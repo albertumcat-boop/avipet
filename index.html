@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro - Finanzas & Consultas</title>
+    <title>Pet Control Pro - Darwin & Joan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -30,157 +30,101 @@
     <main id="adminSection" class="hidden max-w-5xl mx-auto p-4">
         
         <nav class="flex space-x-6 border-b-2 border-gray-200 mb-6 no-print">
-            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">HISTORIA MÉDICA</button>
-            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500">BUSCAR CÉDULA</button>
-            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500">REPORTE FINANCIERO</button>
+            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2 uppercase text-[11px] tracking-widest">Historia</button>
+            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 uppercase text-[11px] tracking-widest">Buscador CI</button>
+            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 uppercase text-[11px] tracking-widest">Cierre Diario</button>
         </nav>
 
-        <section id="sectionHistoria" class="block bg-white p-8 shadow-sm border border-slate-200 rounded-lg print-area">
-            
+        <section id="sectionHistoria" class="block bg-white p-8 shadow-sm border rounded-lg print-area">
             <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 border-2 border-blue-600 flex items-center justify-center text-blue-600 font-black text-2xl">MV</div>
                     <div>
-                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print block text-lg font-bold text-slate-700 bg-white border rounded p-1">
+                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print block text-lg font-bold text-slate-700 bg-white border rounded">
                             <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
                             <option value="Joan Silva">Dr. Joan Silva</option>
                         </select>
-                        <h1 id="doctorPrint" class="hidden print:block font-bold text-xl uppercase text-slate-800">DR. DARWIN SANDOVAL</h1>
-                        <p class="text-[10px] font-bold tracking-widest text-blue-600 uppercase">Médico Veterinario</p>
+                        <h1 id="doctorPrint" class="hidden print:block font-bold text-xl uppercase">DR. DARWIN SANDOVAL</h1>
                     </div>
                 </div>
-                <div class="text-right text-[10px]">
-                    <p class="font-bold text-slate-500 uppercase">Atención Médica</p>
-                    <input type="text" id="fechaDoc" class="w-28 text-center border-b border-slate-400 font-bold">
+                <div class="text-right">
+                    <input type="text" id="fechaDoc" class="w-28 text-center border-b font-bold text-xs">
                 </div>
             </div>
 
-            <div class="no-print mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <select id="servicioMaster" onchange="agregarServicioDetallado(this.value)" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-slate-700">
-                    <option value="">-- SELECCIONAR SERVICIO --</option>
-                    <optgroup label="VACUNAS">
-                        <option value="Sextuple">SEXTUPLE</option>
-                        <option value="Antirrabica">ANTIRRABICA</option>
-                        <option value="KC">KC</option>
-                        <option value="Puppy">PUPPY</option>
-                        <option value="Bioveta">BIOVETA</option>
-                        <option value="Triple Felina">TRIPLE FELINA</option>
-                    </optgroup>
-                    <optgroup label="LABORATORIO">
-                        <option value="Hematologia">HEMATOLOGIA</option>
-                        <option value="Quimica">QUIMICA</option>
-                        <option value="Descarte Hemoparasito">DESCARTE HEMOPARASITO</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[10px] mb-4">
-                <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-                    <div class="header-box">Paciente</div>
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                        <p>NOMBRE: <input id="hNombre" class="border-b w-full font-bold uppercase"></p>
-                        <p>ESPECIE: <input id="hEspecie" class="border-b w-full uppercase"></p>
-                        <p>RAZA: <input id="hRaza" class="border-b w-full uppercase"></p>
-                        <p>EDAD: <input id="hEdad" class="border-b w-full"></p>
-                        <p>SEXO: <input id="hSexo" class="border-b w-full uppercase"></p>
-                        <p>PESO: <input id="hPeso" class="border-b w-full"></p>
-                        <p class="col-span-2">COLOR: <input id="hColor" class="border-b w-full uppercase"></p>
-                    </div>
+            <div class="grid grid-cols-2 border border-slate-400 text-[10px] mb-4">
+                <div class="p-2 border-r border-slate-400">
+                    <p>PACIENTE: <input id="hNombre" class="border-b w-full font-bold uppercase"></p>
+                    <p>RAZA: <input id="hRaza" class="border-b w-full uppercase"></p>
+                    <p>PESO: <input id="hPeso" class="border-b w-full"></p>
                 </div>
-                <div class="p-3 space-y-2">
-                    <div class="header-box">Propietario</div>
-                    <p>NOMBRE: <input id="hProp" class="border-b w-full font-bold uppercase"></p>
-                    <p>CÉDULA: <input id="hCI" class="border-b w-full font-bold"></p>
+                <div class="p-2">
+                    <p>PROPIETARIO: <input id="hProp" class="border-b w-full font-bold uppercase"></p>
+                    <p>CÉDULA: <input id="hCI" class="border-b w-full font-bold bg-yellow-50"></p>
                     <p>TELÉFONO: <input id="hTlf" class="border-b w-full"></p>
-                    <p>DIRECCIÓN: <input id="hDir" class="border-b w-full uppercase"></p>
                 </div>
             </div>
 
-            <div class="border border-slate-400 mb-6">
-                <div class="bg-slate-50 p-1 font-bold text-[10px] border-b border-slate-400 italic text-blue-800 uppercase">Tratamiento:</div>
-                <textarea id="hTratamiento" class="w-full h-48 p-3 text-xs font-medium resize-none leading-relaxed"></textarea>
-            </div>
+            <textarea id="hTratamiento" class="w-full h-40 p-2 text-xs border border-slate-400 mb-4" placeholder="Evolución y tratamiento..."></textarea>
 
-            <div id="panelGastos" class="no-print bg-slate-100 p-6 rounded-lg border-2 border-slate-300">
-                <table class="w-full text-[11px] border bg-white mb-4">
-                    <thead class="bg-slate-700 text-white uppercase text-[9px]">
-                        <tr>
-                            <th class="p-1 border text-left">Insumo</th>
-                            <th class="p-1 border w-24">Costo $</th>
-                            <th class="p-1 border w-16">Cant</th>
-                            <th class="p-1 border w-24 text-right">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpoInsumos"></tbody>
-                </table>
-                
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div class="bg-blue-600 p-4 rounded-xl text-white shadow-md">
-                        <p class="text-[9px] font-bold uppercase">Total Cobrado</p>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent text-3xl font-black w-24 text-center">
+            <div id="panelGastos" class="no-print bg-slate-100 p-4 rounded-lg border">
+                <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                    <div class="bg-blue-600 text-white p-2 rounded">
+                        <p class="text-[9px]">COBRAR $</p>
+                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent text-xl font-bold w-full text-center">
                     </div>
-                    <div class="bg-white border p-4 rounded-xl">
-                        <p class="text-[9px] font-bold text-slate-500 uppercase">Dr (30%)</p>
-                        <p id="labelGananciaVet" class="text-2xl font-black text-slate-700">$0.00</p>
+                    <div class="bg-white p-2 border rounded">
+                        <p class="text-[9px]">DOC (30%)</p>
+                        <p id="labelGananciaVet" class="text-xl font-bold">$0.00</p>
                     </div>
-                    <div class="bg-green-50 border p-4 rounded-xl">
-                        <p class="text-[9px] font-bold text-green-600 uppercase">Tienda</p>
-                        <p id="labelUtilidadTienda" class="text-2xl font-black text-green-800">$0.00</p>
+                    <div class="bg-white p-2 border rounded">
+                        <p class="text-[9px]">TIENDA</p>
+                        <p id="labelUtilidadTienda" class="text-xl font-bold">$0.00</p>
                     </div>
                 </div>
-                
-                <div class="flex gap-4 mt-6">
-                    <button onclick="guardarFirebase(false)" class="flex-1 bg-slate-800 text-white py-3 rounded-lg font-bold">💾 GUARDAR</button>
-                    <button onclick="guardarFirebase(true)" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold uppercase">🖨️ Imprimir</button>
-                    <button onclick="limpiarFormulario()" class="bg-red-100 text-red-600 px-6 py-3 rounded-lg font-bold">LIMPIAR</button>
+                <div class="flex gap-2">
+                    <button onclick="guardarFirebase(false)" class="flex-1 bg-slate-800 text-white py-2 rounded font-bold">GUARDAR</button>
+                    <button onclick="guardarFirebase(true)" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold">IMPRIMIR</button>
+                    <button onclick="limpiarFormulario()" class="bg-red-500 text-white px-4 py-2 rounded font-bold">LIMPIAR</button>
                 </div>
+            </div>
+        </section>
+
+        <section id="sectionBuscador" class="hidden bg-white p-8 rounded shadow border min-h-[400px]">
+            <h2 class="text-lg font-bold mb-4 uppercase text-blue-900">🔍 Buscar Historial Médico</h2>
+            <div class="flex gap-2 mb-8 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <input type="text" id="searchCI" placeholder="Ingrese Cédula exactamente como se guardó..." class="flex-1 p-3 border-2 rounded-lg font-bold text-lg outline-none focus:border-blue-500">
+                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-10 rounded-lg font-bold hover:bg-blue-700 transition">BUSCAR</button>
+            </div>
+            
+            <div id="resultadosBusqueda" class="space-y-4">
+                <p class="text-slate-400 text-center italic">Ingrese una cédula para ver los registros previos.</p>
             </div>
         </section>
 
         <section id="sectionReporte" class="hidden bg-white p-8 rounded shadow border">
-            <h2 class="text-lg font-bold mb-4 uppercase text-blue-900 border-b pb-2">Cierre de Caja Diario</h2>
-            <div id="resumenFinancieroDia" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="p-4 bg-slate-800 text-white rounded text-center">
-                    <p class="text-[9px] uppercase">Cobro Total</p>
+            <h2 class="text-lg font-bold mb-4 uppercase text-blue-900 border-b pb-2">Cierre del Día</h2>
+            <div id="resumenFinancieroDia" class="grid grid-cols-2 gap-4 mb-6">
+                <div class="p-3 bg-slate-800 text-white rounded text-center">
+                    <p class="text-[9px]">TOTAL COBRADO</p>
                     <p id="repTotalCobrado" class="text-xl font-bold">$0.00</p>
                 </div>
-                <div class="p-4 bg-red-100 text-red-800 rounded text-center border">
-                    <p class="text-[9px] uppercase">Gastos Insumos</p>
-                    <p id="repTotalGastos" class="text-xl font-bold">$0.00</p>
-                </div>
-                <div class="p-4 bg-blue-100 text-blue-800 rounded text-center border">
-                    <p class="text-[9px] uppercase">Ganancia Doctores</p>
+                <div class="p-3 bg-blue-100 text-blue-800 rounded text-center border border-blue-200">
+                    <p class="text-[9px]">GANANCIA DOCTORES</p>
                     <p id="repTotalDoctores" class="text-xl font-bold">$0.00</p>
                 </div>
-                <div class="p-4 bg-green-100 text-green-800 rounded text-center border">
-                    <p class="text-[9px] uppercase">Utilidad Tienda</p>
-                    <p id="repTotalTienda" class="text-xl font-bold">$0.00</p>
-                </div>
             </div>
-            <div id="listaReporte" class="divide-y text-xs bg-slate-50 p-4 rounded border"></div>
-            <button onclick="cargarReporte()" class="w-full mt-4 bg-slate-700 text-white py-3 rounded font-bold uppercase">Actualizar Cierre</button>
+            <div id="listaReporte" class="divide-y text-xs"></div>
+            <button onclick="cargarReporte()" class="w-full mt-6 bg-slate-700 text-white py-3 rounded font-bold">ACTUALIZAR REPORTE</button>
         </section>
 
-        <section id="sectionBuscador" class="hidden bg-white p-8 rounded shadow border">
-            <h2 class="text-lg font-bold mb-4 uppercase">🔍 Buscar por Cédula</h2>
-            <div class="flex gap-2 mb-8">
-                <input type="text" id="searchCI" placeholder="Cédula..." class="flex-1 p-3 border rounded font-bold">
-                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-8 rounded font-bold">BUSCAR</button>
-            </div>
-            <div id="resultadosBusqueda" class="space-y-4"></div>
-        </section>
     </main>
 
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const serviciosConfig = {
-            "Sextuple": { desc: "VACUNA SEXTUPLE", insumos: [{n: "Vial Sextuple", c: 8.50}, {n: "Jeringa 3cc", c: 0.35}] },
-            "Antirrabica": { desc: "VACUNA ANTIRRÁBICA", insumos: [{n: "Vial Rabia", c: 5.00}] },
-            "Hematologia": { desc: "HEMATOLOGIA COMPLETA", insumos: [{n: "Tubo EDTA", c: 0.80}, {n: "Reactivos", c: 4.50}] }
-        };
-
+        // FUNCIONES DE NAVEGACIÓN
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
                 document.getElementById('loginSection').classList.add('hidden');
@@ -190,77 +134,105 @@
         };
 
         window.showTab = (t) => {
-            document.getElementById('sectionHistoria').classList.add('hidden');
-            document.getElementById('sectionBuscador').classList.add('hidden');
-            document.getElementById('sectionReporte').classList.add('hidden');
+            const sections = ['sectionHistoria', 'sectionBuscador', 'sectionReporte'];
+            sections.forEach(s => document.getElementById(s).classList.add('hidden'));
             
-            const selected = 'section' + t.charAt(0).toUpperCase() + t.slice(1);
-            document.getElementById(selected).classList.remove('hidden');
+            const activeId = 'section' + t.charAt(0).toUpperCase() + t.slice(1);
+            document.getElementById(activeId).classList.remove('hidden');
 
-            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500");
-            const tabId = 'tab' + (t === 'historia' ? 'H' : t === 'buscador' ? 'B' : 'R');
-            document.getElementById(tabId).className = "tab-active py-2";
-
+            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500 uppercase text-[11px] tracking-widest");
+            const btnId = 'tab' + (t==='historia'?'H' : t==='buscador'?'B':'R');
+            document.getElementById(btnId).className = "tab-active py-2 uppercase text-[11px] tracking-widest";
+            
             if(t === 'reporte') cargarReporte();
         };
 
-        window.agregarServicioDetallado = (id) => {
-            if(!id) return;
-            const config = serviciosConfig[id] || { desc: id.toUpperCase(), insumos: [{n: "Insumos varios", c: 0}] };
-            document.getElementById('hTratamiento').value += (document.getElementById('hTratamiento').value ? "\n" : "") + config.desc;
-            config.insumos.forEach(ins => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="p-2 border uppercase">${ins.n}</td><td class="p-2 border"><input type="number" value="${ins.c}" oninput="calcularFinanzas()" class="i-cost w-full text-center bg-transparent"></td><td class="p-2 border"><input type="number" value="1" oninput="calcularFinanzas()" class="i-cant w-full text-center font-bold bg-transparent"></td><td class="p-2 border font-bold text-right i-sub">$${ins.c.toFixed(2)}</td>`;
-                document.getElementById('cuerpoInsumos').appendChild(tr);
-            });
-            document.getElementById('servicioMaster').value = "";
-            calcularFinanzas();
+        // LÓGICA DE BÚSQUEDA (LA QUE FALLABA)
+        window.buscarPorCedula = async () => {
+            const rawCI = document.getElementById('searchCI').value;
+            const ci = rawCI.trim(); // Elimina espacios accidentales
+            const resContainer = document.getElementById('resultadosBusqueda');
+            
+            if(!ci) return alert("Por favor, ingrese una cédula");
+
+            resContainer.innerHTML = "<p class='text-blue-600 animate-pulse text-center'>Buscando en la base de datos...</p>";
+
+            try {
+                // Consulta a Firestore: Busca donde 'cedula' sea igual a la ingresada
+                const q = query(collection(db, "consultas"), where("cedula", "==", ci), orderBy("fecha", "desc"));
+                const snap = await getDocs(q);
+
+                if(snap.empty) {
+                    resContainer.innerHTML = `
+                        <div class="text-center p-10 border-2 border-dashed rounded-xl">
+                            <p class="text-red-500 font-bold">No se encontraron registros para la cédula: ${ci}</p>
+                            <p class="text-slate-500 text-sm">Verifique que la escribió igual que cuando guardó la historia.</p>
+                        </div>`;
+                    return;
+                }
+
+                resContainer.innerHTML = `<p class="text-xs font-bold text-slate-500 mb-4 uppercase">Se encontraron ${snap.size} registros:</p>`;
+                
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const fecha = d.fechaSimple || "Sin fecha";
+                    resContainer.innerHTML += `
+                        <div class="p-4 border-l-4 border-blue-500 bg-white shadow-md rounded-r-lg mb-4 hover:bg-blue-50 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-1 rounded font-bold">${fecha}</span>
+                                <span class="text-[10px] font-bold text-slate-400">ATENDIÓ: DR. ${d.doctor.toUpperCase()}</span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 uppercase">${d.paciente} <span class="text-slate-400 font-normal">(${d.raza})</span></p>
+                            <div class="mt-2 p-3 bg-slate-50 rounded text-xs text-slate-600 leading-relaxed whitespace-pre-wrap border-t italic">
+                                ${d.tratamiento}
+                            </div>
+                        </div>`;
+                });
+            } catch (error) {
+                console.error("Error en búsqueda:", error);
+                resContainer.innerHTML = "<p class='text-red-600'>Ocurrió un error al conectar con la base de datos.</p>";
+            }
         };
 
+        // LÓGICA DE GUARDADO Y FINANZAS
         window.calcularFinanzas = () => {
-            let totalIns = 0;
-            document.querySelectorAll('#cuerpoInsumos tr').forEach(fila => {
-                const c = parseFloat(fila.querySelector('.i-cost').value) || 0;
-                const n = parseFloat(fila.querySelector('.i-cant').value) || 0;
-                const sub = c * n;
-                fila.querySelector('.i-sub').innerText = `$${sub.toFixed(2)}`;
-                totalIns += sub;
-            });
             const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const gananciaD = (cobro - totalIns) * 0.30;
-            const utilT = (cobro - totalIns) - (gananciaD > 0 ? gananciaD : 0);
-            document.getElementById('labelGananciaVet').innerText = `$${Math.max(0, gananciaD).toFixed(2)}`;
-            document.getElementById('labelUtilidadTienda').innerText = `$${Math.max(0, utilT).toFixed(2)}`;
-            return { cobro, utilT, gananciaD, totalIns };
+            const gananciaD = cobro * 0.30;
+            const utilT = cobro - gananciaD;
+            document.getElementById('labelGananciaVet').innerText = `$${gananciaD.toFixed(2)}`;
+            document.getElementById('labelUtilidadTienda').innerText = `$${utilT.toFixed(2)}`;
+            return { cobro, gananciaD, utilT };
         };
 
         window.guardarFirebase = async (imprimir) => {
             const f = calcularFinanzas();
             const data = {
-                cedula: document.getElementById('hCI').value,
+                cedula: document.getElementById('hCI').value.trim(),
                 paciente: document.getElementById('hNombre').value.toUpperCase(),
+                raza: document.getElementById('hRaza').value.toUpperCase(),
                 propietario: document.getElementById('hProp').value.toUpperCase(),
                 tratamiento: document.getElementById('hTratamiento').value,
                 doctor: document.getElementById('selectDoctor').value,
                 cobrado: f.cobro,
-                gastos: f.totalIns,
-                ganancia_dr: Math.max(0, f.gananciaD),
-                utilidad_tienda: Math.max(0, f.utilT),
+                ganancia_dr: f.gananciaD,
+                utilidad_tienda: f.utilT,
                 fecha: serverTimestamp(),
                 fechaSimple: new Date().toLocaleDateString()
             };
+
+            if(!data.cedula || !data.paciente) return alert("Cédula y Nombre son obligatorios");
+
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("DATOS GUARDADOS CORRECTAMENTE");
+                alert("REGISTRO GUARDADO");
                 if(imprimir) window.print();
-            } catch (e) { alert("ERROR AL GUARDAR"); }
+            } catch (e) { alert("Error al guardar"); }
         };
 
         window.limpiarFormulario = () => {
-            if(confirm("¿Seguro que desea limpiar la pantalla? No se cerrará la sesión.")) {
-                const ids = ['hNombre','hEspecie','hRaza','hEdad','hSexo','hPeso','hColor','hProp','hCI','hTlf','hDir','hTratamiento','precioVenta'];
-                ids.forEach(id => document.getElementById(id).value = id === 'precioVenta' ? 0 : "");
-                document.getElementById('cuerpoInsumos').innerHTML = "";
+            if(confirm("¿Limpiar pantalla?")) {
+                const ids = ['hNombre','hRaza','hPeso','hProp','hCI','hTlf','hTratamiento','precioVenta'];
+                ids.forEach(id => document.getElementById(id).value = id==='precioVenta'?0:"");
                 calcularFinanzas();
             }
         };
@@ -269,30 +241,16 @@
             const hoy = new Date().toLocaleDateString();
             const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
             const snap = await getDocs(q);
-            let c=0, g=0, d=0, t=0;
+            let c=0, d=0;
             const list = document.getElementById('listaReporte');
             list.innerHTML = "";
             snap.forEach(doc => {
                 const v = doc.data();
-                c += v.cobrado; g += v.gastos; d += v.ganancia_dr; t += v.utilidad_tienda;
-                list.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente} (${v.doctor})</span><b>$${v.cobrado.toFixed(2)}</b></div>`;
+                c += v.cobrado; d += v.ganancia_dr;
+                list.innerHTML += `<div class="p-2 flex justify-between border-b"><span>${v.paciente}</span><b>$${v.cobrado.toFixed(2)}</b></div>`;
             });
             document.getElementById('repTotalCobrado').innerText = `$${c.toFixed(2)}`;
-            document.getElementById('repTotalGastos').innerText = `$${g.toFixed(2)}`;
             document.getElementById('repTotalDoctores').innerText = `$${d.toFixed(2)}`;
-            document.getElementById('repTotalTienda').innerText = `$${t.toFixed(2)}`;
-        };
-
-        window.buscarPorCedula = async () => {
-            const ci = document.getElementById('searchCI').value;
-            const q = query(collection(db, "consultas"), where("cedula", "==", ci), orderBy("fecha", "desc"));
-            const snap = await getDocs(q);
-            const res = document.getElementById('resultadosBusqueda');
-            res.innerHTML = snap.empty ? "<p>No hay registros</p>" : "";
-            snap.forEach(doc => {
-                const d = doc.data();
-                res.innerHTML += `<div class="p-4 border-l-4 border-blue-500 bg-white shadow-sm mb-2"><p class="text-xs font-bold text-blue-600">${d.fechaSimple} - DR. ${d.doctor}</p><p class="text-xs"><b>${d.paciente}</b>: ${d.tratamiento}</p></div>`;
-            });
         };
 
         window.actualizarNombreDoctor = (n) => document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase();
