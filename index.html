@@ -9,12 +9,9 @@
         @media print {
             .no-print { display: none !important; }
             body { background-color: white !important; padding: 0; }
-            .print-container { width: 100%; border: 1px solid black; }
             input, textarea { border: none !important; outline: none !important; width: 100%; background: transparent; }
-            .border-print { border: 1px solid black !important; }
         }
         .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
-        input { outline: none; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-900">
@@ -23,8 +20,11 @@
         <div class="bg-white p-8 rounded-xl shadow-2xl w-96 text-center">
             <h2 class="text-2xl font-bold mb-6">Panel Administrativo</h2>
             <input type="password" id="pinInput" placeholder="PIN de Seguridad" 
-                   class="w-full p-3 border rounded-lg mb-4 text-center text-2xl tracking-widest">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Entrar</button>
+                   class="w-full p-3 border rounded-lg mb-4 text-center text-2xl tracking-widest outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors">
+                ENTRAR AL SISTEMA
+            </button>
+            <p id="errorMsg" class="text-red-500 text-sm mt-3 hidden">PIN incorrecto, intente de nuevo.</p>
         </div>
     </div>
 
@@ -39,8 +39,8 @@
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 border-2 border-black flex items-center justify-center font-bold">MV</div>
                     <div>
-                        <h1 class="text-lg font-bold uppercase text-slate-800">Dr. Darwin Sandoval</h1>
-                        <p class="text-[10px] font-bold">MÉDICO VETERINARIO</p>
+                        <h1 class="text-lg font-bold uppercase">Dr. Darwin Sandoval</h1>
+                        <p class="text-[10px] font-bold text-gray-600">MÉDICO VETERINARIO</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -51,15 +51,15 @@
 
             <div class="grid grid-cols-2 gap-0 border border-black text-[11px]">
                 <div class="border-r border-black p-2">
-                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2">MASCOTA</h3>
+                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase">Mascota</h3>
                     <p>ESPECIE: <input id="hEspecie" type="text" class="border-b border-gray-300 w-32" value="CANINO"></p>
-                    <p>RAZA: <input id="hRaza" type="text" class="border-b border-gray-300 w-32" value="POODLE"></p>
+                    <p>RAZA: <input id="hRaza" type="text" class="border-b border-gray-300 w-32"></p>
                     <p>NOMBRE: <input id="hNombre" type="text" class="border-b border-gray-300 w-32 font-bold"></p>
                     <p>EDAD: <input id="hEdad" type="text" class="border-b border-gray-300 w-32"></p>
                     <p>PESO: <input id="hPeso" type="text" class="border-b border-gray-300 w-32"></p>
                 </div>
                 <div class="p-2">
-                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2">DATOS PROPIETARIO</h3>
+                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase">Propietario</h3>
                     <p>NOMBRE: <input id="hPropNombre" type="text" class="border-b border-gray-300 w-full"></p>
                     <p>C.I.: <input id="hPropCI" type="text" class="border-b border-gray-300 w-full"></p>
                     <p>TLF: <input id="hPropTlf" type="text" class="border-b border-gray-300 w-full"></p>
@@ -69,30 +69,32 @@
 
             <div class="mt-4 border border-black text-[11px]">
                 <h3 class="bg-gray-100 p-1 font-bold border-b border-black">MOTIVO DE CONSULTA / ANAMNESIS:</h3>
-                <textarea id="hMotivo" class="w-full p-2 h-20 border-b border-black resize-none"></textarea>
+                <textarea id="hMotivo" class="w-full p-2 h-20 border-b border-black resize-none outline-none"></textarea>
                 <h3 class="bg-gray-100 p-1 font-bold border-b border-black">DIAGNÓSTICO Y TRATAMIENTO:</h3>
-                <textarea id="hTratamiento" class="w-full p-2 h-32 resize-none"></textarea>
+                <textarea id="hTratamiento" class="w-full p-2 h-32 resize-none outline-none"></textarea>
             </div>
 
-            <button onclick="guardarYImprimir()" class="no-print mt-6 bg-green-600 text-white px-8 py-2 rounded font-bold">💾 GUARDAR E IMPRIMIR</button>
+            <button onclick="guardarYImprimir()" class="no-print mt-6 bg-green-600 text-white px-8 py-3 rounded font-bold shadow-md hover:bg-green-700 transition-all">
+                💾 GUARDAR E IMPRIMIR
+            </button>
         </section>
 
-        <section id="sectionInsumos" class="hidden bg-white p-8 border border-blue-300">
-            <h2 class="text-xl font-bold text-blue-800 mb-4">CÁLCULO DE RENTABILIDAD</h2>
+        <section id="sectionInsumos" class="hidden bg-white p-8 border border-blue-300 shadow-md">
+            <h2 class="text-xl font-bold text-blue-800 mb-4 uppercase">Panel de Rentabilidad Interna</h2>
             <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                <div class="p-3 border bg-gray-50"><p class="text-xs">COSTO INSUMOS</p><p id="totalInsumosLabel" class="text-xl font-bold">$0.00</p></div>
-                <div class="p-3 border bg-blue-50"><p class="text-xs">PAGO PROFESIONAL</p><p id="pagoVetLabel" class="text-xl font-bold">$0.00</p></div>
-                <div class="p-3 border bg-green-50"><p class="text-xs">UTILIDAD TIENDA</p><p id="utilidadLabel" class="text-xl font-bold text-green-700">$0.00</p></div>
+                <div class="p-3 border bg-gray-50"><p class="text-xs font-bold">INSUMOS</p><p id="totalInsumosLabel" class="text-xl font-black">$0.00</p></div>
+                <div class="p-3 border bg-blue-50"><p class="text-xs font-bold">VETERINARIO (30%)</p><p id="pagoVetLabel" class="text-xl font-black">$0.00</p></div>
+                <div class="p-3 border bg-green-50"><p class="text-xs font-bold">TIENDA (NETO)</p><p id="utilidadLabel" class="text-xl font-black text-green-700">$0.00</p></div>
             </div>
-            <div class="mb-4">
-                <label class="font-bold">Total Cobrado al Cliente: $</label>
-                <input type="number" id="precioVenta" value="0" onchange="calcularFinanzas()" class="border-b-2 border-blue-600 text-xl w-32 font-bold outline-none">
+            <div class="mb-4 bg-slate-100 p-4 rounded border">
+                <label class="font-bold text-lg">Total Cobrado al Cliente: $</label>
+                <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-white border-2 border-blue-600 text-2xl w-32 font-bold px-2 rounded">
             </div>
-            <table class="w-full text-xs border">
-                <thead class="bg-gray-200"><tr><th class="p-2 border">Insumo</th><th class="p-2 border">Costo $</th><th class="p-2 border">Cant.</th><th class="p-2 border">Subtotal</th></tr></thead>
+            <table class="w-full text-sm border">
+                <thead class="bg-gray-800 text-white"><tr><th class="p-2 border border-gray-600">Insumo / Medicamento</th><th class="p-2 border border-gray-600 w-24">Costo $</th><th class="p-2 border border-gray-600 w-20">Cant.</th><th class="p-2 border border-gray-600 w-24">Subtotal</th></tr></thead>
                 <tbody id="cuerpoInsumos"></tbody>
             </table>
-            <button onclick="nuevaFila()" class="mt-2 text-blue-600 text-xs font-bold">+ AGREGAR INSUMO</button>
+            <button onclick="nuevaFila()" class="mt-4 text-blue-600 font-bold text-sm hover:underline">+ AGREGAR LÍNEA DE GASTO</button>
         </section>
     </main>
 
@@ -100,25 +102,36 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // EXPLICACIÓN: Usamos window.nombreDefuncion para que el HTML pueda verlas fuera del módulo
         window.verificarPin = () => {
-            if(document.getElementById('pinInput').value === "2026") {
+            const pinDigitado = document.getElementById('pinInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if(pinDigitado === "2026") {
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
-            } else { alert("PIN Incorrecto"); }
+                errorMsg.classList.add('hidden');
+            } else {
+                errorMsg.classList.remove('hidden');
+                document.getElementById('pinInput').value = "";
+            }
         };
 
         window.showTab = (t) => {
             document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
             document.getElementById('sectionInsumos').classList.toggle('hidden', t !== 'insumos');
+            document.getElementById('tabH').className = t === 'historia' ? 'tab-active py-2' : 'py-2 text-gray-500';
+            document.getElementById('tabI').className = t === 'insumos' ? 'tab-active py-2' : 'py-2 text-gray-500';
         };
 
         window.nuevaFila = () => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="p-1 border"><input type="text" class="w-full"></td>
-                <td class="p-1 border"><input type="number" class="i-cost w-full" value="0" onchange="calcularFinanzas()"></td>
-                <td class="p-1 border"><input type="number" class="i-cant w-full" value="1" onchange="calcularFinanzas()"></td>
-                <td class="p-1 border font-bold i-sub">$0.00</td>`;
+            tr.innerHTML = `
+                <td class="p-1 border"><input type="text" class="w-full p-1 outline-none"></td>
+                <td class="p-1 border"><input type="number" class="i-cost w-full p-1 outline-none" value="0" oninput="calcularFinanzas()"></td>
+                <td class="p-1 border"><input type="number" class="i-cant w-full p-1 outline-none" value="1" oninput="calcularFinanzas()"></td>
+                <td class="p-1 border font-bold i-sub text-center">$0.00</td>`;
             document.getElementById('cuerpoInsumos').appendChild(tr);
         };
 
@@ -132,7 +145,7 @@
                 totalI += s;
             });
             const venta = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const pagoV = (venta - totalI) * 0.30; // 30% para el veterinario
+            const pagoV = (venta - totalI) * 0.30; // 30% Comisión
             const util = venta - totalI - pagoV;
 
             document.getElementById('totalInsumosLabel').innerText = `$${totalI.toFixed(2)}`;
@@ -146,15 +159,26 @@
             const data = {
                 paciente: document.getElementById('hNombre').value,
                 propietario: document.getElementById('hPropNombre').value,
-                ingreso_total: document.getElementById('precioVenta').value,
-                ganancia_neta: f.util,
+                total_cobrado: document.getElementById('precioVenta').value,
+                ganancia_tienda: f.util,
+                gasto_insumos: f.totalI,
                 fecha: serverTimestamp()
             };
             try {
                 await addDoc(collection(db, "consultas"), data);
                 window.print();
-            } catch (e) { alert("Error al guardar en Firebase."); }
+            } catch (e) { 
+                console.error("Error Firebase:", e);
+                alert("Atención: Los datos no se guardaron en la nube, pero puedes imprimir."); 
+                window.print();
+            }
         };
+
+        // Escuchar tecla Enter en el PIN
+        document.getElementById('pinInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verificarPin();
+        });
     </script>
 </body>
 </html>
+
