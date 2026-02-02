@@ -11,16 +11,25 @@
             body { background-color: white !important; padding: 0; }
             .print-container { width: 100%; border: 1px solid black; }
             input, textarea, select { border: none !important; outline: none !important; width: 100%; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+            #doctorNombrePrint { display: block !important; font-size: 1.25rem; font-weight: bold; text-transform: uppercase; }
         }
         .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
-        input, select, textarea { outline: none; }
+        /* Estilo para que el selector resalte en la web */
+        #selectDoctor {
+            border: 2px solid #2563eb;
+            background-color: #eff6ff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #1e40af;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900">
 
     <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-96 text-center border-t-4 border-blue-600">
-            <h2 class="text-2xl font-bold mb-6">Panel Administrativo</h2>
+            <h2 class="text-2xl font-bold mb-6">Acceso Administrativo</h2>
             <input type="password" id="pinInput" placeholder="PIN de Seguridad" 
                    class="w-full p-3 border rounded-lg mb-4 text-center text-2xl tracking-widest focus:ring-2 focus:ring-blue-500">
             <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">ENTRAR</button>
@@ -41,11 +50,15 @@
                 <div class="flex items-center space-x-4">
                     <div class="w-14 h-14 border-2 border-black flex items-center justify-center font-bold text-xl">MV</div>
                     <div>
-                        <select id="selectDoctor" class="text-lg font-bold uppercase bg-gray-50 border border-dashed border-gray-400 px-2 cursor-pointer no-print focus:bg-white">
-                            <option value="DR. DARWIN SANDOVAL">DR. DARWIN SANDOVAL</option>
-                            <option value="DR. JOAN SILVA">DR. JOAN SILVA</option>
-                        </select>
-                        <div id="doctorNombrePrint" class="hidden print:block text-lg font-bold uppercase"></div>
+                        <div class="no-print">
+                            <label class="text-[9px] font-bold text-blue-600 block mb-1">CAMBIAR DOCTOR DE GUARDIA:</label>
+                            <select id="selectDoctor" onchange="actualizarNombrePrint()">
+                                <option value="DR. DARWIN SANDOVAL">DR. DARWIN SANDOVAL</option>
+                                <option value="DR. JOAN SILVA">DR. JOAN SILVA</option>
+                            </select>
+                        </div>
+                        
+                        <div id="doctorNombrePrint" class="hidden font-bold uppercase">DR. DARWIN SANDOVAL</div>
                         <p class="text-[10px] font-bold">MÉDICO VETERINARIO</p>
                     </div>
                 </div>
@@ -57,19 +70,19 @@
 
             <div class="grid grid-cols-2 gap-0 border border-black text-[11px]">
                 <div class="border-r border-black p-2">
-                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase italic">Mascota</h3>
-                    <p>ESPECIE: <input id="hEspecie" type="text" class="border-b border-gray-300 w-32" value="CANINO"></p>
-                    <p>RAZA: <input id="hRaza" type="text" class="border-b border-gray-300 w-32"></p>
-                    <p>NOMBRE: <input id="hNombre" type="text" class="border-b border-gray-300 w-32 font-black text-sm"></p>
-                    <p>EDAD: <input id="hEdad" type="text" class="border-b border-gray-300 w-32"></p>
-                    <p>PESO: <input id="hPeso" type="text" class="border-b border-gray-300 w-32"></p>
+                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase italic text-[10px]">Mascota</h3>
+                    <p class="mb-1">ESPECIE: <input id="hEspecie" type="text" class="border-b border-gray-300 w-32" value="CANINO"></p>
+                    <p class="mb-1">RAZA: <input id="hRaza" type="text" class="border-b border-gray-300 w-32"></p>
+                    <p class="mb-1">NOMBRE: <input id="hNombre" type="text" class="border-b border-gray-400 w-32 font-black text-blue-800"></p>
+                    <p class="mb-1">EDAD: <input id="hEdad" type="text" class="border-b border-gray-300 w-32"></p>
+                    <p class="mb-1">PESO: <input id="hPeso" type="text" class="border-b border-gray-300 w-32"></p>
                 </div>
                 <div class="p-2">
-                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase italic">Propietario</h3>
-                    <p>NOMBRE: <input id="hPropNombre" type="text" class="border-b border-gray-300 w-full font-bold"></p>
-                    <p>C.I.: <input id="hPropCI" type="text" class="border-b border-gray-300 w-full"></p>
-                    <p>TLF: <input id="hPropTlf" type="text" class="border-b border-gray-300 w-full"></p>
-                    <p>DIRECCIÓN: <input id="hPropDir" type="text" class="border-b border-gray-300 w-full"></p>
+                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase italic text-[10px]">Propietario</h3>
+                    <p class="mb-1">NOMBRE: <input id="hPropNombre" type="text" class="border-b border-gray-300 w-full font-bold"></p>
+                    <p class="mb-1">C.I.: <input id="hPropCI" type="text" class="border-b border-gray-300 w-full"></p>
+                    <p class="mb-1">TLF: <input id="hPropTlf" type="text" class="border-b border-gray-300 w-full"></p>
+                    <p class="mb-1">DIRECCIÓN: <input id="hPropDir" type="text" class="border-b border-gray-300 w-full"></p>
                 </div>
             </div>
 
@@ -80,35 +93,43 @@
                 <textarea id="hTratamiento" class="w-full p-2 h-48 resize-none"></textarea>
             </div>
 
-            <div class="flex justify-between items-center mt-12 no-print">
-                <button onclick="guardarYImprimir()" class="bg-blue-600 text-white px-10 py-3 rounded-full font-bold shadow-xl hover:scale-105 transition">
-                    💾 REGISTRAR E IMPRIMIR
+            <div class="flex justify-center mt-12 no-print">
+                <button onclick="guardarYImprimir()" class="bg-blue-600 text-white px-12 py-4 rounded-full font-bold shadow-xl hover:bg-blue-700 transition-all flex items-center gap-2">
+                    <span>💾</span> REGISTRAR Y GENERAR HOJA
                 </button>
             </div>
         </section>
 
-        <section id="sectionInsumos" class="hidden bg-white p-8 border border-blue-400 shadow-lg">
-            <h2 class="text-xl font-bold text-blue-900 mb-6 uppercase border-b pb-2">Control Financiero Interno</h2>
+        <section id="sectionInsumos" class="hidden bg-white p-8 border border-blue-400 shadow-lg rounded-lg">
+            <h2 class="text-xl font-bold text-blue-900 mb-6 uppercase border-b-2 border-blue-100 pb-2">Control Financiero Interno</h2>
             
             <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                <div class="p-4 border bg-gray-50 rounded"><p class="text-[10px] text-gray-500 font-bold">INSUMOS</p><p id="totalInsumosLabel" class="text-2xl font-black">$0.00</p></div>
-                <div class="p-4 border bg-blue-50 rounded border-blue-200"><p class="text-[10px] text-blue-600 font-bold">PAGO DOCTOR (30%)</p><p id="pagoVetLabel" class="text-2xl font-black">$0.00</p></div>
-                <div class="p-4 border bg-green-50 rounded border-green-200"><p class="text-[10px] text-green-600 font-bold">GANANCIA TIENDA</p><p id="utilidadLabel" class="text-2xl font-black text-green-700">$0.00</p></div>
+                <div class="p-4 border bg-gray-50 rounded shadow-sm"><p class="text-[10px] text-gray-500 font-bold uppercase">Insumos</p><p id="totalInsumosLabel" class="text-2xl font-black">$0.00</p></div>
+                <div class="p-4 border bg-blue-50 rounded border-blue-200 shadow-sm"><p class="text-[10px] text-blue-600 font-bold uppercase">Comisión Doctor (30%)</p><p id="pagoVetLabel" class="text-2xl font-black">$0.00</p></div>
+                <div class="p-4 border bg-green-50 rounded border-green-200 shadow-sm"><p class="text-[10px] text-green-600 font-bold uppercase">Utilidad Tienda</p><p id="utilidadLabel" class="text-2xl font-black text-green-700">$0.00</p></div>
             </div>
 
-            <div class="mb-6 p-4 bg-blue-900 text-white rounded-lg">
-                <label class="font-bold text-lg">Monto total cobrado al cliente: $</label>
-                <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" 
-                       class="bg-white text-blue-900 text-2xl w-32 font-black px-2 rounded ml-4 outline-none">
+            <div class="mb-6 p-6 bg-slate-800 text-white rounded-xl shadow-inner flex items-center justify-between">
+                <label class="font-bold text-xl uppercase tracking-tight">Monto Total Cobrado:</label>
+                <div class="flex items-center">
+                    <span class="text-3xl font-bold mr-2">$</span>
+                    <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" 
+                           class="bg-white text-slate-900 text-3xl w-40 font-black px-4 py-2 rounded-lg outline-none focus:ring-4 focus:ring-blue-400">
+                </div>
             </div>
 
-            <table class="w-full text-sm border-collapse border border-gray-300">
+            <table class="w-full text-sm border-collapse border border-gray-300 shadow-sm">
                 <thead class="bg-gray-800 text-white">
-                    <tr><th class="p-2 border border-gray-600">Descripción del Insumo</th><th class="p-2 border border-gray-600 w-24">Costo $</th><th class="p-2 border border-gray-600 w-20">Cant.</th><th class="p-2 border border-gray-600 w-24">Subtotal</th></tr>
+                    <tr>
+                        <th class="p-3 border border-gray-600 text-left">Insumo / Medicamento</th>
+                        <th class="p-3 border border-gray-600 w-28 text-center">Costo Unit. $</th>
+                        <th class="p-3 border border-gray-600 w-24 text-center">Cantidad</th>
+                        <th class="p-3 border border-gray-600 w-28 text-center">Subtotal</th>
+                    </tr>
                 </thead>
                 <tbody id="cuerpoInsumos"></tbody>
             </table>
-            <button onclick="nuevaFila()" class="mt-4 bg-gray-200 px-4 py-2 rounded font-bold text-xs hover:bg-gray-300"> + AÑADIR MEDICAMENTO / INSUMO </button>
+            <button onclick="nuevaFila()" class="mt-6 bg-blue-50 text-blue-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-100 border border-blue-200 transition"> + AÑADIR GASTO </button>
         </section>
     </main>
 
@@ -116,11 +137,18 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Función para cambiar el nombre que sale en la hoja impresa
+        window.actualizarNombrePrint = () => {
+            const nombreSelect = document.getElementById('selectDoctor').value;
+            document.getElementById('doctorNombrePrint').innerText = nombreSelect;
+        };
+
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
+                actualizarNombrePrint(); // Carga el nombre inicial
             } else { 
                 document.getElementById('errorMsg').classList.remove('hidden');
             }
@@ -136,10 +164,10 @@
         window.nuevaFila = () => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="p-1 border"><input type="text" class="w-full p-1 border-none"></td>
-                <td class="p-1 border"><input type="number" class="i-cost w-full p-1 text-center" value="0" oninput="calcularFinanzas()"></td>
-                <td class="p-1 border"><input type="number" class="i-cant w-full p-1 text-center" value="1" oninput="calcularFinanzas()"></td>
-                <td class="p-1 border font-bold i-sub text-center bg-gray-50">$0.00</td>`;
+                <td class="p-2 border"><input type="text" class="w-full p-1 border-none bg-transparent"></td>
+                <td class="p-2 border text-center font-bold text-gray-400">$ <input type="number" class="i-cost w-20 p-1 text-center bg-transparent text-black" value="0" oninput="calcularFinanzas()"></td>
+                <td class="p-2 border text-center"><input type="number" class="i-cant w-16 p-1 text-center bg-transparent font-bold" value="1" oninput="calcularFinanzas()"></td>
+                <td class="p-2 border font-bold i-sub text-center bg-gray-50 text-blue-700">$0.00</td>`;
             document.getElementById('cuerpoInsumos').appendChild(tr);
         };
 
@@ -163,10 +191,10 @@
         };
 
         window.guardarYImprimir = async () => {
+            actualizarNombrePrint(); // Asegurar nombre antes de imprimir
             const docNombre = document.getElementById('selectDoctor').value;
-            document.getElementById('doctorNombrePrint').innerText = docNombre;
-            
             const f = calcularFinanzas();
+            
             const data = {
                 doctor: docNombre,
                 paciente: document.getElementById('hNombre').value,
@@ -182,7 +210,7 @@
                 window.print();
             } catch (e) {
                 console.error(e);
-                alert("Error de conexión. Se procederá solo con la impresión.");
+                alert("Guardado local exitoso. Error de nube: " + e.message);
                 window.print();
             }
         };
