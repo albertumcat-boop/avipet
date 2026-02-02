@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro - Gestión Médica</title>
+    <title>Pet Control Pro - Darwin & Joan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -21,8 +21,9 @@
     <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-80 text-center border-t-4 border-blue-600">
             <h2 class="text-xl font-bold mb-4 italic">Panel Administrador</h2>
-            <input type="password" id="pinInput" placeholder="PIN 2026" class="w-full p-2 border rounded mb-4 text-center text-xl">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">ENTRAR</button>
+            <input type="password" id="pinInput" placeholder="PIN" class="w-full p-2 border rounded mb-4 text-center text-xl outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 transition-colors">ENTRAR</button>
+            <p class="text-[10px] text-gray-400 mt-4 uppercase">Acceso Restringido 2026</p>
         </div>
     </div>
 
@@ -45,7 +46,7 @@
                             <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
                             <option value="Joan Silva">DR. JOAN SILVA</option>
                         </select>
-                        <h1 id="doctorSeleccionadoPrint" class="hidden font-bold text-2xl tracking-tighter uppercase leading-none">Darwin Sandoval</h1>
+                        <h1 id="doctorSeleccionadoPrint" class="hidden print:block font-bold text-2xl tracking-tighter uppercase leading-none">DR. DARWIN SANDOVAL</h1>
                         <p class="text-[10px] font-black tracking-widest bg-black text-white px-2 mt-1 inline-block">MÉDICO VETERINARIO</p>
                     </div>
                 </div>
@@ -56,7 +57,7 @@
             </div>
 
             <div class="no-print bg-slate-800 p-4 rounded-lg mb-6 text-white">
-                <p class="text-[10px] font-bold mb-2 text-blue-300 uppercase italic">Selección Múltiple de Procedimientos:</p>
+                <p class="text-[10px] font-bold mb-2 text-blue-300 uppercase italic">Servicios:</p>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <label class="flex items-center gap-2 p-2 border border-slate-600 rounded cursor-pointer hover:bg-slate-700">
                         <input type="checkbox" value="Sextuple" onchange="toggleServicio(this)"> <span class="text-[10px] font-bold uppercase">Sextuple</span>
@@ -76,75 +77,61 @@
             <div class="grid grid-cols-2 border border-black text-[10px]">
                 <div class="p-2 border-r border-black">
                     <div class="header-box mb-2 uppercase">Datos Mascota</div>
-                    <p class="mb-1">NOMBRE: <input id="hNombre" class="border-b w-full font-bold uppercase"></p>
-                    <p class="mb-1">RAZA: <input id="hRaza" class="border-b w-full uppercase"></p>
+                    <p class="mb-1">NOMBRE: <input id="hNombre" class="border-b w-full font-bold uppercase outline-none"></p>
+                    <p class="mb-1">RAZA: <input id="hRaza" class="border-b w-full uppercase outline-none"></p>
                 </div>
                 <div class="p-2">
                     <div class="header-box mb-2 uppercase">Datos Propietario</div>
-                    <p class="mb-1">NOMBRE: <input id="hProp" class="border-b w-full font-bold uppercase"></p>
-                    <p class="mb-1">TELÉFONO: <input id="hTlf" class="border-b w-full"></p>
+                    <p class="mb-1">NOMBRE: <input id="hProp" class="border-b w-full font-bold uppercase outline-none"></p>
+                    <p class="mb-1">TELÉFONO: <input id="hTlf" class="border-b w-full outline-none"></p>
                 </div>
             </div>
 
             <div class="mt-4 border border-black">
                 <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black italic">PROCEDIMIENTO Y TRATAMIENTO:</div>
-                <textarea id="hTratamiento" class="w-full h-48 p-3 text-xs font-bold leading-relaxed outline-none resize-none" placeholder="Escriba o seleccione servicios..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-48 p-3 text-xs font-bold leading-relaxed outline-none resize-none"></textarea>
             </div>
 
             <div class="no-print mt-6 flex gap-4">
-                <button onclick="guardarFirebase(false)" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">💾 GUARDAR DATOS</button>
-                <button onclick="guardarFirebase(true)" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold">🖨️ GUARDAR E IMPRIMIR</button>
+                <button onclick="guardarFirebase(false)" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">💾 GUARDAR</button>
+                <button onclick="guardarFirebase(true)" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold">🖨️ IMPRIMIR</button>
             </div>
         </section>
 
         <section id="sectionInsumos" class="hidden bg-white p-8 border-2 border-blue-500 shadow-xl">
             <h2 class="font-black text-xl text-blue-900 border-b-2 mb-6 uppercase">Control Económico</h2>
-            
-            <table class="w-full text-sm border-collapse border border-gray-300">
+            <table class="w-full text-sm border">
                 <thead class="bg-slate-800 text-white">
-                    <tr>
-                        <th class="p-2 border">INSUMO</th>
-                        <th class="p-2 border w-24">COSTO $</th>
-                        <th class="p-2 border w-20">CANT.</th>
-                        <th class="p-2 border w-24">SUBTOTAL</th>
-                        <th class="p-2 border no-print w-10"></th>
-                    </tr>
+                    <tr><th class="p-2 border">INSUMO</th><th class="p-2 border">COSTO $</th><th class="p-2 border">CANT</th><th class="p-2 border">SUBTOTAL</th><th class="p-2 border no-print"></th></tr>
                 </thead>
                 <tbody id="cuerpoInsumos"></tbody>
             </table>
-
-            <button onclick="nuevaFilaInsumo()" class="no-print mt-4 bg-gray-200 px-4 py-2 rounded text-[10px] font-bold"> + AÑADIR OTRO </button>
+            <button onclick="nuevaFilaInsumo()" class="no-print mt-4 bg-gray-200 px-4 py-2 rounded text-[10px] font-bold">+ AÑADIR</button>
 
             <div class="mt-8 grid grid-cols-2 gap-4">
-                <div class="bg-slate-900 text-white p-6 rounded-xl shadow-lg col-span-2">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-2 tracking-widest">Monto cobrado al cliente</p>
-                    <div class="flex items-center">
-                        <span class="text-4xl font-bold mr-2">$</span>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent border-b-2 border-blue-500 text-4xl w-40 font-black outline-none text-blue-400">
-                    </div>
+                <div class="bg-slate-900 text-white p-6 rounded-xl col-span-2">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase">Monto Cobrado</p>
+                    <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent border-b-2 border-blue-500 text-4xl w-full font-black outline-none text-blue-400">
                 </div>
-                
-                <div class="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl">
-                    <p class="text-[10px] font-black text-blue-600 uppercase">Ganancia Doctor (30%)</p>
+                <div class="bg-blue-50 border p-4 rounded-xl">
+                    <p class="text-[9px] font-black text-blue-600 uppercase">Ganancia Doctor (30%)</p>
                     <p id="labelGananciaVet" class="text-2xl font-black text-blue-900">$0.00</p>
                 </div>
-                
-                <div class="bg-green-50 border-2 border-green-200 p-4 rounded-xl">
-                    <p class="text-[10px] font-black text-green-600 uppercase">Utilidad Tienda</p>
+                <div class="bg-green-50 border p-4 rounded-xl">
+                    <p class="text-[9px] font-black text-green-600 uppercase">Utilidad Tienda</p>
                     <p id="labelUtilidadTienda" class="text-2xl font-black text-green-900">$0.00</p>
                 </div>
             </div>
-            <p class="text-[10px] mt-4 text-gray-400 italic text-right">* Cálculo: (Venta - Insumos) - 30% Médico = Tienda</p>
         </section>
 
         <section id="sectionReporte" class="hidden bg-white p-8 border-4 border-green-600">
             <h2 class="text-2xl font-black text-center mb-6 uppercase">Cierre Diario</h2>
             <div id="listaReporte" class="space-y-2 mb-6 text-[10px] bg-gray-50 p-4 border max-h-48 overflow-y-auto"></div>
             <div class="grid grid-cols-2 gap-4 text-center">
-                <div class="p-4 bg-blue-100 border rounded-xl"><p class="text-[9px] font-bold">BRUTO CLIENTE</p><p id="repCobrado" class="text-xl font-black">$0.00</p></div>
-                <div class="p-4 bg-green-100 border rounded-xl"><p class="text-[9px] font-bold">UTILIDAD TIENDA</p><p id="repUtilidad" class="text-xl font-black">$0.00</p></div>
+                <div class="p-4 bg-blue-100 border rounded-xl font-black text-xl" id="repCobrado">$0.00</div>
+                <div class="p-4 bg-green-100 border rounded-xl font-black text-xl" id="repUtilidad">$0.00</div>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-6 bg-green-600 text-white py-3 rounded font-bold uppercase">Actualizar Datos</button>
+            <button onclick="cargarReporte()" class="w-full mt-6 bg-green-600 text-white py-3 rounded font-bold uppercase">Actualizar</button>
         </section>
     </main>
 
@@ -152,43 +139,36 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const serviciosData = {
-            "Sextuple": { t: "VACUNA SEXTUPLE CANINA.", ins: [{n: "Vial Sextuple", c: 8.50}] },
-            "Antirrabica": { t: "VACUNA ANTIRRÁBICA.", ins: [{n: "Vial Rabia", c: 5.00}] },
-            "Hematologia": { t: "HEMATOLOGÍA COMPLETA.", ins: [{n: "Insumos Laboratorio", c: 11.50}] },
-            "Consulta": { t: "CONSULTA VETERINARIA.", ins: [{n: "Insumos Varios", c: 1.00}] }
-        };
-
+        // Globales
         window.verificarPin = () => {
-            if(document.getElementById('pinInput').value === "2026") {
+            const pin = document.getElementById('pinInput').value;
+            if(pin === "2026") {
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
-                cambiarDoctor("Darwin Sandoval");
+            } else {
+                alert("PIN INCORRECTO");
             }
+        };
+
+        window.showTab = (t) => {
+            document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
+            document.getElementById('sectionInsumos').classList.toggle('hidden', t !== 'insumos');
+            document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
+            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500");
+            document.getElementById('tab' + t.charAt(0).toUpperCase()).className = "tab-active py-2";
+            if(t === 'reporte') cargarReporte();
         };
 
         window.cambiarDoctor = (val) => {
             document.getElementById('doctorSeleccionadoPrint').innerText = "DR. " + val.toUpperCase();
         };
 
-        window.showTab = (t) => {
-            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`section${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500");
-            document.getElementById(`tab${t.charAt(0).toUpperCase()}`).className = "tab-active py-2";
-            if(t === 'reporte') cargarReporte();
-        };
-
-        window.nuevaFilaInsumo = () => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="p-2 border"><input type="text" class="w-full bg-transparent uppercase text-[10px]" placeholder="Manual"></td>
-                <td class="p-2 border"><input type="number" class="i-cost w-full text-center bg-transparent" value="0" oninput="calcularFinanzas()"></td>
-                <td class="p-2 border"><input type="number" class="i-cant w-full text-center" value="1" oninput="calcularFinanzas()"></td>
-                <td class="p-2 border font-bold i-sub text-center bg-gray-50">$0.00</td>
-                <td class="p-2 border no-print text-center"><button onclick="this.parentElement.parentElement.remove(); calcularFinanzas()" class="text-red-500 font-bold">×</button></td>`;
-            document.getElementById('cuerpoInsumos').appendChild(tr);
+        const serviciosData = {
+            "Sextuple": { t: "VACUNA SEXTUPLE CANINA.", ins: [{n: "Vial Sextuple", c: 8.50}] },
+            "Antirrabica": { t: "VACUNA ANTIRRÁBICA.", ins: [{n: "Vial Rabia", c: 5.00}] },
+            "Hematologia": { t: "HEMATOLOGÍA COMPLETA.", ins: [{n: "Insumos Laboratorio", c: 11.50}] },
+            "Consulta": { t: "CONSULTA VETERINARIA.", ins: [{n: "Insumos Varios", c: 1.00}] }
         };
 
         window.toggleServicio = (check) => {
@@ -198,13 +178,13 @@
                 area.value += (area.value ? "\n" : "") + data.t;
                 data.ins.forEach(i => {
                     const tr = document.createElement('tr');
-                    tr.classList.add(`row-${check.value}`);
+                    tr.className = `row-${check.value}`;
                     tr.innerHTML = `
-                        <td class="p-2 border font-bold text-[10px] uppercase">${i.n}</td>
+                        <td class="p-2 border font-bold uppercase text-[10px]">${i.n}</td>
                         <td class="p-2 border"><input type="number" class="i-cost w-full text-center bg-transparent" value="${i.c}" oninput="calcularFinanzas()"></td>
                         <td class="p-2 border"><input type="number" class="i-cant w-full text-center font-bold" value="1" oninput="calcularFinanzas()"></td>
-                        <td class="p-2 border font-bold i-sub text-center bg-gray-50">$${i.c.toFixed(2)}</td>
-                        <td class="p-2 border no-print text-center"><button onclick="this.parentElement.parentElement.remove(); calcularFinanzas()" class="text-red-500 font-bold">×</button></td>`;
+                        <td class="p-2 border font-bold i-sub text-center bg-gray-50 text-blue-700">$${i.c.toFixed(2)}</td>
+                        <td class="p-2 border no-print text-center"><button onclick="this.parentElement.parentElement.remove(); calcularFinanzas()" class="text-red-500">×</button></td>`;
                     document.getElementById('cuerpoInsumos').appendChild(tr);
                 });
             } else {
@@ -212,6 +192,17 @@
                 document.querySelectorAll(`.row-${check.value}`).forEach(el => el.remove());
             }
             calcularFinanzas();
+        };
+
+        window.nuevaFilaInsumo = () => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2 border"><input type="text" class="w-full bg-transparent uppercase text-[10px]" placeholder="Manual"></td>
+                <td class="p-2 border"><input type="number" class="i-cost w-full text-center bg-transparent" value="0" oninput="calcularFinanzas()"></td>
+                <td class="p-2 border"><input type="number" class="i-cant w-full text-center" value="1" oninput="calcularFinanzas()"></td>
+                <td class="p-2 border font-bold i-sub text-center bg-gray-50">$0.00</td>
+                <td class="p-2 border no-print text-center"><button onclick="this.parentElement.parentElement.remove(); calcularFinanzas()" class="text-red-500">×</button></td>`;
+            document.getElementById('cuerpoInsumos').appendChild(tr);
         };
 
         window.calcularFinanzas = () => {
@@ -228,7 +219,7 @@
             const utilidadTienda = (venta - totalI) - gananciaVet;
 
             document.getElementById('labelGananciaVet').innerText = `$${gananciaVet.toFixed(2)}`;
-            document.getElementById('labelUtilidadTienda').innerText = `$${utilidatTienda.toFixed(2)}`;
+            document.getElementById('labelUtilidadTienda').innerText = `$${utilidadTienda.toFixed(2)}`;
             return { totalI, gananciaVet, utilidadTienda, venta };
         };
 
@@ -246,7 +237,7 @@
             };
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("✅ REGISTRADO");
+                alert("REGISTRADO");
                 if(imprimir) window.print();
             } catch (e) { alert("ERROR"); }
         };
@@ -261,11 +252,16 @@
             snap.forEach(d => {
                 const v = d.data();
                 c += v.cobrado; u += v.utilidad_tienda;
-                l.innerHTML += `<div class="flex justify-between border-b py-1"><span>${v.paciente} (${v.doctor})</span><span class="font-bold">$${v.cobrado}</span></div>`;
+                l.innerHTML += `<div class="flex justify-between border-b py-1"><span>${v.paciente}</span><span class="font-bold">$${v.cobrado}</span></div>`;
             });
             document.getElementById('repCobrado').innerText = `$${c.toFixed(2)}`;
             document.getElementById('repUtilidad').innerText = `$${u.toFixed(2)}`;
         };
+
+        // Escuchar Enter en el PIN
+        document.getElementById('pinInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verificarPin();
+        });
     </script>
 </body>
 </html>
