@@ -3,19 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro - Gestión Veterinaria</title>
+    <title>Pet Control Pro - AvicolaPet</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #area-impresion, #area-impresion * { visibility: visible; }
+            #area-impresion { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none; }
+        }
+    </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900">
 
-    <nav class="bg-blue-700 shadow-md p-4 sticky top-0 z-50 flex justify-between items-center text-white">
-        <h1 class="text-xl font-bold">🐾 Pet Control Pro</h1>
-        <div id="status-firebase" class="text-xs opacity-75">Estado: Esperando PIN...</div>
+    <nav class="bg-blue-700 shadow-md p-4 sticky top-0 z-50 flex justify-between items-center text-white no-print">
+        <h1 class="text-xl font-bold">🐾 Pet Control Pro - AvicolaPet</h1>
+        <div id="status-firebase" class="text-xs opacity-75">Conectado</div>
     </nav>
 
-    <main class="max-w-5xl mx-auto p-4">
+    <main class="max-w-6xl mx-auto p-4">
         
-        <section id="login-section" class="bg-white p-8 rounded-xl shadow-lg text-center mt-10 max-w-md mx-auto">
+        <section id="login-section" class="bg-white p-8 rounded-xl shadow-lg text-center mt-10 max-w-md mx-auto no-print">
             <h2 class="text-2xl font-bold mb-4">Acceso Seguro</h2>
             <input type="password" id="pin-input" placeholder="PIN de 4 dígitos" class="border-2 rounded-lg p-3 w-full text-center text-2xl mb-4 outline-none focus:border-blue-500">
             <button onclick="verificarPin()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg w-full transition">Ingresar</button>
@@ -23,76 +31,101 @@
 
         <section id="admin-panel" class="hidden space-y-6">
             
-            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500">
-                <h3 class="text-lg font-bold mb-4 flex items-center">📝 Registro de Paciente y Servicio</h3>
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500 no-print">
+                <h3 class="text-lg font-bold mb-4 flex items-center">📝 Registro de Paciente</h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="space-y-2">
-                        <p class="font-semibold text-blue-600 border-b">Datos del Cliente</p>
+                        <p class="font-semibold text-blue-600 border-b">Información General</p>
                         <input type="text" id="nombre_cliente" placeholder="Nombre del Dueño" class="w-full border p-2 rounded">
                         <input type="text" id="cedula_cliente" placeholder="Cédula / ID" class="w-full border p-2 rounded">
-                        <input type="tel" id="tel_cliente" placeholder="Teléfono" class="w-full border p-2 rounded">
+                        <input type="text" id="nombre_mascota" placeholder="Nombre Mascota" class="w-full border p-2 rounded">
+                        <textarea id="diagnostico" placeholder="Informe médico / Diagnóstico" class="w-full border p-2 rounded h-20"></textarea>
                     </div>
 
-                    <div class="space-y-2">
-                        <p class="font-semibold text-blue-600 border-b">Datos de la Mascota</p>
-                        <input type="text" id="nombre_mascota" placeholder="Nombre Mascota" class="w-full border p-2 rounded">
-                        <select id="tipo_mascota" class="w-full border p-2 rounded">
-                            <option value="Perro">Perro</option>
-                            <option value="Gato">Gato</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                        <input type="text" id="raza_mascota" placeholder="Raza" class="w-full border p-2 rounded">
-                        <div class="flex gap-2">
-                            <input type="text" id="edad_mascota" placeholder="Edad" class="w-1/2 border p-2 rounded">
-                            <input type="text" id="color_mascota" placeholder="Color" class="w-1/2 border p-2 rounded">
+                    <div class="space-y-2 bg-slate-50 p-3 rounded border">
+                        <p class="font-semibold text-red-600 border-b">Costos de Insumos ($)</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-xs">Alcohol</label><input type="number" id="ins_alcohol" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
+                            <div><label class="text-xs">Guantes</label><input type="number" id="ins_guantes" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
+                            <div><label class="text-xs">Jeringas</label><input type="number" id="ins_jeringas" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
+                            <div><label class="text-xs">Algodón</label><input type="number" id="ins_algodon" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
+                            <div><label class="text-xs">Otros</label><input type="number" id="ins_otros" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
                         </div>
                     </div>
 
                     <div class="space-y-2">
-                        <p class="font-semibold text-blue-600 border-b">Finanzas del Servicio</p>
+                        <p class="font-semibold text-green-600 border-b">Cobro al Cliente</p>
                         <select id="tipo_servicio" class="w-full border p-2 rounded font-bold">
-                            <option value="Consulta">Consulta/Vacuna</option>
+                            <option value="Consulta">Consulta</option>
                             <option value="Cirugía">Cirugía</option>
-                            <option value="Peluquería">Peluquería</option>
-                            <option value="Laboratorio">Laboratorio</option>
+                            <option value="Vacunación">Vacunación</option>
                         </select>
-                        <input type="number" id="precio_publico" placeholder="Precio Cobrado ($)" class="w-full border p-2 rounded bg-yellow-50">
-                        <input type="number" id="costo_insumos" placeholder="Costo Insumos ($)" class="w-full border p-2 rounded bg-red-50">
+                        <label class="text-xs font-bold text-gray-500">PRECIO TOTAL A COBRAR ($)</label>
+                        <input type="number" id="precio_publico" placeholder="0.00" class="w-full border p-3 rounded bg-yellow-50 text-xl font-bold">
                         <input type="number" id="pct_vet" placeholder="% Comisión Vet" value="30" class="w-full border p-2 rounded">
                     </div>
                 </div>
 
-                <button onclick="guardarTodo()" class="mt-6 w-full bg-green-600 text-white font-bold py-4 rounded-lg hover:bg-green-700 shadow-lg transition uppercase">
-                    Guardar Ficha y Calcular Ganancia
+                <button onclick="guardarTodo()" class="mt-6 w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 shadow-lg transition uppercase">
+                    Guardar y Generar Recibo
                 </button>
             </div>
 
-            <div class="bg-white rounded-xl shadow-md overflow-x-auto">
+            <div class="bg-white rounded-xl shadow-md overflow-x-auto no-print">
                 <table class="w-full text-left">
-                    <thead class="bg-slate-200">
-                        <tr class="text-xs uppercase">
+                    <thead class="bg-slate-200 text-xs uppercase">
+                        <tr>
                             <th class="p-3 border-b">Mascota / Dueño</th>
                             <th class="p-3 border-b">Servicio</th>
-                            <th class="p-3 border-b">Insumos</th>
                             <th class="p-3 border-b">Pago Vet</th>
-                            <th class="p-3 border-b">Utilidad Tienda</th>
+                            <th class="p-3 border-b">Utilidad Neta</th>
+                            <th class="p-3 border-b">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-cuerpo" class="text-sm"></tbody>
                 </table>
             </div>
         </section>
+
+        <div id="area-impresion" class="hidden p-10 bg-white border-2">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-blue-800">AVICOLA PET</h1>
+                <p class="text-sm">Informe de Servicio Veterinario</p>
+                <hr class="my-4">
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <p><strong>Fecha:</strong> <span id="p-fecha"></span></p>
+                    <p><strong>Dueño:</strong> <span id="p-dueno"></span></p>
+                    <p><strong>Cédula:</strong> <span id="p-cedula"></span></p>
+                </div>
+                <div>
+                    <p><strong>Mascota:</strong> <span id="p-mascota"></span></p>
+                    <p><strong>Servicio:</strong> <span id="p-servicio"></span></p>
+                </div>
+            </div>
+            <div class="border p-4 rounded mb-6 min-h-[150px]">
+                <p class="font-bold border-b mb-2">INFORME MÉDICO / DIAGNÓSTICO:</p>
+                <p id="p-diagnostico"></p>
+            </div>
+            <div class="text-right text-xl font-bold">
+                TOTAL PAGADO: $<span id="p-total"></span>
+            </div>
+            <div class="mt-20 text-center text-xs text-gray-400">
+                <p>__________________________</p>
+                <p>Firma del Médico</p>
+            </div>
+        </div>
+
     </main>
 
     <script type="module">
-        // Importamos la conexión desde tu otro archivo
         import { db } from './firebase-config.js';
         import { collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         window.verificarPin = function() {
-            const pin = document.getElementById('pin-input').value;
-            if(pin === "1234") {
+            if(document.getElementById('pin-input').value === "1234") {
                 document.getElementById('login-section').classList.add('hidden');
                 document.getElementById('admin-panel').classList.remove('hidden');
                 cargarDatos();
@@ -100,31 +133,43 @@
         };
 
         window.guardarTodo = async function() {
+            // Sumar todos los insumos
+            const insumosInputs = document.querySelectorAll('.insumo');
+            let totalInsumos = 0;
+            insumosInputs.forEach(input => totalInsumos += parseFloat(input.value) || 0);
+
             const datos = {
                 cliente: document.getElementById('nombre_cliente').value,
                 cedula: document.getElementById('cedula_cliente').value,
-                telefono: document.getElementById('tel_cliente').value,
                 mascota: document.getElementById('nombre_mascota').value,
-                tipoM: document.getElementById('tipo_mascota').value,
-                raza: document.getElementById('raza_mascota').value,
-                edad: document.getElementById('edad_mascota').value,
-                color: document.getElementById('color_mascota').value,
+                diagnostico: document.getElementById('diagnostico').value,
                 servicio: document.getElementById('tipo_servicio').value,
                 precio: parseFloat(document.getElementById('precio_publico').value) || 0,
-                insumos: parseFloat(document.getElementById('costo_insumos').value) || 0,
-                pct: parseFloat(document.getElementById('pct_vet').value) / 100 || 0,
+                costoInsumos: totalInsumos,
+                pct: parseFloat(document.getElementById('pct_vet').value) / 100,
                 fecha: new Date().toLocaleString()
             };
 
-            const pagoVet = (datos.precio - datos.insumos) * datos.pct;
-            const utilidad = datos.precio - datos.insumos - pagoVet;
+            const pagoVet = (datos.precio - datos.costoInsumos) * datos.pct;
+            const utilidad = datos.precio - datos.costoInsumos - pagoVet;
 
             try {
                 await addDoc(collection(db, "historial_clinico"), { ...datos, pagoVet, utilidad });
-                alert("✅ Registro guardado con éxito");
+                
+                // Llenar hoja de impresión
+                document.getElementById('p-fecha').innerText = datos.fecha;
+                document.getElementById('p-dueno').innerText = datos.cliente;
+                document.getElementById('p-cedula').innerText = datos.cedula;
+                document.getElementById('p-mascota').innerText = datos.mascota;
+                document.getElementById('p-servicio').innerText = datos.servicio;
+                document.getElementById('p-diagnostico').innerText = datos.diagnostico;
+                document.getElementById('p-total').innerText = datos.precio.toFixed(2);
+
+                alert("✅ Guardado. Se abrirá la ventana de impresión.");
+                window.print();
                 location.reload();
             } catch (e) {
-                alert("Error al guardar. Verifica que tu Firebase esté bien configurado.");
+                alert("Error al guardar: " + e.message);
             }
         };
 
@@ -139,14 +184,14 @@
                 tabla.innerHTML += `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-3"><strong>${d.mascota}</strong><br><span class="text-xs text-gray-500">${d.cliente}</span></td>
-                        <td class="p-3 text-xs"><b>${d.servicio}</b><br>${d.fecha}</td>
-                        <td class="p-3 text-red-600">$${d.insumos.toFixed(2)}</td>
-                        <td class="p-3 text-orange-600">$${d.pagoVet.toFixed(2)}</td>
-                        <td class="p-3 bg-green-50 font-bold text-green-700">$${d.utilidad.toFixed(2)}</td>
+                        <td class="p-3 text-xs">${d.servicio}<br>${d.fecha}</td>
+                        <td class="p-3 text-orange-600 font-bold">$${d.pagoVet.toFixed(2)}</td>
+                        <td class="p-3 text-green-700 font-bold">$${d.utilidad.toFixed(2)}</td>
+                        <td class="p-3"><button onclick="alert('Diagnóstico: ${d.diagnostico}')" class="bg-gray-200 px-2 py-1 rounded text-xs">Ver Info</button></td>
                     </tr>`;
             });
-            document.getElementById('status-firebase').innerText = "Conectado a la Nube";
         }
     </script>
 </body>
 </html>
+
