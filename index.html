@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro - Historia Clínica y Finanzas</title>
+    <title>Pet Control Pro - Gestión Veterinaria</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900">
@@ -79,14 +79,14 @@
                             <th class="p-3 border-b">Utilidad Tienda</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-cuerpo" class="text-sm">
-                        </tbody>
+                    <tbody id="tabla-cuerpo" class="text-sm"></tbody>
                 </table>
             </div>
         </section>
     </main>
 
     <script type="module">
+        // Importamos la conexión desde tu otro archivo
         import { db } from './firebase-config.js';
         import { collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -100,7 +100,6 @@
         };
 
         window.guardarTodo = async function() {
-            // Captura de datos
             const datos = {
                 cliente: document.getElementById('nombre_cliente').value,
                 cedula: document.getElementById('cedula_cliente').value,
@@ -117,7 +116,6 @@
                 fecha: new Date().toLocaleString()
             };
 
-            // Cálculos
             const pagoVet = (datos.precio - datos.insumos) * datos.pct;
             const utilidad = datos.precio - datos.insumos - pagoVet;
 
@@ -126,8 +124,7 @@
                 alert("✅ Registro guardado con éxito");
                 location.reload();
             } catch (e) {
-                console.error("Error al guardar: ", e);
-                alert("Error de conexión. Asegúrate de estar usando un servidor local (Live Server) o un hosting.");
+                alert("Error al guardar. Verifica que tu Firebase esté bien configurado.");
             }
         };
 
@@ -135,6 +132,7 @@
             const q = query(collection(db, "historial_clinico"), orderBy("fecha", "desc"));
             const querySnapshot = await getDocs(q);
             const tabla = document.getElementById('tabla-cuerpo');
+            tabla.innerHTML = "";
             
             querySnapshot.forEach((doc) => {
                 const d = doc.data();
@@ -142,11 +140,10 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-3"><strong>${d.mascota}</strong><br><span class="text-xs text-gray-500">${d.cliente}</span></td>
                         <td class="p-3 text-xs"><b>${d.servicio}</b><br>${d.fecha}</td>
-                        <td class="p-3 text-red-600 font-mono">$${d.insumos.toFixed(2)}</td>
-                        <td class="p-3 text-orange-600 font-mono">$${d.pagoVet.toFixed(2)}</td>
+                        <td class="p-3 text-red-600">$${d.insumos.toFixed(2)}</td>
+                        <td class="p-3 text-orange-600">$${d.pagoVet.toFixed(2)}</td>
                         <td class="p-3 bg-green-50 font-bold text-green-700">$${d.utilidad.toFixed(2)}</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
             document.getElementById('status-firebase').innerText = "Conectado a la Nube";
         }
