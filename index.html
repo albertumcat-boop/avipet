@@ -3,130 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro - Darwin & Joan</title>
+    <title>Pet Control Pro - Gestión Veterinaria</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
             .no-print { display: none !important; }
             body { background-color: white !important; padding: 0; }
             .print-border { border: 1px solid black !important; }
-            #doctorSeleccionadoPrint { display: block !important; }
+            #doctorPrint { display: block !important; }
         }
-        .header-box { border: 1px solid black; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f3f4f6; }
-        .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
+        .header-box { border: 1px solid #334155; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; }
+        .tab-active { border-bottom: 4px solid #3b82f6; color: #3b82f6; font-weight: bold; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900">
+<body class="bg-slate-50 font-sans text-slate-800">
 
-    <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-80 text-center border-t-4 border-blue-600">
-            <h2 class="text-xl font-bold mb-4 italic">Panel Administrador</h2>
-            <input type="password" id="pinInput" placeholder="PIN" class="w-full p-2 border rounded mb-4 text-center text-xl outline-none">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">ENTRAR</button>
+    <div id="loginSection" class="fixed inset-0 bg-blue-900 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-80 text-center border-t-4 border-blue-500">
+            <h2 class="text-xl font-bold mb-4 text-slate-700">Panel de Control</h2>
+            <input type="password" id="pinInput" placeholder="PIN de Seguridad" class="w-full p-2 border rounded mb-4 text-center text-xl outline-none focus:ring-2 focus:ring-blue-400">
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 transition">ENTRAR</button>
         </div>
     </div>
 
-    <main id="adminSection" class="hidden max-w-6xl mx-auto p-4">
+    <main id="adminSection" class="hidden max-w-5xl mx-auto p-4">
         
-        <nav class="flex space-x-6 border-b-2 border-gray-200 mb-6 no-print overflow-x-auto">
-            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2 whitespace-nowrap">NUEVA CONSULTA</button>
-            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 whitespace-nowrap">BUSCAR POR CÉDULA</button>
-            <button onclick="showTab('insumos')" id="tabI" class="py-2 text-gray-500 whitespace-nowrap">COSTOS</button>
-            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 whitespace-nowrap">REPORTE DIARIO</button>
+        <nav class="flex space-x-6 border-b-2 border-gray-200 mb-6 no-print">
+            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">NUEVA HISTORIA</button>
+            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500">BUSCAR CÉDULA</button>
+            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500">REPORTE DEL DÍA</button>
         </nav>
 
-        <section id="sectionBuscador" class="hidden bg-white p-6 rounded shadow border">
-            <h2 class="text-lg font-bold mb-4">🔍 Consultar Historial del Cliente</h2>
-            <div class="flex gap-2 mb-6">
-                <input type="text" id="searchCI" placeholder="Ingrese Cédula..." class="flex-1 p-2 border rounded">
-                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold">BUSCAR</button>
-            </div>
-            <div id="resultadosBusqueda" class="space-y-4">
-                <p class="text-gray-400 italic">No hay búsquedas recientes.</p>
-            </div>
-        </section>
-
-        <section id="sectionHistoria" class="bg-white p-8 shadow-md border border-gray-300">
-            <div class="flex justify-between items-start border-b-4 border-black pb-4 mb-4">
+        <section id="sectionHistoria" class="bg-white p-8 shadow-sm border border-slate-200 rounded-lg">
+            
+            <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-6">
                 <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 border-4 border-black flex items-center justify-center font-black text-3xl">MV</div>
+                    <div class="w-16 h-16 border-2 border-blue-600 flex items-center justify-center text-blue-600 font-black text-2xl">MV</div>
                     <div>
-                        <select id="selectDoctor" onchange="document.getElementById('doctorSeleccionadoPrint').innerText='DR. '+this.value.toUpperCase()" class="no-print block text-xl font-black uppercase bg-blue-50 border-blue-200 border rounded p-1">
+                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print block text-xl font-bold text-slate-700 bg-white border border-slate-300 rounded p-1 outline-none">
                             <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
                             <option value="Joan Silva">Dr. Joan Silva</option>
                         </select>
-                        <h1 id="doctorSeleccionadoPrint" class="hidden font-bold text-xl uppercase">DR. DARWIN SANDOVAL</h1>
-                        <p class="text-[9px] font-bold tracking-widest bg-black text-white px-2 inline-block">MÉDICO VETERINARIO</p>
+                        <h1 id="doctorPrint" class="hidden font-bold text-xl uppercase text-slate-800">DR. DARWIN SANDOVAL</h1>
+                        <p class="text-[10px] font-bold tracking-widest text-blue-600 uppercase">Médico Veterinario</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-xs font-bold uppercase border-b border-black inline-block px-2 mb-1">Historia Clínica</p>
-                    <p class="text-[10px] font-bold">FECHA: <input type="text" id="fechaDoc" class="w-24 text-center border-b border-gray-400"></p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Fecha de Atención</p>
+                    <input type="text" id="fechaDoc" class="w-28 text-center border-b border-slate-400 font-bold text-sm outline-none">
                 </div>
             </div>
 
-            <div class="no-print bg-slate-800 p-4 rounded-lg mb-6 text-white text-[10px]">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2">
-                    <div class="col-span-full font-bold text-blue-400 border-b border-slate-600 mb-1">VACUNAS Y LABORATORIO</div>
-                    <label class="flex items-center gap-1"><input type="checkbox" value="Sextuple" onchange="toggleServicio(this)"> SEXTUPLE</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" value="Antirrabica" onchange="toggleServicio(this)"> ANTIRRÁBICA</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" value="TripleFelina" onchange="toggleServicio(this)"> TRIPLE FELINA</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" value="Hematologia" onchange="toggleServicio(this)"> HEMATOLOGÍA</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" value="DescarteHemoparasito" onchange="toggleServicio(this)"> DESC. HEMOPARÁSITO</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" value="Eutanasia_L" onchange="toggleServicio(this)"> EUTANASIA (<15KG)</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" value="ConsultaGral" onchange="toggleServicio(this)"> CONSULTA GENERAL</label>
+            <div class="no-print mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <label class="block text-xs font-bold text-blue-800 mb-2 uppercase tracking-tight">Seleccionar Servicio del Listado:</label>
+                <select id="servicioMaster" onchange="agregarServicioDetallado(this.value)" class="w-full p-3 border-2 border-blue-200 rounded-lg font-bold text-slate-700 outline-none focus:border-blue-500">
+                    <option value="">-- ABRE PARA VER LOS SERVICIOS --</option>
+                    <optgroup label="VACUNAS">
+                        <option value="Sextuple">Sextuple</option>
+                        <option value="Antirrabica">Antirrábica</option>
+                        <option value="TripleFelina">Triple Felina</option>
+                        <option value="Puppy">Puppy</option>
+                    </optgroup>
+                    <optgroup label="LABORATORIO">
+                        <option value="Hematologia">Hematología</option>
+                        <option value="Quimica">Química</option>
+                        <option value="Hemoparasitos">Descarte Hemoparásitos</option>
+                    </optgroup>
+                    <optgroup label="OTROS">
+                        <option value="ConsultaGral">Consulta General</option>
+                        <option value="Eutanasia">Eutanasia (<15kg)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 border border-slate-300 text-[11px] mb-6">
+                <div class="p-3 border-r border-slate-300 space-y-2">
+                    <div class="header-box uppercase">Paciente</div>
+                    <p>NOMBRE: <input id="hNombre" class="border-b w-full font-bold uppercase outline-none"></p>
+                    <p>RAZA: <input id="hRaza" class="border-b w-full uppercase outline-none"></p>
+                </div>
+                <div class="p-3 space-y-2">
+                    <div class="header-box uppercase">Propietario</div>
+                    <p>CÉDULA: <input id="hCI" class="border-b w-full font-bold outline-none" placeholder="Obligatorio para historial"></p>
+                    <p>NOMBRE: <input id="hProp" class="border-b w-full uppercase outline-none"></p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 border border-black text-[10px]">
-                <div class="p-2 border-r border-black space-y-2">
-                    <div class="header-box">DATOS MASCOTA</div>
-                    <p>NOMBRE: <input id="hNombre" class="border-b w-3/4 font-bold uppercase outline-none"></p>
-                    <p>RAZA: <input id="hRaza" class="border-b w-3/4 uppercase outline-none"></p>
-                    <p>EDAD: <input id="hEdad" class="border-b w-3/4 outline-none"></p>
+            <div class="mb-6">
+                <p class="text-[10px] font-bold text-blue-800 mb-1">DESGLOSE DE INSUMOS Y COSTOS:</p>
+                <table class="w-full text-[11px] border-collapse border border-slate-300">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="p-2 border border-slate-300 text-left">DESCRIPCIÓN</th>
+                            <th class="p-2 border border-slate-300 w-20">COSTO $</th>
+                            <th class="p-2 border border-slate-300 w-16">CANT</th>
+                            <th class="p-2 border border-slate-300 w-20">SUBTOTAL</th>
+                            <th class="no-print p-2 border border-slate-300 w-8"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoInsumos">
+                        </tbody>
+                </table>
+                <button onclick="nuevaFilaManual()" class="no-print mt-2 text-[10px] bg-slate-200 px-2 py-1 rounded font-bold hover:bg-slate-300">+ AGREGAR EXTRA</button>
+            </div>
+
+            <div class="border border-slate-300 mb-6">
+                <div class="bg-slate-50 p-1 font-bold text-[10px] border-b border-slate-300 italic text-blue-800">EVOLUCIÓN Y TRATAMIENTO:</div>
+                <textarea id="hTratamiento" class="w-full h-32 p-3 text-xs font-medium outline-none resize-none leading-relaxed"></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 border-t-2 pt-4">
+                <div class="bg-blue-600 p-4 rounded text-white shadow-md">
+                    <p class="text-[9px] font-bold opacity-80 uppercase">Cobro Total $</p>
+                    <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent text-2xl font-black w-full outline-none">
                 </div>
-                <div class="p-2 space-y-2">
-                    <div class="header-box">DATOS PROPIETARIO</div>
-                    <p>NOMBRE: <input id="hProp" class="border-b w-3/4 font-bold uppercase outline-none"></p>
-                    <p>CÉDULA: <input id="hCI" class="border-b w-3/4 font-bold outline-none"></p>
-                    <p>TLF: <input id="hTlf" class="border-b w-3/4 outline-none"></p>
+                <div class="bg-slate-100 p-4 rounded border border-slate-200">
+                    <p class="text-[9px] font-bold text-slate-500 uppercase">Ganancia Dr (30%)</p>
+                    <p id="labelGananciaVet" class="text-xl font-black text-slate-700">$0.00</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded border border-green-200">
+                    <p class="text-[9px] font-bold text-green-600 uppercase">Utilidad Tienda</p>
+                    <p id="labelUtilidadTienda" class="text-xl font-black text-green-800">$0.00</p>
                 </div>
             </div>
 
-            <div class="mt-4 border border-black">
-                <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black italic">ANAMNESIS Y TRATAMIENTO:</div>
-                <textarea id="hTratamiento" class="w-full h-40 p-3 text-xs font-bold leading-relaxed outline-none resize-none"></textarea>
-            </div>
-
-            <div class="no-print mt-6 flex gap-4">
-                <button onclick="guardarFirebase(false)" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold shadow-md">💾 GUARDAR</button>
-                <button onclick="guardarFirebase(true)" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold shadow-md">🖨️ IMPRIMIR</button>
+            <div class="no-print mt-8 flex gap-4">
+                <button onclick="guardarFirebase(false)" class="flex-1 bg-slate-700 text-white py-3 rounded-lg font-bold shadow-lg hover:bg-slate-800 transition">💾 GUARDAR REGISTRO</button>
+                <button onclick="guardarFirebase(true)" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition">🖨️ GUARDAR E IMPRIMIR</button>
             </div>
         </section>
 
-        <section id="sectionInsumos" class="hidden bg-white p-8 border shadow-xl">
-             <h2 class="font-black text-xl text-blue-900 border-b mb-4">CÁLCULO DE COSTOS</h2>
-             <table class="w-full text-sm border">
-                 <thead class="bg-slate-800 text-white">
-                     <tr><th class="p-2 border">INSUMO</th><th class="p-2 border">CANT</th><th class="p-2 border">SUBTOTAL</th><th class="no-print p-2"></th></tr>
-                 </thead>
-                 <tbody id="cuerpoInsumos"></tbody>
-             </table>
-             <div class="mt-6 bg-slate-900 p-6 rounded text-white grid grid-cols-2 gap-4">
-                 <div>
-                     <p class="text-xs text-gray-400">COBRO TOTAL AL CLIENTE</p>
-                     <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent border-b-2 text-3xl font-black w-full outline-none text-blue-400">
-                 </div>
-                 <div class="text-right">
-                     <p class="text-xs text-green-400 font-bold">GANANCIA DR (30%): <span id="labelGananciaVet">$0.00</span></p>
-                     <p class="text-xs text-blue-300 font-bold">UTILIDAD TIENDA: <span id="labelUtilidadTienda">$0.00</span></p>
-                 </div>
-             </div>
+        <section id="sectionBuscador" class="hidden bg-white p-8 rounded shadow-lg border">
+            <h2 class="text-xl font-bold mb-4 text-blue-900">🔍 Historial por Cédula</h2>
+            <div class="flex gap-2 mb-8">
+                <input type="text" id="searchCI" placeholder="Cédula del Cliente..." class="flex-1 p-3 border-2 rounded-lg outline-none focus:border-blue-500 font-bold">
+                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-8 rounded-lg font-bold hover:bg-blue-700">BUSCAR</button>
+            </div>
+            <div id="resultadosBusqueda" class="space-y-4">
+                <p class="text-slate-400 italic">Ingrese un número de cédula para ver las consultas anteriores.</p>
+            </div>
         </section>
 
-        <section id="sectionReporte" class="hidden bg-white p-6 border shadow">
-            <h2 class="text-xl font-bold mb-4">REPORTE DIARIO</h2>
-            <div id="listaReporte" class="divide-y text-xs"></div>
+        <section id="sectionReporte" class="hidden bg-white p-8 rounded shadow border">
+             <h2 class="text-xl font-bold mb-4 text-green-800 uppercase">Cierre de Caja</h2>
+             <div id="listaReporte" class="divide-y text-xs mb-6"></div>
+             <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-2 rounded font-bold uppercase">Actualizar Cierre</button>
         </section>
 
     </main>
@@ -135,20 +156,28 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // SERVICIOS SEGUN IMAGENES SUBIDAS
-        const serviciosData = {
-            "Sextuple": { t: "VACUNACIÓN SEXTUPLE CANINA.", c: 10.00 },
-            "Antirrabica": { t: "VACUNACIÓN ANTIRRÁBICA.", c: 5.00 },
-            "TripleFelina": { t: "VACUNACIÓN TRIPLE FELINA.", c: 12.00 },
-            "Hematologia": { t: "EXAMEN DE HEMATOLOGÍA COMPLETA.", c: 15.00 },
-            "DescarteHemoparasito": { t: "DESCARTES DE HEMOPARÁSITOS.", c: 18.00 },
-            "Eutanasia_L": { t: "PROCEDIMIENTO DE EUTANASIA (PACIENTE < 15KG).", c: 25.00 },
-            "ConsultaGral": { t: "CONSULTA MÉDICA GENERAL.", c: 10.00 }
+        // CONFIGURACIÓN DE SERVICIOS E INSUMOS (DETALLADO)
+        const serviciosConfig = {
+            "Sextuple": {
+                desc: "APLICACIÓN VACUNA SEXTUPLE",
+                insumos: [ {n: "Vial Sextuple", c: 8.50}, {n: "Jeringa 3cc", c: 0.35} ]
+            },
+            "Antirrabica": {
+                desc: "APLICACIÓN VACUNA ANTIRRÁBICA",
+                insumos: [ {n: "Vial Rabia", c: 5.00}, {n: "Jeringa 3cc", c: 0.35} ]
+            },
+            "Hematologia": {
+                desc: "ESTUDIO DE HEMATOLOGÍA COMPLETA",
+                insumos: [ {n: "Tubo EDTA", c: 0.80}, {n: "Laboratorio Ext", c: 11.00} ]
+            },
+            "ConsultaGral": {
+                desc: "CONSULTA MÉDICA VETERINARIA",
+                insumos: [ {n: "Insumos Varios", c: 1.50} ]
+            }
         };
 
         window.verificarPin = () => {
-            const pin = document.getElementById('pinInput').value;
-            if(pin === "2026") {
+            if(document.getElementById('pinInput').value === "2026") {
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
@@ -156,72 +185,81 @@
         };
 
         window.showTab = (t) => {
-            ["historia", "insumos", "reporte", "buscador"].forEach(id => {
+            ["historia", "reporte", "buscador"].forEach(id => {
                 document.getElementById('section' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden');
-                document.getElementById('tab' + (id==='historia'?'H':id==='insumos'?'I':id==='reporte'?'R':'B')).className = "py-2 text-gray-500";
             });
             document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('hidden');
-            document.getElementById('tab' + (t==='historia'?'H':t==='insumos'?'I':t==='reporte'?'R':'B')).className = "tab-active py-2";
+            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500");
+            document.getElementById('tab' + (t==='historia'?'H':t==='reporte'?'R':'B')).className = "tab-active py-2";
+            if(t === 'reporte') cargarReporte();
         };
 
-        window.toggleServicio = (check) => {
-            const data = serviciosData[check.value];
+        window.agregarServicioDetallado = (id) => {
+            if(!id) return;
+            const config = serviciosConfig[id];
             const area = document.getElementById('hTratamiento');
-            if(check.checked) {
-                area.value += (area.value ? "\n" : "") + data.t;
+            area.value += (area.value ? "\n" : "") + config.desc;
+
+            config.insumos.forEach(ins => {
                 const tr = document.createElement('tr');
-                tr.id = `row-${check.value}`;
-                tr.innerHTML = `<td class="p-2 border">${data.t}</td><td class="p-2 border text-center">1</td><td class="p-2 border font-bold">$${data.c.toFixed(2)}</td><td class="no-print p-2 text-red-500 cursor-pointer" onclick="this.parentElement.remove()">×</td>`;
+                tr.innerHTML = `
+                    <td class="p-2 border uppercase"><input type="text" value="${ins.n}" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2 border"><input type="number" value="${ins.c}" oninput="calcularFinanzas()" class="i-cost w-full text-center bg-transparent"></td>
+                    <td class="p-2 border"><input type="number" value="1" oninput="calcularFinanzas()" class="i-cant w-full text-center font-bold"></td>
+                    <td class="p-2 border font-bold text-center i-sub">$${ins.c.toFixed(2)}</td>
+                    <td class="no-print p-2 border text-center"><button onclick="this.parentElement.parentElement.remove(); calcularFinanzas()" class="text-red-500 font-bold">×</button></td>
+                `;
                 document.getElementById('cuerpoInsumos').appendChild(tr);
-            } else {
-                area.value = area.value.replace(data.t, "").trim();
-                const el = document.getElementById(`row-${check.value}`);
-                if(el) el.remove();
-            }
+            });
+            document.getElementById('servicioMaster').value = ""; // Reset del select
             calcularFinanzas();
         };
 
-        window.calcularFinanzas = () => {
-            let totalInsumos = 0;
-            const filas = document.getElementById('cuerpoInsumos').rows;
-            for(let i=0; i<filas.length; i++) {
-                totalInsumos += parseFloat(filas[i].cells[2].innerText.replace('$','')) || 0;
-            }
-            const venta = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const baseParaComision = venta - totalInsumos;
-            const gananciaVet = baseParaComision > 0 ? baseParaComision * 0.30 : 0;
-            const utilidadTienda = baseParaComision - gananciaVet;
+        window.nuevaFilaManual = () => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2 border"><input type="text" placeholder="EXTRA" class="w-full bg-transparent uppercase outline-none"></td>
+                <td class="p-2 border"><input type="number" value="0" oninput="calcularFinanzas()" class="i-cost w-full text-center bg-transparent"></td>
+                <td class="p-2 border"><input type="number" value="1" oninput="calcularFinanzas()" class="i-cant w-full text-center"></td>
+                <td class="p-2 border font-bold text-center i-sub">$0.00</td>
+                <td class="no-print p-2 border text-center"><button onclick="this.parentElement.parentElement.remove(); calcularFinanzas()" class="text-red-500 font-bold">×</button></td>
+            `;
+            document.getElementById('cuerpoInsumos').appendChild(tr);
+        };
 
-            document.getElementById('labelGananciaVet').innerText = `$${gananciaVet.toFixed(2)}`;
-            document.getElementById('labelUtilidadTienda').innerText = `$${utilidadTienda.toFixed(2)}`;
-            return { venta, totalInsumos, gananciaVet, utilidadTienda };
+        window.calcularFinanzas = () => {
+            let totalIns = 0;
+            document.querySelectorAll('#cuerpoInsumos tr').forEach(fila => {
+                const c = parseFloat(fila.querySelector('.i-cost').value) || 0;
+                const n = parseFloat(fila.querySelector('.i-cant').value) || 0;
+                const sub = c * n;
+                fila.querySelector('.i-sub').innerText = `$${sub.toFixed(2)}`;
+                totalIns += sub;
+            });
+            const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
+            const gananciaD = (cobro - totalIns) * 0.30;
+            const utilT = (cobro - totalIns) - gananciaD;
+
+            document.getElementById('labelGananciaVet').innerText = `$${gananciaD.toFixed(2)}`;
+            document.getElementById('labelUtilidadTienda').innerText = `$${utilT.toFixed(2)}`;
+            return { cobro, utilT, gananciaD };
         };
 
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value;
-            if(!ci) return alert("Ingrese una cédula");
-            
+            if(!ci) return alert("Ingresa una cédula");
             const q = query(collection(db, "consultas"), where("cedula", "==", ci), orderBy("fecha", "desc"));
-            const querySnapshot = await getDocs(q);
-            const container = document.getElementById('resultadosBusqueda');
-            container.innerHTML = "";
-
-            if (querySnapshot.empty) {
-                container.innerHTML = "<p class='text-red-500'>No se encontraron registros para esta cédula.</p>";
-                return;
-            }
-
-            querySnapshot.forEach((doc) => {
+            const snap = await getDocs(q);
+            const res = document.getElementById('resultadosBusqueda');
+            res.innerHTML = "";
+            if(snap.empty) { res.innerHTML = "No hay registros."; return; }
+            snap.forEach(doc => {
                 const d = doc.data();
-                const fecha = d.fecha ? new Date(d.fecha.seconds * 1000).toLocaleDateString() : "S/F";
-                container.innerHTML += `
-                    <div class="border-l-4 border-blue-600 p-4 bg-gray-50 rounded shadow-sm">
-                        <div class="flex justify-between font-bold text-sm">
-                            <span>📅 ${fecha}</span>
-                            <span class="text-blue-700">🩺 Dr. ${d.doctor}</span>
-                        </div>
-                        <p class="text-xs mt-2"><strong>Mascota:</strong> ${d.paciente} | ${d.raza}</p>
-                        <p class="text-xs mt-1 bg-white p-2 border rounded"><strong>Tratamiento:</strong><br>${d.tratamiento}</p>
+                res.innerHTML += `
+                    <div class="p-4 border-l-4 border-blue-400 bg-slate-50 rounded">
+                        <p class="text-[10px] font-bold text-slate-400">${d.fechaSimple} - DR. ${d.doctor.toUpperCase()}</p>
+                        <p class="text-xs font-bold">${d.paciente} (${d.raza})</p>
+                        <p class="text-[11px] mt-2 whitespace-pre-wrap">${d.tratamiento}</p>
                     </div>`;
             });
         };
@@ -230,34 +268,25 @@
             const f = calcularFinanzas();
             const data = {
                 cedula: document.getElementById('hCI').value,
-                propietario: document.getElementById('hProp').value.toUpperCase(),
                 paciente: document.getElementById('hNombre').value.toUpperCase(),
                 raza: document.getElementById('hRaza').value.toUpperCase(),
+                propietario: document.getElementById('hProp').value.toUpperCase(),
                 tratamiento: document.getElementById('hTratamiento').value,
                 doctor: document.getElementById('selectDoctor').value,
-                cobrado: f.venta,
-                utilidad_tienda: f.utilidadTienda,
+                cobrado: f.cobro,
+                utilidad_tienda: f.utilT,
                 fecha: serverTimestamp(),
                 fechaSimple: new Date().toLocaleDateString()
             };
-
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("DATOS GUARDADOS CORRECTAMENTE");
+                alert("REGISTRO EXITOSO");
                 if(imprimir) window.print();
-            } catch (e) { console.error(e); alert("ERROR AL GUARDAR"); }
+            } catch (e) { alert("ERROR"); }
         };
 
-        window.cargarReporte = async () => {
-            const hoy = new Date().toLocaleDateString();
-            const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
-            const snap = await getDocs(q);
-            const l = document.getElementById('listaReporte');
-            l.innerHTML = "";
-            snap.forEach(d => {
-                const v = d.data();
-                l.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente} (${v.doctor})</span><b>$${v.cobrado}</b></div>`;
-            });
+        window.actualizarNombreDoctor = (n) => {
+            document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase();
         };
     </script>
 </body>
