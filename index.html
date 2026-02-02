@@ -3,195 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro - AvicolaPet</title>
+    <title>Pet Control Pro - Gestión Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            body * { visibility: hidden; }
-            #area-impresion, #area-impresion * { visibility: visible; }
-            #area-impresion { position: absolute; left: 0; top: 0; width: 100%; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            body { background-color: white !important; padding: 0; }
+            .print-container { width: 100%; border: 1px solid black; }
+            input, textarea { border: none !important; outline: none !important; width: 100%; background: transparent; }
+            .border-print { border: 1px solid black !important; }
         }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
+        input { outline: none; }
     </style>
 </head>
-<body class="bg-slate-100 font-sans text-slate-900">
+<body class="bg-slate-50 font-sans text-slate-900">
 
-    <nav class="bg-blue-700 shadow-md p-4 sticky top-0 z-50 flex justify-between items-center text-white no-print">
-        <h1 class="text-xl font-bold">🐾 Pet Control Pro - AvicolaPet</h1>
-        <div id="status-firebase" class="text-xs opacity-75">Conectado</div>
-    </nav>
-
-    <main class="max-w-6xl mx-auto p-4">
-        
-        <section id="login-section" class="bg-white p-8 rounded-xl shadow-lg text-center mt-10 max-w-md mx-auto no-print">
-            <h2 class="text-2xl font-bold mb-4">Acceso Seguro</h2>
-            <input type="password" id="pin-input" placeholder="PIN de 4 dígitos" class="border-2 rounded-lg p-3 w-full text-center text-2xl mb-4 outline-none focus:border-blue-500">
-            <button onclick="verificarPin()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg w-full transition">Ingresar</button>
-        </section>
-
-        <section id="admin-panel" class="hidden space-y-6">
-            
-            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500 no-print">
-                <h3 class="text-lg font-bold mb-4 flex items-center">📝 Registro de Paciente</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="space-y-2">
-                        <p class="font-semibold text-blue-600 border-b">Información General</p>
-                        <input type="text" id="nombre_cliente" placeholder="Nombre del Dueño" class="w-full border p-2 rounded">
-                        <input type="text" id="cedula_cliente" placeholder="Cédula / ID" class="w-full border p-2 rounded">
-                        <input type="text" id="nombre_mascota" placeholder="Nombre Mascota" class="w-full border p-2 rounded">
-                        <textarea id="diagnostico" placeholder="Informe médico / Diagnóstico" class="w-full border p-2 rounded h-20"></textarea>
-                    </div>
-
-                    <div class="space-y-2 bg-slate-50 p-3 rounded border">
-                        <p class="font-semibold text-red-600 border-b">Costos de Insumos ($)</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-xs">Alcohol</label><input type="number" id="ins_alcohol" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
-                            <div><label class="text-xs">Guantes</label><input type="number" id="ins_guantes" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
-                            <div><label class="text-xs">Jeringas</label><input type="number" id="ins_jeringas" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
-                            <div><label class="text-xs">Algodón</label><input type="number" id="ins_algodon" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
-                            <div><label class="text-xs">Otros</label><input type="number" id="ins_otros" value="0" class="insumo w-full border p-1 rounded text-sm"></div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <p class="font-semibold text-green-600 border-b">Cobro al Cliente</p>
-                        <select id="tipo_servicio" class="w-full border p-2 rounded font-bold">
-                            <option value="Consulta">Consulta</option>
-                            <option value="Cirugía">Cirugía</option>
-                            <option value="Vacunación">Vacunación</option>
-                        </select>
-                        <label class="text-xs font-bold text-gray-500">PRECIO TOTAL A COBRAR ($)</label>
-                        <input type="number" id="precio_publico" placeholder="0.00" class="w-full border p-3 rounded bg-yellow-50 text-xl font-bold">
-                        <input type="number" id="pct_vet" placeholder="% Comisión Vet" value="30" class="w-full border p-2 rounded">
-                    </div>
-                </div>
-
-                <button onclick="guardarTodo()" class="mt-6 w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 shadow-lg transition uppercase">
-                    Guardar y Generar Recibo
-                </button>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md overflow-x-auto no-print">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-200 text-xs uppercase">
-                        <tr>
-                            <th class="p-3 border-b">Mascota / Dueño</th>
-                            <th class="p-3 border-b">Servicio</th>
-                            <th class="p-3 border-b">Pago Vet</th>
-                            <th class="p-3 border-b">Utilidad Neta</th>
-                            <th class="p-3 border-b">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-cuerpo" class="text-sm"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <div id="area-impresion" class="hidden p-10 bg-white border-2">
-            <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-blue-800">AVICOLA PET</h1>
-                <p class="text-sm">Informe de Servicio Veterinario</p>
-                <hr class="my-4">
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <p><strong>Fecha:</strong> <span id="p-fecha"></span></p>
-                    <p><strong>Dueño:</strong> <span id="p-dueno"></span></p>
-                    <p><strong>Cédula:</strong> <span id="p-cedula"></span></p>
-                </div>
-                <div>
-                    <p><strong>Mascota:</strong> <span id="p-mascota"></span></p>
-                    <p><strong>Servicio:</strong> <span id="p-servicio"></span></p>
-                </div>
-            </div>
-            <div class="border p-4 rounded mb-6 min-h-[150px]">
-                <p class="font-bold border-b mb-2">INFORME MÉDICO / DIAGNÓSTICO:</p>
-                <p id="p-diagnostico"></p>
-            </div>
-            <div class="text-right text-xl font-bold">
-                TOTAL PAGADO: $<span id="p-total"></span>
-            </div>
-            <div class="mt-20 text-center text-xs text-gray-400">
-                <p>__________________________</p>
-                <p>Firma del Médico</p>
-            </div>
+    <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-96 text-center">
+            <h2 class="text-2xl font-bold mb-6">Panel Administrativo</h2>
+            <input type="password" id="pinInput" placeholder="PIN de Seguridad" 
+                   class="w-full p-3 border rounded-lg mb-4 text-center text-2xl tracking-widest">
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">Entrar</button>
         </div>
+    </div>
 
+    <main id="adminSection" class="hidden max-w-5xl mx-auto p-4">
+        <nav class="flex space-x-8 border-b mb-6 no-print">
+            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">Historia Clínica</button>
+            <button onclick="showTab('insumos')" id="tabI" class="py-2 text-gray-500">Insumos y Gastos</button>
+        </nav>
+
+        <section id="sectionHistoria" class="bg-white p-8 shadow-md border border-gray-300">
+            <div class="flex justify-between items-center border-b-2 border-black pb-4 mb-4">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 border-2 border-black flex items-center justify-center font-bold">MV</div>
+                    <div>
+                        <h1 class="text-lg font-bold uppercase text-slate-800">Dr. Darwin Sandoval</h1>
+                        <p class="text-[10px] font-bold">MÉDICO VETERINARIO</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs">FECHA: <input type="text" id="fechaDoc" class="border-b border-black w-24 text-center"></p>
+                    <h2 class="font-bold text-sm mt-2 border border-black px-2 py-1">HISTORIA CLÍNICA DEL PACIENTE</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-0 border border-black text-[11px]">
+                <div class="border-r border-black p-2">
+                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2">MASCOTA</h3>
+                    <p>ESPECIE: <input id="hEspecie" type="text" class="border-b border-gray-300 w-32" value="CANINO"></p>
+                    <p>RAZA: <input id="hRaza" type="text" class="border-b border-gray-300 w-32" value="POODLE"></p>
+                    <p>NOMBRE: <input id="hNombre" type="text" class="border-b border-gray-300 w-32 font-bold"></p>
+                    <p>EDAD: <input id="hEdad" type="text" class="border-b border-gray-300 w-32"></p>
+                    <p>PESO: <input id="hPeso" type="text" class="border-b border-gray-300 w-32"></p>
+                </div>
+                <div class="p-2">
+                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2">DATOS PROPIETARIO</h3>
+                    <p>NOMBRE: <input id="hPropNombre" type="text" class="border-b border-gray-300 w-full"></p>
+                    <p>C.I.: <input id="hPropCI" type="text" class="border-b border-gray-300 w-full"></p>
+                    <p>TLF: <input id="hPropTlf" type="text" class="border-b border-gray-300 w-full"></p>
+                    <p>DIRECCIÓN: <input id="hPropDir" type="text" class="border-b border-gray-300 w-full"></p>
+                </div>
+            </div>
+
+            <div class="mt-4 border border-black text-[11px]">
+                <h3 class="bg-gray-100 p-1 font-bold border-b border-black">MOTIVO DE CONSULTA / ANAMNESIS:</h3>
+                <textarea id="hMotivo" class="w-full p-2 h-20 border-b border-black resize-none"></textarea>
+                <h3 class="bg-gray-100 p-1 font-bold border-b border-black">DIAGNÓSTICO Y TRATAMIENTO:</h3>
+                <textarea id="hTratamiento" class="w-full p-2 h-32 resize-none"></textarea>
+            </div>
+
+            <button onclick="guardarYImprimir()" class="no-print mt-6 bg-green-600 text-white px-8 py-2 rounded font-bold">💾 GUARDAR E IMPRIMIR</button>
+        </section>
+
+        <section id="sectionInsumos" class="hidden bg-white p-8 border border-blue-300">
+            <h2 class="text-xl font-bold text-blue-800 mb-4">CÁLCULO DE RENTABILIDAD</h2>
+            <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+                <div class="p-3 border bg-gray-50"><p class="text-xs">COSTO INSUMOS</p><p id="totalInsumosLabel" class="text-xl font-bold">$0.00</p></div>
+                <div class="p-3 border bg-blue-50"><p class="text-xs">PAGO PROFESIONAL</p><p id="pagoVetLabel" class="text-xl font-bold">$0.00</p></div>
+                <div class="p-3 border bg-green-50"><p class="text-xs">UTILIDAD TIENDA</p><p id="utilidadLabel" class="text-xl font-bold text-green-700">$0.00</p></div>
+            </div>
+            <div class="mb-4">
+                <label class="font-bold">Total Cobrado al Cliente: $</label>
+                <input type="number" id="precioVenta" value="0" onchange="calcularFinanzas()" class="border-b-2 border-blue-600 text-xl w-32 font-bold outline-none">
+            </div>
+            <table class="w-full text-xs border">
+                <thead class="bg-gray-200"><tr><th class="p-2 border">Insumo</th><th class="p-2 border">Costo $</th><th class="p-2 border">Cant.</th><th class="p-2 border">Subtotal</th></tr></thead>
+                <tbody id="cuerpoInsumos"></tbody>
+            </table>
+            <button onclick="nuevaFila()" class="mt-2 text-blue-600 text-xs font-bold">+ AGREGAR INSUMO</button>
+        </section>
     </main>
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        window.verificarPin = function() {
-            if(document.getElementById('pin-input').value === "1234") {
-                document.getElementById('login-section').classList.add('hidden');
-                document.getElementById('admin-panel').classList.remove('hidden');
-                cargarDatos();
+        window.verificarPin = () => {
+            if(document.getElementById('pinInput').value === "2026") {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('adminSection').classList.remove('hidden');
+                document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
             } else { alert("PIN Incorrecto"); }
         };
 
-        window.guardarTodo = async function() {
-            // Sumar todos los insumos
-            const insumosInputs = document.querySelectorAll('.insumo');
-            let totalInsumos = 0;
-            insumosInputs.forEach(input => totalInsumos += parseFloat(input.value) || 0);
-
-            const datos = {
-                cliente: document.getElementById('nombre_cliente').value,
-                cedula: document.getElementById('cedula_cliente').value,
-                mascota: document.getElementById('nombre_mascota').value,
-                diagnostico: document.getElementById('diagnostico').value,
-                servicio: document.getElementById('tipo_servicio').value,
-                precio: parseFloat(document.getElementById('precio_publico').value) || 0,
-                costoInsumos: totalInsumos,
-                pct: parseFloat(document.getElementById('pct_vet').value) / 100,
-                fecha: new Date().toLocaleString()
-            };
-
-            const pagoVet = (datos.precio - datos.costoInsumos) * datos.pct;
-            const utilidad = datos.precio - datos.costoInsumos - pagoVet;
-
-            try {
-                await addDoc(collection(db, "historial_clinico"), { ...datos, pagoVet, utilidad });
-                
-                // Llenar hoja de impresión
-                document.getElementById('p-fecha').innerText = datos.fecha;
-                document.getElementById('p-dueno').innerText = datos.cliente;
-                document.getElementById('p-cedula').innerText = datos.cedula;
-                document.getElementById('p-mascota').innerText = datos.mascota;
-                document.getElementById('p-servicio').innerText = datos.servicio;
-                document.getElementById('p-diagnostico').innerText = datos.diagnostico;
-                document.getElementById('p-total').innerText = datos.precio.toFixed(2);
-
-                alert("✅ Guardado. Se abrirá la ventana de impresión.");
-                window.print();
-                location.reload();
-            } catch (e) {
-                alert("Error al guardar: " + e.message);
-            }
+        window.showTab = (t) => {
+            document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
+            document.getElementById('sectionInsumos').classList.toggle('hidden', t !== 'insumos');
         };
 
-        async function cargarDatos() {
-            const q = query(collection(db, "historial_clinico"), orderBy("fecha", "desc"));
-            const querySnapshot = await getDocs(q);
-            const tabla = document.getElementById('tabla-cuerpo');
-            tabla.innerHTML = "";
-            
-            querySnapshot.forEach((doc) => {
-                const d = doc.data();
-                tabla.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3"><strong>${d.mascota}</strong><br><span class="text-xs text-gray-500">${d.cliente}</span></td>
-                        <td class="p-3 text-xs">${d.servicio}<br>${d.fecha}</td>
-                        <td class="p-3 text-orange-600 font-bold">$${d.pagoVet.toFixed(2)}</td>
-                        <td class="p-3 text-green-700 font-bold">$${d.utilidad.toFixed(2)}</td>
-                        <td class="p-3"><button onclick="alert('Diagnóstico: ${d.diagnostico}')" class="bg-gray-200 px-2 py-1 rounded text-xs">Ver Info</button></td>
-                    </tr>`;
+        window.nuevaFila = () => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="p-1 border"><input type="text" class="w-full"></td>
+                <td class="p-1 border"><input type="number" class="i-cost w-full" value="0" onchange="calcularFinanzas()"></td>
+                <td class="p-1 border"><input type="number" class="i-cant w-full" value="1" onchange="calcularFinanzas()"></td>
+                <td class="p-1 border font-bold i-sub">$0.00</td>`;
+            document.getElementById('cuerpoInsumos').appendChild(tr);
+        };
+
+        window.calcularFinanzas = () => {
+            let totalI = 0;
+            document.querySelectorAll('#cuerpoInsumos tr').forEach(f => {
+                const c = parseFloat(f.querySelector('.i-cost').value) || 0;
+                const n = parseFloat(f.querySelector('.i-cant').value) || 0;
+                const s = c * n;
+                f.querySelector('.i-sub').innerText = `$${s.toFixed(2)}`;
+                totalI += s;
             });
-        }
+            const venta = parseFloat(document.getElementById('precioVenta').value) || 0;
+            const pagoV = (venta - totalI) * 0.30; // 30% para el veterinario
+            const util = venta - totalI - pagoV;
+
+            document.getElementById('totalInsumosLabel').innerText = `$${totalI.toFixed(2)}`;
+            document.getElementById('pagoVetLabel').innerText = `$${pagoV.toFixed(2)}`;
+            document.getElementById('utilidadLabel').innerText = `$${util.toFixed(2)}`;
+            return { totalI, pagoV, util };
+        };
+
+        window.guardarYImprimir = async () => {
+            const f = calcularFinanzas();
+            const data = {
+                paciente: document.getElementById('hNombre').value,
+                propietario: document.getElementById('hPropNombre').value,
+                ingreso_total: document.getElementById('precioVenta').value,
+                ganancia_neta: f.util,
+                fecha: serverTimestamp()
+            };
+            try {
+                await addDoc(collection(db, "consultas"), data);
+                window.print();
+            } catch (e) { alert("Error al guardar en Firebase."); }
+        };
     </script>
 </body>
 </html>
-
