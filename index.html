@@ -9,19 +9,20 @@
         @media print {
             .no-print { display: none !important; }
             body { background-color: white !important; padding: 0; }
-            .print-area { border: none !important; shadow: none !important; }
-            #doctorPrint { display: block !important; }
+            .print-area { border: none !important; shadow: none !important; width: 100%; }
+            textarea { border: none !important; overflow: hidden !important; }
         }
         .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; }
         .tab-active { border-bottom: 4px solid #3b82f6; color: #3b82f6; font-weight: bold; }
+        input, textarea { outline: none; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800">
 
     <div id="loginSection" class="fixed inset-0 bg-blue-900 flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-80 text-center border-t-4 border-blue-500">
-            <h2 class="text-xl font-bold mb-4 text-slate-700 uppercase">Acceso Médico</h2>
-            <input type="password" id="pinInput" placeholder="PIN" class="w-full p-2 border rounded mb-4 text-center text-xl outline-none">
+            <h2 class="text-xl font-bold mb-4 text-slate-700 uppercase italic">Acceso Médico</h2>
+            <input type="password" id="pinInput" placeholder="PIN 2026" class="w-full p-2 border rounded mb-4 text-center text-xl">
             <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 transition">ENTRAR</button>
         </div>
     </div>
@@ -29,12 +30,12 @@
     <main id="adminSection" class="hidden max-w-5xl mx-auto p-4">
         
         <nav class="flex space-x-6 border-b-2 border-gray-200 mb-6 no-print">
-            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">NUEVA HISTORIA</button>
+            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">HISTORIA MÉDICA</button>
             <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500">BUSCAR CÉDULA</button>
             <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500">REPORTE DIARIO</button>
         </nav>
 
-        <section id="sectionHistoria" class="bg-white p-8 shadow-sm border border-slate-200 rounded-lg print-area">
+        <section id="sectionHistoria" class="block bg-white p-8 shadow-sm border border-slate-200 rounded-lg print-area">
             
             <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
                 <div class="flex items-center gap-4">
@@ -44,20 +45,20 @@
                             <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
                             <option value="Joan Silva">Dr. Joan Silva</option>
                         </select>
-                        <h1 id="doctorPrint" class="hidden font-bold text-xl uppercase text-slate-800">DR. DARWIN SANDOVAL</h1>
+                        <h1 id="doctorPrint" class="hidden print:block font-bold text-xl uppercase text-slate-800">DR. DARWIN SANDOVAL</h1>
                         <p class="text-[10px] font-bold tracking-widest text-blue-600 uppercase">Médico Veterinario</p>
                     </div>
                 </div>
                 <div class="text-right text-[10px]">
-                    <p class="font-bold text-slate-500 uppercase">Fecha</p>
-                    <input type="text" id="fechaDoc" class="w-28 text-center border-b border-slate-400 font-bold outline-none">
+                    <p class="font-bold text-slate-500 uppercase">Atención Médica</p>
+                    <input type="text" id="fechaDoc" class="w-28 text-center border-b border-slate-400 font-bold">
                 </div>
             </div>
 
             <div class="no-print mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <label class="block text-[10px] font-bold text-blue-800 mb-1 uppercase">Seleccionar Servicio:</label>
-                <select id="servicioMaster" onchange="agregarServicioDetallado(this.value)" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-slate-700 outline-none">
-                    <option value="">-- SELECCIONE UN PROCEDIMIENTO --</option>
+                <label class="block text-[10px] font-bold text-blue-800 mb-1 uppercase tracking-wider">Selección de Procedimiento:</label>
+                <select id="servicioMaster" onchange="agregarServicioDetallado(this.value)" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-slate-700">
+                    <option value="">-- ELIGE UN SERVICIO PARA CARGAR INSUMOS --</option>
                     <option value="Sextuple">Vacuna Sextuple</option>
                     <option value="Antirrabica">Vacuna Antirrábica</option>
                     <option value="Hematologia">Hematología Completa</option>
@@ -67,74 +68,84 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[10px] mb-4">
                 <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-                    <div class="header-box">Datos de la Mascota</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <p>NOMBRE: <input id="hNombre" class="border-b w-full font-bold uppercase outline-none"></p>
-                        <p>ESPECIE: <input id="hEspecie" class="border-b w-full uppercase outline-none"></p>
-                        <p>RAZA: <input id="hRaza" class="border-b w-full uppercase outline-none"></p>
-                        <p>EDAD: <input id="hEdad" class="border-b w-full outline-none"></p>
-                        <p>SEXO: <input id="hSexo" class="border-b w-full outline-none"></p>
-                        <p>PESO: <input id="hPeso" class="border-b w-full outline-none"></p>
-                        <p class="col-span-2">COLOR: <input id="hColor" class="border-b w-full outline-none"></p>
+                    <div class="header-box">Paciente</div>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <p>NOMBRE: <input id="hNombre" class="border-b w-full font-bold uppercase"></p>
+                        <p>ESPECIE: <input id="hEspecie" class="border-b w-full uppercase"></p>
+                        <p>RAZA: <input id="hRaza" class="border-b w-full uppercase"></p>
+                        <p>EDAD: <input id="hEdad" class="border-b w-full"></p>
+                        <p>SEXO: <input id="hSexo" class="border-b w-full"></p>
+                        <p>PESO: <input id="hPeso" class="border-b w-full"></p>
+                        <p class="col-span-2">COLOR: <input id="hColor" class="border-b w-full uppercase"></p>
                     </div>
                 </div>
                 <div class="p-3 space-y-2">
-                    <div class="header-box">Datos del Propietario</div>
-                    <p>NOMBRE: <input id="hProp" class="border-b w-full font-bold uppercase outline-none"></p>
-                    <p>CÉDULA: <input id="hCI" class="border-b w-full font-bold outline-none"></p>
-                    <p>TELÉFONO: <input id="hTlf" class="border-b w-full outline-none"></p>
-                    <p>DIRECCIÓN: <input id="hDir" class="border-b w-full outline-none"></p>
+                    <div class="header-box">Propietario</div>
+                    <p>NOMBRE: <input id="hProp" class="border-b w-full font-bold uppercase"></p>
+                    <p>CÉDULA: <input id="hCI" class="border-b w-full font-bold"></p>
+                    <p>TELÉFONO: <input id="hTlf" class="border-b w-full"></p>
+                    <p>DIRECCIÓN: <input id="hDir" class="border-b w-full uppercase"></p>
                 </div>
             </div>
 
             <div class="border border-slate-400 mb-6">
-                <div class="bg-slate-50 p-1 font-bold text-[10px] border-b border-slate-400 italic text-blue-800 uppercase">Anamnesis, Evolución y Tratamiento:</div>
-                <textarea id="hTratamiento" class="w-full h-48 p-3 text-xs font-medium outline-none resize-none leading-relaxed"></textarea>
+                <div class="bg-slate-50 p-1 font-bold text-[10px] border-b border-slate-400 italic text-blue-800 uppercase">Tratamiento y Evolución:</div>
+                <textarea id="hTratamiento" class="w-full h-48 p-3 text-xs font-medium resize-none leading-relaxed" placeholder="Escriba aquí los detalles..."></textarea>
             </div>
 
-            <div class="no-print mb-8 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <p class="text-[10px] font-bold text-blue-800 mb-2 uppercase">Control Interno de Gastos e Insumos:</p>
-                <table class="w-full text-[11px] border">
-                    <thead class="bg-slate-200">
+            <div id="panelGastos" class="no-print bg-slate-100 p-6 rounded-lg border-2 border-slate-300">
+                <h3 class="text-xs font-black text-slate-600 mb-4 uppercase tracking-widest border-b pb-1">Control de Gastos y Ganancias (Privado)</h3>
+                
+                <table class="w-full text-[11px] border bg-white mb-4">
+                    <thead class="bg-slate-700 text-white uppercase text-[9px]">
                         <tr>
-                            <th class="p-1 border text-left">INSUMO</th>
-                            <th class="p-1 border w-20">COSTO $</th>
-                            <th class="p-1 border w-12">CANT</th>
-                            <th class="p-1 border w-20">SUBTOTAL</th>
+                            <th class="p-1 border text-left">Insumo</th>
+                            <th class="p-1 border w-24">Costo $</th>
+                            <th class="p-1 border w-16">Cant</th>
+                            <th class="p-1 border w-24 text-right">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoInsumos"></tbody>
                 </table>
                 
-                <div class="grid grid-cols-3 gap-2 mt-4 text-center">
-                    <div class="bg-blue-600 p-2 rounded text-white">
-                        <p class="text-[8px] font-bold">COBRO TOTAL</p>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent text-xl font-black w-full text-center outline-none">
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="bg-blue-600 p-4 rounded-xl text-white shadow-inner">
+                        <p class="text-[9px] font-bold opacity-80 uppercase mb-1">Total Cobrado</p>
+                        <div class="flex justify-center items-baseline">
+                            <span class="text-lg mr-1">$</span>
+                            <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="bg-transparent text-3xl font-black w-24 text-center">
+                        </div>
                     </div>
-                    <div class="bg-white border p-2 rounded">
-                        <p class="text-[8px] font-bold text-slate-500">DR (30%)</p>
-                        <p id="labelGananciaVet" class="text-lg font-black">$0.00</p>
+                    <div class="bg-white border-2 border-slate-200 p-4 rounded-xl">
+                        <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Ganancia Doctor (30%)</p>
+                        <p id="labelGananciaVet" class="text-2xl font-black text-slate-700">$0.00</p>
                     </div>
-                    <div class="bg-green-100 border p-2 rounded">
-                        <p class="text-[8px] font-bold text-green-600">TIENDA</p>
-                        <p id="labelUtilidadTienda" class="text-lg font-black text-green-800">$0.00</p>
+                    <div class="bg-green-50 border-2 border-green-200 p-4 rounded-xl">
+                        <p class="text-[9px] font-bold text-green-600 uppercase mb-1">Utilidad Tienda</p>
+                        <p id="labelUtilidadTienda" class="text-2xl font-black text-green-800">$0.00</p>
                     </div>
                 </div>
-            </div>
-
-            <div class="no-print mt-4 flex gap-4">
-                <button onclick="guardarFirebase(false)" class="flex-1 bg-slate-700 text-white py-3 rounded font-bold shadow-lg">💾 GUARDAR</button>
-                <button onclick="guardarFirebase(true)" class="flex-1 bg-blue-600 text-white py-3 rounded font-bold shadow-lg">🖨️ GUARDAR E IMPRIMIR</button>
+                
+                <div class="flex gap-4 mt-6">
+                    <button onclick="guardarFirebase(false)" class="flex-1 bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 shadow-md">💾 SOLO GUARDAR</button>
+                    <button onclick="guardarFirebase(true)" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 shadow-md">🖨️ GUARDAR E IMPRIMIR</button>
+                </div>
             </div>
         </section>
 
         <section id="sectionBuscador" class="hidden bg-white p-8 rounded shadow border">
-            <h2 class="text-lg font-bold mb-4 text-blue-900 uppercase">🔍 Historial por Cédula</h2>
+            <h2 class="text-lg font-bold mb-4 text-blue-900 uppercase">🔍 Historial Médico por Cédula</h2>
             <div class="flex gap-2 mb-8">
-                <input type="text" id="searchCI" placeholder="Cédula..." class="flex-1 p-2 border-2 rounded outline-none font-bold">
-                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-8 rounded font-bold">BUSCAR</button>
+                <input type="text" id="searchCI" placeholder="Ingrese Cédula del Propietario..." class="flex-1 p-3 border-2 rounded outline-none font-bold">
+                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-8 rounded font-bold hover:bg-blue-700">BUSCAR</button>
             </div>
             <div id="resultadosBusqueda" class="space-y-4"></div>
+        </section>
+
+        <section id="sectionReporte" class="hidden bg-white p-8 rounded shadow border">
+            <h2 class="text-lg font-bold mb-4 text-green-800 uppercase">Reporte de Caja Diario</h2>
+            <div id="listaReporte" class="divide-y text-xs mb-6 bg-slate-50 p-4 rounded"></div>
+            <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-3 rounded font-bold uppercase">Actualizar Lista</button>
         </section>
 
     </main>
@@ -143,12 +154,11 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN DE SERVICIOS
         const serviciosConfig = {
             "Sextuple": { desc: "APLICACIÓN VACUNA SEXTUPLE", insumos: [{n: "Vial Sextuple", c: 8.50}, {n: "Jeringa 3cc", c: 0.35}] },
             "Antirrabica": { desc: "APLICACIÓN VACUNA ANTIRRÁBICA", insumos: [{n: "Vial Rabia", c: 5.00}, {n: "Jeringa 3cc", c: 0.35}] },
-            "Hematologia": { desc: "HEMATOLOGÍA COMPLETA", insumos: [{n: "Tubo EDTA", c: 0.80}, {n: "Serv. Laboratorio", c: 11.00}] },
-            "ConsultaGral": { desc: "CONSULTA MÉDICA VETERINARIA", insumos: [{n: "Insumos Varios", c: 1.50}] }
+            "Hematologia": { desc: "ESTUDIO HEMATOLOGÍA COMPLETA", insumos: [{n: "Tubo EDTA", c: 0.80}, {n: "Serv. Laboratorio", c: 11.00}] },
+            "ConsultaGral": { desc: "CONSULTA MÉDICA VETERINARIA", insumos: [{n: "Insumos Clínicos", c: 1.50}] }
         };
 
         window.verificarPin = () => {
@@ -160,10 +170,23 @@
         };
 
         window.showTab = (t) => {
-            ["historia", "reporte", "buscador"].forEach(id => document.getElementById('section' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden'));
-            document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('hidden');
+            // Corrección de navegación: ocultar todas y mostrar la seleccionada
+            const tabs = ['sectionHistoria', 'sectionBuscador', 'sectionReporte'];
+            tabs.forEach(tab => document.getElementById(tab).classList.replace('block', 'hidden'));
+            
+            const selected = 'section' + t.charAt(0).toUpperCase() + t.slice(1);
+            document.getElementById(selected).classList.replace('hidden', 'block');
+
+            // Actualizar botones
             document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500");
-            document.getElementById('tab' + (t==='historia'?'H':t==='reporte'?'R':'B')).className = "tab-active py-2";
+            const btnId = 'tab' + (t === 'historia' ? 'H' : t === 'buscador' ? 'B' : 'R');
+            document.getElementById(btnId).className = "tab-active py-2";
+
+            if(t === 'reporte') cargarReporte();
+        };
+
+        window.actualizarNombreDoctor = (n) => {
+            document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase();
         };
 
         window.agregarServicioDetallado = (id) => {
@@ -175,10 +198,10 @@
             config.insumos.forEach(ins => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="p-1 border uppercase">${ins.n}</td>
-                    <td class="p-1 border text-center"><input type="number" value="${ins.c}" oninput="calcularFinanzas()" class="i-cost w-full bg-transparent text-center"></td>
-                    <td class="p-1 border text-center"><input type="number" value="1" oninput="calcularFinanzas()" class="i-cant w-full bg-transparent text-center font-bold"></td>
-                    <td class="p-1 border font-bold text-center i-sub">$${ins.c.toFixed(2)}</td>
+                    <td class="p-2 border uppercase">${ins.n}</td>
+                    <td class="p-2 border text-center"><input type="number" value="${ins.c}" oninput="calcularFinanzas()" class="i-cost w-full bg-transparent text-center outline-none"></td>
+                    <td class="p-2 border text-center"><input type="number" value="1" oninput="calcularFinanzas()" class="i-cant w-full bg-transparent text-center font-bold outline-none"></td>
+                    <td class="p-2 border font-bold text-right i-sub">$${ins.c.toFixed(2)}</td>
                 `;
                 document.getElementById('cuerpoInsumos').appendChild(tr);
             });
@@ -197,27 +220,29 @@
             });
             const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
             const gananciaD = (cobro - totalIns) * 0.30;
-            const utilT = (cobro - totalIns) - gananciaD;
+            const utilT = (cobro - totalIns) - (gananciaD > 0 ? gananciaD : 0);
 
-            document.getElementById('labelGananciaVet').innerText = `$${gananciaD.toFixed(2)}`;
-            document.getElementById('labelUtilidadTienda').innerText = `$${utilT.toFixed(2)}`;
+            document.getElementById('labelGananciaVet').innerText = `$${(gananciaD > 0 ? gananciaD : 0).toFixed(2)}`;
+            document.getElementById('labelUtilidadTienda').innerText = `$${(utilT > 0 ? utilT : 0).toFixed(2)}`;
             return { cobro, utilT, gananciaD };
         };
 
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value;
-            if(!ci) return;
+            if(!ci) return alert("Ingrese una cédula");
             const q = query(collection(db, "consultas"), where("cedula", "==", ci), orderBy("fecha", "desc"));
             const snap = await getDocs(q);
             const res = document.getElementById('resultadosBusqueda');
             res.innerHTML = "";
+            if(snap.empty) { res.innerHTML = "<p class='text-slate-400'>No se encontraron registros.</p>"; return; }
             snap.forEach(doc => {
                 const d = doc.data();
-                res.innerHTML += `<div class="p-3 border-l-4 border-blue-400 bg-slate-50 mb-2">
-                    <p class="text-[9px] font-bold">${d.fechaSimple} - ${d.doctor}</p>
-                    <p class="text-xs font-bold">${d.paciente} (${d.raza})</p>
-                    <p class="text-[10px] whitespace-pre-wrap">${d.tratamiento}</p>
-                </div>`;
+                res.innerHTML += `
+                    <div class="p-4 border-l-4 border-blue-500 bg-white shadow-sm rounded">
+                        <p class="text-[9px] font-bold text-blue-600">${d.fechaSimple} - ATENDIDO POR: DR. ${d.doctor.toUpperCase()}</p>
+                        <p class="text-xs font-bold uppercase">${d.paciente} | ${d.raza} | ${d.propietario}</p>
+                        <p class="text-[11px] mt-2 whitespace-pre-wrap text-slate-600 leading-relaxed">${d.tratamiento}</p>
+                    </div>`;
             });
         };
 
@@ -226,7 +251,6 @@
             const data = {
                 cedula: document.getElementById('hCI').value,
                 paciente: document.getElementById('hNombre').value.toUpperCase(),
-                especie: document.getElementById('hEspecie').value.toUpperCase(),
                 raza: document.getElementById('hRaza').value.toUpperCase(),
                 propietario: document.getElementById('hProp').value.toUpperCase(),
                 tratamiento: document.getElementById('hTratamiento').value,
@@ -236,12 +260,24 @@
                 fecha: serverTimestamp(),
                 fechaSimple: new Date().toLocaleDateString()
             };
-            await addDoc(collection(db, "consultas"), data);
-            alert("REGISTRADO");
-            if(imprimir) window.print();
+            try {
+                await addDoc(collection(db, "consultas"), data);
+                alert("DATOS GUARDADOS EN LA NUBE");
+                if(imprimir) window.print();
+            } catch (e) { alert("ERROR AL GUARDAR"); }
         };
 
-        window.actualizarNombreDoctor = (n) => document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase();
+        window.cargarReporte = async () => {
+            const hoy = new Date().toLocaleDateString();
+            const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
+            const snap = await getDocs(q);
+            const l = document.getElementById('listaReporte');
+            l.innerHTML = "";
+            snap.forEach(d => {
+                const v = d.data();
+                l.innerHTML += `<div class="p-2 flex justify-between"><span><b>${v.paciente}</b> (${v.doctor})</span><span class="font-bold text-blue-600">$${v.cobrado}</span></div>`;
+            });
+        };
     </script>
 </body>
 </html>
