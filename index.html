@@ -3,146 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro - Automatización de Insumos</title>
+    <title>Pet Control Pro - Gestión Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
             .no-print { display: none !important; }
             body { background-color: white !important; padding: 0; }
-            input, textarea, select { border: none !important; outline: none !important; background: transparent; appearance: none; }
-            #doctorNombrePrint { display: block !important; }
+            .print-border { border: 1px solid black !important; }
         }
+        .header-box { border: 1px solid black; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f3f4f6; }
         .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900">
 
     <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-96 text-center">
-            <h2 class="text-2xl font-bold mb-6">Panel Administrativo</h2>
-            <input type="password" id="pinInput" placeholder="PIN de Seguridad" class="w-full p-3 border rounded-lg mb-4 text-center text-2xl tracking-widest">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">ENTRAR</button>
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-80 text-center border-t-4 border-blue-600">
+            <h2 class="text-xl font-bold mb-4">Panel de Control</h2>
+            <input type="password" id="pinInput" placeholder="PIN de Seguridad" class="w-full p-2 border rounded mb-4 text-center text-xl">
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">ENTRAR</button>
         </div>
     </div>
 
     <main id="adminSection" class="hidden max-w-5xl mx-auto p-4">
-        <nav class="flex space-x-8 border-b mb-6 no-print">
-            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">Historia Clínica</button>
-            <button onclick="showTab('insumos')" id="tabI" class="py-2 text-gray-500">Costos e Insumos Automáticos</button>
+        
+        <nav class="flex space-x-6 border-b-2 border-gray-200 mb-6 no-print">
+            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">HISTORIA MÉDICA</button>
+            <button onclick="showTab('insumos')" id="tabI" class="py-2 text-gray-500">COSTOS E INSUMOS</button>
+            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500">REPORTE DEL DÍA</button>
         </nav>
 
-        <section id="sectionHistoria" class="bg-white p-8 shadow-md border border-gray-400">
-            <div class="flex justify-between items-start border-b-2 border-black pb-4 mb-4">
-                <div class="flex items-center space-x-4">
-                    <div class="w-14 h-14 border-2 border-black flex items-center justify-center font-bold text-xl">MV</div>
+        <section id="sectionHistoria" class="bg-white p-8 shadow-md border border-gray-300">
+            <div class="flex justify-between items-center border-b-4 border-black pb-4 mb-4">
+                <div class="flex items-center gap-6">
+                    <div class="relative">
+                        <div class="w-20 h-20 border-4 border-black flex flex-col items-center justify-center bg-white">
+                            <span class="text-4xl font-black leading-none">MV</span>
+                        </div>
+                    </div>
                     <div>
-                        <select id="selectDoctor" class="no-print font-bold uppercase border p-1 text-sm mb-1 bg-blue-50">
-                            <option value="DR. DARWIN SANDOVAL">DR. DARWIN SANDOVAL</option>
-                            <option value="DR. JOAN SILVA">DR. JOAN SILVA</option>
-                        </select>
-                        <div id="doctorNombrePrint" class="hidden font-bold uppercase text-lg">DR. DARWIN SANDOVAL</div>
-                        <p class="text-[10px] font-bold">MÉDICO VETERINARIO</p>
+                        <h1 class="font-bold text-2xl tracking-tighter uppercase leading-none">Darwin Sandoval</h1>
+                        <p class="text-[10px] font-black tracking-widest bg-black text-white px-2 mt-1">MÉDICO VETERINARIO</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-xs">FECHA: <input type="text" id="fechaDoc" class="border-b border-black w-24 text-center"></p>
+                    <p class="text-xs font-bold uppercase border-b border-black inline-block px-2 mb-2">Historia Clínica</p>
+                    <p class="text-[10px] font-bold">FECHA: <input type="text" id="fechaDoc" class="w-24 text-center border-b border-gray-400"></p>
                 </div>
             </div>
 
-            <div class="no-print mb-6 p-4 bg-blue-900 text-white rounded-lg shadow-lg">
-                <label class="block font-bold mb-2">SELECCIONAR SERVICIOS (Esto carga insumos automáticamente):</label>
-                <select id="selectorServicios" onchange="agregarServicio(this.value)" class="w-full p-2 text-black rounded font-bold">
-                    <option value="">-- Seleccionar Servicio --</option>
-                    <optgroup label="VACUNAS">
-                        <option value="Sextuple">Sextuple</option>
-                        <option value="Antirrabica">Antirrabica</option>
-                        <option value="KC">KC / Puppy</option>
-                        <option value="Triple Felina">Triple Felina</option>
-                    </optgroup>
-                    <optgroup label="LABORATORIO">
-                        <option value="Hematologia">Hematologia</option>
-                        <option value="Quimica">Quimica</option>
-                        <option value="Descarte Hemoparasito">Descarte Hemoparasito</option>
-                    </optgroup>
-                    <optgroup label="OTROS">
-                        <option value="Eutanasia <5kg">Eutanasia <5kg</option>
-                        <option value="Consulta General">Consulta General</option>
-                    </optgroup>
-                </select>
-                <div id="serviciosSeleccionados" class="mt-3 flex flex-wrap gap-2"></div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-0 border border-black text-[11px]">
-                <div class="border-r border-black p-2">
-                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase">Mascota</h3>
-                    <p>NOMBRE: <input id="hNombre" type="text" class="border-b border-gray-300 w-32 font-bold"></p>
-                    <p>RAZA: <input id="hRaza" type="text" class="border-b border-gray-300 w-32"></p>
-                </div>
-                <div class="p-2 text-[11px]">
-                    <h3 class="bg-gray-200 font-bold text-center border-b border-black mb-2 uppercase">Motivo</h3>
-                    <textarea id="hMotivo" class="w-full h-12 border-none resize-none"></textarea>
+            <div class="no-print bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+                <label class="block text-xs font-bold text-blue-800 mb-2 uppercase">Añadir Servicios al Paciente:</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-100 cursor-pointer">
+                        <input type="checkbox" value="Sextuple" onchange="toggleServicio(this)"> <span class="text-[10px] font-bold">SEXTUPLE</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-100 cursor-pointer">
+                        <input type="checkbox" value="Antirrabica" onchange="toggleServicio(this)"> <span class="text-[10px] font-bold">ANTIRRÁBICA</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-100 cursor-pointer">
+                        <input type="checkbox" value="Hematologia" onchange="toggleServicio(this)"> <span class="text-[10px] font-bold">HEMATOLOGÍA</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-100 cursor-pointer">
+                        <input type="checkbox" value="Eutanasia" onchange="toggleServicio(this)"> <span class="text-[10px] font-bold">EUTANASIA</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-100 cursor-pointer">
+                        <input type="checkbox" value="Consulta" onchange="toggleServicio(this)"> <span class="text-[10px] font-bold">CONSULTA</span>
+                    </label>
                 </div>
             </div>
 
-            <div class="mt-4 border border-black text-[11px]">
-                <h3 class="bg-gray-100 p-1 font-bold border-b border-black">TRATAMIENTO / OBSERVACIONES:</h3>
-                <textarea id="hTratamiento" class="w-full p-2 h-40 resize-none"></textarea>
+            <div class="grid grid-cols-2 border border-black text-[10px]">
+                <div class="p-2 border-r border-black">
+                    <div class="header-box mb-2">DATOS DE LA MASCOTA</div>
+                    <p class="mb-1 uppercase">NOMBRE: <input id="hNombre" class="border-b w-32 font-bold"></p>
+                    <p class="mb-1 uppercase">RAZA: <input id="hRaza" class="border-b w-32"></p>
+                    <p class="mb-1 uppercase">PESO: <input id="hPeso" class="border-b w-32"></p>
+                </div>
+                <div class="p-2">
+                    <div class="header-box mb-2">DATOS PROPIETARIO</div>
+                    <p class="mb-1 uppercase">NOMBRE: <input id="hProp" class="border-b w-full font-bold"></p>
+                    <p class="mb-1 uppercase">C.I.: <input id="hCI" class="border-b w-full"></p>
+                    <p class="mb-1 uppercase">TLF: <input id="hTlf" class="border-b w-full"></p>
+                </div>
             </div>
 
-            <button onclick="guardarYImprimir()" class="no-print mt-6 bg-green-600 text-white px-8 py-3 rounded font-bold">💾 GUARDAR E IMPRIMIR</button>
+            <div class="mt-4 border border-black">
+                <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black italic">TRATAMIENTO Y PROCEDIMIENTOS:</div>
+                <textarea id="hTratamiento" class="w-full h-48 p-3 text-xs font-bold leading-relaxed outline-none resize-none"></textarea>
+            </div>
+
+            <div class="no-print mt-6 flex gap-4">
+                <button onclick="guardarFirebase(false)" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">💾 SOLO GUARDAR</button>
+                <button onclick="guardarFirebase(true)" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-green-700">🖨️ GUARDAR E IMPRIMIR</button>
+            </div>
         </section>
 
         <section id="sectionInsumos" class="hidden bg-white p-8 border border-blue-400">
-            <h2 class="text-xl font-bold text-blue-900 mb-6 uppercase border-b pb-2">Desglose de Insumos por Servicio</h2>
-            
-            <table class="w-full text-sm border-collapse border border-gray-300 mb-6">
+            <h2 class="font-bold text-xl text-blue-900 border-b-2 mb-4 uppercase italic">Control de Insumos</h2>
+            <table class="w-full text-xs mb-6">
                 <thead class="bg-slate-800 text-white">
-                    <tr>
-                        <th class="p-2 border">Insumo</th>
-                        <th class="p-2 border w-24">Costo $</th>
-                        <th class="p-2 border w-20">Cant.</th>
-                        <th class="p-2 border w-24">Subtotal</th>
-                        <th class="p-2 border no-print w-10"></th>
-                    </tr>
+                    <tr><th class="p-2 border">DESCRIPCIÓN</th><th class="p-2 border w-24">COSTO $</th><th class="p-2 border w-24">TOTAL</th></tr>
                 </thead>
-                <tbody id="cuerpoInsumos">
-                    </tbody>
+                <tbody id="cuerpoInsumos"></tbody>
             </table>
-
-            <div class="grid grid-cols-3 gap-4 text-center">
-                <div class="p-4 border bg-gray-50"><p class="text-xs font-bold">TOTAL INSUMOS</p><p id="totalInsumosLabel" class="text-2xl font-black">$0.00</p></div>
-                <div class="p-4 border bg-blue-50"><p class="text-xs font-bold">COBRO CLIENTE</p>
-                    <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="text-2xl font-black w-24 bg-transparent text-center border-b-2 border-blue-600">
+            <div class="bg-slate-100 p-4 rounded border-2 border-slate-300">
+                <p class="font-bold text-sm">MONTO TOTAL COBRADO AL CLIENTE: $<input type="number" id="precioVenta" value="0" oninput="calcularUtilidad()" class="w-24 px-2 border border-blue-400 rounded"></p>
+                <div class="flex justify-between mt-2 text-xs font-bold">
+                    <span>SUMA INSUMOS: <span id="labelTotalInsumos">$0.00</span></span>
+                    <span class="text-green-700">GANANCIA NETA: <span id="labelUtilidad">$0.00</span></span>
                 </div>
-                <div class="p-4 border bg-green-50"><p class="text-xs font-bold">UTILIDAD TIENDA</p><p id="utilidadLabel" class="text-2xl font-black text-green-700">$0.00</p></div>
             </div>
         </section>
+
+        <section id="sectionReporte" class="hidden bg-white p-8 border-4 border-green-600 shadow-2xl">
+            <h2 class="text-2xl font-black text-center mb-6 uppercase border-b-2">Reporte de Cierre Diario</h2>
+            <div id="listaReporte" class="space-y-2 mb-6 text-[10px]">
+                </div>
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="p-4 bg-gray-100 border rounded"><p class="text-[9px] font-bold uppercase">Total Cobrado</p><p id="repCobrado" class="text-xl font-black text-blue-700">$0.00</p></div>
+                <div class="p-4 bg-gray-100 border rounded"><p class="text-[9px] font-bold uppercase">Total Insumos</p><p id="repInsumos" class="text-xl font-black text-red-700">$0.00</p></div>
+                <div class="p-4 bg-green-100 border border-green-400 rounded"><p class="text-[9px] font-bold uppercase">Utilidad Final</p><p id="repUtilidad" class="text-2xl font-black text-green-800">$0.00</p></div>
+            </div>
+            <button onclick="cargarReporte()" class="w-full mt-6 bg-green-600 text-white py-2 rounded font-bold uppercase">Actualizar Reporte</button>
+        </section>
+
     </main>
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- DICCIONARIO DE INSUMOS POR SERVICIO ---
-        const recetas = {
-            "Sextuple": [
-                { nombre: "Vacuna Sextuple (Vial)", costo: 8.50 },
-                { nombre: "Jeringa 3cc", costo: 0.25 },
-                { nombre: "Algodón y Alcohol", costo: 0.10 },
-                { nombre: "Guantes Par", costo: 0.50 }
-            ],
-            "Hematologia": [
-                { nombre: "Tubo EDTA", costo: 0.80 },
-                { nombre: "Inyec. 3cc", costo: 0.25 },
-                { nombre: "Servicio Lab Externo", costo: 12.00 }
-            ],
-            "Eutanasia <5kg": [
-                { nombre: "Catéter 24G", costo: 1.20 },
-                { nombre: "Propofol/Eutanex", costo: 15.00 },
-                { nombre: "Guantes", costo: 0.50 },
-                { nombre: "Bolsa Desecho", costo: 2.00 }
-            ]
-            // Aquí puedes seguir agregando todos los servicios de la imagen...
+        const serviciosData = {
+            "Sextuple": { t: "APLICACIÓN DE VACUNA SEXTUPLE CANINA.", ins: [{n: "Vial Sextuple", c: 8.50}, {n: "Jeringa 3cc", c: 0.30}] },
+            "Antirrabica": { t: "APLICACIÓN DE VACUNA ANTIRRÁBICA.", ins: [{n: "Vial Rabia", c: 5.00}, {n: "Jeringa 3cc", c: 0.30}] },
+            "Hematologia": { t: "MUESTRA DE SANGRE PARA HEMATOLOGÍA COMPLETA.", ins: [{n: "Tubo EDTA", c: 1.00}, {n: "Laboratorio Ext.", c: 10.00}] },
+            "Eutanasia": { t: "PROCEDIMIENTO DE EUTANASIA HUMANITARIA.", ins: [{n: "Fármacos", c: 20.00}, {n: "Bolsa Clínica", c: 2.00}] },
+            "Consulta": { t: "CONSULTA MÉDICA VETERINARIA.", ins: [{n: "Guantes/Insumos", c: 0.80}] }
         };
 
         window.verificarPin = () => {
@@ -156,55 +153,82 @@
         window.showTab = (t) => {
             document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
             document.getElementById('sectionInsumos').classList.toggle('hidden', t !== 'insumos');
+            document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
+            document.getElementById('tabH').className = t === 'historia' ? 'tab-active py-2' : 'py-2 text-gray-500';
+            document.getElementById('tabI').className = t === 'insumos' ? 'tab-active py-2' : 'py-2 text-gray-500';
+            document.getElementById('tabR').className = t === 'reporte' ? 'tab-active py-2' : 'py-2 text-gray-500';
+            if(t === 'reporte') cargarReporte();
         };
 
-        // --- AGREGAR SERVICIOS ---
-        window.agregarServicio = (servicio) => {
-            if (!servicio || !recetas[servicio]) return;
-
-            // 1. Mostrar etiqueta en historia
-            const lista = document.getElementById('serviciosSeleccionados');
-            const span = document.createElement('span');
-            span.className = "bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs font-bold mr-2 mb-2";
-            span.innerText = servicio;
-            lista.appendChild(span);
-
-            // 2. Cargar insumos en la tabla de costos
+        window.toggleServicio = (check) => {
+            const data = serviciosData[check.value];
+            const area = document.getElementById('hTratamiento');
             const tbody = document.getElementById('cuerpoInsumos');
-            recetas[servicio].forEach(insumo => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-2 border font-bold text-xs">${insumo.nombre} <span class="text-[8px] text-gray-400">(${servicio})</span></td>
-                    <td class="p-2 border text-center"><input type="number" class="i-cost w-full bg-transparent" value="${insumo.costo}" oninput="calcularFinanzas()"></td>
-                    <td class="p-2 border text-center"><input type="number" class="i-cant w-full bg-transparent font-bold" value="1" oninput="calcularFinanzas()"></td>
-                    <td class="p-2 border font-bold i-sub text-center bg-gray-50">$${insumo.costo.toFixed(2)}</td>
-                    <td class="p-2 border no-print text-center"><button onclick="this.parentElement.parentElement.remove(); calcularFinanzas()" class="text-red-500">×</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-            calcularFinanzas();
+
+            if(check.checked) {
+                area.value += (area.value ? "\n" : "") + data.t;
+                data.ins.forEach(i => {
+                    const tr = document.createElement('tr');
+                    tr.id = `ins-${check.value}`;
+                    tr.innerHTML = `<td class="p-2 border font-bold">${i.n}</td><td class="p-2 border text-center">$${i.c.toFixed(2)}</td><td class="p-2 border font-bold text-center">$${i.c.toFixed(2)}</td>`;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                area.value = area.value.replace(data.t, "").trim();
+                document.querySelectorAll(`#ins-${check.value}`).forEach(el => el.remove());
+            }
+            calcularUtilidad();
         };
 
-        window.calcularFinanzas = () => {
-            let totalI = 0;
-            document.querySelectorAll('#cuerpoInsumos tr').forEach(f => {
-                const c = parseFloat(f.querySelector('.i-cost').value) || 0;
-                const n = parseFloat(f.querySelector('.i-cant').value) || 0;
-                const s = c * n;
-                f.querySelector('.i-sub').innerText = `$${s.toFixed(2)}`;
-                totalI += s;
+        window.calcularUtilidad = () => {
+            let totalIns = 0;
+            document.querySelectorAll('#cuerpoInsumos tr').forEach(r => {
+                totalIns += parseFloat(r.cells[2].innerText.replace('$','')) || 0;
             });
+            document.getElementById('labelTotalInsumos').innerText = `$${totalIns.toFixed(2)}`;
             const venta = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const util = venta - totalI - ((venta - totalI) * 0.30); // 30% vet
-
-            document.getElementById('totalInsumosLabel').innerText = `$${totalI.toFixed(2)}`;
-            document.getElementById('utilidadLabel').innerText = `$${util.toFixed(2)}`;
+            const util = venta - totalIns - ((venta - totalIns) * 0.30);
+            document.getElementById('labelUtilidad').innerText = `$${util.toFixed(2)}`;
+            return { totalIns, util, venta };
         };
 
-        window.guardarYImprimir = async () => {
-            const doc = document.getElementById('selectDoctor').value;
-            document.getElementById('doctorNombrePrint').innerText = doc;
-            window.print();
+        window.guardarFirebase = async (imprimir) => {
+            const f = calcularUtilidad();
+            const data = {
+                paciente: document.getElementById('hNombre').value,
+                propietario: document.getElementById('hProp').value,
+                cobrado: f.venta,
+                insumos: f.totalIns,
+                utilidad: f.util,
+                fecha: serverTimestamp(),
+                fechaSimple: new Date().toLocaleDateString()
+            };
+
+            try {
+                await addDoc(collection(db, "consultas"), data);
+                alert("✅ Registro guardado con éxito.");
+                if(imprimir) window.print();
+            } catch (e) { console.error(e); }
+        };
+
+        window.cargarReporte = async () => {
+            const hoy = new Date().toLocaleDateString();
+            const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
+            const snap = await getDocs(q);
+            
+            let totalC = 0, totalI = 0, totalU = 0;
+            const lista = document.getElementById('listaReporte');
+            lista.innerHTML = "";
+
+            snap.forEach(doc => {
+                const d = doc.data();
+                totalC += d.cobrado; totalI += d.insumos; totalU += d.utilidad;
+                lista.innerHTML += `<div class="flex justify-between border-b pb-1"><span>${d.paciente} (${d.propietario})</span><span class="font-bold text-blue-600">$${d.cobrado}</span></div>`;
+            });
+
+            document.getElementById('repCobrado').innerText = `$${totalC.toFixed(2)}`;
+            document.getElementById('repInsumos').innerText = `$${totalI.toFixed(2)}`;
+            document.getElementById('repUtilidad').innerText = `$${totalU.toFixed(2)}`;
         };
     </script>
 </body>
