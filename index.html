@@ -378,50 +378,52 @@
 
         // --- GUARDAR CONSULTA ---
         window.guardarFirebase = async (imp) => {
-            if (!doctorVerificado) {
-                alert("⚠️ Debe validar un doctor con su PIN antes de guardar.");
-                return;
-            }
-            try {
-                const nombreMascota = document.getElementById('hNombre').value;
-                if(!nombreMascota) return alert("Nombre de mascota obligatorio");
+    if (!doctorVerificado) return alert("⚠️ Valide un doctor con su PIN.");
+    
+    try {
+        const nombreMascota = document.getElementById('hNombre').value;
+        if(!nombreMascota) return alert("Nombre de mascota obligatorio");
 
-                const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-                const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-                const neto = bruto - insu;
+        // --- CAPTURAR LISTA DETALLADA DE INSUMOS ---
+        const detalleInsumos = [];
+        document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
+            const nombre = fila.cells[0].innerText;
+            const cant = fila.querySelector('.i-cant').value;
+            const precio = fila.querySelector('.i-cost').value;
+            detalleInsumos.push({ nombre, cant, precio });
+        });
 
-                const datos = {
-    // Datos del Paciente
-    paciente: nombreMascota.toUpperCase(),
-    especie: document.getElementById('hEspecie').value.toUpperCase(),
-    raza: document.getElementById('hRaza').value.toUpperCase(),
-    
-    // Datos del Propietario (Claves para la búsqueda)
-    cedula: document.getElementById('hCI').value.trim(), 
-    propietario: document.getElementById('hProp').value.toUpperCase(),
-    telefono: document.getElementById('hTlf').value,
-    
-    // Información Médica
-    doctor: doctorVerificado,
-    tratamiento: document.getElementById('hTratamiento').value,
-    
-    // Finanzas
-    montoBruto: bruto,
-    montoInsumos: insu,
-    pagoDoctor: neto * 0.3,
-    gananciaTienda: neto * 0.7,
-    
-    // Registro
-    fechaSimple: new Date().toLocaleDateString(),
-    timestamp: serverTimestamp()
-};
+        const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+        const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+        const neto = bruto - insu;
 
-                await addDoc(collection(db, "consultas"), datos);
-                if(imp) window.print();
-                alert("✅ Registrado con éxito");
-                location.reload();
-            } catch (e) { alert("Error: " + e.message); }
+        const datos = {
+            paciente: nombreMascota.toUpperCase(),
+            especie: document.getElementById('hEspecie').value.toUpperCase(),
+            raza: document.getElementById('hRaza').value.toUpperCase(),
+            cedula: document.getElementById('hCI').value.trim(), 
+            propietario: document.getElementById('hProp').value.toUpperCase(),
+            telefono: document.getElementById('hTlf').value,
+            doctor: doctorVerificado,
+            tratamiento: document.getElementById('hTratamiento').value,
+            
+            // NUEVO: Guardamos el array de insumos detallado
+            listaDetalladaInsumos: detalleInsumos, 
+            
+            montoBruto: bruto,
+            montoInsumos: insu,
+            pagoDoctor: neto * 0.3,
+            gananciaTienda: neto * 0.7,
+            fechaSimple: new Date().toLocaleDateString(),
+            timestamp: serverTimestamp()
         };
+
+        await addDoc(collection(db, "consultas"), datos);
+        if(imp) window.print();
+        alert("✅ Registrado con éxito");
+        location.reload();
+    } catch (e) { alert("Error: " + e.message); }
+};
        // --- FUNCIONES DE BÚSQUEDA ---
 
 // --- FUNCIONES DE BÚSQUEDA CORREGIDAS ---
@@ -457,63 +459,73 @@ window.autocompletarPorCedula = async (cedula) => {
 window.buscarPorCedula = async () => {
     const cedulaInput = document.getElementById('searchCI').value.trim();
     const contenedor = document.getElementById('resultadosBusqueda');
-    
-    if (!cedulaInput) {
-        alert("Por favor, ingrese una cédula para buscar.");
-        return;
-    }
+    if (!cedulaInput) return alert("Ingrese una cédula");
 
-    contenedor.innerHTML = `
-        <div class="flex flex-col items-center justify-center p-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-            <p class="text-blue-600 font-bold animate-pulse text-xs">BUSCANDO EN BASE DE DATOS...</p>
-        </div>`;
+    contenedor.innerHTML = "<p class='text-center animate-pulse'>Buscando...</p>";
 
     try {
         const q = query(collection(db, "consultas"), where("cedula", "==", cedulaInput));
         const snap = await getDocs(q);
-        
         contenedor.innerHTML = "";
 
         if (snap.empty) {
-            contenedor.innerHTML = `
-                <div class="bg-orange-50 border-2 border-orange-200 p-6 rounded-2xl text-center">
-                    <p class="text-orange-600 font-black uppercase text-sm">Sin resultados</p>
-                    <p class="text-slate-500 text-[10px]">No existen historias clínicas con la cédula: ${cedulaInput}</p>
-                </div>`;
+            contenedor.innerHTML = "<p class='text-center text-red-500'>No hay registros.</p>";
             return;
         }
 
-        // Ordenar resultados por fecha (si el timestamp existe)
-        const resultados = [];
-        snap.forEach(doc => resultados.push(doc.data()));
-        
-        // Renderizar cada resultado
-        resultados.reverse().forEach(d => {
+        snap.forEach(doc => {
+            const d = doc.data();
+            
+            // Generar filas de la tabla de insumos
+            let filasInsumos = "";
+            if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
+                d.listaDetalladaInsumos.forEach(ins => {
+                    filasInsumos += `
+                        <tr class="border-b border-slate-100">
+                            <td class="py-1">${ins.nombre}</td>
+                            <td class="py-1 text-center">${ins.cant}</td>
+                            <td class="py-1 text-right">$${parseFloat(ins.precio).toFixed(2)}</td>
+                        </tr>`;
+                });
+            } else {
+                filasInsumos = `<tr><td colspan="3" class="text-center text-slate-400 py-2">No se detallaron insumos</td></tr>`;
+            }
+
             contenedor.innerHTML += `
-                <div class="bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm mb-3">
-                    <div class="flex justify-between items-start border-b border-slate-50 pb-2 mb-2">
-                        <div>
-                            <p class="text-[10px] font-black text-blue-600 uppercase">${d.fechaSimple || 'S/F'}</p>
-                            <h3 class="font-black text-slate-800 text-lg">${d.paciente}</h3>
-                        </div>
-                        <span class="text-[9px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Dr. ${d.doctor}</span>
+                <div class="bg-white p-5 rounded-2xl border-2 border-blue-50 shadow-sm mb-6">
+                    <div class="flex justify-between mb-3">
+                        <span class="text-xs font-black text-blue-600 uppercase">${d.fechaSimple}</span>
+                        <span class="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded">DR. ${d.doctor}</span>
                     </div>
-                    <div class="space-y-1 mb-3">
-                        <p class="text-[11px] text-slate-600"><b>Propietario:</b> ${d.propietario}</p>
-                        <p class="text-[11px] text-slate-600"><b>Cédula:</b> ${d.cedula}</p>
-                    </div>
-                    <div class="p-3 bg-slate-50 rounded-xl">
-                        <p class="text-[11px] font-bold text-slate-400 uppercase mb-1">Diagnóstico y Tratamiento:</p>
-                        <p class="text-xs text-slate-700 leading-relaxed italic whitespace-pre-line">${d.tratamiento || 'Sin detalles'}</p>
+                    
+                    <h3 class="font-black text-slate-800 text-lg mb-1">${d.paciente}</h3>
+                    <p class="text-[11px] text-slate-500 mb-4 italic">${d.tratamiento}</p>
+
+                    <div class="mt-4">
+                        <p class="text-[10px] font-bold text-blue-800 mb-2 uppercase">📊 Detalle de Insumos Utilizados:</p>
+                        <table class="w-full text-[10px] text-slate-600">
+                            <thead>
+                                <tr class="text-slate-400 border-b">
+                                    <th class="text-left py-1">Insumo</th>
+                                    <th class="w-12 py-1">Cant.</th>
+                                    <th class="w-16 text-right py-1">Costo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filasInsumos}
+                            </tbody>
+                            <tfoot>
+                                <tr class="font-bold text-slate-800">
+                                    <td colspan="2" class="pt-2 text-right">Total Insumos:</td>
+                                    <td class="pt-2 text-right text-red-600">$${d.montoInsumos.toFixed(2)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             `;
         });
-    } catch (e) {
-        console.error(e);
-        alert("Error crítico en la búsqueda. Revisa la consola.");
-    }
+    } catch (e) { alert("Error: " + e.message); }
 };
 
         // --- REPORTES Y CIERRE ---
@@ -549,5 +561,6 @@ window.buscarPorCedula = async () => {
     </script>
 </body>
 </html>
+
 
 
