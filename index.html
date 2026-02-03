@@ -424,66 +424,95 @@
         };
        // --- FUNCIONES DE BÚSQUEDA ---
 
-// Esta función se activa al salir del campo Cédula en la Historia
+// --- FUNCIONES DE BÚSQUEDA CORREGIDAS ---
+
 window.autocompletarPorCedula = async (cedula) => {
-    if (!cedula) return;
+    const valor = cedula.trim();
+    if (!valor || valor.length < 3) return; 
+    
     try {
-        const q = query(collection(db, "consultas"), where("cedula", "==", cedula));
+        // Buscamos por la cédula exacta
+        const q = query(collection(db, "consultas"), where("cedula", "==", valor));
         const snap = await getDocs(q);
         
         if (!snap.empty) {
-            // Tomamos los datos del último registro encontrado
-            const datos = snap.docs[0].data();
+            // Ordenar manualmente por el más reciente si hay varios
+            const docs = snap.docs.map(d => d.data());
+            const datos = docs[docs.length - 1]; // Tomamos el último registro
+
             document.getElementById('hProp').value = datos.propietario || "";
             document.getElementById('hTlf').value = datos.telefono || "";
             document.getElementById('hMail').value = datos.correo || "";
-            // Opcional: autocompletar también datos de la mascota si es la misma
             document.getElementById('hNombre').value = datos.paciente || "";
             document.getElementById('hEspecie').value = datos.especie || "";
             document.getElementById('hRaza').value = datos.raza || "";
+            
+            console.log("Datos recuperados para la cédula:", valor);
         }
     } catch (e) {
         console.error("Error al autocompletar: ", e);
     }
 };
 
-// Esta función es para la pestaña "Buscador"
 window.buscarPorCedula = async () => {
-    const cedula = document.getElementById('searchCI').value;
+    const cedulaInput = document.getElementById('searchCI').value.trim();
     const contenedor = document.getElementById('resultadosBusqueda');
-    if (!cedula) return alert("Ingrese una cédula");
+    
+    if (!cedulaInput) {
+        alert("Por favor, ingrese una cédula para buscar.");
+        return;
+    }
 
-    contenedor.innerHTML = "<p class='text-center'>Buscando...</p>";
+    contenedor.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+            <p class="text-blue-600 font-bold animate-pulse text-xs">BUSCANDO EN BASE DE DATOS...</p>
+        </div>`;
 
     try {
-        const q = query(collection(db, "consultas"), where("cedula", "==", cedula));
+        const q = query(collection(db, "consultas"), where("cedula", "==", cedulaInput));
         const snap = await getDocs(q);
         
         contenedor.innerHTML = "";
+
         if (snap.empty) {
-            contenedor.innerHTML = "<p class='text-red-500'>No se encontraron registros.</p>";
+            contenedor.innerHTML = `
+                <div class="bg-orange-50 border-2 border-orange-200 p-6 rounded-2xl text-center">
+                    <p class="text-orange-600 font-black uppercase text-sm">Sin resultados</p>
+                    <p class="text-slate-500 text-[10px]">No existen historias clínicas con la cédula: ${cedulaInput}</p>
+                </div>`;
             return;
         }
 
-        snap.forEach(doc => {
-            const d = doc.data();
-            const fecha = d.fechaSimple || "S/F";
+        // Ordenar resultados por fecha (si el timestamp existe)
+        const resultados = [];
+        snap.forEach(doc => resultados.push(doc.data()));
+        
+        // Renderizar cada resultado
+        resultados.reverse().forEach(d => {
             contenedor.innerHTML += `
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
-                    <div class="flex justify-between mb-2">
-                        <span class="font-black text-blue-800">${fecha}</span>
-                        <span class="text-[10px] bg-blue-200 px-2 py-1 rounded-full font-bold">${d.doctor}</span>
+                <div class="bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm mb-3">
+                    <div class="flex justify-between items-start border-b border-slate-50 pb-2 mb-2">
+                        <div>
+                            <p class="text-[10px] font-black text-blue-600 uppercase">${d.fechaSimple || 'S/F'}</p>
+                            <h3 class="font-black text-slate-800 text-lg">${d.paciente}</h3>
+                        </div>
+                        <span class="text-[9px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Dr. ${d.doctor}</span>
                     </div>
-                    <p class="text-sm"><b>Paciente:</b> ${d.paciente}</p>
-                    <p class="text-xs text-slate-600"><b>Propietario:</b> ${d.propietario || 'No registrado'}</p>
-                    <div class="mt-2 p-2 bg-white rounded border text-[11px] italic">
-                        ${d.tratamiento || 'Sin detalle de tratamiento'}
+                    <div class="space-y-1 mb-3">
+                        <p class="text-[11px] text-slate-600"><b>Propietario:</b> ${d.propietario}</p>
+                        <p class="text-[11px] text-slate-600"><b>Cédula:</b> ${d.cedula}</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl">
+                        <p class="text-[11px] font-bold text-slate-400 uppercase mb-1">Diagnóstico y Tratamiento:</p>
+                        <p class="text-xs text-slate-700 leading-relaxed italic whitespace-pre-line">${d.tratamiento || 'Sin detalles'}</p>
                     </div>
                 </div>
             `;
         });
     } catch (e) {
-        alert("Error en búsqueda: " + e.message);
+        console.error(e);
+        alert("Error crítico en la búsqueda. Revisa la consola.");
     }
 };
 
@@ -520,4 +549,5 @@ window.buscarPorCedula = async () => {
     </script>
 </body>
 </html>
+
 
