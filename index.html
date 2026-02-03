@@ -59,27 +59,54 @@
                 <input type="text" id="fechaDoc" class="w-24 text-right font-black text-xs" readonly>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
-                <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-                    <div class="header-box italic">Información del Paciente</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="col-span-2"><label class="text-[9px] font-bold text-slate-400">MASCOTA</label><input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
-                    </div>
-                </div>
-                <div class="p-3 space-y-2">
-                    <div class="header-box italic">Datos del Propietario</div>
-                    <div><label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label><input id="hProp" class="border-b w-full uppercase"></div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
-                    </div>
-                    <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
-                </div>
+           <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
+    <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
+        <div class="header-box italic">Información del Paciente</div>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="col-span-2">
+                <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
+                <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
             </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-400">ESPECIE</label>
+                <input id="hEspecie" class="border-b w-full uppercase">
+            </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-400">RAZA</label>
+                <input id="hRaza" class="border-b w-full uppercase">
+            </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
+                <input id="hPeso" class="border-b w-full">
+            </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-400">EDAD</label>
+                <input id="hEdad" class="border-b w-full uppercase">
+            </div>
+        </div>
+    </div>
+    <div class="p-3 space-y-2">
+        <div class="header-box italic">Datos del Propietario</div>
+        <div>
+            <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
+            <input id="hProp" class="border-b w-full uppercase">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
+                <input id="hCI" class="border-b w-full font-bold text-blue-700">
+            </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-400">TELÉFONO</label>
+                <input id="hTlf" class="border-b w-full">
+            </div>
+        </div>
+        <div>
+            <label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label>
+            <input id="hMail" class="border-b w-full">
+        </div>
+    </div>
+</div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
@@ -141,27 +168,36 @@
                 <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Diagnóstico y tratamiento..."></textarea>
             </div>
 
-            <div class="no-print bg-slate-900 p-6 rounded-3xl text-white shadow-xl border-b-8 border-blue-600 mb-4">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
-                        <label class="text-[10px] text-blue-300 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-center">
-                    </div>
-                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
-                        <label class="text-[10px] text-red-300 font-bold uppercase block mb-1">Insumos/Gastos ($)</label>
-                        <input type="number" id="gastoInsumos" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-red-400 text-center">
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center mb-6">
-                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold uppercase">Neto</p><p id="labelNeto" class="text-xl font-black text-emerald-400">$0.00</p></div>
-                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold uppercase">Dr (30%)</p><p id="labelDr" class="text-xl font-black text-white">$0.00</p></div>
-                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold uppercase">Avipet (70%)</p><p id="labelTienda" class="text-xl font-black text-blue-400">$0.00</p></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="guardarFirebase(false)" class="bg-slate-700 py-4 rounded-xl font-black uppercase text-xs">Guardar</button>
-                    <button onclick="guardarFirebase(true)" class="bg-blue-600 py-4 rounded-xl font-black uppercase text-xs shadow-lg">Guardar e Imprimir</button>
-                </div>
-            </div>
+            <div class="no-print bg-blue-50 p-6 rounded-3xl text-slate-800 shadow-lg border-2 border-blue-200 mb-4">
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-white p-3 rounded-xl border border-blue-200 text-center shadow-sm">
+            <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
+            <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-center outline-none text-blue-700">
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-red-200 text-center shadow-sm">
+            <label class="text-[10px] text-red-500 font-bold uppercase block mb-1">Insumos/Gastos ($)</label>
+            <input type="number" id="gastoInsumos" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-red-600 text-center outline-none">
+        </div>
+    </div>
+    <div class="grid grid-cols-3 gap-2 text-center mb-6">
+        <div class="p-2 bg-white border border-slate-200 rounded-lg">
+            <p class="text-[9px] text-slate-500 font-bold uppercase">Neto</p>
+            <p id="labelNeto" class="text-xl font-black text-emerald-600">$0.00</p>
+        </div>
+        <div class="p-2 bg-white border border-slate-200 rounded-lg">
+            <p class="text-[9px] text-slate-500 font-bold uppercase">Dr (30%)</p>
+            <p id="labelDr" class="text-xl font-black text-slate-700">$0.00</p>
+        </div>
+        <div class="p-2 bg-white border border-slate-200 rounded-lg">
+            <p class="text-[9px] text-slate-500 font-bold uppercase">Avipet (70%)</p>
+            <p id="labelTienda" class="text-xl font-black text-blue-600">$0.00</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+        <button onclick="guardarFirebase(false)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 py-4 rounded-xl font-black uppercase text-xs transition-colors">Guardar</button>
+        <button onclick="guardarFirebase(true)" class="bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black uppercase text-xs shadow-md transition-colors">Guardar e Imprimir</button>
+    </div>
+</div>
         </section>
 
         <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
@@ -290,3 +326,4 @@
     </script>
 </body>
 </html>
+
