@@ -268,104 +268,85 @@
     </div>
 </section>
 
-    <script type="module">
+   <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // INSUMOS
-        const insumosFijosMedicos = [
-            { nombre: "Guantes de examen", costo: 0.50 },
-            { nombre: "Algodón y Alcohol", costo: 0.10 },
-            { nombre: "Hojas/Papelería", costo: 0.10 }
-        ];
-
-        const insumosBaseVacuna = [
-            { nombre: "Jeringa 3cc", costo: 0.25 },
-            { nombre: "Xeruk", costo: 0.10 },
-            { nombre: "Crema", costo: 0.10 }
-        ];
-
-        const recetas = {
-            "VACUNA SEXTUPLE": [{ nombre: "Vial Sextuple", costo: 8.50 }],
-            "VACUNA ANTIRRÁBICA": [{ nombre: "Vial Antirrábica", costo: 4.00 }],
-            "HEMATOLOGÍA COMPLETA": [
-                { nombre: "Tubo EDTA", costo: 1.00 },
-                { nombre: "Jeringa 3cc", costo: 0.25 },
-                { nombre: "Servicio Laboratorio", costo: 10.00 }
-            ],
-            "CONSULTA GENERAL": [{ nombre: "Baja lenguas/Insumos", costo: 0.40 }],
-            "EUTANASIA HASTA 5KG": [
-                { nombre: "Catéter 24G", costo: 1.20 },
-                { nombre: "Fármacos Eutanasia", costo: 15.00 },
-                { nombre: "Bolsa Clínica", costo: 3.00 }
-            ]
-        };
-
-        // CORE - Gestión de Accesos y Seguridad
+        // --- CONFIGURACIÓN INICIAL ---
         const pinsDoctores = {
             "Darwin Sandoval": "1111", 
             "Joan Silva": "2222"
         };
 
-        let doctorValidado = ""; // Variable para reportes de comisiones
+        let doctorVerificado = ""; 
+        window.ultimoResumenCalculado = null;
 
+        // --- SEGURIDAD GENERAL ---
         window.verificarPin = () => {
-            if(document.getElementById('pinInput').value === "2026") {
+            const pin = document.getElementById('pinInput').value;
+            if(pin === "2026") {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
-                // Limpiamos el selector por seguridad al entrar
-                document.getElementById('selectDoctor').value = "";
-            } else { alert("PIN INCORRECTO"); }
+            } else { 
+                alert("PIN GENERAL INCORRECTO"); 
+            }
         };
 
+        // --- SEGURIDAD POR DOCTOR ---
         window.validarAccesoDoctor = (nombre) => {
             if (!nombre) {
-                doctorValidado = "";
+                doctorVerificado = "";
                 document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
                 return;
             }
 
-            const pinIngresado = prompt(`ACCESO DOCTOR: Ingrese PIN para ${nombre.toUpperCase()}:`);
+            const pinIngresado = prompt(`ACCESO RESTRINGIDO: Ingrese PIN para ${nombre.toUpperCase()}:`);
 
             if (pinIngresado === pinsDoctores[nombre]) {
-                doctorValidado = nombre;
-                // Esto actualiza el nombre que saldrá en la impresión (PDF)
+                doctorVerificado = nombre; 
                 document.getElementById('doctorPrint').innerText = "DR. " + nombre.toUpperCase();
-                alert("✅ Acceso concedido al Dr. " + nombre);
+                alert("✅ Identidad confirmada, Dr. " + nombre);
             } else {
-                alert("❌ PIN Incorrecto");
+                alert("❌ PIN DE DOCTOR INCORRECTO.");
                 document.getElementById('selectDoctor').value = "";
-                doctorValidado = "";
+                doctorVerificado = "";
                 document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
             }
         };
 
+        // --- NAVEGACIÓN ---
         window.showTab = (t) => {
-            ['sectionHistoria', 'sectionBuscador', 'sectionReporte'].forEach(id => {
-                document.getElementById(id).style.display = (id === 'section' + t.charAt(0).toUpperCase() + t.slice(1)) ? 'block' : 'none';
-            });
+            document.getElementById('sectionHistoria').style.display = (t === 'historia') ? 'block' : 'none';
+            document.getElementById('sectionBuscador').style.display = (t === 'buscador') ? 'block' : 'none';
+            document.getElementById('sectionReporte').style.display = (t === 'reporte') ? 'block' : 'none';
+            
             document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500 text-[11px] px-2 uppercase font-bold");
             document.getElementById('tab' + (t === 'historia' ? 'H' : t === 'buscador' ? 'B' : 'R')).className = "tab-active py-2 text-[11px] px-2 uppercase font-bold";
+            
             if(t === 'reporte') cargarReporte();
+        };
+
+        // --- LÓGICA DE INSUMOS Y CÁLCULOS ---
+        const insumosFijosMedicos = [{ nombre: "Guantes de examen", costo: 0.50 }, { nombre: "Algodón y Alcohol", costo: 0.10 }, { nombre: "Hojas/Papelería", costo: 0.10 }];
+        const insumosBaseVacuna = [{ nombre: "Jeringa 3cc", costo: 0.25 }, { nombre: "Xeruk", costo: 0.10 }, { nombre: "Crema", costo: 0.10 }];
+        const recetas = {
+            "VACUNA SEXTUPLE": [{ nombre: "Vial Sextuple", costo: 8.50 }],
+            "VACUNA ANTIRRÁBICA": [{ nombre: "Vial Antirrábica", costo: 4.00 }],
+            "HEMATOLOGÍA COMPLETA": [{ nombre: "Tubo EDTA", costo: 1.00 }, { nombre: "Jeringa 3cc", costo: 0.25 }, { nombre: "Servicio Laboratorio", costo: 10.00 }],
+            "CONSULTA GENERAL": [{ nombre: "Baja lenguas/Insumos", costo: 0.40 }]
         };
 
         window.insertarServicio = (v) => {
             if (!v) return;
             const area = document.getElementById('hTratamiento');
             area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
-            const cuerpo = document.getElementById('listaInsumosDinamica');
             document.getElementById('contenedorInsumos').classList.remove('hidden');
+            const cuerpo = document.getElementById('listaInsumosDinamica');
 
-            let lista = [];
-            if (v.includes("VACUNA") || v.includes("CONSULTA") || v.includes("EUTANASIA") || v.includes("HEMATOLOGÍA")) lista = [...insumosFijosMedicos];
+            let lista = [...insumosFijosMedicos];
             if (v.includes("VACUNA")) lista = [...lista, ...insumosBaseVacuna];
             if (recetas[v]) lista = [...lista, ...recetas[v]];
-
-            const filaTitulo = document.createElement('tr');
-            filaTitulo.className = "bg-slate-100 border-b";
-            filaTitulo.innerHTML = `<td colspan="4" class="p-1 px-2 text-[10px] font-black text-blue-700 uppercase italic">📦 ${v}</td>`;
-            cuerpo.appendChild(filaTitulo);
 
             lista.forEach(insumo => {
                 const tr = document.createElement('tr');
@@ -379,311 +360,84 @@
                 cuerpo.appendChild(tr);
             });
             calcularTodo();
-            area.focus();
-        };
-
-        window.agregarInsumoManual = () => {
-            const nombre = document.getElementById('nombreExtra').value.trim();
-            const costo = parseFloat(document.getElementById('costoExtra').value) || 0;
-            if (!nombre) return;
-            const cuerpo = document.getElementById('listaInsumosDinamica');
-            const tr = document.createElement('tr');
-            tr.className = "bg-orange-50 border-b";
-            tr.innerHTML = `<td class="p-2 font-bold text-orange-800 italic">${nombre.toUpperCase()} (EXTRA)</td>
-                <td class="p-2 text-center"><input type="number" value="1" oninput="calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
-                <td class="p-2 text-center"><input type="number" value="${costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded"></td>
-                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>`;
-            cuerpo.appendChild(tr);
-            document.getElementById('nombreExtra').value = "";
-            document.getElementById('costoExtra').value = "";
-            calcularTodo();
         };
 
         window.calcularTodo = () => {
-    let totalI = 0;
-    // Selecciona todas las filas de la tabla de insumos
-    document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
-        const cInput = fila.querySelector('.i-cant');
-        const pInput = fila.querySelector('.i-cost');
-        
-        // El truco es el (valor || 0): si el campo está vacío, usa 0
-        if(cInput && pInput) {
-            const cant = parseFloat(cInput.value) || 0;
-            const cost = parseFloat(pInput.value) || 0;
-            totalI += (cant * cost);
-        }
-    });
-
-    // Actualiza el campo de gasto total de insumos
-    const gastoInsumosEl = document.getElementById('gastoInsumos');
-    if(gastoInsumosEl) gastoInsumosEl.value = totalI.toFixed(2);
-
-    // Calcula el neto basado en el precio de venta (bruto)
-    const precioVentaEl = document.getElementById('precioVenta');
-    const bruto = precioVentaEl ? (parseFloat(precioVentaEl.value) || 0) : 0;
-    const neto = bruto - totalI;
-
-    // Actualiza las etiquetas visuales
-    const lblNeto = document.getElementById('labelNeto');
-    const lblDr = document.getElementById('labelDr');
-    const lblTienda = document.getElementById('labelTienda');
-
-    if(lblNeto) lblNeto.innerText = `$${neto.toFixed(2)}`;
-    if(lblDr) lblDr.innerText = `$${(neto * 0.3).toFixed(2)}`;
-    if(lblTienda) lblTienda.innerText = `$${(neto * 0.7).toFixed(2)}`;
-};
-// --- CONFIGURACIÓN DE SEGURIDAD ---
-const pinsDoctores = {
-    "Darwin Sandoval": "9876", 
-    "Joan Silva": "0123"       
-};
-
-let doctorVerificado = ""; // Esta es la "llave" global
-
-// --- FUNCIÓN PARA VALIDAR AL DOCTOR ---
-window.validarAccesoDoctor = (nombre) => {
-    if (!nombre) {
-        doctorVerificado = "";
-        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-        return;
-    }
-
-    const pinIngresado = prompt(`ACCESO RESTRINGIDO: Ingrese PIN para ${nombre.toUpperCase()}:`);
-
-    if (pinIngresado === pinsDoctores[nombre]) {
-        doctorVerificado = nombre; 
-        document.getElementById('doctorPrint').innerText = "DR. " + nombre.toUpperCase();
-        alert("✅ Identidad confirmada.");
-    } else {
-        alert("❌ PIN INCORRECTO.");
-        document.getElementById('selectDoctor').value = "";
-        doctorVerificado = "";
-        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-    }
-};
-
-// --- FUNCIÓN DE GUARDADO ---
-window.guardarFirebase = async (imp) => {
-    if (window.event) window.event.preventDefault();
-
-    const doctorSeleccionado = document.getElementById('selectDoctor')?.value;
-    
-    // El candado: Verifica que el nombre y el PIN coincidan
-    if (!doctorSeleccionado || doctorSeleccionado !== doctorVerificado) {
-        alert("⚠️ SEGURIDAD: Debe seleccionar un doctor y validar su PIN.");
-        return;
-    }
-
-    try {
-        const campoNombre = document.getElementById('hNombre');
-        if(!campoNombre || !campoNombre.value) {
-            alert("Falta el nombre de la mascota");
-            return;
-        }
-
-        const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-        const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-        const neto = bruto - insu;
-
-        const datos = {
-            paciente: campoNombre.value.toUpperCase(),
-            especie: document.getElementById('hEspecie')?.value.toUpperCase() || "",
-            raza: document.getElementById('hRaza')?.value.toUpperCase() || "",
-            peso: document.getElementById('hPeso')?.value || "",
-            edad: document.getElementById('hEdad')?.value || "",
-            propietario: document.getElementById('hProp')?.value.toUpperCase() || "",
-            cedula: document.getElementById('hCI')?.value || "",
-            telefono: document.getElementById('hTlf')?.value || "",
-            correo: document.getElementById('hMail')?.value || "",
-            doctor: doctorVerificado, // Guarda el nombre validado
-            montoBruto: bruto,
-            montoInsumos: insu,
-            pagoDoctor: neto * 0.3,
-            gananciaTienda: neto * 0.7,
-            tratamiento: document.getElementById('hTratamiento')?.value || "",
-            fechaSimple: new Date().toLocaleDateString(),
-            timestamp: serverTimestamp() 
-        };
-
-        await addDoc(collection(db, "consultas"), datos);
-        
-        if(imp) { window.print(); }
-
-        alert("✅ CONSULTA REGISTRADA POR EL DR. " + doctorVerificado.toUpperCase());
-        location.reload(); 
-
-    } catch (error) {
-        console.error("Error:", error);
-        alert("❌ Error al guardar: " + error.message);
-    }
-};
-        // Variable global para guardar el cálculo temporalmente antes de enviarlo a la base de datos
-window.ultimoResumenCalculado = null;
-
-window.cargarReporte = async () => {
-    const lista = document.getElementById('listaReporte');
-    const hoy = new Date().toLocaleDateString();
-    lista.innerHTML = "<p class='p-4 italic text-gray-500'>Buscando datos de hoy...</p>";
-
-    try {
-        // Buscamos solo lo que se hizo HOY
-        const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
-        const querySnapshot = await getDocs(q);
-
-        let tBruto = 0, tInsumos = 0, tDocs = 0, tNeto = 0;
-        lista.innerHTML = ""; 
-
-        querySnapshot.forEach((doc) => {
-            const d = doc.data();
-            tBruto += d.montoBruto || 0;
-            tInsumos += d.montoInsumos || 0;
-            tDocs += d.pagoDoctor || 0;
-            tNeto += d.gananciaTienda || 0;
-
-            // Listado visual rápido
-            const item = document.createElement('div');
-            item.className = "flex justify-between p-2 border-b text-[10px]";
-            item.innerHTML = `<span><b>${d.paciente}</b> (Dr. ${d.doctor})</span><span>$${d.montoBruto.toFixed(2)}</span>`;
-            lista.appendChild(item);
-        });
-
-        // Actualizamos los cuadros de la pantalla
-        document.getElementById('repBruto').innerText = `$${tBruto.toFixed(2)}`;
-        document.getElementById('repGastos').innerText = `$${tInsumos.toFixed(2)}`;
-        document.getElementById('repDocs').innerText = `$${tDocs.toFixed(2)}`;
-        document.getElementById('repNeto').innerText = `$${tNeto.toFixed(2)}`;
-
-        // Preparamos el paquete para el almacenamiento permanente
-        window.ultimoResumenCalculado = {
-            fecha: hoy,
-            totalBruto: tBruto,
-            totalDocs: tDocs,
-            netoAvipet: tNeto,
-            totalInsumos: tInsumos,
-            creadoEl: new Date().toLocaleString()
-        };
-
-    } catch (error) {
-        console.error("Error:", error);
-        alert("No se pudo cargar el reporte diario.");
-    }
-};
-        window.guardarResumenDelDia = async () => {
-    // Verificamos que haya algo que guardar
-    if (!window.ultimoResumenCalculado || window.ultimoResumenCalculado.totalBruto === 0) {
-        alert("⚠️ Primero debe pulsar 'ACTUALIZAR' para calcular los montos de hoy.");
-        return;
-    }
-
-    if (!confirm("¿Desea GUARDAR permanentemente el resumen de hoy en el historial de caja?")) return;
-
-    try {
-        // Guardamos en una nueva colección "cierres_caja"
-        await addDoc(collection(db, "cierres_caja"), {
-            ...window.ultimoResumenCalculado,
-            timestamp: serverTimestamp()
-        });
-        
-        alert("✅ CIERRE ALMACENADO. Los datos de hoy ya están en el historial permanente.");
-        
-    } catch (error) {
-        alert("Error al almacenar el cierre: " + error.message);
-    }
-};
-
-window.validarAccesoDoctor = (nombre) => {
-    if (!nombre) {
-        doctorVerificado = "";
-        window.actualizarNombreDoctor("");
-        return;
-    }
-
-    const pinIngresado = prompt(`Ingrese PIN de acceso para el ${nombre.toUpperCase()}:`);
-
-    if (pinIngresado === pinsDoctores[nombre]) {
-        doctorVerificado = nombre;
-        window.actualizarNombreDoctor(nombre); // Esto actualiza el texto de impresión
-        alert("✅ Acceso concedido");
-    } else {
-        alert("❌ PIN Incorrecto o cancelado. Acceso denegado.");
-        document.getElementById('selectDoctor').value = "";
-        doctorVerificado = "";
-        window.actualizarNombreDoctor("");
-    }
-};
-
-// Asegúrate de que esta función esté definida como window para que sea global
-window.actualizarNombreDoctor = (n) => { 
-    const el = document.getElementById('doctorPrint');
-    if(el) el.innerText = n ? "DR. " + n.toUpperCase() : "SELECCIONE DOCTOR"; 
-};
-
-// ... (El resto de tus funciones guardarFirebase, buscar e informar están perfectas) ...
-        window.buscarPorCedula = async () => {
-            const ci = document.getElementById('searchCI').value.trim();
-            const res = document.getElementById('resultadosBusqueda');
-            const q = query(collection(db, "consultas"), where("cedula", "==", ci));
-            const snap = await getDocs(q);
-            res.innerHTML = "";
-            snap.forEach(d => {
-                const v = d.data();
-                res.innerHTML += `<div class="p-4 border bg-white rounded-xl shadow-sm text-[11px] mb-2"><b>${v.fechaSimple} - ${v.doctor}</b><br><span>${v.paciente}</span><p class="mt-2 italic">${v.tratamiento}</p></div>`;
+            let totalI = 0;
+            document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
+                const c = fila.querySelector('.i-cant'), p = fila.querySelector('.i-cost');
+                if(c && p) totalI += (parseFloat(c.value) || 0) * (parseFloat(p.value) || 0);
             });
+            document.getElementById('gastoInsumos').value = totalI.toFixed(2);
+            const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+            const neto = bruto - totalI;
+            document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
+            document.getElementById('labelDr').innerText = `$${(neto * 0.3).toFixed(2)}`;
+            document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
         };
 
+        // --- GUARDAR CONSULTA ---
+        window.guardarFirebase = async (imp) => {
+            if (!doctorVerificado) {
+                alert("⚠️ Debe validar un doctor con su PIN antes de guardar.");
+                return;
+            }
+            try {
+                const nombreMascota = document.getElementById('hNombre').value;
+                if(!nombreMascota) return alert("Nombre de mascota obligatorio");
+
+                const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+                const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+                const neto = bruto - insu;
+
+                const datos = {
+                    paciente: nombreMascota.toUpperCase(),
+                    doctor: doctorVerificado,
+                    montoBruto: bruto,
+                    montoInsumos: insu,
+                    pagoDoctor: neto * 0.3,
+                    gananciaTienda: neto * 0.7,
+                    fechaSimple: new Date().toLocaleDateString(),
+                    timestamp: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "consultas"), datos);
+                if(imp) window.print();
+                alert("✅ Registrado con éxito");
+                location.reload();
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        // --- REPORTES Y CIERRE ---
         window.cargarReporte = async () => {
+            const lista = document.getElementById('listaReporte');
             const hoy = new Date().toLocaleDateString();
-            const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
-            const snap = await getDocs(q);
-            let tB = 0, tI = 0, tD = 0, tT = 0;
-            const l = document.getElementById('listaReporte');
-            l.innerHTML = "";
-            snap.forEach(d => {
-                const v = d.data();
-                tB += v.montoBruto; tI += v.montoInsumos; tD += v.pagoDoctor; tT += v.gananciaTienda;
-                l.innerHTML += `<div class="p-2 flex justify-between bg-slate-50 mb-1 rounded"><span>${v.paciente}</span><span>$${v.montoBruto}</span></div>`;
-            });
-            document.getElementById('repBruto').innerText = `$${tB.toFixed(2)}`;
-            document.getElementById('repGastos').innerText = `$${tI.toFixed(2)}`;
-            document.getElementById('repDocs').innerText = `$${tD.toFixed(2)}`;
-            document.getElementById('repNeto').innerText = `$${tT.toFixed(2)}`;
+            lista.innerHTML = "Cargando...";
+            try {
+                const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
+                const snap = await getDocs(q);
+                let b = 0, i = 0, d = 0, n = 0;
+                lista.innerHTML = "";
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    b += data.montoBruto; i += data.montoInsumos; d += data.pagoDoctor; n += data.gananciaTienda;
+                    lista.innerHTML += `<div class="p-1 flex justify-between"><span>${data.paciente} (${data.doctor})</span><b>$${data.montoBruto}</b></div>`;
+                });
+                document.getElementById('repBruto').innerText = `$${b.toFixed(2)}`;
+                document.getElementById('repGastos').innerText = `$${i.toFixed(2)}`;
+                document.getElementById('repDocs').innerText = `$${d.toFixed(2)}`;
+                document.getElementById('repNeto').innerText = `$${n.toFixed(2)}`;
+                window.ultimoResumenCalculado = { fecha: hoy, totalBruto: b, netoAvipet: n };
+            } catch (e) { console.log(e); }
         };
 
-        window.actualizarNombreDoctor = (n) => { document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase(); };
-       window.autocompletarPorCedula = async (ci) => {
-    if (!ci || ci.length < 4) return; 
-
-    try {
-        const q = query(collection(db, "consultas"), where("cedula", "==", ci));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-            // Buscamos el registro más reciente (el último de la lista)
-            const docs = querySnapshot.docs.map(d => d.data());
-            const doc = docs[docs.length - 1]; 
-            
-            document.getElementById('hProp').value = doc.propietario || "";
-            document.getElementById('hTlf').value = doc.telefono || "";
-            document.getElementById('hMail').value = doc.correo || "";
-            document.getElementById('hNombre').value = doc.paciente || "";
-            document.getElementById('hEspecie').value = doc.especie || "";
-            document.getElementById('hRaza').value = doc.raza || "";
-            document.getElementById('hPeso').value = doc.peso || "";
-            document.getElementById('hEdad').value = doc.edad || "";
-            
-            // Feedback visual: el campo brilla en verde si encontró datos
-            document.getElementById('hCI').classList.add('bg-green-100');
-            setTimeout(() => document.getElementById('hCI').classList.remove('bg-green-100'), 1000);
-        }
-    } catch (e) {
-        console.error("Error al autocompletar:", e);
-    }
-};
+        window.guardarResumenDelDia = async () => {
+            if(!window.ultimoResumenCalculado) return alert("Cargue los datos primero");
+            try {
+                await addDoc(collection(db, "cierres_caja"), { ...window.ultimoResumenCalculado, timestamp: serverTimestamp() });
+                alert("✅ Cierre guardado");
+            } catch (e) { alert(e.message); }
+        };
     </script>
 </body>
 </html>
-
-
-
-
-
