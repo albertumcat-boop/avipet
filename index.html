@@ -75,7 +75,10 @@
                     <div class="header-box italic">Datos del Propietario</div>
                     <div><label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label><input id="hProp" class="border-b w-full uppercase"></div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700"></div>
+                        <div>
+    <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
+    <input id="hCI" onblur="autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700">
+</div>
                         <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
                     </div>
                     <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
@@ -351,8 +354,15 @@
     const neto = bruto - insu;
 
     const datos = {
-        paciente: pac.toUpperCase(),
+        paciente: document.getElementById('hNombre').value.toUpperCase(),
+        especie: document.getElementById('hEspecie').value.toUpperCase(),
+        raza: document.getElementById('hRaza').value.toUpperCase(),
+        peso: document.getElementById('hPeso').value,
+        edad: document.getElementById('hEdad').value,
+        propietario: document.getElementById('hProp').value.toUpperCase(),
         cedula: document.getElementById('hCI').value,
+        telefono: document.getElementById('hTlf').value,
+        correo: document.getElementById('hMail').value,
         doctor: document.getElementById('selectDoctor').value,
         montoBruto: bruto,
         montoInsumos: insu,
@@ -360,7 +370,7 @@
         gananciaTienda: neto * 0.7,
         tratamiento: document.getElementById('hTratamiento').value,
         fechaSimple: new Date().toLocaleDateString(),
-        timestamp: serverTimestamp() // Asegúrate que 'serverTimestamp' esté importado arriba
+        timestamp: serverTimestamp()
     };
 
     try {
@@ -411,9 +421,39 @@
         };
 
         window.actualizarNombreDoctor = (n) => { document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase(); };
+       window.autocompletarPorCedula = async (ci) => {
+    if (!ci || ci.length < 4) return; 
+
+    try {
+        const q = query(collection(db, "consultas"), where("cedula", "==", ci));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            // Buscamos el registro más reciente (el último de la lista)
+            const docs = querySnapshot.docs.map(d => d.data());
+            const doc = docs[docs.length - 1]; 
+            
+            document.getElementById('hProp').value = doc.propietario || "";
+            document.getElementById('hTlf').value = doc.telefono || "";
+            document.getElementById('hMail').value = doc.correo || "";
+            document.getElementById('hNombre').value = doc.paciente || "";
+            document.getElementById('hEspecie').value = doc.especie || "";
+            document.getElementById('hRaza').value = doc.raza || "";
+            document.getElementById('hPeso').value = doc.peso || "";
+            document.getElementById('hEdad').value = doc.edad || "";
+            
+            // Feedback visual: el campo brilla en verde si encontró datos
+            document.getElementById('hCI').classList.add('bg-green-100');
+            setTimeout(() => document.getElementById('hCI').classList.remove('bg-green-100'), 1000);
+        }
+    } catch (e) {
+        console.error("Error al autocompletar:", e);
+    }
+};
     </script>
 </body>
 </html>
+
 
 
 
