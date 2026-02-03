@@ -245,36 +245,31 @@
 
     </main>
 
-    <script type="module">
-        import { db } from './firebase-config.js';
-        import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        // --- DICCIONARIO DE INSUMOS POR SERVICIO ---
+   // --- 1. CONFIGURACIÓN DE INSUMOS BASE ---
+// Estos se cargan siempre en servicios médicos
+const insumosFijosMedicos = [
+    { nombre: "Guantes de examen", costo: 0.50 },
+    { nombre: "Algodón y Alcohol", costo: 0.10 },
+    { nombre: "Hojas/Papelería", costo: 0.10 }
+];
+
+// Estos se cargan solo si el servicio es una VACUNA
+const insumosBaseVacuna = [
+    { nombre: "Jeringa 3cc", costo: 0.25 },
+    { nombre: "Xeruk", costo: 0.10 },
+    { nombre: "Crema", costo: 0.10 }
+];
+
+// --- 2. DICCIONARIO DE SERVICIOS (Solo lo único de cada uno) ---
 const recetas = {
-    "VACUNA SEXTUPLE": [
-        { nombre: "Vial Sextuple", costo: 8.50 },
-        { nombre: "Guantes", costo: 0.50 },
-        { nombre: "Jeringa 3cc", costo: 0.25 },
-        { nombre: "Algodón y Alcohol", costo: 0.10 }, // Agregada coma
-        { nombre: "hojas", costo: 0.10 },             // Agregada coma
-        { nombre: "xeruk", costo: 0.10 },             // Agregada coma
-        { nombre: "crema", costo: 0.10 }
-    ],
-    "VACUNA ANTIRRÁBICA": [
-        { nombre: "Vial Antirrábica", costo: 4.00 },
-        { nombre: "Guantes", costo: 0.50 },
-        { nombre: "Jeringa 3cc", costo: 0.25 },
-        { nombre: "Algodón y Alcohol", costo: 0.10 }, // Agregada coma
-        { nombre: "hojas", costo: 0.10 },             // Agregada coma
-        { nombre: "xeruk", costo: 0.10 },             // Agregada coma
-        { nombre: "crema", costo: 0.10 }
-    ],
+    "VACUNA SEXTUPLE": [{ nombre: "Vial Sextuple", costo: 8.50 }],
+    "VACUNA ANTIRRÁBICA": [{ nombre: "Vial Antirrábica", costo: 4.00 }],
     "HEMATOLOGÍA COMPLETA": [
         { nombre: "Tubo EDTA", costo: 1.00 },
         { nombre: "Jeringa 3cc", costo: 0.25 },
         { nombre: "Servicio Laboratorio", costo: 10.00 }
     ],
     "CONSULTA GENERAL": [
-        { nombre: "Guantes de examen", costo: 0.60 },
         { nombre: "Baja lenguas/Insumos", costo: 0.40 }
     ],
     "EUTANASIA HASTA 5KG": [
@@ -333,51 +328,65 @@ window.agregarInsumoManual = () => {
             if(t === 'reporte') cargarReporte();
         };
 
-   window.insertarServicio = (v) => {
+  window.insertarServicio = (v) => {
     if (!v) return;
     
-    // 1. Escribir en el cuadro de historia clínica
+    // Escribir en la historia clínica (Textarea)
     const area = document.getElementById('hTratamiento');
     area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
     
-    // 2. Desglosar insumos en la tabla
-    if (recetas[v]) {
-        const tabla = document.getElementById('contenedorInsumos');
-        const cuerpo = document.getElementById('listaInsumosDinamica');
-        tabla.classList.remove('hidden'); 
+    const tabla = document.getElementById('contenedorInsumos');
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    tabla.classList.remove('hidden');
 
-        // --- NUEVO: FILA DE ENCABEZADO PARA SEPARAR ---
+    // ARMAMOS LA LISTA SEGÚN EL TIPO DE SERVICIO
+    let listaFinal = [];
+
+    // A. Si es medicina básica, agregamos los Fijos (Guantes, etc.)
+    if (v.includes("VACUNA") || v.includes("CONSULTA") || v.includes("EUTANASIA") || v.includes("HEMATOLOGÍA")) {
+        listaFinal = [...insumosFijosMedicos];
+    }
+
+    // B. Si es específicamente una VACUNA, sumamos el kit de inyección
+    if (v.includes("VACUNA")) {
+        listaFinal = [...listaFinal, ...insumosBaseVacuna];
+    }
+
+    // C. Sumamos los insumos únicos definidos en el diccionario 'recetas'
+    if (recetas[v]) {
+        listaFinal = [...listaFinal, ...recetas[v]];
+    }
+
+    // D. DIBUJAMOS EN LA TABLA
+    if (listaFinal.length > 0) {
+        // Fila de encabezado para separar servicios
         const filaTitulo = document.createElement('tr');
-        filaTitulo.className = "bg-slate-100 border-b-2 border-blue-200";
-        filaTitulo.innerHTML = `
-            <td colspan="4" class="p-1 px-2 text-[10px] font-black text-blue-700 uppercase italic">
-                📦 Bloque: ${v}
-            </td>
-        `;
+        filaTitulo.className = "bg-slate-100 border-b";
+        filaTitulo.innerHTML = `<td colspan="4" class="p-1 px-2 text-[10px] font-black text-blue-700 uppercase italic">📦 Bloque: ${v}</td>`;
         cuerpo.appendChild(filaTitulo);
 
-        // --- INSUMOS DEL SERVICIO ---
-        recetas[v].forEach(insumo => {
+        // Filas de insumos individuales
+        listaFinal.forEach(insumo => {
             const tr = document.createElement('tr');
             tr.className = "border-b border-blue-50";
             tr.innerHTML = `
                 <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
                 <td class="p-2 text-center">
-                    <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-12 text-center border rounded font-bold text-blue-600 bg-white">
+                    <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded bg-white">
                 </td>
                 <td class="p-2 text-center">
-                    <input type="number" value="${insumo.costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded font-bold text-slate-600 bg-white">
+                    <input type="number" value="${insumo.costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded bg-white">
                 </td>
                 <td class="p-2 text-center text-red-500 font-bold cursor-pointer hover:bg-red-50" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
             `;
             cuerpo.appendChild(tr);
         });
         
+        // Ejecutamos cálculo financiero inmediatamente
         calcularTodo();
     }
     area.focus();
 };
-
      window.calcularTodo = () => {
     let totalInsumos = 0;
     
@@ -408,37 +417,38 @@ window.agregarInsumoManual = () => {
     document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
 };
 
-        window.guardarFirebase = async (imp) => {
-            const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-            const neto = bruto - insumos;
-            const data = {
-                cedula: document.getElementById('hCI').value.trim(),
-                paciente: document.getElementById('hNombre').value.toUpperCase(),
-                especie: document.getElementById('hEspecie').value.toUpperCase(),
-                raza: document.getElementById('hRaza').value.toUpperCase(),
-                edad: document.getElementById('hEdad').value.toUpperCase(),
-                propietario: document.getElementById('hProp').value.toUpperCase(),
-                telefono: document.getElementById('hTlf').value,
-                correo: document.getElementById('hMail').value,
-                tratamiento: document.getElementById('hTratamiento').value,
-                doctor: document.getElementById('selectDoctor').value,
-                montoBruto: bruto,
-                montoInsumos: insumos,
-                pagoDoctor: neto * 0.3,
-                gananciaTienda: neto * 0.7,
-                fechaSimple: new Date().toLocaleDateString(),
-                timestamp: serverTimestamp()
-            };
-            if(!data.cedula || !data.paciente) return alert("Falta Cédula o Nombre");
-            try {
-                await addDoc(collection(db, "consultas"), data);
-                if(imp) { window.print(); }
-                alert("✓ GUARDADO");
-                location.reload(); 
-            } catch (e) { alert("Error al guardar"); }
-        };
+      window.guardarFirebase = async (imp) => {
+    // ... (tus validaciones de nombre, especie, etc.)
+    
+    const datos = {
+        paciente: document.getElementById('pNombre').value,
+        doctor: document.getElementById('pDoctor').value, // Darwin o Joan
+        montoBruto: parseFloat(document.getElementById('precioVenta').value) || 0,
+        montoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
+        // ... el resto de tus campos
+        fechaSimple: new Date().toLocaleDateString(),
+        timestamp: serverTimestamp()
+    };
 
+    try {
+        await addDoc(collection(db, "consultas"), datos);
+        
+        if(imp) window.print();
+
+        alert("✅ REGISTRO GUARDADO CON ÉXITO");
+
+        // --- ESTO ES LO QUE DEBES AGREGAR PARA LIMPIAR ---
+        document.getElementById('listaInsumosDinamica').innerHTML = ""; // Vacía la tabla
+        document.getElementById('contenedorInsumos').classList.add('hidden'); // Oculta la tabla
+        document.getElementById('fConsultas').reset(); // Limpia el formulario
+        document.getElementById('labelNeto').innerText = "$0.00";
+        // ------------------------------------------------
+        
+    } catch (e) {
+        console.error("Error: ", e);
+        alert("❌ Error al guardar");
+    }
+};
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
@@ -477,6 +487,7 @@ window.agregarInsumoManual = () => {
     </script>
 </body>
 </html>
+
 
 
 
