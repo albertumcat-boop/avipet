@@ -28,10 +28,10 @@
 <body class="bg-slate-50 font-sans text-slate-800">
 
     <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-xs text-center">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-xs text-center border-t-4 border-blue-600">
             <h1 class="text-3xl font-black mb-2 text-blue-600 uppercase">Avipet</h1>
             <input type="password" id="pinInput" placeholder="PIN" class="w-full p-4 border-2 rounded-xl mb-4 text-center text-2xl font-bold">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold uppercase">Entrar</button>
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold uppercase shadow-lg">Entrar</button>
         </div>
     </div>
 
@@ -43,14 +43,14 @@
             <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 text-[11px] px-2 uppercase">Finanzas</button>
         </nav>
 
-        <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border rounded-xl print-area">
+        <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
             
             <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg">A</div>
                     <div>
                         <h1 class="text-xl font-black">AVIPET</h1>
-                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print text-xs font-bold text-blue-600">
+                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print text-xs font-bold text-blue-600 bg-transparent">
                             <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
                             <option value="Joan Silva">DR. JOAN SILVA</option>
                         </select>
@@ -62,106 +62,142 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
                 <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-                    <div class="header-box italic">Ficha del Paciente</div>
+                    <div class="header-box italic">Paciente</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="col-span-2"><label class="text-[9px] font-bold text-slate-400">MASCOTA</label><input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
                     </div>
                 </div>
                 <div class="p-3 space-y-2">
-                    <div class="header-box italic">Responsable</div>
+                    <div class="header-box italic">Propietario</div>
                     <div><label class="text-[9px] font-bold text-slate-400">NOMBRE</label><input id="hProp" class="border-b w-full uppercase"></div>
                     <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700"></div>
+                    <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
                 </div>
             </div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
                     <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
-                        <option value="">-- SELECCIONAR SERVICIOS --</option>
+                        <option value="">-- SELECCIONE SERVICIO (TODOS) --</option>
                         <optgroup label="CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
-                            <option value="CONSULTA CAMADA">CONSULTA CAMADA</option>
+                            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+                            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+                            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
                         </optgroup>
                         <optgroup label="VACUNAS">
                             <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
                             <option value="VACUNA PUPPY">VACUNA PUPPY</option>
                             <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+                            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC</option>
                             <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+                            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+                            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
                         </optgroup>
-                        <optgroup label="OTROS">
-                            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA</option>
-                            <option value="EUTANASIA CON DISPOSICIÓN">EUTANASIA CON DISPOSICIÓN</option>
+                        <optgroup label="LABORATORIO">
+                            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+                            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+                            <option value="PERFIL 20">PERFIL 20</option>
+                            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
+                            <option value="DISTEMPER">DISTEMPER</option>
+                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
+                            <option value="FILARIASIS">FILARIASIS</option>
+                            <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
+                            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
+                            <option value="CITOLOGIA">CITOLOGIA</option>
+                            <option value="RASPADO PIEL">RASPADO PIEL</option>
+                        </optgroup>
+                        <optgroup label="EUTANASIA">
+                            <option value="EUTANASIA HASTA 5KG CON DISPOSICION">HASTA 5KG CON DISPOSICION</option>
+                            <option value="EUTANASIA HASTA 15KG CON DISPOSICION">HASTA 15KG CON DISPOSICION</option>
+                            <option value="EUTANASIA HASTA 25KG CON DISPOSICION">HASTA 25KG CON DISPOSICION</option>
+                            <option value="EUTANASIA HASTA 35KG CON DISPOSICION">HASTA 35KG CON DISPOSICION</option>
+                        </optgroup>
+                        <optgroup label="REFERIDOS">
+                            <option value="REFERIDO: EXAMEN DE HECES">REFERIDO HECES</option>
+                            <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO ORINA</option>
+                            <option value="REFERIDO: CULTIVOS">REFERIDO CULTIVOS</option>
                         </optgroup>
                     </select>
                 </div>
-                <textarea id="hTratamiento" class="w-full h-48 p-3 text-sm" placeholder="Detalles médicos..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-64 p-3 text-sm" placeholder="El tratamiento se verá aquí..."></textarea>
             </div>
 
-            <div class="no-print bg-slate-900 p-4 rounded-xl text-white space-y-4">
-                <h3 class="text-center text-[10px] font-black tracking-widest text-blue-400 uppercase">Calculadora de Insumos y Ganancias</h3>
-                <div class="grid grid-cols-2 gap-4">
+            <div class="no-print bg-slate-900 p-5 rounded-2xl text-white shadow-xl border-b-8 border-blue-600">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="text-[10px] block text-slate-400 font-bold uppercase">Cobro Bruto ($)</label>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-2xl font-black text-white border-b-2 border-blue-500 w-full">
+                        <label class="text-[10px] text-blue-400 font-black uppercase tracking-tighter">Cobro Bruto (Cliente)</label>
+                        <div class="flex items-center border-b-2 border-slate-600 focus-within:border-blue-500">
+                            <span class="text-xl font-bold mr-1">$</span>
+                            <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-3xl font-black py-1">
+                        </div>
                     </div>
                     <div>
-                        <label class="text-[10px] block text-slate-400 font-bold uppercase">Gasto Insumos ($)</label>
-                        <input type="number" id="gastoInsumos" value="0" oninput="calcularTodo()" class="text-2xl font-black text-red-400 border-b-2 border-red-500 w-full">
+                        <label class="text-[10px] text-red-400 font-black uppercase tracking-tighter">Gasto en Insumos</label>
+                        <div class="flex items-center border-b-2 border-slate-600 focus-within:border-red-500">
+                            <span class="text-xl font-bold mr-1">$</span>
+                            <input type="number" id="gastoInsumos" value="0" oninput="calcularTodo()" class="text-3xl font-black py-1">
+                        </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 pt-2 text-center">
-                    <div class="bg-slate-800 p-2 rounded-lg">
-                        <p class="text-[9px] text-slate-400">NETO (Limpio)</p>
-                        <p id="labelNeto" class="text-lg font-black text-emerald-400">$0.00</p>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">Utilidad Neta</p>
+                        <p id="labelNeto" class="text-xl font-black text-emerald-400">$0.00</p>
                     </div>
-                    <div class="bg-slate-800 p-2 rounded-lg">
-                        <p class="text-[9px] text-slate-400">DR (30%)</p>
-                        <p id="labelDr" class="text-lg font-black text-slate-200">$0.00</p>
+                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">Pago Dr (30%)</p>
+                        <p id="labelDr" class="text-xl font-black text-white">$0.00</p>
                     </div>
-                    <div class="bg-slate-800 p-2 rounded-lg">
-                        <p class="text-[9px] text-slate-400">AVIPET (70%)</p>
-                        <p id="labelTienda" class="text-lg font-black text-slate-200">$0.00</p>
+                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">Tienda (70%)</p>
+                        <p id="labelTienda" class="text-xl font-black text-blue-400">$0.00</p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="guardarFirebase(false)" class="bg-slate-700 py-3 rounded-lg font-bold text-xs uppercase">Solo Guardar</button>
-                    <button onclick="guardarFirebase(true)" class="bg-blue-600 py-3 rounded-lg font-bold text-xs uppercase">Guardar e Imprimir</button>
+
+                <div class="grid grid-cols-2 gap-4 mt-6">
+                    <button onclick="guardarFirebase(false)" class="bg-slate-700 py-4 rounded-xl font-black uppercase text-xs hover:bg-slate-600 transition-all">Solo Guardar</button>
+                    <button onclick="guardarFirebase(true)" class="bg-blue-600 py-4 rounded-xl font-black uppercase text-xs shadow-lg hover:bg-blue-500 transition-all">Guardar e Imprimir</button>
                 </div>
             </div>
         </section>
 
         <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black text-center mb-6 uppercase tracking-widest">Estado Financiero Consolidado</h2>
+            <h2 class="font-black text-center mb-6 uppercase text-blue-900 tracking-widest">Cierre de Caja</h2>
             <div id="listaReporte" class="divide-y mb-6 text-[10px]"></div>
             
-            <div class="space-y-2">
-                <div class="flex justify-between p-3 bg-slate-100 rounded-lg">
-                    <span class="font-bold uppercase text-slate-600">Total Ingreso Bruto:</span>
-                    <span id="repBruto" class="font-black text-slate-900">$0.00</span>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="p-3 bg-slate-100 rounded-lg">
+                    <p class="text-[9px] font-bold text-slate-500 uppercase">Total Bruto</p>
+                    <p id="repBruto" class="text-xl font-black">$0.00</p>
                 </div>
-                <div class="flex justify-between p-3 bg-red-50 rounded-lg">
-                    <span class="font-bold uppercase text-red-600">Total Gastos Insumos:</span>
-                    <span id="repGastos" class="font-black text-red-700">$0.00</span>
+                <div class="p-3 bg-red-50 rounded-lg">
+                    <p class="text-[9px] font-bold text-red-500 uppercase">Total Insumos</p>
+                    <p id="repGastos" class="text-xl font-black">$0.00</p>
                 </div>
-                <div class="flex justify-between p-3 bg-blue-50 rounded-lg">
-                    <span class="font-bold uppercase text-blue-600">Total Pago Doctores:</span>
-                    <span id="repDocs" class="font-black text-blue-700">$0.00</span>
+                <div class="p-3 bg-blue-50 rounded-lg">
+                    <p class="text-[9px] font-bold text-blue-500 uppercase">Pago Doctores</p>
+                    <p id="repDocs" class="text-xl font-black">$0.00</p>
                 </div>
-                <div class="flex justify-between p-4 bg-emerald-600 text-white rounded-xl shadow-xl">
-                    <span class="font-black uppercase">Ganancia Neta Tienda:</span>
-                    <span id="repNeto" class="text-2xl font-black">$0.00</span>
+                <div class="p-3 bg-emerald-50 rounded-lg border-2 border-emerald-500">
+                    <p class="text-[9px] font-bold text-emerald-600 uppercase">Utilidad AVIPET</p>
+                    <p id="repNeto" class="text-xl font-black text-emerald-700">$0.00</p>
                 </div>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-6 bg-slate-900 text-white py-4 rounded-xl font-black uppercase">Actualizar Cierre</button>
+            <button onclick="cargarReporte()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase">Actualizar Cierre</button>
         </section>
 
         <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black mb-4 uppercase">Buscador</h2>
-            <input type="text" id="searchCI" placeholder="Cédula del Propietario..." class="w-full p-4 border-2 rounded-xl mb-4 font-bold">
-            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Buscar Historial</button>
+            <h2 class="font-black mb-4 uppercase">Buscador de Historias</h2>
+            <input type="text" id="searchCI" placeholder="Cédula del Propietario..." class="w-full p-4 border-2 rounded-xl mb-4 font-bold outline-none focus:border-blue-600">
+            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg">Buscar</button>
             <div id="resultadosBusqueda" class="mt-4 space-y-2"></div>
         </section>
 
@@ -169,7 +205,7 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, query, where, getDocs, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
@@ -183,8 +219,8 @@
             ['sectionHistoria', 'sectionBuscador', 'sectionReporte'].forEach(id => {
                 document.getElementById(id).style.display = (id === 'section' + t.charAt(0).toUpperCase() + t.slice(1)) ? 'block' : 'none';
             });
-            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-400 text-[11px] px-2");
-            document.getElementById('tab' + (t === 'historia' ? 'H' : t === 'buscador' ? 'B' : 'R')).className = "tab-active py-2 text-[11px] px-2";
+            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-400 text-[11px] px-2 uppercase");
+            document.getElementById('tab' + (t === 'historia' ? 'H' : t === 'buscador' ? 'B' : 'R')).className = "tab-active py-2 text-[11px] px-2 uppercase";
             if(t === 'reporte') cargarReporte();
         };
 
@@ -217,21 +253,20 @@
                 doctor: document.getElementById('selectDoctor').value,
                 montoBruto: bruto,
                 montoInsumos: insumos,
-                montoNeto: neto,
                 pagoDoctor: neto * 0.3,
                 gananciaTienda: neto * 0.7,
                 fechaSimple: new Date().toLocaleDateString(),
                 timestamp: serverTimestamp()
             };
 
-            if(!data.cedula || !data.paciente) return alert("Faltan datos del paciente/dueño");
+            if(!data.cedula || !data.paciente) return alert("Cédula y Mascota son obligatorios");
 
             try {
                 await addDoc(collection(db, "consultas"), data);
                 if(imp) { window.print(); }
                 alert("✓ GUARDADO CORRECTAMENTE");
-                location.reload(); // Reinicia para nueva consulta
-            } catch (e) { alert("Error al guardar"); }
+                location.reload(); 
+            } catch (e) { alert("Error al conectar con la nube"); }
         };
 
         window.buscarPorCedula = async () => {
@@ -242,9 +277,10 @@
             const q = query(collection(db, "consultas"), where("cedula", "==", ci));
             const snap = await getDocs(q);
             res.innerHTML = "";
+            if(snap.empty) { res.innerHTML = "No hay registros."; return; }
             snap.forEach(d => {
                 const v = d.data();
-                res.innerHTML += `<div class="p-3 border bg-white rounded shadow-sm text-[11px]"><b>${v.fechaSimple} - ${v.doctor}</b><br>${v.tratamiento}</div>`;
+                res.innerHTML += `<div class="p-4 border-l-4 border-blue-600 bg-white rounded shadow-sm text-[11px] mb-2"><b>${v.fechaSimple} - ${v.doctor}</b><br><span class="text-blue-600 font-bold">${v.paciente}</span><br><p class="whitespace-pre-wrap mt-1">${v.tratamiento}</p></div>`;
             });
         };
 
@@ -262,7 +298,7 @@
                 tInsumos += v.montoInsumos;
                 tDocs += v.pagoDoctor;
                 tTienda += v.gananciaTienda;
-                l.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente}</span><span>Bruto: $${v.montoBruto} | Insumo: $${v.montoInsumos}</span></div>`;
+                l.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente} (${v.doctor})</span><span>$${v.montoBruto}</span></div>`;
             });
 
             document.getElementById('repBruto').innerText = `$${tBruto.toFixed(2)}`;
@@ -272,7 +308,6 @@
         };
         
         window.actualizarNombreDoctor = (n) => { document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase(); };
-
     </script>
 </body>
 </html>
