@@ -446,35 +446,86 @@
         } catch (e) { alert("Error: " + e.message); }
     };
 
-    window.buscarPorCedula = async () => {
-        const ci = document.getElementById('searchCI').value.trim();
-        const res = document.getElementById('resultadosBusqueda');
-        if(!ci) return;
-        res.innerHTML = "Buscando...";
+   window.buscarPorCedula = async () => {
+    const ci = document.getElementById('searchCI').value.trim();
+    const res = document.getElementById('resultadosBusqueda');
+    if(!ci) return alert("Ingrese una cédula");
+    
+    res.innerHTML = "<p class='text-center animate-pulse text-blue-600 font-bold'>Buscando...</p>";
+    
+    try {
         const q = query(collection(db, "consultas"), where("cedula", "==", ci));
         const snap = await getDocs(q);
         res.innerHTML = "";
+
+        if (snap.empty) {
+            res.innerHTML = "<p class='text-center text-red-500 font-bold p-4'>No hay registros.</p>";
+            return;
+        }
+
         snap.forEach(doc => {
             const d = doc.data();
             const id = doc.id;
-            let tabla = "";
-            (d.listaDetalladaInsumos || []).forEach(i => {
-                tabla += `<tr><td>${i.nombre}</td><td class="text-center">${i.cant}</td><td class="text-right">$${i.precio.toFixed(2)}</td></tr>`;
-            });
+            
+            // Construimos la tabla de insumos
+            let tablaInsumos = "";
+            const lista = d.listaDetalladaInsumos || [];
+            
+            if (lista.length > 0) {
+                lista.forEach(i => {
+                    tablaInsumos += `
+                        <tr class="border-b border-slate-50">
+                            <td class="py-1">${i.nombre}</td>
+                            <td class="text-center">${i.cant}</td>
+                            <td class="text-right font-mono">$${(i.precio || 0).toFixed(2)}</td>
+                        </tr>`;
+                });
+            } else {
+                tablaInsumos = "<tr><td colspan='3' class='text-center py-2 text-slate-400 italic'>Sin detalle de insumos</td></tr>";
+            }
 
             res.innerHTML += `
-                <div class="bg-white p-4 rounded-xl border-2 mb-4">
-                    <p class="text-[10px] font-bold text-blue-600">${d.fechaSimple} - DR. ${d.doctor}</p>
-                    <h3 class="font-black uppercase">${d.paciente}</h3>
-                    <button onclick="document.getElementById('det-${id}').classList.toggle('hidden')" class="text-[10px] text-blue-500 underline">VER DETALLES</button>
-                    <div id="det-${id}" class="hidden mt-2 text-[10px]">
-                        <table class="w-full border-t">
-                            ${tabla}
+                <div class="bg-white p-5 rounded-2xl border-2 border-slate-100 mb-6 shadow-sm hover:border-blue-200 transition-all">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-black text-blue-600 uppercase tracking-wider">${d.fechaSimple || 'S/F'}</span>
+                        <span class="text-[9px] font-bold bg-blue-50 text-blue-700 px-2 py-1 rounded uppercase italic">Dr. ${d.doctor}</span>
+                    </div>
+                    
+                    <h3 class="font-black text-slate-800 text-lg mb-1 uppercase tracking-tighter">${d.paciente}</h3>
+                    
+                    <div class="p-3 bg-slate-50 rounded-xl mb-4 border border-slate-100">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1 italic">Diagnóstico / Servicio:</p>
+                        <p class="text-[11px] text-slate-700 leading-relaxed whitespace-pre-line font-medium">
+                            ${d.tratamiento || 'No se especificó el servicio.'}
+                        </p>
+                    </div>
+
+                    <button onclick="document.getElementById('det-${id}').classList.toggle('hidden')" 
+                            class="w-full py-2 bg-slate-100 hover:bg-blue-100 text-blue-700 text-[10px] font-black uppercase rounded-lg transition-colors">
+                        🔍 Ver Desglose de Insumos ($${(d.montoInsumos || 0).toFixed(2)})
+                    </button>
+
+                    <div id="det-${id}" class="hidden mt-4 pt-4 border-t border-dashed animate-fadeIn">
+                        <table class="w-full text-[10px] text-slate-600">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-100 uppercase italic">
+                                    <th class="text-left py-1">Insumo</th>
+                                    <th class="w-12 py-1 text-center">Cant.</th>
+                                    <th class="w-16 text-right py-1">Costo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tablaInsumos}
+                            </tbody>
                         </table>
                     </div>
                 </div>`;
         });
-    };
+    } catch (e) {
+        console.error("Error:", e);
+        res.innerHTML = "Error al cargar datos.";
+    }
+};
     
     // Función para autocompletar al escribir cédula
     window.autocompletarPorCedula = async (cedula) => {
@@ -492,3 +543,4 @@
 </script>
 </body>
 </html>
+
