@@ -3,35 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AVIPET - Sistema Médico</title>
+    <title>AVIPET - Sistema Médico y Financiero</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
             .no-print { display: none !important; }
-            body { background-color: white !important; padding: 0; }
+            body { background-color: white !important; padding: 0; margin: 0; }
             .print-area { border: none !important; shadow: none !important; width: 100%; }
-            textarea { border: none !important; overflow: hidden !important; height: auto !important; }
+            #hTratamiento { border: none !important; height: auto !important; overflow: visible !important; display: block !important; white-space: pre-wrap !important; font-size: 12px; }
         }
         .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
         .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
         input, textarea { outline: none; background: transparent; width: 100%; }
         
         .menu-desplegable {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #3b82f6;
-            border-radius: 10px;
-            background-color: #eff6ff;
-            font-weight: bold;
-            color: #1e40af;
-            font-size: 13px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            appearance: none;
+            width: 100%; padding: 14px; border: 2px solid #3b82f6; border-radius: 10px;
+            background-color: #eff6ff; font-weight: bold; color: #1e40af; font-size: 13px;
+            margin-bottom: 10px; cursor: pointer; appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 1em;
+            background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
         }
         .finance-card { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 12px; padding: 15px; }
     </style>
@@ -75,13 +65,11 @@
                 <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-3">
                     <div class="header-box italic">Paciente</div>
                     <div class="grid grid-cols-2 gap-x-4 gap-y-3">
-                        <div class="col-span-2"><label class="text-[9px] font-bold text-slate-400">MASCOTA</label><input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700"></div>
+                        <div class="col-span-2"><label class="text-[9px] font-bold text-slate-400 uppercase">Nombre Mascota</label><input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">SEXO</label><input id="hSexo" class="border-b w-full uppercase"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">COLOR</label><input id="hColor" class="border-b w-full uppercase"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
                     </div>
                 </div>
                 <div class="p-3 space-y-3">
@@ -89,86 +77,53 @@
                     <div><label class="text-[9px] font-bold text-slate-400">NOMBRE</label><input id="hProp" class="border-b w-full font-bold uppercase"></div>
                     <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700"></div>
                     <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full uppercase"></div>
-                    <div><label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label><input id="hDir" class="border-b w-full uppercase"></div>
                 </div>
             </div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 border-b border-slate-400 no-print">
-                    <label class="text-[11px] font-black text-blue-800 uppercase block mb-2">TIPO DE SERVICIOS ↓</label>
-                    <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
-                        <option value="">-- TOQUE AQUÍ PARA VER TODOS LOS SERVICIOS --</option>
+                    <label class="text-[11px] font-black text-blue-800 uppercase block mb-2">SELECCIONAR SERVICIO (CARGA COSTOS E INSUMOS) ↓</label>
+                    <select id="menuServicios" onchange="procesarServicio(this.value); this.value='';" class="menu-desplegable">
+                        <option value="">-- SELECCIONE UN SERVICIO --</option>
                         <optgroup label="CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
-                            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
-                            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
-                            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
                         </optgroup>
                         <optgroup label="VACUNAS">
                             <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
                             <option value="VACUNA PUPPY">VACUNA PUPPY</option>
                             <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
-                            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC</option>
                             <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
-                            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
-                            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
                         </optgroup>
                         <optgroup label="LABORATORIO">
                             <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
-                            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
                             <option value="PERFIL 20">PERFIL 20</option>
                             <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-                            <option value="DISTEMPER">DISTEMPER</option>
-                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
-                            <option value="FILARIASIS">FILARIASIS</option>
-                            <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
-                            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">HEMATOLOGIA+QUIMICA+HEMOPARASITOS</option>
-                            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
-                            <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
-                            <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
-                            <option value="RASPADO PIEL">RASPADO PIEL</option>
-                            <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITOLOGIA FLUIDOS, SECRECIONES</option>
                         </optgroup>
                         <optgroup label="EUTANASIA">
-                            <option value="EUTANASIA HASTA 5KG">HASTA 5KG</option>
-                            <option value="EUTANASIA HASTA 15KG">HASTA 15KG</option>
-                            <option value="EUTANASIA HASTA 5KG CON DISPOSICION">HASTA 5KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 15KG CON DISPOSICION">HASTA 15KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 25KG CON DISPOSICION">HASTA 25KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 35KG CON DISPOSICION">HASTA 35KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 5KG CREMACION">HASTA 5KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 15KG CREMACION">HASTA 15KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 25KG CREMACION">HASTA 25KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 35KG CREMACION">HASTA 35KG CREMACION CON CENIZAS</option>
-                        </optgroup>
-                        <optgroup label="REFERIDOS">
-                            <option value="REFERIDO: EXAMEN DE HECES">EXAMENES DE HECES</option>
-                            <option value="REFERIDO: EXAMENES DE ORINA">EXAMENES DE ORINA</option>
-                            <option value="REFERIDO: CULTIVOS">CULTIVOS</option>
-                            <option value="REFERIDO: DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
+                            <option value="EUTANASIA HASTA 5KG CON DISPOSICION">EUTANASIA HASTA 5KG CON DISPOSICIÓN</option>
+                            <option value="EUTANASIA HASTA 15KG CON DISPOSICION">EUTANASIA HASTA 15KG CON DISPOSICIÓN</option>
                         </optgroup>
                     </select>
                 </div>
-                <textarea id="hTratamiento" class="w-full h-80 p-3 text-xs md:text-sm font-medium leading-relaxed" placeholder="Los servicios aparecerán aquí..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-64 p-3 text-xs md:text-sm font-medium leading-relaxed" placeholder="El tratamiento aparecerá aquí..."></textarea>
             </div>
 
             <div id="panelGastos" class="no-print finance-card shadow-sm border-2 border-slate-100 mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl">
-                        <p class="text-[10px] font-black text-blue-800 uppercase mb-1">Cobro Total al Cliente ($)</p>
+                        <p class="text-[10px] font-black text-blue-800 uppercase mb-1">Cobro Total Sugerido ($)</p>
                         <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="text-3xl font-black text-blue-600 w-full">
                     </div>
                     <div class="p-3 bg-red-50 border border-red-200 rounded-xl">
-                        <p class="text-[10px] font-black text-red-800 uppercase mb-1">Gasto en Materiales ($)</p>
+                        <p class="text-[10px] font-black text-red-800 uppercase mb-1">Costo de Insumos (Gasto) ($)</p>
                         <input type="number" id="gastoInsumos" value="0" oninput="calcularFinanzas()" class="text-3xl font-black text-red-600 w-full">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                        <p class="text-[10px] font-bold text-emerald-800 uppercase mb-1">Utilidad Neta</p>
+                        <p class="text-[10px] font-bold text-emerald-800 uppercase mb-1">Ganancia Neta (Limpio)</p>
                         <p id="labelUtilidadReal" class="text-2xl font-black text-emerald-700">$0.00</p>
                     </div>
                     <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
@@ -182,28 +137,34 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="guardarFirebase(false)" class="bg-slate-100 text-slate-700 py-4 rounded-xl font-black uppercase text-[11px] border border-slate-200">Guardar</button>
-                    <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[11px] shadow-lg">Imprimir</button>
+                    <button onclick="guardarFirebase(false)" class="bg-slate-100 text-slate-700 py-4 rounded-xl font-black uppercase text-[11px] border border-slate-200">Guardar Datos</button>
+                    <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[11px] shadow-lg">Imprimir Reporte</button>
                 </div>
             </div>
         </section>
 
         <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black mb-4 uppercase">🔍 Buscador</h2>
+            <h2 class="font-black mb-4 uppercase">🔍 Buscador Histórico</h2>
             <input type="text" id="searchCI" placeholder="Cédula..." class="w-full p-4 border-2 rounded-xl mb-4">
             <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Buscar</button>
             <div id="resultadosBusqueda" class="mt-4 space-y-4"></div>
         </section>
 
         <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black mb-6 text-center uppercase">Cierre de Caja</h2>
-            <div id="listaReporte" class="divide-y mb-6 text-[10px]"></div>
-            <div class="space-y-2 text-[12px]">
-                <div class="flex justify-between p-3 bg-blue-600 text-white rounded-lg"><span>INGRESOS:</span> <span id="repTotalCobrado">$0.00</span></div>
-                <div class="flex justify-between p-3 bg-red-600 text-white rounded-lg"><span>GASTOS:</span> <span id="repTotalInsumos">$0.00</span></div>
-                <div class="flex justify-between p-3 bg-emerald-600 text-white rounded-lg font-black"><span>NETO:</span> <span id="repTotalNeto">$0.00</span></div>
+            <h2 class="font-black mb-6 text-center uppercase tracking-widest text-blue-900">Estado Financiero del Día</h2>
+            <div id="listaReporte" class="divide-y mb-6 text-[11px]"></div>
+            <div class="space-y-3">
+                <div class="flex justify-between p-4 bg-blue-600 text-white rounded-xl shadow-lg">
+                    <span class="font-bold">VENTAS TOTALES:</span> <span id="repTotalCobrado" class="text-xl font-black">$0.00</span>
+                </div>
+                <div class="flex justify-between p-4 bg-red-500 text-white rounded-xl shadow-lg">
+                    <span class="font-bold">GASTOS EN INSUMOS:</span> <span id="repTotalInsumos" class="text-xl font-black">$0.00</span>
+                </div>
+                <div class="flex justify-between p-5 bg-emerald-600 text-white rounded-2xl shadow-xl border-4 border-white">
+                    <span class="font-bold text-lg">UTILIDAD NETA TOTAL:</span> <span id="repTotalNeto" class="text-3xl font-black">$0.00</span>
+                </div>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-6 bg-slate-800 text-white py-4 rounded-xl font-black uppercase">Actualizar</button>
+            <button onclick="cargarReporte()" class="w-full mt-8 bg-slate-800 text-white py-4 rounded-xl font-black uppercase">Actualizar Estado Financiero</button>
         </section>
 
     </main>
@@ -211,6 +172,21 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // BASE DE DATOS DE PRECIOS E INSUMOS
+        const CATALOGO = {
+            "CONSULTA GENERAL": { precio: 30, insumo: 2 },
+            "CONSULTA OFTALMOLÓGICA": { precio: 45, insumo: 5 },
+            "VACUNA SEXTUPLE": { precio: 25, insumo: 12 },
+            "VACUNA PUPPY": { precio: 20, insumo: 10 },
+            "VACUNA ANTIRRÁBICA": { precio: 15, insumo: 5 },
+            "VACUNA TRIPLE FELINA": { precio: 25, insumo: 12 },
+            "HEMATOLOGÍA COMPLETA": { precio: 15, insumo: 8 },
+            "PERFIL 20": { precio: 40, insumo: 20 },
+            "DESCARTE HEMOPARASITO": { precio: 25, insumo: 12 },
+            "EUTANASIA HASTA 5KG CON DISPOSICION": { precio: 60, insumo: 25 },
+            "EUTANASIA HASTA 15KG CON DISPOSICION": { precio: 85, insumo: 35 }
+        };
 
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
@@ -229,10 +205,23 @@
             if(t === 'reporte') cargarReporte();
         };
 
-        window.insertarServicio = (v) => {
+        // FUNCIÓN CLAVE: PROCESA EL SERVICIO Y CARGA LOS COSTOS
+        window.procesarServicio = (v) => {
             if(!v) return;
             const area = document.getElementById('hTratamiento');
+            const pVenta = document.getElementById('precioVenta');
+            const gInsumo = document.getElementById('gastoInsumos');
+
+            // Añadir al texto de la historia
             area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
+            
+            // Cargar costos automáticos si existen en el catálogo
+            if(CATALOGO[v]) {
+                pVenta.value = parseFloat(pVenta.value) + CATALOGO[v].precio;
+                gInsumo.value = parseFloat(gInsumo.value) + CATALOGO[v].insumo;
+            }
+
+            calcularFinanzas();
             area.focus();
         };
 
@@ -244,89 +233,79 @@
             const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
             const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
             const utilidadReal = cobro - insumos;
+
             document.getElementById('labelUtilidadReal').innerText = `$${utilidadReal.toFixed(2)}`;
             document.getElementById('labelGananciaVet').innerText = `$${(utilidadReal * 0.3).toFixed(2)}`;
             document.getElementById('labelUtilidadTienda').innerText = `$${(utilidadReal * 0.7).toFixed(2)}`;
         };
 
         const limpiarFormulario = () => {
-            ['hNombre','hEspecie','hRaza','hEdad','hSexo','hPeso','hColor','hProp','hCI','hTlf','hDir','hTratamiento','precioVenta','gastoInsumos'].forEach(id => {
+            const ids = ['hNombre','hEspecie','hRaza','hPeso','hEdad','hProp','hCI','hTlf','hTratamiento','precioVenta','gastoInsumos'];
+            ids.forEach(id => {
                 const el = document.getElementById(id);
                 if(el.type === 'number') el.value = 0;
                 else el.value = '';
             });
-            document.getElementById('labelUtilidadReal').innerText = '$0.00';
-            document.getElementById('labelGananciaVet').innerText = '$0.00';
-            document.getElementById('labelUtilidadTienda').innerText = '$0.00';
+            calcularFinanzas();
         };
 
         window.guardarFirebase = async (imp) => {
-            const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
             const data = {
                 cedula: document.getElementById('hCI').value.trim(),
                 paciente: document.getElementById('hNombre').value.toUpperCase(),
-                especie: document.getElementById('hEspecie').value.toUpperCase(),
-                raza: document.getElementById('hRaza').value.toUpperCase(),
-                color: document.getElementById('hColor').value.toUpperCase(),
-                edad: document.getElementById('hEdad').value.toUpperCase(),
-                sexo: document.getElementById('hSexo').value.toUpperCase(),
-                peso: document.getElementById('hPeso').value,
-                propietario: document.getElementById('hProp').value.toUpperCase(),
-                telefono: document.getElementById('hTlf').value,
-                direccion: document.getElementById('hDir').value.toUpperCase(),
                 tratamiento: document.getElementById('hTratamiento').value,
                 doctor: document.getElementById('selectDoctor').value,
-                cobrado: cobro,
-                costoInsumos: insumos,
-                utilidad: cobro - insumos,
+                cobrado: parseFloat(document.getElementById('precioVenta').value) || 0,
+                costoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
+                utilidad: (parseFloat(document.getElementById('precioVenta').value) || 0) - (parseFloat(document.getElementById('gastoInsumos').value) || 0),
                 fecha: serverTimestamp(),
                 fechaSimple: new Date().toLocaleDateString()
             };
 
-            if(!data.cedula || !data.paciente) return alert("Faltan datos obligatorios");
+            if(!data.cedula || !data.paciente) return alert("Faltan datos");
 
             try {
                 await addDoc(collection(db, "consultas"), data);
-                if(imp) { window.print(); setTimeout(() => { alert("✓ GUARDADO"); limpiarFormulario(); }, 500); }
-                else { alert("✓ GUARDADO"); limpiarFormulario(); }
-            } catch (e) { alert("Error al guardar"); }
+                if(imp) {
+                    window.print();
+                    setTimeout(() => { alert("✓ DATOS GUARDADOS"); limpiarFormulario(); }, 1000);
+                } else {
+                    alert("✓ DATOS GUARDADOS");
+                    limpiarFormulario();
+                }
+            } catch (e) { alert("Error de red"); }
         };
 
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
-            if(!ci) return alert("Ingrese cédula");
+            if(!ci) return;
             res.innerHTML = "Buscando...";
-            try {
-                const q = query(collection(db, "consultas"), where("cedula", "==", ci));
-                const snap = await getDocs(q);
-                res.innerHTML = "";
-                if(snap.empty) { res.innerHTML = "No hay registros."; return; }
-                let docs = [];
-                snap.forEach(d => docs.push(d.data()));
-                docs.sort((a,b) => b.fecha - a.fecha).forEach(d => {
-                    res.innerHTML += `<div class="p-3 border-l-4 border-blue-600 bg-slate-50 rounded shadow-sm text-[11px] mb-2"><p class="font-bold text-blue-600">${d.fechaSimple} - ${d.doctor}</p><p class="font-black uppercase">${d.paciente}</p><p class="mt-1 whitespace-pre-wrap">${d.tratamiento}</p></div>`;
-                });
-            } catch (e) { alert("Error"); }
+            const q = query(collection(db, "consultas"), where("cedula", "==", ci));
+            const snap = await getDocs(q);
+            res.innerHTML = "";
+            snap.forEach(d => {
+                const v = d.data();
+                res.innerHTML += `<div class="p-3 border-l-4 border-blue-600 bg-slate-50 text-[11px] mb-2"><b>${v.fechaSimple} - ${v.doctor}</b><br>${v.tratamiento}</div>`;
+            });
         };
 
         window.cargarReporte = async () => {
             const hoy = new Date().toLocaleDateString();
             const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
             const snap = await getDocs(q);
+            let totalVenta = 0, totalGasto = 0;
             const l = document.getElementById('listaReporte');
-            let totalI = 0, totalG = 0;
             l.innerHTML = "";
             snap.forEach(d => {
                 const v = d.data();
-                totalI += v.cobrado;
-                totalG += (v.costoInsumos || 0);
-                l.innerHTML += `<div class="p-2 flex justify-between font-bold"><span>${v.paciente}</span><span>$${v.cobrado.toFixed(2)} (-$${(v.costoInsumos || 0).toFixed(2)})</span></div>`;
+                totalVenta += v.cobrado;
+                totalGasto += v.costoInsumos;
+                l.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente}</span><span>Venta: $${v.cobrado} - Insumo: $${v.costoInsumos}</span></div>`;
             });
-            document.getElementById('repTotalCobrado').innerText = `$${totalI.toFixed(2)}`;
-            document.getElementById('repTotalInsumos').innerText = `$${totalG.toFixed(2)}`;
-            document.getElementById('repTotalNeto').innerText = `$${(totalI - totalG).toFixed(2)}`;
+            document.getElementById('repTotalCobrado').innerText = `$${totalVenta.toFixed(2)}`;
+            document.getElementById('repTotalInsumos').innerText = `$${totalGasto.toFixed(2)}`;
+            document.getElementById('repTotalNeto').innerText = `$${(totalVenta - totalGasto).toFixed(2)}`;
         };
     </script>
 </body>
