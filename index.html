@@ -180,6 +180,16 @@
         <tbody id="listaInsumosDinamica" class="bg-white">
             </tbody>
     </table>
+                <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
+    <input type="text" id="nombreExtra" placeholder="Añadir algo extra (ej. Vendaje)..." class="flex-1 text-[10px] p-2 border rounded bg-white outline-none focus:border-blue-400 font-medium">
+    <div class="flex items-center bg-white border rounded">
+        <span class="pl-2 text-[10px] font-bold text-slate-400">$</span>
+        <input type="number" id="costoExtra" placeholder="0.00" class="w-14 text-[10px] p-2 outline-none">
+    </div>
+    <button onclick="agregarInsumoManual()" class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black hover:bg-blue-800 transition-all shadow-sm">
+        + AGREGAR
+    </button>
+</div>
 </div>
 
             <div class="no-print bg-blue-50 p-6 rounded-3xl text-slate-800 shadow-lg border-2 border-blue-200 mb-4">
@@ -280,7 +290,40 @@ const recetas = {
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
             } else { alert("PIN INCORRECTO"); }
         };
+window.agregarInsumoManual = () => {
+    const nombre = document.getElementById('nombreExtra').value.trim();
+    const costo = parseFloat(document.getElementById('costoExtra').value) || 0;
+    
+    if (nombre === "") {
+        alert("Por favor escribe el nombre del insumo");
+        return;
+    }
 
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    const tabla = document.getElementById('contenedorInsumos');
+    tabla.classList.remove('hidden');
+
+    const tr = document.createElement('tr');
+    tr.className = "border-b border-orange-100 bg-orange-50"; // Color diferente para distinguir que es manual
+    tr.innerHTML = `
+        <td class="p-2 font-bold text-orange-800 italic">${nombre.toUpperCase()} (EXTRA)</td>
+        <td class="p-2 text-center">
+            <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-12 text-center border rounded">
+        </td>
+        <td class="p-2 text-center">
+            <input type="number" value="${costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded">
+        </td>
+        <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
+    `;
+    
+    cuerpo.appendChild(tr);
+    
+    // Limpiar campos después de agregar
+    document.getElementById('nombreExtra').value = "";
+    document.getElementById('costoExtra').value = "";
+    
+    calcularTodo(); // Para que se sume al total de gastos inmediatamente
+};
         window.showTab = (t) => {
             ['sectionHistoria', 'sectionBuscador', 'sectionReporte'].forEach(id => {
                 document.getElementById(id).style.display = (id === 'section' + t.charAt(0).toUpperCase() + t.slice(1)) ? 'block' : 'none';
@@ -290,56 +333,76 @@ const recetas = {
             if(t === 'reporte') cargarReporte();
         };
 
-     window.insertarServicio = (v) => {
+   window.insertarServicio = (v) => {
     if (!v) return;
     
-    // 1. Escribir en historia
+    // 1. Escribir en el cuadro de historia clínica
     const area = document.getElementById('hTratamiento');
     area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
     
-    // 2. Desglosar insumos en la tabla editable
+    // 2. Desglosar insumos en la tabla
     if (recetas[v]) {
         const tabla = document.getElementById('contenedorInsumos');
         const cuerpo = document.getElementById('listaInsumosDinamica');
-        tabla.classList.remove('hidden'); // Mostrar la tabla
+        tabla.classList.remove('hidden'); 
 
+        // --- NUEVO: FILA DE ENCABEZADO PARA SEPARAR ---
+        const filaTitulo = document.createElement('tr');
+        filaTitulo.className = "bg-slate-100 border-b-2 border-blue-200";
+        filaTitulo.innerHTML = `
+            <td colspan="4" class="p-1 px-2 text-[10px] font-black text-blue-700 uppercase italic">
+                📦 Bloque: ${v}
+            </td>
+        `;
+        cuerpo.appendChild(filaTitulo);
+
+        // --- INSUMOS DEL SERVICIO ---
         recetas[v].forEach(insumo => {
             const tr = document.createElement('tr');
             tr.className = "border-b border-blue-50";
             tr.innerHTML = `
-                <td class="p-2 font-bold text-blue-800">${insumo.nombre}</td>
+                <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
                 <td class="p-2 text-center">
-                    <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-12 text-center border rounded">
+                    <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-12 text-center border rounded font-bold text-blue-600 bg-white">
                 </td>
                 <td class="p-2 text-center">
-                    <input type="number" value="${insumo.costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded">
+                    <input type="number" value="${insumo.costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded font-bold text-slate-600 bg-white">
                 </td>
-                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
+                <td class="p-2 text-center text-red-500 font-bold cursor-pointer hover:bg-red-50" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
             `;
             cuerpo.appendChild(tr);
         });
+        
         calcularTodo();
     }
     area.focus();
 };
 
-       window.calcularTodo = () => {
+     window.calcularTodo = () => {
     let totalInsumos = 0;
     
-    // Suma todos los insumos de la tabla dinámica
+    // 1. Sumamos solo las filas que tienen inputs (clases .i-cant e .i-cost)
     document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
-        const cant = parseFloat(fila.querySelector('.i-cant').value) || 0;
-        const costo = parseFloat(fila.querySelector('.i-cost').value) || 0;
-        totalInsumos += (cant * costo);
+        const inputCant = fila.querySelector('.i-cant');
+        const inputCosto = fila.querySelector('.i-cost');
+        
+        // Solo sumamos si ambos inputs existen en la fila
+        if (inputCant && inputCosto) {
+            const cant = parseFloat(inputCant.value) || 0;
+            const costo = parseFloat(inputCosto.value) || 0;
+            totalInsumos += (cant * costo);
+        }
     });
 
-    // Actualiza el input de gastos
-    document.getElementById('gastoInsumos').value = totalInsumos.toFixed(2);
+    // 2. Actualizamos el input visible de Gastos
+    const inputGastos = document.getElementById('gastoInsumos');
+    if (inputGastos) inputGastos.value = totalInsumos.toFixed(2);
 
-    // Cálculos financieros
+    // 3. Cálculos financieros
     const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
     const neto = bruto - totalInsumos;
     
+    // 4. Actualizamos etiquetas visuales
     document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
     document.getElementById('labelDr').innerText = `$${(neto * 0.3).toFixed(2)}`;
     document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
@@ -414,6 +477,7 @@ const recetas = {
     </script>
 </body>
 </html>
+
 
 
 
