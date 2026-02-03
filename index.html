@@ -17,17 +17,23 @@
         input, textarea { outline: none; background: transparent; width: 100%; }
         input[type="password"] { letter-spacing: 0.3em; }
         
+        /* Estilo del menú solicitado */
         .menu-desplegable {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border: 2px solid #3b82f6;
-            border-radius: 8px;
+            border-radius: 10px;
             background-color: #eff6ff;
             font-weight: bold;
             color: #1e40af;
-            font-size: 12px;
+            font-size: 13px;
             margin-bottom: 10px;
             cursor: pointer;
+            appearance: none; /* Quita el estilo por defecto */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
         }
     </style>
 </head>
@@ -91,9 +97,9 @@
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 border-b border-slate-400 no-print">
-                    <label class="text-[10px] font-bold text-blue-800 uppercase block mb-1">Tipo de Servicios ↓</label>
+                    <label class="text-[11px] font-black text-blue-800 uppercase block mb-2">TIPO DE SERVICIOS ↓</label>
                     <select onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
-                        <option value="">-- SELECCIONE UN SERVICIO --</option>
+                        <option value="">-- TOQUE AQUÍ PARA VER SERVICIOS --</option>
                         <optgroup label="CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
@@ -116,12 +122,12 @@
                             <option value="PERFIL 20">PERFIL 20</option>
                             <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
                             <option value="DISTEMPER">DISTEMPER</option>
-                            <option value="PARVOVIRUS / CORONAVIRUS">PARVOVIRUS / CORONAVIRUS</option>
+                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
                             <option value="FILARIASIS">FILARIASIS</option>
-                            <option value="SIDA / LEUCEMIA">SIDA / LEUCEMIA</option>
-                            <option value="HEMATOLOGIA + QUIMICA + HEMOPARASITOS">HEMATOLOGIA + QUIMICA + HEMOPARASITOS</option>
+                            <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
+                            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">HEMATOLOGIA+QUIMICA+HEMOPARASITOS</option>
                             <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-                            <option value="EXAMEN DE ORINA">EXAMEN DE ORINA</option>
+                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
                             <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
                             <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
                             <option value="RASPADO PIEL">RASPADO PIEL</option>
@@ -134,20 +140,20 @@
                             <option value="EUTANASIA HASTA 15KG CON DISPOSICION">HASTA 15KG CON DISPOSICION</option>
                             <option value="EUTANASIA HASTA 25KG CON DISPOSICION">HASTA 25KG CON DISPOSICION</option>
                             <option value="EUTANASIA HASTA 35KG CON DISPOSICION">HASTA 35KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 5KG CREMACION CON CENIZAS">HASTA 5KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 15KG CREMACION CON CENIZAS">HASTA 15KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 25KG CREMACION CON CENIZAS">HASTA 25KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 35KG CREMACION CON CENIZAS">HASTA 35KG CREMACION CON CENIZAS</option>
+                            <option value="EUTANASIA HASTA 5KG CREMACION">HASTA 5KG CREMACION CON CENIZAS</option>
+                            <option value="EUTANASIA HASTA 15KG CREMACION">HASTA 15KG CREMACION CON CENIZAS</option>
+                            <option value="EUTANASIA HASTA 25KG CREMACION">HASTA 25KG CREMACION CON CENIZAS</option>
+                            <option value="EUTANASIA HASTA 35KG CREMACION">HASTA 35KG CREMACION CON CENIZAS</option>
                         </optgroup>
                         <optgroup label="REFERIDOS">
-                            <option value="REFERIDO: EXAMEN DE HECES">EXAMEN DE HECES</option>
-                            <option value="REFERIDO: EXAMEN DE ORINA">EXAMEN DE ORINA</option>
+                            <option value="REFERIDO: EXAMEN DE HECES">EXAMENES DE HECES</option>
+                            <option value="REFERIDO: EXAMENES DE ORINA">EXAMENES DE ORINA</option>
                             <option value="REFERIDO: CULTIVOS">CULTIVOS</option>
                             <option value="REFERIDO: DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
                         </optgroup>
                     </select>
                 </div>
-                <textarea id="hTratamiento" class="w-full h-72 p-3 text-xs md:text-sm font-medium leading-relaxed" placeholder="El servicio seleccionado aparecerá aquí..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-80 p-3 text-xs md:text-sm font-medium leading-relaxed" placeholder="Los servicios seleccionados aparecerán aquí..."></textarea>
             </div>
 
             <div id="panelGastos" class="no-print bg-slate-900 p-4 rounded-xl">
@@ -192,12 +198,14 @@
             </div>
             <button onclick="cargarReporte()" class="w-full mt-4 bg-slate-800 text-white py-4 rounded-xl font-bold uppercase text-[10px]">Actualizar</button>
         </section>
+
     </main>
 
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // FUNCIONES DE CONTROL
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
                 document.getElementById('loginSection').style.display = 'none';
@@ -214,10 +222,13 @@
             if(t === 'reporte') cargarReporte();
         };
 
+        // LA FUNCIÓN QUE AGREGA SIN BORRAR
         window.insertarServicio = (v) => {
             if(!v) return;
             const area = document.getElementById('hTratamiento');
-            area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
+            const textoPrevio = area.value;
+            // Agrega el nuevo servicio con una flecha y salto de línea
+            area.value = textoPrevio + (textoPrevio ? "\n" : "") + "=> " + v + ": ";
             area.focus();
         };
 
@@ -255,25 +266,25 @@
 
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("✓ GUARDADO");
+                alert("✓ GUARDADO CORRECTAMENTE");
                 if(imp) window.print();
                 location.reload(); 
-            } catch (e) { alert("Error al guardar"); }
+            } catch (e) { alert("Error al conectar con Firebase"); }
         };
 
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
             if(!ci) return alert("Ingrese cédula");
-            res.innerHTML = "Buscando...";
+            res.innerHTML = "Buscando historial...";
             try {
                 const q = query(collection(db, "consultas"), where("cedula", "==", ci));
                 const snap = await getDocs(q);
                 res.innerHTML = "";
-                if(snap.empty) { res.innerHTML = "Sin registros."; return; }
+                if(snap.empty) { res.innerHTML = "No hay registros previos."; return; }
                 let docs = [];
                 snap.forEach(d => docs.push(d.data()));
-                docs.reverse().forEach(d => {
+                docs.sort((a,b) => b.fecha - a.fecha).forEach(d => {
                     res.innerHTML += `
                         <div class="p-3 border-l-4 border-blue-600 bg-slate-50 rounded shadow-sm text-[11px]">
                             <p class="font-bold text-blue-600">${d.fechaSimple} - ${d.doctor}</p>
