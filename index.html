@@ -10,7 +10,6 @@
             .no-print { display: none !important; }
             body { background-color: white !important; padding: 0; }
             .print-area { border: none !important; shadow: none !important; width: 100%; margin: 0; }
-            /* Expansión del tratamiento en impresión */
             #hTratamiento { display: none !important; }
             #tratamientoPrint { 
                 display: block !important; 
@@ -56,11 +55,11 @@
                             <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
                             <option value="Joan Silva">Dr. Joan Silva</option>
                         </select>
-                        <h1 id="doctorPrint" class="hidden print:block font-bold text-xl uppercase">DR. DARWIN SANDOVAL</h1>
+                        <h1 id="doctorPrint" class="hidden print:block font-bold text-xl uppercase text-slate-800">DR. DARWIN SANDOVAL</h1>
                     </div>
                 </div>
                 <div class="text-right">
-                    <input type="text" id="fechaDoc" class="w-28 text-center border-b font-bold text-xs">
+                    <input type="text" id="fechaDoc" class="w-28 text-center border-b font-bold text-xs" readonly>
                 </div>
             </div>
 
@@ -99,8 +98,8 @@
                 </div>
                 <div class="flex gap-2">
                     <button onclick="guardarFirebase(false)" class="flex-1 bg-slate-800 text-white py-2 rounded font-bold">GUARDAR</button>
-                    <button onclick="guardarFirebase(true)" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold">IMPRIMIR</button>
-                    <button onclick="limpiarFormulario()" class="bg-red-500 text-white px-4 py-2 rounded font-bold">LIMPIAR</button>
+                    <button onclick="guardarFirebase(true)" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold uppercase">Guardar e Imprimir</button>
+                    <button onclick="limpiarFormulario()" class="bg-red-500 text-white px-4 py-2 rounded font-bold uppercase">Limpiar</button>
                 </div>
             </div>
         </section>
@@ -108,10 +107,12 @@
         <section id="sectionBuscador" class="hidden bg-white p-8 rounded shadow border min-h-[400px]">
             <h2 class="text-lg font-bold mb-4 uppercase text-blue-900">🔍 Buscar por Cédula</h2>
             <div class="flex gap-2 mb-8">
-                <input type="text" id="searchCI" placeholder="Cédula del cliente..." class="flex-1 p-3 border-2 rounded font-bold">
-                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-10 rounded font-bold">BUSCAR</button>
+                <input type="text" id="searchCI" placeholder="Cédula del cliente..." class="flex-1 p-3 border-2 rounded font-bold outline-none focus:border-blue-500">
+                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-10 rounded font-bold hover:bg-blue-700 transition uppercase">Buscar</button>
             </div>
-            <div id="resultadosBusqueda" class="space-y-4"></div>
+            <div id="resultadosBusqueda" class="space-y-4">
+                <p class="text-slate-400 text-center italic">Ingrese una cédula para ver el historial.</p>
+            </div>
         </section>
 
         <section id="sectionReporte" class="hidden bg-white p-8 rounded shadow border">
@@ -126,15 +127,15 @@
                     <p id="repTotalDoctores">$0.00</p>
                 </div>
             </div>
-            <div id="listaReporte" class="divide-y text-xs"></div>
-            <button onclick="cargarReporte()" class="w-full mt-6 bg-slate-700 text-white py-3 rounded font-bold uppercase text-[11px]">Actualizar</button>
+            <div id="listaReporte" class="divide-y text-[11px]"></div>
+            <button onclick="cargarReporte()" class="w-full mt-6 bg-slate-700 text-white py-3 rounded font-bold uppercase text-[11px]">Actualizar Cierre</button>
         </section>
 
     </main>
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
@@ -150,6 +151,7 @@
             document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500 uppercase text-[11px] tracking-widest");
             const btnId = 'tab' + (t==='historia'?'H':t==='buscador'?'B':'R');
             document.getElementById(btnId).className = "tab-active py-2 uppercase text-[11px] tracking-widest";
+            if(t === 'reporte') cargarReporte();
         };
 
         window.syncTratamiento = (val) => {
@@ -185,31 +187,68 @@
 
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("REGISTRO GUARDADO");
-                if(imprimir) window.print();
-            } catch (e) { alert("Error al guardar en Firebase"); }
+                alert("REGISTRO GUARDADO EXITOSAMENTE");
+                if(imprimir) {
+                    window.print();
+                }
+                limpiarFormulario();
+            } catch (e) { 
+                console.error(e);
+                alert("Error al conectar con la base de datos."); 
+            }
         };
 
+        // BUSCADOR CORREGIDO: NO NECESITA ÍNDICES EN FIREBASE
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
-            const res = document.getElementById('resultadosBusqueda');
-            if(!ci) return alert("Ingrese una cédula");
-            res.innerHTML = "Buscando...";
+            const resContainer = document.getElementById('resultadosBusqueda');
+            
+            if(!ci) return alert("Por favor, ingrese una cédula");
+
+            resContainer.innerHTML = "<p class='text-blue-600 animate-pulse text-center'>Buscando historial...</p>";
+
             try {
-                const q = query(collection(db, "consultas"), where("cedula", "==", ci), orderBy("fecha", "desc"));
+                // Consulta simple (sin orderBy para evitar error de índice)
+                const q = query(collection(db, "consultas"), where("cedula", "==", ci));
                 const snap = await getDocs(q);
-                if(snap.empty) { res.innerHTML = "No se encontraron registros."; return; }
-                res.innerHTML = "";
+
+                if(snap.empty) {
+                    resContainer.innerHTML = `<p class="text-red-500 text-center font-bold">No se encontraron registros para la CI: ${ci}</p>`;
+                    return;
+                }
+
+                // Guardamos los datos en un array para ordenarlos manualmente
+                let listaResultados = [];
                 snap.forEach(doc => {
-                    const d = doc.data();
-                    res.innerHTML += `
-                        <div class="p-3 border-l-4 border-blue-500 bg-slate-50 rounded mb-2">
-                            <p class="text-[10px] font-bold text-gray-500">${d.fechaSimple} - ATENDIÓ: ${d.doctor}</p>
-                            <p class="font-bold uppercase">${d.paciente} (${d.raza})</p>
-                            <div class="text-xs italic mt-1 whitespace-pre-wrap">${d.tratamiento}</div>
+                    listaResultados.push(doc.data());
+                });
+
+                // Ordenamos por fecha (el más reciente primero)
+                listaResultados.sort((a, b) => {
+                    const fechaA = a.fecha?.seconds || 0;
+                    const fechaB = b.fecha?.seconds || 0;
+                    return fechaB - fechaA;
+                });
+
+                resContainer.innerHTML = `<p class="text-[10px] font-bold text-slate-500 mb-4 uppercase text-center">Historial encontrado:</p>`;
+                
+                listaResultados.forEach(d => {
+                    resContainer.innerHTML += `
+                        <div class="p-4 border-l-4 border-blue-500 bg-white shadow-sm rounded-r-lg mb-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-blue-100 text-blue-700 text-[9px] px-2 py-1 rounded font-bold">${d.fechaSimple}</span>
+                                <span class="text-[9px] font-bold text-slate-400">MV: ${d.doctor.toUpperCase()}</span>
+                            </div>
+                            <p class="text-xs font-bold text-slate-800 uppercase">${d.paciente} <span class="text-slate-400 font-normal">(${d.raza})</span></p>
+                            <div class="mt-2 p-2 bg-slate-50 rounded text-[11px] text-slate-600 leading-relaxed whitespace-pre-wrap italic border-t">
+                                ${d.tratamiento}
+                            </div>
                         </div>`;
                 });
-            } catch (e) { alert("Error en búsqueda. Verifique conexión."); }
+            } catch (error) {
+                console.error("Error de búsqueda:", error);
+                resContainer.innerHTML = "<p class='text-red-600 text-center'>Error al consultar. Verifique su conexión.</p>";
+            }
         };
 
         window.cargarReporte = async () => {
@@ -222,21 +261,24 @@
             snap.forEach(doc => {
                 const v = doc.data();
                 c += v.cobrado; d += v.ganancia_dr;
-                list.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente}</span><b>$${v.cobrado.toFixed(2)}</b></div>`;
+                list.innerHTML += `<div class="p-2 flex justify-between border-b"><span>${v.paciente} (${v.doctor})</span><b>$${v.cobrado.toFixed(2)}</b></div>`;
             });
             document.getElementById('repTotalCobrado').innerText = `$${c.toFixed(2)}`;
             document.getElementById('repTotalDoctores').innerText = `$${d.toFixed(2)}`;
         };
 
         window.limpiarFormulario = () => {
-            ['hNombre','hRaza','hPeso','hProp','hCI','hTlf','hTratamiento','precioVenta'].forEach(id => {
+            const ids = ['hNombre','hRaza','hPeso','hProp','hCI','hTlf','hTratamiento','precioVenta'];
+            ids.forEach(id => {
                 document.getElementById(id).value = id==='precioVenta'?0:"";
             });
             document.getElementById('tratamientoPrint').innerText = "";
             calcularFinanzas();
         };
 
-        window.actualizarNombreDoctor = (n) => document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase();
+        window.actualizarNombreDoctor = (n) => {
+            document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase();
+        };
     </script>
 </body>
 </html>
