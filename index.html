@@ -305,48 +305,81 @@
         };
 
         window.calcularTodo = () => {
-            let totalI = 0;
-            document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
-                const c = fila.querySelector('.i-cant');
-                const p = fila.querySelector('.i-cost');
-                if(c && p) totalI += (parseFloat(c.value)||0) * (parseFloat(p.value)||0);
-            });
-            document.getElementById('gastoInsumos').value = totalI.toFixed(2);
-            const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const neto = bruto - totalI;
-            document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
-            document.getElementById('labelDr').innerText = `$${(neto * 0.3).toFixed(2)}`;
-            document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
-        };
+    let totalI = 0;
+    // Selecciona todas las filas de la tabla de insumos
+    document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
+        const cInput = fila.querySelector('.i-cant');
+        const pInput = fila.querySelector('.i-cost');
+        
+        // El truco es el (valor || 0): si el campo está vacío, usa 0
+        if(cInput && pInput) {
+            const cant = parseFloat(cInput.value) || 0;
+            const cost = parseFloat(pInput.value) || 0;
+            totalI += (cant * cost);
+        }
+    });
 
-        window.guardarFirebase = async (imp) => {
-            const pac = document.getElementById('hNombre').value;
-            if(!pac) return alert("Nombre Mascota Requerido");
-            const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-            const neto = bruto - insu;
+    // Actualiza el campo de gasto total de insumos
+    const gastoInsumosEl = document.getElementById('gastoInsumos');
+    if(gastoInsumosEl) gastoInsumosEl.value = totalI.toFixed(2);
 
-            const datos = {
-                paciente: pac,
-                cedula: document.getElementById('hCI').value,
-                doctor: document.getElementById('selectDoctor').value,
-                montoBruto: bruto,
-                montoInsumos: insu,
-                pagoDoctor: neto * 0.3,
-                gananciaTienda: neto * 0.7,
-                tratamiento: document.getElementById('hTratamiento').value,
-                fechaSimple: new Date().toLocaleDateString(),
-                timestamp: serverTimestamp()
-            };
+    // Calcula el neto basado en el precio de venta (bruto)
+    const precioVentaEl = document.getElementById('precioVenta');
+    const bruto = precioVentaEl ? (parseFloat(precioVentaEl.value) || 0) : 0;
+    const neto = bruto - totalI;
 
-            try {
-                await addDoc(collection(db, "consultas"), datos);
-                if(imp) window.print();
-                alert("✅ GUARDADO");
-                location.reload();
-            } catch (e) { alert("Error al guardar"); }
-        };
+    // Actualiza las etiquetas visuales
+    const lblNeto = document.getElementById('labelNeto');
+    const lblDr = document.getElementById('labelDr');
+    const lblTienda = document.getElementById('labelTienda');
 
+    if(lblNeto) lblNeto.innerText = `$${neto.toFixed(2)}`;
+    if(lblDr) lblDr.innerText = `$${(neto * 0.3).toFixed(2)}`;
+    if(lblTienda) lblTienda.innerText = `$${(neto * 0.7).toFixed(2)}`;
+};
+
+       window.guardarFirebase = async (imp) => {
+    // 1. Evitar que la página se recargue sola
+    if (event) event.preventDefault();
+
+    const pac = document.getElementById('hNombre').value;
+    if(!pac) return alert("Nombre Mascota Requerido");
+
+    // 2. Asegurar que los números sean válidos antes de enviar
+    const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+    const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+    const neto = bruto - insu;
+
+    const datos = {
+        paciente: pac.toUpperCase(),
+        cedula: document.getElementById('hCI').value,
+        doctor: document.getElementById('selectDoctor').value,
+        montoBruto: bruto,
+        montoInsumos: insu,
+        pagoDoctor: neto * 0.3,
+        gananciaTienda: neto * 0.7,
+        tratamiento: document.getElementById('hTratamiento').value,
+        fechaSimple: new Date().toLocaleDateString(),
+        timestamp: serverTimestamp() // Asegúrate que 'serverTimestamp' esté importado arriba
+    };
+
+    try {
+        // 3. Verificamos que 'db' y 'collection' existan
+        if (!db) throw new Error("Firebase no está conectado");
+        
+        await addDoc(collection(db, "consultas"), datos);
+        
+        if(imp) {
+            window.print();
+        }
+        
+        alert("✅ GUARDADO CON ÉXITO");
+        location.reload(); // Solo recarga si se guardó bien
+    } catch (e) { 
+        console.error("Error detallado:", e);
+        alert("❌ Error al guardar: " + e.message); 
+    }
+};
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
@@ -381,5 +414,6 @@
     </script>
 </body>
 </html>
+
 
 
