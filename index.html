@@ -40,7 +40,7 @@
 
     <div id="loginSection" class="fixed inset-0 bg-black flex items-center justify-center z-50">
         <div class="bg-white p-6 border-4 border-double border-black w-72 text-center">
-            <h1 class="text-2xl font-black mb-2">AVIPET</h1>
+            <h1 class="text-2xl font-black mb-2 tracking-tighter">AVIPET</h1>
             <h2 class="font-bold mb-4 uppercase text-xs">Acceso Clínico 2026</h2>
             <input type="password" id="pinInput" placeholder="PIN" class="border-2 border-black text-center mb-4 p-2 w-full font-bold">
             <button onclick="verificarPin()" class="w-full bg-black text-white py-2 font-bold uppercase hover:bg-gray-800">Entrar</button>
@@ -59,7 +59,7 @@
             <div class="flex justify-between items-center mb-4 border-b-4 border-black pb-2">
                 <div>
                     <h1 class="text-3xl font-black tracking-tighter">AVIPET</h1>
-                    <p class="font-bold uppercase text-[10px]">Servicios Veterinarios Especializados</p>
+                    <p class="font-bold uppercase text-[10px]">Servicios Veterinarios</p>
                 </div>
                 <div class="text-center px-4 border-x-2 border-black">
                     <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print font-bold text-sm border border-black px-1 mb-1">
@@ -96,7 +96,7 @@
             </div>
 
             <div class="no-print grid grid-cols-4 gap-2 mb-2">
-                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white">
+                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white cursor-pointer">
                     <option value="">+ CONSULTAS</option>
                     <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                     <option value="C. OFTAMOLOGICA">C. OFTAMOLOGICA</option>
@@ -104,7 +104,7 @@
                     <option value="C. CAMADA HASTA 8 CACHORROS">C. CAMADA HASTA 8 CACHORROS</option>
                     <option value="C. CAMADA MAS DE 8 CACHORROS">C. CAMADA MAS DE 8 CACHORROS</option>
                 </select>
-                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white">
+                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white cursor-pointer">
                     <option value="">+ VACUNAS</option>
                     <option value="VACUNA SEXTUPLE">SEXTUPLE</option>
                     <option value="VACUNA ANTIRRABICA">ANTIRRABICA</option>
@@ -114,7 +114,7 @@
                     <option value="VACUNA TRIPLE FELINA">TRIPLE FELINA</option>
                     <option value="VACUNA QUINTUPLE FELINA">QUINTUPLE FELINA</option>
                 </select>
-                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white">
+                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white cursor-pointer">
                     <option value="">+ LABORATORIO</option>
                     <option value="LAB: HEMATOLOGIA">HEMATOLOGIA</option>
                     <option value="LAB: QUIMICA">QUIMICA</option>
@@ -125,16 +125,17 @@
                     <option value="LAB: SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
                     <option value="LAB: HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LAB COMPLETO</option>
                 </select>
-                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white">
-                    <option value="">+ OTROS/CITO</option>
+                <select onchange="insertarServicio(this.value)" class="border border-black text-[10px] font-bold p-1 bg-white cursor-pointer">
+                    <option value="">+ OTROS</option>
                     <option value="ORINA">ORINA</option>
                     <option value="HECES">HECES</option>
                     <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
                     <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
                     <option value="RASPADO PIEL">RASPADO PIEL</option>
                     <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITO FLUIDOS</option>
-                    <option value="CULTIVOS">CULTIVOS</option>
                     <option value="REFERIDOS">REFERIDOS</option>
+                    <option value="CULTIVOS">CULTIVOS</option>
+                    <option value="HEMOPARASITOS">HEMOPARASITOS</option>
                 </select>
             </div>
 
@@ -148,7 +149,7 @@
 
             <div class="no-print grid grid-cols-2 gap-4 mt-4 bg-gray-200 p-4 border-2 border-black">
                 <div class="flex flex-col justify-center">
-                    <span class="font-bold uppercase text-[10px]">Importe Total AVIPET $:</span>
+                    <span class="font-bold uppercase text-[10px]">Importe Total $:</span>
                     <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="input-monto text-3xl">
                     <div class="flex justify-between mt-2 text-[10px] font-bold">
                         <span>DR (30%): <span id="labelGananciaVet">$0.00</span></span>
@@ -156,24 +157,24 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-2">
-                    <button onclick="guardarFirebase(false)" class="bg-black text-white font-bold py-3 border-2 border-black uppercase hover:bg-gray-800">Guardar en AVIPET</button>
-                    <button onclick="guardarFirebase(true)" class="bg-white text-black font-bold py-3 border-2 border-black uppercase hover:bg-gray-100">Guardar e Imprimir</button>
+                    <button onclick="guardarFirebase(false)" class="bg-black text-white font-bold py-3 border-2 border-black uppercase hover:bg-gray-800">Guardar</button>
+                    <button onclick="guardarFirebase(true)" class="bg-white text-black font-bold py-3 border-2 border-black uppercase hover:bg-gray-100">Imprimir</button>
                     <button onclick="limpiarFormulario()" class="bg-red-600 text-white font-bold py-1 text-xs border-2 border-black uppercase">Limpiar</button>
                 </div>
             </div>
         </section>
 
         <section id="sectionBuscador" class="hidden">
-            <h2 class="font-bold border-b-2 border-black mb-4 uppercase">Historial AVIPET por Cédula</h2>
+            <h2 class="font-bold border-b-2 border-black mb-4 uppercase">Historial por Cédula</h2>
             <div class="flex gap-2 mb-4">
                 <input type="text" id="searchCI" placeholder="CÉDULA..." class="border-2 border-black p-2 bg-white flex-1 font-bold">
-                <button onclick="buscarPorCedula()" class="bg-black text-white px-10 font-bold uppercase">Consultar</button>
+                <button onclick="buscarPorCedula()" class="bg-black text-white px-10 font-bold uppercase">Buscar</button>
             </div>
             <div id="resultadosBusqueda"></div>
         </section>
 
         <section id="sectionReporte" class="hidden">
-            <h2 class="font-bold border-b-2 border-black mb-4 uppercase text-center">Cierre de Caja AVIPET</h2>
+            <h2 class="font-bold border-b-2 border-black mb-4 uppercase text-center">Cierre Diario AVIPET</h2>
             <div id="listaReporte" class="mb-4"></div>
             <div class="border-t-4 border-black pt-2 flex justify-between font-bold text-2xl">
                 <span>TOTAL RECAUDADO</span>
@@ -188,7 +189,6 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Función para insertar servicios desde los select
         window.insertarServicio = (val) => {
             if(!val) return;
             const area = document.getElementById('hTratamiento');
@@ -202,7 +202,7 @@
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
-            } else { alert("ACCESO DENEGADO"); }
+            } else { alert("PIN INCORRECTO"); }
         };
 
         window.showTab = (t) => {
@@ -241,24 +241,24 @@
                 doctor: document.getElementById('selectDoctor').value,
                 cobrado: f.c, ganancia_dr: f.g, fecha: serverTimestamp(), fechaSimple: new Date().toLocaleDateString()
             };
-            if(!data.cedula || !data.paciente) return alert("INGRESE CÉDULA Y NOMBRE");
+            if(!data.cedula || !data.paciente) return alert("LLENE CÉDULA Y NOMBRE");
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("GUARDADO EN AVIPET");
+                alert("DATOS GUARDADOS EN AVIPET");
                 if(imp) window.print();
                 limpiarFormulario();
-            } catch (e) { alert("ERROR DE CONEXIÓN"); }
+            } catch (e) { alert("ERROR AL GUARDAR"); }
         };
 
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
             if(!ci) return alert("INGRESE CÉDULA");
-            res.innerHTML = "CONSULTANDO AVIPET...";
+            res.innerHTML = "BUSCANDO...";
             try {
                 const q = query(collection(db, "consultas"), where("cedula", "==", ci));
                 const snap = await getDocs(q);
-                if(snap.empty) { res.innerHTML = "NO HAY HISTORIAL."; return; }
+                if(snap.empty) { res.innerHTML = "NO HAY REGISTROS."; return; }
                 let l = []; snap.forEach(doc => l.push(doc.data()));
                 l.sort((a,b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
                 res.innerHTML = "";
