@@ -510,60 +510,76 @@ window.buscarPorCedula = async () => {
             return;
         }
 
-        snap.forEach(doc => {
+       snap.forEach(doc => {
             const d = doc.data();
-            const idDoc = doc.id; // Usamos el ID de Firebase para que cada botón sea único
+            const idDoc = doc.id;
+            
+            // 1. Aseguramos que el total de insumos sea número
             const totalInsumos = parseFloat(d.montoInsumos) || 0;
             
+            // 2. BUSCAMOS LA LISTA (Verificamos ambos posibles nombres por si acaso)
+            const lista = d.listaDetalladaInsumos || d.listaInsumos || [];
+            
             let filasInsumos = "";
-            if (d.listaDetalladaInsumos && Array.isArray(d.listaDetalladaInsumos)) {
-                d.listaDetalladaInsumos.forEach(ins => {
-                    const p = parseFloat(ins.precio) || 0;
+
+            if (Array.isArray(lista) && lista.length > 0) {
+                lista.forEach(ins => {
+                    const nombreIns = ins.nombre || "Insumo desconocido";
+                    const cantIns = ins.cant || 0;
+                    const precioIns = parseFloat(ins.precio) || 0;
+
                     filasInsumos += `
-                        <tr class="border-b border-slate-100">
-                            <td class="py-1">${ins.nombre}</td>
-                            <td class="py-1 text-center">${ins.cant || 0}</td>
-                            <td class="py-1 text-right font-mono">$${p.toFixed(2)}</td>
+                        <tr class="border-b border-slate-50">
+                            <td class="py-1 text-slate-700">${nombreIns}</td>
+                            <td class="py-1 text-center font-bold text-blue-600">${cantIns}</td>
+                            <td class="py-1 text-right text-slate-500 font-mono">$${precioIns.toFixed(2)}</td>
                         </tr>`;
                 });
             } else {
-                filasInsumos = `<tr><td colspan="3" class="text-center text-slate-400 py-2 italic text-[10px]">Sin detalle de insumos</td></tr>`;
+                // Esto sale si el registro existe pero no tiene la lista guardada
+                filasInsumos = `
+                    <tr>
+                        <td colspan="3" class="py-4 text-center">
+                            <p class="text-[10px] text-slate-400 italic">No hay desglose detallado para este registro antiguo.</p>
+                            <p class="text-[9px] text-blue-400">Solo registros nuevos mostrarán el detalle.</p>
+                        </td>
+                    </tr>`;
             }
 
+            // Inyectar la tarjeta (manteniendo tu diseño de "Ver Detalles")
             contenedor.innerHTML += `
-                <div class="bg-white p-5 rounded-2xl border-2 border-blue-50 shadow-sm mb-6 hover:border-blue-200 transition-all">
-                    <div class="flex justify-between mb-3 items-center">
-                        <span class="text-[10px] font-black text-blue-600 uppercase tracking-wider">${d.fechaSimple || 'S/F'}</span>
-                        <span class="text-[9px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded uppercase">DR. ${d.doctor || 'S/N'}</span>
+                <div class="bg-white p-5 rounded-2xl border-2 border-slate-100 mb-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-black text-blue-600 uppercase">${d.fechaSimple || 'S/F'}</span>
+                        <span class="text-[9px] font-bold bg-blue-50 text-blue-700 px-2 py-1 rounded uppercase">Dr. ${d.doctor}</span>
                     </div>
                     
-                    <h3 class="font-black text-slate-800 text-lg mb-1 uppercase tracking-tighter">${d.paciente}</h3>
-                    <div class="bg-blue-50/50 p-3 rounded-xl mb-4">
-                        <p class="text-[11px] text-slate-600 leading-tight italic">${d.tratamiento || 'Sin descripción'}</p>
+                    <h3 class="font-black text-slate-800 text-lg mb-1 uppercase">${d.paciente}</h3>
+                    <div class="p-3 bg-slate-50 rounded-xl mb-4 border border-slate-100">
+                        <p class="text-[11px] text-slate-600 italic whitespace-pre-line">${d.tratamiento}</p>
                     </div>
 
                     <button onclick="document.getElementById('det-${idDoc}').classList.toggle('hidden')" 
-                            class="w-full py-2 bg-slate-100 hover:bg-blue-100 text-blue-700 text-[10px] font-black uppercase rounded-lg transition-colors mb-2">
-                        🔍 Ver Detalles de Insumos
+                            class="w-full py-2 bg-slate-100 hover:bg-blue-100 text-blue-700 text-[10px] font-black uppercase rounded-lg transition-all">
+                        🔍 Ver Desglose de Insumos
                     </button>
 
-                    <div id="det-${idDoc}" class="hidden mt-4 animate-fadeIn">
-                        <p class="text-[9px] font-black text-blue-800/40 mb-2 uppercase tracking-widest">📊 Desglose de Insumos:</p>
-                        <table class="w-full text-[10px] text-slate-600">
+                    <div id="det-${idDoc}" class="hidden mt-4 border-t pt-4">
+                        <table class="w-full text-[10px]">
                             <thead>
-                                <tr class="text-slate-400 border-b border-slate-100">
-                                    <th class="text-left py-1 font-bold">Insumo</th>
-                                    <th class="w-12 py-1 font-bold">Cant.</th>
-                                    <th class="w-16 text-right py-1 font-bold">Costo</th>
+                                <tr class="text-slate-400 border-b border-slate-100 uppercase tracking-tighter">
+                                    <th class="text-left py-1">Insumo</th>
+                                    <th class="w-12 py-1 text-center">Cant.</th>
+                                    <th class="w-16 text-right py-1">Costo</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${filasInsumos}
                             </tbody>
                             <tfoot>
-                                <tr class="font-bold text-slate-800 border-t-2 border-slate-50">
-                                    <td colspan="2" class="pt-2 text-right text-[11px]">Gasto Total:</td>
-                                    <td class="pt-2 text-right text-red-600 font-black text-sm">$${totalInsumos.toFixed(2)}</td>
+                                <tr class="font-black text-slate-800">
+                                    <td colspan="2" class="pt-3 text-right text-[11px] uppercase">Gasto Total:</td>
+                                    <td class="pt-3 text-right text-red-600 text-sm">$${totalInsumos.toFixed(2)}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -571,12 +587,6 @@ window.buscarPorCedula = async () => {
                 </div>
             `;
         });
-    } catch (e) { 
-        console.error("Error en buscador:", e);
-        alert("Hubo un problema al cargar los datos."); 
-    }
-};
-
         // --- REPORTES Y CIERRE ---
         window.cargarReporte = async () => {
             const lista = document.getElementById('listaReporte');
@@ -651,6 +661,7 @@ window.buscarPorCedula = async () => {
     </script>
 </body>
 </html>
+
 
 
 
