@@ -49,6 +49,13 @@
             font-size: 12px; 
         }
     }
+       @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
 </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -337,31 +344,48 @@
             "CONSULTA GENERAL": [{ nombre: "Baja lenguas/Insumos", costo: 0.40 }]
         };
 
-        window.insertarServicio = (v) => {
-            if (!v) return;
-            const area = document.getElementById('hTratamiento');
-            area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
-            document.getElementById('contenedorInsumos').classList.remove('hidden');
-            const cuerpo = document.getElementById('listaInsumosDinamica');
+       window.insertarServicio = (v) => {
+    if (!v) return;
+    const area = document.getElementById('hTratamiento');
+    
+    // Añade el servicio al cuadro de texto de tratamiento
+    area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
+    
+    // Muestra la tabla de insumos
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+    const cuerpo = document.getElementById('listaInsumosDinamica');
 
-            let lista = [...insumosFijosMedicos];
-            if (v.includes("VACUNA")) lista = [...lista, ...insumosBaseVacuna];
-            if (recetas[v]) lista = [...lista, ...recetas[v]];
+    // Lógica de selección de insumos según el servicio
+    let lista = [...insumosFijosMedicos];
+    if (v.includes("VACUNA")) lista = [...lista, ...insumosBaseVacuna];
+    if (recetas[v]) lista = [...lista, ...recetas[v]];
 
-            lista.forEach(insumo => {
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-blue-50";
-                tr.innerHTML = `
-                    <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
-                    <td class="p-2 text-center"><input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded"></td>
-                    <td class="p-2 text-center"><input type="number" value="${insumo.costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded"></td>
-                    <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
-                `;
-                cuerpo.appendChild(tr);
-            });
-            calcularTodo();
-        };
+    lista.forEach(insumo => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-blue-50";
+        
+        // El costo se formatea a 2 decimales para evitar errores de cálculo
+        const costoFormateado = parseFloat(insumo.costo).toFixed(2);
 
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
+            <td class="p-2 text-center">
+                <input type="number" value="1" oninput="calcularTodo()" 
+                       class="i-cant w-10 text-center border rounded outline-none focus:border-blue-500">
+            </td>
+            <td class="p-2 text-center">
+                <input type="number" value="${costoFormateado}" step="0.01" oninput="calcularTodo()" 
+                       class="i-cost w-12 text-center border rounded outline-none focus:border-blue-500">
+            </td>
+            <td class="p-2 text-center text-red-500 font-bold cursor-pointer hover:bg-red-50" 
+                onclick="this.parentElement.remove(); calcularTodo()">✕</td>
+        `;
+        cuerpo.appendChild(tr);
+    });
+
+    // Actualiza los totales automáticamente
+    calcularTodo();
+};
         window.calcularTodo = () => {
             let totalI = 0;
             document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
@@ -377,20 +401,30 @@
         };
 
         // --- GUARDAR CONSULTA ---
-        window.guardarFirebase = async (imp) => {
+       window.guardarFirebase = async (imp) => {
     if (!doctorVerificado) return alert("⚠️ Valide un doctor con su PIN.");
     
     try {
         const nombreMascota = document.getElementById('hNombre').value;
         if(!nombreMascota) return alert("Nombre de mascota obligatorio");
 
-        // --- CAPTURAR LISTA DETALLADA DE INSUMOS ---
+        // --- CAPTURA DE INSUMOS MEJORADA ---
         const detalleInsumos = [];
-        document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
+        const filas = document.querySelectorAll('#listaInsumosDinamica tr');
+        
+        filas.forEach(fila => {
+            // Buscamos los inputs específicos dentro de la fila
             const nombre = fila.cells[0].innerText;
-            const cant = fila.querySelector('.i-cant').value;
-            const precio = fila.querySelector('.i-cost').value;
-            detalleInsumos.push({ nombre, cant, precio });
+            const cantInput = fila.querySelector('.i-cant');
+            const costoInput = fila.querySelector('.i-cost');
+            
+            if (nombre && cantInput && costoInput) {
+                detalleInsumos.push({
+                    nombre: nombre.trim(),
+                    cant: parseInt(cantInput.value) || 0,
+                    precio: parseFloat(costoInput.value) || 0
+                });
+            }
         });
 
         const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
@@ -407,7 +441,7 @@
             doctor: doctorVerificado,
             tratamiento: document.getElementById('hTratamiento').value,
             
-            // NUEVO: Guardamos el array de insumos detallado
+            // Aseguramos que siempre sea un array, aunque esté vacío
             listaDetalladaInsumos: detalleInsumos, 
             
             montoBruto: bruto,
@@ -420,9 +454,12 @@
 
         await addDoc(collection(db, "consultas"), datos);
         if(imp) window.print();
-        alert("✅ Registrado con éxito");
+        alert("✅ Registro guardado correctamente");
         location.reload();
-    } catch (e) { alert("Error: " + e.message); }
+    } catch (e) { 
+        console.error("Error al guardar:", e);
+        alert("Error al guardar: " + e.message); 
+    }
 };
        // --- FUNCIONES DE BÚSQUEDA ---
 
@@ -461,7 +498,7 @@ window.buscarPorCedula = async () => {
     const contenedor = document.getElementById('resultadosBusqueda');
     if (!cedulaInput) return alert("Ingrese una cédula");
 
-    contenedor.innerHTML = "<p class='text-center animate-pulse'>Buscando...</p>";
+    contenedor.innerHTML = "<p class='text-center animate-pulse text-blue-600 font-bold'>Buscando...</p>";
 
     try {
         const q = query(collection(db, "consultas"), where("cedula", "==", cedulaInput));
@@ -469,55 +506,64 @@ window.buscarPorCedula = async () => {
         contenedor.innerHTML = "";
 
         if (snap.empty) {
-            contenedor.innerHTML = "<p class='text-center text-red-500'>No hay registros.</p>";
+            contenedor.innerHTML = "<p class='text-center text-red-500 font-bold p-4'>No hay registros.</p>";
             return;
         }
 
         snap.forEach(doc => {
             const d = doc.data();
+            const idDoc = doc.id; // Usamos el ID de Firebase para que cada botón sea único
+            const totalInsumos = parseFloat(d.montoInsumos) || 0;
             
-            // Generar filas de la tabla de insumos
             let filasInsumos = "";
-            if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
+            if (d.listaDetalladaInsumos && Array.isArray(d.listaDetalladaInsumos)) {
                 d.listaDetalladaInsumos.forEach(ins => {
+                    const p = parseFloat(ins.precio) || 0;
                     filasInsumos += `
                         <tr class="border-b border-slate-100">
                             <td class="py-1">${ins.nombre}</td>
-                            <td class="py-1 text-center">${ins.cant}</td>
-                            <td class="py-1 text-right">$${parseFloat(ins.precio).toFixed(2)}</td>
+                            <td class="py-1 text-center">${ins.cant || 0}</td>
+                            <td class="py-1 text-right font-mono">$${p.toFixed(2)}</td>
                         </tr>`;
                 });
             } else {
-                filasInsumos = `<tr><td colspan="3" class="text-center text-slate-400 py-2">No se detallaron insumos</td></tr>`;
+                filasInsumos = `<tr><td colspan="3" class="text-center text-slate-400 py-2 italic text-[10px]">Sin detalle de insumos</td></tr>`;
             }
 
             contenedor.innerHTML += `
-                <div class="bg-white p-5 rounded-2xl border-2 border-blue-50 shadow-sm mb-6">
-                    <div class="flex justify-between mb-3">
-                        <span class="text-xs font-black text-blue-600 uppercase">${d.fechaSimple}</span>
-                        <span class="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded">DR. ${d.doctor}</span>
+                <div class="bg-white p-5 rounded-2xl border-2 border-blue-50 shadow-sm mb-6 hover:border-blue-200 transition-all">
+                    <div class="flex justify-between mb-3 items-center">
+                        <span class="text-[10px] font-black text-blue-600 uppercase tracking-wider">${d.fechaSimple || 'S/F'}</span>
+                        <span class="text-[9px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded uppercase">DR. ${d.doctor || 'S/N'}</span>
                     </div>
                     
-                    <h3 class="font-black text-slate-800 text-lg mb-1">${d.paciente}</h3>
-                    <p class="text-[11px] text-slate-500 mb-4 italic">${d.tratamiento}</p>
+                    <h3 class="font-black text-slate-800 text-lg mb-1 uppercase tracking-tighter">${d.paciente}</h3>
+                    <div class="bg-blue-50/50 p-3 rounded-xl mb-4">
+                        <p class="text-[11px] text-slate-600 leading-tight italic">${d.tratamiento || 'Sin descripción'}</p>
+                    </div>
 
-                    <div class="mt-4">
-                        <p class="text-[10px] font-bold text-blue-800 mb-2 uppercase">📊 Detalle de Insumos Utilizados:</p>
+                    <button onclick="document.getElementById('det-${idDoc}').classList.toggle('hidden')" 
+                            class="w-full py-2 bg-slate-100 hover:bg-blue-100 text-blue-700 text-[10px] font-black uppercase rounded-lg transition-colors mb-2">
+                        🔍 Ver Detalles de Insumos
+                    </button>
+
+                    <div id="det-${idDoc}" class="hidden mt-4 animate-fadeIn">
+                        <p class="text-[9px] font-black text-blue-800/40 mb-2 uppercase tracking-widest">📊 Desglose de Insumos:</p>
                         <table class="w-full text-[10px] text-slate-600">
                             <thead>
-                                <tr class="text-slate-400 border-b">
-                                    <th class="text-left py-1">Insumo</th>
-                                    <th class="w-12 py-1">Cant.</th>
-                                    <th class="w-16 text-right py-1">Costo</th>
+                                <tr class="text-slate-400 border-b border-slate-100">
+                                    <th class="text-left py-1 font-bold">Insumo</th>
+                                    <th class="w-12 py-1 font-bold">Cant.</th>
+                                    <th class="w-16 text-right py-1 font-bold">Costo</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${filasInsumos}
                             </tbody>
                             <tfoot>
-                                <tr class="font-bold text-slate-800">
-                                    <td colspan="2" class="pt-2 text-right">Total Insumos:</td>
-                                    <td class="pt-2 text-right text-red-600">$${d.montoInsumos.toFixed(2)}</td>
+                                <tr class="font-bold text-slate-800 border-t-2 border-slate-50">
+                                    <td colspan="2" class="pt-2 text-right text-[11px]">Gasto Total:</td>
+                                    <td class="pt-2 text-right text-red-600 font-black text-sm">$${totalInsumos.toFixed(2)}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -525,7 +571,10 @@ window.buscarPorCedula = async () => {
                 </div>
             `;
         });
-    } catch (e) { alert("Error: " + e.message); }
+    } catch (e) { 
+        console.error("Error en buscador:", e);
+        alert("Hubo un problema al cargar los datos."); 
+    }
 };
 
         // --- REPORTES Y CIERRE ---
@@ -558,9 +607,51 @@ window.buscarPorCedula = async () => {
                 alert("✅ Cierre guardado");
             } catch (e) { alert(e.message); }
         };
+       // --- FUNCIÓN PARA AGREGAR INSUMOS MANUALMENTE ---
+        window.agregarInsumoManual = () => {
+            const nombreInput = document.getElementById('nombreExtra');
+            const costoInput = document.getElementById('costoExtra');
+            
+            const nombre = nombreInput.value.trim();
+            const costo = parseFloat(costoInput.value) || 0;
+            
+            if (!nombre || costo <= 0) {
+                return alert("Por favor, ingrese un nombre y un costo válido.");
+            }
+
+            const cuerpo = document.getElementById('listaInsumosDinamica');
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-blue-50";
+
+            // Usamos las mismas clases 'i-cant' e 'i-cost' para que guardarFirebase lo reconozca
+            tr.innerHTML = `
+                <td class="p-2 font-bold text-blue-800 text-[11px]">${nombre.toUpperCase()}</td>
+                <td class="p-2 text-center">
+                    <input type="number" value="1" oninput="calcularTodo()" 
+                           class="i-cant w-10 text-center border rounded outline-none">
+                </td>
+                <td class="p-2 text-center">
+                    <input type="number" value="${costo.toFixed(2)}" step="0.01" oninput="calcularTodo()" 
+                           class="i-cost w-12 text-center border rounded outline-none">
+                </td>
+                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" 
+                    onclick="this.parentElement.remove(); calcularTodo()">✕</td>
+            `;
+
+            cuerpo.appendChild(tr);
+
+            // Limpiar los campitos después de agregar
+            nombreInput.value = "";
+            costoInput.value = "";
+            
+            // Mostrar la tabla si estaba oculta y calcular
+            document.getElementById('contenedorInsumos').classList.remove('hidden');
+            calcularTodo();
+        };
     </script>
 </body>
 </html>
+
 
 
 
