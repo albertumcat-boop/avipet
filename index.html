@@ -5,24 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background-color: white !important; padding: 0; margin: 0; }
-            .print-area { border: none !important; shadow: none !important; width: 100%; }
-            #hTratamiento { border: none !important; height: auto !important; overflow: visible !important; display: block !important; white-space: pre-wrap !important; font-size: 12px; }
+   <style>
+    /* 1. ESTILOS DE PANTALLA (Lo que ves mientras trabajas) */
+    @media screen {
+        #doctorPrint { display: none; } /* Oculto en pantalla */
+    }
+
+    .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
+    .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
+    input, textarea { outline: none; background: transparent; width: 100%; }
+    
+    .menu-desplegable {
+        width: 100%; padding: 14px; border: 2px solid #3b82f6; border-radius: 10px;
+        background-color: #eff6ff; font-weight: bold; color: #1e40af; font-size: 13px;
+        margin-bottom: 10px; cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
+    }
+
+    /* 2. ESTILOS DE IMPRESIÓN (Lo que sale en el papel) */
+    @media print {
+        .no-print, button, select, .menu-desplegable, nav, #loginSection { 
+            display: none !important; 
         }
-        .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
-        .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
-        input, textarea { outline: none; background: transparent; width: 100%; }
-        .menu-desplegable {
-            width: 100%; padding: 14px; border: 2px solid #3b82f6; border-radius: 10px;
-            background-color: #eff6ff; font-weight: bold; color: #1e40af; font-size: 13px;
-            margin-bottom: 10px; cursor: pointer; appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
+        body { background-color: white !important; padding: 0; margin: 0; }
+        .print-area { border: none !important; shadow: none !important; width: 100%; }
+        
+        /* Mostramos el nombre del doctor validado en el papel */
+        #doctorPrint { 
+            display: block !important; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            font-size: 14px;
+            color: black;
         }
-    </style>
+
+        #hTratamiento { 
+            border: none !important; 
+            height: auto !important; 
+            overflow: visible !important; 
+            display: block !important; 
+            white-space: pre-wrap !important; 
+            font-size: 12px; 
+        }
+    }
+</style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
 
@@ -43,19 +70,29 @@
 
         <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
             <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg">A</div>
-                    <div>
-                        <h1 class="text-xl font-black">AVIPET</h1>
-                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 rounded">
-                            <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
-                            <option value="Joan Silva">DR. JOAN SILVA</option>
-                        </select>
-                        <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase">DR. DARWIN SANDOVAL</h2>
-                    </div>
-                </div>
-                <input type="text" id="fechaDoc" class="w-24 text-right font-black text-xs" readonly>
-            </div>
+    <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg shadow-md">A</div>
+        <div>
+            <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
+            
+            <select id="selectDoctor" 
+                    onchange="validarAccesoDoctor(this.value)" 
+                    class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
+                <option value="">-- SELECCIONE DOCTOR --</option>
+                <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
+                <option value="Joan Silva">DR. JOAN SILVA</option>
+            </select>
+
+            <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700">
+                SELECCIONE DOCTOR
+            </h2>
+        </div>
+    </div>
+    
+    <div class="text-right">
+        <input type="text" id="fechaDoc" class="w-24 text-right font-black text-xs text-slate-500 bg-transparent outline-none" readonly>
+    </div>
+</div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
                 <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
@@ -194,18 +231,42 @@
             <div id="resultadosBusqueda" class="mt-4 space-y-3"></div>
         </section>
 
-        <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black text-center mb-6 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
-            <div id="listaReporte" class="divide-y mb-6 text-[10px]"></div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-slate-100 rounded-2xl"><p class="text-[10px] font-bold uppercase">Bruto</p><p id="repBruto" class="text-2xl font-black">$0.00</p></div>
-                <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500"><p class="text-[10px] font-bold uppercase">Gastos</p><p id="repGastos" class="text-2xl font-black text-red-700">$0.00</p></div>
-                <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500"><p class="text-[10px] font-bold uppercase">Docs (30%)</p><p id="repDocs" class="text-2xl font-black text-blue-700">$0.00</p></div>
-                <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600"><p class="text-[10px] font-bold uppercase">Neto Avipet</p><p id="repNeto" class="text-3xl font-black text-emerald-800">$0.00</p></div>
-            </div>
-            <button onclick="cargarReporte()" class="w-full mt-8 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase">Actualizar</button>
-        </section>
-    </main>
+       <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
+    <h2 class="font-black text-center mb-6 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
+    
+    <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg"></div>
+    
+    <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-slate-100 rounded-2xl">
+            <p class="text-[10px] font-bold uppercase text-slate-500">Bruto</p>
+            <p id="repBruto" class="text-2xl font-black text-slate-800">$0.00</p>
+        </div>
+        <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500">
+            <p class="text-[10px] font-bold uppercase text-red-600">Gastos</p>
+            <p id="repGastos" class="text-2xl font-black text-red-700">$0.00</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500">
+            <p class="text-[10px] font-bold uppercase text-blue-600">Docs (30%)</p>
+            <p id="repDocs" class="text-2xl font-black text-blue-700">$0.00</p>
+        </div>
+        <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600">
+            <p class="text-[10px] font-bold uppercase text-emerald-700">Neto Avipet</p>
+            <p id="repNeto" class="text-3xl font-black text-emerald-800">$0.00</p>
+        </div>
+    </div>
+
+    <div class="flex gap-3 mt-8">
+        <button onclick="cargarReporte()" 
+                class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs hover:bg-slate-800 transition-colors">
+            Actualizar
+        </button>
+        
+        <button onclick="guardarResumenDelDia()" 
+                class="flex-1 bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100">
+            Guardar Cierre
+        </button>
+    </div>
+</section>
 
     <script type="module">
         import { db } from './firebase-config.js';
@@ -240,13 +301,44 @@
             ]
         };
 
-        // CORE
+        // CORE - Gestión de Accesos y Seguridad
+        const pinsDoctores = {
+            "Darwin Sandoval": "1111", 
+            "Joan Silva": "2222"
+        };
+
+        let doctorValidado = ""; // Variable para reportes de comisiones
+
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
+                // Limpiamos el selector por seguridad al entrar
+                document.getElementById('selectDoctor').value = "";
             } else { alert("PIN INCORRECTO"); }
+        };
+
+        window.validarAccesoDoctor = (nombre) => {
+            if (!nombre) {
+                doctorValidado = "";
+                document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+                return;
+            }
+
+            const pinIngresado = prompt(`ACCESO DOCTOR: Ingrese PIN para ${nombre.toUpperCase()}:`);
+
+            if (pinIngresado === pinsDoctores[nombre]) {
+                doctorValidado = nombre;
+                // Esto actualiza el nombre que saldrá en la impresión (PDF)
+                document.getElementById('doctorPrint').innerText = "DR. " + nombre.toUpperCase();
+                alert("✅ Acceso concedido al Dr. " + nombre);
+            } else {
+                alert("❌ PIN Incorrecto");
+                document.getElementById('selectDoctor').value = "";
+                doctorValidado = "";
+                document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+            }
         };
 
         window.showTab = (t) => {
@@ -340,56 +432,193 @@
     if(lblDr) lblDr.innerText = `$${(neto * 0.3).toFixed(2)}`;
     if(lblTienda) lblTienda.innerText = `$${(neto * 0.7).toFixed(2)}`;
 };
+// --- CONFIGURACIÓN DE SEGURIDAD ---
+const pinsDoctores = {
+    "Darwin Sandoval": "9876", 
+    "Joan Silva": "0123"       
+};
 
-       window.guardarFirebase = async (imp) => {
-    // 1. Evitar que la página se recargue sola
-    if (event) event.preventDefault();
+let doctorVerificado = ""; // Esta es la "llave" global
 
-    const pac = document.getElementById('hNombre').value;
-    if(!pac) return alert("Nombre Mascota Requerido");
+// --- FUNCIÓN PARA VALIDAR AL DOCTOR ---
+window.validarAccesoDoctor = (nombre) => {
+    if (!nombre) {
+        doctorVerificado = "";
+        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+        return;
+    }
 
-    // 2. Asegurar que los números sean válidos antes de enviar
-    const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-    const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-    const neto = bruto - insu;
+    const pinIngresado = prompt(`ACCESO RESTRINGIDO: Ingrese PIN para ${nombre.toUpperCase()}:`);
 
-    const datos = {
-        paciente: document.getElementById('hNombre').value.toUpperCase(),
-        especie: document.getElementById('hEspecie').value.toUpperCase(),
-        raza: document.getElementById('hRaza').value.toUpperCase(),
-        peso: document.getElementById('hPeso').value,
-        edad: document.getElementById('hEdad').value,
-        propietario: document.getElementById('hProp').value.toUpperCase(),
-        cedula: document.getElementById('hCI').value,
-        telefono: document.getElementById('hTlf').value,
-        correo: document.getElementById('hMail').value,
-        doctor: document.getElementById('selectDoctor').value,
-        montoBruto: bruto,
-        montoInsumos: insu,
-        pagoDoctor: neto * 0.3,
-        gananciaTienda: neto * 0.7,
-        tratamiento: document.getElementById('hTratamiento').value,
-        fechaSimple: new Date().toLocaleDateString(),
-        timestamp: serverTimestamp()
-    };
-
-    try {
-        // 3. Verificamos que 'db' y 'collection' existan
-        if (!db) throw new Error("Firebase no está conectado");
-        
-        await addDoc(collection(db, "consultas"), datos);
-        
-        if(imp) {
-            window.print();
-        }
-        
-        alert("✅ GUARDADO CON ÉXITO");
-        location.reload(); // Solo recarga si se guardó bien
-    } catch (e) { 
-        console.error("Error detallado:", e);
-        alert("❌ Error al guardar: " + e.message); 
+    if (pinIngresado === pinsDoctores[nombre]) {
+        doctorVerificado = nombre; 
+        document.getElementById('doctorPrint').innerText = "DR. " + nombre.toUpperCase();
+        alert("✅ Identidad confirmada.");
+    } else {
+        alert("❌ PIN INCORRECTO.");
+        document.getElementById('selectDoctor').value = "";
+        doctorVerificado = "";
+        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
     }
 };
+
+// --- FUNCIÓN DE GUARDADO ---
+window.guardarFirebase = async (imp) => {
+    if (window.event) window.event.preventDefault();
+
+    const doctorSeleccionado = document.getElementById('selectDoctor')?.value;
+    
+    // El candado: Verifica que el nombre y el PIN coincidan
+    if (!doctorSeleccionado || doctorSeleccionado !== doctorVerificado) {
+        alert("⚠️ SEGURIDAD: Debe seleccionar un doctor y validar su PIN.");
+        return;
+    }
+
+    try {
+        const campoNombre = document.getElementById('hNombre');
+        if(!campoNombre || !campoNombre.value) {
+            alert("Falta el nombre de la mascota");
+            return;
+        }
+
+        const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+        const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+        const neto = bruto - insu;
+
+        const datos = {
+            paciente: campoNombre.value.toUpperCase(),
+            especie: document.getElementById('hEspecie')?.value.toUpperCase() || "",
+            raza: document.getElementById('hRaza')?.value.toUpperCase() || "",
+            peso: document.getElementById('hPeso')?.value || "",
+            edad: document.getElementById('hEdad')?.value || "",
+            propietario: document.getElementById('hProp')?.value.toUpperCase() || "",
+            cedula: document.getElementById('hCI')?.value || "",
+            telefono: document.getElementById('hTlf')?.value || "",
+            correo: document.getElementById('hMail')?.value || "",
+            doctor: doctorVerificado, // Guarda el nombre validado
+            montoBruto: bruto,
+            montoInsumos: insu,
+            pagoDoctor: neto * 0.3,
+            gananciaTienda: neto * 0.7,
+            tratamiento: document.getElementById('hTratamiento')?.value || "",
+            fechaSimple: new Date().toLocaleDateString(),
+            timestamp: serverTimestamp() 
+        };
+
+        await addDoc(collection(db, "consultas"), datos);
+        
+        if(imp) { window.print(); }
+
+        alert("✅ CONSULTA REGISTRADA POR EL DR. " + doctorVerificado.toUpperCase());
+        location.reload(); 
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("❌ Error al guardar: " + error.message);
+    }
+};
+        // Variable global para guardar el cálculo temporalmente antes de enviarlo a la base de datos
+window.ultimoResumenCalculado = null;
+
+window.cargarReporte = async () => {
+    const lista = document.getElementById('listaReporte');
+    const hoy = new Date().toLocaleDateString();
+    lista.innerHTML = "<p class='p-4 italic text-gray-500'>Buscando datos de hoy...</p>";
+
+    try {
+        // Buscamos solo lo que se hizo HOY
+        const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
+        const querySnapshot = await getDocs(q);
+
+        let tBruto = 0, tInsumos = 0, tDocs = 0, tNeto = 0;
+        lista.innerHTML = ""; 
+
+        querySnapshot.forEach((doc) => {
+            const d = doc.data();
+            tBruto += d.montoBruto || 0;
+            tInsumos += d.montoInsumos || 0;
+            tDocs += d.pagoDoctor || 0;
+            tNeto += d.gananciaTienda || 0;
+
+            // Listado visual rápido
+            const item = document.createElement('div');
+            item.className = "flex justify-between p-2 border-b text-[10px]";
+            item.innerHTML = `<span><b>${d.paciente}</b> (Dr. ${d.doctor})</span><span>$${d.montoBruto.toFixed(2)}</span>`;
+            lista.appendChild(item);
+        });
+
+        // Actualizamos los cuadros de la pantalla
+        document.getElementById('repBruto').innerText = `$${tBruto.toFixed(2)}`;
+        document.getElementById('repGastos').innerText = `$${tInsumos.toFixed(2)}`;
+        document.getElementById('repDocs').innerText = `$${tDocs.toFixed(2)}`;
+        document.getElementById('repNeto').innerText = `$${tNeto.toFixed(2)}`;
+
+        // Preparamos el paquete para el almacenamiento permanente
+        window.ultimoResumenCalculado = {
+            fecha: hoy,
+            totalBruto: tBruto,
+            totalDocs: tDocs,
+            netoAvipet: tNeto,
+            totalInsumos: tInsumos,
+            creadoEl: new Date().toLocaleString()
+        };
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("No se pudo cargar el reporte diario.");
+    }
+};
+        window.guardarResumenDelDia = async () => {
+    // Verificamos que haya algo que guardar
+    if (!window.ultimoResumenCalculado || window.ultimoResumenCalculado.totalBruto === 0) {
+        alert("⚠️ Primero debe pulsar 'ACTUALIZAR' para calcular los montos de hoy.");
+        return;
+    }
+
+    if (!confirm("¿Desea GUARDAR permanentemente el resumen de hoy en el historial de caja?")) return;
+
+    try {
+        // Guardamos en una nueva colección "cierres_caja"
+        await addDoc(collection(db, "cierres_caja"), {
+            ...window.ultimoResumenCalculado,
+            timestamp: serverTimestamp()
+        });
+        
+        alert("✅ CIERRE ALMACENADO. Los datos de hoy ya están en el historial permanente.");
+        
+    } catch (error) {
+        alert("Error al almacenar el cierre: " + error.message);
+    }
+};
+
+window.validarAccesoDoctor = (nombre) => {
+    if (!nombre) {
+        doctorVerificado = "";
+        window.actualizarNombreDoctor("");
+        return;
+    }
+
+    const pinIngresado = prompt(`Ingrese PIN de acceso para el ${nombre.toUpperCase()}:`);
+
+    if (pinIngresado === pinsDoctores[nombre]) {
+        doctorVerificado = nombre;
+        window.actualizarNombreDoctor(nombre); // Esto actualiza el texto de impresión
+        alert("✅ Acceso concedido");
+    } else {
+        alert("❌ PIN Incorrecto o cancelado. Acceso denegado.");
+        document.getElementById('selectDoctor').value = "";
+        doctorVerificado = "";
+        window.actualizarNombreDoctor("");
+    }
+};
+
+// Asegúrate de que esta función esté definida como window para que sea global
+window.actualizarNombreDoctor = (n) => { 
+    const el = document.getElementById('doctorPrint');
+    if(el) el.innerText = n ? "DR. " + n.toUpperCase() : "SELECCIONE DOCTOR"; 
+};
+
+// ... (El resto de tus funciones guardarFirebase, buscar e informar están perfectas) ...
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
@@ -453,6 +682,7 @@
     </script>
 </body>
 </html>
+
 
 
 
