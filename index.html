@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AVIPET - Sistema Médico y Financiero</title>
+    <title>AVIPET - Gestión Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -12,9 +12,9 @@
             .print-area { border: none !important; shadow: none !important; width: 100%; }
             #hTratamiento { border: none !important; height: auto !important; overflow: visible !important; display: block !important; white-space: pre-wrap !important; font-size: 12px; }
         }
-        .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
         .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
         input, textarea { outline: none; background: transparent; width: 100%; }
+        .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
         
         .menu-desplegable {
             width: 100%; padding: 14px; border: 2px solid #3b82f6; border-radius: 10px;
@@ -23,71 +23,67 @@
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
         }
-        .finance-card { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 12px; padding: 15px; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800">
 
     <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-xs text-center border-t-4 border-blue-600">
-            <h1 class="text-3xl font-black mb-2 text-blue-600">AVIPET</h1>
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-xs text-center">
+            <h1 class="text-3xl font-black mb-2 text-blue-600 uppercase">Avipet</h1>
             <input type="password" id="pinInput" placeholder="PIN" class="w-full p-4 border-2 rounded-xl mb-4 text-center text-2xl font-bold">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold uppercase shadow-lg">Entrar</button>
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold uppercase">Entrar</button>
         </div>
     </div>
 
     <main id="adminSection" class="hidden max-w-5xl mx-auto p-2 md:p-4">
         
         <nav class="flex justify-around border-b-2 border-gray-200 mb-4 no-print bg-white sticky top-0 z-40 py-1">
-            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2 text-[11px] px-2">HISTORIA</button>
-            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 text-[11px] px-2">BUSCADOR</button>
-            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 text-[11px] px-2">REPORTE</button>
+            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2 text-[11px] px-2 uppercase">Historia</button>
+            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 text-[11px] px-2 uppercase">Buscador</button>
+            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 text-[11px] px-2 uppercase">Finanzas</button>
         </nav>
 
-        <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
+        <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border rounded-xl print-area">
             
             <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg">A</div>
                     <div>
-                        <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
-                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print block text-xs font-bold text-blue-600 bg-transparent border-none outline-none">
+                        <h1 class="text-xl font-black">AVIPET</h1>
+                        <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print text-xs font-bold text-blue-600">
                             <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
                             <option value="Joan Silva">DR. JOAN SILVA</option>
                         </select>
-                        <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-800">DR. DARWIN SANDOVAL</h2>
+                        <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase">DR. DARWIN SANDOVAL</h2>
                     </div>
                 </div>
-                <input type="text" id="fechaDoc" class="w-24 text-right font-bold text-slate-700 text-xs" readonly>
+                <input type="text" id="fechaDoc" class="w-24 text-right font-bold text-xs" readonly>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
-                <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-3">
-                    <div class="header-box italic">Paciente</div>
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-3">
-                        <div class="col-span-2"><label class="text-[9px] font-bold text-slate-400 uppercase">Nombre Mascota</label><input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700"></div>
+                <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
+                    <div class="header-box italic">Ficha del Paciente</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="col-span-2"><label class="text-[9px] font-bold text-slate-400">MASCOTA</label><input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
                     </div>
                 </div>
-                <div class="p-3 space-y-3">
-                    <div class="header-box italic">Propietario</div>
-                    <div><label class="text-[9px] font-bold text-slate-400">NOMBRE</label><input id="hProp" class="border-b w-full font-bold uppercase"></div>
+                <div class="p-3 space-y-2">
+                    <div class="header-box italic">Responsable</div>
+                    <div><label class="text-[9px] font-bold text-slate-400">NOMBRE</label><input id="hProp" class="border-b w-full uppercase"></div>
                     <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700"></div>
-                    <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full uppercase"></div>
                 </div>
             </div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
-                <div class="bg-slate-100 p-3 border-b border-slate-400 no-print">
-                    <label class="text-[11px] font-black text-blue-800 uppercase block mb-2">SELECCIONAR SERVICIO (CARGA COSTOS E INSUMOS) ↓</label>
-                    <select id="menuServicios" onchange="procesarServicio(this.value); this.value='';" class="menu-desplegable">
-                        <option value="">-- SELECCIONE UN SERVICIO --</option>
+                <div class="bg-slate-100 p-3 no-print">
+                    <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
+                        <option value="">-- SELECCIONAR SERVICIOS --</option>
                         <optgroup label="CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+                            <option value="CONSULTA CAMADA">CONSULTA CAMADA</option>
                         </optgroup>
                         <optgroup label="VACUNAS">
                             <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
@@ -95,76 +91,78 @@
                             <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
                             <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
                         </optgroup>
-                        <optgroup label="LABORATORIO">
-                            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
-                            <option value="PERFIL 20">PERFIL 20</option>
-                            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-                        </optgroup>
-                        <optgroup label="EUTANASIA">
-                            <option value="EUTANASIA HASTA 5KG CON DISPOSICION">EUTANASIA HASTA 5KG CON DISPOSICIÓN</option>
-                            <option value="EUTANASIA HASTA 15KG CON DISPOSICION">EUTANASIA HASTA 15KG CON DISPOSICIÓN</option>
+                        <optgroup label="OTROS">
+                            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA</option>
+                            <option value="EUTANASIA CON DISPOSICIÓN">EUTANASIA CON DISPOSICIÓN</option>
                         </optgroup>
                     </select>
                 </div>
-                <textarea id="hTratamiento" class="w-full h-64 p-3 text-xs md:text-sm font-medium leading-relaxed" placeholder="El tratamiento aparecerá aquí..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-48 p-3 text-sm" placeholder="Detalles médicos..."></textarea>
             </div>
 
-            <div id="panelGastos" class="no-print finance-card shadow-sm border-2 border-slate-100 mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl">
-                        <p class="text-[10px] font-black text-blue-800 uppercase mb-1">Cobro Total Sugerido ($)</p>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="text-3xl font-black text-blue-600 w-full">
+            <div class="no-print bg-slate-900 p-4 rounded-xl text-white space-y-4">
+                <h3 class="text-center text-[10px] font-black tracking-widest text-blue-400 uppercase">Calculadora de Insumos y Ganancias</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] block text-slate-400 font-bold uppercase">Cobro Bruto ($)</label>
+                        <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-2xl font-black text-white border-b-2 border-blue-500 w-full">
                     </div>
-                    <div class="p-3 bg-red-50 border border-red-200 rounded-xl">
-                        <p class="text-[10px] font-black text-red-800 uppercase mb-1">Costo de Insumos (Gasto) ($)</p>
-                        <input type="number" id="gastoInsumos" value="0" oninput="calcularFinanzas()" class="text-3xl font-black text-red-600 w-full">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                        <p class="text-[10px] font-bold text-emerald-800 uppercase mb-1">Ganancia Neta (Limpio)</p>
-                        <p id="labelUtilidadReal" class="text-2xl font-black text-emerald-700">$0.00</p>
-                    </div>
-                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">DR. (30%)</p>
-                        <p id="labelGananciaVet" class="text-2xl font-black text-slate-700">$0.00</p>
-                    </div>
-                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">TIENDA (70%)</p>
-                        <p id="labelUtilidadTienda" class="text-2xl font-black text-slate-700">$0.00</p>
+                    <div>
+                        <label class="text-[10px] block text-slate-400 font-bold uppercase">Gasto Insumos ($)</label>
+                        <input type="number" id="gastoInsumos" value="0" oninput="calcularTodo()" class="text-2xl font-black text-red-400 border-b-2 border-red-500 w-full">
                     </div>
                 </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="guardarFirebase(false)" class="bg-slate-100 text-slate-700 py-4 rounded-xl font-black uppercase text-[11px] border border-slate-200">Guardar Datos</button>
-                    <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[11px] shadow-lg">Imprimir Reporte</button>
+                <div class="grid grid-cols-3 gap-2 pt-2 text-center">
+                    <div class="bg-slate-800 p-2 rounded-lg">
+                        <p class="text-[9px] text-slate-400">NETO (Limpio)</p>
+                        <p id="labelNeto" class="text-lg font-black text-emerald-400">$0.00</p>
+                    </div>
+                    <div class="bg-slate-800 p-2 rounded-lg">
+                        <p class="text-[9px] text-slate-400">DR (30%)</p>
+                        <p id="labelDr" class="text-lg font-black text-slate-200">$0.00</p>
+                    </div>
+                    <div class="bg-slate-800 p-2 rounded-lg">
+                        <p class="text-[9px] text-slate-400">AVIPET (70%)</p>
+                        <p id="labelTienda" class="text-lg font-black text-slate-200">$0.00</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="guardarFirebase(false)" class="bg-slate-700 py-3 rounded-lg font-bold text-xs uppercase">Solo Guardar</button>
+                    <button onclick="guardarFirebase(true)" class="bg-blue-600 py-3 rounded-lg font-bold text-xs uppercase">Guardar e Imprimir</button>
                 </div>
             </div>
-        </section>
-
-        <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black mb-4 uppercase">🔍 Buscador Histórico</h2>
-            <input type="text" id="searchCI" placeholder="Cédula..." class="w-full p-4 border-2 rounded-xl mb-4">
-            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Buscar</button>
-            <div id="resultadosBusqueda" class="mt-4 space-y-4"></div>
         </section>
 
         <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black mb-6 text-center uppercase tracking-widest text-blue-900">Estado Financiero del Día</h2>
-            <div id="listaReporte" class="divide-y mb-6 text-[11px]"></div>
-            <div class="space-y-3">
-                <div class="flex justify-between p-4 bg-blue-600 text-white rounded-xl shadow-lg">
-                    <span class="font-bold">VENTAS TOTALES:</span> <span id="repTotalCobrado" class="text-xl font-black">$0.00</span>
+            <h2 class="font-black text-center mb-6 uppercase tracking-widest">Estado Financiero Consolidado</h2>
+            <div id="listaReporte" class="divide-y mb-6 text-[10px]"></div>
+            
+            <div class="space-y-2">
+                <div class="flex justify-between p-3 bg-slate-100 rounded-lg">
+                    <span class="font-bold uppercase text-slate-600">Total Ingreso Bruto:</span>
+                    <span id="repBruto" class="font-black text-slate-900">$0.00</span>
                 </div>
-                <div class="flex justify-between p-4 bg-red-500 text-white rounded-xl shadow-lg">
-                    <span class="font-bold">GASTOS EN INSUMOS:</span> <span id="repTotalInsumos" class="text-xl font-black">$0.00</span>
+                <div class="flex justify-between p-3 bg-red-50 rounded-lg">
+                    <span class="font-bold uppercase text-red-600">Total Gastos Insumos:</span>
+                    <span id="repGastos" class="font-black text-red-700">$0.00</span>
                 </div>
-                <div class="flex justify-between p-5 bg-emerald-600 text-white rounded-2xl shadow-xl border-4 border-white">
-                    <span class="font-bold text-lg">UTILIDAD NETA TOTAL:</span> <span id="repTotalNeto" class="text-3xl font-black">$0.00</span>
+                <div class="flex justify-between p-3 bg-blue-50 rounded-lg">
+                    <span class="font-bold uppercase text-blue-600">Total Pago Doctores:</span>
+                    <span id="repDocs" class="font-black text-blue-700">$0.00</span>
+                </div>
+                <div class="flex justify-between p-4 bg-emerald-600 text-white rounded-xl shadow-xl">
+                    <span class="font-black uppercase">Ganancia Neta Tienda:</span>
+                    <span id="repNeto" class="text-2xl font-black">$0.00</span>
                 </div>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-8 bg-slate-800 text-white py-4 rounded-xl font-black uppercase">Actualizar Estado Financiero</button>
+            <button onclick="cargarReporte()" class="w-full mt-6 bg-slate-900 text-white py-4 rounded-xl font-black uppercase">Actualizar Cierre</button>
+        </section>
+
+        <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
+            <h2 class="font-black mb-4 uppercase">Buscador</h2>
+            <input type="text" id="searchCI" placeholder="Cédula del Propietario..." class="w-full p-4 border-2 rounded-xl mb-4 font-bold">
+            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Buscar Historial</button>
+            <div id="resultadosBusqueda" class="mt-4 space-y-2"></div>
         </section>
 
     </main>
@@ -172,21 +170,6 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        // BASE DE DATOS DE PRECIOS E INSUMOS
-        const CATALOGO = {
-            "CONSULTA GENERAL": { precio: 30, insumo: 2 },
-            "CONSULTA OFTALMOLÓGICA": { precio: 45, insumo: 5 },
-            "VACUNA SEXTUPLE": { precio: 25, insumo: 12 },
-            "VACUNA PUPPY": { precio: 20, insumo: 10 },
-            "VACUNA ANTIRRÁBICA": { precio: 15, insumo: 5 },
-            "VACUNA TRIPLE FELINA": { precio: 25, insumo: 12 },
-            "HEMATOLOGÍA COMPLETA": { precio: 15, insumo: 8 },
-            "PERFIL 20": { precio: 40, insumo: 20 },
-            "DESCARTE HEMOPARASITO": { precio: 25, insumo: 12 },
-            "EUTANASIA HASTA 5KG CON DISPOSICION": { precio: 60, insumo: 25 },
-            "EUTANASIA HASTA 15KG CON DISPOSICION": { precio: 85, insumo: 35 }
-        };
 
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
@@ -205,75 +188,50 @@
             if(t === 'reporte') cargarReporte();
         };
 
-        // FUNCIÓN CLAVE: PROCESA EL SERVICIO Y CARGA LOS COSTOS
-        window.procesarServicio = (v) => {
-            if(!v) return;
+        window.insertarServicio = (v) => {
             const area = document.getElementById('hTratamiento');
-            const pVenta = document.getElementById('precioVenta');
-            const gInsumo = document.getElementById('gastoInsumos');
-
-            // Añadir al texto de la historia
             area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
-            
-            // Cargar costos automáticos si existen en el catálogo
-            if(CATALOGO[v]) {
-                pVenta.value = parseFloat(pVenta.value) + CATALOGO[v].precio;
-                gInsumo.value = parseFloat(gInsumo.value) + CATALOGO[v].insumo;
-            }
-
-            calcularFinanzas();
             area.focus();
         };
 
-        window.actualizarNombreDoctor = (n) => {
-            document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase();
-        };
-
-        window.calcularFinanzas = () => {
-            const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
+        window.calcularTodo = () => {
+            const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
             const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-            const utilidadReal = cobro - insumos;
-
-            document.getElementById('labelUtilidadReal').innerText = `$${utilidadReal.toFixed(2)}`;
-            document.getElementById('labelGananciaVet').innerText = `$${(utilidadReal * 0.3).toFixed(2)}`;
-            document.getElementById('labelUtilidadTienda').innerText = `$${(utilidadReal * 0.7).toFixed(2)}`;
-        };
-
-        const limpiarFormulario = () => {
-            const ids = ['hNombre','hEspecie','hRaza','hPeso','hEdad','hProp','hCI','hTlf','hTratamiento','precioVenta','gastoInsumos'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if(el.type === 'number') el.value = 0;
-                else el.value = '';
-            });
-            calcularFinanzas();
+            const neto = bruto - insumos;
+            
+            document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
+            document.getElementById('labelDr').innerText = `$${(neto * 0.3).toFixed(2)}`;
+            document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
         };
 
         window.guardarFirebase = async (imp) => {
+            const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+            const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+            const neto = bruto - insumos;
+
             const data = {
                 cedula: document.getElementById('hCI').value.trim(),
                 paciente: document.getElementById('hNombre').value.toUpperCase(),
+                propietario: document.getElementById('hProp').value.toUpperCase(),
                 tratamiento: document.getElementById('hTratamiento').value,
                 doctor: document.getElementById('selectDoctor').value,
-                cobrado: parseFloat(document.getElementById('precioVenta').value) || 0,
-                costoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
-                utilidad: (parseFloat(document.getElementById('precioVenta').value) || 0) - (parseFloat(document.getElementById('gastoInsumos').value) || 0),
-                fecha: serverTimestamp(),
-                fechaSimple: new Date().toLocaleDateString()
+                montoBruto: bruto,
+                montoInsumos: insumos,
+                montoNeto: neto,
+                pagoDoctor: neto * 0.3,
+                gananciaTienda: neto * 0.7,
+                fechaSimple: new Date().toLocaleDateString(),
+                timestamp: serverTimestamp()
             };
 
-            if(!data.cedula || !data.paciente) return alert("Faltan datos");
+            if(!data.cedula || !data.paciente) return alert("Faltan datos del paciente/dueño");
 
             try {
                 await addDoc(collection(db, "consultas"), data);
-                if(imp) {
-                    window.print();
-                    setTimeout(() => { alert("✓ DATOS GUARDADOS"); limpiarFormulario(); }, 1000);
-                } else {
-                    alert("✓ DATOS GUARDADOS");
-                    limpiarFormulario();
-                }
-            } catch (e) { alert("Error de red"); }
+                if(imp) { window.print(); }
+                alert("✓ GUARDADO CORRECTAMENTE");
+                location.reload(); // Reinicia para nueva consulta
+            } catch (e) { alert("Error al guardar"); }
         };
 
         window.buscarPorCedula = async () => {
@@ -286,7 +244,7 @@
             res.innerHTML = "";
             snap.forEach(d => {
                 const v = d.data();
-                res.innerHTML += `<div class="p-3 border-l-4 border-blue-600 bg-slate-50 text-[11px] mb-2"><b>${v.fechaSimple} - ${v.doctor}</b><br>${v.tratamiento}</div>`;
+                res.innerHTML += `<div class="p-3 border bg-white rounded shadow-sm text-[11px]"><b>${v.fechaSimple} - ${v.doctor}</b><br>${v.tratamiento}</div>`;
             });
         };
 
@@ -294,19 +252,27 @@
             const hoy = new Date().toLocaleDateString();
             const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
             const snap = await getDocs(q);
-            let totalVenta = 0, totalGasto = 0;
+            let tBruto = 0, tInsumos = 0, tDocs = 0, tTienda = 0;
             const l = document.getElementById('listaReporte');
             l.innerHTML = "";
+
             snap.forEach(d => {
                 const v = d.data();
-                totalVenta += v.cobrado;
-                totalGasto += v.costoInsumos;
-                l.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente}</span><span>Venta: $${v.cobrado} - Insumo: $${v.costoInsumos}</span></div>`;
+                tBruto += v.montoBruto;
+                tInsumos += v.montoInsumos;
+                tDocs += v.pagoDoctor;
+                tTienda += v.gananciaTienda;
+                l.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente}</span><span>Bruto: $${v.montoBruto} | Insumo: $${v.montoInsumos}</span></div>`;
             });
-            document.getElementById('repTotalCobrado').innerText = `$${totalVenta.toFixed(2)}`;
-            document.getElementById('repTotalInsumos').innerText = `$${totalGasto.toFixed(2)}`;
-            document.getElementById('repTotalNeto').innerText = `$${(totalVenta - totalGasto).toFixed(2)}`;
+
+            document.getElementById('repBruto').innerText = `$${tBruto.toFixed(2)}`;
+            document.getElementById('repGastos').innerText = `$${tInsumos.toFixed(2)}`;
+            document.getElementById('repDocs').innerText = `$${tDocs.toFixed(2)}`;
+            document.getElementById('repNeto').innerText = `$${tTienda.toFixed(2)}`;
         };
+        
+        window.actualizarNombreDoctor = (n) => { document.getElementById('doctorPrint').innerText = "DR. " + n.toUpperCase(); };
+
     </script>
 </body>
 </html>
