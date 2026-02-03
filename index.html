@@ -139,7 +139,7 @@
                             <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
                             <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">HEMATOLOGIA+QUIMICA+HEMOPARASITOS</option>
                             <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
+                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>        
                             <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
                             <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
                             <option value="RASPADO PIEL">RASPADO PIEL</option>
@@ -167,6 +167,20 @@
                 </div>
                 <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Diagnóstico y tratamiento..."></textarea>
             </div>
+            <div id="contenedorInsumos" class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
+    <table class="w-full text-[11px] text-left">
+        <thead class="bg-blue-600 text-white uppercase italic">
+            <tr>
+                <th class="p-2">Insumo</th>
+                <th class="p-2 w-16 text-center">Cant.</th>
+                <th class="p-2 w-16 text-center">Precio $</th>
+                <th class="p-2 w-10"></th>
+            </tr>
+        </thead>
+        <tbody id="listaInsumosDinamica" class="bg-white">
+            </tbody>
+    </table>
+</div>
 
             <div class="no-print bg-blue-50 p-6 rounded-3xl text-slate-800 shadow-lg border-2 border-blue-200 mb-4">
     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -276,39 +290,60 @@ const recetas = {
             if(t === 'reporte') cargarReporte();
         };
 
-      window.insertarServicio = (v) => {
+     window.insertarServicio = (v) => {
     if (!v) return;
     
-    // 1. Escribe en el cuadro de texto de la historia
+    // 1. Escribir en historia
     const area = document.getElementById('hTratamiento');
     area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
     
-    // 2. Calcula y suma los insumos automáticamente
+    // 2. Desglosar insumos en la tabla editable
     if (recetas[v]) {
-        let costoServicio = 0;
+        const tabla = document.getElementById('contenedorInsumos');
+        const cuerpo = document.getElementById('listaInsumosDinamica');
+        tabla.classList.remove('hidden'); // Mostrar la tabla
+
         recetas[v].forEach(insumo => {
-            costoServicio += insumo.costo;
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-blue-50";
+            tr.innerHTML = `
+                <td class="p-2 font-bold text-blue-800">${insumo.nombre}</td>
+                <td class="p-2 text-center">
+                    <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-12 text-center border rounded">
+                </td>
+                <td class="p-2 text-center">
+                    <input type="number" value="${insumo.costo}" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded">
+                </td>
+                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
+            `;
+            cuerpo.appendChild(tr);
         });
-        
-        // Obtiene el gasto actual y le suma el nuevo
-        let gastoActual = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-        document.getElementById('gastoInsumos').value = (gastoActual + costoServicio).toFixed(2);
-        
-        // Actualiza los cálculos visuales (Neto, Dr, Tienda)
         calcularTodo();
     }
-    
     area.focus();
 };
 
-        window.calcularTodo = () => {
-            const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-            const neto = bruto - insumos;
-            document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
-            document.getElementById('labelDr').innerText = `$${(neto * 0.3).toFixed(2)}`;
-            document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
-        };
+       window.calcularTodo = () => {
+    let totalInsumos = 0;
+    
+    // Suma todos los insumos de la tabla dinámica
+    document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
+        const cant = parseFloat(fila.querySelector('.i-cant').value) || 0;
+        const costo = parseFloat(fila.querySelector('.i-cost').value) || 0;
+        totalInsumos += (cant * costo);
+    });
+
+    // Actualiza el input de gastos
+    document.getElementById('gastoInsumos').value = totalInsumos.toFixed(2);
+
+    // Cálculos financieros
+    const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+    const neto = bruto - totalInsumos;
+    
+    document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
+    document.getElementById('labelDr').innerText = `$${(neto * 0.3).toFixed(2)}`;
+    document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
+};
 
         window.guardarFirebase = async (imp) => {
             const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
@@ -379,6 +414,7 @@ const recetas = {
     </script>
 </body>
 </html>
+
 
 
 
