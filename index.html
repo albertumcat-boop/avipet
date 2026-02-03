@@ -6,13 +6,13 @@
     <title>AVIPET - CONTROL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ESTILO ORIGINAL RECUPERADO */
+        /* ESTILO "LÍNEA NEGRA" ORIGINAL RECUPERADO */
         body { font-family: 'Courier New', Courier, monospace; background-color: #ffffff; color: #000; }
         .no-print { background-color: #f3f4f6; padding: 10px; border-bottom: 2px solid #000; }
         
         .seccion-tabla { border: 2px solid #000; margin-bottom: 10px; }
         .celda { border: 1px solid #000; padding: 5px; }
-        .titulo-celda { font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; }
+        .titulo-celda { font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; line-height: 1.2; }
         
         input, textarea { width: 100%; border: none; font-size: 14px; text-transform: uppercase; outline: none; background: transparent; }
         .input-monto { border: 2px solid #000; font-weight: bold; padding: 5px; text-align: center; background: #fff; }
@@ -38,38 +38,39 @@
     <div id="loginSection" class="fixed inset-0 bg-white flex items-center justify-center z-50">
         <div class="border-4 border-black p-8 w-80 text-center">
             <h1 class="text-3xl font-black mb-4">AVIPET</h1>
-            <input type="password" id="pinInput" placeholder="PIN" class="border-2 border-black text-center mb-4 p-2 w-full text-2xl">
-            <button onclick="verificarPin()" class="w-full bg-black text-white py-2 font-bold uppercase">Entrar</button>
+            <p class="text-[10px] font-bold mb-4">SISTEMA DE CONTROL</p>
+            <input type="password" id="pinInput" placeholder="PIN" class="border-2 border-black text-center mb-6 p-2 w-full text-2xl">
+            <button onclick="verificarPin()" class="w-full bg-black text-white py-2 font-bold uppercase hover:bg-gray-800">Entrar</button>
         </div>
     </div>
 
     <main id="adminSection" class="hidden max-w-4xl mx-auto p-4">
         
-        <div class="no-print mb-4 flex gap-4 font-bold border-b border-black pb-2">
-            <button onclick="showTab('historia')">HISTORIA</button>
-            <button onclick="showTab('buscador')">BUSCADOR</button>
-            <button onclick="showTab('reporte')">REPORTE</button>
+        <div class="no-print mb-4 flex gap-6 font-bold border-b-2 border-black pb-2 text-sm">
+            <button onclick="showTab('historia')">HISTORIA CLÍNICA</button>
+            <button onclick="showTab('buscador')">BUSCADOR CI</button>
+            <button onclick="showTab('reporte')">REPORTE DIARIO</button>
         </div>
 
         <section id="sectionHistoria" class="print-area">
             <div class="flex justify-between items-end mb-4 border-b-4 border-black pb-2">
                 <div>
-                    <h1 class="text-3xl font-black">AVIPET</h1>
-                    <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print font-bold border border-black p-1 text-sm">
+                    <h1 class="text-4xl font-black tracking-tighter">AVIPET</h1>
+                    <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print font-bold border border-black p-1 text-sm mt-2">
                         <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
                         <option value="Joan Silva">DR. JOAN SILVA</option>
                     </select>
                     <h2 id="doctorPrint" class="hidden print:block font-bold text-xl uppercase">DR. DARWIN SANDOVAL</h2>
                 </div>
-                <div>
-                    <span class="titulo-celda text-right">FECHA:</span>
-                    <input type="text" id="fechaDoc" class="font-bold w-32 text-right" readonly>
+                <div class="text-right">
+                    <span class="titulo-celda">FECHA:</span>
+                    <input type="text" id="fechaDoc" class="font-bold w-32 text-right border-none" readonly>
                 </div>
             </div>
 
             <div class="seccion-tabla grid grid-cols-2">
                 <div class="celda border-r-2 border-black">
-                    <span class="titulo-celda">Nombre Mascota:</span>
+                    <span class="titulo-celda">Mascota:</span>
                     <input id="hNombre" class="font-bold">
                     <span class="titulo-celda">Especie:</span>
                     <input id="hEspecie">
@@ -105,15 +106,15 @@
 
             <div class="seccion-tabla">
                 <div class="celda bg-gray-100 no-print">
-                    <span class="titulo-celda">TRATAMIENTO Y EVOLUCIÓN:</span>
+                    <span class="titulo-celda">TRATAMIENTO, EVOLUCIÓN Y SERVICIOS:</span>
                 </div>
-                <textarea id="hTratamiento" oninput="syncTratamiento(this.value)" class="p-2 h-96 border-t-2 border-black"></textarea>
+                <textarea id="hTratamiento" oninput="syncTratamiento(this.value)" class="p-2 h-96 border-t-2 border-black" placeholder="ESCRIBA EL INFORME AQUÍ..."></textarea>
                 <div id="tratamientoPrint"></div>
             </div>
 
-            <div class="no-print grid grid-cols-2 gap-4 mt-4 bg-gray-200 p-4 border-2 border-black">
+            <div class="no-print grid grid-cols-2 gap-4 mt-4 bg-gray-100 p-4 border-2 border-black">
                 <div>
-                    <span class="font-bold uppercase text-xs">Total Cobrado $:</span>
+                    <span class="font-bold uppercase text-[10px]">Importe Total $:</span>
                     <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="input-monto text-3xl">
                     <div class="flex justify-between mt-2 text-[10px] font-bold">
                         <span>DR (30%): <span id="labelGananciaVet">$0.00</span></span>
@@ -121,29 +122,29 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-2">
-                    <button onclick="guardarFirebase(false)" class="bg-black text-white font-bold py-3 border-2 border-black">GUARDAR</button>
-                    <button onclick="guardarFirebase(true)" class="bg-white text-black font-bold py-3 border-2 border-black">IMPRIMIR</button>
+                    <button onclick="guardarFirebase(false)" class="bg-black text-white font-bold py-3 border-2 border-black hover:invert">GUARDAR DATOS</button>
+                    <button onclick="guardarFirebase(true)" class="bg-white text-black font-bold py-3 border-2 border-black hover:bg-black hover:text-white">GUARDAR E IMPRIMIR</button>
                 </div>
             </div>
         </section>
 
         <section id="sectionBuscador" class="hidden">
-            <h2 class="font-bold border-b-2 border-black mb-4 uppercase">Buscador</h2>
+            <h2 class="font-bold border-b-2 border-black mb-4 uppercase">Buscador Historial</h2>
             <div class="flex gap-2 mb-4">
-                <input type="text" id="searchCI" placeholder="CÉDULA..." class="border-2 border-black p-2 flex-1">
-                <button onclick="buscarPorCedula()" class="bg-black text-white px-8 font-bold">BUSCAR</button>
+                <input type="text" id="searchCI" placeholder="CÉDULA..." class="border-2 border-black p-2 flex-1 font-bold">
+                <button onclick="buscarPorCedula()" class="bg-black text-white px-10 font-bold uppercase">Buscar</button>
             </div>
             <div id="resultadosBusqueda"></div>
         </section>
 
         <section id="sectionReporte" class="hidden">
-            <h2 class="font-bold border-b-2 border-black mb-4 uppercase text-center">Cierre AVIPET</h2>
+            <h2 class="font-bold border-b-2 border-black mb-4 uppercase text-center">Cierre Diario AVIPET</h2>
             <div id="listaReporte" class="mb-4"></div>
             <div class="border-t-4 border-black pt-2 flex justify-between font-bold text-2xl">
                 <span>TOTAL</span>
                 <span id="repTotalCobrado">$0.00</span>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-4 bg-gray-300 py-3 border-2 border-black font-bold">ACTUALIZAR</button>
+            <button onclick="cargarReporte()" class="w-full mt-4 bg-gray-200 py-3 border-2 border-black font-bold uppercase">Actualizar Cierre</button>
         </section>
 
     </main>
@@ -193,13 +194,13 @@
                 doctor: document.getElementById('selectDoctor').value,
                 cobrado: f.c, ganancia_dr: f.g, fecha: serverTimestamp(), fechaSimple: new Date().toLocaleDateString()
             };
-            if(!data.cedula || !data.paciente) return alert("LLENE CÉDULA Y NOMBRE");
+            if(!data.cedula || !data.paciente) return alert("COMPLETE CÉDULA Y NOMBRE");
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("DATOS GUARDADOS");
+                alert("DATOS GUARDADOS CORRECTAMENTE");
                 if(imp) window.print();
                 location.reload(); 
-            } catch (e) { alert("ERROR"); }
+            } catch (e) { alert("ERROR DE CONEXIÓN"); }
         };
 
         window.buscarPorCedula = async () => {
@@ -218,7 +219,7 @@
                     res.innerHTML += `<div class="p-3 border-2 border-black mb-2">
                         <p class="text-[10px] font-bold">${d.fechaSimple} - ATENDIÓ: ${d.doctor}</p>
                         <p class="font-bold uppercase">${d.paciente} (${d.raza})</p>
-                        <p class="text-xs italic whitespace-pre-wrap border-t border-black mt-1">${d.tratamiento}</p>
+                        <p class="text-xs italic whitespace-pre-wrap border-t border-black mt-1 pt-1">${d.tratamiento}</p>
                     </div>`;
                 });
             } catch (e) { alert("ERROR"); }
