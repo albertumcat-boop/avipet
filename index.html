@@ -391,15 +391,30 @@
                 const neto = bruto - insu;
 
                 const datos = {
-                    paciente: nombreMascota.toUpperCase(),
-                    doctor: doctorVerificado,
-                    montoBruto: bruto,
-                    montoInsumos: insu,
-                    pagoDoctor: neto * 0.3,
-                    gananciaTienda: neto * 0.7,
-                    fechaSimple: new Date().toLocaleDateString(),
-                    timestamp: serverTimestamp()
-                };
+    // Datos del Paciente
+    paciente: nombreMascota.toUpperCase(),
+    especie: document.getElementById('hEspecie').value.toUpperCase(),
+    raza: document.getElementById('hRaza').value.toUpperCase(),
+    
+    // Datos del Propietario (Claves para la búsqueda)
+    cedula: document.getElementById('hCI').value.trim(), 
+    propietario: document.getElementById('hProp').value.toUpperCase(),
+    telefono: document.getElementById('hTlf').value,
+    
+    // Información Médica
+    doctor: doctorVerificado,
+    tratamiento: document.getElementById('hTratamiento').value,
+    
+    // Finanzas
+    montoBruto: bruto,
+    montoInsumos: insu,
+    pagoDoctor: neto * 0.3,
+    gananciaTienda: neto * 0.7,
+    
+    // Registro
+    fechaSimple: new Date().toLocaleDateString(),
+    timestamp: serverTimestamp()
+};
 
                 await addDoc(collection(db, "consultas"), datos);
                 if(imp) window.print();
@@ -407,6 +422,70 @@
                 location.reload();
             } catch (e) { alert("Error: " + e.message); }
         };
+       // --- FUNCIONES DE BÚSQUEDA ---
+
+// Esta función se activa al salir del campo Cédula en la Historia
+window.autocompletarPorCedula = async (cedula) => {
+    if (!cedula) return;
+    try {
+        const q = query(collection(db, "consultas"), where("cedula", "==", cedula));
+        const snap = await getDocs(q);
+        
+        if (!snap.empty) {
+            // Tomamos los datos del último registro encontrado
+            const datos = snap.docs[0].data();
+            document.getElementById('hProp').value = datos.propietario || "";
+            document.getElementById('hTlf').value = datos.telefono || "";
+            document.getElementById('hMail').value = datos.correo || "";
+            // Opcional: autocompletar también datos de la mascota si es la misma
+            document.getElementById('hNombre').value = datos.paciente || "";
+            document.getElementById('hEspecie').value = datos.especie || "";
+            document.getElementById('hRaza').value = datos.raza || "";
+        }
+    } catch (e) {
+        console.error("Error al autocompletar: ", e);
+    }
+};
+
+// Esta función es para la pestaña "Buscador"
+window.buscarPorCedula = async () => {
+    const cedula = document.getElementById('searchCI').value;
+    const contenedor = document.getElementById('resultadosBusqueda');
+    if (!cedula) return alert("Ingrese una cédula");
+
+    contenedor.innerHTML = "<p class='text-center'>Buscando...</p>";
+
+    try {
+        const q = query(collection(db, "consultas"), where("cedula", "==", cedula));
+        const snap = await getDocs(q);
+        
+        contenedor.innerHTML = "";
+        if (snap.empty) {
+            contenedor.innerHTML = "<p class='text-red-500'>No se encontraron registros.</p>";
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const fecha = d.fechaSimple || "S/F";
+            contenedor.innerHTML += `
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-black text-blue-800">${fecha}</span>
+                        <span class="text-[10px] bg-blue-200 px-2 py-1 rounded-full font-bold">${d.doctor}</span>
+                    </div>
+                    <p class="text-sm"><b>Paciente:</b> ${d.paciente}</p>
+                    <p class="text-xs text-slate-600"><b>Propietario:</b> ${d.propietario || 'No registrado'}</p>
+                    <div class="mt-2 p-2 bg-white rounded border text-[11px] italic">
+                        ${d.tratamiento || 'Sin detalle de tratamiento'}
+                    </div>
+                </div>
+            `;
+        });
+    } catch (e) {
+        alert("Error en búsqueda: " + e.message);
+    }
+};
 
         // --- REPORTES Y CIERRE ---
         window.cargarReporte = async () => {
@@ -441,3 +520,4 @@
     </script>
 </body>
 </html>
+
