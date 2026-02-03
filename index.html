@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AVIPET - SISTEMA COMPLETO 2026</title>
+    <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -30,7 +30,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xs text-center border-t-8 border-blue-600">
             <h1 class="text-4xl font-black mb-2 text-blue-600 uppercase italic">Avipet</h1>
             <input type="password" id="pinInput" placeholder="PIN" class="w-full p-4 border-2 rounded-xl mb-4 text-center text-3xl font-bold bg-slate-50">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg">Entrar</button>
+            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Entrar</button>
         </div>
     </div>
 
@@ -61,24 +61,30 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
                 <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-                    <div class="header-box italic">Ficha del Paciente</div>
+                    <div class="header-box italic">Información del Paciente</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="col-span-2"><label class="text-[9px] font-bold text-slate-400">MASCOTA</label><input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
                         <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
                     </div>
                 </div>
                 <div class="p-3 space-y-2">
-                    <div class="header-box italic">Propietario</div>
-                    <div><label class="text-[9px] font-bold text-slate-400">NOMBRE</label><input id="hProp" class="border-b w-full uppercase"></div>
-                    <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700"></div>
+                    <div class="header-box italic">Datos del Propietario</div>
+                    <div><label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label><input id="hProp" class="border-b w-full uppercase"></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
+                    </div>
+                    <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
                 </div>
             </div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
                     <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
-                        <option value="">-- SELECCIONE SERVICIO ACTUALIZADO --</option>
+                        <option value="">-- SELECCIONE SERVICIO --</option>
                         <optgroup label="CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
@@ -119,10 +125,10 @@
                             <option value="EUTANASIA HASTA 15KG CON DISPOSICION">HASTA 15KG CON DISPOSICION</option>
                             <option value="EUTANASIA HASTA 25KG CON DISPOSICION">HASTA 25KG CON DISPOSICION</option>
                             <option value="EUTANASIA HASTA 35KG CON DISPOSICION">HASTA 35KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 5KG CREMACION">HASTA 5KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 15KG CREMACION">HASTA 15KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 25KG CREMACION">HASTA 25KG CREMACION CON CENIZAS</option>
-                            <option value="EUTANASIA HASTA 35KG CREMACION">HASTA 35KG CREMACION CON CENIZAS</option>
+                            <option value="EUTANASIA HASTA 5KG CREMACION CON CENIZAS">HASTA 5KG CREMACION</option>
+                            <option value="EUTANASIA HASTA 15KG CREMACION CON CENIZAS">HASTA 15KG CREMACION</option>
+                            <option value="EUTANASIA HASTA 25KG CREMACION CON CENIZAS">HASTA 25KG CREMACION</option>
+                            <option value="EUTANASIA HASTA 35KG CREMACION CON CENIZAS">HASTA 35KG CREMACION</option>
                         </optgroup>
                         <optgroup label="REFERIDOS">
                             <option value="REFERIDO: EXAMEN DE HECES">EXAMENES DE HECES</option>
@@ -132,24 +138,24 @@
                         </optgroup>
                     </select>
                 </div>
-                <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Escriba aquí..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Diagnóstico y tratamiento..."></textarea>
             </div>
 
             <div class="no-print bg-slate-900 p-6 rounded-3xl text-white shadow-xl border-b-8 border-blue-600 mb-4">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
                         <label class="text-[10px] text-blue-300 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-center outline-none">
+                        <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-center">
                     </div>
                     <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
                         <label class="text-[10px] text-red-300 font-bold uppercase block mb-1">Insumos/Gastos ($)</label>
-                        <input type="number" id="gastoInsumos" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-red-400 text-center outline-none">
+                        <input type="number" id="gastoInsumos" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-red-400 text-center">
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center mb-6">
-                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold">NETO</p><p id="labelNeto" class="text-xl font-black text-emerald-400">$0.00</p></div>
-                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold">DR (30%)</p><p id="labelDr" class="text-xl font-black text-white">$0.00</p></div>
-                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold">AVIPET (70%)</p><p id="labelTienda" class="text-xl font-black text-blue-400">$0.00</p></div>
+                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold uppercase">Neto</p><p id="labelNeto" class="text-xl font-black text-emerald-400">$0.00</p></div>
+                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold uppercase">Dr (30%)</p><p id="labelDr" class="text-xl font-black text-white">$0.00</p></div>
+                    <div class="p-2 bg-slate-800 rounded-lg"><p class="text-[9px] text-slate-400 font-bold uppercase">Avipet (70%)</p><p id="labelTienda" class="text-xl font-black text-blue-400">$0.00</p></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="guardarFirebase(false)" class="bg-slate-700 py-4 rounded-xl font-black uppercase text-xs">Guardar</button>
@@ -165,15 +171,15 @@
                 <div class="p-4 bg-slate-100 rounded-2xl"><p class="text-[10px] font-bold text-slate-500 uppercase">Bruto Total</p><p id="repBruto" class="text-2xl font-black">$0.00</p></div>
                 <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500"><p class="text-[10px] font-bold text-red-500 uppercase">Insumos</p><p id="repGastos" class="text-2xl font-black text-red-700">$0.00</p></div>
                 <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500"><p class="text-[10px] font-bold text-blue-500 uppercase">Pago Docs (30%)</p><p id="repDocs" class="text-2xl font-black text-blue-700">$0.00</p></div>
-                <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600"><p class="text-[10px] font-bold text-emerald-600 uppercase">Neto Avipet (70%)</p><p id="repNeto" class="text-3xl font-black text-emerald-800">$0.00</p></div>
+                <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600"><p class="text-[10px] font-bold text-emerald-600 uppercase">Utilidad (70%)</p><p id="repNeto" class="text-3xl font-black text-emerald-800">$0.00</p></div>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-8 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase">Actualizar</button>
+            <button onclick="cargarReporte()" class="w-full mt-8 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase">Actualizar Cierre</button>
         </section>
 
         <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
             <h2 class="font-black mb-4 uppercase text-blue-600">Buscador</h2>
             <input type="text" id="searchCI" placeholder="Cédula..." class="w-full p-4 border-2 rounded-xl mb-4 font-bold bg-slate-50">
-            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Buscar</button>
+            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg">Buscar</button>
             <div id="resultadosBusqueda" class="mt-4 space-y-3"></div>
         </section>
 
@@ -222,7 +228,12 @@
             const data = {
                 cedula: document.getElementById('hCI').value.trim(),
                 paciente: document.getElementById('hNombre').value.toUpperCase(),
+                especie: document.getElementById('hEspecie').value.toUpperCase(),
+                raza: document.getElementById('hRaza').value.toUpperCase(),
+                edad: document.getElementById('hEdad').value.toUpperCase(),
                 propietario: document.getElementById('hProp').value.toUpperCase(),
+                telefono: document.getElementById('hTlf').value,
+                correo: document.getElementById('hMail').value,
                 tratamiento: document.getElementById('hTratamiento').value,
                 doctor: document.getElementById('selectDoctor').value,
                 montoBruto: bruto,
@@ -238,7 +249,7 @@
                 if(imp) { window.print(); }
                 alert("✓ GUARDADO");
                 location.reload(); 
-            } catch (e) { alert("Error"); }
+            } catch (e) { alert("Error al guardar"); }
         };
 
         window.buscarPorCedula = async () => {
@@ -250,7 +261,7 @@
             res.innerHTML = "";
             snap.forEach(d => {
                 const v = d.data();
-                res.innerHTML += `<div class="p-4 border bg-white rounded-xl shadow-sm text-[11px] mb-2"><b>${v.fechaSimple} - ${v.doctor}</b><br><span class="text-blue-600 font-black">${v.paciente}</span><br><p class="whitespace-pre-wrap mt-2">${v.tratamiento}</p></div>`;
+                res.innerHTML += `<div class="p-4 border bg-white rounded-xl shadow-sm text-[11px] mb-2"><b>${v.fechaSimple} - ${v.doctor}</b><br><span class="text-blue-600 font-black">${v.paciente} (${v.raza})</span><br><p class="whitespace-pre-wrap mt-2">${v.tratamiento}</p></div>`;
             });
         };
 
