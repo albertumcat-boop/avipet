@@ -224,6 +224,42 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // --- DICCIONARIO DE INSUMOS POR SERVICIO ---
+const recetas = {
+    "VACUNA SEXTUPLE": [
+        { nombre: "Vial Sextuple", costo: 8.50 },
+        { nombre: "Guantes", costo: 0.50 },
+        { nombre: "Jeringa 3cc", costo: 0.25 },
+        { nombre: "Algodón y Alcohol", costo: 0.10 }
+         { nombre: "hojas", costo: 0.10 }
+         { nombre: "xeruk", costo: 0.10 }
+         { nombre: "crema", costo: 0.10 }
+    ],
+    "VACUNA ANTIRRÁBICA": [
+        { nombre: "Vial Antirrábica", costo: 4.00 },
+        { nombre: "Guantes", costo: 0.50 },
+        { nombre: "Jeringa 3cc", costo: 0.25 },
+        { nombre: "Algodón y Alcohol", costo: 0.10 }
+         { nombre: "hojas", costo: 0.10 }
+         { nombre: "xeruk", costo: 0.10 }
+         { nombre: "crema", costo: 0.10 }
+    ],
+    "HEMATOLOGÍA COMPLETA": [
+        { nombre: "Tubo EDTA", costo: 1.00 },
+        { nombre: "Jeringa 3cc", costo: 0.25 },
+        { nombre: "Servicio Laboratorio", costo: 10.00 }
+    ],
+    "CONSULTA GENERAL": [
+        { nombre: "Guantes de examen", costo: 0.60 },
+        { nombre: "Baja lenguas/Insumos", costo: 0.40 }
+    ],
+    "EUTANASIA HASTA 5KG": [
+        { nombre: "Catéter 24G", costo: 1.20 },
+        { nombre: "Fármacos Eutanasia", costo: 15.00 },
+        { nombre: "Bolsa Clínica", costo: 3.00 }
+    ]
+    // Puedes seguir agregando más servicios siguiendo este mismo formato
+};
 
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
@@ -242,11 +278,30 @@
             if(t === 'reporte') cargarReporte();
         };
 
-        window.insertarServicio = (v) => {
-            const area = document.getElementById('hTratamiento');
-            area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
-            area.focus();
-        };
+      window.insertarServicio = (v) => {
+    if (!v) return;
+    
+    // 1. Escribe en el cuadro de texto de la historia
+    const area = document.getElementById('hTratamiento');
+    area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
+    
+    // 2. Calcula y suma los insumos automáticamente
+    if (recetas[v]) {
+        let costoServicio = 0;
+        recetas[v].forEach(insumo => {
+            costoServicio += insumo.costo;
+        });
+        
+        // Obtiene el gasto actual y le suma el nuevo
+        let gastoActual = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+        document.getElementById('gastoInsumos').value = (gastoActual + costoServicio).toFixed(2);
+        
+        // Actualiza los cálculos visuales (Neto, Dr, Tienda)
+        calcularTodo();
+    }
+    
+    area.focus();
+};
 
         window.calcularTodo = () => {
             const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
@@ -326,4 +381,5 @@
     </script>
 </body>
 </html>
+
 
