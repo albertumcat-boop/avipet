@@ -3,115 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Control Pro</title>
+    <title>Sistema Veterinario</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ESTILO ORIGINAL REESTABLECIDO */
-        .tab-active { border-bottom: 4px solid #3b82f6; color: #3b82f6; font-weight: bold; }
+        /* ESTILO CLÁSICO ORIGINAL */
+        body { font-family: sans-serif; background-color: #f1f5f9; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: bold; }
+        input, textarea, select { border: 1px solid #a1a1aa; padding: 4px; outline: none; }
+        input:focus, textarea:focus { border-color: #2563eb; }
         
         @media print {
             .no-print { display: none !important; }
-            body { background-color: white !important; padding: 0; }
-            .print-area { border: none !important; shadow: none !important; width: 100%; margin: 0; }
+            body { background-color: white !important; }
+            .print-area { border: none !important; width: 100%; margin: 0; padding: 0; }
             
-            /* Corrección de tratamiento para impresión */
+            /* Esta es la corrección para que el tratamiento se vea todo */
             #hTratamiento { display: none !important; }
             #tratamientoPrint { 
                 display: block !important; 
                 white-space: pre-wrap; 
                 word-wrap: break-word;
-                font-size: 11px;
-                line-height: 1.5;
-                min-height: 100px;
+                font-size: 12px;
                 border: 1px solid #000;
                 padding: 10px;
+                min-height: 200px;
             }
         }
         #tratamientoPrint { display: none; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800">
+<body>
 
-    <div id="loginSection" class="fixed inset-0 bg-blue-900 flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-80 text-center">
-            <h2 class="text-xl font-bold mb-4 italic uppercase">Control Médico</h2>
-            <input type="password" id="pinInput" placeholder="PIN 2026" class="w-full p-2 border rounded mb-4 text-center text-xl">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">ENTRAR</button>
+    <div id="loginSection" class="fixed inset-0 bg-slate-800 flex items-center justify-center z-50">
+        <div class="bg-white p-6 border-2 border-black w-72 text-center">
+            <h2 class="font-bold mb-4">ACCESO MEDICOS</h2>
+            <input type="password" id="pinInput" placeholder="PIN" class="w-full text-center mb-4">
+            <button onclick="verificarPin()" class="w-full bg-slate-700 text-white py-2 font-bold">ENTRAR</button>
         </div>
     </div>
 
-    <main id="adminSection" class="hidden max-w-5xl mx-auto p-4">
+    <main id="adminSection" class="hidden max-w-4xl mx-auto p-4 bg-white min-h-screen border-x border-gray-300">
         
-        <nav class="flex space-x-6 border-b-2 mb-6 no-print">
-            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2">HISTORIA</button>
-            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500">BUSCAR CÉDULA</button>
-            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500">REPORTE</button>
+        <nav class="flex gap-4 border-b mb-6 no-print text-sm">
+            <button onclick="showTab('historia')" id="tabH" class="tab-active pb-2">HISTORIA</button>
+            <button onclick="showTab('buscador')" id="tabB" class="pb-2 text-gray-500">BUSCADOR</button>
+            <button onclick="showTab('reporte')" id="tabR" class="pb-2 text-gray-500">REPORTE</button>
         </nav>
 
-        <section id="sectionHistoria" class="block bg-white p-6 shadow border rounded-lg print-area">
-            <div class="flex justify-between items-center border-b mb-4 pb-2">
-                <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print font-bold border rounded p-1">
-                    <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
-                    <option value="Joan Silva">Dr. Joan Silva</option>
-                </select>
-                <h1 id="doctorPrint" class="hidden print:block font-bold uppercase">DR. DARWIN SANDOVAL</h1>
-                <input type="text" id="fechaDoc" class="w-28 text-center border-b text-xs font-bold" readonly>
+        <section id="sectionHistoria" class="block print-area">
+            <div class="flex justify-between items-start border-b-2 border-black pb-2 mb-4">
+                <div>
+                    <select id="selectDoctor" onchange="actualizarNombreDoctor(this.value)" class="no-print font-bold text-lg mb-1">
+                        <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
+                        <option value="Joan Silva">Dr. Joan Silva</option>
+                    </select>
+                    <h1 id="doctorPrint" class="hidden print:block font-bold text-xl uppercase">DR. DARWIN SANDOVAL</h1>
+                    <p class="text-xs italic">Médico Veterinario</p>
+                </div>
+                <input type="text" id="fechaDoc" class="w-24 text-right border-none font-bold" readonly>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 text-[11px] mb-4">
-                <div class="space-y-2 border-r pr-4">
-                    <p>PACIENTE: <input id="hNombre" class="border-b w-full uppercase p-1 font-bold"></p>
-                    <p>RAZA: <input id="hRaza" class="border-b w-full uppercase p-1"></p>
-                    <p>PESO: <input id="hPeso" class="border-b w-full p-1"></p>
+            <div class="grid grid-cols-2 border border-black text-xs mb-4">
+                <div class="p-2 border-r border-black space-y-2">
+                    <p>PACIENTE: <input id="hNombre" class="w-full border-b border-gray-300 uppercase font-bold"></p>
+                    <p>RAZA: <input id="hRaza" class="w-full border-b border-gray-300 uppercase"></p>
+                    <p>PESO (KG): <input id="hPeso" class="w-full border-b border-gray-300"></p>
                 </div>
-                <div class="space-y-2">
-                    <p>DUEÑO: <input id="hProp" class="border-b w-full uppercase p-1 font-bold"></p>
-                    <p>CÉDULA: <input id="hCI" class="border-b w-full font-bold p-1 bg-yellow-50"></p>
-                    <p>TELÉFONO: <input id="hTlf" class="border-b w-full p-1"></p>
+                <div class="p-2 space-y-2">
+                    <p>PROPIETARIO: <input id="hProp" class="w-full border-b border-gray-300 uppercase font-bold"></p>
+                    <p>CÉDULA: <input id="hCI" class="w-full border-b border-gray-300 font-bold bg-yellow-50"></p>
+                    <p>TELÉFONO: <input id="hTlf" class="w-full border-b border-gray-300"></p>
                 </div>
             </div>
 
             <div class="mb-4">
-                <textarea id="hTratamiento" oninput="syncTratamiento(this.value)" class="w-full h-40 p-2 text-xs border border-gray-400" placeholder="Escriba aquí el tratamiento..."></textarea>
-                <div id="tratamientoPrint" class="text-xs"></div>
+                <label class="text-[10px] font-bold block mb-1 uppercase">Tratamiento / Observaciones:</label>
+                <textarea id="hTratamiento" oninput="syncTratamiento(this.value)" class="w-full h-64 text-xs p-2 border border-black leading-normal" placeholder="Escriba aquí..."></textarea>
+                <div id="tratamientoPrint"></div>
             </div>
 
-            <div class="bg-slate-100 p-4 rounded-lg no-print border">
-                <div class="flex gap-4 items-center justify-between">
+            <div class="no-print bg-gray-100 p-4 border border-gray-400">
+                <div class="flex items-center gap-6 mb-4">
                     <div>
-                        <p class="text-[10px] font-bold uppercase">Monto $</p>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="text-2xl font-bold w-24 bg-white border rounded px-2">
+                        <span class="text-xs font-bold mr-2">MONTO TOTAL $:</span>
+                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="w-24 text-lg font-bold text-center">
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="guardarFirebase(false)" class="bg-slate-800 text-white px-6 py-2 rounded font-bold">GUARDAR</button>
-                        <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white px-6 py-2 rounded font-bold">IMPRIMIR</button>
-                        <button onclick="limpiarFormulario()" class="bg-red-500 text-white px-4 py-2 rounded font-bold">LIMPIAR</button>
+                    <div class="text-[10px] font-bold space-x-4">
+                        <span>DOCTOR (30%): <span id="labelGananciaVet" class="text-blue-700">$0.00</span></span>
+                        <span>TIENDA (70%): <span id="labelUtilidadTienda" class="text-green-700">$0.00</span></span>
                     </div>
                 </div>
-                <div class="mt-2 flex gap-4 text-[10px] font-bold text-gray-500 uppercase">
-                    <span>Dr (30%): <span id="labelGananciaVet">$0.00</span></span>
-                    <span>Tienda (70%): <span id="labelUtilidadTienda">$0.00</span></span>
+                <div class="flex gap-2">
+                    <button onclick="guardarFirebase(false)" class="bg-gray-800 text-white px-8 py-2 font-bold text-sm">GUARDAR</button>
+                    <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white px-8 py-2 font-bold text-sm">GUARDAR E IMPRIMIR</button>
+                    <button onclick="limpiarFormulario()" class="bg-red-600 text-white px-4 py-2 font-bold text-sm">LIMPIAR</button>
                 </div>
             </div>
         </section>
 
-        <section id="sectionBuscador" class="hidden bg-white p-6 shadow border rounded-lg">
-            <h2 class="font-bold mb-4 uppercase">Consultar Historial</h2>
-            <div class="flex gap-2 mb-6">
-                <input type="text" id="searchCI" placeholder="Cédula..." class="flex-1 p-2 border-2 rounded font-bold">
-                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-6 rounded font-bold">BUSCAR</button>
+        <section id="sectionBuscador" class="hidden">
+            <h3 class="font-bold border-b mb-4">BUSCAR HISTORIAL</h3>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="searchCI" placeholder="Cédula del cliente" class="flex-1 p-2 border">
+                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white px-6 font-bold">BUSCAR</button>
             </div>
-            <div id="resultadosBusqueda" class="space-y-3"></div>
+            <div id="resultadosBusqueda" class="space-y-4"></div>
         </section>
 
-        <section id="sectionReporte" class="hidden bg-white p-6 shadow border rounded-lg">
-            <h2 class="font-bold mb-4 uppercase text-center border-b pb-2">Cierre de Caja</h2>
-            <div id="listaReporte" class="text-sm divide-y mb-4"></div>
-            <div class="bg-slate-800 text-white p-3 rounded flex justify-between font-bold">
-                <span>TOTAL DÍA</span>
+        <section id="sectionReporte" class="hidden">
+            <h3 class="font-bold border-b mb-4 text-center uppercase">Reporte del Día</h3>
+            <div id="listaReporte" class="text-xs mb-4 divide-y"></div>
+            <div class="border-t-2 border-black pt-2 flex justify-between font-bold">
+                <span>TOTAL RECAUDADO</span>
                 <span id="repTotalCobrado">$0.00</span>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-4 bg-slate-400 text-white py-2 rounded font-bold uppercase">Actualizar</button>
+            <button onclick="cargarReporte()" class="w-full mt-4 bg-gray-200 py-2 border font-bold text-xs">ACTUALIZAR</button>
         </section>
 
     </main>
@@ -125,14 +131,14 @@
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('adminSection').classList.remove('hidden');
                 document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
-            } else { alert("PIN Incorrecto"); }
+            } else { alert("PIN INCORRECTO"); }
         };
 
         window.showTab = (t) => {
             ['sectionHistoria', 'sectionBuscador', 'sectionReporte'].forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500");
-            document.getElementById('tab' + (t==='historia'?'H':t==='buscador'?'B':'R')).className = "tab-active py-2";
+            document.querySelectorAll('nav button').forEach(b => b.className = "pb-2 text-gray-500");
+            document.getElementById('tab' + (t==='historia'?'H':t==='buscador'?'B':'R')).className = "tab-active pb-2";
             if(t === 'reporte') cargarReporte();
         };
 
@@ -140,9 +146,11 @@
 
         window.calcularFinanzas = () => {
             const c = parseFloat(document.getElementById('precioVenta').value) || 0;
-            document.getElementById('labelGananciaVet').innerText = `$${(c * 0.3).toFixed(2)}`;
-            document.getElementById('labelUtilidadTienda').innerText = `$${(c * 0.7).toFixed(2)}`;
-            return { c, g: c*0.3 };
+            const g = c * 0.30;
+            const u = c * 0.70;
+            document.getElementById('labelGananciaVet').innerText = `$${g.toFixed(2)}`;
+            document.getElementById('labelUtilidadTienda').innerText = `$${u.toFixed(2)}`;
+            return { c, g };
         };
 
         window.guardarFirebase = async (imp) => {
@@ -159,10 +167,10 @@
                 fecha: serverTimestamp(), 
                 fechaSimple: new Date().toLocaleDateString()
             };
-            if(!data.cedula || !data.paciente) return alert("Falta Cédula o Nombre");
+            if(!data.cedula || !data.paciente) return alert("Faltan datos");
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("GUARDADO EXITOSO");
+                alert("GUARDADO EN LA NUBE");
                 if(imp) window.print();
                 limpiarFormulario();
             } catch (e) { alert("Error al guardar"); }
@@ -171,42 +179,44 @@
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
-            if(!ci) return alert("Ingrese cédula");
+            if(!ci) return alert("Ingrese CI");
             res.innerHTML = "Buscando...";
             try {
                 const q = query(collection(db, "consultas"), where("cedula", "==", ci));
                 const snap = await getDocs(q);
-                if(snap.empty) { res.innerHTML = "No hay registros."; return; }
+                if(snap.empty) { res.innerHTML = "No hay datos."; return; }
                 let lista = [];
                 snap.forEach(doc => lista.push(doc.data()));
                 lista.sort((a,b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
                 res.innerHTML = "";
                 lista.forEach(d => {
-                    res.innerHTML += `<div class="p-3 border-b mb-2">
-                        <p class="text-[9px] font-bold text-blue-600">${d.fechaSimple} - ${d.doctor}</p>
+                    res.innerHTML += `<div class="p-2 border-b border-black mb-2">
+                        <p class="text-[9px] font-bold text-blue-600">${d.fechaSimple} - ATENDIÓ: ${d.doctor}</p>
                         <p class="font-bold uppercase text-xs">${d.paciente}</p>
-                        <p class="text-[11px] italic whitespace-pre-wrap">${d.tratamiento}</p>
+                        <p class="text-[10px] italic whitespace-pre-wrap mt-1">${d.tratamiento}</p>
                     </div>`;
                 });
-            } catch (e) { alert("Error de conexión"); }
+            } catch (e) { alert("Error de búsqueda"); }
         };
 
         window.cargarReporte = async () => {
             const hoy = new Date().toLocaleDateString();
             const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
             const snap = await getDocs(q);
-            let c=0;
+            let total = 0;
             const list = document.getElementById('listaReporte');
             list.innerHTML = "";
             snap.forEach(doc => {
-                const v = doc.data(); c += v.cobrado;
+                const v = doc.data(); total += v.cobrado;
                 list.innerHTML += `<div class="p-2 flex justify-between"><span>${v.paciente}</span><b>$${v.cobrado.toFixed(2)}</b></div>`;
             });
-            document.getElementById('repTotalCobrado').innerText = `$${c.toFixed(2)}`;
+            document.getElementById('repTotalCobrado').innerText = `$${total.toFixed(2)}`;
         };
 
         window.limpiarFormulario = () => {
-            ['hNombre','hRaza','hPeso','hProp','hCI','hTlf','hTratamiento','precioVenta'].forEach(id => document.getElementById(id).value = id==='precioVenta'?0:"");
+            ['hNombre','hRaza','hPeso','hProp','hCI','hTlf','hTratamiento','precioVenta'].forEach(id => {
+                document.getElementById(id).value = (id==='precioVenta')? 0 : "";
+            });
             document.getElementById('tratamientoPrint').innerText = "";
             calcularFinanzas();
         };
