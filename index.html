@@ -15,9 +15,7 @@
         .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
         .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
         input, textarea { outline: none; background: transparent; width: 100%; }
-        input[type="password"] { letter-spacing: 0.3em; }
         
-        /* Estilo del menú solicitado */
         .menu-desplegable {
             width: 100%;
             padding: 14px;
@@ -29,12 +27,13 @@
             font-size: 13px;
             margin-bottom: 10px;
             cursor: pointer;
-            appearance: none; /* Quita el estilo por defecto */
+            appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 1rem center;
             background-size: 1em;
         }
+        .finance-card { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 12px; padding: 15px; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800">
@@ -42,7 +41,6 @@
     <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
         <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-xs text-center border-t-4 border-blue-600">
             <h1 class="text-3xl font-black mb-2 text-blue-600">AVIPET</h1>
-            <p class="text-[10px] font-bold mb-6 text-slate-400 uppercase tracking-widest">Control Médico</p>
             <input type="password" id="pinInput" placeholder="PIN" class="w-full p-4 border-2 rounded-xl mb-4 text-center text-2xl font-bold">
             <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold uppercase shadow-lg">Entrar</button>
         </div>
@@ -98,8 +96,8 @@
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 border-b border-slate-400 no-print">
                     <label class="text-[11px] font-black text-blue-800 uppercase block mb-2">TIPO DE SERVICIOS ↓</label>
-                    <select onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
-                        <option value="">-- TOQUE AQUÍ PARA VER SERVICIOS --</option>
+                    <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
+                        <option value="">-- TOQUE AQUÍ PARA VER TODOS LOS SERVICIOS --</option>
                         <optgroup label="CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
@@ -153,50 +151,59 @@
                         </optgroup>
                     </select>
                 </div>
-                <textarea id="hTratamiento" class="w-full h-80 p-3 text-xs md:text-sm font-medium leading-relaxed" placeholder="Los servicios seleccionados aparecerán aquí..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-80 p-3 text-xs md:text-sm font-medium leading-relaxed" placeholder="Los servicios aparecerán aquí..."></textarea>
             </div>
 
-            <div id="panelGastos" class="no-print bg-slate-900 p-4 rounded-xl">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-center mb-4">
-                    <div class="bg-blue-600 p-3 rounded-lg">
-                        <p class="text-[9px] font-bold text-white uppercase">Cobro Total $</p>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="text-2xl font-black text-white text-center">
+            <div id="panelGastos" class="no-print finance-card shadow-sm border-2 border-slate-100 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p class="text-[10px] font-black text-blue-800 uppercase mb-1">Cobro Total al Cliente ($)</p>
+                        <input type="number" id="precioVenta" value="0" oninput="calcularFinanzas()" class="text-3xl font-black text-blue-600 w-full">
                     </div>
-                    <div class="flex justify-around md:col-span-2 gap-2">
-                        <div class="bg-slate-800 p-3 rounded-lg flex-1">
-                            <p class="text-[9px] font-bold text-slate-400">DR. (30%)</p>
-                            <p id="labelGananciaVet" class="text-lg font-bold text-white">$0.00</p>
-                        </div>
-                        <div class="bg-slate-800 p-3 rounded-lg flex-1">
-                            <p class="text-[9px] font-bold text-slate-400">TIENDA (70%)</p>
-                            <p id="labelUtilidadTienda" class="text-lg font-bold text-white">$0.00</p>
-                        </div>
+                    <div class="p-3 bg-red-50 border border-red-200 rounded-xl">
+                        <p class="text-[10px] font-black text-red-800 uppercase mb-1">Gasto en Materiales ($)</p>
+                        <input type="number" id="gastoInsumos" value="0" oninput="calcularFinanzas()" class="text-3xl font-black text-red-600 w-full">
                     </div>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                        <p class="text-[10px] font-bold text-emerald-800 uppercase mb-1">Utilidad Neta</p>
+                        <p id="labelUtilidadReal" class="text-2xl font-black text-emerald-700">$0.00</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">DR. (30%)</p>
+                        <p id="labelGananciaVet" class="text-2xl font-black text-slate-700">$0.00</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">TIENDA (70%)</p>
+                        <p id="labelUtilidadTienda" class="text-2xl font-black text-slate-700">$0.00</p>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="guardarFirebase(false)" class="bg-white text-slate-900 py-4 rounded-lg font-bold uppercase text-[10px]">Guardar</button>
-                    <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-lg font-bold uppercase text-[10px]">Imprimir</button>
+                    <button onclick="guardarFirebase(false)" class="bg-slate-100 text-slate-700 py-4 rounded-xl font-black uppercase text-[11px] border border-slate-200">Guardar</button>
+                    <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[11px] shadow-lg">Imprimir</button>
                 </div>
             </div>
         </section>
 
-        <section id="sectionBuscador" class="hidden bg-white p-4 rounded-xl border">
-            <h2 class="font-bold mb-4 text-blue-900 uppercase">🔍 Buscar por Cédula</h2>
-            <div class="flex flex-col gap-2 mb-8">
-                <input type="text" id="searchCI" placeholder="Cédula..." class="p-4 border-2 rounded-xl font-bold">
-                <button onclick="buscarPorCedula()" class="bg-blue-600 text-white py-4 rounded-xl font-bold uppercase">Buscar Historial</button>
-            </div>
-            <div id="resultadosBusqueda" class="space-y-4"></div>
+        <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
+            <h2 class="font-black mb-4 uppercase">🔍 Buscador</h2>
+            <input type="text" id="searchCI" placeholder="Cédula..." class="w-full p-4 border-2 rounded-xl mb-4">
+            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Buscar</button>
+            <div id="resultadosBusqueda" class="mt-4 space-y-4"></div>
         </section>
 
-        <section id="sectionReporte" class="hidden bg-white p-4 rounded-xl border">
-            <h2 class="font-bold mb-4 text-center uppercase">Cierre de Caja</h2>
-            <div id="listaReporte" class="divide-y text-[10px] mb-6"></div>
-            <div class="bg-blue-50 p-4 rounded-xl flex justify-between items-center font-black">
-                <span class="text-xs">TOTAL:</span>
-                <span id="repTotalCobrado" class="text-blue-600 text-xl">$0.00</span>
+        <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
+            <h2 class="font-black mb-6 text-center uppercase">Cierre de Caja</h2>
+            <div id="listaReporte" class="divide-y mb-6 text-[10px]"></div>
+            <div class="space-y-2 text-[12px]">
+                <div class="flex justify-between p-3 bg-blue-600 text-white rounded-lg"><span>INGRESOS:</span> <span id="repTotalCobrado">$0.00</span></div>
+                <div class="flex justify-between p-3 bg-red-600 text-white rounded-lg"><span>GASTOS:</span> <span id="repTotalInsumos">$0.00</span></div>
+                <div class="flex justify-between p-3 bg-emerald-600 text-white rounded-lg font-black"><span>NETO:</span> <span id="repTotalNeto">$0.00</span></div>
             </div>
-            <button onclick="cargarReporte()" class="w-full mt-4 bg-slate-800 text-white py-4 rounded-xl font-bold uppercase text-[10px]">Actualizar</button>
+            <button onclick="cargarReporte()" class="w-full mt-6 bg-slate-800 text-white py-4 rounded-xl font-black uppercase">Actualizar</button>
         </section>
 
     </main>
@@ -205,7 +212,6 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // FUNCIONES DE CONTROL
         window.verificarPin = () => {
             if(document.getElementById('pinInput').value === "2026") {
                 document.getElementById('loginSection').style.display = 'none';
@@ -215,20 +221,18 @@
         };
 
         window.showTab = (t) => {
-            ['sectionHistoria', 'sectionBuscador', 'sectionReporte'].forEach(id => document.getElementById(id).style.display = 'none');
-            document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = 'block';
+            ['sectionHistoria', 'sectionBuscador', 'sectionReporte'].forEach(id => {
+                document.getElementById(id).style.display = (id === 'section' + t.charAt(0).toUpperCase() + t.slice(1)) ? 'block' : 'none';
+            });
             document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-400 text-[11px] px-2");
             document.getElementById('tab' + (t === 'historia' ? 'H' : t === 'buscador' ? 'B' : 'R')).className = "tab-active py-2 text-[11px] px-2";
             if(t === 'reporte') cargarReporte();
         };
 
-        // LA FUNCIÓN QUE AGREGA SIN BORRAR
         window.insertarServicio = (v) => {
             if(!v) return;
             const area = document.getElementById('hTratamiento');
-            const textoPrevio = area.value;
-            // Agrega el nuevo servicio con una flecha y salto de línea
-            area.value = textoPrevio + (textoPrevio ? "\n" : "") + "=> " + v + ": ";
+            area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
             area.focus();
         };
 
@@ -238,11 +242,27 @@
 
         window.calcularFinanzas = () => {
             const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
-            document.getElementById('labelGananciaVet').innerText = `$${(cobro * 0.3).toFixed(2)}`;
-            document.getElementById('labelUtilidadTienda').innerText = `$${(cobro * 0.7).toFixed(2)}`;
+            const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+            const utilidadReal = cobro - insumos;
+            document.getElementById('labelUtilidadReal').innerText = `$${utilidadReal.toFixed(2)}`;
+            document.getElementById('labelGananciaVet').innerText = `$${(utilidadReal * 0.3).toFixed(2)}`;
+            document.getElementById('labelUtilidadTienda').innerText = `$${(utilidadReal * 0.7).toFixed(2)}`;
+        };
+
+        const limpiarFormulario = () => {
+            ['hNombre','hEspecie','hRaza','hEdad','hSexo','hPeso','hColor','hProp','hCI','hTlf','hDir','hTratamiento','precioVenta','gastoInsumos'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el.type === 'number') el.value = 0;
+                else el.value = '';
+            });
+            document.getElementById('labelUtilidadReal').innerText = '$0.00';
+            document.getElementById('labelGananciaVet').innerText = '$0.00';
+            document.getElementById('labelUtilidadTienda').innerText = '$0.00';
         };
 
         window.guardarFirebase = async (imp) => {
+            const cobro = parseFloat(document.getElementById('precioVenta').value) || 0;
+            const insumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
             const data = {
                 cedula: document.getElementById('hCI').value.trim(),
                 paciente: document.getElementById('hNombre').value.toUpperCase(),
@@ -257,42 +277,38 @@
                 direccion: document.getElementById('hDir').value.toUpperCase(),
                 tratamiento: document.getElementById('hTratamiento').value,
                 doctor: document.getElementById('selectDoctor').value,
-                cobrado: parseFloat(document.getElementById('precioVenta').value) || 0,
+                cobrado: cobro,
+                costoInsumos: insumos,
+                utilidad: cobro - insumos,
                 fecha: serverTimestamp(),
                 fechaSimple: new Date().toLocaleDateString()
             };
 
-            if(!data.cedula || !data.paciente) return alert("Cédula y Paciente requeridos");
+            if(!data.cedula || !data.paciente) return alert("Faltan datos obligatorios");
 
             try {
                 await addDoc(collection(db, "consultas"), data);
-                alert("✓ GUARDADO CORRECTAMENTE");
-                if(imp) window.print();
-                location.reload(); 
-            } catch (e) { alert("Error al conectar con Firebase"); }
+                if(imp) { window.print(); setTimeout(() => { alert("✓ GUARDADO"); limpiarFormulario(); }, 500); }
+                else { alert("✓ GUARDADO"); limpiarFormulario(); }
+            } catch (e) { alert("Error al guardar"); }
         };
 
         window.buscarPorCedula = async () => {
             const ci = document.getElementById('searchCI').value.trim();
             const res = document.getElementById('resultadosBusqueda');
             if(!ci) return alert("Ingrese cédula");
-            res.innerHTML = "Buscando historial...";
+            res.innerHTML = "Buscando...";
             try {
                 const q = query(collection(db, "consultas"), where("cedula", "==", ci));
                 const snap = await getDocs(q);
                 res.innerHTML = "";
-                if(snap.empty) { res.innerHTML = "No hay registros previos."; return; }
+                if(snap.empty) { res.innerHTML = "No hay registros."; return; }
                 let docs = [];
                 snap.forEach(d => docs.push(d.data()));
                 docs.sort((a,b) => b.fecha - a.fecha).forEach(d => {
-                    res.innerHTML += `
-                        <div class="p-3 border-l-4 border-blue-600 bg-slate-50 rounded shadow-sm text-[11px]">
-                            <p class="font-bold text-blue-600">${d.fechaSimple} - ${d.doctor}</p>
-                            <p class="font-black uppercase">${d.paciente} (${d.raza})</p>
-                            <p class="mt-1 whitespace-pre-wrap">${d.tratamiento}</p>
-                        </div>`;
+                    res.innerHTML += `<div class="p-3 border-l-4 border-blue-600 bg-slate-50 rounded shadow-sm text-[11px] mb-2"><p class="font-bold text-blue-600">${d.fechaSimple} - ${d.doctor}</p><p class="font-black uppercase">${d.paciente}</p><p class="mt-1 whitespace-pre-wrap">${d.tratamiento}</p></div>`;
                 });
-            } catch (e) { alert("Error en búsqueda"); }
+            } catch (e) { alert("Error"); }
         };
 
         window.cargarReporte = async () => {
@@ -300,14 +316,17 @@
             const q = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
             const snap = await getDocs(q);
             const l = document.getElementById('listaReporte');
-            let total = 0;
+            let totalI = 0, totalG = 0;
             l.innerHTML = "";
             snap.forEach(d => {
                 const v = d.data();
-                total += v.cobrado;
-                l.innerHTML += `<div class="p-2 flex justify-between font-bold"><span>${v.paciente}</span><span>$${v.cobrado.toFixed(2)}</span></div>`;
+                totalI += v.cobrado;
+                totalG += (v.costoInsumos || 0);
+                l.innerHTML += `<div class="p-2 flex justify-between font-bold"><span>${v.paciente}</span><span>$${v.cobrado.toFixed(2)} (-$${(v.costoInsumos || 0).toFixed(2)})</span></div>`;
             });
-            document.getElementById('repTotalCobrado').innerText = `$${total.toFixed(2)}`;
+            document.getElementById('repTotalCobrado').innerText = `$${totalI.toFixed(2)}`;
+            document.getElementById('repTotalInsumos').innerText = `$${totalG.toFixed(2)}`;
+            document.getElementById('repTotalNeto').innerText = `$${(totalI - totalG).toFixed(2)}`;
         };
     </script>
 </body>
