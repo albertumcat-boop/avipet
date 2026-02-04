@@ -273,22 +273,23 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 
     </div></div> 
 
-<div class="w-full block clear-both mt-12 mb-10" style="clear: both !important; float: none !important;">
-    <div class="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto px-4">
+<div class="w-full flex justify-center mt-10 mb-10 clear-both" style="display: flex !important; width: 100% !important;">
+    
+    <div class="flex flex-col md:flex-row items-center justify-center gap-4 w-full max-w-5xl px-4">
         
-        <div class="w-full md:w-64 bg-white border-2 border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-center shadow-lg">
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Neto</span>
-            <span id="labelNeto" class="text-3xl font-black text-slate-800">$0.00</span>
+        <div class="w-full md:flex-1 bg-white border-2 border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-center shadow-md h-36">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Saldo Neto</span>
+            <span id="labelNeto" class="text-3xl font-black text-slate-800 leading-none">$0.00</span>
         </div>
 
-        <div class="w-full md:w-80 bg-blue-600 border-4 border-blue-400 rounded-[2rem] p-8 flex flex-col items-center justify-center shadow-2xl transform md:scale-110 z-10">
-            <span class="text-[11px] font-black text-blue-100 uppercase italic tracking-widest mb-1 text-center">Ganancia Doctor (30%)</span>
-            <span id="labelDr" class="text-4xl font-black text-white">$0.00</span>
+        <div class="w-full md:flex-1 bg-blue-600 border-4 border-blue-400 rounded-[2rem] p-6 flex flex-col items-center justify-center shadow-2xl h-40 transform md:scale-105 z-10">
+            <span class="text-[11px] font-black text-blue-100 uppercase italic tracking-widest mb-2 text-center">Ganancia Doctor (30%)</span>
+            <span id="labelDr" class="text-4xl font-black text-white leading-none">$0.00</span>
         </div>
 
-        <div class="w-full md:w-64 bg-green-50 border-2 border-green-200 rounded-3xl p-6 flex flex-col items-center justify-center shadow-lg">
-            <span class="text-[10px] font-black text-green-500 uppercase tracking-widest mb-1">Avipet (70%)</span>
-            <span id="labelTienda" class="text-3xl font-black text-green-700">$0.00</span>
+        <div class="w-full md:flex-1 bg-green-50 border-2 border-green-200 rounded-3xl p-6 flex flex-col items-center justify-center shadow-md h-36">
+            <span class="text-[10px] font-black text-green-500 uppercase tracking-widest mb-2">Avipet (70%)</span>
+            <span id="labelTienda" class="text-3xl font-black text-green-700 leading-none">$0.00</span>
         </div>
 
     </div>
@@ -679,15 +680,19 @@ window.buscarPorCedula = async () => {
             return;
         }
 
-        // Mapeamos y ordenamos por fecha
-        const registros = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                                   .sort((a, b) => b.fecha - a.fecha);
+        // --- LÓGICA DE ORDENAMIENTO REFORZADA ---
+        const registros = snap.docs.map(doc => {
+            const data = doc.data();
+            // Convertimos el timestamp de Firebase a milisegundos para comparar fácilmente
+            // Si por alguna razón no hay fecha, usamos 0 para mandarlo al final
+            const fechaMs = data.fecha?.toMillis ? data.fecha.toMillis() : (data.fecha || 0);
+            return { id: doc.id, ...data, fechaMs };
+        }).sort((a, b) => b.fechaMs - a.fechaMs); // Orden descendente (Más reciente primero)
 
         registros.forEach(d => {
             const div = document.createElement('div');
             div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
             
-            // Lógica de Insumos: Solo aparece si hay datos en el array
             let insumosHTML = "";
             if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
                 const listaItems = d.listaDetalladaInsumos.map(ins => `
@@ -700,12 +705,10 @@ window.buscarPorCedula = async () => {
                 insumosHTML = `
                     <div id="detalles-${d.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-300">
                         <p class="text-[9px] font-black text-blue-500 mb-2 uppercase tracking-widest">Desglose de Insumos:</p>
-                        <ul class="space-y-1">
-                            ${listaItems}
-                        </ul>
+                        <ul class="space-y-1">${listaItems}</ul>
                     </div>
                     <button onclick="const el = document.getElementById('detalles-${d.id}'); el.classList.toggle('hidden'); this.innerText = el.classList.contains('hidden') ? '[ + Ver detalle de insumos ]' : '[ - Ocultar detalles ]'" 
-                            class="w-full text-center py-1 text-[10px] font-black text-blue-600 bg-blue-50 rounded-lg mt-2 uppercase tracking-tighter">
+                            class="w-full text-center py-1 text-[10px] font-black text-blue-600 bg-blue-50 rounded-lg mt-2 uppercase">
                         [ + Ver detalle de insumos ]
                     </button>
                 `;
@@ -722,26 +725,23 @@ window.buscarPorCedula = async () => {
                         <p class="text-xs font-black text-gray-700 uppercase">Dr. ${d.doctor}</p>
                     </div>
                 </div>
-
                 <div class="py-1">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
-                    <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
+                    <p class="text-sm text-gray-700 whitespace-pre-line">${d.tratamiento || 'Sin observaciones'}</p>
                 </div>
-
                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <div class="grid grid-cols-2 gap-2 text-xs">
-                        <p class="text-gray-500 font-bold">TOTAL COBRADO: <span class="text-gray-900 font-black">$${d.montoVenta?.toFixed(2) || '0.00'}</span></p>
-                        <p class="text-gray-500 font-bold text-right">COSTO INSUMOS: <span class="text-red-600 font-black">$${d.montoInsumos?.toFixed(2) || '0.00'}</span></p>
+                        <p class="text-gray-500 font-bold">TOTAL: <span class="text-gray-900 font-black">$${d.montoVenta?.toFixed(2) || '0.00'}</span></p>
+                        <p class="text-gray-500 font-bold text-right">INSUMOS: <span class="text-red-600 font-black">$${d.montoInsumos?.toFixed(2) || '0.00'}</span></p>
                     </div>
                 </div>
-
                 ${insumosHTML}
             `;
             contenedor.appendChild(div);
         });
     } catch (e) {
-        console.error("Error en búsqueda:", e);
-        contenedor.innerHTML = "<p class='text-center text-red-500'>Error de conexión al buscar registros.</p>";
+        console.error("Error:", e);
+        contenedor.innerHTML = "<p class='text-center text-red-500'>Error de conexión.</p>";
     }
 };
 window.eliminarFila = (boton, nombreServicio) => {
@@ -878,6 +878,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
