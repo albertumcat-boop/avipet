@@ -551,9 +551,129 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         serviciosEnLista = []; // <--- AJUSTE: Limpiar seguimiento
         calcularTodo();
     };
+    // --- FUNCIÓN DE AUTORELLENO POR CÉDULA ---
+window.buscarPacientePorCedula = async (cedula) => {
+    if (cedula.length < 5) return; // No busca hasta que haya una cédula válida
+
+    try {
+        const q = query(collection(db, "consultas"), where("cedula", "==", cedula.trim()));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            // Tomamos el registro más reciente (el último guardado)
+            const datos = querySnapshot.docs[querySnapshot.docs.length - 1].data();
+            
+            // Rellenamos los campos automáticamente
+            document.getElementById('hNombre').value = datos.paciente || "";
+            // Si tienes estos campos en tu HTML, se llenarán:
+            if(document.getElementById('hEspecie')) document.getElementById('hEspecie').value = datos.especie || "";
+            if(document.getElementById('hRaza')) document.getElementById('hRaza').value = datos.raza || "";
+            if(document.getElementById('hProp')) document.getElementById('hProp').value = datos.propietario || "";
+            if(document.getElementById('hTlf')) document.getElementById('hTlf').value = datos.telefono || "";
+            
+            console.log("✅ Datos recuperados para la cédula:", cedula);
+        }
+    } catch (e) {
+        console.error("Error al buscar paciente:", e);
+    }
+};
+    window.buscarPorCedula = async () => {
+    const ci = document.getElementById('searchCI').value.trim();
+    const contenedor = document.getElementById('resultadosBusqueda');
+    if (!ci) return alert("Ingrese una cédula");
+
+    contenedor.innerHTML = "<p class='text-center animate-pulse'>Buscando...</p>";
+
+    try {
+        const q = query(collection(db, "consultas"), where("cedula", "==", ci));
+        const snap = await getDocs(q);
+        contenedor.innerHTML = "";
+
+        if (snap.empty) {
+            contenedor.innerHTML = "<p class='text-red-500 text-center font-bold'>No se encontraron registros.</p>";
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const div = document.createElement('div');
+            div.className = "p-4 border-2 rounded-xl bg-slate-50 hover:border-blue-400 cursor-pointer transition";
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-black text-blue-800">${d.paciente}</p>
+                        <p class="text-[10px] text-gray-500">${d.fechaSimple || 'Sin fecha'}</p>
+                    </div>
+                    <button class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">Cargar</button>
+                </div>
+            `;
+            // Al hacer clic, carga los datos en la Historia Clínica
+            div.onclick = () => {
+                document.getElementById('hNombre').value = d.paciente || "";
+                document.getElementById('hCI').value = d.cedula || "";
+                document.getElementById('hTratamiento').value = d.tratamiento || "";
+                window.showTab('historia');
+                alert("Datos cargados en Historia");
+            };
+            contenedor.appendChild(div);
+        });
+    } catch (e) {
+        console.error(e);
+        contenedor.innerHTML = "Error al buscar.";
+    }
+};
+    window.buscarPacientePorCedula = async (cedula) => {
+    if (cedula.length < 5) return;
+    try {
+        const q = query(collection(db, "consultas"), where("cedula", "==", cedula.trim()));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const d = snap.docs[snap.docs.length - 1].data();
+            document.getElementById('hNombre').value = d.paciente || "";
+            // Si tienes más campos como hProp o hTlf, añadelos aquí igual que el nombre
+        }
+    } catch (e) { console.error(e); }
+};
+    window.eliminarFila = (boton, nombreServicio) => {
+    // 1. Eliminar la fila visualmente
+    const fila = boton.parentElement;
+    fila.remove();
+
+    // 2. Si eliminamos un encabezado de servicio (los que dicen 📦 INSUMOS)
+    // debemos quitar ese servicio de nuestra lista de seguimiento
+    if (nombreServicio) {
+        const index = serviciosEnLista.indexOf(nombreServicio);
+        if (index > -1) {
+            serviciosEnLista.splice(index, 1);
+            
+            // 3. Restar el precio del servicio eliminado del total
+            let precioARestar = recetas[nombreServicio] ? recetas[nombreServicio].precioVenta : 0;
+            
+            // Ajuste por si era un precio de combo
+            if (nombreServicio === "HEMATOLOGÍA COMPLETA" && precioARestar > 20) {
+               // Aquí podrías añadir lógica si necesitas ser más específico con el monto exacto
+            }
+
+            const inputPrecio = document.getElementById('precioVenta');
+            let totalActual = parseFloat(inputPrecio.value) || 0;
+            inputPrecio.value = Math.max(0, totalActual - precioARestar).toFixed(2);
+        }
+    }
+
+    // 4. Recalcular todo (Insumos, Neto, Ganancias)
+    calcularTodo();
+    
+    // 5. Si la tabla queda vacía, ocultamos el contenedor
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    if (cuerpo.children.length === 0) {
+        document.getElementById('contenedorInsumos').classList.add('hidden');
+        document.getElementById('precioVenta').value = "0";
+    }
+};
 </script>
 </body>
 </html>
+
 
 
 
