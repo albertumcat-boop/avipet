@@ -271,22 +271,22 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     <div class="grid grid-cols-2 gap-4 mb-4">
         </div>
 
-    <div class="w-full mt-4 px-2"> 
-    <div class="grid grid-cols-3 gap-2 w-full max-w-4xl mx-auto">
+    <div class="w-full flex justify-center my-8 clear-both">
+    <div class="flex flex-col md:flex-row items-center justify-center gap-4 w-full max-w-5xl px-4">
         
-        <div class="bg-white border-2 border-slate-200 rounded-xl p-3 flex flex-col items-center shadow-sm">
-            <span class="text-[10px] font-black text-slate-400 uppercase">Neto</span>
-            <span id="labelNeto" class="text-base font-black text-slate-800">$0.00</span>
+        <div class="w-full md:flex-1 bg-white border-2 border-slate-200 rounded-2xl p-5 flex flex-col items-center shadow-sm">
+            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Neto</span>
+            <span id="labelNeto" class="text-2xl font-black text-slate-800 leading-none">$0.00</span>
         </div>
 
-        <div class="bg-blue-50 border-2 border-blue-100 rounded-xl p-3 flex flex-col items-center shadow-sm">
-            <span class="text-[10px] font-black text-blue-400 uppercase italic">Doctor (30%)</span>
-            <span id="labelDr" class="text-base font-black text-blue-700">$0.00</span>
+        <div class="w-full md:flex-1 bg-blue-600 border-2 border-blue-700 rounded-2xl p-6 flex flex-col items-center shadow-xl transform md:scale-110 z-10">
+            <span class="text-[11px] font-black text-blue-100 uppercase italic tracking-widest mb-1">Ganancia Doctor (30%)</span>
+            <span id="labelDr" class="text-3xl font-black text-white leading-none">$0.00</span>
         </div>
 
-        <div class="bg-green-50 border-2 border-green-100 rounded-xl p-3 flex flex-col items-center shadow-sm">
-            <span class="text-[10px] font-black text-green-400 uppercase">Avipet (70%)</span>
-            <span id="labelTienda" class="text-base font-black text-green-700">$0.00</span>
+        <div class="w-full md:flex-1 bg-green-50 border-2 border-green-200 rounded-2xl p-5 flex flex-col items-center shadow-sm">
+            <span class="text-[11px] font-black text-green-500 uppercase tracking-widest mb-1">Avipet (70%)</span>
+            <span id="labelTienda" class="text-2xl font-black text-green-700 leading-none">$0.00</span>
         </div>
 
     </div>
@@ -841,6 +841,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
