@@ -403,69 +403,82 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         document.getElementById('tab' + tabId).className = "tab-active py-2 text-[11px] px-2 uppercase font-bold";
     };
 
-    // AQUÍ CONTINÚA EL RESTO DE TUS FUNCIONES (insertarServicio, calcularTodo, etc.)
-    // Asegúrate de que NO haya un </script> hasta el final de todo tu archivo.
+   // --- LÓGICA DE INSUMOS --- [cite: 9]
+    const insumosFijosMedicos = [
+        { nombre: "Guantes de examen", costo: 0.50 }, 
+        { nombre: "Algodón y Alcohol", costo: 0.10 }, 
+        { nombre: "Hojas/Papelería", costo: 0.10 }
+    ]; [cite: 9]
 
-    // --- LÓGICA DE INSUMOS ---
-    const insumosFijosMedicos = [{ nombre: "Guantes de examen", costo: 0.50 }, { nombre: "Algodón y Alcohol", costo: 0.10 }, { nombre: "Hojas/Papelería", costo: 0.10 }];
-    const insumosBaseVacuna = [{ nombre: "Jeringa 3cc", costo: 0.25 }, { nombre: "Xeruk", costo: 0.10 }, { nombre: "Crema", costo: 0.10 }];
+    const insumosBaseVacuna = [
+        { nombre: "Jeringa 3cc", costo: 0.25 }, 
+        { nombre: "Xeruk", costo: 0.10 }, 
+        { nombre: "Crema", costo: 0.10 }
+    ]; [cite: 10]
     
     const recetas = {
-    // --- CONSULTAS ---
-    "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] },
-    "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
-    "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] },
-    "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] },
-    "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] },
-    
-    // --- VACUNAS ---
-    "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] },
-    "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] },
-    "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] },
-    "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta: 45, insumos: [{ nombre: "Vial KC", costo: 9.00 }] },
-    "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] },
-    "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] },
-    "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] },
-    
-    // --- LABORATORIO ---
-    "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] },
-    "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
-    "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] },
-    "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] },
-    "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] },
-    "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] },
-    "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] },
-    "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] },
-    "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] },
-    "EXAMEN DE HECES": { precioVenta: 10, insumos: [{ nombre: "Portas/Solución/Envase", costo: 1.50 }] },
-    "EXAMENES DE ORINA": { precioVenta: 10, insumos: [{ nombre: "Tira Reactiva/Sedimento", costo: 2.00 }] },
-    "CITOLOGIA 1 OIDO": { precioVenta: 15, insumos: [{ nombre: "Hisopo/Tincion", costo: 2.50 }] },
-    "CITOLOGIA 2 OIDOS": { precioVenta: 20, insumos: [{ nombre: "Hisopos/Tinciones", costo: 4.00 }] },
-    "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] },
-    "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] },
-    "PERFIL ANEMIA": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] },
-    "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] },
-    
-    // --- EUTANASIA ---
-    "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [{ nombre: "Fármacos Eutanasia <5kg", costo: 10.00 }] },
-    "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [{ nombre: "Fármacos Eutanasia <15kg", costo: 18.00 }] },
-    "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [{ nombre: "Fármacos Eutanasia <25kg", costo: 25.00 }] },
-    "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [{ nombre: "Fármacos Eutanasia <35kg", costo: 35.00 }] },
-    "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] },
-    "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] },
-    "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] },
-    
-    // --- REFERIDOS ---
-    "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
-    "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
-    "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] },
-    "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] },
-    "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
-    "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
-    
-    // --- OTROS ---
-    "ABSESO": { precioVenta: 25, insumos: [{ nombre: "jelco", costo: 4.50}, { nombre: "Agua Oxigenada", costo: 0.50 }, { nombre: "Compresa", costo: 0.50 }, { nombre: "Antibiotico", costo: 0.50 }, { nombre: "Antinflamatorio", costo: 0.50 }, { nombre: "Sedacion", costo: 0.50 }, { nombre: "Guantes", costo: 0.50 }, }] }
-};
+        // --- CONSULTAS --- [cite: 11]
+        "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] }, [cite: 11]
+        "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] }, [cite: 11]
+        "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] }, [cite: 11]
+        "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] }, [cite: 11]
+        "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] }, [cite: 11]
+        
+        // --- VACUNAS --- [cite: 11]
+        "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] }, [cite: 11, 12]
+        "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] }, [cite: 12]
+        "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] }, [cite: 12]
+        "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta: 45, insumos: [{ nombre: "Vial KC", costo: 9.00 }] }, [cite: 12]
+        "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] }, [cite: 12]
+        "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] }, [cite: 12]
+        "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] }, [cite: 12]
+        
+        // --- LABORATORIO --- [cite: 13]
+        "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] }, [cite: 13]
+        "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] }, [cite: 13]
+        "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] }, [cite: 13]
+        "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] }, [cite: 13]
+        "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] }, [cite: 13]
+        "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] }, [cite: 13]
+        "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] }, [cite: 13]
+        "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] }, [cite: 13, 14]
+        "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] }, [cite: 14]
+        "EXAMEN DE HECES": { precioVenta: 10, insumos: [{ nombre: "Portas/Solución/Envase", costo: 1.50 }] }, [cite: 14]
+        "EXAMENES DE ORINA": { precioVenta: 10, insumos: [{ nombre: "Tira Reactiva/Sedimento", costo: 2.00 }] }, [cite: 14]
+        "CITOLOGIA 1 OIDO": { precioVenta: 15, insumos: [{ nombre: "Hisopo/Tincion", costo: 2.50 }] }, [cite: 14]
+        "CITOLOGIA 2 OIDOS": { precioVenta: 20, insumos: [{ nombre: "Hisopos/Tinciones", costo: 4.00 }] }, [cite: 14]
+        "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] }, [cite: 14]
+        "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] }, [cite: 15]
+        "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] }, [cite: 20]
+        
+        // --- EUTANASIA --- [cite: 20]
+        "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [{ nombre: "Fármacos Eutanasia <5kg", costo: 10.00 }] }, [cite: 20]
+        "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [{ nombre: "Fármacos Eutanasia <15kg", costo: 18.00 }] }, [cite: 20]
+        "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [{ nombre: "Fármacos Eutanasia <25kg", costo: 25.00 }] }, [cite: 20]
+        "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [{ nombre: "Fármacos Eutanasia <35kg", costo: 35.00 }] }, [cite: 20]
+        "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] }, [cite: 20]
+        "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] }, [cite: 21]
+        "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] }, [cite: 21]
+        
+        // --- REFERIDOS --- [cite: 21]
+        "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] }, [cite: 21]
+        "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] }, [cite: 21]
+        "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] }, [cite: 21]
+        "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] }, [cite: 21]
+        "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] }, [cite: 22]
+        "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] }, [cite: 22]
+        
+        // --- OTROS --- [cite: 22]
+        "ABSCESO": { precioVenta: 25, insumos: [
+            { nombre: "Jelco", costo: 4.50 }, 
+            { nombre: "Agua Oxigenada", costo: 0.50 }, 
+            { nombre: "Compresa", costo: 0.50 }, 
+            { nombre: "Antibiotico", costo: 0.50 }, 
+            { nombre: "Antinflamatorio", costo: 0.50 }, 
+            { nombre: "Sedacion", costo: 0.50 }, 
+            { nombre: "Guantes", costo: 0.50 }
+        ]} [cite: 22, 23]
+    };
 
   window.insertarServicio = (v) => {
     if (!v) return;
@@ -809,7 +822,7 @@ window.buscarPorCedula = async () => {
         contenedor.innerHTML = "<p class='text-center text-red-500 font-bold p-4'>Error de conexión al buscar archivos.</p>";
     }
 };
-window.eliminarFila = (boton, nombreServicio) => {
+        window.eliminarFila = (boton, nombreServicio) => {
     // 1. Eliminar la fila física (el tr)
     const fila = boton.closest('tr');
     if (fila) fila.remove();
@@ -856,8 +869,9 @@ window.eliminarFila = (boton, nombreServicio) => {
         calcularTodo(); // Para que los labels bajen a $0.00
     }
 };
-   window.agregarInsumoManual = () => {
-    // CORRECCIÓN: Usamos los IDs que pusiste en el HTML (nombreExtra y costoExtra)
+        
+  window.agregarInsumoManual = () => {
+    // CORRECCIÓN: Usamos los IDs que pusiste en el HTML (nombreExtra y costoExtra) [cite: 56, 110]
     const nombreInput = document.getElementById('nombreExtra');
     const costoInput = document.getElementById('costoExtra');
     
@@ -865,32 +879,34 @@ window.eliminarFila = (boton, nombreServicio) => {
     const costo = parseFloat(costoInput.value) || 0;
 
     if (!nombre) {
-        return alert("⚠️ Ingrese el nombre del insumo extra.");
+        return alert("⚠️ Ingrese el nombre del insumo extra."); [cite: 110]
     }
 
-    const cuerpo = document.getElementById('listaInsumosDinamica');
-    document.getElementById('contenedorInsumos').classList.remove('hidden');
+    const cuerpo = document.getElementById('listaInsumosDinamica'); [cite: 110]
+    document.getElementById('contenedorInsumos').classList.remove('hidden'); [cite: 111]
 
     const tr = document.createElement('tr');
     tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50"; 
+    
+    // CAMBIO CLAVE: Se añadió 'whitespace-nowrap' y se ajustó el ancho (w-12 y w-16)
     tr.innerHTML = `
-        <td class="p-2 font-bold text-gray-700 text-[11px] italic">➕ ${nombre.toUpperCase()}</td>
+        <td class="p-2 font-bold text-gray-700 text-[11px] italic whitespace-nowrap">➕ ${nombre.toUpperCase()}</td>
         <td class="p-2 text-center">
-            <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded">
+            <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
         </td>
         <td class="p-2 text-center">
-            <input type="number" value="${costo.toFixed(2)}" step="0.01" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded">
+            <input type="number" value="${costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
         </td>
-        <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
-    `;
+        <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>
+    `; [cite: 111]
 
-    cuerpo.appendChild(tr);
+    cuerpo.appendChild(tr); [cite: 111]
 
-    // Limpiamos los campos usando los IDs correctos
+    // Limpiamos los campos usando los IDs correctos [cite: 112]
     nombreInput.value = "";
     costoInput.value = "";
     
-    calcularTodo();
+    window.calcularTodo(); [cite: 113]
 };
     window.imprimirRecetaLimpia = () => {
     // Añadimos clase para ocultar finanzas mediante el CSS que ya tienes arriba
@@ -943,6 +959,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
