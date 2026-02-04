@@ -360,16 +360,10 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
     let doctorVerificado = ""; 
     let serviciosEnLista = [];
-
-    // --- CONFIGURACIÓN AL CARGAR ---
-    document.addEventListener('DOMContentLoaded', () => {
-        const fechaDoc = document.getElementById('fechaDoc');
-        if (fechaDoc) fechaDoc.value = new Date().toLocaleDateString();
-    });
-    // --- FUNCIÓN DE CÁLCULO (EL MOTOR QUE FALTA) ---
+// --- MOTOR DE CÁLCULO (AQUÍ ESTABA EL ERROR) ---
     window.calcularTodo = () => {
         let totalInsumos = 0;
-        // Sumar todos los insumos de la tabla dinámica
+        // Sumamos todos los insumos de la tabla
         document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
             const cant = parseFloat(fila.querySelector('.i-cant').value) || 0;
             const cost = parseFloat(fila.querySelector('.i-cost').value) || 0;
@@ -384,12 +378,21 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         const venta = parseFloat(inputPrecioVenta.value) || 0;
         const neto = venta - totalInsumos;
 
-        // Actualizar las etiquetas de finanzas (Doctor Sandoval/Silva y Avipet)
-        if (document.getElementById('labelNeto')) document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
-        if (document.getElementById('labelDr')) document.getElementById('labelDr').innerText = `$${(neto * 0.30).toFixed(2)}`;
-        if (document.getElementById('labelTienda')) document.getElementById('labelTienda').innerText = `$${(neto * 0.70).toFixed(2)}`;
-    };
+        // Aquí se conectan con los divs que me acabas de pasar:
+        const lNeto = document.getElementById('labelNeto');
+        const lDr = document.getElementById('labelDr');
+        const lTienda = document.getElementById('labelTienda');
 
+        if (lNeto) lNeto.innerText = `$${neto.toFixed(2)}`;
+        if (lDr) lDr.innerText = `$${(neto * 0.30).toFixed(2)}`;
+        if (lTienda) lTienda.innerText = `$${(neto * 0.70).toFixed(2)}`;
+    };
+    // --- CONFIGURACIÓN AL CARGAR ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const fechaDoc = document.getElementById('fechaDoc');
+        if (fechaDoc) fechaDoc.value = new Date().toLocaleDateString();
+    });
+   
     window.validarAccesoDoctor = (nombre) => {
         if (!nombre) {
             doctorVerificado = "";
@@ -619,7 +622,10 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                 div.innerHTML = `<div class="flex justify-between border-b pb-2"><div><span class="text-[10px] bg-blue-100 text-blue-700 px-2 rounded-full font-bold">${d.fechaSimple}</span><h3 class="font-black text-blue-900 text-lg uppercase">${d.paciente}</h3></div><div class="text-right"><p class="text-xs font-black text-gray-700 uppercase">DR. ${d.doctor}</p></div></div><p class="text-sm text-gray-700 whitespace-pre-line">${d.tratamiento}</p><div class="bg-slate-50 p-3 rounded-lg flex justify-between text-xs"><span>TOTAL: <b>$${d.montoVenta.toFixed(2)}</b></span><span class="text-red-600">INSUMOS: <b>$${d.montoInsumos.toFixed(2)}</b></span></div>${insHTML}`;
                 contenedor.appendChild(div);
             });
-        } catch (e) { contenedor.innerHTML = "Error de conexión."; }
+       } catch (e) { 
+    console.error("Error Real:", e);
+    contenedor.innerHTML = "Error: " + e.message; 
+}
     };
 
     window.eliminarFila = (boton, nombreServicio) => {
@@ -676,6 +682,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </script>
 </body>
 </html>
+
 
 
 
