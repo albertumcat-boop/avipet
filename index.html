@@ -394,77 +394,78 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         document.getElementById('sectionHistoria').style.display = (t === 'historia') ? 'block' : 'none';
         document.getElementById('sectionBuscador').style.display = (t === 'buscador') ? 'block' : 'none';
         document.getElementById('sectionReporte').style.display = (t === 'reporte') ? 'block' : 'none';
+        
         document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500 text-[11px] px-2 uppercase font-bold");
         const tabId = t === 'historia' ? 'H' : (t === 'buscador' ? 'B' : 'R');
         document.getElementById('tab' + tabId).className = "tab-active py-2 text-[11px] px-2 uppercase font-bold";
     };
 
-   // --- LÓGICA DE INSUMOS --- [cite: 9]
+    // --- LÓGICA DE INSUMOS ---
     const insumosFijosMedicos = [
         { nombre: "Guantes de examen", costo: 0.50 }, 
         { nombre: "Algodón y Alcohol", costo: 0.10 }, 
         { nombre: "Hojas/Papelería", costo: 0.10 }
-    ]; [cite: 9]
+    ];
 
     const insumosBaseVacuna = [
         { nombre: "Jeringa 3cc", costo: 0.25 }, 
         { nombre: "Xeruk", costo: 0.10 }, 
         { nombre: "Crema", costo: 0.10 }
-    ]; [cite: 10]
+    ];
     
     const recetas = {
-        // --- CONSULTAS --- [cite: 11]
-        "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] }, [cite: 11]
-        "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] }, [cite: 11]
-        "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] }, [cite: 11]
-        "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] }, [cite: 11]
-        "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] }, [cite: 11]
+        // --- CONSULTAS ---
+        "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] },
+        "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
+        "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] },
+        "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] },
+        "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] },
         
-        // --- VACUNAS --- [cite: 11]
-        "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] }, [cite: 11, 12]
-        "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] }, [cite: 12]
-        "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] }, [cite: 12]
-        "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta: 45, insumos: [{ nombre: "Vial KC", costo: 9.00 }] }, [cite: 12]
-        "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] }, [cite: 12]
-        "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] }, [cite: 12]
-        "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] }, [cite: 12]
+        // --- VACUNAS ---
+        "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] },
+        "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] },
+        "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] },
+        "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta: 45, insumos: [{ nombre: "Vial KC", costo: 9.00 }] },
+        "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] },
+        "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] },
+        "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] },
         
-        // --- LABORATORIO --- [cite: 13]
-        "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] }, [cite: 13]
-        "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] }, [cite: 13]
-        "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] }, [cite: 13]
-        "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] }, [cite: 13]
-        "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] }, [cite: 13]
-        "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] }, [cite: 13]
-        "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] }, [cite: 13]
-        "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] }, [cite: 13, 14]
-        "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] }, [cite: 14]
-        "EXAMEN DE HECES": { precioVenta: 10, insumos: [{ nombre: "Portas/Solución/Envase", costo: 1.50 }] }, [cite: 14]
-        "EXAMENES DE ORINA": { precioVenta: 10, insumos: [{ nombre: "Tira Reactiva/Sedimento", costo: 2.00 }] }, [cite: 14]
-        "CITOLOGIA 1 OIDO": { precioVenta: 15, insumos: [{ nombre: "Hisopo/Tincion", costo: 2.50 }] }, [cite: 14]
-        "CITOLOGIA 2 OIDOS": { precioVenta: 20, insumos: [{ nombre: "Hisopos/Tinciones", costo: 4.00 }] }, [cite: 14]
-        "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] }, [cite: 14]
-        "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] }, [cite: 15]
-        "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] }, [cite: 20]
+        // --- LABORATORIO ---
+        "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] },
+        "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
+        "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] },
+        "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] },
+        "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] },
+        "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] },
+        "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] },
+        "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] },
+        "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] },
+        "EXAMEN DE HECES": { precioVenta: 10, insumos: [{ nombre: "Portas/Solución/Envase", costo: 1.50 }] },
+        "EXAMENES DE ORINA": { precioVenta: 10, insumos: [{ nombre: "Tira Reactiva/Sedimento", costo: 2.00 }] },
+        "CITOLOGIA 1 OIDO": { precioVenta: 15, insumos: [{ nombre: "Hisopo/Tincion", costo: 2.50 }] },
+        "CITOLOGIA 2 OIDOS": { precioVenta: 20, insumos: [{ nombre: "Hisopos/Tinciones", costo: 4.00 }] },
+        "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] },
+        "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] },
+        "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] },
         
-        // --- EUTANASIA --- [cite: 20]
-        "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [{ nombre: "Fármacos Eutanasia <5kg", costo: 10.00 }] }, [cite: 20]
-        "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [{ nombre: "Fármacos Eutanasia <15kg", costo: 18.00 }] }, [cite: 20]
-        "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [{ nombre: "Fármacos Eutanasia <25kg", costo: 25.00 }] }, [cite: 20]
-        "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [{ nombre: "Fármacos Eutanasia <35kg", costo: 35.00 }] }, [cite: 20]
-        "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] }, [cite: 20]
-        "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] }, [cite: 21]
-        "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] }, [cite: 21]
+        // --- EUTANASIA ---
+        "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [{ nombre: "Fármacos Eutanasia <5kg", costo: 10.00 }] },
+        "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [{ nombre: "Fármacos Eutanasia <15kg", costo: 18.00 }] },
+        "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [{ nombre: "Fármacos Eutanasia <25kg", costo: 25.00 }] },
+        "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [{ nombre: "Fármacos Eutanasia <35kg", costo: 35.00 }] },
+        "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] },
+        "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] },
+        "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] },
         
-        // --- REFERIDOS --- [cite: 21]
-        "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] }, [cite: 21]
-        "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] }, [cite: 21]
-        "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] }, [cite: 21]
-        "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] }, [cite: 21]
-        "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] }, [cite: 22]
-        "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] }, [cite: 22]
+        // --- REFERIDOS ---
+        "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
+        "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
+        "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] },
+        "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] },
+        "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
+        "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
         
-        // --- OTROS --- [cite: 22]
+        // --- OTROS ---
         "ABSCESO": { precioVenta: 25, insumos: [
             { nombre: "Jelco", costo: 4.50 }, 
             { nombre: "Agua Oxigenada", costo: 0.50 }, 
@@ -473,10 +474,10 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
             { nombre: "Antinflamatorio", costo: 0.50 }, 
             { nombre: "Sedacion", costo: 0.50 }, 
             { nombre: "Guantes", costo: 0.50 }
-        ]} [cite: 22, 23]
+        ]}
     };
 
-  window.insertarServicio = (v) => {
+ window.insertarServicio = (v) => {
     if (!v) return;
     
     const area = document.getElementById('hTratamiento');
@@ -484,17 +485,15 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     let nombreFinal = v;
     let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
     
-    // Creamos un ID único para vincular el título con sus insumos
     const grupoID = "srv-" + Date.now();
 
-    // --- LÓGICA PARA KG ADICIONAL ($7 por cada kilo) ---
+    // --- LÓGICA PARA KG ADICIONAL ---
     if (v === "KG ADICIONAL") {
         const kgs = prompt("Ingrese la cantidad de KG adicionales:");
         if (kgs && !isNaN(kgs)) {
             const numKgs = parseFloat(kgs);
             nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
             precioFinal = numKgs * 7;
-            alert(`Se han calculado $${precioFinal.toFixed(2)} por los ${numKgs}kg adicionales.`);
         } else { return; }
     }
 
@@ -515,10 +514,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
 
-    // Insertar el encabezado con la nueva función 'eliminarServicioCompleto'
-    const filaTitulo = document.createElement('tr');
-    filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
-   // Reemplaza solo la creación de la filaTitulo dentro de insertarServicio
+    // --- CORRECCIÓN: FILA TÍTULO (SIN DUPLICAR) ---
     const filaTitulo = document.createElement('tr');
     filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
     filaTitulo.innerHTML = `
@@ -534,8 +530,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
     if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
 
-    listaNuevos.forEach(insumo => {
-        // Reemplaza el forEach de los insumos al final de insertarServicio
+    // --- CORRECCIÓN: UN SOLO FOREACH PARA INSUMOS ---
     listaNuevos.forEach(insumo => {
         const tr = document.createElement('tr');
         tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
@@ -551,9 +546,14 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         `;
         cuerpo.appendChild(tr);
     });
-    calcularTodo();
+
+    // --- CORRECCIÓN FINAL: USAR window. ---
+    window.calcularTodo();
+    
+    // Limpiar el selector para elegir el siguiente
+    document.getElementById('selectorServicios').value = "";
 };
-    window.eliminarServicioCompleto = (idGrupo, precioARestar) => {
+    window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
     if (!confirm("¿Eliminar este servicio y todos sus insumos?")) return;
 
     // 1. Borrar todos los insumos que tengan la clase del ID del grupo
@@ -561,58 +561,39 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     elementos.forEach(el => el.remove());
 
     // 2. Borrar la fila del título (donde está el botón)
-    event.target.closest('tr').remove();
+    // Usamos el evento pasado por parámetro para mayor seguridad
+    const botonPresionado = event.target || event.srcElement;
+    botonPresionado.closest('tr').remove();
 
     // 3. Restar el precio automáticamente del total cobrado
     const inputPrecioVenta = document.getElementById('precioVenta');
     let actual = parseFloat(inputPrecioVenta.value) || 0;
     inputPrecioVenta.value = Math.max(0, actual - precioARestar).toFixed(2);
 
-    // 4. Recalcular saldos neto, doctor y tienda
-    calcularTodo();
+    // 4. Recalcular (siempre usando window. para evitar errores de scope)
+    window.calcularTodo();
 };
-   window.calcularTodo = () => {
-    let totalI = 0;
-    
-    // Seleccionamos solo las filas con clase 'insumo-fila' para no sumar títulos
-    document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
-        const c = fila.querySelector('.i-cant');
-        const p = fila.querySelector('.i-cost');
-        
-        if (c && p) {
-            const cantidad = parseFloat(c.value) || 0;
-            const precio = parseFloat(p.value) || 0;
-            totalI += (cantidad * precio);
-        }
-    });
-
-    const elGasto = document.getElementById('gastoInsumos');
-    if (elGasto) elGasto.value = totalI.toFixed(2);
-
-    const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-    const neto = bruto - totalI;
-
-    const labelNeto = document.getElementById('labelNeto');
-    const labelDr = document.getElementById('labelDr');
-    const labelTienda = document.getElementById('labelTienda');
-
-    if (labelNeto) labelNeto.innerText = `$${neto.toFixed(2)}`;
-    if (labelDr) labelDr.innerText = `$${(neto * 0.3).toFixed(2)}`;
-    if (labelTienda) labelTienda.innerText = `$${(neto * 0.7).toFixed(2)}`;
-}; // <--- Aquí solo va UNA llave.
-    window.guardarFirebase = async (imp) => {
+  window.guardarFirebase = async (imp) => {
         if (window.event) window.event.preventDefault();
+        
+        // Verificación de firma (Darwin o Joan)
         if (!doctorVerificado) {
             alert("⚠️ El registro no puede guardarse sin la firma de un doctor.");
             const selector = document.getElementById('selectDoctor');
-            if(selector) { selector.focus(); selector.style.border = "2px solid red"; setTimeout(() => selector.style.border = "", 2000); }
+            if(selector) { 
+                selector.focus(); 
+                selector.style.border = "2px solid red"; 
+                setTimeout(() => selector.style.border = "", 2000); 
+            }
             return;
         }
+
         try {
             const mascota = document.getElementById('hNombre').value.trim();
             const cedula = document.getElementById('hCI').value.trim();
             if(!mascota || !cedula) return alert("⚠️ Nombre de mascota y Cédula son obligatorios.");
 
+            // Recopilar insumos para la base de datos
             const detalleInsumos = [];
             document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
                 detalleInsumos.push({
@@ -622,9 +603,12 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                 });
             });
 
-            const netoTotal = parseFloat(document.getElementById('labelNeto').innerText.replace('$', '')) || 0;
-           const data = {
-                // Datos del Paciente y Cliente (Añadidos para que el autocompletado funcione)
+            // --- CÁLCULO SEGURO DE MONTOS ---
+            const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
+            const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+            const netoTotal = montoVenta - montoInsumos;
+
+            const data = {
                 paciente: mascota,
                 cedula: cedula,
                 propietario: document.getElementById('hProp').value.trim(),
@@ -633,53 +617,31 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                 especie: document.getElementById('hEspecie').value.trim(),
                 raza: document.getElementById('hRaza').value.trim(),
                 edad: document.getElementById('hEdad').value.trim(),
-                
-                // Datos de la Consulta
                 doctor: doctorVerificado,
                 tratamiento: document.getElementById('hTratamiento').value.trim(),
-                
-                // Datos Financieros
-                montoVenta: parseFloat(document.getElementById('precioVenta').value) || 0,
-                montoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
-                pagoDoctor: netoTotal * 0.3,
-                pagoAvipet: netoTotal * 0.7,
-                
-                // Detalles Técnicos
+                montoVenta: montoVenta,
+                montoInsumos: montoInsumos,
+                pagoDoctor: netoTotal * 0.3, // 30% para el Dr.
+                pagoAvipet: netoTotal * 0.7,  // 70% para tienda
                 listaDetalladaInsumos: detalleInsumos,
                 fecha: serverTimestamp(),
                 fechaSimple: new Date().toLocaleDateString()
             };
+
             await addDoc(collection(db, "consultas"), data);
+            
             if (imp) window.print();
-            alert(`✅ Consulta de ${mascota} guardada.`);
-            resetFormulario();
-        } catch (e) { console.error(e); alert("❌ Error al guardar."); }
+            
+            alert(`✅ Consulta de ${mascota} guardada exitosamente.`);
+            
+            // Recargar para limpiar todo de forma segura
+            location.reload(); 
+
+        } catch (e) { 
+            console.error("Error en Firebase:", e); 
+            alert("❌ Error al guardar en la base de datos."); 
+        }
     };
-    window.resetFormulario = () => {
-    // Limpiar textos e inputs
-    const idsParaLimpiar = ['hNombre', 'hEspecie', 'hRaza', 'hPeso', 'hEdad', 'hProp', 'hCI', 'hTlf', 'hMail', 'hTratamiento', 'precioVenta', 'gastoInsumos', 'nombreExtra', 'costoExtra'];
-    idsParaLimpiar.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = el.type === 'number' ? "0" : "";
-    });
-
-    // Limpiar tablas y listas
-    document.getElementById('listaInsumosDinamica').innerHTML = "";
-    document.getElementById('contenedorInsumos').classList.add('hidden');
-    serviciosEnLista = [];
-
-    // Resetear labels de dinero
-    document.getElementById('labelNeto').innerText = "$0.00";
-    document.getElementById('labelDr').innerText = "$0.00";
-    document.getElementById('labelTienda').innerText = "$0.00";
-    
-    // Quitar doctor actual para obligar a nueva firma en el siguiente paciente
-    doctorVerificado = "";
-    document.getElementById('selectDoctor').value = "";
-    document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-    
-    window.scrollTo(0, 0);
-};
 
     window.imprimirRecetaLimpia = () => {
         document.body.classList.add('receta-modo');
@@ -693,17 +655,44 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     };
 
     window.resetFormulario = () => {
-        ["hNombre", "hEspecie", "hRaza", "hPeso", "hEdad", "hProp", "hCI", "hTlf", "hMail", "hTratamiento"].forEach(id => {
-            const el = document.getElementById(id); if(el) el.value = "";
-        });
-        document.getElementById('precioVenta').value = "0";
-        document.getElementById('listaInsumosDinamica').innerHTML = "";
-        serviciosEnLista = []; // <--- AJUSTE: Limpiar seguimiento
-        calcularTodo();
-    };
-    // --- FUNCIÓN DE AUTORELLENO POR CÉDULA ---
-// Esta es la función que llama el HTML cuando escribes la cédula
-window.autocompletarPorCedula = async (cedula) => {
+    // 1. Limpiar todos los inputs de texto y número
+    const idsParaLimpiar = [
+        'hNombre', 'hEspecie', 'hRaza', 'hPeso', 'hEdad', 
+        'hProp', 'hCI', 'hTlf', 'hMail', 'hTratamiento', 
+        'precioVenta', 'gastoInsumos', 'nombreExtra', 'costoExtra'
+    ];
+    
+    idsParaLimpiar.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = (el.type === 'number') ? "0" : "";
+    });
+
+    // 2. Limpiar tabla de insumos y ocultar contenedor
+    const cuerpoTabla = document.getElementById('listaInsumosDinamica');
+    if (cuerpoTabla) cuerpoTabla.innerHTML = "";
+    
+    const contInsumos = document.getElementById('contenedorInsumos');
+    if (contInsumos) contInsumos.classList.add('hidden');
+    
+    serviciosEnLista = []; // Resetear el array de seguimiento
+
+    // 3. Resetear labels financieros a cero
+    if (document.getElementById('labelNeto')) document.getElementById('labelNeto').innerText = "$0.00";
+    if (document.getElementById('labelDr')) document.getElementById('labelDr').innerText = "$0.00";
+    if (document.getElementById('labelTienda')) document.getElementById('labelTienda').innerText = "$0.00";
+    
+    // 4. Quitar doctor actual (Obligatorio para nueva firma)
+    doctorVerificado = "";
+    const selectorDoc = document.getElementById('selectDoctor');
+    if (selectorDoc) selectorDoc.value = "";
+    
+    const printDoc = document.getElementById('doctorPrint');
+    if (printDoc) printDoc.innerText = "SELECCIONE DOCTOR";
+    
+    window.scrollTo(0, 0);
+    console.log("🧹 Formulario reseteado por completo.");
+};
+    window.autocompletarPorCedula = async (cedula) => {
     if (cedula.length < 5) return;
 
     try {
@@ -711,24 +700,25 @@ window.autocompletarPorCedula = async (cedula) => {
         const snap = await getDocs(q);
 
         if (!snap.empty) {
-            // Tomamos el último registro para obtener los datos más recientes
-            const d = snap.docs[snap.docs.length - 1].data();
+            // Ordenamos para obtener el registro más reciente (el último)
+            const docs = snap.docs.map(doc => doc.data());
+            const d = docs[docs.length - 1];
             
-            // Auto-rellenamos los campos del Propietario
+            // Rellenar Propietario
             if(document.getElementById('hProp')) document.getElementById('hProp').value = d.propietario || d.nombrePropietario || "";
             if(document.getElementById('hTlf')) document.getElementById('hTlf').value = d.telefono || "";
             if(document.getElementById('hMail')) document.getElementById('hMail').value = d.correo || "";
 
-            // Auto-rellenamos los campos de la Mascota
-            document.getElementById('hNombre').value = d.paciente || "";
+            // Rellenar Mascota
+            if(document.getElementById('hNombre')) document.getElementById('hNombre').value = d.paciente || "";
             if(document.getElementById('hEspecie')) document.getElementById('hEspecie').value = d.especie || "";
             if(document.getElementById('hRaza')) document.getElementById('hRaza').value = d.raza || "";
             if(document.getElementById('hEdad')) document.getElementById('hEdad').value = d.edad || "";
             
-            console.log("✅ Datos de paciente recuperados exitosamente.");
+            console.log("✅ Datos recuperados de la última visita.");
         }
     } catch (e) {
-        console.error("Error al autocompletar:", e);
+        console.error("Error en autocompletado:", e);
     }
 };
 
@@ -765,7 +755,7 @@ window.buscarPorCedula = async () => {
             return { id: doc.id, ...data, fechaMs: ms };
         }).sort((a, b) => b.fechaMs - a.fechaMs); // El más reciente primero
 
-        registros.forEach(d => {
+      registros.forEach(d => {
             const div = document.createElement('div');
             div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
             
@@ -773,7 +763,7 @@ window.buscarPorCedula = async () => {
             if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
                 const listaItems = d.listaDetalladaInsumos.map(ins => `
                     <li class="flex justify-between text-[11px] text-gray-600 bg-gray-50 p-2 rounded border-b border-gray-100">
-                        <span>${ins.nombre} <b class="text-blue-600">x${ins.cant}</b></span>
+                        <span class="whitespace-nowrap">${ins.nombre} <b class="text-blue-600">x${ins.cant}</b></span>
                         <span class="font-bold text-slate-700">$${(ins.cant * ins.precio).toFixed(2)}</span>
                     </li>
                 `).join('');
@@ -798,23 +788,62 @@ window.buscarPorCedula = async () => {
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] text-gray-400 font-bold italic">Atendido por:</p>
-                        <p class="text-xs font-black text-gray-700 uppercase">Dr. ${d.doctor}</p>
+                        <p class="text-xs font-black text-gray-700 uppercase">${d.doctor.includes('Dr') ? d.doctor : 'DR. ' + d.doctor}</p>
                     </div>
                 </div>
                 <div class="py-1">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
                     <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
                 </div>
-              <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-    <div class="flex justify-between items-center text-xs whitespace-nowrap">
-        <p class="text-gray-500 font-bold uppercase">
-            Total: <span class="text-gray-900 font-black text-sm">$${(Number(d.montoVenta) || 0).toFixed(2)}</span>
-        </p>
-        <p class="text-gray-500 font-bold uppercase ml-4">
-            Insumos: <span class="text-red-600 font-black text-sm">$${(Number(d.montoInsumos) || 0).toFixed(2)}</span>
-        </p>
-    </div>
-</div>
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div class="flex justify-between items-center text-xs">
+                        <p class="text-gray-500 font-bold uppercase">
+                            Total: <span class="text-gray-900 font-black text-sm">$${(Number(d.montoVenta) || 0).toFixed(2)}</span>
+                        </p>
+                        <p class="text-gray-500 font-bold uppercase">
+                            Insumos: <span class="text-red-600 font-black text-sm">$${(Number(d.montoInsumos) || 0).toFixed(2)}</span>
+                        </p>
+                    </div>
+                </div>
+                ${insumosHTML}
+            `;
+            contenedor.appendChild(div);
+        });
+    } catch (e) {
+        console.error("Error en búsqueda:", e);
+        document.getElementById('resultadosBusqueda').innerHTML = "<p class='text-center text-red-500 font-bold p-4'>Error de conexión.</p>";
+    }
+};
+            // CORRECCIÓN: Estructura de montos más limpia
+            div.innerHTML = `
+                <div class="flex justify-between border-b pb-2 items-start">
+                    <div>
+                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase">${d.fechaSimple || 'Sin Fecha'}</span>
+                        <h3 class="font-black text-blue-900 text-lg uppercase leading-tight">${d.paciente}</h3>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-400 font-bold italic">Atendido por:</p>
+                        <p class="text-xs font-black text-gray-700 uppercase">${d.doctor.includes('Dr') ? d.doctor : 'DR. ' + d.doctor}</p>
+                    </div>
+                </div>
+                <div class="py-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
+                    <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div class="flex justify-between items-center text-xs">
+                        <p class="text-gray-500 font-bold uppercase">
+                            Total: <span class="text-gray-900 font-black text-sm">$${(Number(d.montoVenta) || 0).toFixed(2)}</span>
+                        </p>
+                        <p class="text-gray-500 font-bold uppercase">
+                            Insumos: <span class="text-red-600 font-black text-sm">$${(Number(d.montoInsumos) || 0).toFixed(2)}</span>
+                        </p>
+                    </div>
+                </div>
+                ${insumosHTML}
+            `;
+            contenedor.appendChild(div);
+        });
                 ${insumosHTML}
             `;
             contenedor.appendChild(div);
@@ -824,12 +853,12 @@ window.buscarPorCedula = async () => {
         contenedor.innerHTML = "<p class='text-center text-red-500 font-bold p-4'>Error de conexión al buscar archivos.</p>";
     }
 };
-        window.eliminarFila = (boton, nombreServicio) => {
-    // 1. Eliminar la fila física (el tr)
+       window.eliminarFila = (boton, nombreServicio) => {
+    // 1. Eliminar la fila física
     const fila = boton.closest('tr');
     if (fila) fila.remove();
 
-    // 2. Si es un encabezado de servicio, lo quitamos de la lista de seguimiento
+    // 2. Si es un encabezado de servicio, lo quitamos de la lista
     if (nombreServicio) {
         const index = serviciosEnLista.indexOf(nombreServicio);
         if (index > -1) {
@@ -837,43 +866,41 @@ window.buscarPorCedula = async () => {
         }
     }
 
-    // 3. RESET DE PRECIO Y RE-CÁLCULO TOTAL
-    // En lugar de restar, ponemos el precio en 0 y sumamos de nuevo los servicios que quedaron
+    // 3. RE-CÁLCULO DINÁMICO DE PRECIOS (Combos)
     const inputPrecioVenta = document.getElementById('precioVenta');
-    inputPrecioVenta.value = "0";
+    let nuevoPrecioTotal = 0;
 
     serviciosEnLista.forEach(serv => {
         let precioServicio = recetas[serv] ? recetas[serv].precioVenta : 0;
 
-        // Re-aplicamos la lógica de combos para los que se quedaron
+        // Lógica de descuentos por combo
         if (serv === "HEMATOLOGÍA COMPLETA") {
-            const tieneOtroLab = serviciosEnLista.some(s => s !== serv && (s.includes("QUÍMICA") || s.includes("PERFIL") || s.includes("DESCARTE") || s.includes("DISTEMPER")));
-            if (tieneOtroLab) precioServicio = 20;
+            const tieneOtroLab = serviciosEnLista.some(s => s !== serv && (s.includes("QUÍMICA") || s.includes("PERFIL") || s.includes("DESCARTE")));
+            if (tieneOtroLab) precioServicio = 20; // Precio especial por combo
         }
+        
         if (serv === "VACUNA KC (TOS DE LAS PERRERAS)" || serv === "VACUNA ANTIRRÁBICA") {
             const tieneOtraVacuna = serviciosEnLista.some(s => s !== serv && s.includes("VACUNA"));
             if (tieneOtraVacuna) precioServicio = serv.includes("KC") ? 40 : 25;
         }
 
-        let actual = parseFloat(inputPrecioVenta.value) || 0;
-        inputPrecioVenta.value = (actual + precioServicio).toFixed(2);
+        nuevoPrecioTotal += precioServicio;
     });
 
-    // 4. Recalcular finanzas e insumos
-    calcularTodo();
+    inputPrecioVenta.value = nuevoPrecioTotal.toFixed(2);
 
-    // 5. Si ya no hay nada, limpiar todo
+    // 4. Si la tabla quedó vacía, ocultar el contenedor
     const cuerpo = document.getElementById('listaInsumosDinamica');
-    if (!cuerpo || cuerpo.rows.length === 0) {
+    if (!cuerpo || cuerpo.querySelectorAll('tr').length === 0) {
         document.getElementById('contenedorInsumos').classList.add('hidden');
         inputPrecioVenta.value = "0";
-        serviciosEnLista = []; // Limpiamos el array por seguridad
-        calcularTodo(); // Para que los labels bajen a $0.00
+        serviciosEnLista = [];
     }
+
+    window.calcularTodo();
 };
         
-  window.agregarInsumoManual = () => {
-    // CORRECCIÓN: Usamos los IDs que pusiste en el HTML (nombreExtra y costoExtra) [cite: 56, 110]
+ window.agregarInsumoManual = () => {
     const nombreInput = document.getElementById('nombreExtra');
     const costoInput = document.getElementById('costoExtra');
     
@@ -881,16 +908,15 @@ window.buscarPorCedula = async () => {
     const costo = parseFloat(costoInput.value) || 0;
 
     if (!nombre) {
-        return alert("⚠️ Ingrese el nombre del insumo extra."); [cite: 110]
+        return alert("⚠️ Ingrese el nombre del insumo extra.");
     }
 
-    const cuerpo = document.getElementById('listaInsumosDinamica'); [cite: 110]
-    document.getElementById('contenedorInsumos').classList.remove('hidden'); [cite: 111]
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
 
     const tr = document.createElement('tr');
     tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50"; 
     
-    // CAMBIO CLAVE: Se añadió 'whitespace-nowrap' y se ajustó el ancho (w-12 y w-16)
     tr.innerHTML = `
         <td class="p-2 font-bold text-gray-700 text-[11px] italic whitespace-nowrap">➕ ${nombre.toUpperCase()}</td>
         <td class="p-2 text-center">
@@ -900,68 +926,67 @@ window.buscarPorCedula = async () => {
             <input type="number" value="${costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
         </td>
         <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>
-    `; [cite: 111]
+    `;
 
-    cuerpo.appendChild(tr); [cite: 111]
+    cuerpo.appendChild(tr);
 
-    // Limpiamos los campos usando los IDs correctos [cite: 112]
+    // Limpiar campos
     nombreInput.value = "";
     costoInput.value = "";
     
-    window.calcularTodo(); [cite: 113]
+    window.calcularTodo();
 };
     window.imprimirRecetaLimpia = () => {
-    // Añadimos clase para ocultar finanzas mediante el CSS que ya tienes arriba
     document.body.classList.add('receta-modo');
-    window.print();
-    // Quitamos la clase para que en pantalla se sigan viendo los costos
-    document.body.classList.remove('receta-modo');
+    // Damos 300ms para que el navegador oculte las finanzas antes de abrir el diálogo
+    setTimeout(() => {
+        window.print();
+        document.body.classList.remove('receta-modo');
+    }, 300);
 };
  window.autocompletarPorCedula = async (cedula) => {
-    if (!cedula) return;
+        if (!cedula) return;
+        try {
+            const q = query(collection(db, "consultas"), where("cedula", "==", cedula.trim()));
+            const querySnapshot = await getDocs(q);
 
-    try {
-        // Buscamos en la colección 'consultas' el registro más reciente de esa cédula
-        const q = query(
-            collection(db, "consultas"), 
-            where("cedula", "==", cedula.trim())
-        );
-        
-        const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const docs = querySnapshot.docs.map(doc => doc.data());
+                const ultimo = docs[docs.length - 1];
 
-        if (!querySnapshot.empty) {
-            // Obtenemos todos los documentos y los ordenamos por fecha manualmente 
-            // (o simplemente tomamos el primero si no necesitas el más reciente exacto)
-            const docs = querySnapshot.docs.map(doc => doc.data());
-            // Tomamos el último encontrado
-            const ultimo = docs[docs.length - 1];
+                // Rellenar Propietario
+                document.getElementById('hProp').value = ultimo.propietario || ultimo.cliente || ""; 
+                document.getElementById('hTlf').value = ultimo.telefono || ultimo.tlf || "";
+                document.getElementById('hMail').value = ultimo.correo || ultimo.mail || "";
 
-            // Rellenamos los campos del Propietario
-            document.getElementById('hProp').value = ultimo.propietario || ultimo.cliente || ""; 
-            document.getElementById('hTlf').value = ultimo.telefono || ultimo.tlf || "";
-            document.getElementById('hMail').value = ultimo.correo || ultimo.mail || "";
-
-            // Rellenamos los campos de la Mascota (opcional, por si es el mismo paciente)
-            document.getElementById('hNombre').value = ultimo.paciente || "";
-            document.getElementById('hEspecie').value = ultimo.especie || "";
-            document.getElementById('hRaza').value = ultimo.raza || "";
-            document.getElementById('hEdad').value = ultimo.edad || "";
-            
-            // Efecto visual para indicar que se cargó
-            const inputCI = document.getElementById('hCI');
-            inputCI.classList.add('bg-green-100');
-            setTimeout(() => inputCI.classList.remove('bg-green-100'), 1000);
-            
-            console.log("Datos recuperados para la cédula:", cedula);
+                // Rellenar Mascota
+                document.getElementById('hNombre').value = ultimo.paciente || "";
+                document.getElementById('hEspecie').value = ultimo.especie || "";
+                document.getElementById('hRaza').value = ultimo.raza || "";
+                document.getElementById('hEdad').value = ultimo.edad || "";
+                
+                // Efecto visual de éxito
+                const inputCI = document.getElementById('hCI');
+                if(inputCI) {
+                    inputCI.classList.add('bg-green-100', 'border-green-500');
+                    setTimeout(() => inputCI.classList.remove('bg-green-100', 'border-green-500'), 1500);
+                }
+                console.log("✅ Datos recuperados exitosamente.");
+            }
+        } catch (e) {
+            console.error("Error al autocompletar:", e);
         }
-    } catch (e) {
-        console.error("Error al autocompletar:", e);
-    }
-};
+    };
+
+    // Al final del script, puedes agregar un inicializador de fecha si no lo tienes
+    document.addEventListener('DOMContentLoaded', () => {
+        const fechaInput = document.getElementById('fechaActual');
+        if (fechaInput) fechaInput.value = new Date().toLocaleDateString();
+    });
+
 </script>
 </body>
 </html>
-
 
 
 
