@@ -362,32 +362,34 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     let serviciosEnLista = [];
 
     // --- CONFIGURACIÓN AL CARGAR ---
-    document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
+    document.addEventListener('DOMContentLoaded', () => {
+        const fechaDoc = document.getElementById('fechaDoc');
+        if (fechaDoc) fechaDoc.value = new Date().toLocaleDateString();
+    });
 
     window.validarAccesoDoctor = (nombre) => {
-    if (!nombre) {
-        doctorVerificado = "";
-        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-        return;
-    }
+        if (!nombre) {
+            doctorVerificado = "";
+            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+            return;
+        }
 
-    // Corregido: eliminadas las barras invertidas que bloqueaban el PIN
-    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
-    
-    if (pinIngresado === pinsDoctores[nombre]) {
-        doctorVerificado = nombre; 
-        const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
-        document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
-        alert(`✅ Identidad confirmada, ${prefijo}${nombre}`);
+        const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
         
-        if (typeof window.calcularTodo === "function") window.calcularTodo();
-    } else {
-        alert("❌ PIN INCORRECTO.");
-        document.getElementById('selectDoctor').value = "";
-        doctorVerificado = "";
-        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-    }
-};
+        if (pinIngresado === pinsDoctores[nombre]) {
+            doctorVerificado = nombre; 
+            const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+            document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
+            alert(`✅ Identidad confirmada, ${prefijo}${nombre}`);
+            
+            if (typeof window.calcularTodo === "function") window.calcularTodo();
+        } else {
+            alert("❌ PIN INCORRECTO.");
+            document.getElementById('selectDoctor').value = "";
+            doctorVerificado = "";
+            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+        }
+    };
 
     // --- NAVEGACIÓN DE PESTAÑAS ---
     window.showTab = (t) => {
@@ -397,7 +399,8 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         
         document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500 text-[11px] px-2 uppercase font-bold");
         const tabId = t === 'historia' ? 'H' : (t === 'buscador' ? 'B' : 'R');
-        document.getElementById('tab' + tabId).className = "tab-active py-2 text-[11px] px-2 uppercase font-bold";
+        const tabEl = document.getElementById('tab' + tabId);
+        if (tabEl) tabEl.className = "tab-active py-2 text-[11px] px-2 uppercase font-bold";
     };
 
     // --- LÓGICA DE INSUMOS ---
@@ -414,14 +417,11 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     ];
     
     const recetas = {
-        // --- CONSULTAS ---
         "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] },
         "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
         "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] },
         "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] },
         "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] },
-        
-        // --- VACUNAS ---
         "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] },
         "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] },
         "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] },
@@ -429,8 +429,6 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] },
         "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] },
         "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] },
-        
-        // --- LABORATORIO ---
         "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] },
         "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
         "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] },
@@ -447,8 +445,6 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] },
         "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] },
         "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] },
-        
-        // --- EUTANASIA ---
         "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [{ nombre: "Fármacos Eutanasia <5kg", costo: 10.00 }] },
         "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [{ nombre: "Fármacos Eutanasia <15kg", costo: 18.00 }] },
         "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [{ nombre: "Fármacos Eutanasia <25kg", costo: 25.00 }] },
@@ -456,144 +452,89 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] },
         "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] },
         "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] },
-        
-        // --- REFERIDOS ---
         "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
         "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
         "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] },
         "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] },
         "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
         "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
-        
-        // --- OTROS ---
         "ABSCESO": { precioVenta: 25, insumos: [
-            { nombre: "Jelco", costo: 4.50 }, 
-            { nombre: "Agua Oxigenada", costo: 0.50 }, 
-            { nombre: "Compresa", costo: 0.50 }, 
-            { nombre: "Antibiotico", costo: 0.50 }, 
-            { nombre: "Antinflamatorio", costo: 0.50 }, 
-            { nombre: "Sedacion", costo: 0.50 }, 
-            { nombre: "Guantes", costo: 0.50 }
+            { nombre: "Jelco", costo: 4.50 }, { nombre: "Agua Oxigenada", costo: 0.50 }, { nombre: "Compresa", costo: 0.50 }, 
+            { nombre: "Antibiotico", costo: 0.50 }, { nombre: "Antinflamatorio", costo: 0.50 }, { nombre: "Sedacion", costo: 0.50 }, { nombre: "Guantes", costo: 0.50 }
         ]}
     };
 
- window.insertarServicio = (v) => {
-    if (!v) return;
-    
-    const area = document.getElementById('hTratamiento');
-    const inputPrecioVenta = document.getElementById('precioVenta');
-    let nombreFinal = v;
-    let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
-    
-    const grupoID = "srv-" + Date.now();
+    window.insertarServicio = (v) => {
+        if (!v) return;
+        const area = document.getElementById('hTratamiento');
+        const inputPrecioVenta = document.getElementById('precioVenta');
+        let nombreFinal = v;
+        let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+        const grupoID = "srv-" + Date.now();
 
-    // --- LÓGICA PARA KG ADICIONAL ---
-    if (v === "KG ADICIONAL") {
-        const kgs = prompt("Ingrese la cantidad de KG adicionales:");
-        if (kgs && !isNaN(kgs)) {
-            const numKgs = parseFloat(kgs);
-            nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-            precioFinal = numKgs * 7;
-        } else { return; }
-    }
-
-    // --- LÓGICA PARA DISPOSICIÓN O CREMACIÓN ---
-    if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
-        const monto = prompt(`Ingrese el precio pactado para ${v}:`);
-        if (monto && !isNaN(monto)) {
-            precioFinal = parseFloat(monto);
-        } else { return; }
-    }
-
-    serviciosEnLista.push(v);
-    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
-
-    let actual = parseFloat(inputPrecioVenta.value) || 0;
-    inputPrecioVenta.value = (actual + precioFinal).toFixed(2);
-
-    document.getElementById('contenedorInsumos').classList.remove('hidden');
-    const cuerpo = document.getElementById('listaInsumosDinamica');
-
-    // --- CORRECCIÓN: FILA TÍTULO (SIN DUPLICAR) ---
-    const filaTitulo = document.createElement('tr');
-    filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
-    filaTitulo.innerHTML = `
-        <td colspan="3" class="p-2 text-[11px] uppercase whitespace-nowrap">🔹 ${nombreFinal}</td>
-        <td class="p-2 text-center">
-            <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal})" class="text-red-500 font-bold text-lg">×</button>
-        </td>`;
-    cuerpo.appendChild(filaTitulo);
-
-    const yaHayInsumosBase = cuerpo.querySelectorAll('.insumo-fila').length > 0;
-    let listaNuevos = !yaHayInsumosBase ? [...insumosFijosMedicos] : [];
-    
-    if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-    if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
-
-    // --- CORRECCIÓN: UN SOLO FOREACH PARA INSUMOS ---
-    listaNuevos.forEach(insumo => {
-        const tr = document.createElement('tr');
-        tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
-        tr.innerHTML = `
-            <td class="p-2 font-bold text-gray-700 text-[11px] whitespace-nowrap italic">${insumo.nombre.toUpperCase()}</td>
-            <td class="p-2 text-center">
-                <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
-            </td>
-            <td class="p-2 text-center">
-                <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
-            </td>
-            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>
-        `;
-        cuerpo.appendChild(tr);
-    });
-
-    // --- CORRECCIÓN FINAL: USAR window. ---
-    window.calcularTodo();
-    
-    // Limpiar el selector para elegir el siguiente
-    document.getElementById('selectorServicios').value = "";
-};
-    window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
-    if (!confirm("¿Eliminar este servicio y todos sus insumos?")) return;
-
-    // 1. Borrar todos los insumos que tengan la clase del ID del grupo
-    const elementos = document.querySelectorAll('.' + idGrupo);
-    elementos.forEach(el => el.remove());
-
-    // 2. Borrar la fila del título (donde está el botón)
-    // Usamos el evento pasado por parámetro para mayor seguridad
-    const botonPresionado = event.target || event.srcElement;
-    botonPresionado.closest('tr').remove();
-
-    // 3. Restar el precio automáticamente del total cobrado
-    const inputPrecioVenta = document.getElementById('precioVenta');
-    let actual = parseFloat(inputPrecioVenta.value) || 0;
-    inputPrecioVenta.value = Math.max(0, actual - precioARestar).toFixed(2);
-
-    // 4. Recalcular (siempre usando window. para evitar errores de scope)
-    window.calcularTodo();
-};
-  window.guardarFirebase = async (imp) => {
-        if (window.event) window.event.preventDefault();
-        
-        // Verificación de firma (Darwin o Joan)
-        if (!doctorVerificado) {
-            alert("⚠️ El registro no puede guardarse sin la firma de un doctor.");
-            const selector = document.getElementById('selectDoctor');
-            if(selector) { 
-                selector.focus(); 
-                selector.style.border = "2px solid red"; 
-                setTimeout(() => selector.style.border = "", 2000); 
-            }
-            return;
+        if (v === "KG ADICIONAL") {
+            const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+            if (kgs && !isNaN(kgs)) {
+                const numKgs = parseFloat(kgs);
+                nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
+                precioFinal = numKgs * 7;
+            } else return;
         }
 
+        if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
+            const monto = prompt(`Ingrese el precio pactado para ${v}:`);
+            if (monto && !isNaN(monto)) precioFinal = parseFloat(monto);
+            else return;
+        }
+
+        serviciosEnLista.push(v);
+        area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
+        inputPrecioVenta.value = (parseFloat(inputPrecioVenta.value || 0) + precioFinal).toFixed(2);
+
+        document.getElementById('contenedorInsumos').classList.remove('hidden');
+        const cuerpo = document.getElementById('listaInsumosDinamica');
+
+        const filaTitulo = document.createElement('tr');
+        filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
+        filaTitulo.innerHTML = `<td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal}</td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button></td>`;
+        cuerpo.appendChild(filaTitulo);
+
+        let listaNuevos = !cuerpo.querySelector('.insumo-fila') ? [...insumosFijosMedicos] : [];
+        if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+        if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
+
+        listaNuevos.forEach(insumo => {
+            const tr = document.createElement('tr');
+            tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
+            tr.innerHTML = `
+                <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+                <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
+                <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
+                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+            cuerpo.appendChild(tr);
+        });
+
+        window.calcularTodo();
+        document.getElementById('selectorServicios').value = "";
+    };
+
+    window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
+        if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
+        document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
+        const boton = event.target || event.srcElement;
+        boton.closest('tr').remove();
+        const inputPrecioVenta = document.getElementById('precioVenta');
+        inputPrecioVenta.value = Math.max(0, parseFloat(inputPrecioVenta.value || 0) - precioARestar).toFixed(2);
+        window.calcularTodo();
+    };
+
+    window.guardarFirebase = async (imp) => {
+        if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
         try {
             const mascota = document.getElementById('hNombre').value.trim();
             const cedula = document.getElementById('hCI').value.trim();
-            if(!mascota || !cedula) return alert("⚠️ Nombre de mascota y Cédula son obligatorios.");
+            if(!mascota || !cedula) return alert("⚠️ Nombre y Cédula obligatorios.");
 
-            // Recopilar insumos para la base de datos
             const detalleInsumos = [];
             document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
                 detalleInsumos.push({
@@ -603,392 +544,110 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                 });
             });
 
-            // --- CÁLCULO SEGURO DE MONTOS ---
             const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
             const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-            const netoTotal = montoVenta - montoInsumos;
+            const neto = montoVenta - montoInsumos;
 
-            const data = {
-                paciente: mascota,
-                cedula: cedula,
-                propietario: document.getElementById('hProp').value.trim(),
-                telefono: document.getElementById('hTlf').value.trim(),
-                correo: document.getElementById('hMail').value.trim(),
-                especie: document.getElementById('hEspecie').value.trim(),
-                raza: document.getElementById('hRaza').value.trim(),
-                edad: document.getElementById('hEdad').value.trim(),
-                doctor: doctorVerificado,
-                tratamiento: document.getElementById('hTratamiento').value.trim(),
-                montoVenta: montoVenta,
-                montoInsumos: montoInsumos,
-                pagoDoctor: netoTotal * 0.3, // 30% para el Dr.
-                pagoAvipet: netoTotal * 0.7,  // 70% para tienda
-                listaDetalladaInsumos: detalleInsumos,
-                fecha: serverTimestamp(),
-                fechaSimple: new Date().toLocaleDateString()
-            };
-
-            await addDoc(collection(db, "consultas"), data);
-            
+            await addDoc(collection(db, "consultas"), {
+                paciente: mascota, cedula: cedula, doctor: doctorVerificado,
+                montoVenta, montoInsumos, pagoDoctor: neto * 0.3, pagoAvipet: neto * 0.7,
+                listaDetalladaInsumos: detalleInsumos, fecha: serverTimestamp(), fechaSimple: new Date().toLocaleDateString(),
+                propietario: document.getElementById('hProp').value.trim(), tratamiento: document.getElementById('hTratamiento').value.trim()
+            });
             if (imp) window.print();
-            
-            alert(`✅ Consulta de ${mascota} guardada exitosamente.`);
-            
-            // Recargar para limpiar todo de forma segura
-            location.reload(); 
+            alert("✅ Guardado.");
+            location.reload();
+        } catch (e) { alert("❌ Error al guardar."); }
+    };
 
-        } catch (e) { 
-            console.error("Error en Firebase:", e); 
-            alert("❌ Error al guardar en la base de datos."); 
+    window.buscarPorCedula = async () => {
+        const ci = document.getElementById('searchCI').value.trim();
+        const contenedor = document.getElementById('resultadosBusqueda');
+        if (!ci) return alert("⚠️ Ingrese cédula.");
+        contenedor.innerHTML = "<p class='text-center py-4 animate-pulse text-blue-600 font-bold'>Consultando...</p>";
+        try {
+            const q = query(collection(db, "consultas"), where("cedula", "==", ci));
+            const snap = await getDocs(q);
+            contenedor.innerHTML = "";
+            if (snap.empty) {
+                contenedor.innerHTML = "<div class='p-4 text-center bg-red-50 text-red-600 rounded-xl font-bold'>❌ Sin registros.</div>";
+                return;
+            }
+            const registros = snap.docs.map(doc => {
+                const d = doc.data();
+                let ms = (d.fecha && d.fecha.toMillis) ? d.fecha.toMillis() : (d.fecha?.seconds ? d.fecha.seconds * 1000 : Date.now());
+                return { id: doc.id, ...d, fechaMs: ms };
+            }).sort((a, b) => b.fechaMs - a.fechaMs);
+
+            registros.forEach(d => {
+                const div = document.createElement('div');
+                div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
+                let insHTML = "";
+                if (d.listaDetalladaInsumos?.length > 0) {
+                    const items = d.listaDetalladaInsumos.map(i => `<li class="flex justify-between text-[11px] bg-gray-50 p-2 border-b"><span>${i.nombre} <b>x${i.cant}</b></span><b>$${(i.cant * i.precio).toFixed(2)}</b></li>`).join('');
+                    insHTML = `<div id="detalles-${d.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-300"><ul class="space-y-1">${items}</ul></div>
+                               <button onclick="const el=document.getElementById('detalles-${d.id}'); el.classList.toggle('hidden'); this.innerText=el.classList.contains('hidden')?'[ + Ver detalle ]':'[ - Ocultar ]'" class="w-full text-center py-1 text-[10px] font-black text-blue-600 bg-blue-50 rounded-lg mt-2">[ + Ver detalle ]</button>`;
+                }
+                div.innerHTML = `<div class="flex justify-between border-b pb-2"><div><span class="text-[10px] bg-blue-100 text-blue-700 px-2 rounded-full font-bold">${d.fechaSimple}</span><h3 class="font-black text-blue-900 text-lg uppercase">${d.paciente}</h3></div><div class="text-right"><p class="text-xs font-black text-gray-700 uppercase">DR. ${d.doctor}</p></div></div><p class="text-sm text-gray-700 whitespace-pre-line">${d.tratamiento}</p><div class="bg-slate-50 p-3 rounded-lg flex justify-between text-xs"><span>TOTAL: <b>$${d.montoVenta.toFixed(2)}</b></span><span class="text-red-600">INSUMOS: <b>$${d.montoInsumos.toFixed(2)}</b></span></div>${insHTML}`;
+                contenedor.appendChild(div);
+            });
+        } catch (e) { contenedor.innerHTML = "Error de conexión."; }
+    };
+
+    window.eliminarFila = (boton, nombreServicio) => {
+        const fila = boton.closest('tr');
+        if (fila) fila.remove();
+        if (nombreServicio) {
+            const index = serviciosEnLista.indexOf(nombreServicio);
+            if (index > -1) serviciosEnLista.splice(index, 1);
         }
+        let nuevoTotal = 0;
+        serviciosEnLista.forEach(serv => {
+            let p = recetas[serv]?.precioVenta || 0;
+            if (serv === "HEMATOLOGÍA COMPLETA" && serviciosEnLista.some(s => s !== serv && (s.includes("QUÍMICA") || s.includes("PERFIL")))) p = 20;
+            nuevoTotal += p;
+        });
+        document.getElementById('precioVenta').value = nuevoTotal.toFixed(2);
+        window.calcularTodo();
+    };
+
+    window.agregarInsumoManual = () => {
+        const n = document.getElementById('nombreExtra'), c = document.getElementById('costoExtra');
+        if (!n.value) return alert("Ingrese nombre.");
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50";
+        tr.innerHTML = `<td class="p-2 font-bold text-[11px] italic">➕ ${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c.value || 0).toFixed(2)}" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+        document.getElementById('listaInsumosDinamica').appendChild(tr);
+        n.value = ""; c.value = ""; window.calcularTodo();
+    };
+
+    window.autocompletarPorCedula = async (ci) => {
+        if (!ci) return;
+        try {
+            const snap = await getDocs(query(collection(db, "consultas"), where("cedula", "==", ci.trim())));
+            if (!snap.empty) {
+                const d = snap.docs[snap.docs.length - 1].data();
+                document.getElementById('hProp').value = d.propietario || d.cliente || "";
+                document.getElementById('hTlf').value = d.telefono || "";
+                document.getElementById('hNombre').value = d.paciente || "";
+                document.getElementById('hEspecie').value = d.especie || "";
+                document.getElementById('hRaza').value = d.raza || "";
+                document.getElementById('hEdad').value = d.edad || "";
+                const input = document.getElementById('hCI');
+                input.classList.add('bg-green-100');
+                setTimeout(() => input.classList.remove('bg-green-100'), 1500);
+            }
+        } catch (e) { console.error(e); }
     };
 
     window.imprimirRecetaLimpia = () => {
         document.body.classList.add('receta-modo');
-        const f = document.querySelector('.finanzas-area'), i = document.getElementById('contenedorInsumos');
-        if(f) f.style.display = 'none'; if(i) i.style.display = 'none';
-        setTimeout(() => {
-            window.print();
-            document.body.classList.remove('receta-modo');
-            if(f) f.style.display = 'block'; if(i) i.style.display = 'block';
-        }, 500);
+        setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
-
-    window.resetFormulario = () => {
-    // 1. Limpiar todos los inputs de texto y número
-    const idsParaLimpiar = [
-        'hNombre', 'hEspecie', 'hRaza', 'hPeso', 'hEdad', 
-        'hProp', 'hCI', 'hTlf', 'hMail', 'hTratamiento', 
-        'precioVenta', 'gastoInsumos', 'nombreExtra', 'costoExtra'
-    ];
-    
-    idsParaLimpiar.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = (el.type === 'number') ? "0" : "";
-    });
-
-    // 2. Limpiar tabla de insumos y ocultar contenedor
-    const cuerpoTabla = document.getElementById('listaInsumosDinamica');
-    if (cuerpoTabla) cuerpoTabla.innerHTML = "";
-    
-    const contInsumos = document.getElementById('contenedorInsumos');
-    if (contInsumos) contInsumos.classList.add('hidden');
-    
-    serviciosEnLista = []; // Resetear el array de seguimiento
-
-    // 3. Resetear labels financieros a cero
-    if (document.getElementById('labelNeto')) document.getElementById('labelNeto').innerText = "$0.00";
-    if (document.getElementById('labelDr')) document.getElementById('labelDr').innerText = "$0.00";
-    if (document.getElementById('labelTienda')) document.getElementById('labelTienda').innerText = "$0.00";
-    
-    // 4. Quitar doctor actual (Obligatorio para nueva firma)
-    doctorVerificado = "";
-    const selectorDoc = document.getElementById('selectDoctor');
-    if (selectorDoc) selectorDoc.value = "";
-    
-    const printDoc = document.getElementById('doctorPrint');
-    if (printDoc) printDoc.innerText = "SELECCIONE DOCTOR";
-    
-    window.scrollTo(0, 0);
-    console.log("🧹 Formulario reseteado por completo.");
-};
-    window.autocompletarPorCedula = async (cedula) => {
-    if (cedula.length < 5) return;
-
-    try {
-        const q = query(collection(db, "consultas"), where("cedula", "==", cedula.trim()));
-        const snap = await getDocs(q);
-
-        if (!snap.empty) {
-            // Ordenamos para obtener el registro más reciente (el último)
-            const docs = snap.docs.map(doc => doc.data());
-            const d = docs[docs.length - 1];
-            
-            // Rellenar Propietario
-            if(document.getElementById('hProp')) document.getElementById('hProp').value = d.propietario || d.nombrePropietario || "";
-            if(document.getElementById('hTlf')) document.getElementById('hTlf').value = d.telefono || "";
-            if(document.getElementById('hMail')) document.getElementById('hMail').value = d.correo || "";
-
-            // Rellenar Mascota
-            if(document.getElementById('hNombre')) document.getElementById('hNombre').value = d.paciente || "";
-            if(document.getElementById('hEspecie')) document.getElementById('hEspecie').value = d.especie || "";
-            if(document.getElementById('hRaza')) document.getElementById('hRaza').value = d.raza || "";
-            if(document.getElementById('hEdad')) document.getElementById('hEdad').value = d.edad || "";
-            
-            console.log("✅ Datos recuperados de la última visita.");
-        }
-    } catch (e) {
-        console.error("Error en autocompletado:", e);
-    }
-};
-
-window.buscarPorCedula = async () => {
-    const ci = document.getElementById('searchCI').value.trim();
-    const contenedor = document.getElementById('resultadosBusqueda');
-    
-    if (!ci) return alert("⚠️ Ingrese una cédula para buscar.");
-
-    contenedor.innerHTML = "<p class='text-center py-4 animate-pulse text-blue-600 font-bold'>Consultando archivos...</p>";
-
-    try {
-        const q = query(collection(db, "consultas"), where("cedula", "==", ci));
-        const snap = await getDocs(q);
-        contenedor.innerHTML = "";
-
-        if (snap.empty) {
-            contenedor.innerHTML = "<div class='p-4 text-center bg-red-50 text-red-600 rounded-xl border-2 border-red-100 font-bold'>❌ No hay registros para esta cédula.</div>";
-            return;
-        }
-
-        // --- AJUSTE DE ORDENAMIENTO (CORREGIDO) ---
-        const registros = snap.docs.map(doc => {
-            const data = doc.data();
-            // Obtenemos los milisegundos de forma segura
-            let ms = 0;
-            if (data.fecha && typeof data.fecha.toMillis === 'function') {
-                ms = data.fecha.toMillis();
-            } else if (data.fecha && data.fecha.seconds) {
-                ms = data.fecha.seconds * 1000;
-            } else {
-                ms = Date.now(); // Si es muy nuevo y no tiene timestamp aún
-            }
-            return { id: doc.id, ...data, fechaMs: ms };
-        }).sort((a, b) => b.fechaMs - a.fechaMs); // El más reciente primero
-
-      registros.forEach(d => {
-            const div = document.createElement('div');
-            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
-            
-            let insumosHTML = "";
-            if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
-                const listaItems = d.listaDetalladaInsumos.map(ins => `
-                    <li class="flex justify-between text-[11px] text-gray-600 bg-gray-50 p-2 rounded border-b border-gray-100">
-                        <span class="whitespace-nowrap">${ins.nombre} <b class="text-blue-600">x${ins.cant}</b></span>
-                        <span class="font-bold text-slate-700">$${(ins.cant * ins.precio).toFixed(2)}</span>
-                    </li>
-                `).join('');
-
-                insumosHTML = `
-                    <div id="detalles-${d.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-300">
-                        <p class="text-[9px] font-black text-blue-500 mb-2 uppercase tracking-widest">Desglose de Insumos:</p>
-                        <ul class="space-y-1">${listaItems}</ul>
-                    </div>
-                    <button onclick="const el = document.getElementById('detalles-${d.id}'); el.classList.toggle('hidden'); this.innerText = el.classList.contains('hidden') ? '[ + Ver detalle de insumos ]' : '[ - Ocultar detalles ]'" 
-                            class="w-full text-center py-1 text-[10px] font-black text-blue-600 bg-blue-50 rounded-lg mt-2 uppercase tracking-tighter">
-                        [ + Ver detalle de insumos ]
-                    </button>
-                `;
-            }
-
-            div.innerHTML = `
-                <div class="flex justify-between border-b pb-2 items-start">
-                    <div>
-                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase">${d.fechaSimple || 'Sin Fecha'}</span>
-                        <h3 class="font-black text-blue-900 text-lg uppercase leading-tight">${d.paciente}</h3>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] text-gray-400 font-bold italic">Atendido por:</p>
-                        <p class="text-xs font-black text-gray-700 uppercase">${d.doctor.includes('Dr') ? d.doctor : 'DR. ' + d.doctor}</p>
-                    </div>
-                </div>
-                <div class="py-1">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
-                    <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div class="flex justify-between items-center text-xs">
-                        <p class="text-gray-500 font-bold uppercase">
-                            Total: <span class="text-gray-900 font-black text-sm">$${(Number(d.montoVenta) || 0).toFixed(2)}</span>
-                        </p>
-                        <p class="text-gray-500 font-bold uppercase">
-                            Insumos: <span class="text-red-600 font-black text-sm">$${(Number(d.montoInsumos) || 0).toFixed(2)}</span>
-                        </p>
-                    </div>
-                </div>
-                ${insumosHTML}
-            `;
-            contenedor.appendChild(div);
-        });
-    } catch (e) {
-        console.error("Error en búsqueda:", e);
-        document.getElementById('resultadosBusqueda').innerHTML = "<p class='text-center text-red-500 font-bold p-4'>Error de conexión.</p>";
-    }
-};
-            // CORRECCIÓN: Estructura de montos más limpia
-            div.innerHTML = `
-                <div class="flex justify-between border-b pb-2 items-start">
-                    <div>
-                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase">${d.fechaSimple || 'Sin Fecha'}</span>
-                        <h3 class="font-black text-blue-900 text-lg uppercase leading-tight">${d.paciente}</h3>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] text-gray-400 font-bold italic">Atendido por:</p>
-                        <p class="text-xs font-black text-gray-700 uppercase">${d.doctor.includes('Dr') ? d.doctor : 'DR. ' + d.doctor}</p>
-                    </div>
-                </div>
-                <div class="py-1">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
-                    <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div class="flex justify-between items-center text-xs">
-                        <p class="text-gray-500 font-bold uppercase">
-                            Total: <span class="text-gray-900 font-black text-sm">$${(Number(d.montoVenta) || 0).toFixed(2)}</span>
-                        </p>
-                        <p class="text-gray-500 font-bold uppercase">
-                            Insumos: <span class="text-red-600 font-black text-sm">$${(Number(d.montoInsumos) || 0).toFixed(2)}</span>
-                        </p>
-                    </div>
-                </div>
-                ${insumosHTML}
-            `;
-            contenedor.appendChild(div);
-        });
-                ${insumosHTML}
-            `;
-            contenedor.appendChild(div);
-        });
-    } catch (e) {
-        console.error("Error en búsqueda:", e);
-        contenedor.innerHTML = "<p class='text-center text-red-500 font-bold p-4'>Error de conexión al buscar archivos.</p>";
-    }
-};
-       window.eliminarFila = (boton, nombreServicio) => {
-    // 1. Eliminar la fila física
-    const fila = boton.closest('tr');
-    if (fila) fila.remove();
-
-    // 2. Si es un encabezado de servicio, lo quitamos de la lista
-    if (nombreServicio) {
-        const index = serviciosEnLista.indexOf(nombreServicio);
-        if (index > -1) {
-            serviciosEnLista.splice(index, 1);
-        }
-    }
-
-    // 3. RE-CÁLCULO DINÁMICO DE PRECIOS (Combos)
-    const inputPrecioVenta = document.getElementById('precioVenta');
-    let nuevoPrecioTotal = 0;
-
-    serviciosEnLista.forEach(serv => {
-        let precioServicio = recetas[serv] ? recetas[serv].precioVenta : 0;
-
-        // Lógica de descuentos por combo
-        if (serv === "HEMATOLOGÍA COMPLETA") {
-            const tieneOtroLab = serviciosEnLista.some(s => s !== serv && (s.includes("QUÍMICA") || s.includes("PERFIL") || s.includes("DESCARTE")));
-            if (tieneOtroLab) precioServicio = 20; // Precio especial por combo
-        }
-        
-        if (serv === "VACUNA KC (TOS DE LAS PERRERAS)" || serv === "VACUNA ANTIRRÁBICA") {
-            const tieneOtraVacuna = serviciosEnLista.some(s => s !== serv && s.includes("VACUNA"));
-            if (tieneOtraVacuna) precioServicio = serv.includes("KC") ? 40 : 25;
-        }
-
-        nuevoPrecioTotal += precioServicio;
-    });
-
-    inputPrecioVenta.value = nuevoPrecioTotal.toFixed(2);
-
-    // 4. Si la tabla quedó vacía, ocultar el contenedor
-    const cuerpo = document.getElementById('listaInsumosDinamica');
-    if (!cuerpo || cuerpo.querySelectorAll('tr').length === 0) {
-        document.getElementById('contenedorInsumos').classList.add('hidden');
-        inputPrecioVenta.value = "0";
-        serviciosEnLista = [];
-    }
-
-    window.calcularTodo();
-};
-        
- window.agregarInsumoManual = () => {
-    const nombreInput = document.getElementById('nombreExtra');
-    const costoInput = document.getElementById('costoExtra');
-    
-    const nombre = nombreInput.value.trim();
-    const costo = parseFloat(costoInput.value) || 0;
-
-    if (!nombre) {
-        return alert("⚠️ Ingrese el nombre del insumo extra.");
-    }
-
-    const cuerpo = document.getElementById('listaInsumosDinamica');
-    document.getElementById('contenedorInsumos').classList.remove('hidden');
-
-    const tr = document.createElement('tr');
-    tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50"; 
-    
-    tr.innerHTML = `
-        <td class="p-2 font-bold text-gray-700 text-[11px] italic whitespace-nowrap">➕ ${nombre.toUpperCase()}</td>
-        <td class="p-2 text-center">
-            <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
-        </td>
-        <td class="p-2 text-center">
-            <input type="number" value="${costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
-        </td>
-        <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>
-    `;
-
-    cuerpo.appendChild(tr);
-
-    // Limpiar campos
-    nombreInput.value = "";
-    costoInput.value = "";
-    
-    window.calcularTodo();
-};
-    window.imprimirRecetaLimpia = () => {
-    document.body.classList.add('receta-modo');
-    // Damos 300ms para que el navegador oculte las finanzas antes de abrir el diálogo
-    setTimeout(() => {
-        window.print();
-        document.body.classList.remove('receta-modo');
-    }, 300);
-};
- window.autocompletarPorCedula = async (cedula) => {
-        if (!cedula) return;
-        try {
-            const q = query(collection(db, "consultas"), where("cedula", "==", cedula.trim()));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                const docs = querySnapshot.docs.map(doc => doc.data());
-                const ultimo = docs[docs.length - 1];
-
-                // Rellenar Propietario
-                document.getElementById('hProp').value = ultimo.propietario || ultimo.cliente || ""; 
-                document.getElementById('hTlf').value = ultimo.telefono || ultimo.tlf || "";
-                document.getElementById('hMail').value = ultimo.correo || ultimo.mail || "";
-
-                // Rellenar Mascota
-                document.getElementById('hNombre').value = ultimo.paciente || "";
-                document.getElementById('hEspecie').value = ultimo.especie || "";
-                document.getElementById('hRaza').value = ultimo.raza || "";
-                document.getElementById('hEdad').value = ultimo.edad || "";
-                
-                // Efecto visual de éxito
-                const inputCI = document.getElementById('hCI');
-                if(inputCI) {
-                    inputCI.classList.add('bg-green-100', 'border-green-500');
-                    setTimeout(() => inputCI.classList.remove('bg-green-100', 'border-green-500'), 1500);
-                }
-                console.log("✅ Datos recuperados exitosamente.");
-            }
-        } catch (e) {
-            console.error("Error al autocompletar:", e);
-        }
-    };
-
-    // Al final del script, puedes agregar un inicializador de fecha si no lo tienes
-    document.addEventListener('DOMContentLoaded', () => {
-        const fechaInput = document.getElementById('fechaActual');
-        if (fechaInput) fechaInput.value = new Date().toLocaleDateString();
-    });
 
 </script>
 </body>
 </html>
-
-
 
 
 
