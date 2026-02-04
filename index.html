@@ -271,11 +271,26 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     <div class="grid grid-cols-2 gap-4 mb-4">
         </div>
 
-    <div class="grid grid-cols-3 gap-2 text-center mb-6">
-        <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Neto</p><p id="labelNeto" class="text-xl font-black text-emerald-600">$0.00</p></div>
-        <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Dr (30%)</p><p id="labelDr" class="text-xl font-black text-slate-700">$0.00</p></div>
-        <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Avipet (70%)</p><p id="labelTienda" class="text-xl font-black text-blue-600">$0.00</p></div>
+    <div class="w-full mt-4 px-2"> 
+    <div class="grid grid-cols-3 gap-2 w-full max-w-4xl mx-auto">
+        
+        <div class="bg-white border-2 border-slate-200 rounded-xl p-3 flex flex-col items-center shadow-sm">
+            <span class="text-[10px] font-black text-slate-400 uppercase">Neto</span>
+            <span id="labelNeto" class="text-base font-black text-slate-800">$0.00</span>
+        </div>
+
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-xl p-3 flex flex-col items-center shadow-sm">
+            <span class="text-[10px] font-black text-blue-400 uppercase italic">Doctor (30%)</span>
+            <span id="labelDr" class="text-base font-black text-blue-700">$0.00</span>
+        </div>
+
+        <div class="bg-green-50 border-2 border-green-100 rounded-xl p-3 flex flex-col items-center shadow-sm">
+            <span class="text-[10px] font-black text-green-400 uppercase">Avipet (70%)</span>
+            <span id="labelTienda" class="text-base font-black text-green-700">$0.00</span>
+        </div>
+
     </div>
+</div>
 
    <div class="grid grid-cols-2 gap-3">
     <button type="button" onclick="guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">
@@ -536,15 +551,28 @@ cuerpo.appendChild(filaTitulo);
             });
 
             const netoTotal = parseFloat(document.getElementById('labelNeto').innerText.replace('$', '')) || 0;
-            const data = {
+           const data = {
+                // Datos del Paciente y Cliente (Añadidos para que el autocompletado funcione)
                 paciente: mascota,
                 cedula: cedula,
+                propietario: document.getElementById('hProp').value.trim(),
+                telefono: document.getElementById('hTlf').value.trim(),
+                correo: document.getElementById('hMail').value.trim(),
+                especie: document.getElementById('hEspecie').value.trim(),
+                raza: document.getElementById('hRaza').value.trim(),
+                edad: document.getElementById('hEdad').value.trim(),
+                
+                // Datos de la Consulta
                 doctor: doctorVerificado,
                 tratamiento: document.getElementById('hTratamiento').value.trim(),
+                
+                // Datos Financieros
                 montoVenta: parseFloat(document.getElementById('precioVenta').value) || 0,
                 montoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
                 pagoDoctor: netoTotal * 0.3,
                 pagoAvipet: netoTotal * 0.7,
+                
+                // Detalles Técnicos
                 listaDetalladaInsumos: detalleInsumos,
                 fecha: serverTimestamp(),
                 fechaSimple: new Date().toLocaleDateString()
@@ -555,6 +583,31 @@ cuerpo.appendChild(filaTitulo);
             resetFormulario();
         } catch (e) { console.error(e); alert("❌ Error al guardar."); }
     };
+    window.resetFormulario = () => {
+    // Limpiar textos e inputs
+    const idsParaLimpiar = ['hNombre', 'hEspecie', 'hRaza', 'hPeso', 'hEdad', 'hProp', 'hCI', 'hTlf', 'hMail', 'hTratamiento', 'precioVenta', 'gastoInsumos', 'nombreExtra', 'costoExtra'];
+    idsParaLimpiar.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = el.type === 'number' ? "0" : "";
+    });
+
+    // Limpiar tablas y listas
+    document.getElementById('listaInsumosDinamica').innerHTML = "";
+    document.getElementById('contenedorInsumos').classList.add('hidden');
+    serviciosEnLista = [];
+
+    // Resetear labels de dinero
+    document.getElementById('labelNeto').innerText = "$0.00";
+    document.getElementById('labelDr').innerText = "$0.00";
+    document.getElementById('labelTienda').innerText = "$0.00";
+    
+    // Quitar doctor actual para obligar a nueva firma en el siguiente paciente
+    doctorVerificado = "";
+    document.getElementById('selectDoctor').value = "";
+    document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+    
+    window.scrollTo(0, 0);
+};
 
     window.imprimirRecetaLimpia = () => {
         document.body.classList.add('receta-modo');
@@ -577,32 +630,38 @@ cuerpo.appendChild(filaTitulo);
         calcularTodo();
     };
     // --- FUNCIÓN DE AUTORELLENO POR CÉDULA ---
-window.buscarPacientePorCedula = async (cedula) => {
-    if (cedula.length < 5) return; // No busca hasta que haya una cédula válida
+// Esta es la función que llama el HTML cuando escribes la cédula
+window.autocompletarPorCedula = async (cedula) => {
+    if (cedula.length < 5) return;
 
     try {
         const q = query(collection(db, "consultas"), where("cedula", "==", cedula.trim()));
-        const querySnapshot = await getDocs(q);
+        const snap = await getDocs(q);
 
-        if (!querySnapshot.empty) {
-            // Tomamos el registro más reciente (el último guardado)
-            const datos = querySnapshot.docs[querySnapshot.docs.length - 1].data();
+        if (!snap.empty) {
+            // Tomamos el último registro para obtener los datos más recientes
+            const d = snap.docs[snap.docs.length - 1].data();
             
-            // Rellenamos los campos automáticamente
-            document.getElementById('hNombre').value = datos.paciente || "";
-            // Si tienes estos campos en tu HTML, se llenarán:
-            if(document.getElementById('hEspecie')) document.getElementById('hEspecie').value = datos.especie || "";
-            if(document.getElementById('hRaza')) document.getElementById('hRaza').value = datos.raza || "";
-            if(document.getElementById('hProp')) document.getElementById('hProp').value = datos.propietario || "";
-            if(document.getElementById('hTlf')) document.getElementById('hTlf').value = datos.telefono || "";
+            // Auto-rellenamos los campos del Propietario
+            if(document.getElementById('hProp')) document.getElementById('hProp').value = d.propietario || d.nombrePropietario || "";
+            if(document.getElementById('hTlf')) document.getElementById('hTlf').value = d.telefono || "";
+            if(document.getElementById('hMail')) document.getElementById('hMail').value = d.correo || "";
+
+            // Auto-rellenamos los campos de la Mascota
+            document.getElementById('hNombre').value = d.paciente || "";
+            if(document.getElementById('hEspecie')) document.getElementById('hEspecie').value = d.especie || "";
+            if(document.getElementById('hRaza')) document.getElementById('hRaza').value = d.raza || "";
+            if(document.getElementById('hEdad')) document.getElementById('hEdad').value = d.edad || "";
             
-            console.log("✅ Datos recuperados para la cédula:", cedula);
+            console.log("✅ Datos de paciente recuperados exitosamente.");
         }
     } catch (e) {
-        console.error("Error al buscar paciente:", e);
+        console.error("Error al autocompletar:", e);
     }
 };
-   window.buscarPorCedula = async () => {
+
+// Esta es la función del botón "BUSCAR" en la pestaña de buscador
+window.buscarPorCedula = async () => {
     const ci = document.getElementById('searchCI').value.trim();
     const contenedor = document.getElementById('resultadosBusqueda');
     if (!ci) return alert("⚠️ Ingrese una cédula para buscar.");
@@ -624,8 +683,7 @@ window.buscarPacientePorCedula = async (cedula) => {
 
         registros.forEach(d => {
             const div = document.createElement('div');
-            // Diseño de tarjeta cerrada (sin inputs, solo texto)
-            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-2";
+            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-2 mb-4";
             div.innerHTML = `
                 <div class="flex justify-between border-b pb-2 items-start">
                     <div>
@@ -637,18 +695,9 @@ window.buscarPacientePorCedula = async (cedula) => {
                         <p class="text-xs font-black text-gray-700 uppercase">Dr. ${d.doctor}</p>
                     </div>
                 </div>
-
                 <div class="py-2">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
                     <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
-                </div>
-
-                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Detalle de Finanzas:</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <p class="text-gray-600">Cobrado: <span class="font-bold text-gray-900">$${d.montoVenta?.toFixed(2) || '0.00'}</span></p>
-                        <p class="text-gray-600">Insumos: <span class="font-bold text-red-600">$${d.montoInsumos?.toFixed(2) || '0.00'}</span></p>
-                    </div>
                 </div>
             `;
             contenedor.appendChild(div);
@@ -658,70 +707,72 @@ window.buscarPacientePorCedula = async (cedula) => {
         contenedor.innerHTML = "<p class='text-center text-red-500'>Error de conexión al buscar.</p>";
     }
 };
-    window.buscarPacientePorCedula = async (cedula) => {
-    if (cedula.length < 5) return;
-    try {
-        const q = query(collection(db, "consultas"), where("cedula", "==", cedula.trim()));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-            const d = snap.docs[snap.docs.length - 1].data();
-            document.getElementById('hNombre').value = d.paciente || "";
-            // Si tienes más campos como hProp o hTlf, añadelos aquí igual que el nombre
-        }
-    } catch (e) { console.error(e); }
-};
-   window.eliminarFila = (boton, nombreServicio) => {
-    // 1. Corregido: Subimos dos niveles para borrar la fila (tr) y no solo la celda
+window.eliminarFila = (boton, nombreServicio) => {
+    // 1. Eliminar la fila física (el tr)
     const fila = boton.closest('tr');
     if (fila) fila.remove();
 
-    // 2. Lógica de limpieza de servicios y precios
+    // 2. Si es un encabezado de servicio, lo quitamos de la lista de seguimiento
     if (nombreServicio) {
         const index = serviciosEnLista.indexOf(nombreServicio);
         if (index > -1) {
             serviciosEnLista.splice(index, 1);
-            
-            // 3. Restar el precio base del servicio
-            const precioARestar = recetas[nombreServicio] ? recetas[nombreServicio].precioVenta : 0;
-            const inputPrecio = document.getElementById('precioVenta');
-            let totalActual = parseFloat(inputPrecio.value) || 0;
-            
-            inputPrecio.value = Math.max(0, totalActual - precioARestar).toFixed(2);
         }
     }
 
-    // 4. Recalcular todo (Insumos, Neto, Ganancias)
-    if (typeof calcularTodo === 'function') {
-        calcularTodo();
-    }
-    
-    // 5. Verificar si la tabla está vacía para limpiar la interfaz
+    // 3. RESET DE PRECIO Y RE-CÁLCULO TOTAL
+    // En lugar de restar, ponemos el precio en 0 y sumamos de nuevo los servicios que quedaron
+    const inputPrecioVenta = document.getElementById('precioVenta');
+    inputPrecioVenta.value = "0";
+
+    serviciosEnLista.forEach(serv => {
+        let precioServicio = recetas[serv] ? recetas[serv].precioVenta : 0;
+
+        // Re-aplicamos la lógica de combos para los que se quedaron
+        if (serv === "HEMATOLOGÍA COMPLETA") {
+            const tieneOtroLab = serviciosEnLista.some(s => s !== serv && (s.includes("QUÍMICA") || s.includes("PERFIL") || s.includes("DESCARTE") || s.includes("DISTEMPER")));
+            if (tieneOtroLab) precioServicio = 20;
+        }
+        if (serv === "VACUNA KC (TOS DE LAS PERRERAS)" || serv === "VACUNA ANTIRRÁBICA") {
+            const tieneOtraVacuna = serviciosEnLista.some(s => s !== serv && s.includes("VACUNA"));
+            if (tieneOtraVacuna) precioServicio = serv.includes("KC") ? 40 : 25;
+        }
+
+        let actual = parseFloat(inputPrecioVenta.value) || 0;
+        inputPrecioVenta.value = (actual + precioServicio).toFixed(2);
+    });
+
+    // 4. Recalcular finanzas e insumos
+    calcularTodo();
+
+    // 5. Si ya no hay nada, limpiar todo
     const cuerpo = document.getElementById('listaInsumosDinamica');
     if (!cuerpo || cuerpo.rows.length === 0) {
         document.getElementById('contenedorInsumos').classList.add('hidden');
-        document.getElementById('precioVenta').value = "0.00";
-        // Reset de etiquetas visuales
-        if(document.getElementById('labelNeto')) document.getElementById('labelNeto').innerText = "$0.00";
-        if(document.getElementById('labelDr')) document.getElementById('labelDr').innerText = "$0.00";
-        if(document.getElementById('labelTienda')) document.getElementById('labelTienda').innerText = "$0.00";
+        inputPrecioVenta.value = "0";
+        serviciosEnLista = []; // Limpiamos el array por seguridad
+        calcularTodo(); // Para que los labels bajen a $0.00
     }
 };
-    window.agregarInsumoManual = () => {
-    const nombre = document.getElementById('nuevoInsumoNombre').value.trim();
-    const costo = parseFloat(document.getElementById('nuevoInsumoCosto').value) || 0;
+   window.agregarInsumoManual = () => {
+    // CORRECCIÓN: Usamos los IDs que pusiste en el HTML (nombreExtra y costoExtra)
+    const nombreInput = document.getElementById('nombreExtra');
+    const costoInput = document.getElementById('costoExtra');
+    
+    const nombre = nombreInput.value.trim();
+    const costo = parseFloat(costoInput.value) || 0;
 
-    if (!nombre || costo <= 0) {
-        return alert("⚠️ Ingrese nombre y costo del insumo extra.");
+    if (!nombre) {
+        return alert("⚠️ Ingrese el nombre del insumo extra.");
     }
 
     const cuerpo = document.getElementById('listaInsumosDinamica');
     document.getElementById('contenedorInsumos').classList.remove('hidden');
 
-    // Creamos la fila igual a las automáticas para que calcularTodo() la reconozca
     const tr = document.createElement('tr');
-    tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50"; // Fondo amarillento para notar que es extra
+    tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50"; 
     tr.innerHTML = `
-        <td class="p-2 font-bold text-gray-700 text-[11px] italic">➕ ${nombre}</td>
+        <td class="p-2 font-bold text-gray-700 text-[11px] italic">➕ ${nombre.toUpperCase()}</td>
         <td class="p-2 text-center">
             <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded">
         </td>
@@ -733,11 +784,10 @@ window.buscarPacientePorCedula = async (cedula) => {
 
     cuerpo.appendChild(tr);
 
-    // Limpiamos los campos para el siguiente insumo extra
-    document.getElementById('nuevoInsumoCosto').value = "";
-    document.getElementById('nuevoInsumoNombre').value = "";
+    // Limpiamos los campos usando los IDs correctos
+    nombreInput.value = "";
+    costoInput.value = "";
     
-    // Ejecutamos el cálculo para que el 30% del doctor se actualice
     calcularTodo();
 };
     window.imprimirRecetaLimpia = () => {
@@ -747,10 +797,51 @@ window.buscarPacientePorCedula = async (cedula) => {
     // Quitamos la clase para que en pantalla se sigan viendo los costos
     document.body.classList.remove('receta-modo');
 };
- 
+ window.autocompletarPorCedula = async (cedula) => {
+    if (!cedula) return;
+
+    try {
+        // Buscamos en la colección 'consultas' el registro más reciente de esa cédula
+        const q = query(
+            collection(db, "consultas"), 
+            where("cedula", "==", cedula.trim())
+        );
+        
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            // Obtenemos todos los documentos y los ordenamos por fecha manualmente 
+            // (o simplemente tomamos el primero si no necesitas el más reciente exacto)
+            const docs = querySnapshot.docs.map(doc => doc.data());
+            // Tomamos el último encontrado
+            const ultimo = docs[docs.length - 1];
+
+            // Rellenamos los campos del Propietario
+            document.getElementById('hProp').value = ultimo.propietario || ultimo.cliente || ""; 
+            document.getElementById('hTlf').value = ultimo.telefono || ultimo.tlf || "";
+            document.getElementById('hMail').value = ultimo.correo || ultimo.mail || "";
+
+            // Rellenamos los campos de la Mascota (opcional, por si es el mismo paciente)
+            document.getElementById('hNombre').value = ultimo.paciente || "";
+            document.getElementById('hEspecie').value = ultimo.especie || "";
+            document.getElementById('hRaza').value = ultimo.raza || "";
+            document.getElementById('hEdad').value = ultimo.edad || "";
+            
+            // Efecto visual para indicar que se cargó
+            const inputCI = document.getElementById('hCI');
+            inputCI.classList.add('bg-green-100');
+            setTimeout(() => inputCI.classList.remove('bg-green-100'), 1000);
+            
+            console.log("Datos recuperados para la cédula:", cedula);
+        }
+    } catch (e) {
+        console.error("Error al autocompletar:", e);
+    }
+};
 </script>
 </body>
 </html>
+
 
 
 
