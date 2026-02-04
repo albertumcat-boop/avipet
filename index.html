@@ -115,69 +115,45 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 <body class="bg-slate-100 font-sans text-slate-800">
 
     <main id="adminSection" class="max-w-5xl mx-auto p-2 md:p-4">
-        <nav class="flex justify-around border-b-2 border-gray-200 mb-4 no-print bg-white sticky top-0 z-40 py-1">
-            <button onclick="showTab('historia')" id="tabH" class="tab-active py-2 text-[11px] px-2 uppercase font-bold">Historia</button>
-            <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">Buscador</button>
-            <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">Finanzas</button>
-        </nav>
-
-        <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
-            <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
-    <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg shadow-md">A</div>
-        <div>
-            <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
+        
+        <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl">
             
-            <select id="selectDoctor" 
-                    onchange="validarAccesoDoctor(this.value)" 
-                    class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
-                <option value="">-- SELECCIONE DOCTOR --</option>
-                <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
-                <option value="Joan Silva">DR. JOAN SILVA</option>
-            </select>
-
-            <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700">
-                SELECCIONE DOCTOR
-            </h2>
-        </div>
-    </div>
-    
-    <div class="text-right">
-        <input type="text" id="fechaDoc" class="w-24 text-right font-black text-xs text-slate-500 bg-transparent outline-none" readonly>
-    </div>
-</div>
+            <div class="grid grid-cols-2 gap-4 mt-2 mb-4 no-print">
+                <input type="text" id="hNombreInput" placeholder="NOMBRE MASCOTA" class="p-3 border-2 border-gray-100 rounded-xl font-bold uppercase focus:border-blue-500 outline-none">
+                <input type="text" id="hCIInput" placeholder="CÉDULA PROPIETARIO" onblur="window.autocompletarPorCedula(this.value)" class="p-3 border-2 border-gray-100 rounded-xl font-bold focus:border-blue-500 outline-none">
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
                 <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-                    <div class="header-box italic">Información del Paciente</div>
+                    <div class="header-box italic font-bold text-blue-600">Información del Paciente</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="col-span-2">
                             <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
-                            <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
+                            <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700 outline-none">
                         </div>
-                        <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase outline-none"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase outline-none"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full outline-none"></div>
+                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase outline-none"></div>
                     </div>
                 </div>
                 <div class="p-3 space-y-2">
-                    <div class="header-box italic">Datos del Propietario</div>
-                    <div><label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label><input id="hProp" class="border-b w-full uppercase"></div>
+                    <div class="header-box italic font-bold text-blue-600">Datos del Propietario</div>
+                    <div><label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label><input id="hProp" class="border-b w-full uppercase outline-none"></div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-    <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
-    <input id="hCI" onblur="autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700">
-</div>
-                        <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
+                            <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
+                            <input id="hCI" class="border-b w-full font-bold text-blue-700 outline-none">
+                        </div>
+                        <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full outline-none"></div>
                     </div>
-                    <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
+                    <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full outline-none"></div>
                 </div>
             </div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
-                    <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
+                    <select id="menuServicios" onchange="window.insertarServicio(this.value); this.value='';" class="w-full p-2 border rounded font-bold text-xs">
                         <option value="">-- SELECCIONE SERVICIO --</option>
                         <optgroup label="CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
@@ -194,9 +170,6 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                             <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
                             <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
                             <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
-                         </optgroup>
-                        <optgroup label="OTROS">
-                            <option value="ABSESO">ABSESO</option>
                         </optgroup>
                         <optgroup label="LABORATORIO">
                             <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
@@ -213,8 +186,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                             <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
                             <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
                             <option value="RASPADO PIEL">RASPADO PIEL</option>
-                             <option value="PERFIL ANEMICO">PERFIL ANEMICO</option>
-                             <option value="PERFIL ANEMIA">PERFIL ANEMIA</option>
+                            <option value="PERFIL ANEMICO">PERFIL ANEMICO</option>
                             <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITOLOGIA FLUIDOS, SECRECIONES</option>
                         </optgroup>
                         <optgroup label="EUTANASIA">
@@ -227,130 +199,74 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                             <option value="CREMACION CON CENIZAS">CREMACION</option>
                         </optgroup>
                         <optgroup label="REFERIDOS">
-                            <option value="REFERIDO: EXAMEN DE HECES">EXAMENES DE HECES</option>
-                            <option value="REFERIDO: EXAMENES DE ORINA">EXAMENES DE ORINA</option>
-                            <option value="REFERIDO: CULTIVOS">CULTIVOS</option>
-                            <option value="REFERIDO: DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-                            <option value="REFERIDO: DISTEMPER">DISTEMPER</option>
-                            <option value="REFERIDO: PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
+                            <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMENES DE HECES</option>
+                            <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
+                            <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
+                            <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
+                            <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
+                            <option value="REFERIDO: PARVOVIRUS/CORONAVIRUS">REFERIDO: PARVOVIRUS/CORONAVIRUS</option>
                         </optgroup>
                     </select>
                 </div>
-                <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Diagnóstico y tratamiento..."></textarea>
+                <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none" placeholder="Diagnóstico y tratamiento..."></textarea>
             </div>
 
-            <div id="contenedorInsumos" class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
-                <table class="w-full text-[11px] text-left">
-                    <thead class="bg-blue-600 text-white uppercase italic">
-                        <tr>
-                            <th class="p-2">Insumo</th>
-                            <th class="p-2 w-16 text-center">Cant.</th>
-                            <th class="p-2 w-16 text-center">Precio $</th>
-                            <th class="p-2 w-10"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="listaInsumosDinamica" class="bg-white"></tbody>
-                </table>
-                <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
-                    <input type="text" id="nombreExtra" placeholder="Añadir algo extra..." class="flex-1 text-[10px] p-2 border rounded bg-white">
-                    <input type="number" id="costoExtra" placeholder="0.00" class="w-14 text-[10px] p-2 border rounded bg-white">
-                    <button onclick="agregarInsumoManual()" class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">+ AGREGAR</button>
-                </div>
-            </div>
-
-            <div class="no-print bg-blue-50 p-6 rounded-3xl text-slate-800 shadow-lg border-2 border-blue-200 mb-4">
-                <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="no-print bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 mb-4">
+                <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white p-3 rounded-xl border border-blue-200 text-center shadow-sm">
                         <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
-                        <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-3xl font-black w-full bg-transparent text-center outline-none text-blue-700">
+                        <input type="number" id="precioVenta" value="0" oninput="window.calcularTodo()" class="text-3xl font-black w-full bg-transparent text-center outline-none text-blue-700">
                     </div>
                     <div class="bg-white p-3 rounded-xl border border-red-200 text-center shadow-sm">
                         <label class="text-[10px] text-red-500 font-bold uppercase block mb-1">Insumos ($)</label>
                         <input type="number" id="gastoInsumos" value="0" class="text-3xl font-black w-full bg-transparent text-red-600 text-center outline-none" readonly>
                     </div>
-               </div> 
+                </div>
+            </div>
 
-<div class="w-full block clear-both mt-8 mb-16 no-print"> 
-    <div class="flex flex-row items-stretch justify-center gap-3 w-full max-w-4xl mx-auto px-4">
-        
-        <div class="flex-1 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm h-24">
-            <span class="text-[10px] font-black text-slate-400 uppercase">Saldo Neto</span>
-            <span id="labelNeto" class="text-xl font-black text-slate-700">$0.00</span>
-        </div>
-
-        <div class="flex-1 bg-sky-400 border border-sky-300 rounded-2xl p-4 flex flex-col items-center justify-center shadow-md h-24">
-            <span class="text-[10px] font-black text-white uppercase italic">Doctor (30%)</span>
-            <span id="labelDr" class="text-xl font-black text-white">$0.00</span>
-        </div>
-
-        <div class="flex-1 bg-green-50 border border-green-100 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm h-24">
-            <span class="text-[10px] font-black text-green-500 uppercase">Avipet (70%)</span>
-            <span id="labelTienda" class="text-xl font-black text-green-700">$0.00</span>
-        </div>
-
-    </div>
-</div>
-
-<div class="flex flex-row justify-center gap-4 mt-6">
-    </div>
-   <div class="grid grid-cols-2 gap-3">
-    <button type="button" onclick="guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">
-        Guardar
-    </button>
-    
-    <button type="button" onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">
-        Guardar e Imprimir
-    </button>
-</div>
-
-<button type="button" onclick="imprimirRecetaLimpia()" class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3 shadow-md hover:bg-cyan-600">
-    📄 Imprimir Solo Receta (Sin Costos)
-</button>
+            <div class="grid grid-cols-2 gap-3 no-print">
+                <button onclick="window.guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">Guardar</button>
+                <button onclick="window.guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">Guardar e Imprimir</button>
+            </div>
+            <button onclick="window.imprimirRecetaLimpia()" class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3 shadow-md hover:bg-cyan-600 no-print">
+                📄 Imprimir Solo Receta (Sin Costos)
+            </button>
         </section>
 
-        <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black mb-4 uppercase text-blue-600">Buscador</h2>
-            <input type="text" id="searchCI" placeholder="Cédula..." class="w-full p-4 border-2 rounded-xl mb-4 font-bold bg-slate-50">
-            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg">Buscar</button>
+        <section id="sectionBuscador" style="display:none;" class="bg-white p-6 rounded-xl border border-slate-200">
+            <h2 class="font-black mb-4 uppercase text-blue-600">Buscador de Pacientes</h2>
+            <input type="text" id="searchCI" placeholder="Cédula..." class="w-full p-4 border-2 rounded-xl mb-4 font-bold bg-slate-50 outline-none">
+            <button onclick="window.buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg">Buscar</button>
             <div id="resultadosBusqueda" class="mt-4 space-y-3"></div>
         </section>
 
-       <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
-    <h2 class="font-black text-center mb-6 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
-    
-    <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg"></div>
-    
-    <div class="grid grid-cols-2 gap-4">
-        <div class="p-4 bg-slate-100 rounded-2xl">
-            <p class="text-[10px] font-bold uppercase text-slate-500">Bruto</p>
-            <p id="repBruto" class="text-2xl font-black text-slate-800">$0.00</p>
-        </div>
-        <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500">
-            <p class="text-[10px] font-bold uppercase text-red-600">Gastos</p>
-            <p id="repGastos" class="text-2xl font-black text-red-700">$0.00</p>
-        </div>
-        <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500">
-            <p class="text-[10px] font-bold uppercase text-blue-600">Docs (30%)</p>
-            <p id="repDocs" class="text-2xl font-black text-blue-700">$0.00</p>
-        </div>
-        <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600">
-            <p class="text-[10px] font-bold uppercase text-emerald-700">Neto Avipet</p>
-            <p id="repNeto" class="text-3xl font-black text-emerald-800">$0.00</p>
-        </div>
-    </div>
+        <section id="sectionReporte" style="display:none;" class="bg-white p-6 rounded-xl border border-slate-200">
+            <h2 class="font-black text-center mb-6 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="p-4 bg-slate-100 rounded-2xl"><p class="text-[10px] font-bold uppercase text-slate-500">Bruto</p><p id="repBruto" class="text-2xl font-black text-slate-800">$0.00</p></div>
+                <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500"><p class="text-[10px] font-bold uppercase text-red-600">Gastos</p><p id="repGastos" class="text-2xl font-black text-red-700">$0.00</p></div>
+                <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500"><p class="text-[10px] font-bold uppercase text-blue-600">Docs (30%)</p><p id="repDocs" class="text-2xl font-black text-blue-700">$0.00</p></div>
+                <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600"><p class="text-[10px] font-bold uppercase text-emerald-700">Neto Avipet</p><p id="repNeto" class="text-3xl font-black text-emerald-800">$0.00</p></div>
+            </div>
 
-    <div class="flex gap-3 mt-8">
-        <button onclick="cargarReporte()" 
-                class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs hover:bg-slate-800 transition-colors">
-            Actualizar
-        </button>
-        
-        <button onclick="guardarResumenDelDia()" 
-                class="flex-1 bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100">
-            Guardar Cierre
-        </button>
-    </div>
-</section>
+            <div id="contenedorInsumosReporte" class="mt-4 bg-slate-50 p-4 rounded-xl">
+                <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase">Detalle de Insumos:</p>
+                <table class="w-full text-left text-[11px]">
+                    <thead class="bg-slate-200 font-bold uppercase">
+                        <tr><th class="p-2">Insumo</th><th class="p-2">Cant</th><th class="p-2">Costo</th></tr>
+                    </thead>
+                    <tbody id="listaInsumosDinamica"></tbody>
+                </table>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="window.cargarReporte()" class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs">Actualizar</button>
+                <button onclick="window.guardarResumenDelDia()" class="flex-1 bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-lg shadow-emerald-100">Guardar Cierre</button>
+            </div>
+        </section>
+
+    </main>
 
 <script type="module">
     // Importaciones
@@ -391,8 +307,11 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     document.addEventListener('DOMContentLoaded', () => {
         const fechaDoc = document.getElementById('fechaDoc');
         if (fechaDoc) fechaDoc.value = new Date().toLocaleDateString();
+
+        // Asegura que al abrir la página estemos en Historia y los cálculos limpios
+        window.showTab('historia'); 
+        window.calcularTodo(); 
     });
-   
     window.validarAccesoDoctor = (nombre) => {
         if (!nombre) {
             doctorVerificado = "";
@@ -713,6 +632,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </script>
 </body>
 </html>
+
 
 
 
