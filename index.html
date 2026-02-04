@@ -229,6 +229,8 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                             <option value="REFERIDO: EXAMENES DE ORINA">EXAMENES DE ORINA</option>
                             <option value="REFERIDO: CULTIVOS">CULTIVOS</option>
                             <option value="REFERIDO: DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
+                            <option value="REFERIDO: DISTEMPER">DISTEMPER</option>
+                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
                         </optgroup>
                     </select>
                 </div>
@@ -483,18 +485,38 @@ cuerpo.appendChild(filaTitulo);
         calcularTodo();
     };
 
-    window.calcularTodo = () => {
-        let totalI = 0;
-        document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
-            const c = fila.querySelector('.i-cant'), p = fila.querySelector('.i-cost');
-            if(c && p) totalI += (parseFloat(c.value) || 0) * (parseFloat(p.value) || 0);
-        });
-        document.getElementById('gastoInsumos').value = totalI.toFixed(2);
-        const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
-        const neto = bruto - totalI;
-        document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
-        document.getElementById('labelDr').innerText = `$${(neto * 0.3).toFixed(2)}`;
-        document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
+   window.calcularTodo = () => {
+    let totalI = 0;
+    
+    // CAMBIO: Solo buscamos en las filas que tienen la clase 'insumo-fila'
+    document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
+        const c = fila.querySelector('.i-cant');
+        const p = fila.querySelector('.i-cost');
+        
+        if (c && p) {
+            const cantidad = parseFloat(c.value) || 0;
+            const precio = parseFloat(p.value) || 0;
+            totalI += (cantidad * precio);
+        }
+    });
+
+    // Actualizar campo de gasto total
+    const elGasto = document.getElementById('gastoInsumos');
+    if (elGasto) elGasto.value = totalI.toFixed(2);
+
+    // Obtener bruto y calcular neto
+    const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
+    const neto = bruto - totalI;
+
+    // Reflejar en etiquetas de finanzas
+    const labelNeto = document.getElementById('labelNeto');
+    const labelDr = document.getElementById('labelDr');
+    const labelTienda = document.getElementById('labelTienda');
+
+    if (labelNeto) labelNeto.innerText = `$${neto.toFixed(2)}`;
+    if (labelDr) labelDr.innerText = `$${(neto * 0.3).toFixed(2)}`;
+    if (labelTienda) labelTienda.innerText = `$${(neto * 0.7).toFixed(2)}`;
+};
     };
 
     window.guardarFirebase = async (imp) => {
@@ -586,12 +608,12 @@ window.buscarPacientePorCedula = async (cedula) => {
         console.error("Error al buscar paciente:", e);
     }
 };
-    window.buscarPorCedula = async () => {
+   window.buscarPorCedula = async () => {
     const ci = document.getElementById('searchCI').value.trim();
     const contenedor = document.getElementById('resultadosBusqueda');
-    if (!ci) return alert("Ingrese una cédula");
+    if (!ci) return alert("⚠️ Ingrese una cédula para buscar.");
 
-    contenedor.innerHTML = "<p class='text-center animate-pulse'>Buscando...</p>";
+    contenedor.innerHTML = "<p class='text-center py-4 animate-pulse text-blue-600 font-bold'>Consultando archivos...</p>";
 
     try {
         const q = query(collection(db, "consultas"), where("cedula", "==", ci));
@@ -599,36 +621,47 @@ window.buscarPacientePorCedula = async (cedula) => {
         contenedor.innerHTML = "";
 
         if (snap.empty) {
-            contenedor.innerHTML = "<p class='text-red-500 text-center font-bold'>No se encontraron registros.</p>";
+            contenedor.innerHTML = "<div class='p-4 text-center bg-red-50 text-red-600 rounded-xl border-2 border-red-100 font-bold'>❌ No hay registros para esta cédula.</div>";
             return;
         }
 
-        snap.forEach(doc => {
-            const d = doc.data();
+        // Ordenamos por fecha (el más reciente arriba)
+        const registros = snap.docs.map(doc => doc.data()).sort((a, b) => b.fecha - a.fecha);
+
+        registros.forEach(d => {
             const div = document.createElement('div');
-            div.className = "p-4 border-2 rounded-xl bg-slate-50 hover:border-blue-400 cursor-pointer transition";
+            // Diseño de tarjeta cerrada (sin inputs, solo texto)
+            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-2";
             div.innerHTML = `
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between border-b pb-2 items-start">
                     <div>
-                        <p class="font-black text-blue-800">${d.paciente}</p>
-                        <p class="text-[10px] text-gray-500">${d.fechaSimple || 'Sin fecha'}</p>
+                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase">${d.fechaSimple || 'Sin Fecha'}</span>
+                        <h3 class="font-black text-blue-900 text-lg uppercase">${d.paciente}</h3>
                     </div>
-                    <button class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">Cargar</button>
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-400 font-bold italic">Atendido por:</p>
+                        <p class="text-xs font-black text-gray-700 uppercase">Dr. ${d.doctor}</p>
+                    </div>
+                </div>
+
+                <div class="py-2">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
+                    <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Detalle de Finanzas:</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <p class="text-gray-600">Cobrado: <span class="font-bold text-gray-900">$${d.montoVenta?.toFixed(2) || '0.00'}</span></p>
+                        <p class="text-gray-600">Insumos: <span class="font-bold text-red-600">$${d.montoInsumos?.toFixed(2) || '0.00'}</span></p>
+                    </div>
                 </div>
             `;
-            // Al hacer clic, carga los datos en la Historia Clínica
-            div.onclick = () => {
-                document.getElementById('hNombre').value = d.paciente || "";
-                document.getElementById('hCI').value = d.cedula || "";
-                document.getElementById('hTratamiento').value = d.tratamiento || "";
-                window.showTab('historia');
-                alert("Datos cargados en Historia");
-            };
             contenedor.appendChild(div);
         });
     } catch (e) {
         console.error(e);
-        contenedor.innerHTML = "Error al buscar.";
+        contenedor.innerHTML = "<p class='text-center text-red-500'>Error de conexión al buscar.</p>";
     }
 };
     window.buscarPacientePorCedula = async (cedula) => {
@@ -679,9 +712,44 @@ window.buscarPacientePorCedula = async (cedula) => {
         document.getElementById('precioVenta').value = "0";
     }
 };
+    window.agregarInsumoManual = () => {
+    const nombre = document.getElementById('nuevoInsumoNombre').value.trim();
+    const costo = parseFloat(document.getElementById('nuevoInsumoCosto').value) || 0;
+
+    if (!nombre || costo <= 0) {
+        return alert("⚠️ Ingrese nombre y costo del insumo extra.");
+    }
+
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+
+    // Creamos la fila igual a las automáticas para que calcularTodo() la reconozca
+    const tr = document.createElement('tr');
+    tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50"; // Fondo amarillento para notar que es extra
+    tr.innerHTML = `
+        <td class="p-2 font-bold text-gray-700 text-[11px] italic">➕ ${nombre}</td>
+        <td class="p-2 text-center">
+            <input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded">
+        </td>
+        <td class="p-2 text-center">
+            <input type="number" value="${costo.toFixed(2)}" step="0.01" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded">
+        </td>
+        <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
+    `;
+
+    cuerpo.appendChild(tr);
+
+    // Limpiamos los campos para el siguiente insumo extra
+    document.getElementById('nuevoInsumoCosto').value = "";
+    document.getElementById('nuevoInsumoNombre').value = "";
+    
+    // Ejecutamos el cálculo para que el 30% del doctor se actualice
+    calcularTodo();
+};
 </script>
 </body>
 </html>
+
 
 
 
