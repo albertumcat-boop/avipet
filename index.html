@@ -114,15 +114,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
 
-    <div id="loginSection" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xs text-center border-t-8 border-blue-600">
-            <h1 class="text-4xl font-black mb-2 text-blue-600 uppercase italic">Avipet</h1>
-            <input type="password" id="pinInput" placeholder="PIN" class="w-full p-4 border-2 rounded-xl mb-4 text-center text-3xl font-bold bg-slate-50">
-            <button onclick="verificarPin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Entrar</button>
-        </div>
-    </div>
-
-    <main id="adminSection" class="hidden max-w-5xl mx-auto p-2 md:p-4">
+    <main id="adminSection" class="max-w-5xl mx-auto p-2 md:p-4">
         <nav class="flex justify-around border-b-2 border-gray-200 mb-4 no-print bg-white sticky top-0 z-40 py-1">
             <button onclick="showTab('historia')" id="tabH" class="tab-active py-2 text-[11px] px-2 uppercase font-bold">Historia</button>
             <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">Buscador</button>
@@ -351,15 +343,10 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
     let doctorVerificado = ""; 
 
-    // --- SEGURIDAD ---
-    window.verificarPin = () => {
-        const pin = document.getElementById('pinInput').value;
-        if(pin === "2026") {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('adminSection').classList.remove('hidden');
-            document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
-        } else { alert("PIN GENERAL INCORRECTO"); }
-    };
+    // --- CONFIGURACIÓN AL CARGAR ---
+document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
+
+// Borra window.verificarPin completo.
 
     window.validarAccesoDoctor = (nombre) => {
         if (!nombre) {
@@ -437,57 +424,79 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
     };
 
-    // --- GUARDAR Y LIMPIAR (CORREGIDO) ---
     window.guardarFirebase = async (imp) => {
-        if (window.event) window.event.preventDefault(); // EVITA EL REFRESCO
-        if (!doctorVerificado) return alert("⚠️ Valide un doctor.");
-        
-        try {
-            const mascota = document.getElementById('hNombre').value.trim();
-            const cedula = document.getElementById('hCI').value.trim(); // Corregido ID
-            const tratamiento = document.getElementById('hTratamiento').value.trim();
-            const precioVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
+    // 1. Bloqueo inmediato de refresco
+    if (window.event) window.event.preventDefault();
 
-            if(!mascota || !cedula) return alert("Mascota y Cédula son obligatorios.");
-
-            const detalleInsumos = [];
-            document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
-                detalleInsumos.push({
-                    nombre: fila.cells[0].innerText,
-                    cant: parseInt(fila.querySelector('.i-cant').value) || 0,
-                    precio: parseFloat(fila.querySelector('.i-cost').value) || 0
-                });
-            });
-
-            const netoTotal = parseFloat(document.getElementById('labelNeto').innerText.replace('$', ''));
-
-            const data = {
-                paciente: mascota,
-                cedula: cedula,
-                doctor: doctorVerificado,
-                tratamiento: tratamiento,
-                montoVenta: precioVenta,
-                montoInsumos: parseFloat(document.getElementById('gastoInsumos').value),
-                pagoDoctor: netoTotal * 0.3,
-                pagoAvipet: netoTotal * 0.7,
-                listaDetalladaInsumos: detalleInsumos,
-                fecha: serverTimestamp(),
-                fechaSimple: new Date().toLocaleDateString()
-            };
-
-            await addDoc(collection(db, "consultas"), data);
-            
-            if (imp) window.print();
-            
-            alert("✅ Guardado con éxito.");
-            resetFormulario(); // Limpia sin refrescar
-
-        } catch (e) {
-            console.error(e);
-            alert("Error al guardar.");
+    // 2. Seguridad: Si el doctor no se ha validado, lo invitamos a hacerlo
+    if (!doctorVerificado) {
+        alert("⚠️ El registro no puede guardarse sin la firma de un doctor.");
+        const selector = document.getElementById('selectDoctor');
+        if(selector) {
+            selector.focus();
+            // Esto ayuda a que el doctor sepa que debe elegir su nombre arriba
+            selector.style.border = "2px solid red";
+            setTimeout(() => selector.style.border = "", 2000);
         }
-    };
+        return;
+    }
+    
+    try {
+        // Captura de datos
+        const mascota = document.getElementById('hNombre').value.trim();
+        const cedula = document.getElementById('hCI').value.trim();
+        const tratamiento = document.getElementById('hTratamiento').value.trim();
+        const precioVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
 
+        if(!mascota || !cedula) return alert("⚠️ Nombre de mascota y Cédula son obligatorios.");
+
+        // Procesamiento de Insumos
+        const detalleInsumos = [];
+        document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
+            detalleInsumos.push({
+                nombre: fila.cells[0].innerText,
+                cant: parseInt(fila.querySelector('.i-cant').value) || 0,
+                precio: parseFloat(fila.querySelector('.i-cost').value) || 0
+            });
+        });
+
+        const netoTotal = parseFloat(document.getElementById('labelNeto').innerText.replace('$', '')) || 0;
+
+        // Estructura de datos para Firebase
+        const data = {
+            paciente: mascota,
+            cedula: cedula,
+            doctor: doctorVerificado, // Sandoval o Silva
+            tratamiento: tratamiento,
+            montoVenta: precioVenta,
+            montoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
+            pagoDoctor: netoTotal * 0.3,
+            pagoAvipet: netoTotal * 0.7,
+            listaDetalladaInsumos: detalleInsumos,
+            fecha: serverTimestamp(),
+            fechaSimple: new Date().toLocaleDateString()
+        };
+
+        // 3. Envío a la nube
+        await addDoc(collection(db, "consultas"), data);
+        
+        console.log("✅ Registro exitoso en Firebase");
+
+        // 4. Impresión (Si el botón presionado fue 'Guardar e Imprimir')
+        if (imp) {
+            window.print();
+        }
+        
+        alert(`✅ Consulta de ${mascota} guardada correctamente.`);
+        
+        // 5. Limpieza total (importante para el siguiente paciente)
+        resetFormulario();
+
+    } catch (e) {
+        console.error("Error en Firebase:", e);
+        alert("❌ Error de conexión: No se pudo guardar en la base de datos.");
+    }
+};
     window.imprimirRecetaLimpia = () => {
         document.body.classList.add('receta-modo');
         const f = document.querySelector('.finanzas-area');
@@ -515,6 +524,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
   </script>
 </body>
 </html>
+
 
 
 
