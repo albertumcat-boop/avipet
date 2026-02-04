@@ -271,22 +271,23 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     <div class="grid grid-cols-2 gap-4 mb-4">
         </div>
 
-    <div class="w-full flex justify-center my-8 clear-both">
-    <div class="flex flex-col md:flex-row items-center justify-center gap-4 w-full max-w-5xl px-4">
+    <div class="w-full flex justify-center" style="clear: both; display: flex; width: 100% !important;">
+    
+    <div class="flex flex-col md:flex-row items-stretch justify-center gap-6 w-full max-w-6xl mx-auto my-10 px-6">
         
-        <div class="w-full md:flex-1 bg-white border-2 border-slate-200 rounded-2xl p-5 flex flex-col items-center shadow-sm">
-            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Neto</span>
-            <span id="labelNeto" class="text-2xl font-black text-slate-800 leading-none">$0.00</span>
+        <div class="flex-1 bg-white border-2 border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center shadow-sm min-w-[200px]">
+            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Saldo Neto</span>
+            <span id="labelNeto" class="text-3xl font-black text-slate-800">$0.00</span>
         </div>
 
-        <div class="w-full md:flex-1 bg-blue-600 border-2 border-blue-700 rounded-2xl p-6 flex flex-col items-center shadow-xl transform md:scale-110 z-10">
-            <span class="text-[11px] font-black text-blue-100 uppercase italic tracking-widest mb-1">Ganancia Doctor (30%)</span>
-            <span id="labelDr" class="text-3xl font-black text-white leading-none">$0.00</span>
+        <div class="flex-1 bg-blue-600 border-4 border-blue-400 rounded-3xl p-8 flex flex-col items-center justify-center shadow-2xl transform md:scale-110 z-10 min-w-[250px]">
+            <span class="text-[12px] font-black text-blue-100 uppercase italic tracking-widest mb-2 text-center">Ganancia Doctor (30%)</span>
+            <span id="labelDr" class="text-4xl font-black text-white">$0.00</span>
         </div>
 
-        <div class="w-full md:flex-1 bg-green-50 border-2 border-green-200 rounded-2xl p-5 flex flex-col items-center shadow-sm">
-            <span class="text-[11px] font-black text-green-500 uppercase tracking-widest mb-1">Avipet (70%)</span>
-            <span id="labelTienda" class="text-2xl font-black text-green-700 leading-none">$0.00</span>
+        <div class="flex-1 bg-green-50 border-2 border-green-200 rounded-2xl p-6 flex flex-col items-center justify-center shadow-sm min-w-[200px]">
+            <span class="text-[11px] font-black text-green-500 uppercase tracking-widest mb-1 text-center">Avipet (70%)</span>
+            <span id="labelTienda" class="text-3xl font-black text-green-700">$0.00</span>
         </div>
 
     </div>
@@ -678,12 +679,35 @@ window.buscarPorCedula = async () => {
             return;
         }
 
-        // Ordenamos por fecha (el más reciente arriba)
-        const registros = snap.docs.map(doc => doc.data()).sort((a, b) => b.fecha - a.fecha);
+        const registros = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                                   .sort((a, b) => b.fecha - a.fecha);
 
         registros.forEach(d => {
             const div = document.createElement('div');
-            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-2 mb-4";
+            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
+            
+            // Generamos el HTML de los insumos si existen
+            let insumosHTML = "";
+            if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
+                insumosHTML = `
+                    <div id="detalles-${d.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-200">
+                        <p class="text-[10px] font-black text-blue-500 mb-2 uppercase italic">Insumos y Servicios detallados:</p>
+                        <ul class="space-y-1">
+                            ${d.listaDetalladaInsumos.map(ins => `
+                                <li class="flex justify-between text-[11px] text-gray-600 bg-gray-50 p-1 rounded">
+                                    <span>${ins.nombre} (x${ins.cant})</span>
+                                    <span class="font-bold">$${(ins.cant * ins.precio).toFixed(2)}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <button onclick="document.getElementById('detalles-${d.id}').classList.toggle('hidden')" 
+                            class="text-[10px] font-bold text-blue-600 hover:underline mt-2">
+                        [ + Ver detalles de insumos ]
+                    </button>
+                `;
+            }
+
             div.innerHTML = `
                 <div class="flex justify-between border-b pb-2 items-start">
                     <div>
@@ -695,10 +719,20 @@ window.buscarPorCedula = async () => {
                         <p class="text-xs font-black text-gray-700 uppercase">Dr. ${d.doctor}</p>
                     </div>
                 </div>
-                <div class="py-2">
+
+                <div class="py-1">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
                     <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
                 </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <p class="text-gray-600">Total Cobrado: <span class="font-bold text-gray-900">$${d.montoVenta?.toFixed(2) || '0.00'}</span></p>
+                        <p class="text-gray-600 text-right">Gasto Insumos: <span class="font-bold text-red-600">$${d.montoInsumos?.toFixed(2) || '0.00'}</span></p>
+                    </div>
+                </div>
+
+                ${insumosHTML}
             `;
             contenedor.appendChild(div);
         });
@@ -841,6 +875,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
