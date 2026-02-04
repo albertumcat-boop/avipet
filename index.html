@@ -273,22 +273,22 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 
     </div></div> 
 
-<div style="clear: both; display: block; width: 100% !important; margin: 40px 0;">
-    <div class="flex flex-col md:flex-row items-stretch justify-center gap-4 w-full max-w-6xl mx-auto px-4" style="min-height: 160px;">
+<div class="w-full mt-4 px-4">
+    <div class="flex flex-row items-center justify-center gap-4 w-full max-w-4xl mx-auto">
         
-        <div class="flex-1 bg-white border-2 border-slate-200 rounded-3xl p-4 flex flex-col items-center justify-center shadow-sm" style="flex: 1 1 0;">
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Neto</span>
-            <span id="labelNeto" class="text-2xl font-black text-slate-800">$0.00</span>
+        <div class="flex-1 bg-white border border-slate-200 rounded-xl p-3 flex flex-col items-center shadow-sm">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Saldo Neto</span>
+            <span id="labelNeto" class="text-lg font-black text-slate-700 leading-none mt-1">$0.00</span>
         </div>
 
-        <div class="flex-1 bg-blue-600 border-4 border-blue-400 rounded-[2rem] p-4 flex flex-col items-center justify-center shadow-xl transform md:scale-105 z-10" style="flex: 1 1 0;">
-            <span class="text-[11px] font-black text-blue-100 uppercase italic tracking-widest mb-1 text-center">Doctor (30%)</span>
-            <span id="labelDr" class="text-4xl font-black text-white">$0.00</span>
+        <div class="flex-1 bg-blue-400 border border-blue-300 rounded-xl p-3 flex flex-col items-center shadow-md transform scale-105 z-10">
+            <span class="text-[9px] font-black text-blue-50 uppercase italic tracking-tighter">Doctor (30%)</span>
+            <span id="labelDr" class="text-xl font-black text-white leading-none mt-1">$0.00</span>
         </div>
 
-        <div class="flex-1 bg-green-50 border-2 border-green-200 rounded-3xl p-4 flex flex-col items-center justify-center shadow-sm" style="flex: 1 1 0;">
-            <span class="text-[10px] font-black text-green-500 uppercase tracking-widest mb-1">Avipet (70%)</span>
-            <span id="labelTienda" class="text-2xl font-black text-green-700">$0.00</span>
+        <div class="flex-1 bg-green-50 border border-green-200 rounded-xl p-3 flex flex-col items-center shadow-sm">
+            <span class="text-[9px] font-black text-green-500 uppercase tracking-tighter">Avipet (70%)</span>
+            <span id="labelTienda" class="text-lg font-black text-green-700 leading-none mt-1">$0.00</span>
         </div>
 
     </div>
@@ -883,6 +883,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
