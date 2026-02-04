@@ -526,14 +526,16 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         const tr = document.createElement('tr');
         // Le asignamos la clase del grupoID para identificar estos insumos
         tr.className = `border-b border-blue-50 insumo-fila ${grupoID}`; 
-        tr.innerHTML = `
-            <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
-            <td class="p-2 text-center"><input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded"></td>
-            <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded"></td>
-            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>`;
-        cuerpo.appendChild(tr);
-    });
-
+       tr.innerHTML = `
+    <td class="p-2 font-bold text-blue-800 text-[11px] whitespace-nowrap">${insumo.nombre}</td>
+    <td class="p-2 text-center">
+        <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
+    </td>
+    <td class="p-2 text-center">
+        <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
+    </td>
+    <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+cuerpo.appendChild(tr);
     calcularTodo();
 };
     window.eliminarServicioCompleto = (idGrupo, precioARestar) => {
@@ -788,12 +790,16 @@ window.buscarPorCedula = async () => {
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tratamiento / Observaciones:</p>
                     <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">${d.tratamiento || 'Sin observaciones'}</p>
                 </div>
-                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <p class="text-gray-500 font-bold uppercase">Total: <span class="text-gray-900 font-black text-sm">$${(Number(d.montoVenta) || 0).toFixed(2)}</span></p>
-                        <p class="text-gray-500 font-bold text-right uppercase">Insumos: <span class="text-red-600 font-black text-sm">$${(Number(d.montoInsumos) || 0).toFixed(2)}</span></p>
-                    </div>
-                </div>
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+    <div class="flex justify-between items-center text-xs whitespace-nowrap">
+        <p class="text-gray-500 font-bold uppercase">
+            Total: <span class="text-gray-900 font-black text-sm">$${(Number(d.montoVenta) || 0).toFixed(2)}</span>
+        </p>
+        <p class="text-gray-500 font-bold uppercase ml-4">
+            Insumos: <span class="text-red-600 font-black text-sm">$${(Number(d.montoInsumos) || 0).toFixed(2)}</span>
+        </p>
+    </div>
+</div>
                 ${insumosHTML}
             `;
             contenedor.appendChild(div);
@@ -937,6 +943,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
