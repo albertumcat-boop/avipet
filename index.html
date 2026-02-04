@@ -353,35 +353,47 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </section>
 
 <script type="module">
-    // Importaciones corregidas al inicio
+    // Importaciones
     import { db } from './firebase-config.js';
     import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
     let doctorVerificado = ""; 
-    let serviciosEnLista = []; // <--- AJUSTE: Para rastrear combos
+    let serviciosEnLista = [];
 
     // --- CONFIGURACIÓN AL CARGAR ---
     document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
 
+    // EXPONER LA FUNCIÓN AL MUNDO EXTERIOR
     window.validarAccesoDoctor = (nombre) => {
         if (!nombre) {
             doctorVerificado = "";
             document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
             return;
         }
+
         const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
+        
         if (pinIngresado === pinsDoctores[nombre]) {
             doctorVerificado = nombre; 
-            document.getElementById('doctorPrint').innerText = "DR. " + nombre.toUpperCase();
-            alert("✅ Identidad confirmada, Dr. " + nombre);
+            
+            // Ajuste de etiqueta DR o DRA
+            const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+            document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
+            
+            alert(`✅ Identidad confirmada, ${prefijo}${nombre}`);
+            
+            // Llamar a calcularTodo si existe para refrescar los honorarios del 30%
+            if (typeof window.calcularTodo === "function") window.calcularTodo();
         } else {
             alert("❌ PIN INCORRECTO.");
             document.getElementById('selectDoctor').value = "";
             doctorVerificado = "";
+            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
         }
     };
 
+    // --- NAVEGACIÓN DE PESTAÑAS ---
     window.showTab = (t) => {
         document.getElementById('sectionHistoria').style.display = (t === 'historia') ? 'block' : 'none';
         document.getElementById('sectionBuscador').style.display = (t === 'buscador') ? 'block' : 'none';
@@ -390,6 +402,9 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         const tabId = t === 'historia' ? 'H' : (t === 'buscador' ? 'B' : 'R');
         document.getElementById('tab' + tabId).className = "tab-active py-2 text-[11px] px-2 uppercase font-bold";
     };
+
+    // AQUÍ CONTINÚA EL RESTO DE TUS FUNCIONES (insertarServicio, calcularTodo, etc.)
+    // Asegúrate de que NO haya un </script> hasta el final de todo tu archivo.
 
     // --- LÓGICA DE INSUMOS ---
     const insumosFijosMedicos = [{ nombre: "Guantes de examen", costo: 0.50 }, { nombre: "Algodón y Alcohol", costo: 0.10 }, { nombre: "Hojas/Papelería", costo: 0.10 }];
@@ -922,6 +937,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
