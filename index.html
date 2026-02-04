@@ -210,19 +210,18 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                             <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
                             <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
                             <option value="RASPADO PIEL">RASPADO PIEL</option>
+                             <option value="PERFIL ANEMICO">PERFIL ANEMICO</option>
+                             <option value="PERFIL ANEMIA">PERFIL ANEMIA</option>
                             <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITOLOGIA FLUIDOS, SECRECIONES</option>
                         </optgroup>
                         <optgroup label="EUTANASIA">
                             <option value="EUTANASIA HASTA 5KG">HASTA 5KG</option>
                             <option value="EUTANASIA HASTA 15KG">HASTA 15KG</option>
-                            <option value="EUTANASIA HASTA 5KG CON DISPOSICION">HASTA 5KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 15KG CON DISPOSICION">HASTA 15KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 25KG CON DISPOSICION">HASTA 25KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 35KG CON DISPOSICION">HASTA 35KG CON DISPOSICION</option>
-                            <option value="EUTANASIA HASTA 5KG CREMACION CON CENIZAS">HASTA 5KG CREMACION</option>
-                            <option value="EUTANASIA HASTA 15KG CREMACION CON CENIZAS">HASTA 15KG CREMACION</option>
-                            <option value="EUTANASIA HASTA 25KG CREMACION CON CENIZAS">HASTA 25KG CREMACION</option>
-                            <option value="EUTANASIA HASTA 35KG CREMACION CON CENIZAS">HASTA 35KG CREMACION</option>
+                            <option value="EUTANASIA HASTA 25KG ">HASTA 25KG</option>
+                            <option value="EUTANASIA HASTA 35KG ">HASTA 35KG</option>
+                            <option value="KG ADICIONAL">KG ADICIONAL</option>
+                            <option value="DISPOSICION">DISPOSICION</option>
+                            <option value="CREMACION CON CENIZAS">CREMACION</option>
                         </optgroup>
                         <optgroup label="REFERIDOS">
                             <option value="REFERIDO: EXAMEN DE HECES">EXAMENES DE HECES</option>
@@ -230,7 +229,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                             <option value="REFERIDO: CULTIVOS">CULTIVOS</option>
                             <option value="REFERIDO: DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
                             <option value="REFERIDO: DISTEMPER">DISTEMPER</option>
-                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
+                            <option value="REFERIDO: PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
                         </optgroup>
                     </select>
                 </div>
@@ -273,26 +272,29 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 
     </div></div> 
 
-<div class="w-full mt-4 px-4">
-    <div class="flex flex-row items-center justify-center gap-4 w-full max-w-4xl mx-auto">
+<div class="w-full block clear-both mt-12 mb-16 no-print"> 
+    <div class="flex flex-row items-stretch justify-center gap-4 w-full max-w-4xl mx-auto px-4">
         
-        <div class="flex-1 bg-white border border-slate-200 rounded-xl p-3 flex flex-col items-center shadow-sm">
-            <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Saldo Neto</span>
-            <span id="labelNeto" class="text-lg font-black text-slate-700 leading-none mt-1">$0.00</span>
+        <div class="flex-1 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Saldo Neto</span>
+            <span id="labelNeto" class="text-xl font-black text-slate-700 mt-1">$0.00</span>
         </div>
 
-        <div class="flex-1 bg-blue-400 border border-blue-300 rounded-xl p-3 flex flex-col items-center shadow-md transform scale-105 z-10">
-            <span class="text-[9px] font-black text-blue-50 uppercase italic tracking-tighter">Doctor (30%)</span>
-            <span id="labelDr" class="text-xl font-black text-white leading-none mt-1">$0.00</span>
+        <div class="flex-1 bg-sky-400 border border-sky-300 rounded-2xl p-4 flex flex-col items-center justify-center shadow-md transform scale-110 z-10">
+            <span class="text-[10px] font-black text-white uppercase italic tracking-tighter text-center">Doctor (30%)</span>
+            <span id="labelDr" class="text-2xl font-black text-white mt-1">$0.00</span>
         </div>
 
-        <div class="flex-1 bg-green-50 border border-green-200 rounded-xl p-3 flex flex-col items-center shadow-sm">
-            <span class="text-[9px] font-black text-green-500 uppercase tracking-tighter">Avipet (70%)</span>
-            <span id="labelTienda" class="text-lg font-black text-green-700 leading-none mt-1">$0.00</span>
+        <div class="flex-1 bg-green-50 border border-green-100 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
+            <span class="text-[10px] font-black text-green-500 uppercase tracking-tighter">Avipet (70%)</span>
+            <span id="labelTienda" class="text-xl font-black text-green-700 mt-1">$0.00</span>
         </div>
 
     </div>
 </div>
+
+<div class="flex flex-row justify-center gap-4 mt-6">
+    </div>
    <div class="grid grid-cols-2 gap-3">
     <button type="button" onclick="guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">
         Guardar
@@ -441,65 +443,69 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     };
 
     window.insertarServicio = (v) => {
-        if (!v) return;
-        serviciosEnLista.push(v); // <--- AJUSTE: Seguimiento para combos
-        
-        const area = document.getElementById('hTratamiento');
-        const inputPrecioVenta = document.getElementById('precioVenta');
-        area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
-        
-        // --- AJUSTE: LÓGICA DE PRECIOS AUTOMÁTICOS Y COMBOS ---
-        let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+    if (!v) return;
+    
+    const area = document.getElementById('hTratamiento');
+    const inputPrecioVenta = document.getElementById('precioVenta');
+    let nombreFinal = v;
+    let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
 
-        if (v === "HEMATOLOGÍA COMPLETA") {
-            const tieneOtroLab = serviciosEnLista.some(s => s !== v && (s.includes("QUÍMICA") || s.includes("PERFIL") || s.includes("DESCARTE") || s.includes("DISTEMPER")));
-            if (tieneOtroLab) precioFinal = 20;
-        }
-        if (v === "VACUNA KC (TOS DE LAS PERRERAS)" || v === "VACUNA ANTIRRÁBICA") {
-            const tieneOtraVacuna = serviciosEnLista.some(s => s !== v && s.includes("VACUNA"));
-            if (tieneOtraVacuna) precioFinal = v.includes("KC") ? 40 : 25;
-        }
+    // --- LÓGICA ESPECIAL PARA EUTANASIA/DISPOSICIÓN ---
+    if (v === "KG ADICIONAL") {
+        const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+        if (kgs && !isNaN(kgs)) {
+            nombreFinal = `KG ADICIONAL (${kgs}kg)`;
+            precioFinal = parseFloat(kgs) * 2; // $2 por kilo adicional
+        } else { return; }
+    }
 
-        let actual = parseFloat(inputPrecioVenta.value) || 0;
-        inputPrecioVenta.value = (actual + precioFinal).toFixed(2);
+    if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
+        const monto = prompt(`Ingrese el precio pactado para ${v}:`);
+        if (monto && !isNaN(monto)) {
+            precioFinal = parseFloat(monto);
+        } else { return; }
+    }
 
-        document.getElementById('contenedorInsumos').classList.remove('hidden');
-        const cuerpo = document.getElementById('listaInsumosDinamica');
+    serviciosEnLista.push(v);
+    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
 
-       // --- 1. INSERTAR ENCABEZADO DE SERVICIO (ESTILO LIMPIO) ---
-const filaTitulo = document.createElement('tr');
-// Usamos un fondo azul muy tenue y un borde inferior sólido
-filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
-filaTitulo.innerHTML = `
-    <td colspan="3" class="p-2 text-[11px] uppercase tracking-wider">
-        🔹 ${v}
-    </td>
-    <td class="p-2 text-center">
-        <button onclick="eliminarFila(this, '${v}')" class="text-red-500 hover:text-red-700 font-bold text-lg">×</button>
-    </td>
-`;
-cuerpo.appendChild(filaTitulo);
+    // Ajuste de combos (lo que ya tenías)
+    if (v === "HEMATOLOGÍA COMPLETA") {
+        const tieneOtroLab = serviciosEnLista.some(s => s !== v && (s.includes("QUÍMICA") || s.includes("PERFIL")));
+        if (tieneOtroLab) precioFinal = 20;
+    }
 
-        const yaHayInsumosBase = cuerpo.querySelectorAll('.insumo-fila').length > 0;
-        let listaNuevos = !yaHayInsumosBase ? [...insumosFijosMedicos] : [];
+    let actual = parseFloat(inputPrecioVenta.value) || 0;
+    inputPrecioVenta.value = (actual + precioFinal).toFixed(2);
 
-        if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-        if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+    const cuerpo = document.getElementById('listaInsumosDinamica');
 
-        listaNuevos.forEach(insumo => {
-            const tr = document.createElement('tr');
-            tr.className = "border-b border-blue-50 insumo-fila";
-            tr.innerHTML = `
-                <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
-                <td class="p-2 text-center"><input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded"></td>
-                <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded"></td>
-                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>
-            `;
-            cuerpo.appendChild(tr);
-        });
-        calcularTodo();
-    };
+    // Título en la tabla
+    const filaTitulo = document.createElement('tr');
+    filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
+    filaTitulo.innerHTML = `<td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal}</td>
+                            <td class="p-2 text-center"><button onclick="this.parentElement.parentElement.remove(); calcularTodo()" class="text-red-500 font-bold">×</button></td>`;
+    cuerpo.appendChild(filaTitulo);
 
+    // Insumos (lo que ya tenías)
+    const yaHayInsumosBase = cuerpo.querySelectorAll('.insumo-fila').length > 0;
+    let listaNuevos = !yaHayInsumosBase ? [...insumosFijosMedicos] : [];
+    if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+    if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
+
+    listaNuevos.forEach(insumo => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-blue-50 insumo-fila";
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
+            <td class="p-2 text-center"><input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded"></td>
+            <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="calcularTodo()" class="i-cost w-12 text-center border rounded"></td>
+            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); calcularTodo()">✕</td>`;
+        cuerpo.appendChild(tr);
+    });
+    calcularTodo();
+};
    window.calcularTodo = () => {
     let totalI = 0;
     
@@ -883,6 +889,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
