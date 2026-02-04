@@ -662,7 +662,6 @@ window.autocompletarPorCedula = async (cedula) => {
     }
 };
 
-// Esta es la función del botón "BUSCAR" en la pestaña de buscador
 window.buscarPorCedula = async () => {
     const ci = document.getElementById('searchCI').value.trim();
     const contenedor = document.getElementById('resultadosBusqueda');
@@ -680,6 +679,7 @@ window.buscarPorCedula = async () => {
             return;
         }
 
+        // Mapeamos y ordenamos por fecha
         const registros = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
                                    .sort((a, b) => b.fecha - a.fecha);
 
@@ -687,24 +687,26 @@ window.buscarPorCedula = async () => {
             const div = document.createElement('div');
             div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
             
-            // Generamos el HTML de los insumos si existen
+            // Lógica de Insumos: Solo aparece si hay datos en el array
             let insumosHTML = "";
             if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
+                const listaItems = d.listaDetalladaInsumos.map(ins => `
+                    <li class="flex justify-between text-[11px] text-gray-600 bg-gray-50 p-2 rounded border-b border-gray-100">
+                        <span>${ins.nombre} <b class="text-blue-600">x${ins.cant}</b></span>
+                        <span class="font-bold text-slate-700">$${(ins.cant * ins.precio).toFixed(2)}</span>
+                    </li>
+                `).join('');
+
                 insumosHTML = `
-                    <div id="detalles-${d.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-200">
-                        <p class="text-[10px] font-black text-blue-500 mb-2 uppercase italic">Insumos y Servicios detallados:</p>
+                    <div id="detalles-${d.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-300">
+                        <p class="text-[9px] font-black text-blue-500 mb-2 uppercase tracking-widest">Desglose de Insumos:</p>
                         <ul class="space-y-1">
-                            ${d.listaDetalladaInsumos.map(ins => `
-                                <li class="flex justify-between text-[11px] text-gray-600 bg-gray-50 p-1 rounded">
-                                    <span>${ins.nombre} (x${ins.cant})</span>
-                                    <span class="font-bold">$${(ins.cant * ins.precio).toFixed(2)}</span>
-                                </li>
-                            `).join('')}
+                            ${listaItems}
                         </ul>
                     </div>
-                    <button onclick="document.getElementById('detalles-${d.id}').classList.toggle('hidden')" 
-                            class="text-[10px] font-bold text-blue-600 hover:underline mt-2">
-                        [ + Ver detalles de insumos ]
+                    <button onclick="const el = document.getElementById('detalles-${d.id}'); el.classList.toggle('hidden'); this.innerText = el.classList.contains('hidden') ? '[ + Ver detalle de insumos ]' : '[ - Ocultar detalles ]'" 
+                            class="w-full text-center py-1 text-[10px] font-black text-blue-600 bg-blue-50 rounded-lg mt-2 uppercase tracking-tighter">
+                        [ + Ver detalle de insumos ]
                     </button>
                 `;
             }
@@ -728,8 +730,8 @@ window.buscarPorCedula = async () => {
 
                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <div class="grid grid-cols-2 gap-2 text-xs">
-                        <p class="text-gray-600">Total Cobrado: <span class="font-bold text-gray-900">$${d.montoVenta?.toFixed(2) || '0.00'}</span></p>
-                        <p class="text-gray-600 text-right">Gasto Insumos: <span class="font-bold text-red-600">$${d.montoInsumos?.toFixed(2) || '0.00'}</span></p>
+                        <p class="text-gray-500 font-bold">TOTAL COBRADO: <span class="text-gray-900 font-black">$${d.montoVenta?.toFixed(2) || '0.00'}</span></p>
+                        <p class="text-gray-500 font-bold text-right">COSTO INSUMOS: <span class="text-red-600 font-black">$${d.montoInsumos?.toFixed(2) || '0.00'}</span></p>
                     </div>
                 </div>
 
@@ -738,8 +740,8 @@ window.buscarPorCedula = async () => {
             contenedor.appendChild(div);
         });
     } catch (e) {
-        console.error(e);
-        contenedor.innerHTML = "<p class='text-center text-red-500'>Error de conexión al buscar.</p>";
+        console.error("Error en búsqueda:", e);
+        contenedor.innerHTML = "<p class='text-center text-red-500'>Error de conexión al buscar registros.</p>";
     }
 };
 window.eliminarFila = (boton, nombreServicio) => {
@@ -876,6 +878,7 @@ window.eliminarFila = (boton, nombreServicio) => {
 </script>
 </body>
 </html>
+
 
 
 
