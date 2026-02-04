@@ -335,18 +335,17 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     </div>
 </section>
 
- <script type="module">
+<script type="module">
     // Importaciones corregidas al inicio
     import { db } from './firebase-config.js';
     import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
     let doctorVerificado = ""; 
+    let serviciosEnLista = []; // <--- AJUSTE: Para rastrear combos
 
     // --- CONFIGURACIÓN AL CARGAR ---
-document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
-
-// Borra window.verificarPin completo.
+    document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
 
     window.validarAccesoDoctor = (nombre) => {
         if (!nombre) {
@@ -378,27 +377,92 @@ document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
     // --- LÓGICA DE INSUMOS ---
     const insumosFijosMedicos = [{ nombre: "Guantes de examen", costo: 0.50 }, { nombre: "Algodón y Alcohol", costo: 0.10 }, { nombre: "Hojas/Papelería", costo: 0.10 }];
     const insumosBaseVacuna = [{ nombre: "Jeringa 3cc", costo: 0.25 }, { nombre: "Xeruk", costo: 0.10 }, { nombre: "Crema", costo: 0.10 }];
+    
     const recetas = {
-        "VACUNA SEXTUPLE": [{ nombre: "Vial Sextuple", costo: 8.50 }],
-        "VACUNA ANTIRRÁBICA": [{ nombre: "Vial Antirrábica", costo: 4.00 }],
-        "HEMATOLOGÍA COMPLETA": [{ nombre: "Tubo EDTA", costo: 1.00 }, { nombre: "Jeringa 3cc", costo: 0.25 }, { nombre: "Servicio Laboratorio", costo: 10.00 }],
-        "CONSULTA GENERAL": [{ nombre: "Baja lenguas/Insumos", costo: 0.40 }]
+        // --- CONSULTAS ---
+        "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] },
+        "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
+        "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] },
+        "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] },
+        "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] },
+        "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] },
+        "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] },
+        "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] },
+        "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta: 45, insumos: [{ nombre: "Vial KC", costo: 9.00 }] },
+        "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] },
+        "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] },
+        "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] },
+        "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] },
+        "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
+        "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] },
+        "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] },
+        "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] },
+        "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] },
+        "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] },
+        "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] },
+        "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] },
+        "EXAMEN DE HECES": { precioVenta: 10, insumos: [{ nombre: "Portas/Solución/Envase", costo: 1.50 }] },
+        "EXAMENES DE ORINA": { precioVenta: 10, insumos: [{ nombre: "Tira Reactiva/Sedimento", costo: 2.00 }] },
+        "CITOLOGIA 1 OIDO": { precioVenta: 15, insumos: [{ nombre: "Hisopo/Tincion", costo: 2.50 }] },
+        "CITOLOGIA 2 OIDOS": { precioVenta: 20, insumos: [{ nombre: "Hisopos/Tinciones", costo: 4.00 }] },
+        "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] },
+        "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] },
+        "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [{ nombre: "Fármacos Eutanasia", costo: 10.00 }] },
+        "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [{ nombre: "Fármacos Eutanasia", costo: 18.00 }] },
+        "EUTANASIA HASTA 5KG CON DISPOSICION": { precioVenta: 50, insumos: [{ nombre: "Fármacos/Logística", costo: 20.00 }] },
+        "EUTANASIA HASTA 15KG CON DISPOSICION": { precioVenta: 70, insumos: [{ nombre: "Fármacos/Logística", costo: 30.00 }] },
+        "EUTANASIA HASTA 25KG CON DISPOSICION": { precioVenta: 90, insumos: [{ nombre: "Fármacos/Logística", costo: 40.00 }] },
+        "EUTANASIA HASTA 35KG CON DISPOSICION": { precioVenta: 110, insumos: [{ nombre: "Fármacos/Logística", costo: 50.00 }] },
+        "EUTANASIA HASTA 5KG CREMACION CON CENIZAS": { precioVenta: 150, insumos: [{ nombre: "Serv. Cremación/Urna", costo: 80.00 }] },
+        "EUTANASIA HASTA 15KG CREMACION CON CENIZAS": { precioVenta: 180, insumos: [{ nombre: "Serv. Cremación/Urna", costo: 100.00 }] },
+        "EUTANASIA HASTA 25KG CREMACION CON CENIZAS": { precioVenta: 220, insumos: [{ nombre: "Serv. Cremación/Urna", costo: 130.00 }] },
+        "EUTANASIA HASTA 35KG CREMACION CON CENIZAS": { precioVenta: 260, insumos: [{ nombre: "Serv. Cremación/Urna", costo: 160.00 }] },
+        "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
+        "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
+        "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] },
+        "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] }
     };
 
     window.insertarServicio = (v) => {
         if (!v) return;
+        serviciosEnLista.push(v); // <--- AJUSTE: Seguimiento para combos
+        
         const area = document.getElementById('hTratamiento');
+        const inputPrecioVenta = document.getElementById('precioVenta');
         area.value += (area.value ? "\n" : "") + "=> " + v + ": ";
+        
+        // --- AJUSTE: LÓGICA DE PRECIOS AUTOMÁTICOS Y COMBOS ---
+        let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+
+        if (v === "HEMATOLOGÍA COMPLETA") {
+            const tieneOtroLab = serviciosEnLista.some(s => s !== v && (s.includes("QUÍMICA") || s.includes("PERFIL") || s.includes("DESCARTE") || s.includes("DISTEMPER")));
+            if (tieneOtroLab) precioFinal = 20;
+        }
+        if (v === "VACUNA KC (TOS DE LAS PERRERAS)" || v === "VACUNA ANTIRRÁBICA") {
+            const tieneOtraVacuna = serviciosEnLista.some(s => s !== v && s.includes("VACUNA"));
+            if (tieneOtraVacuna) precioFinal = v.includes("KC") ? 40 : 25;
+        }
+
+        let actual = parseFloat(inputPrecioVenta.value) || 0;
+        inputPrecioVenta.value = (actual + precioFinal).toFixed(2);
+
         document.getElementById('contenedorInsumos').classList.remove('hidden');
         const cuerpo = document.getElementById('listaInsumosDinamica');
-        const yaHayInsumos = cuerpo.querySelectorAll('tr').length > 0;
-        let listaNuevos = !yaHayInsumos ? [...insumosFijosMedicos] : [];
+
+        const filaTitulo = document.createElement('tr');
+        filaTitulo.className = "bg-slate-800 text-white font-bold";
+        filaTitulo.innerHTML = `<td colspan="4" class="p-1 text-[10px] uppercase tracking-widest text-center">📦 INSUMOS: ${v}</td>`;
+        cuerpo.appendChild(filaTitulo);
+
+        const yaHayInsumosBase = cuerpo.querySelectorAll('.insumo-fila').length > 0;
+        let listaNuevos = !yaHayInsumosBase ? [...insumosFijosMedicos] : [];
+
         if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-        if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v]];
+        if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
 
         listaNuevos.forEach(insumo => {
             const tr = document.createElement('tr');
-            tr.className = "border-b border-blue-50";
+            tr.className = "border-b border-blue-50 insumo-fila";
             tr.innerHTML = `
                 <td class="p-2 font-bold text-blue-800 text-[11px]">${insumo.nombre}</td>
                 <td class="p-2 text-center"><input type="number" value="1" oninput="calcularTodo()" class="i-cant w-10 text-center border rounded"></td>
@@ -425,105 +489,72 @@ document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
     };
 
     window.guardarFirebase = async (imp) => {
-    // 1. Bloqueo inmediato de refresco
-    if (window.event) window.event.preventDefault();
-
-    // 2. Seguridad: Si el doctor no se ha validado, lo invitamos a hacerlo
-    if (!doctorVerificado) {
-        alert("⚠️ El registro no puede guardarse sin la firma de un doctor.");
-        const selector = document.getElementById('selectDoctor');
-        if(selector) {
-            selector.focus();
-            // Esto ayuda a que el doctor sepa que debe elegir su nombre arriba
-            selector.style.border = "2px solid red";
-            setTimeout(() => selector.style.border = "", 2000);
+        if (window.event) window.event.preventDefault();
+        if (!doctorVerificado) {
+            alert("⚠️ El registro no puede guardarse sin la firma de un doctor.");
+            const selector = document.getElementById('selectDoctor');
+            if(selector) { selector.focus(); selector.style.border = "2px solid red"; setTimeout(() => selector.style.border = "", 2000); }
+            return;
         }
-        return;
-    }
-    
-    try {
-        // Captura de datos
-        const mascota = document.getElementById('hNombre').value.trim();
-        const cedula = document.getElementById('hCI').value.trim();
-        const tratamiento = document.getElementById('hTratamiento').value.trim();
-        const precioVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
+        try {
+            const mascota = document.getElementById('hNombre').value.trim();
+            const cedula = document.getElementById('hCI').value.trim();
+            if(!mascota || !cedula) return alert("⚠️ Nombre de mascota y Cédula son obligatorios.");
 
-        if(!mascota || !cedula) return alert("⚠️ Nombre de mascota y Cédula son obligatorios.");
-
-        // Procesamiento de Insumos
-        const detalleInsumos = [];
-        document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
-            detalleInsumos.push({
-                nombre: fila.cells[0].innerText,
-                cant: parseInt(fila.querySelector('.i-cant').value) || 0,
-                precio: parseFloat(fila.querySelector('.i-cost').value) || 0
+            const detalleInsumos = [];
+            document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
+                detalleInsumos.push({
+                    nombre: fila.cells[0].innerText,
+                    cant: parseInt(fila.querySelector('.i-cant').value) || 0,
+                    precio: parseFloat(fila.querySelector('.i-cost').value) || 0
+                });
             });
-        });
 
-        const netoTotal = parseFloat(document.getElementById('labelNeto').innerText.replace('$', '')) || 0;
+            const netoTotal = parseFloat(document.getElementById('labelNeto').innerText.replace('$', '')) || 0;
+            const data = {
+                paciente: mascota,
+                cedula: cedula,
+                doctor: doctorVerificado,
+                tratamiento: document.getElementById('hTratamiento').value.trim(),
+                montoVenta: parseFloat(document.getElementById('precioVenta').value) || 0,
+                montoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
+                pagoDoctor: netoTotal * 0.3,
+                pagoAvipet: netoTotal * 0.7,
+                listaDetalladaInsumos: detalleInsumos,
+                fecha: serverTimestamp(),
+                fechaSimple: new Date().toLocaleDateString()
+            };
+            await addDoc(collection(db, "consultas"), data);
+            if (imp) window.print();
+            alert(`✅ Consulta de ${mascota} guardada.`);
+            resetFormulario();
+        } catch (e) { console.error(e); alert("❌ Error al guardar."); }
+    };
 
-        // Estructura de datos para Firebase
-        const data = {
-            paciente: mascota,
-            cedula: cedula,
-            doctor: doctorVerificado, // Sandoval o Silva
-            tratamiento: tratamiento,
-            montoVenta: precioVenta,
-            montoInsumos: parseFloat(document.getElementById('gastoInsumos').value) || 0,
-            pagoDoctor: netoTotal * 0.3,
-            pagoAvipet: netoTotal * 0.7,
-            listaDetalladaInsumos: detalleInsumos,
-            fecha: serverTimestamp(),
-            fechaSimple: new Date().toLocaleDateString()
-        };
-
-        // 3. Envío a la nube
-        await addDoc(collection(db, "consultas"), data);
-        
-        console.log("✅ Registro exitoso en Firebase");
-
-        // 4. Impresión (Si el botón presionado fue 'Guardar e Imprimir')
-        if (imp) {
-            window.print();
-        }
-        
-        alert(`✅ Consulta de ${mascota} guardada correctamente.`);
-        
-        // 5. Limpieza total (importante para el siguiente paciente)
-        resetFormulario();
-
-    } catch (e) {
-        console.error("Error en Firebase:", e);
-        alert("❌ Error de conexión: No se pudo guardar en la base de datos.");
-    }
-};
     window.imprimirRecetaLimpia = () => {
         document.body.classList.add('receta-modo');
-        const f = document.querySelector('.finanzas-area');
-        const i = document.getElementById('contenedorInsumos');
-        if(f) f.style.display = 'none';
-        if(i) i.style.display = 'none';
-
+        const f = document.querySelector('.finanzas-area'), i = document.getElementById('contenedorInsumos');
+        if(f) f.style.display = 'none'; if(i) i.style.display = 'none';
         setTimeout(() => {
             window.print();
             document.body.classList.remove('receta-modo');
-            if(f) f.style.display = 'block';
-            if(i) i.style.display = 'block';
+            if(f) f.style.display = 'block'; if(i) i.style.display = 'block';
         }, 500);
     };
 
     window.resetFormulario = () => {
         ["hNombre", "hEspecie", "hRaza", "hPeso", "hEdad", "hProp", "hCI", "hTlf", "hMail", "hTratamiento"].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "";
+            const el = document.getElementById(id); if(el) el.value = "";
         });
         document.getElementById('precioVenta').value = "0";
         document.getElementById('listaInsumosDinamica').innerHTML = "";
+        serviciosEnLista = []; // <--- AJUSTE: Limpiar seguimiento
         calcularTodo();
     };
-  </script>
+</script>
 </body>
 </html>
+
 
 
 
