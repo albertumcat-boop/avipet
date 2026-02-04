@@ -449,10 +449,19 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         document.getElementById('contenedorInsumos').classList.remove('hidden');
         const cuerpo = document.getElementById('listaInsumosDinamica');
 
-        const filaTitulo = document.createElement('tr');
-        filaTitulo.className = "bg-slate-800 text-white font-bold";
-        filaTitulo.innerHTML = `<td colspan="4" class="p-1 text-[10px] uppercase tracking-widest text-center">📦 INSUMOS: ${v}</td>`;
-        cuerpo.appendChild(filaTitulo);
+       // --- 1. INSERTAR ENCABEZADO DE SERVICIO (ESTILO LIMPIO) ---
+const filaTitulo = document.createElement('tr');
+// Usamos un fondo azul muy tenue y un borde inferior sólido
+filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
+filaTitulo.innerHTML = `
+    <td colspan="3" class="p-2 text-[11px] uppercase tracking-wider">
+        🔹 ${v}
+    </td>
+    <td class="p-2 text-center">
+        <button onclick="eliminarFila(this, '${v}')" class="text-red-500 hover:text-red-700 font-bold text-lg">×</button>
+    </td>
+`;
+cuerpo.appendChild(filaTitulo);
 
         const yaHayInsumosBase = cuerpo.querySelectorAll('.insumo-fila').length > 0;
         let listaNuevos = !yaHayInsumosBase ? [...insumosFijosMedicos] : [];
@@ -673,6 +682,7 @@ window.buscarPacientePorCedula = async (cedula) => {
 </script>
 </body>
 </html>
+
 
 
 
