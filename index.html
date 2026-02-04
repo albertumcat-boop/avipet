@@ -28,48 +28,88 @@
         .no-print, button, select, .menu-desplegable, nav, #loginSection { 
             display: none !important; 
         }
-        body { background-color: white !important; padding: 0; margin: 0; }
-        .print-area { border: none !important; shadow: none !important; width: 100%; }
-        
-        /* Mostramos el nombre del doctor validado en el papel */
-        #doctorPrint { 
-            display: block !important; 
-            font-weight: bold; 
-            text-transform: uppercase;
-            font-size: 14px;
-            color: black;
-        }
+       /* 1. ESTILOS DE PANTALLA (Interfaz Moderna) */
+body { 
+    background-color: #f1f5f9; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #1e293b; 
+}
 
-        #hTratamiento { 
-            border: none !important; 
-            height: auto !important; 
-            overflow: visible !important; 
-            display: block !important; 
-            white-space: pre-wrap !important; 
-            font-size: 12px; 
-        }
+/* Tarjeta Principal */
+.print-area {
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Botones con Micro-interacciones */
+button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+button:active { transform: scale(0.95); }
+button:hover { filter: brightness(1.1); }
+
+/* Inputs Estilizados */
+input, textarea {
+    outline: none;
+    transition: all 0.2s;
+}
+input:focus { border-bottom: 2px solid #2563eb !important; }
+
+/* Menú Desplegable Mejorado */
+.menu-desplegable {
+    width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px;
+    background-color: #ffffff; font-weight: 700; color: #1e40af; font-size: 13px;
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
+}
+.menu-desplegable:hover { border-color: #3b82f6; }
+
+/* 2. ESTILOS DE IMPRESIÓN */
+@media screen {
+    #doctorPrint { display: none; }
+}
+
+@media print {
+    .no-print, button, select, nav, #loginSection, .finanzas-ocultar { 
+        display: none !important; 
     }
-       @keyframes fadeIn {
+    body { background-color: white !important; padding: 0; margin: 0; }
+    .print-area { border: none !important; box-shadow: none !important; width: 100%; }
+    
+    #doctorPrint { 
+        display: block !important; 
+        font-weight: 800; 
+        text-transform: uppercase;
+        font-size: 14px;
+        color: black;
+        margin-top: 10px;
+    }
+
+    #hTratamiento { 
+        border: none !important; 
+        height: auto !important; 
+        overflow: visible !important; 
+        display: block !important; 
+        white-space: pre-wrap !important; 
+        font-size: 13px; 
+        line-height: 1.6;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-}
-       button {
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-button:active {
-    transform: scale(0.95);
-}
-
-.print-area {
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-}
+/* Clase para ocultar finanzas en la receta */
+.receta-modo .finanzas-area { display: none !important; }
 </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -233,16 +273,30 @@ button:active {
                         <input type="number" id="gastoInsumos" value="0" class="text-3xl font-black w-full bg-transparent text-red-600 text-center outline-none" readonly>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-center mb-6">
-                    <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Neto</p><p id="labelNeto" class="text-xl font-black text-emerald-600">$0.00</p></div>
-                    <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Dr (30%)</p><p id="labelDr" class="text-xl font-black text-slate-700">$0.00</p></div>
-                    <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Avipet (70%)</p><p id="labelTienda" class="text-xl font-black text-blue-600">$0.00</p></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">Guardar</button>
-                    <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">Guardar e Imprimir</button>
-                </div>
-            </div>
+               <div class="no-print bg-blue-50 p-6 rounded-3xl text-slate-800 shadow-lg border-2 border-blue-200 mb-4 finanzas-area">
+    
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        </div>
+
+    <div class="grid grid-cols-3 gap-2 text-center mb-6">
+        <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Neto</p><p id="labelNeto" class="text-xl font-black text-emerald-600">$0.00</p></div>
+        <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Dr (30%)</p><p id="labelDr" class="text-xl font-black text-slate-700">$0.00</p></div>
+        <div class="p-2 bg-white border border-slate-200 rounded-lg"><p class="text-[9px] font-bold uppercase text-slate-500">Avipet (70%)</p><p id="labelTienda" class="text-xl font-black text-blue-600">$0.00</p></div>
+    </div>
+
+   <div class="grid grid-cols-2 gap-3">
+    <button type="button" onclick="guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">
+        Guardar
+    </button>
+    
+    <button type="button" onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">
+        Guardar e Imprimir
+    </button>
+</div>
+
+<button type="button" onclick="imprimirRecetaLimpia()" class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3 shadow-md hover:bg-cyan-600">
+    📄 Imprimir Solo Receta (Sin Costos)
+</button>
         </section>
 
         <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
@@ -385,7 +439,23 @@ button:active {
         });
         calcularTodo();
     };
+window.imprimirRecetaLimpia = () => {
+    // 1. Agregamos la clase que oculta lo financiero (gracias al CSS que pusimos antes)
+    document.body.classList.add('receta-modo');
+    
+    // 2. Escondemos la tabla de insumos para el cliente
+    const tablaInsumos = document.getElementById('contenedorInsumos');
+    if(tablaInsumos) tablaInsumos.style.display = 'none';
 
+    // 3. Pequeña espera para que el navegador aplique los cambios visuales antes de imprimir
+    setTimeout(() => {
+        window.print();
+        
+        // 4. Regresamos todo a la normalidad después de imprimir
+        document.body.classList.remove('receta-modo');
+        if(tablaInsumos) tablaInsumos.style.display = 'block';
+    }, 500); 
+};
     window.agregarInsumoManual = () => {
         const nombre = document.getElementById('nombreExtra').value;
         const costo = parseFloat(document.getElementById('costoExtra').value) || 0;
@@ -420,20 +490,101 @@ button:active {
         document.getElementById('labelTienda').innerText = `$${(neto * 0.7).toFixed(2)}`;
     };
 
-    window.guardarFirebase = async (imp) => {
-        if (!doctorVerificado) return alert("⚠️ Valide un doctor.");
-        try {
-            const mascota = document.getElementById('hNombre').value;
-            if(!mascota) return alert("Nombre mascota obligatorio");
+   window.guardarFirebase = async (imp) => {
+    // 1. Evita el refresco de página
+    if (window.event) window.event.preventDefault();
 
-            const detalleInsumos = [];
-            document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
-                detalleInsumos.push({
-                    nombre: fila.cells[0].innerText,
-                    cant: parseInt(fila.querySelector('.i-cant').value) || 0,
-                    precio: parseFloat(fila.querySelector('.i-cost').value) || 0
-                });
+    if (!doctorVerificado) return alert("⚠️ Por favor, valide un doctor primero.");
+    
+    try {
+        // Captura de datos básicos
+        const mascota = document.getElementById('hNombre').value.trim();
+        const cedula = document.getElementById('hCedula').value.trim();
+        const tratamiento = document.getElementById('hTratamiento').value.trim();
+        
+        if(!mascota || !cedula) return alert("Nombre y Cédula son obligatorios.");
+
+        // Captura de montos financieros
+        const precioVenta = parseFloat(document.getElementById('hPrecioVenta').value) || 0;
+        const costoInsumos = parseFloat(document.getElementById('labelGastoInsumos').innerText.replace('$', '')) || 0;
+        const neto = parseFloat(document.getElementById('labelNeto').innerText.replace('$', '')) || 0;
+        const parteDr = parseFloat(document.getElementById('labelDr').innerText.replace('$', '')) || 0;
+        const parteAvipet = parseFloat(document.getElementById('labelTienda').innerText.replace('$', '')) || 0;
+
+        // Captura detallada de insumos
+        const detalleInsumos = [];
+        document.querySelectorAll('#listaInsumosDinamica tr').forEach(fila => {
+            detalleInsumos.push({
+                nombre: fila.cells[0].innerText,
+                cant: parseInt(fila.querySelector('.i-cant').value) || 0,
+                precio: parseFloat(fila.querySelector('.i-cost').value) || 0
             });
+        });
+
+        // 2. CREACIÓN DEL OBJETO PARA FIREBASE
+        const dataConsulta = {
+            paciente: mascota,
+            cedula: cedula,
+            doctor: doctorVerificado, // Nombre del Dr. Sandoval o Silva
+            tratamiento: tratamiento,
+            montoVenta: precioVenta,
+            montoInsumos: costoInsumos,
+            gananciaNeta: neto,
+            pagoDoctor: parteDr,
+            pagoAvipet: parteAvipet,
+            listaDetalladaInsumos: detalleInsumos,
+            fecha: new Date(),
+            fechaSimple: new Date().toLocaleDateString()
+        };
+
+        // 3. GUARDAR EN FIREBASE (Asegúrate de tener 'db' y 'collection' definidos arriba)
+        const { addDoc, collection } = await import("https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js");
+        await addDoc(collection(db, "consultas"), dataConsulta);
+        
+        console.log("✅ Datos guardados en la nube");
+
+        // 4. Lógica de impresión
+        if (imp) {
+            window.print();
+        }
+
+        // 5. LIMPIEZA MANUAL (Punto 3: Profesionalismo)
+        resetFormulario();
+        alert("¡Registro guardado exitosamente!");
+
+    } catch (error) {
+        console.error("Error crítico:", error);
+        alert("Hubo un problema al guardar. Revisa la consola.");
+    }
+};
+
+// Función para resetear campos sin recargar
+window.resetFormulario = () => {
+    document.getElementById('hNombre').value = "";
+    document.getElementById('hCedula').value = "";
+    document.getElementById('hTratamiento').value = "";
+    document.getElementById('hPrecioVenta').value = "0";
+    document.getElementById('listaInsumosDinamica').innerHTML = "";
+    
+    // Si tienes una función que recalcula los $0.00, la llamamos
+    if(typeof calcularTodo === 'function') calcularTodo();
+};
+// Función para limpiar todo sin refrescar la página
+window.resetFormulario = () => {
+    // Limpiar textos
+    document.getElementById('hNombre').value = "";
+    document.getElementById('hCedula').value = "";
+    document.getElementById('hTratamiento').value = "";
+    document.getElementById('hPrecioVenta').value = "0";
+    
+    // Limpiar tabla de insumos
+    document.getElementById('listaInsumosDinamica').innerHTML = "";
+    
+    // Resetear totales
+    if(typeof calcularTodo === "function") calcularTodo(); 
+    
+    console.log("Formulario limpio para el siguiente paciente.");
+};
 
             const bruto = parseFloat(document.getElementById('precioVenta').value) || 0;
             const insu = parseFloat(document.getElementById('gastoInsumos').value) || 0;
@@ -557,5 +708,6 @@ button:active {
 </script>
 </body>
 </html>
+
 
 
