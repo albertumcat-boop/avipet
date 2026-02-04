@@ -364,34 +364,30 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     // --- CONFIGURACIÓN AL CARGAR ---
     document.getElementById('fechaDoc').value = new Date().toLocaleDateString();
 
-    // EXPONER LA FUNCIÓN AL MUNDO EXTERIOR
     window.validarAccesoDoctor = (nombre) => {
-        if (!nombre) {
-            doctorVerificado = "";
-            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-            return;
-        }
+    if (!nombre) {
+        doctorVerificado = "";
+        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+        return;
+    }
 
-        const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
+    // Corregido: eliminadas las barras invertidas que bloqueaban el PIN
+    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
+    
+    if (pinIngresado === pinsDoctores[nombre]) {
+        doctorVerificado = nombre; 
+        const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+        document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
+        alert(`✅ Identidad confirmada, ${prefijo}${nombre}`);
         
-        if (pinIngresado === pinsDoctores[nombre]) {
-            doctorVerificado = nombre; 
-            
-            // Ajuste de etiqueta DR o DRA
-            const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
-            document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
-            
-            alert(`✅ Identidad confirmada, ${prefijo}${nombre}`);
-            
-            // Llamar a calcularTodo si existe para refrescar los honorarios del 30%
-            if (typeof window.calcularTodo === "function") window.calcularTodo();
-        } else {
-            alert("❌ PIN INCORRECTO.");
-            document.getElementById('selectDoctor').value = "";
-            doctorVerificado = "";
-            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-        }
-    };
+        if (typeof window.calcularTodo === "function") window.calcularTodo();
+    } else {
+        alert("❌ PIN INCORRECTO.");
+        document.getElementById('selectDoctor').value = "";
+        doctorVerificado = "";
+        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+    }
+};
 
     // --- NAVEGACIÓN DE PESTAÑAS ---
     window.showTab = (t) => {
@@ -522,10 +518,13 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     // Insertar el encabezado con la nueva función 'eliminarServicioCompleto'
     const filaTitulo = document.createElement('tr');
     filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
+   // Reemplaza solo la creación de la filaTitulo dentro de insertarServicio
+    const filaTitulo = document.createElement('tr');
+    filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
     filaTitulo.innerHTML = `
-        <td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal}</td>
+        <td colspan="3" class="p-2 text-[11px] uppercase whitespace-nowrap">🔹 ${nombreFinal}</td>
         <td class="p-2 text-center">
-            <button onclick="eliminarServicioCompleto('${grupoID}', ${precioFinal})" class="text-red-500 font-bold text-lg">×</button>
+            <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal})" class="text-red-500 font-bold text-lg">×</button>
         </td>`;
     cuerpo.appendChild(filaTitulo);
 
@@ -536,19 +535,22 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
 
     listaNuevos.forEach(insumo => {
+        // Reemplaza el forEach de los insumos al final de insertarServicio
+    listaNuevos.forEach(insumo => {
         const tr = document.createElement('tr');
-        // Le asignamos la clase del grupoID para identificar estos insumos
-        tr.className = `border-b border-blue-50 insumo-fila ${grupoID}`; 
-       tr.innerHTML = `
-    <td class="p-2 font-bold text-blue-800 text-[11px] whitespace-nowrap">${insumo.nombre}</td>
-    <td class="p-2 text-center">
-        <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
-    </td>
-    <td class="p-2 text-center">
-        <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
-    </td>
-    <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
-cuerpo.appendChild(tr);
+        tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-gray-700 text-[11px] whitespace-nowrap italic">${insumo.nombre.toUpperCase()}</td>
+            <td class="p-2 text-center">
+                <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
+            </td>
+            <td class="p-2 text-center">
+                <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
+            </td>
+            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>
+        `;
+        cuerpo.appendChild(tr);
+    });
     calcularTodo();
 };
     window.eliminarServicioCompleto = (idGrupo, precioARestar) => {
@@ -959,6 +961,7 @@ window.buscarPorCedula = async () => {
 </script>
 </body>
 </html>
+
 
 
 
