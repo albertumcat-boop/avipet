@@ -366,6 +366,29 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         const fechaDoc = document.getElementById('fechaDoc');
         if (fechaDoc) fechaDoc.value = new Date().toLocaleDateString();
     });
+    // --- FUNCIÓN DE CÁLCULO (EL MOTOR QUE FALTA) ---
+    window.calcularTodo = () => {
+        let totalInsumos = 0;
+        // Sumar todos los insumos de la tabla dinámica
+        document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
+            const cant = parseFloat(fila.querySelector('.i-cant').value) || 0;
+            const cost = parseFloat(fila.querySelector('.i-cost').value) || 0;
+            totalInsumos += (cant * cost);
+        });
+
+        const inputGasto = document.getElementById('gastoInsumos');
+        const inputPrecioVenta = document.getElementById('precioVenta');
+        
+        if (inputGasto) inputGasto.value = totalInsumos.toFixed(2);
+        
+        const venta = parseFloat(inputPrecioVenta.value) || 0;
+        const neto = venta - totalInsumos;
+
+        // Actualizar las etiquetas de finanzas (Doctor Sandoval/Silva y Avipet)
+        if (document.getElementById('labelNeto')) document.getElementById('labelNeto').innerText = `$${neto.toFixed(2)}`;
+        if (document.getElementById('labelDr')) document.getElementById('labelDr').innerText = `$${(neto * 0.30).toFixed(2)}`;
+        if (document.getElementById('labelTienda')) document.getElementById('labelTienda').innerText = `$${(neto * 0.70).toFixed(2)}`;
+    };
 
     window.validarAccesoDoctor = (nombre) => {
         if (!nombre) {
@@ -573,11 +596,16 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                 contenedor.innerHTML = "<div class='p-4 text-center bg-red-50 text-red-600 rounded-xl font-bold'>❌ Sin registros.</div>";
                 return;
             }
-            const registros = snap.docs.map(doc => {
-                const d = doc.data();
-                let ms = (d.fecha && d.fecha.toMillis) ? d.fecha.toMillis() : (d.fecha?.seconds ? d.fecha.seconds * 1000 : Date.now());
-                return { id: doc.id, ...d, fechaMs: ms };
-            }).sort((a, b) => b.fechaMs - a.fechaMs);
+           const registros = snap.docs.map(doc => {
+    const d = doc.data();
+    // Asegura que si no hay fecha, no de error
+    let ms = 0;
+    if (d.fecha && d.fecha.toMillis) ms = d.fecha.toMillis();
+    else if (d.fecha?.seconds) ms = d.fecha.seconds * 1000;
+    else ms = Date.now(); 
+
+    return { id: doc.id, ...d, fechaMs: ms };
+}).sort((a, b) => b.fechaMs - a.fechaMs);
 
             registros.forEach(d => {
                 const div = document.createElement('div');
@@ -648,6 +676,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </script>
 </body>
 </html>
+
 
 
 
