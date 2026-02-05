@@ -178,64 +178,73 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
                     <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
-                        <option value="">-- SELECCIONE SERVICIO --</option>
-                        <optgroup label="CONSULTAS">
-                            <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
-                            <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
-                            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
-                            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
-                            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
-                        </optgroup>
-                        <optgroup label="VACUNAS">
-                            <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
-                            <option value="VACUNA PUPPY">VACUNA PUPPY</option>
-                            <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
-                            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC</option>
-                            <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
-                            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
-                            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
-                         </optgroup>
-                        <optgroup label="OTROS">
-                            <option value="ABSESO">ABSESO</option>
-                        </optgroup>
-                        <optgroup label="LABORATORIO">
-                            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
-                            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
-                            <option value="PERFIL 20">PERFIL 20</option>
-                            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-                            <option value="DISTEMPER">DISTEMPER</option>
-                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
-                            <option value="FILARIASIS">FILARIASIS</option>
-                            <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
-                            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">HEMATOLOGIA+QUIMICA+HEMOPARASITOS</option>
-                            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>  
-                            <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
-                            <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
-                            <option value="RASPADO PIEL">RASPADO PIEL</option>
-                             <option value="PERFIL ANEMICO">PERFIL ANEMICO</option>
-                             <option value="PERFIL ANEMIA">PERFIL ANEMIA</option>
-                            <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITOLOGIA FLUIDOS, SECRECIONES</option>
-                        </optgroup>
-                        <optgroup label="EUTANASIA">
-                            <option value="EUTANASIA HASTA 5KG">HASTA 5KG</option>
-                            <option value="EUTANASIA HASTA 15KG">HASTA 15KG</option>
-                            <option value="EUTANASIA HASTA 25KG ">HASTA 25KG</option>
-                            <option value="EUTANASIA HASTA 35KG ">HASTA 35KG</option>
-                            <option value="KG ADICIONAL">KG ADICIONAL</option>
-                            <option value="DISPOSICION">DISPOSICION</option>
-                            <option value="CREMACION CON CENIZAS">CREMACION</option>
-                        </optgroup>
-                        <optgroup label="REFERIDOS">
-                            <option value="REFERIDO: EXAMEN DE HECES">EXAMENES DE HECES</option>
-                            <option value="REFERIDO: EXAMENES DE ORINA">EXAMENES DE ORINA</option>
-                            <option value="REFERIDO: CULTIVOS">CULTIVOS</option>
-                            <option value="REFERIDO: DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-                            <option value="REFERIDO: DISTEMPER">DISTEMPER</option>
-                            <option value="REFERIDO: PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
-                        </optgroup>
-                    </select>
-                </div>
+                       <select id="selectorServicios" class="w-full p-2 border rounded bg-white text-sm" onchange="window.insertarServicio(this.value)">
+    <option value="">-- SELECCIONE SERVICIO --</option>
+    
+    <optgroup label="CONSULTAS">
+        <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
+        <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+        <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+        <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+        <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+    </optgroup>
+
+    <optgroup label="PROCEDIMIENTOS Y OTROS">
+        <option value="ABSCESO">ABSCESO</option>
+        <option value="ECOGRAFÍA">ECOGRAFÍA</option>
+        <option value="COLOCACION VIA">COLOCACION VIA</option>
+        <option value="ADMINISTRACION MEDICINA">ADMINISTRACION MEDICINA</option>
+        <option value="TOMA DE MUESTRA SANGRE">TOMA DE MUESTRA SANGRE</option>
+    </optgroup>
+
+    <optgroup label="VACUNAS">
+        <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
+        <option value="VACUNA PUPPY">VACUNA PUPPY</option>
+        <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+        <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC</option>
+        <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+        <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+        <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
+    </optgroup>
+
+    <optgroup label="LABORATORIO">
+        <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+        <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+        <option value="PERFIL 20">PERFIL 20</option>
+        <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
+        <option value="DISTEMPER">DISTEMPER</option>
+        <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
+        <option value="FILARIASIS">FILARIASIS</option>
+        <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
+        <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">HEMATOLOGIA+QUIMICA+HEMOPARASITOS</option>
+        <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+        <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>  
+        <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
+        <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
+        <option value="RASPADO PIEL">RASPADO PIEL</option>
+        <option value="PERFIL ANEMICO">PERFIL ANEMICO</option>
+        <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITOLOGIA FLUIDOS, SECRECIONES</option>
+    </optgroup>
+
+    <optgroup label="EUTANASIA">
+        <option value="EUTANASIA HASTA 5KG">HASTA 5KG</option>
+        <option value="EUTANASIA HASTA 15KG">HASTA 15KG</option>
+        <option value="EUTANASIA HASTA 25KG">HASTA 25KG</option>
+        <option value="EUTANASIA HASTA 35KG">HASTA 35KG</option>
+        <option value="KG ADICIONAL">KG ADICIONAL</option>
+        <option value="DISPOSICION">DISPOSICION</option>
+        <option value="CREMACION CON CENIZAS">CREMACION</option>
+    </optgroup>
+
+    <optgroup label="REFERIDOS">
+        <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
+        <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
+        <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
+        <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
+        <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
+        <option value="REFERIDO: PARVOVIRUS/CORONAVIRUS">REFERIDO: PARVOVIRUS/CORONAVIRUS</option>
+    </optgroup>
+</select>
                 <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Diagnóstico y tratamiento..."></textarea>
             </div>
 
@@ -408,7 +417,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         if(t === 'reporte') window.cargarReporte();
     };
 
-    // --- RECETAS E INSUMOS ---
+   // --- RECETAS E INSUMOS ---
     const insumosFijosMedicos = [
         { nombre: "Guantes de examen", costo: 0.50 }, 
         { nombre: "Algodón y Alcohol", costo: 0.10 }, 
@@ -420,13 +429,36 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         { nombre: "Xeruk", costo: 0.10 }, 
         { nombre: "Crema", costo: 0.10 }
     ];
-
-    const recetas = {
-        "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] },
+   const recetas = {
+        "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Crema", costo: 0.50 }] },
         "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
         "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] },
         "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] },
         "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] },
+        
+        "ABSCESO": { precioVenta: 25, insumos: [
+            { nombre: "Jelco", costo: 4.50 }, { nombre: "Agua Oxigenada", costo: 0.50 }, { nombre: "Compresa", costo: 0.50 }, 
+            { nombre: "Antibiotico", costo: 0.50 }, { nombre: "Antinflamatorio", costo: 0.50 }, { nombre: "Sedacion", costo: 0.50 }
+        ]},
+
+        "ECOGRAFÍA": { precioVenta: 40, insumos: [
+            { nombre: "Gel Ecográfico", costo: 1.00 }, { nombre: "Papel Absorbente", costo: 0.50 }, { nombre: "Toallín/Servilletas", costo: 0.30 }
+        ]},
+
+        "COLOCACION VIA": { precioVenta: 15, insumos: [
+            { nombre: "Jelco", costo: 1.50 }, { nombre: "Jeringa 5cc", costo: 0.50 }, { nombre: "Adhesivo", costo: 0.30 }, 
+            { nombre: "Mariposa", costo: 1.00 }, { nombre: "Obturador", costo: 1.00 }
+        ]},
+
+        "ADMINISTRACION MEDICINA": { precioVenta: 10, insumos: [
+            { nombre: "Jeringa", costo: 0.50 }, { nombre: "Medicamento (Nombre y Precio)", costo: 0.00 }
+        ]},
+
+        "TOMA DE MUESTRA SANGRE": { precioVenta: 10, insumos: [
+            { nombre: "Jeringa", costo: 0.50 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Tubo Morado o Naranja", costo: 1.20 }
+        ]},
+
+        // --- VACUNAS (El resto de insumos van por la lógica automática) ---
         "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] },
         "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] },
         "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] },
@@ -434,6 +466,8 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] },
         "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] },
         "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] },
+
+        // --- LABORATORIO ---
         "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] },
         "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
         "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] },
@@ -450,97 +484,122 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] },
         "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] },
         "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] },
-        "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [{ nombre: "Fármacos Eutanasia <5kg", costo: 10.00 }] },
-        "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [{ nombre: "Fármacos Eutanasia <15kg", costo: 18.00 }] },
-        "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [{ nombre: "Fármacos Eutanasia <25kg", costo: 25.00 }] },
-        "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [{ nombre: "Fármacos Eutanasia <35kg", costo: 35.00 }] },
+
+        // --- EUTANASIA ---
+        "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [
+            { nombre: "Propofol", costo: 4.00 }, { nombre: "Xilacina", costo: 1.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 1.00 }
+        ]},
+        "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [
+            { nombre: "Propofol", costo: 7.00 }, { nombre: "Xilacina", costo: 2.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 1.50 }
+        ]},
+        "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [
+            { nombre: "Propofol", costo: 10.00 }, { nombre: "Xilacina", costo: 3.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 2.00 }
+        ]},
+        "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [
+            { nombre: "Propofol", costo: 15.00 }, { nombre: "Xilacina", costo: 4.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 3.00 }
+        ]},
+
+        // --- OTROS ---
         "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] },
         "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] },
         "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] },
+
+        // --- REFERIDOS ---
         "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
         "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
         "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] },
         "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] },
         "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
-        "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
-        "ABSCESO": { precioVenta: 25, insumos: [
-            { nombre: "Jelco", costo: 4.50 }, { nombre: "Agua Oxigenada", costo: 0.50 }, { nombre: "Compresa", costo: 0.50 }, 
-            { nombre: "Antibiotico", costo: 0.50 }, { nombre: "Antinflamatorio", costo: 0.50 }, { nombre: "Sedacion", costo: 0.50 }, { nombre: "Guantes", costo: 0.50 }
-        ]}
+        "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] }
     };
 
- // --- MANEJO DE SERVICIOS ---
-    window.insertarServicio = (v) => {
-        if (!v) return;
-        const area = document.getElementById('hTratamiento');
-        const inputPrecioVenta = document.getElementById('precioVenta');
-        let nombreFinal = v;
-        let precioFinal = 0;
+window.insertarServicio = (v) => {
+    if (!v) return;
+    const area = document.getElementById('hTratamiento');
+    const inputPrecioVenta = document.getElementById('precioVenta');
+    let nombreFinal = v;
+    let precioFinal = 0;
 
-        // 1. Lógica para KG ADICIONAL
-        if (v === "KG ADICIONAL") {
-            const kgs = prompt("Ingrese la cantidad de KG adicionales:");
-            if (kgs && !isNaN(kgs)) {
-                const numKgs = parseFloat(kgs);
-                nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-                precioFinal = numKgs * 7;
-            } else return;
-        } 
-        // 2. Lógica para DISPOSICION / CREMACION
-        else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
-            const monto = prompt(`Ingrese el precio pactado para ${v}:`);
-            if (monto && !isNaN(monto)) {
-                precioFinal = parseFloat(monto);
-            } else return;
+    // 1. Lógica para KG ADICIONAL
+    if (v === "KG ADICIONAL") {
+        const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+        if (kgs && !isNaN(kgs)) {
+            const numKgs = parseFloat(kgs);
+            nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
+            precioFinal = numKgs * 7;
+        } else return;
+    } 
+    // 2. Lógica para DISPOSICION / CREMACION
+    else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
+        const monto = prompt(`Ingrese el precio pactado para ${v}:`);
+        if (monto && !isNaN(monto)) {
+            precioFinal = parseFloat(monto);
+        } else return;
+    }
+    // 3. Servicios normales y Combos Automáticos
+    else {
+        precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+        if (serviciosEnLista.length > 0) {
+            if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
+            if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
         }
-        // 3. Servicios normales y Combos
-        else {
-            precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
-            if (serviciosEnLista.length > 0) {
-                if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
-                if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
-            }
+    }
+
+    const grupoID = "srv-" + Date.now();
+    serviciosEnLista.push(v);
+    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
+    
+    let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
+    inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
+
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+
+    const filaTitulo = document.createElement('tr');
+    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black";
+    filaTitulo.innerHTML = `
+        <td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})</td>
+        <td class="p-2 text-center">
+            <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
+        </td>`;
+    cuerpo.appendChild(filaTitulo);
+
+    // --- LÓGICA DE INSUMOS ---
+    let listaNuevos = [];
+
+    // Fijos (Guantes, Alcohol, Hojas) solo si la tabla está vacía
+    if (!cuerpo.querySelector('.insumo-fila')) {
+        listaNuevos = [...insumosFijosMedicos];
+    }
+
+    // Vacunas (Jeringa, Xeruk, Crema) solo si NO hay otra vacuna ya en la tabla
+    if (v.includes("VACUNA")) {
+        const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td'))
+                                 .some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
+        if (!yaHayVacuna) {
+            listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
         }
+    }
 
-        const grupoID = "srv-" + Date.now();
-        serviciosEnLista.push(v);
-        area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
-        
-        let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
-        inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
+    // Insumos específicos de la receta
+    if (recetas[v] && recetas[v].insumos) {
+        listaNuevos = [...listaNuevos, ...recetas[v].insumos];
+    }
 
-        document.getElementById('contenedorInsumos').classList.remove('hidden');
-        const cuerpo = document.getElementById('listaInsumosDinamica');
+    listaNuevos.forEach(insumo => {
+        const tr = document.createElement('tr');
+        tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+            <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
+            <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
+            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+        cuerpo.appendChild(tr);
+    });
 
-        // AQUÍ SE CORRIGE: Ahora pasamos el 'precioFinal' (pactado o calculado) al botón de eliminar
-        const filaTitulo = document.createElement('tr');
-        filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black";
-        filaTitulo.innerHTML = `
-            <td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})</td>
-            <td class="p-2 text-center">
-                <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
-            </td>`;
-        cuerpo.appendChild(filaTitulo);
-
-        // Insumos fijos y específicos
-        let listaNuevos = !cuerpo.querySelector('.insumo-fila') ? [...insumosFijosMedicos] : [];
-        if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-        if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
-
-        listaNuevos.forEach(insumo => {
-            const tr = document.createElement('tr');
-            tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
-            tr.innerHTML = `
-                <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
-                <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
-                <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
-                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
-            cuerpo.appendChild(tr);
-        });
-
-        window.calcularTodo(); 
-        document.getElementById('selectorServicios').value = "";
-    };
+    window.calcularTodo(); 
+    document.getElementById('selectorServicios').value = "";
+};
     window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
         if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
         document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
@@ -731,6 +790,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
 </script>
+
 
 
 
