@@ -655,16 +655,15 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         } catch (e) { alert("❌ Error: " + e.message); }
     };
 
- window.buscarPorCedula = async () => {
+window.buscarPorCedula = async () => {
     const input = document.getElementById('searchCI');
     const contenedor = document.getElementById('resultadosBusqueda');
     if (!input || !input.value.trim()) return alert("⚠️ Ingrese una cédula para buscar.");
     
-    const ci = input.value.trim(); // Limpia espacios accidentales
+    const ci = input.value.trim();
     contenedor.innerHTML = "<p class='text-center py-4 text-blue-600 font-bold'>Buscando en registros...</p>";
     
     try {
-        // Hacemos la consulta a Firebase
         const q = query(collection(db, "consultas"), where("cedula", "==", ci));
         const snap = await getDocs(q);
         
@@ -677,20 +676,54 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
             return;
         }
 
-        contenedor.innerHTML = ""; // Limpiar el "Buscando..."
+        contenedor.innerHTML = ""; 
         
         snap.forEach(docSnap => {
             const d = docSnap.data();
-            // Creamos la tarjeta del paciente (puedes usar el diseño que ya tenías)
             const div = document.createElement('div');
-            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm mb-4";
+            div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl shadow-sm overflow-hidden";
+            
+            // Usamos <details> para el efecto de desplegar
             div.innerHTML = `
-                <div class="flex justify-between border-b pb-2 mb-2">
-                    <h3 class="font-black text-blue-900 uppercase">${d.paciente || 'S/N'}</h3>
-                    <span class="text-[10px] bg-blue-100 px-2 rounded-full">${d.fechaSimple || 'S/F'}</span>
-                </div>
-                <p class="text-sm text-gray-600"><strong>Doctor:</strong> ${d.doctor}</p>
-                <p class="text-sm italic text-gray-700 mt-2">${d.tratamiento || 'Sin detalles'}</p>
+                <details class="group">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 list-none">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold">${d.fechaSimple || 'S/F'}</span>
+                            <h3 class="font-black text-blue-900 uppercase leading-none">${d.paciente || 'S/N'}</h3>
+                            <p class="text-[10px] text-gray-500 uppercase mt-1">Dr. ${d.doctor}</p>
+                        </div>
+                        <div class="text-blue-500 font-bold text-xl group-open:rotate-180 transition-transform">
+                            ▾
+                        </div>
+                    </summary>
+                    
+                    <div class="p-4 bg-slate-50 border-t border-slate-200 animate-fadeIn">
+                        <div class="mb-3">
+                            <p class="text-[10px] font-bold text-blue-600 uppercase mb-1 underline">Diagnóstico y Tratamiento:</p>
+                            <p class="text-sm text-slate-700 whitespace-pre-wrap">${d.tratamiento || 'Sin detalles'}</p>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1 underline">Insumos y Gastos Detallados:</p>
+                            <div class="space-y-1">
+                                ${d.insumosUsados && d.insumosUsados.length > 0 
+                                    ? d.insumosUsados.map(ins => `
+                                        <div class="flex justify-between text-[11px] text-slate-600 border-b border-dotted border-slate-300 pb-1">
+                                            <span>${ins.nombre} (x${ins.cantidad})</span>
+                                            <span class="font-bold">$${ins.precio}</span>
+                                        </div>
+                                    `).join('')
+                                    : '<p class="text-xs italic text-gray-400">No se registraron insumos en esta visita.</p>'
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-2 border-t border-slate-300 flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Costo Total:</span>
+                            <span class="text-lg font-black text-slate-900">$${d.precioVenta || '0.00'}</span>
+                        </div>
+                    </div>
+                </details>
             `;
             contenedor.appendChild(div);
         });
@@ -794,6 +827,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </script>
 </body>
 </html>
+
 
 
 
