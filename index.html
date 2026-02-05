@@ -562,56 +562,67 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     };
 
     // --- MANEJO DE SERVICIOS ---
-    window.insertarServicio = (v) => {
-        if (!v) return;
-        const area = document.getElementById('hTratamiento');
-        const inputPrecioVenta = document.getElementById('precioVenta');
-        let nombreFinal = v;
-        let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
-        const grupoID = "srv-" + Date.now();
+window.insertarServicio = (v) => {
+    if (!v) return;
+    const area = document.getElementById('hTratamiento');
+    const inputPrecioVenta = document.getElementById('precioVenta');
+    let nombreFinal = v;
+    let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+    const grupoID = "srv-" + Date.now();
 
-        if (v === "KG ADICIONAL") {
-            const kgs = prompt("Ingrese la cantidad de KG adicionales:");
-            if (kgs && !isNaN(kgs)) {
-                const numKgs = parseFloat(kgs);
-                nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-                precioFinal = numKgs * 7;
-            } else return;
-        }
+    if (v === "KG ADICIONAL") {
+        const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+        if (kgs && !isNaN(kgs)) {
+            const numKgs = parseFloat(kgs);
+            nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
+            precioFinal = numKgs * 7;
+        } else return;
+    }
 
-        if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
-            const monto = prompt(`Ingrese el precio pactado para ${v}:`);
-            if (monto && !isNaN(monto)) precioFinal = parseFloat(monto);
-            else return;
-        }
+    if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
+        const monto = prompt(`Ingrese el precio pactado para ${v}:`);
+        if (monto && !isNaN(monto)) precioFinal = parseFloat(monto);
+        else return;
+    }
 
-        serviciosEnLista.push(v);
-        area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
-        inputPrecioVenta.value = (parseFloat(inputPrecioVenta.value || 0) + precioFinal).toFixed(2);
+    serviciosEnLista.push(v);
+    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
+    
+    // CORRECCIÓN: Sumar al valor existente en lugar de reemplazarlo
+    let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
+    inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
 
-        document.getElementById('contenedorInsumos').classList.remove('hidden');
-        const cuerpo = document.getElementById('listaInsumosDinamica');
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+    const cuerpo = document.getElementById('listaInsumosDinamica');
 
-        const filaTitulo = document.createElement('tr');
-        filaTitulo.className = "bg-blue-50 border-b-2 border-blue-200 text-blue-700 font-black";
-        filaTitulo.innerHTML = `<td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal}</td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button></td>`;
-        cuerpo.appendChild(filaTitulo);
+    const filaTitulo = document.createElement('tr');
+    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black";
+    filaTitulo.innerHTML = `<td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal}</td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button></td>`;
+    cuerpo.appendChild(filaTitulo);
 
-        let listaNuevos = !cuerpo.querySelector('.insumo-fila') ? [...insumosFijosMedicos] : [];
-        if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-        if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
+    // Solo agregar insumos fijos si la tabla está vacía
+    let listaNuevos = !cuerpo.querySelector('.insumo-fila') ? [...insumosFijosMedicos] : [];
+    if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+    if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
 
-        listaNuevos.forEach(insumo => {
-            const tr = document.createElement('tr');
-            tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
-            tr.innerHTML = `
-                <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
-                <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
-                <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
-                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
-            cuerpo.appendChild(tr);
-        });
+    listaNuevos.forEach(insumo => {
+        const tr = document.createElement('tr');
+        tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+            <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
+            <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
+            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+        cuerpo.appendChild(tr);
+    });
 
+    // AJUSTE FINAL: Forzamos el recalculo de los labels de ganancia
+    window.calcularTodo(); 
+    document.getElementById('selectorServicios').value = "";
+};
+    window.calcularTodo(); // Recalcula Neto, Dr y Tienda
+    document.getElementById('selectorServicios').value = "";
+};
         window.calcularTodo();
         document.getElementById('selectorServicios').value = "";
     };
@@ -841,6 +852,7 @@ window.buscarPorCedula = async () => {
 </script>
 </body>
 </html>
+
 
 
 
