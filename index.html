@@ -671,7 +671,7 @@ window.buscarPorCedula = async () => {
             contenedor.innerHTML = `
                 <div class='p-4 text-center bg-orange-50 text-orange-700 rounded-xl border border-orange-200'>
                     <p class="font-bold">❌ No hay resultados</p>
-                    <p class="text-xs">No existe ninguna consulta con la cédula: ${ci}</p>
+                    <p class="text-[10px]">No existe ninguna consulta con la cédula: ${ci}</p>
                 </div>`;
             return;
         }
@@ -683,7 +683,6 @@ window.buscarPorCedula = async () => {
             const div = document.createElement('div');
             div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl shadow-sm overflow-hidden";
             
-            // Usamos <details> para el efecto de desplegar
             div.innerHTML = `
                 <details class="group">
                     <summary class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 list-none">
@@ -692,9 +691,7 @@ window.buscarPorCedula = async () => {
                             <h3 class="font-black text-blue-900 uppercase leading-none">${d.paciente || 'S/N'}</h3>
                             <p class="text-[10px] text-gray-500 uppercase mt-1">Dr. ${d.doctor}</p>
                         </div>
-                        <div class="text-blue-500 font-bold text-xl group-open:rotate-180 transition-transform">
-                            ▾
-                        </div>
+                        <div class="text-blue-500 font-bold text-xl group-open:rotate-180 transition-transform">▾</div>
                     </summary>
                     
                     <div class="p-4 bg-slate-50 border-t border-slate-200 animate-fadeIn">
@@ -704,23 +701,25 @@ window.buscarPorCedula = async () => {
                         </div>
 
                         <div>
-                            <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1 underline">Insumos y Gastos Detallados:</p>
+                            <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1 underline">Insumos y Gastos:</p>
                             <div class="space-y-1">
-                                ${d.insumosUsados && d.insumosUsados.length > 0 
-                                    ? d.insumosUsados.map(ins => `
+                                ${
+                                    // Cambiamos a 'listaDetalladaInsumos' que es el nombre que usas al guardar
+                                    d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0 
+                                    ? d.listaDetalladaInsumos.map(ins => `
                                         <div class="flex justify-between text-[11px] text-slate-600 border-b border-dotted border-slate-300 pb-1">
-                                            <span>${ins.nombre} (x${ins.cantidad})</span>
-                                            <span class="font-bold">$${ins.precio}</span>
+                                            <span>${ins.nombre} (x${ins.cant})</span>
+                                            <span class="font-bold">$${ins.precio.toFixed(2)}</span>
                                         </div>
                                     `).join('')
-                                    : '<p class="text-xs italic text-gray-400">No se registraron insumos en esta visita.</p>'
+                                    : '<p class="text-xs italic text-gray-400">No se detallaron insumos en este registro.</p>'
                                 }
                             </div>
                         </div>
 
                         <div class="mt-4 pt-2 border-t border-slate-300 flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-500 uppercase">Costo Total:</span>
-                            <span class="text-lg font-black text-slate-900">$${d.precioVenta || '0.00'}</span>
+                            <span class="text-xs font-bold text-slate-500 uppercase">Costo Total cobrado:</span>
+                            <span class="text-lg font-black text-slate-900">$${(d.montoVenta || 0).toFixed(2)}</span>
                         </div>
                     </div>
                 </details>
@@ -729,10 +728,9 @@ window.buscarPorCedula = async () => {
         });
     } catch (e) {
         console.error("Error en búsqueda:", e);
-        contenedor.innerHTML = `<p class="text-red-500 font-bold">Error de conexión: ${e.message}</p>`;
+        contenedor.innerHTML = `<p class="text-red-500 font-bold">Error: ${e.message}</p>`;
     }
 };
-
     window.autocompletarPorCedula = async (ci) => {
         if (!ci) return;
         try {
@@ -827,6 +825,7 @@ window.buscarPorCedula = async () => {
 </script>
 </body>
 </html>
+
 
 
 
