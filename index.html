@@ -5,111 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
-   <style>
-    /* 1. ESTILOS DE PANTALLA (Lo que ves mientras trabajas) */
-    @media screen {
-        #doctorPrint { display: none; } /* Oculto en pantalla */
-    }
-
-    .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
-    .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
-    input, textarea { outline: none; background: transparent; width: 100%; }
-    
-    .menu-desplegable {
-        width: 100%; padding: 14px; border: 2px solid #3b82f6; border-radius: 10px;
-        background-color: #eff6ff; font-weight: bold; color: #1e40af; font-size: 13px;
-        margin-bottom: 10px; cursor: pointer; appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
-    }
-
-    /* 2. ESTILOS DE IMPRESIÓN (Lo que sale en el papel) */
-    @media print {
-        .no-print, button, select, .menu-desplegable, nav, #loginSection { 
-            display: none !important; 
+    <style>
+        /* ==========================================
+           1. ESTILOS GENERALES Y DE PANTALLA
+           ========================================== */
+        body { 
+            background-color: #f1f5f9; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1e293b; 
         }
-       /* 1. ESTILOS DE PANTALLA (Interfaz Moderna) */
-body { 
-    background-color: #f1f5f9; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #1e293b; 
-}
 
-/* Tarjeta Principal */
-.print-area {
-    background: #ffffff;
-    border-radius: 28px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-}
+        .print-area {
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
 
-/* Botones con Micro-interacciones */
-button {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-button:active { transform: scale(0.95); }
-button:hover { filter: brightness(1.1); }
+        .header-box { border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold; font-size: 10px; background: #f8fafc; text-transform: uppercase; margin-bottom: 8px; }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: bold; }
+        
+        input, textarea { outline: none; background: transparent; width: 100%; transition: all 0.2s; }
+        input:focus { border-bottom: 2px solid #2563eb !important; }
 
-/* Inputs Estilizados */
-input, textarea {
-    outline: none;
-    transition: all 0.2s;
-}
-input:focus { border-bottom: 2px solid #2563eb !important; }
+        button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        button:active { transform: scale(0.95); }
+        button:hover { filter: brightness(1.1); }
 
-/* Menú Desplegable Mejorado */
-.menu-desplegable {
-    width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px;
-    background-color: #ffffff; font-weight: 700; color: #1e40af; font-size: 13px;
-    cursor: pointer; appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
-}
-.menu-desplegable:hover { border-color: #3b82f6; }
+        .menu-desplegable {
+            width: 100%; padding: 14px; border: 2px solid #3b82f6; border-radius: 10px;
+            background-color: #eff6ff; font-weight: bold; color: #1e40af; font-size: 13px;
+            margin-bottom: 10px; cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
+        }
 
-/* 2. ESTILOS DE IMPRESIÓN */
-@media screen {
-    #doctorPrint { display: none; }
-}
+        @media screen {
+            #doctorPrint { display: none; }
+        }
 
-@media print {
-    .no-print, button, select, nav, #loginSection, .finanzas-ocultar { 
-        display: none !important; 
-    }
-    body { background-color: white !important; padding: 0; margin: 0; }
-    .print-area { border: none !important; box-shadow: none !important; width: 100%; }
-    
-    #doctorPrint { 
-        display: block !important; 
-        font-weight: 800; 
-        text-transform: uppercase;
-        font-size: 14px;
-        color: black;
-        margin-top: 10px;
-    }
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-    #hTratamiento { 
-        border: none !important; 
-        height: auto !important; 
-        overflow: visible !important; 
-        display: block !important; 
-        white-space: pre-wrap !important; 
-        font-size: 13px; 
-        line-height: 1.6;
-    }
-}
+        /* ==========================================
+           2. ESTILOS DE IMPRESIÓN (ELIMINA CORTES)
+           ========================================== */
+        @media print {
+            .no-print, button, select, nav, #loginSection, .finanzas-ocultar, .menu-desplegable { 
+                display: none !important; 
+            }
+            
+            body { background-color: white !important; padding: 0; margin: 0; }
+            
+            .print-area { 
+                border: none !important; 
+                box-shadow: none !important; 
+                width: 100% !important; 
+            }
 
-/* Animaciones */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+            #doctorPrint { 
+                display: block !important; 
+                font-weight: 800; 
+                text-transform: uppercase;
+                font-size: 14px;
+                color: black;
+                margin-top: 10px;
+            }
 
-/* Clase para ocultar finanzas en la receta */
-.receta-modo .finanzas-area { display: none !important; }
+            /* AJUSTE MAESTRO: ESTIRA EL TEXTAREA EN EL PAPEL */
+            #hTratamiento { 
+                border: none !important; 
+                height: auto !important; 
+                min-height: 150px;
+                overflow: visible !important; 
+                display: block !important; 
+                white-space: pre-wrap !important; 
+                font-size: 13px; 
+                line-height: 1.6;
+                color: black !important;
+                width: 100% !important;
+            }
+            
+            input { border: none !important; color: black !important; font-weight: bold; }
+        }
 </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -793,6 +779,7 @@ window.insertarServicio = (v) => {
         setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
 </script>
+
 
 
 
