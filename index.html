@@ -469,7 +469,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         ]}
     };
 
-    // --- MANEJO DE SERVICIOS ---
+   // --- MANEJO DE SERVICIOS ---
     window.insertarServicio = (v) => {
         if (!v) return;
         const area = document.getElementById('hTratamiento');
@@ -506,7 +506,13 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         filaTitulo.innerHTML = `<td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal}</td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button></td>`;
         cuerpo.appendChild(filaTitulo);
 
-        let listaNuevos = !cuerpo.querySelector('.insumo-fila') ? [...insumosFijosMedicos] : [];
+        // AJUSTE: Solo cargamos insumos fijos (guantes, algodón) si la tabla está VACÍA.
+        // Si ya hay algo (un combo), solo sumamos los insumos específicos del nuevo servicio.
+        let listaNuevos = [];
+        if (!cuerpo.querySelector('.insumo-fila')) {
+            listaNuevos = [...insumosFijosMedicos];
+        }
+
         if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
         if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
 
@@ -715,6 +721,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
 </script>
+
 
 
 
