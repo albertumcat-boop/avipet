@@ -392,27 +392,35 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         }
     };
 
-    // --- NAVEGACIÓN DE PESTAÑAS ---
-   // --- NAVEGACIÓN DE PESTAÑAS (SOLO EL AJUSTE NECESARIO) ---
+   // --- NAVEGACIÓN DE PESTAÑAS ---
     window.showTab = (t) => {
-        // 1. Buscamos las secciones
         const sH = document.getElementById('sectionHistoria');
         const sB = document.getElementById('sectionBuscador');
         const sR = document.getElementById('sectionReporte');
 
-        // 2. Quitamos la clase 'hidden' solo a la activa y se la ponemos a las demás
         sH.classList.toggle('hidden', t !== 'historia');
         sB.classList.toggle('hidden', t !== 'buscador');
         sR.classList.toggle('hidden', t !== 'reporte');
         
-        // 3. Estilos de los botones del menú (Tu lógica original)
         document.querySelectorAll('nav button').forEach(b => b.className = "py-2 text-gray-500 text-[11px] px-2 uppercase font-bold");
         const tabId = t === 'historia' ? 'H' : (t === 'buscador' ? 'B' : 'R');
         const tabEl = document.getElementById('tab' + tabId);
         if (tabEl) tabEl.className = "tab-active py-2 text-[11px] px-2 uppercase font-bold";
     };
 
-    // ... sigue el resto de tu código igual ...
+    // --- LÓGICA DE INSUMOS ---
+    const insumosFijosMedicos = [
+        { nombre: "Guantes de examen", costo: 0.50 }, 
+        { nombre: "Algodón y Alcohol", costo: 0.10 }, 
+        { nombre: "Hojas/Papelería", costo: 0.10 }
+    ];
+
+    const insumosBaseVacuna = [
+        { nombre: "Jeringa 3cc", costo: 0.25 }, 
+        { nombre: "Xeruk", costo: 0.10 }, 
+        { nombre: "Crema", costo: 0.10 }
+    ];
+
     const recetas = {
         "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Insumos Consulta", costo: 0.40 }] },
         "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
@@ -460,32 +468,35 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
             { nombre: "Antibiotico", costo: 0.50 }, { nombre: "Antinflamatorio", costo: 0.50 }, { nombre: "Sedacion", costo: 0.50 }, { nombre: "Guantes", costo: 0.50 }
         ]}
     };
-// --- FUNCIÓN PARA CARGAR REPORTE Y CONTADOR ---
+
+    // --- FUNCIONES DE FINANZAS ---
     window.cargarReporte = async () => {
         const listaDiv = document.getElementById('listaReporte');
         const totalPacientesSpan = document.getElementById('totalPacientes');
         if (!listaDiv) return;
 
-        listaDiv.innerHTML = "<p class='text-center py-4'>Cargando...</p>";
+        listaDiv.innerHTML = "<p class='text-center py-4 animate-pulse'>Calculando finanzas...</p>";
         
         try {
             const querySnapshot = await getDocs(collection(db, "consultas"));
             listaDiv.innerHTML = "";
             let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0, contador = 0;
+            const hoy = new Date().toLocaleDateString();
 
             querySnapshot.forEach((docSnap) => {
                 const d = docSnap.data();
-                if(d.fechaSimple === new Date().toLocaleDateString()) {
+                if(d.fechaSimple === hoy) {
                     const pVenta = parseFloat(d.montoVenta) || 0;
                     const pGasto = parseFloat(d.montoInsumos) || 0;
-                    const pagoDr = (pVenta - pGasto) * 0.30;
-                    const pagoTienda = (pVenta - pGasto) * 0.70;
+                    const saldoNeto = pVenta - pGasto;
+                    const pagoDr = saldoNeto * 0.30;
+                    const pagoTienda = saldoNeto * 0.70;
 
                     bruto += pVenta; gastos += pGasto; docsTotal += pagoDr; netoAvipet += pagoTienda;
                     contador++;
 
                     listaDiv.innerHTML += `
-                        <div class="py-2 border-b flex justify-between text-[10px] bg-white px-2">
+                        <div class="py-2 border-b flex justify-between text-[10px] bg-white px-2 mb-1 rounded shadow-sm">
                             <span><b>${d.paciente || 'S/N'}</b> (${d.doctor || '---'})</span>
                             <span class="font-bold text-blue-700">Dr: $${pagoDr.toFixed(2)}</span>
                         </div>`;
@@ -500,7 +511,6 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         } catch (e) { console.error(e); }
     };
 
-    // --- FUNCIÓN DESCARGAR REPORTE ---
     window.descargarReporte = () => {
         let contenido = `REPORTE DE PACIENTES - AVIPET\nFECHA: ${new Date().toLocaleDateString()}\n`;
         contenido += `------------------------------------------\n`;
@@ -517,7 +527,6 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         link.click();
     };
 
-    // --- FUNCIÓN GUARDAR CIERRE OFICIAL ---
     window.guardarResumenDelDia = async () => {
         if (!confirm("¿Guardar cierre en la base de datos?")) return;
         try {
@@ -530,6 +539,8 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
             alert("✅ Cierre guardado.");
         } catch (e) { alert("❌ Error."); }
     };
+
+    // --- FUNCIONES DE SERVICIOS ---
     window.insertarServicio = (v) => {
         if (!v) return;
         const area = document.getElementById('hTratamiento');
@@ -827,6 +838,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </script>
 </body>
 </html>
+
 
 
 
