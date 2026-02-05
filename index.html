@@ -281,21 +281,18 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 <button type="button" onclick="imprimirRecetaLimpia()" class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3 shadow-md hover:bg-cyan-600">
     📄 Imprimir Solo Receta (Sin Costos)
 </button>
-        </section>
-
-        <section id="sectionBuscador" class="hidden bg-white p-6 rounded-xl border">
-            <h2 class="font-black mb-4 uppercase text-blue-600">Buscador</h2>
-            <input type="text" id="searchCI" placeholder="Cédula..." class="w-full p-4 border-2 rounded-xl mb-4 font-bold bg-slate-50">
-            <button onclick="buscarPorCedula()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg">Buscar</button>
-            <div id="resultadosBusqueda" class="mt-4 space-y-3"></div>
-        </section>
-
        <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
-    <h2 class="font-black text-center mb-6 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
+    <h2 class="font-black text-center mb-2 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
     
-    <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg"></div>
+    <div class="text-center mb-4">
+        <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+            Pacientes Atendidos: <span id="totalPacientes">0</span>
+        </span>
+    </div>
     
-    <div class="grid grid-cols-2 gap-4">
+    <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
+    
+    <div class="grid grid-cols-2 gap-4 mb-6">
         <div class="p-4 bg-slate-100 rounded-2xl">
             <p class="text-[10px] font-bold uppercase text-slate-500">Bruto</p>
             <p id="repBruto" class="text-2xl font-black text-slate-800">$0.00</p>
@@ -314,16 +311,19 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         </div>
     </div>
 
-    <div class="flex gap-3 mt-8">
-        <button onclick="cargarReporte()" 
-                class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs hover:bg-slate-800 transition-colors">
-            Actualizar
+    <div class="flex flex-col gap-3">
+        <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[11px]">
+            🔄 Actualizar Cierre
         </button>
         
-        <button onclick="guardarResumenDelDia()" 
-                class="flex-1 bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100">
-            Guardar Cierre
-        </button>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="descargarReporte()" class="bg-green-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">
+                📥 Descargar TXT
+            </button>
+            <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">
+                💾 Guardar en Nube
+            </button>
+        </div>
     </div>
 </section>
 
@@ -529,37 +529,144 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         window.calcularTodo();
     };
 
-    window.guardarFirebase = async (imp) => {
-        if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
-        try {
-            const mascota = document.getElementById('hNombre').value.trim();
-            const cedula = document.getElementById('hCI').value.trim();
-            if(!mascota || !cedula) return alert("⚠️ Nombre y Cédula obligatorios.");
+   window.guardarFirebase = async (imp) => {
+    if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
+    try {
+        const mascota = document.getElementById('hNombre').value.trim();
+        const cedula = document.getElementById('hCI').value.trim();
+        if(!mascota || !cedula) return alert("⚠️ Nombre y Cédula obligatorios.");
 
-            const detalleInsumos = [];
-            document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
-                detalleInsumos.push({
-                    nombre: fila.cells[0].innerText,
-                    cant: parseInt(fila.querySelector('.i-cant').value) || 0,
-                    precio: parseFloat(fila.querySelector('.i-cost').value) || 0
-                });
+        const detalleInsumos = [];
+        document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
+            detalleInsumos.push({
+                nombre: fila.cells[0].innerText,
+                cant: parseInt(fila.querySelector('.i-cant').value) || 0,
+                precio: parseFloat(fila.querySelector('.i-cost').value) || 0
             });
+        });
 
-            const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-            const neto = montoVenta - montoInsumos;
+        // Aseguramos que lea bien el precio de venta aunque hayamos movido el diseño
+        const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
+        const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+        const neto = montoVenta - montoInsumos;
 
-            await addDoc(collection(db, "consultas"), {
-                paciente: mascota, cedula: cedula, doctor: doctorVerificado,
-                montoVenta, montoInsumos, pagoDoctor: neto * 0.3, pagoAvipet: neto * 0.7,
-                listaDetalladaInsumos: detalleInsumos, fecha: serverTimestamp(), fechaSimple: new Date().toLocaleDateString(),
-                propietario: document.getElementById('hProp').value.trim(), tratamiento: document.getElementById('hTratamiento').value.trim()
-            });
-            if (imp) window.print();
-            alert("✅ Guardado.");
-            location.reload();
-        } catch (e) { alert("❌ Error al guardar."); }
-    };
+        await addDoc(collection(db, "consultas"), {
+            paciente: mascota, 
+            cedula: cedula, 
+            doctor: doctorVerificado, // Guarda Sandoval o Silva
+            montoVenta: montoVenta, 
+            montoInsumos: montoInsumos, 
+            pagoDoctor: neto * 0.3, 
+            pagoAvipet: neto * 0.7,
+            listaDetalladaInsumos: detalleInsumos, 
+            fecha: serverTimestamp(), 
+            fechaSimple: new Date().toLocaleDateString(),
+            propietario: document.getElementById('hProp').value.trim(), 
+            tratamiento: document.getElementById('hTratamiento').value.trim()
+        });
+
+        if (imp) window.print();
+        alert("✅ Guardado exitosamente.");
+        location.reload();
+    } catch (e) { 
+        console.error(e);
+        alert("❌ Error al guardar: " + e.message); 
+    }
+};
+    window.cargarReporte = async () => {
+    const listaDiv = document.getElementById('listaReporte');
+    const totalPacientesSpan = document.getElementById('totalPacientes'); // El contador
+    if (!listaDiv) return;
+
+    listaDiv.innerHTML = "<p class='text-center py-4'>Cargando datos...</p>";
+    
+    try {
+        const querySnapshot = await getDocs(collection(db, "consultas"));
+        listaDiv.innerHTML = "";
+        
+        let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0;
+        let contador = 0;
+
+        querySnapshot.forEach((docSnap) => {
+            const d = docSnap.data();
+            // Solo mostramos lo de hoy (opcional, si quieres ver todo quita la validación de fecha)
+            if(d.fechaSimple === new Date().toLocaleDateString()) {
+                const pVenta = parseFloat(d.montoVenta) || 0;
+                const pGasto = parseFloat(d.montoInsumos) || 0;
+                const pagoDr = (pVenta - pGasto) * 0.30;
+                const pagoTienda = (pVenta - pGasto) * 0.70;
+
+                bruto += pVenta;
+                gastos += pGasto;
+                docsTotal += pagoDr;
+                netoAvipet += pagoTienda;
+                contador++;
+
+                listaDiv.innerHTML += `
+                    <div class="py-2 border-b border-slate-200 flex justify-between text-[11px] bg-white px-2">
+                        <span><b>${d.paciente}</b> (${d.doctor})</span>
+                        <span class="font-bold text-blue-700">Dr: $${pagoDr.toFixed(2)}</span>
+                    </div>`;
+            }
+        });
+
+        if(totalPacientesSpan) totalPacientesSpan.innerText = contador;
+        document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
+        document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
+        document.getElementById('repDocs').innerText = `$${docsTotal.toFixed(2)}`;
+        document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
+
+    } catch (e) { console.error(e); }
+};
+    window.descargarReporte = () => {
+    // 1. Validar que existan datos antes de descargar
+    const listaReporte = document.getElementById('listaReporte');
+    if (!listaReporte || listaReporte.children.length === 0) {
+        return alert("⚠️ No hay datos para descargar. Presiona 'Actualizar Cierre' primero.");
+    }
+
+    let contenido = `REPORTE DE PACIENTES - AVIPET\n`;
+    contenido += `FECHA: ${new Date().toLocaleDateString()}\n`;
+    contenido += `------------------------------------------\n`;
+    
+    // 2. Usar > div para tomar solo las filas principales y evitar duplicar texto
+    const lineas = document.querySelectorAll('#listaReporte > div');
+    lineas.forEach(linea => {
+        // Limpiamos el texto para que no haya saltos de línea internos en cada fila
+        const textoLimpio = linea.innerText.replace(/\n/g, " | ");
+        contenido += textoLimpio + "\n";
+    });
+
+    contenido += `------------------------------------------\n`;
+    contenido += `TOTAL PARA DOCTORES: ${document.getElementById('repDocs').innerText}\n`;
+    contenido += `PACIENTES TOTALES: ${document.getElementById('totalPacientes').innerText}\n`;
+    contenido += `\nGenerado por: Sistema Avipet`;
+
+    const blob = new Blob([contenido], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Cierre_${new Date().toLocaleDateString().replace(/\//g, '-')}.txt`;
+    link.click();
+};
+    window.guardarResumenDelDia = async () => {
+    if (!confirm("¿Deseas guardar formalmente el cierre de hoy en la base de datos?")) return;
+
+    try {
+        await addDoc(collection(db, "cierres_diarios"), {
+            fecha: serverTimestamp(),
+            fechaSimple: new Date().toLocaleDateString(),
+            bruto: document.getElementById('repBruto').innerText,
+            gastos: document.getElementById('repGastos').innerText,
+            pagoDoctores: document.getElementById('repDocs').innerText,
+            netoAvipet: document.getElementById('repNeto').innerText,
+            totalPacientes: document.getElementById('totalPacientes').innerText
+        });
+        alert("✅ Cierre diario guardado correctamente en la nube.");
+    } catch (e) {
+        alert("❌ Error al guardar el cierre.");
+        console.error(e);
+    }
+};
 
    window.buscarPorCedula = async () => {
     const ci = document.getElementById('searchCI').value.trim();
@@ -749,6 +856,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </script>
 </body>
 </html>
+
 
 
 
