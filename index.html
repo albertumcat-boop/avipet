@@ -281,48 +281,44 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 <button type="button" onclick="imprimirRecetaLimpia()" class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3 shadow-md hover:bg-cyan-600">
     📄 Imprimir Solo Receta (Sin Costos)
 </button>
-       <section id="sectionReporte" class="hidden bg-white p-6 rounded-xl border">
-    <h2 class="font-black text-center mb-2 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
-    
-    <div class="text-center mb-4">
-        <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-            Pacientes Atendidos: <span id="totalPacientes">0</span>
-        </span>
-    </div>
-    
-    <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
-    
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="p-4 bg-slate-100 rounded-2xl">
-            <p class="text-[10px] font-bold uppercase text-slate-500">Bruto</p>
-            <p id="repBruto" class="text-2xl font-black text-slate-800">$0.00</p>
-        </div>
-        <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500">
-            <p class="text-[10px] font-bold uppercase text-red-600">Gastos</p>
-            <p id="repGastos" class="text-2xl font-black text-red-700">$0.00</p>
-        </div>
-        <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500">
-            <p class="text-[10px] font-bold uppercase text-blue-600">Docs (30%)</p>
-            <p id="repDocs" class="text-2xl font-black text-blue-700">$0.00</p>
-        </div>
-        <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600">
-            <p class="text-[10px] font-bold uppercase text-emerald-700">Neto Avipet</p>
-            <p id="repNeto" class="text-3xl font-black text-emerald-800">$0.00</p>
-        </div>
-    </div>
 
-    <div class="flex flex-col gap-3">
-        <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[11px]">
-            🔄 Actualizar Cierre
-        </button>
+</section> 
+
+<section id="sectionBuscador" class="hidden p-4 animate-fadeIn">
+    <div class="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 max-w-2xl mx-auto">
+        <h2 class="text-blue-600 font-black uppercase text-center mb-6 text-lg">🔎 Buscador de Historias</h2>
+        <div class="flex gap-2 mb-6">
+            <input type="text" id="searchCI" placeholder="Cédula del dueño..." 
+                   class="w-full p-4 border-2 border-slate-100 rounded-xl text-sm focus:border-blue-500 outline-none">
+            <button onclick="window.buscarPorCedula()" class="bg-blue-600 text-white px-6 rounded-xl font-bold">BUSCAR</button>
+        </div>
+        <div id="resultadosBusqueda" class="space-y-4"></div>
+    </div>
+</section>
+
+<section id="sectionReporte" class="hidden p-4 animate-fadeIn">
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
+        <h2 class="font-black text-center mb-2 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
+        <div class="text-center mb-4">
+            <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase">
+                Pacientes Atendidos: <span id="totalPacientes">0</span>
+            </span>
+        </div>
+        <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
         
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="descargarReporte()" class="bg-green-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">
-                📥 Descargar TXT
-            </button>
-            <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">
-                💾 Guardar en Nube
-            </button>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="p-4 bg-slate-100 rounded-2xl"><p class="text-[10px] font-bold uppercase text-slate-500">Bruto</p><p id="repBruto" class="text-2xl font-black">$0.00</p></div>
+            <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500"><p class="text-[10px] font-bold uppercase text-red-600">Gastos</p><p id="repGastos" class="text-2xl font-black">$0.00</p></div>
+            <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500"><p class="text-[10px] font-bold uppercase text-blue-600">Docs (30%)</p><p id="repDocs" class="text-2xl font-black">$0.00</p></div>
+            <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600"><p class="text-[10px] font-bold uppercase text-emerald-700">Neto Avipet</p><p id="repNeto" class="text-3xl font-black">$0.00</p></div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[11px]">🔄 Actualizar Cierre</button>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="descargarReporte()" class="bg-green-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">📥 Descargar TXT</button>
+                <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">💾 Guardar en Nube</button>
+            </div>
         </div>
     </div>
 </section>
@@ -798,6 +794,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
 </script>
 </body>
 </html>
+
 
 
 
