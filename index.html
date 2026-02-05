@@ -469,15 +469,15 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         ]}
     };
 
-   // --- MANEJO DE SERVICIOS ---
+ // --- MANEJO DE SERVICIOS ---
     window.insertarServicio = (v) => {
         if (!v) return;
         const area = document.getElementById('hTratamiento');
         const inputPrecioVenta = document.getElementById('precioVenta');
         let nombreFinal = v;
-        let precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
-        const grupoID = "srv-" + Date.now();
+        let precioFinal = 0;
 
+        // 1. Lógica para KG ADICIONAL
         if (v === "KG ADICIONAL") {
             const kgs = prompt("Ingrese la cantidad de KG adicionales:");
             if (kgs && !isNaN(kgs)) {
@@ -485,34 +485,45 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                 nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
                 precioFinal = numKgs * 7;
             } else return;
-        }
-
-        if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
+        } 
+        // 2. Lógica para DISPOSICION / CREMACION
+        else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
             const monto = prompt(`Ingrese el precio pactado para ${v}:`);
-            if (monto && !isNaN(monto)) precioFinal = parseFloat(monto);
-            else return;
+            if (monto && !isNaN(monto)) {
+                precioFinal = parseFloat(monto);
+            } else return;
+        }
+        // 3. Servicios normales y Combos
+        else {
+            precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+            if (serviciosEnLista.length > 0) {
+                if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
+                if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
+            }
         }
 
+        const grupoID = "srv-" + Date.now();
         serviciosEnLista.push(v);
         area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
+        
         let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
         inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
 
         document.getElementById('contenedorInsumos').classList.remove('hidden');
         const cuerpo = document.getElementById('listaInsumosDinamica');
 
+        // AQUÍ SE CORRIGE: Ahora pasamos el 'precioFinal' (pactado o calculado) al botón de eliminar
         const filaTitulo = document.createElement('tr');
         filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black";
-        filaTitulo.innerHTML = `<td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal}</td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button></td>`;
+        filaTitulo.innerHTML = `
+            <td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})</td>
+            <td class="p-2 text-center">
+                <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
+            </td>`;
         cuerpo.appendChild(filaTitulo);
 
-        // AJUSTE: Solo cargamos insumos fijos (guantes, algodón) si la tabla está VACÍA.
-        // Si ya hay algo (un combo), solo sumamos los insumos específicos del nuevo servicio.
-        let listaNuevos = [];
-        if (!cuerpo.querySelector('.insumo-fila')) {
-            listaNuevos = [...insumosFijosMedicos];
-        }
-
+        // Insumos fijos y específicos
+        let listaNuevos = !cuerpo.querySelector('.insumo-fila') ? [...insumosFijosMedicos] : [];
         if (v.includes("VACUNA")) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
         if (recetas[v]) listaNuevos = [...listaNuevos, ...recetas[v].insumos];
 
@@ -530,7 +541,6 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         window.calcularTodo(); 
         document.getElementById('selectorServicios').value = "";
     };
-
     window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
         if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
         document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
@@ -721,6 +731,7 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
 </script>
+
 
 
 
