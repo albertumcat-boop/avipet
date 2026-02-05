@@ -659,54 +659,72 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         } catch (e) { alert("❌ Error: " + e.message); }
     };
 
-    window.buscarPorCedula = async () => {
-        const ci = document.getElementById('searchCI').value.trim();
-        const contenedor = document.getElementById('resultadosBusqueda');
-        if (!ci) return alert("⚠️ Ingrese cédula.");
+  window.buscarPorCedula = async () => {
+    const ciInput = document.getElementById('searchCI');
+    const contenedor = document.getElementById('resultadosBusqueda');
+    if (!ciInput || !ciInput.value.trim()) return alert("⚠️ Ingrese cédula.");
+    
+    const ci = ciInput.value.trim();
+    contenedor.innerHTML = "<p class='text-center py-4 animate-pulse text-blue-600 font-bold'>Consultando base de datos...</p>";
+    
+    try {
+        // Buscamos en la colección "consultas" donde la cédula coincida
+        const q = query(collection(db, "consultas"), where("cedula", "==", ci));
+        const snap = await getDocs(q);
+        contenedor.innerHTML = "";
         
-        contenedor.innerHTML = "<p class='text-center py-4 animate-pulse text-blue-600 font-bold'>Consultando...</p>";
-        
-        try {
-            const q = query(collection(db, "consultas"), where("cedula", "==", ci));
-            const snap = await getDocs(q);
-            contenedor.innerHTML = "";
+        if (snap.empty) {
+            contenedor.innerHTML = "<div class='p-4 text-center bg-red-50 text-red-600 rounded-xl font-bold'>❌ No se encontraron registros para esta cédula.</div>";
+            return;
+        }
+
+        snap.forEach(docSnap => {
+            const d = docSnap.data();
+            const div = document.createElement('div');
+            div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
             
-            if (snap.empty) {
-                contenedor.innerHTML = "<div class='p-4 text-center bg-red-50 text-red-600 rounded-xl font-bold'>❌ Sin registros.</div>";
-                return;
+            // Lógica de detalle de insumos
+            let insHTML = "";
+            if (d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0) {
+                const items = d.listaDetalladaInsumos.map(i => `
+                    <li class="flex justify-between text-[11px] bg-gray-50 p-2 border-b">
+                        <span>${i.nombre} <b>x${i.cant}</b></span>
+                        <b>$${((i.cant || 0) * (i.precio || 0)).toFixed(2)}</b>
+                    </li>`).join('');
+                
+                insHTML = `
+                    <div id="detalles-${docSnap.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-300">
+                        <ul class="space-y-1">${items}</ul>
+                    </div>
+                    <button onclick="const el=document.getElementById('detalles-${docSnap.id}'); el.classList.toggle('hidden'); this.innerText=el.classList.contains('hidden')?'[ + Ver detalle ]':'[ - Ocultar ]'" 
+                            class="w-full text-center py-1 text-[10px] font-black text-blue-600 bg-blue-50 rounded-lg mt-2">
+                        [ + Ver detalle ]
+                    </button>`;
             }
 
-            const registros = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            registros.forEach(d => {
-                const div = document.createElement('div');
-                div.className = "p-4 border-2 border-gray-100 bg-white rounded-xl shadow-sm space-y-3 mb-4";
-                
-                let insHTML = "";
-                if (d.listaDetalladaInsumos?.length > 0) {
-                    const items = d.listaDetalladaInsumos.map(i => `<li class="flex justify-between text-[11px] bg-gray-50 p-2 border-b"><span>${i.nombre} <b>x${i.cant}</b></span><b>$${((i.cant||0)*(i.precio||0)).toFixed(2)}</b></li>`).join('');
-                    insHTML = `<div id="detalles-${d.id}" class="hidden mt-3 pt-3 border-t border-dashed border-gray-300"><ul class="space-y-1">${items}</ul></div>
-                               <button onclick="const el=document.getElementById('detalles-${d.id}'); el.classList.toggle('hidden'); this.innerText=el.classList.contains('hidden')?'[ + Ver detalle ]':'[ - Ocultar ]'" class="w-full text-center py-1 text-[10px] font-black text-blue-600 bg-blue-50 rounded-lg mt-2">[ + Ver detalle ]</button>`;
-                }
-
-                div.innerHTML = `
-                    <div class="flex justify-between border-b pb-2">
-                        <div>
-                            <span class="text-[10px] bg-blue-100 text-blue-700 px-2 rounded-full font-bold">${d.fechaSimple || 'Sin fecha'}</span>
-                            <h3 class="font-black text-blue-900 text-lg uppercase">${d.paciente || 'S/N'}</h3>
-                        </div>
-                        <div class="text-right"><p class="text-xs font-black text-gray-700 uppercase">DR. ${d.doctor || '---'}</p></div>
+            div.innerHTML = `
+                <div class="flex justify-between border-b pb-2">
+                    <div>
+                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 rounded-full font-bold">${d.fechaSimple || 'S/F'}</span>
+                        <h3 class="font-black text-blue-900 text-lg uppercase">${d.paciente || 'PACIENTE SIN NOMBRE'}</h3>
                     </div>
-                    <p class="text-sm text-gray-700 whitespace-pre-line">${d.tratamiento || 'Sin descripción'}</p>
-                    <div class="bg-slate-50 p-3 rounded-lg flex justify-between text-xs">
-                        <span>TOTAL: <b>$${parseFloat(d.montoVenta||0).toFixed(2)}</b></span>
-                        <span class="text-red-600">INSUMOS: <b>$${parseFloat(d.montoInsumos||0).toFixed(2)}</b></span>
+                    <div class="text-right">
+                        <p class="text-xs font-black text-gray-700 uppercase">DR. ${d.doctor || '---'}</p>
                     </div>
-                    ${insHTML}`;
-                contenedor.appendChild(div);
-            });
-        } catch (e) { contenedor.innerHTML = "Error: " + e.message; }
-    };
+                </div>
+                <p class="text-sm text-gray-700 whitespace-pre-line"><b>Tratamiento:</b>\n${d.tratamiento || 'Sin descripción'}</p>
+                <div class="bg-slate-50 p-3 rounded-lg flex justify-between text-xs">
+                    <span>TOTAL: <b>$${parseFloat(d.montoVenta || 0).toFixed(2)}</b></span>
+                    <span class="text-red-600">COSTO INSUMOS: <b>$${parseFloat(d.montoInsumos || 0).toFixed(2)}</b></span>
+                </div>
+                ${insHTML}`;
+            contenedor.appendChild(div);
+        });
+    } catch (e) { 
+        console.error(e);
+        contenedor.innerHTML = "<p class='text-red-500'>Error al buscar: " + e.message + "</p>"; 
+    }
+};
 
     window.autocompletarPorCedula = async (ci) => {
         if (!ci) return;
@@ -737,71 +755,72 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
 
-    // --- FUNCIÓN PARA EL CIERRE DE CAJA (FINANZAS) ---
     window.cargarReporte = async () => {
-        const listaDiv = document.getElementById('listaReporte');
-        if (!listaDiv) return;
+    const listaDiv = document.getElementById('listaReporte');
+    if (!listaDiv) return;
 
-        listaDiv.innerHTML = "<p class='text-center py-4 animate-pulse'>Calculando finanzas...</p>";
+    listaDiv.innerHTML = "<p class='text-center py-4 animate-pulse'>Calculando balance financiero...</p>";
+    
+    try {
+        const querySnapshot = await getDocs(collection(db, "consultas"));
+        listaDiv.innerHTML = "";
         
-        try {
-            const querySnapshot = await getDocs(collection(db, "consultas"));
-            listaDiv.innerHTML = "";
-            
-            let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0;
+        let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0, contador = 0;
+        const hoy = new Date().toLocaleDateString();
 
-            querySnapshot.forEach((docSnap) => {
-                const d = docSnap.data();
-                
-                // Obtenemos los valores guardados
+        querySnapshot.forEach((docSnap) => {
+            const d = docSnap.data();
+            
+            // Si quieres ver TODO, comenta la siguiente línea del IF y su cierre }.
+            // if(d.fechaSimple === hoy) { 
                 const pVenta = parseFloat(d.montoVenta) || 0;
                 const pGasto = parseFloat(d.montoInsumos) || 0;
-                
-                // Realizamos el desglose que eliminamos de la pantalla de historia
                 const saldoNeto = pVenta - pGasto;
                 const pagoDr = saldoNeto * 0.30;
                 const pagoTienda = saldoNeto * 0.70;
 
-                // Sumamos a los totales globales
-                bruto += pVenta;
-                gastos += pGasto;
-                docsTotal += pagoDr;
+                bruto += pVenta; 
+                gastos += pGasto; 
+                docsTotal += pagoDr; 
                 netoAvipet += pagoTienda;
+                contador++;
 
-                // Creamos la fila con el detalle de Sandoval/Silva y Avipet
-                const fila = document.createElement('div');
-                fila.className = "py-3 border-b border-slate-200 flex justify-between items-center bg-white px-2 mb-1 rounded-lg shadow-sm";
-                fila.innerHTML = `
-                    <div>
-                        <p class="font-black text-slate-800 text-[11px] uppercase">${d.paciente || 'S/N'}</p>
-                        <p class="text-[9px] text-blue-600 font-bold italic">${d.doctor || 'SIN DOCTOR'}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold text-slate-700 text-[11px]">$${pVenta.toFixed(2)}</p>
-                        <p class="text-[9px] text-slate-400 font-medium">
-                            Dr (30%): <span class="text-sky-600">$${pagoDr.toFixed(2)}</span> | 
-                            Avipet: <span class="text-emerald-600">$${pagoTienda.toFixed(2)}</span>
-                        </p>
-                    </div>
-                `;
-                listaDiv.appendChild(fila);
-            });
+                listaDiv.innerHTML += `
+                    <div class="py-3 border-b border-slate-200 flex justify-between items-center bg-white px-2 mb-1 rounded-lg shadow-sm">
+                        <div>
+                            <p class="font-black text-slate-800 text-[11px] uppercase">${d.paciente || 'S/N'}</p>
+                            <p class="text-[9px] text-blue-600 font-bold italic">${d.doctor || 'SIN DOCTOR'}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-slate-700 text-[11px]">$${pVenta.toFixed(2)}</p>
+                            <p class="text-[9px] text-slate-400 font-medium">
+                                Dr (30%): <span class="text-sky-600">$${pagoDr.toFixed(2)}</span> | 
+                                Tienda: <span class="text-emerald-600">$${pagoTienda.toFixed(2)}</span>
+                            </p>
+                        </div>
+                    </div>`;
+            // } 
+        });
 
-            // Actualizamos los cuadros de totales de la pestaña Finanzas
-            document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
-            document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
-            document.getElementById('repDocs').innerText = `$${docsTotal.toFixed(2)}`;
-            document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
+        // Actualización de etiquetas en el HTML
+        if(document.getElementById('totalPacientes')) document.getElementById('totalPacientes').innerText = contador;
+        if(document.getElementById('repBruto')) document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
+        if(document.getElementById('repGastos')) document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
+        if(document.getElementById('repDocs')) document.getElementById('repDocs').innerText = `$${docsTotal.toFixed(2)}`;
+        if(document.getElementById('repNeto')) document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
 
-        } catch (e) {
-            console.error("Error en reporte:", e);
-            listaDiv.innerHTML = "<p class='text-red-500 text-center font-bold'>Error al cargar datos.</p>";
-        }
-    };
+        if(contador === 0) listaDiv.innerHTML = "<p class='text-center py-4 text-gray-400'>No hay datos para mostrar hoy.</p>";
+
+    } catch (e) { 
+        console.error("Error en reporte:", e);
+        listaDiv.innerHTML = "<p class='text-red-500 text-center font-bold'>Error crítico al conectar con la base de datos.</p>";
+    }
+};
 
 </script>
 </body>
 </html>
+
 
 
 
