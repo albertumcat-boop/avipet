@@ -473,33 +473,26 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
     const totalPacientesSpan = document.getElementById('totalPacientes');
     if (!listaDiv) return;
 
-    listaDiv.innerHTML = "<p class='text-center py-4 animate-pulse text-blue-500 font-bold text-xs'>Sincronizando caja diaria...</p>";
+    // Limpiamos visualmente y reseteamos contadores
+    listaDiv.innerHTML = "<p class='text-center py-4 text-slate-400 text-xs'>Sincronizando caja...</p>";
     
+    let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0, contador = 0;
+
+    // Generamos la fecha de HOY manualmente para comparar
+    const ahora = new Date();
+    const hoyComparar = `${ahora.getDate()}/${ahora.getMonth() + 1}/${ahora.getFullYear()}`;
+
     try {
         const querySnapshot = await getDocs(collection(db, "consultas"));
-        listaDiv.innerHTML = "";
-        
-        let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0, contador = 0;
-        
-        // NORMALIZACIÓN DE FECHA: Evita errores de "05/02" vs "5/2"
-        const ahora = new Date();
-        const hoyNormalizado = `${ahora.getDate()}/${ahora.getMonth() + 1}/${ahora.getFullYear()}`;
+        let htmlAcumulado = "";
 
         querySnapshot.forEach((docSnap) => {
             const d = docSnap.data();
             
-            // Convertimos la fecha guardada a formato normalizado para comparar
-            let fechaGuardada = d.fechaSimple; 
-            if (d.fecha && d.fecha.toDate) {
-                const f = d.fecha.toDate();
-                fechaGuardada = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
-            }
-
-            if(fechaGuardada === hoyNormalizado) {
+            // SOLO si la fecha coincide exactamente con hoy
+            if (d.fechaSimple === hoyComparar) {
                 const pVenta = parseFloat(d.montoVenta) || 0;
                 const pGasto = parseFloat(d.montoInsumos) || 0;
-                
-                // Cálculo según tu regla de negocio (30% para Darwin/Joan sobre el neto)
                 const saldoNeto = pVenta - pGasto;
                 const pagoDr = saldoNeto * 0.30;
                 const pagoTienda = saldoNeto * 0.70;
@@ -510,36 +503,33 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
                 netoAvipet += pagoTienda;
                 contador++;
 
-                listaDiv.innerHTML += `
-                    <div class="py-3 border-b border-slate-100 flex justify-between items-center bg-white px-3 mb-2 rounded-xl shadow-sm border-l-4 border-blue-500">
+                htmlAcumulado += `
+                    <div class="py-3 border-b border-slate-100 flex justify-between items-center bg-white px-3 mb-2 rounded-xl shadow-sm border-l-4 border-slate-300">
                         <div>
-                            <p class="font-black text-slate-800 text-[11px] uppercase">${d.paciente || 'S/N'}</p>
-                            <p class="text-[9px] text-blue-600 font-bold">DR. ${d.doctor ? d.doctor.toUpperCase() : 'SIN ASIGNAR'}</p>
+                            <p class="font-black text-slate-700 text-[11px] uppercase">${d.paciente || 'S/N'}</p>
+                            <p class="text-[9px] text-slate-400 font-bold italic">DR. ${d.doctor || 'S/D'}</p>
                         </div>
                         <div class="text-right">
-                            <p class="font-black text-slate-900 text-[12px]">$${pVenta.toFixed(2)}</p>
-                            <p class="text-[8px] text-slate-400">
-                                Pago Dr: <span class="text-sky-600 font-bold">$${pagoDr.toFixed(2)}</span>
-                            </p>
+                            <p class="font-black text-slate-800 text-[11px]">$${pVenta.toFixed(2)}</p>
+                            <p class="text-[8px] text-slate-400">Neto Dr: $${pagoDr.toFixed(2)}</p>
                         </div>
                     </div>`;
             }
         });
 
-        if(contador === 0) {
-            listaDiv.innerHTML = "<p class='text-center py-8 text-slate-400 text-xs italic'>No se han registrado pacientes hoy.</p>";
-        }
-
-        // Actualización de la UI
+        // Inyectamos los resultados
+        listaDiv.innerHTML = htmlAcumulado || "<p class='text-center py-6 text-slate-400 text-xs italic'>No hay registros para hoy.</p>";
+        
+        // Actualizamos los cuadros de totales
         if(totalPacientesSpan) totalPacientesSpan.innerText = contador;
         document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
         document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
         document.getElementById('repDocs').innerText = `$${docsTotal.toFixed(2)}`;
         document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
 
-    } catch (e) { 
+    } catch (e) {
         console.error(e);
-        listaDiv.innerHTML = `<p class="text-red-500 text-center text-xs">Error: ${e.message}</p>`;
+        listaDiv.innerHTML = "<p class='text-red-500 text-center text-xs'>Error de conexión.</p>";
     }
 };
     window.descargarReporte = () => {
@@ -636,47 +626,50 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
         window.calcularTodo();
     };
 
-    // --- FIREBASE Y BUSCADOR ---
-    window.guardarFirebase = async (imp) => {
-        if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
-        try {
-            const mascota = document.getElementById('hNombre').value.trim();
-            const cedula = document.getElementById('hCI').value.trim();
-            if(!mascota || !cedula) return alert("⚠️ Nombre y Cédula obligatorios.");
+   window.guardarFirebase = async (imp) => {
+    if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
+    try {
+        const mascota = document.getElementById('hNombre').value.trim();
+        const cedula = document.getElementById('hCI').value.trim();
+        if(!mascota || !cedula) return alert("⚠️ Nombre y Cédula obligatorios.");
 
-            const detalleInsumos = [];
-            document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
-                detalleInsumos.push({
-                    nombre: fila.cells[0].innerText,
-                    cant: parseInt(fila.querySelector('.i-cant').value) || 0,
-                    precio: parseFloat(fila.querySelector('.i-cost').value) || 0
-                });
+        // NORMALIZACIÓN DE FECHA (Día/Mes/Año sin ceros a la izquierda)
+        const ahora = new Date();
+        const fechaManual = `${ahora.getDate()}/${ahora.getMonth() + 1}/${ahora.getFullYear()}`;
+
+        const detalleInsumos = [];
+        document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
+            detalleInsumos.push({
+                nombre: fila.cells[0].innerText,
+                cant: parseInt(fila.querySelector('.i-cant').value) || 0,
+                precio: parseFloat(fila.querySelector('.i-cost').value) || 0
             });
+        });
 
-            const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-            const neto = montoVenta - montoInsumos;
+        const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
+        const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
+        const neto = montoVenta - montoInsumos;
 
-            await addDoc(collection(db, "consultas"), {
-                paciente: mascota, 
-                cedula: cedula, 
-                doctor: doctorVerificado,
-                montoVenta: montoVenta, 
-                montoInsumos: montoInsumos, 
-                pagoDoctor: neto * 0.3, 
-                pagoAvipet: neto * 0.7,
-                listaDetalladaInsumos: detalleInsumos, 
-                fecha: serverTimestamp(), 
-                fechaSimple: new Date().toLocaleDateString(),
-                propietario: document.getElementById('hProp').value.trim(), 
-                tratamiento: document.getElementById('hTratamiento').value.trim()
-            });
+        await addDoc(collection(db, "consultas"), {
+            paciente: mascota, 
+            cedula: cedula, 
+            doctor: doctorVerificado,
+            montoVenta: montoVenta, 
+            montoInsumos: montoInsumos, 
+            pagoDoctor: neto * 0.3, 
+            pagoAvipet: neto * 0.7,
+            listaDetalladaInsumos: detalleInsumos, 
+            fecha: serverTimestamp(), 
+            fechaSimple: fechaManual, // USAMOS LA FECHA NORMALIZADA
+            propietario: document.getElementById('hProp').value.trim(), 
+            tratamiento: document.getElementById('hTratamiento').value.trim()
+        });
 
-            if (imp) window.print();
-            alert("✅ Guardado exitosamente.");
-            location.reload();
-        } catch (e) { alert("❌ Error: " + e.message); }
-    };
+        if (imp) window.print();
+        alert("✅ Guardado exitosamente.");
+        location.reload();
+    } catch (e) { alert("❌ Error: " + e.message); }
+};
 
 window.buscarPorCedula = async () => {
     const input = document.getElementById('searchCI');
@@ -848,6 +841,7 @@ window.buscarPorCedula = async () => {
 </script>
 </body>
 </html>
+
 
 
 
