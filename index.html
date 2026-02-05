@@ -176,81 +176,79 @@ input:focus { border-bottom: 2px solid #2563eb !important; }
             </div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
+               <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
-                    <select id="menuServicios" onchange="insertarServicio(this.value); this.value='';" class="menu-desplegable">
-                       <select id="selectorServicios" class="w-full p-2 border rounded bg-white text-sm" onchange="window.insertarServicio(this.value)">
-    <option value="">-- SELECCIONE SERVICIO --</option>
-    
-   <div class="mb-4">
-    <label class="block text-slate-700 text-sm font-bold mb-2">AÑADIR SERVICIOS O PRODUCTOS:</label>
-    <select id="selectorServicios" class="w-full p-2 border rounded bg-white text-sm" onchange="window.insertarServicio(this.value)">
-        <option value="">-- SELECCIONE SERVICIO --</option>
-        
-        <optgroup label="CONSULTAS">
-            <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
-            <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
-            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
-            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
-            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
-        </optgroup>
+                    <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 tracking-wider">Añadir Servicios o Productos:</label>
+                    <select id="selectorServicios" class="menu-desplegable" onchange="window.insertarServicio(this.value)">
+                        <option value="">-- SELECCIONE SERVICIO --</option>
+                        
+                        <optgroup label="CONSULTAS">
+                            <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
+                            <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+                            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+                            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+                            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+                        </optgroup>
 
-        <optgroup label="PROCEDIMIENTOS Y OTROS">
-            <option value="ABSCESO">ABSCESO</option>
-            <option value="ECOGRAFÍA">ECOGRAFÍA</option>
-            <option value="COLOCACION VIA">COLOCACION VIA</option>
-            <option value="ADMINISTRACION MEDICINA">ADMINISTRACION MEDICINA</option>
-            <option value="TOMA DE MUESTRA SANGRE">TOMA DE MUESTRA SANGRE</option>
-        </optgroup>
+                        <optgroup label="PROCEDIMIENTOS Y OTROS">
+                            <option value="ABSCESO">ABSCESO</option>
+                            <option value="ECOGRAFÍA">ECOGRAFÍA</option>
+                            <option value="COLOCACION VIA">COLOCACION VIA</option>
+                            <option value="ADMINISTRACION MEDICINA">ADMINISTRACION MEDICINA</option>
+                            <option value="TOMA DE MUESTRA SANGRE">TOMA DE MUESTRA SANGRE</option>
+                        </optgroup>
 
-        <optgroup label="VACUNAS">
-            <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
-            <option value="VACUNA PUPPY">VACUNA PUPPY</option>
-            <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
-            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC</option>
-            <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
-            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
-            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
-        </optgroup>
+                        <optgroup label="VACUNAS">
+                            <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
+                            <option value="VACUNA PUPPY">VACUNA PUPPY</option>
+                            <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+                            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC</option>
+                            <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+                            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+                            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
+                        </optgroup>
 
-        <optgroup label="LABORATORIO">
-            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
-            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
-            <option value="PERFIL 20">PERFIL 20</option>
-            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-            <option value="DISTEMPER">DISTEMPER</option>
-            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
-            <option value="FILARIASIS">FILARIASIS</option>
-            <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
-            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">HEMATOLOGIA+QUIMICA+HEMOPARASITOS</option>
-            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>  
-            <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
-            <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
-            <option value="RASPADO PIEL">RASPADO PIEL</option>
-            <option value="PERFIL ANEMICO">PERFIL ANEMICO</option>
-            <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITOLOGIA FLUIDOS, SECRECIONES</option>
-        </optgroup>
+                        <optgroup label="LABORATORIO">
+                            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+                            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+                            <option value="PERFIL 20">PERFIL 20</option>
+                            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
+                            <option value="DISTEMPER">DISTEMPER</option>
+                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
+                            <option value="FILARIASIS">FILARIASIS</option>
+                            <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
+                            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">HEMATOLOGIA+QUIMICA+HEMOPARASITOS</option>
+                            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>  
+                            <option value="CITOLOGIA 1 OIDO">CITOLOGIA 1 OIDO</option>
+                            <option value="CITOLOGIA 2 OIDOS">CITOLOGIA 2 OIDOS</option>
+                            <option value="RASPADO PIEL">RASPADO PIEL</option>
+                            <option value="PERFIL ANEMICO">PERFIL ANEMICO</option>
+                            <option value="CITOLOGIA FLUIDOS, SECRECIONES">CITOLOGIA FLUIDOS, SECRECIONES</option>
+                        </optgroup>
 
-        <optgroup label="EUTANASIA Y FINAL">
-            <option value="EUTANASIA HASTA 5KG">HASTA 5KG</option>
-            <option value="EUTANASIA HASTA 15KG">HASTA 15KG</option>
-            <option value="EUTANASIA HASTA 25KG">HASTA 25KG</option>
-            <option value="EUTANASIA HASTA 35KG">HASTA 35KG</option>
-            <option value="KG ADICIONAL">KG ADICIONAL</option>
-            <option value="DISPOSICION">DISPOSICION</option>
-            <option value="CREMACION CON CENIZAS">CREMACION</option>
-        </optgroup>
+                        <optgroup label="EUTANASIA Y FINAL">
+                            <option value="EUTANASIA HASTA 5KG">HASTA 5KG</option>
+                            <option value="EUTANASIA HASTA 15KG">HASTA 15KG</option>
+                            <option value="EUTANASIA HASTA 25KG">HASTA 25KG</option>
+                            <option value="EUTANASIA HASTA 35KG">HASTA 35KG</option>
+                            <option value="KG ADICIONAL">KG ADICIONAL</option>
+                            <option value="DISPOSICION">DISPOSICION</option>
+                            <option value="CREMACION CON CENIZAS">CREMACION</option>
+                        </optgroup>
 
-        <optgroup label="REFERIDOS">
-            <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
-            <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
-            <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
-            <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
-            <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
-            <option value="REFERIDO: PARVOVIRUS/CORONAVIRUS">REFERIDO: PARVOVIRUS/CORONAVIRUS</option>
-        </optgroup>
-    </select>
-</div>
+                        <optgroup label="REFERIDOS">
+                            <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
+                            <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
+                            <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
+                            <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
+                            <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
+                            <option value="REFERIDO: PARVOVIRUS/CORONAVIRUS">REFERIDO: PARVOVIRUS/CORONAVIRUS</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Diagnóstico y tratamiento..."></textarea>
+            </div>
                 <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white" placeholder="Diagnóstico y tratamiento..."></textarea>
             </div>
 
@@ -796,6 +794,7 @@ window.insertarServicio = (v) => {
         setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
 </script>
+
 
 
 
