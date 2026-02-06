@@ -244,7 +244,7 @@
             </div>
         </section>
 
-     <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
+    <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
         <h2 class="font-black text-center mb-2 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
         
@@ -268,10 +268,10 @@
             </div>
             
             <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500">
-                <p class="text-[10px] font-bold uppercase text-blue-600 mb-1 leading-tight">Dres. (Sando/Silva)</p>
+                <p class="text-[10px] font-bold uppercase text-blue-600 mb-1">Dres. (Sando/Silva)</p>
                 <div class="text-[9px] font-bold text-slate-700 space-y-0.5">
-                    <div class="flex justify-between">SANDOVAL: <span id="repDocSandoval" class="text-blue-700">$0.00</span></div>
-                    <div class="flex justify-between">SILVA: <span id="repDocSilva" class="text-blue-700">$0.00</span></div>
+                    <div class="flex justify-between uppercase">Sandoval: <span id="repDocSandoval" class="text-blue-700 font-black">$0.00</span></div>
+                    <div class="flex justify-between uppercase">Silva: <span id="repDocSilva" class="text-blue-700 font-black">$0.00</span></div>
                 </div>
             </div>
 
@@ -281,29 +281,26 @@
             </div>
         </div>
 
-        <div class="flex flex-col gap-3">
-            <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[11px]">🔄 Actualizar Cierre</button>
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="descargarReporte()" class="bg-green-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">📥 Descargar TXT</button>
-                <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">💾 Guardar en Nube</button>
+        <div class="flex flex-col gap-2">
+            <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[11px] hover:bg-slate-700 transition-colors">
+                🔄 Actualizar Cierre
+            </button>
+            
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="descargarReporte()" class="bg-green-600 text-white py-3 rounded-xl font-black uppercase text-[10px] hover:bg-green-500 transition-colors">
+                    📥 Descargar TXT
+                </button>
+                <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-3 rounded-xl font-black uppercase text-[10px] hover:bg-emerald-500 transition-colors">
+                    💾 Guardar en Nube
+                </button>
             </div>
-            <button onclick="window.generarReporteMensual()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase text-[11px] shadow-lg">📊 Análisis Financiero Mensual</button>
+            
+            <button onclick="window.generarReporteMensual()" class="w-full bg-blue-900 text-white py-3 rounded-xl font-black uppercase text-[11px] shadow-lg hover:bg-blue-800 transition-colors mt-1">
+                📊 Análisis Financiero Mensual
+            </button>
         </div>
-
-        <div class="mt-6 border border-slate-400 rounded-lg overflow-hidden">
-            <table class="w-full bg-white text-[10px]">
-                <thead class="bg-slate-100 uppercase border-b border-slate-400">
-                    <tr>
-                        <th class="p-2 text-left">Doctor</th>
-                        <th class="p-2 text-left">Propietario</th>
-                        <th class="p-2 text-left">Neto Doc</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaReportes"></tbody>
-            </table>
-        </div>
-    </div>
-</section>
+    </div> 
+    </section>
 <script type="module">
     // --- IMPORTACIONES ---
     import { db } from './firebase-config.js';
@@ -1152,6 +1149,7 @@ ${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior."
     }
 };
 </script>
+
 
 
 
