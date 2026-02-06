@@ -683,7 +683,6 @@ window.insertarServicio = (v) => {
         window.calcularTodo();
     };
 
-    // --- FIREBASE: GUARDAR ---
    window.guardarFirebase = async (imp) => {
     if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
     try {
@@ -694,6 +693,7 @@ window.insertarServicio = (v) => {
         const ahora = new Date();
         const fechaManual = `${ahora.getDate()}/${ahora.getMonth() + 1}/${ahora.getFullYear()}`;
 
+        // 1. Recopilar detalle de insumos (Tu lógica intacta)
         const detalleInsumos = [];
         document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
             detalleInsumos.push({
@@ -703,9 +703,23 @@ window.insertarServicio = (v) => {
             });
         });
 
+        // --- NUEVA LÓGICA DE CÁLCULO DINÁMICO ---
+        let pagoDoctorVariable = 0;
+        // Buscamos todas las filas que marcamos como "servicio-principal" en insertarServicio
+        document.querySelectorAll('.servicio-principal').forEach(fila => {
+            const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+            const porcentajeDoc = parseFloat(fila.getAttribute('data-porc')) || 0;
+            
+            // Sumamos la ganancia de este servicio según su porcentaje de la lista maestra
+            pagoDoctorVariable += (precioServicio * (porcentajeDoc / 100));
+        });
+        // ---------------------------------------
+
         const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
         const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
-        const neto = montoVenta - montoInsumos;
+        
+        // El neto es lo que queda después de descontar insumos
+        const netoDisponible = montoVenta - montoInsumos;
 
         await addDoc(collection(db, "consultas"), {
             paciente: mascota, 
@@ -713,8 +727,10 @@ window.insertarServicio = (v) => {
             doctor: doctorVerificado,
             montoVenta: montoVenta, 
             montoInsumos: montoInsumos, 
-            pagoDoctor: neto * 0.3, 
-            pagoAvipet: neto * 0.7,
+            // CAMBIO AQUÍ: Ahora usa el cálculo variable, no 0.3
+            pagoDoctor: pagoDoctorVariable, 
+            // Avipet se lleva el resto del dinero después de insumos y pago al doctor
+            pagoAvipet: netoDisponible - pagoDoctorVariable,
             listaDetalladaInsumos: detalleInsumos, 
             fecha: serverTimestamp(), 
             fechaSimple: fechaManual,
@@ -722,9 +738,8 @@ window.insertarServicio = (v) => {
             tratamiento: document.getElementById('hTratamiento').value.trim()
         });
 
-        // --- AJUSTE PARA IMPRESIÓN SIN CORTES ---
+        // --- TU LÓGICA DE IMPRESIÓN (Mantenida igual) ---
         if (imp) {
-            // Copiamos el texto al div invisible antes de imprimir
             const tratamientoTexto = document.getElementById('hTratamiento').value;
             const espejo = document.getElementById('hTratamientoPrint');
             if(espejo) {
@@ -732,7 +747,6 @@ window.insertarServicio = (v) => {
             }
             window.print();
         }
-        // ----------------------------------------
 
         alert("✅ Guardado exitosamente.");
         location.reload();
@@ -805,46 +819,54 @@ window.insertarServicio = (v) => {
 
     // --- FINANZAS Y REPORTES ---
     window.cargarReporte = async () => {
-        const listaDiv = document.getElementById('listaReporte');
-        if (!listaDiv) return;
-        listaDiv.innerHTML = "<p class='text-center py-4'>Sincronizando caja...</p>";
-        try {
-            const querySnapshot = await getDocs(collection(db, "consultas"));
-            listaDiv.innerHTML = "";
-            let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0, contador = 0;
-            const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
+    const listaDiv = document.getElementById('listaReporte');
+    if (!listaDiv) return;
+    listaDiv.innerHTML = "<p class='text-center py-4'>Sincronizando caja...</p>";
+    try {
+        const querySnapshot = await getDocs(collection(db, "consultas"));
+        listaDiv.innerHTML = "";
+        let bruto = 0, gastos = 0, docsTotal = 0, netoAvipet = 0, contador = 0;
+        const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
 
-            querySnapshot.forEach((docSnap) => {
-                const d = docSnap.data();
-                if(d.fechaSimple === hoy) { 
-                    const pVenta = parseFloat(d.montoVenta) || 0;
-                    const pGasto = parseFloat(d.montoInsumos) || 0;
-                    const saldoNeto = pVenta - pGasto;
-                    bruto += pVenta; gastos += pGasto; 
-                    docsTotal += (saldoNeto * 0.30); netoAvipet += (saldoNeto * 0.70);
-                    contador++;
+        querySnapshot.forEach((docSnap) => {
+            const d = docSnap.data();
+            if(d.fechaSimple === hoy) { 
+                const pVenta = parseFloat(d.montoVenta) || 0;
+                const pGasto = parseFloat(d.montoInsumos) || 0;
+                
+                // LÓGICA CORREGIDA: Leemos el pago que se calculó individualmente
+                const pagoRealDoc = parseFloat(d.pagoDoctor) || 0; 
+                
+                bruto += pVenta; 
+                gastos += pGasto; 
+                docsTotal += pagoRealDoc; 
+                
+                // AVIPET gana: Venta Total - Gastos - Lo que cobró el Doctor
+                netoAvipet += (pVenta - pGasto - pagoRealDoc);
+                
+                contador++;
 
-                    listaDiv.innerHTML += `
-                        <div class="py-3 border-b border-slate-100 flex justify-between items-center bg-white px-3 mb-2 rounded-xl shadow-sm border-l-4 border-slate-300">
-                            <div>
-                                <p class="font-black text-slate-700 text-[11px] uppercase">${d.paciente || 'S/N'}</p>
-                                <p class="text-[9px] text-slate-400 font-bold italic">DR. ${d.doctor || 'S/D'}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-black text-slate-800 text-[11px]">$${pVenta.toFixed(2)}</p>
-                                <p class="text-[8px] text-slate-400">Neto Dr: $${(saldoNeto*0.3).toFixed(2)}</p>
-                            </div>
-                        </div>`;
-                }
-            });
-            document.getElementById('totalPacientes').innerText = contador;
-            document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
-            document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
-            document.getElementById('repDocs').innerText = `$${docsTotal.toFixed(2)}`;
-            document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
-            if(contador === 0) listaDiv.innerHTML = "<p class='text-center py-6 text-slate-400 italic'>No hay registros hoy.</p>";
-        } catch (e) { console.error(e); }
-    };
+                listaDiv.innerHTML += `
+                    <div class="py-3 border-b border-slate-100 flex justify-between items-center bg-white px-3 mb-2 rounded-xl shadow-sm border-l-4 border-slate-300">
+                        <div>
+                            <p class="font-black text-slate-700 text-[11px] uppercase">${d.paciente || 'S/N'}</p>
+                            <p class="text-[9px] text-slate-400 font-bold italic">DR. ${d.doctor || 'S/D'}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-black text-slate-800 text-[11px]">$${pVenta.toFixed(2)}</p>
+                            <p class="text-[8px] text-blue-600 font-bold">Ganancia Dr: $${pagoRealDoc.toFixed(2)}</p>
+                        </div>
+                    </div>`;
+            }
+        });
+        document.getElementById('totalPacientes').innerText = contador;
+        document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
+        document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
+        document.getElementById('repDocs').innerText = `$${docsTotal.toFixed(2)}`;
+        document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
+        if(contador === 0) listaDiv.innerHTML = "<p class='text-center py-6 text-slate-400 italic'>No hay registros hoy.</p>";
+    } catch (e) { console.error(e); }
+};
 
     window.descargarReporte = () => {
         let contenido = `REPORTE AVIPET - ${new Date().toLocaleDateString()}\n`;
@@ -955,6 +977,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
