@@ -306,8 +306,8 @@
         <h2 class="font-black text-center mb-2 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
         <div class="text-center mb-4">
             <span class="bg-slate-500 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">
-    Pacientes Atendidos: <span id="totalPacientes">0</span>
-</span>
+                Pacientes Atendidos: <span id="totalPacientes">0</span>
+            </span>
         </div>
         <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
         
@@ -324,10 +324,10 @@
                 <button onclick="descargarReporte()" class="bg-green-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">📥 Descargar TXT</button>
                 <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">💾 Guardar en Nube</button>
             </div>
+            <button onclick="window.generarReporteMensual()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase text-[11px] shadow-lg">📊 Análisis Financiero Mensual</button>
         </div>
     </div>
 </section>
-
 <script type="module">
     // --- IMPORTACIONES ---
     import { db } from './firebase-config.js';
@@ -790,6 +790,62 @@ window.insertarServicio = (v) => {
         document.getElementById('listaInsumosDinamica').appendChild(tr);
         n.value = ""; c.value = ""; window.calcularTodo();
     };
+  window.generarReporteMensual = async () => {
+    const mesAno = prompt("Ingrese Mes/Año a analizar (ej: 02/2026):");
+    if (!mesAno) return;
+
+    try {
+        const q = query(collection(db, "consultas"));
+        const snap = await getDocs(q);
+        
+        let stats = {
+            bruto: 0,
+            insumos: 0,
+            docs: 0,
+            neto: 0,
+            pacientes: 0
+        };
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.fechaSimple && d.fechaSimple.includes(mesAno)) {
+                stats.bruto += parseFloat(d.montoVenta || 0);
+                stats.insumos += parseFloat(d.montoInsumos || 0);
+                stats.docs += parseFloat(d.pagoDoctor || 0);
+                stats.neto += parseFloat(d.pagoAvipet || 0);
+                stats.pacientes++;
+            }
+        });
+
+        if (stats.pacientes === 0) return alert("No hay datos para ese período.");
+
+        // --- CÁLCULO DE COMPORTAMIENTO ---
+        const margenNeto = (stats.neto / stats.bruto) * 100;
+        const costoInsumosPorc = (stats.insumos / stats.bruto) * 100;
+        const promedioTicket = stats.bruto / stats.pacientes;
+
+        const resumen = `
+📈 ANÁLISIS DE COMPORTAMIENTO - AVIPET (${mesAno})
+---------------------------------------------------
+🐾 Total Pacientes: ${stats.pacientes}
+💰 Venta Total: $${stats.bruto.toFixed(2)}
+📉 Gasto Insumos: $${stats.insumos.toFixed(2)} (${costoInsumosPorc.toFixed(1)}% de la venta)
+🩺 Pago Doctores: $${stats.docs.toFixed(2)}
+---------------------------------------------------
+🏢 GANANCIA LIMPIA: $${stats.neto.toFixed(2)}
+📊 MARGEN DE UTILIDAD: ${margenNeto.toFixed(1)}%
+🎟️ TICKET PROMEDIO POR CLIENTE: $${promedioTicket.toFixed(2)}
+
+${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima del 30%. Revisar precios." : "✅ EFICIENCIA: El costo de insumos está bajo control."}
+        `;
+
+        alert(resumen);
+        console.log(resumen);
+
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+};
 
     window.imprimirRecetaLimpia = () => {
         document.body.classList.add('receta-modo');
@@ -822,6 +878,7 @@ window.insertarServicio = (v) => {
     }
 };
 </script>
+
 
 
 
