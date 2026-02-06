@@ -393,19 +393,22 @@ const CONFIG_SERVICIOS = {
     let doctorVerificado = ""; 
     let serviciosEnLista = [];
 
-   // ✅ CÓDIGO NUEVO (usa porcentajes variables):
+  // ✅ CÓDIGO OPTIMIZADO: Cálculo granular de Ganancia Neta y Comisiones
 window.calcularTodo = () => {
     let totalComisionDoctores = 0;
-    let totalVentaBruta = parseFloat(document.getElementById('precioVenta').value) || 0;
     let totalGastosInsumos = 0;
+    
+    // Obtenemos el precio de venta total ingresado en el campo principal
+    const inputVenta = document.getElementById('precioVenta');
+    const totalVentaBruta = parseFloat(inputVenta ? inputVenta.value : 0) || 0;
 
-    // 1. Recorrer cada servicio y calcular su comisión individual
+    // 1. Recorrer cada servicio principal en la tabla para cálculos individuales
     document.querySelectorAll('.servicio-principal').forEach(filaServicio => {
         const precioServicio = parseFloat(filaServicio.getAttribute('data-precio')) || 0;
         const porcServicio = parseFloat(filaServicio.getAttribute('data-porc')) || 0;
         const grupoID = filaServicio.getAttribute('data-grupo');
 
-        // 2. Calcular gastos de insumos SOLO de este servicio
+        // 2. Calcular gastos de insumos VINCULADOS a este servicio mediante el grupoID
         let gastosGrupo = 0;
         document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
             const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
@@ -415,28 +418,31 @@ window.calcularTodo = () => {
 
         totalGastosInsumos += gastosGrupo;
 
-        // 3. Calcular ganancia neta del servicio
-        const netoServicio = precioServicio - gastosGrupo;
-
-        // 4. Aplicar el porcentaje específico del servicio
+        // 3. Aplicar "Regla de Oro" por servicio: (Precio - Gasto) * Porcentaje
+        // Usamos Math.max(0, ...) para evitar comisiones negativas si el gasto supera el precio
+        const netoServicio = Math.max(0, precioServicio - gastosGrupo);
         const comisionServicio = netoServicio * (porcServicio / 100);
+        
         totalComisionDoctores += comisionServicio;
     });
 
-    // 5. Actualizar campos en pantalla
+    // 4. Calcular el neto total para la tienda (Venta Total - Todos los Insumos)
+    const netoTotalEmpresa = totalVentaBruta - totalGastosInsumos;
+    const pagoFinalTienda = netoTotalEmpresa - totalComisionDoctores;
+
+    // 5. Actualización de la Interfaz de Usuario (UI)
+    // Campo de gasto total (input)
     const inputGasto = document.getElementById('gastoInsumos');
     if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
 
-    const netoTotal = totalVentaBruta - totalGastosInsumos;
-    const pagoTienda = netoTotal - totalComisionDoctores;
+    // Etiquetas de resultados (Labels/Spans)
+    const lNeto = document.getElementById('labelNeto');   // Utilidad antes de pagar al Dr.
+    const lDr = document.getElementById('labelDr');       // Pago al Dr. Sandoval/Silva
+    const lTienda = document.getElementById('labelTienda'); // Ganancia real de Avipet
 
-    const lNeto = document.getElementById('labelNeto');
-    const lDr = document.getElementById('labelDr');
-    const lTienda = document.getElementById('labelTienda');
-
-    if (lNeto) lNeto.innerText = `$${netoTotal.toFixed(2)}`;
-    if (lDr) lDr.innerText = `$${totalComisionDoctores.toFixed(2)}`; // ← AHORA USA PORCENTAJES REALES
-    if (lTienda) lTienda.innerText = `$${pagoTienda.toFixed(2)}`;
+    if (lNeto)   lNeto.innerText   = `$${netoTotalEmpresa.toFixed(2)}`;
+    if (lDr)     lDr.innerText     = `$${totalComisionDoctores.toFixed(2)}`;
+    if (lTienda) lTienda.innerText = `$${pagoFinalTienda.toFixed(2)}`;
 };
     // --- SEGURIDAD Y ACCESO ---
     window.validarAccesoDoctor = (nombre) => {
@@ -584,15 +590,17 @@ window.insertarServicio = (v) => {
     let nombreFinal = v;
     let precioFinal = 0;
     
+    // 1. Determinar porcentaje inicial según CONFIG_SERVICIOS
     let porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
 
+    // 2. Lógica de Precios Especiales y Prompts
     if (v === "KG ADICIONAL") {
         const kgs = prompt("Ingrese la cantidad de KG adicionales:");
         if (kgs && !isNaN(kgs)) {
             const numKgs = parseFloat(kgs);
             nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
             precioFinal = numKgs * 7;
-            porcentajeServicio = 0;
+            porcentajeServicio = 0; // Sin comisión para el doctor por KG extra
         } else return;
     } 
     else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
@@ -603,20 +611,34 @@ window.insertarServicio = (v) => {
         } else return;
     }
     else {
+        // Precio estándar desde el objeto recetas
         precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+        
+        // Ajuste automático de Combos (Vacunas y Hematología)
         if (serviciosEnLista.length > 0) {
-            if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
-            if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
+            if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { 
+                precioFinal = 40; 
+                nombreFinal += " (Combo)"; 
+            }
+            if (v === "HEMATOLOGÍA COMPLETA") { 
+                precioFinal = 20; 
+                nombreFinal += " (Combo)"; 
+            }
         }
     }
 
+    // 3. Crear identificador único para el grupo de este servicio
     const grupoID = "srv-" + Date.now();
     serviciosEnLista.push(v);
+    
+    // 4. Actualizar el área de texto del tratamiento (lo que ve el dueño)
     area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
     
+    // 5. Actualizar el total de venta en el input
     let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
     inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
 
+    // 6. Dibujar la fila del Servicio en la tabla de insumos
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
 
@@ -638,21 +660,21 @@ window.insertarServicio = (v) => {
         </td>`;
     cuerpo.appendChild(filaTitulo);
 
+    // 7. Cargar Insumos Automáticos (Fijos, Vacunas y Recetas)
     let listaNuevos = [];
     if (!cuerpo.querySelector('.insumo-fila')) {
-        listaNuevos = [...insumosFijosMedicos];
+        listaNuevos = [...insumosFijosMedicos]; // Material base si es el primer servicio
     }
     if (v.includes("VACUNA")) {
         const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td'))
                                  .some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
-        if (!yaHayVacuna) {
-            listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-        }
+        if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
     }
     if (recetas[v] && recetas[v].insumos) {
         listaNuevos = [...listaNuevos, ...recetas[v].insumos];
     }
 
+    // 8. Renderizar filas de insumos vinculadas al grupoID
     listaNuevos.forEach(insumo => {
         const tr = document.createElement('tr');
         tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
@@ -664,41 +686,37 @@ window.insertarServicio = (v) => {
         cuerpo.appendChild(tr);
     });
     
+    // 9. Recalcular todo y resetear el selector
     window.calcularTodo(); 
     document.getElementById('selectorServicios').value = "";
 };
     
-   window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
-    // 1. Prevenir que la página salte
+window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
+    // 1. Prevenir que la página salte o recargue
     if (event) event.preventDefault();
 
-    // 2. Confirmación
+    // 2. Confirmación (Mantiene la seguridad de la operación)
     if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
 
-    // 3. Borrar los INSUMOS vinculados (las filas con la clase del grupo)
+    // 3. Borrar los INSUMOS vinculados (filas con la clase del grupoID)
     document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
 
-    // 4. Borrar el ENCABEZADO del servicio (buscándolo por su data-grupo)
+    // 4. Borrar el ENCABEZADO del servicio (buscado por su data-grupo)
     const filaTitulo = document.querySelector(`[data-grupo="${idGrupo}"]`);
     if (filaTitulo) filaTitulo.remove();
 
-    // 5. Restar el precio del total de venta
+    // 5. Restar el precio del total de venta en el input principal
     const inputPrecioVenta = document.getElementById('precioVenta');
     if (inputPrecioVenta) {
         const actual = parseFloat(inputPrecioVenta.value) || 0;
         inputPrecioVenta.value = Math.max(0, actual - precioARestar).toFixed(2);
     }
 
-    // 6. RECALCULAR TODO
-    // Esto es vital: recalcula la ganancia del doctor y de la tienda
-    // basándose solo en los servicios que quedaron en la tabla.
+    // 6. RECALCULAR TODO (Actualiza comisiones de doctores y utilidad de Avipet)
     if (typeof window.calcularTodo === "function") {
         window.calcularTodo();
     }
-      
-};
-}; // <-- Esta llave es la que faltaba para cerrar la función
-
+}; // <-- Llave de cierre única y correcta para la función
  window.guardarFirebase = async (imp) => {
     // 1. Verificación de Seguridad y Firma
     if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor para procesar el pago.");
@@ -1082,6 +1100,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
