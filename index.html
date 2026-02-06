@@ -589,8 +589,26 @@ window.insertarServicio = (v) => {
     // Obtener porcentaje de la Lista Maestra
     let porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
 
+    // --- NUEVA LÓGICA PARA CIRUGÍAS ---
+    if (v === "CIRUGIAS") {
+        const nombreCirugia = prompt("Nombre de la cirugía:");
+        const costoCirugia = prompt("Costo de la cirugía:");
+        const cantDocs = prompt("¿Cuántos doctores participaron? (Sin contar a la Avícola):", "1");
+        
+        if (nombreCirugia && costoCirugia && !isNaN(costoCirugia) && !isNaN(cantDocs)) {
+            const numDocs = parseInt(cantDocs) || 1;
+            const totalSocios = numDocs + 1; // Doctores + Avícola
+            
+            // Cálculo dinámico: Se divide el 100% entre todos los socios (incluyendo Avícola)
+            // Multiplicamos por numDocs para saber cuánto se llevan los doctores en total
+            porcentajeServicio = (100 / totalSocios) * numDocs; 
+            
+            nombreFinal = `CIRUGÍA: ${nombreCirugia.toUpperCase()} (${numDocs} Docs)`;
+            precioFinal = parseFloat(costoCirugia);
+        } else return; 
+    }
     // 1. Lógica para KG ADICIONAL
-    if (v === "KG ADICIONAL") {
+    else if (v === "KG ADICIONAL") {
         const kgs = prompt("Ingrese la cantidad de KG adicionales:");
         if (kgs && !isNaN(kgs)) {
             const numKgs = parseFloat(kgs);
@@ -636,7 +654,9 @@ window.insertarServicio = (v) => {
     filaTitulo.innerHTML = `
         <td colspan="3" class="p-2 text-[11px] uppercase">
             🔹 ${nombreFinal} ($${precioFinal.toFixed(2)}) 
-            <span class="text-[9px] text-blue-500 ml-2">[${porcentajeServicio}% Doc]</span>
+            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
+                ${porcentajeServicio.toFixed(1)}% DOC
+            </span>
         </td>
         <td class="p-2 text-center">
             <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
@@ -648,6 +668,18 @@ window.insertarServicio = (v) => {
     if (!cuerpo.querySelector('.insumo-fila')) {
         listaNuevos = [...insumosFijosMedicos];
     }
+    
+    // --- INSUMOS ESPECÍFICOS PARA CIRUGÍA ---
+    if (v === "CIRUGIAS") {
+        const insumosCirugia = [
+            { nombre: "KIT QUIRÚRGICO", costo: 15.00 },
+            { nombre: "ANESTESIA", costo: 10.00 },
+            { nombre: "SUTURA", costo: 7.50 },
+            { nombre: "GASAS Y CAMPOS", costo: 3.00 }
+        ];
+        listaNuevos = [...listaNuevos, ...insumosCirugia];
+    }
+
     if (v.includes("VACUNA")) {
         const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td'))
                                  .some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
@@ -670,18 +702,40 @@ window.insertarServicio = (v) => {
         cuerpo.appendChild(tr);
     });
     
+    if(window.calcularTodo) window.calcularTodo();
+};
+    
     window.calcularTodo(); 
     document.getElementById('selectorServicios').value = "";
 };
-    window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
-        if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
-        document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
-        const boton = event.target || event.srcElement;
-        boton.closest('tr').remove();
-        const inputPrecioVenta = document.getElementById('precioVenta');
-        inputPrecioVenta.value = Math.max(0, parseFloat(inputPrecioVenta.value || 0) - precioARestar).toFixed(2);
+   window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
+    // 1. Prevenir que la página salte
+    if (event) event.preventDefault();
+
+    // 2. Confirmación
+    if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
+
+    // 3. Borrar los INSUMOS vinculados (las filas con la clase del grupo)
+    document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
+
+    // 4. Borrar el ENCABEZADO del servicio (buscándolo por su data-grupo)
+    const filaTitulo = document.querySelector(`[data-grupo="${idGrupo}"]`);
+    if (filaTitulo) filaTitulo.remove();
+
+    // 5. Restar el precio del total de venta
+    const inputPrecioVenta = document.getElementById('precioVenta');
+    if (inputPrecioVenta) {
+        const actual = parseFloat(inputPrecioVenta.value) || 0;
+        inputPrecioVenta.value = Math.max(0, actual - precioARestar).toFixed(2);
+    }
+
+    // 6. RECALCULAR TODO
+    // Esto es vital: recalcula la ganancia del doctor y de la tienda
+    // basándose solo en los servicios que quedaron en la tabla.
+    if (typeof window.calcularTodo === "function") {
         window.calcularTodo();
-    };
+    }
+}; // <-- Esta llave es la que faltaba para cerrar la función
 
    window.guardarFirebase = async (imp) => {
     if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
@@ -693,44 +747,59 @@ window.insertarServicio = (v) => {
         const ahora = new Date();
         const fechaManual = `${ahora.getDate()}/${ahora.getMonth() + 1}/${ahora.getFullYear()}`;
 
-        // 1. Recopilar detalle de insumos (Tu lógica intacta)
+        // 1. Recopilar detalle de insumos para el historial
         const detalleInsumos = [];
         document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
             detalleInsumos.push({
-                nombre: fila.cells[0].innerText,
+                nombre: fila.cells[0].innerText.replace('➕ ', ''),
                 cant: parseInt(fila.querySelector('.i-cant').value) || 0,
                 precio: parseFloat(fila.querySelector('.i-cost').value) || 0
             });
         });
 
-        // --- NUEVA LÓGICA DE CÁLCULO DINÁMICO ---
+        // --- ✅ NUEVA LÓGICA: COMISIÓN SOBRE GANANCIA NETA POR SERVICIO ---
         let pagoDoctorVariable = 0;
-        // Buscamos todas las filas que marcamos como "servicio-principal" en insertarServicio
+        let totalGastosInsumos = 0;
+
+        // Recorremos cada servicio principal
         document.querySelectorAll('.servicio-principal').forEach(fila => {
             const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
             const porcentajeDoc = parseFloat(fila.getAttribute('data-porc')) || 0;
+            const grupoID = fila.getAttribute('data-grupo');
+
+            // Calculamos los gastos exclusivos de este servicio
+            let gastosDeEsteServicio = 0;
+            document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
+                const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
+                const cost = parseFloat(insumo.querySelector('.i-cost').value) || 0;
+                gastosDeEsteServicio += (cant * cost);
+            });
+
+            totalGastosInsumos += gastosDeEsteServicio;
+
+            // REGLA DE ORO: (Precio - Gastos) * %
+            const netoServicio = precioServicio - gastosDeEsteServicio;
+            const comisionEsteServicio = netoServicio * (porcentajeDoc / 100);
             
-            // Sumamos la ganancia de este servicio según su porcentaje de la lista maestra
-            pagoDoctorVariable += (precioServicio * (porcentajeDoc / 100));
+            pagoDoctorVariable += comisionEsteServicio;
         });
-        // ---------------------------------------
+        // ------------------------------------------------------------------
 
         const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
-        const montoInsumos = parseFloat(document.getElementById('gastoInsumos').value) || 0;
         
-        // El neto es lo que queda después de descontar insumos
-        const netoDisponible = montoVenta - montoInsumos;
+        // El montoInsumos real es el que calculamos sumando todos los grupos
+        const montoInsumosFinal = totalGastosInsumos;
+        const netoTotalConsulta = montoVenta - montoInsumosFinal;
 
         await addDoc(collection(db, "consultas"), {
             paciente: mascota, 
             cedula: cedula, 
             doctor: doctorVerificado,
             montoVenta: montoVenta, 
-            montoInsumos: montoInsumos, 
-            // CAMBIO AQUÍ: Ahora usa el cálculo variable, no 0.3
+            montoInsumos: montoInsumosFinal, 
             pagoDoctor: pagoDoctorVariable, 
-            // Avipet se lleva el resto del dinero después de insumos y pago al doctor
-            pagoAvipet: netoDisponible - pagoDoctorVariable,
+            // Avipet se queda con el neto total menos lo que cobró el doctor
+            pagoAvipet: netoTotalConsulta - pagoDoctorVariable,
             listaDetalladaInsumos: detalleInsumos, 
             fecha: serverTimestamp(), 
             fechaSimple: fechaManual,
@@ -738,17 +807,15 @@ window.insertarServicio = (v) => {
             tratamiento: document.getElementById('hTratamiento').value.trim()
         });
 
-        // --- TU LÓGICA DE IMPRESIÓN (Mantenida igual) ---
+        // --- LÓGICA DE IMPRESIÓN ---
         if (imp) {
             const tratamientoTexto = document.getElementById('hTratamiento').value;
             const espejo = document.getElementById('hTratamientoPrint');
-            if(espejo) {
-                espejo.innerText = tratamientoTexto;
-            }
+            if(espejo) espejo.innerText = tratamientoTexto;
             window.print();
         }
 
-        alert("✅ Guardado exitosamente.");
+        alert("✅ Guardado exitosamente con cálculos de ganancia neta.");
         location.reload();
     } catch (e) { alert("❌ Error: " + e.message); }
 };
@@ -880,15 +947,40 @@ window.insertarServicio = (v) => {
         a.click();
     };
 
-    window.agregarInsumoManual = () => {
-        const n = document.getElementById('nombreExtra'), c = document.getElementById('costoExtra');
-        if (!n.value) return alert("Ingrese nombre.");
-        const tr = document.createElement('tr');
-        tr.className = "border-b border-gray-100 insumo-fila bg-yellow-50";
-        tr.innerHTML = `<td class="p-2 font-bold text-[11px] italic">➕ ${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c.value || 0).toFixed(2)}" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
-        document.getElementById('listaInsumosDinamica').appendChild(tr);
-        n.value = ""; c.value = ""; window.calcularTodo();
-    };
+   window.agregarInsumoManual = () => {
+    const n = document.getElementById('nombreExtra');
+    const c = document.getElementById('costoExtra');
+    
+    if (!n.value) return alert("Ingrese nombre del insumo.");
+
+    // Buscamos el ID del último servicio agregado para vincular este insumo
+    const todasLasFilas = document.querySelectorAll('.servicio-principal');
+    const ultimoGrupo = todasLasFilas.length > 0 
+        ? todasLasFilas[todasLasFilas.length - 1].getAttribute('data-grupo') 
+        : "manual"; // Si no hay servicios, queda como manual independiente
+
+    const tr = document.createElement('tr');
+    // Le asignamos la clase del grupo para que calcularTodo lo tome en cuenta
+    tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrupo}`;
+    
+    tr.innerHTML = `
+        <td class="p-2 font-bold text-[11px] italic">➕ ${n.value.toUpperCase()}</td>
+        <td class="p-2 text-center">
+            <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
+        </td>
+        <td class="p-2 text-center">
+            <input type="number" value="${parseFloat(c.value || 0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
+        </td>
+        <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>
+    `;
+
+    document.getElementById('listaInsumosDinamica').appendChild(tr);
+    
+    // Limpiar campos y RECALCULAR
+    n.value = ""; 
+    c.value = ""; 
+    window.calcularTodo(); 
+};
   window.generarReporteMensual = async () => {
     const mesAno = prompt("Ingrese Mes/Año a analizar (ej: 02/2026):");
     if (!mesAno) return;
@@ -977,6 +1069,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
