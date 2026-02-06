@@ -395,38 +395,51 @@ const CONFIG_SERVICIOS = {
     let doctorVerificado = ""; 
     let serviciosEnLista = [];
 
-    // --- MOTOR DE CÁLCULO ---
-    window.calcularTodo = () => {
-        let totalInsumos = 0;
-        document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
-            const cant = parseFloat(fila.querySelector('.i-cant').value) || 0;
-            const cost = parseFloat(fila.querySelector('.i-cost').value) || 0;
-            totalInsumos += (cant * cost);
+   // ✅ CÓDIGO NUEVO (usa porcentajes variables):
+window.calcularTodo = () => {
+    let totalComisionDoctores = 0;
+    let totalVentaBruta = parseFloat(document.getElementById('precioVenta').value) || 0;
+    let totalGastosInsumos = 0;
+
+    // 1. Recorrer cada servicio y calcular su comisión individual
+    document.querySelectorAll('.servicio-principal').forEach(filaServicio => {
+        const precioServicio = parseFloat(filaServicio.getAttribute('data-precio')) || 0;
+        const porcServicio = parseFloat(filaServicio.getAttribute('data-porc')) || 0;
+        const grupoID = filaServicio.getAttribute('data-grupo');
+
+        // 2. Calcular gastos de insumos SOLO de este servicio
+        let gastosGrupo = 0;
+        document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
+            const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
+            const cost = parseFloat(insumo.querySelector('.i-cost').value) || 0;
+            gastosGrupo += (cant * cost);
         });
 
-        const inputGasto = document.getElementById('gastoInsumos');
-        const inputPrecioVenta = document.getElementById('precioVenta');
-        
-        if (inputGasto) inputGasto.value = totalInsumos.toFixed(2);
-        
-        const venta = parseFloat(inputPrecioVenta.value) || 0;
-        const neto = venta - totalInsumos;
+        totalGastosInsumos += gastosGrupo;
 
-        const lNeto = document.getElementById('labelNeto');
-        const lDr = document.getElementById('labelDr');
-        const lTienda = document.getElementById('labelTienda');
+        // 3. Calcular ganancia neta del servicio
+        const netoServicio = precioServicio - gastosGrupo;
 
-        if (lNeto) lNeto.innerText = `$${neto.toFixed(2)}`;
-        if (lDr) lDr.innerText = `$${(neto * 0.30).toFixed(2)}`;
-        if (lTienda) lTienda.innerText = `$${(neto * 0.70).toFixed(2)}`;
-    };
-
-    // --- CONFIGURACIÓN AL CARGAR ---
-    document.addEventListener('DOMContentLoaded', () => {
-        const fechaDoc = document.getElementById('fechaDoc');
-        if (fechaDoc) fechaDoc.value = new Date().toLocaleDateString();
+        // 4. Aplicar el porcentaje específico del servicio
+        const comisionServicio = netoServicio * (porcServicio / 100);
+        totalComisionDoctores += comisionServicio;
     });
 
+    // 5. Actualizar campos en pantalla
+    const inputGasto = document.getElementById('gastoInsumos');
+    if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
+
+    const netoTotal = totalVentaBruta - totalGastosInsumos;
+    const pagoTienda = netoTotal - totalComisionDoctores;
+
+    const lNeto = document.getElementById('labelNeto');
+    const lDr = document.getElementById('labelDr');
+    const lTienda = document.getElementById('labelTienda');
+
+    if (lNeto) lNeto.innerText = `$${netoTotal.toFixed(2)}`;
+    if (lDr) lDr.innerText = `$${totalComisionDoctores.toFixed(2)}`; // ← AHORA USA PORCENTAJES REALES
+    if (lTienda) lTienda.innerText = `$${pagoTienda.toFixed(2)}`;
+};
     // --- SEGURIDAD Y ACCESO ---
     window.validarAccesoDoctor = (nombre) => {
         if (!nombre) {
@@ -942,6 +955,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
