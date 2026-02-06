@@ -244,7 +244,7 @@
             </div>
         </section>
 
-       <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
+      <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
         <h2 class="font-black text-center mb-2 uppercase text-blue-900 text-2xl">Cierre de Caja</h2>
         
@@ -268,10 +268,10 @@
             </div>
             
             <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500">
-                <p class="text-[10px] font-bold uppercase text-blue-600 mb-1">Ganancia Doctores</p>
-                <div class="text-[9px] font-bold text-slate-700">
-                    <div>SANDOVAL: <span id="repDocSandoval" class="text-blue-700 font-black">$0.00</span></div>
-                    <div>SILVA: <span id="repDocSilva" class="text-blue-700 font-black">$0.00</span></div>
+                <p class="text-[10px] font-bold uppercase text-blue-600 mb-1">Dres. (Sando/Silva)</p>
+                <div class="text-[9px] font-bold text-slate-700 leading-tight">
+                    <div>DR. SANDOVAL: <span id="repDocSandoval" class="text-blue-700">$0.00</span></div>
+                    <div>DR. SILVA: <span id="repDocSilva" class="text-blue-700">$0.00</span></div>
                 </div>
             </div>
 
@@ -280,6 +280,16 @@
                 <p id="repNeto" class="text-2xl font-black">$0.00</p>
             </div>
         </div>
+
+        <div class="flex flex-col gap-3">
+            <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[11px]">🔄 Actualizar Cierre</button>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="descargarReporte()" class="bg-green-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">📥 Descargar TXT</button>
+                <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">💾 Guardar en Nube</button>
+            </div>
+            <button onclick="window.generarReporteMensual()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase text-[11px] shadow-lg">📊 Análisis Financiero Mensual</button>
+        </div>
+    </div>
 
         <div class="flex flex-col gap-3">
             <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[11px]">🔄 Actualizar Cierre</button>
@@ -1163,6 +1173,7 @@ ${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior."
     }
 };
 </script>
+
 
 
 
