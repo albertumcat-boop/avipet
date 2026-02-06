@@ -586,29 +586,9 @@ window.insertarServicio = (v) => {
     let nombreFinal = v;
     let precioFinal = 0;
     
-    // Obtener porcentaje de la Lista Maestra
     let porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
 
-    // --- NUEVA LÓGICA PARA CIRUGÍAS ---
-    if (v === "CIRUGIAS") {
-        const nombreCirugia = prompt("Nombre de la cirugía:");
-        const costoCirugia = prompt("Costo de la cirugía:");
-        const cantDocs = prompt("¿Cuántos doctores participaron? (Sin contar a la Avícola):", "1");
-        
-        if (nombreCirugia && costoCirugia && !isNaN(costoCirugia) && !isNaN(cantDocs)) {
-            const numDocs = parseInt(cantDocs) || 1;
-            const totalSocios = numDocs + 1; // Doctores + Avícola
-            
-            // Cálculo dinámico: Se divide el 100% entre todos los socios (incluyendo Avícola)
-            // Multiplicamos por numDocs para saber cuánto se llevan los doctores en total
-            porcentajeServicio = (100 / totalSocios) * numDocs; 
-            
-            nombreFinal = `CIRUGÍA: ${nombreCirugia.toUpperCase()} (${numDocs} Docs)`;
-            precioFinal = parseFloat(costoCirugia);
-        } else return; 
-    }
-    // 1. Lógica para KG ADICIONAL
-    else if (v === "KG ADICIONAL") {
+    if (v === "KG ADICIONAL") {
         const kgs = prompt("Ingrese la cantidad de KG adicionales:");
         if (kgs && !isNaN(kgs)) {
             const numKgs = parseFloat(kgs);
@@ -617,7 +597,6 @@ window.insertarServicio = (v) => {
             porcentajeServicio = 0;
         } else return;
     } 
-    // 2. Lógica para DISPOSICION / CREMACION
     else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
         const monto = prompt(`Ingrese el precio pactado para ${v}:`);
         if (monto && !isNaN(monto)) {
@@ -625,7 +604,6 @@ window.insertarServicio = (v) => {
             porcentajeServicio = 0;
         } else return;
     }
-    // 3. Servicios normales y Combos Automáticos
     else {
         precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
         if (serviciosEnLista.length > 0) {
@@ -644,7 +622,6 @@ window.insertarServicio = (v) => {
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
 
-    // FILA DE TÍTULO
     const filaTitulo = document.createElement('tr');
     filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
     filaTitulo.setAttribute('data-grupo', grupoID);
@@ -663,23 +640,10 @@ window.insertarServicio = (v) => {
         </td>`;
     cuerpo.appendChild(filaTitulo);
 
-    // LÓGICA DE INSUMOS
     let listaNuevos = [];
     if (!cuerpo.querySelector('.insumo-fila')) {
         listaNuevos = [...insumosFijosMedicos];
     }
-    
-    // --- INSUMOS ESPECÍFICOS PARA CIRUGÍA ---
-    if (v === "CIRUGIAS") {
-        const insumosCirugia = [
-            { nombre: "KIT QUIRÚRGICO", costo: 15.00 },
-            { nombre: "ANESTESIA", costo: 10.00 },
-            { nombre: "SUTURA", costo: 7.50 },
-            { nombre: "GASAS Y CAMPOS", costo: 3.00 }
-        ];
-        listaNuevos = [...listaNuevos, ...insumosCirugia];
-    }
-
     if (v.includes("VACUNA")) {
         const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td'))
                                  .some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
@@ -702,7 +666,8 @@ window.insertarServicio = (v) => {
         cuerpo.appendChild(tr);
     });
     
-    if(window.calcularTodo) window.calcularTodo();
+    window.calcularTodo(); 
+    document.getElementById('selectorServicios').value = "";
 };
     
     window.calcularTodo(); 
@@ -735,6 +700,8 @@ window.insertarServicio = (v) => {
     if (typeof window.calcularTodo === "function") {
         window.calcularTodo();
     }
+      
+};
 }; // <-- Esta llave es la que faltaba para cerrar la función
 
    window.guardarFirebase = async (imp) => {
@@ -819,58 +786,94 @@ window.insertarServicio = (v) => {
         location.reload();
     } catch (e) { alert("❌ Error: " + e.message); }
 };
-    // --- BUSCADOR ---
-    window.buscarPorCedula = async () => {
-        const input = document.getElementById('searchCI');
-        const contenedor = document.getElementById('resultadosBusqueda');
-        if (!input || !input.value.trim()) return alert("⚠️ Ingrese una cédula.");
+    // --- BUSCADOR CORREGIDO ---
+window.buscarPorCedula = async () => {
+    const input = document.getElementById('searchCI');
+    const contenedor = document.getElementById('resultadosBusqueda');
+    
+    if (!input || !input.value.trim()) {
+        alert("⚠️ Por favor, ingrese una cédula para buscar.");
+        return;
+    }
+    
+    const ci = input.value.trim();
+    contenedor.innerHTML = `
+        <div class="text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+            <p class="text-blue-600 font-bold italic">Consultando base de datos...</p>
+        </div>`;
+    
+    try {
+        // Añadimos orderBy para que las consultas más nuevas salgan primero
+        const q = query(
+            collection(db, "consultas"), 
+            where("cedula", "==", ci)
+        );
         
-        const ci = input.value.trim();
-        contenedor.innerHTML = "<p class='text-center py-4 text-blue-600 font-bold'>Buscando...</p>";
+        const snap = await getDocs(q);
         
-        try {
-            const q = query(collection(db, "consultas"), where("cedula", "==", ci));
-            const snap = await getDocs(q);
-            if (snap.empty) {
-                contenedor.innerHTML = "<p class='text-center p-4 bg-orange-50 text-orange-700 rounded-xl'>❌ No hay resultados</p>";
-                return;
-            }
-            contenedor.innerHTML = ""; 
-            snap.forEach(docSnap => {
-                const d = docSnap.data();
-                const div = document.createElement('div');
-                div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl shadow-sm overflow-hidden";
-                div.innerHTML = `
-                    <details class="group">
-                        <summary class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 list-none">
-                            <div>
-                                <span class="text-[10px] text-slate-400 font-bold">${d.fechaSimple || 'S/F'}</span>
-                                <h3 class="font-black text-blue-900 uppercase leading-none">${d.paciente || 'S/N'}</h3>
-                                <p class="text-[10px] text-gray-500 uppercase mt-1">Dr. ${d.doctor}</p>
-                            </div>
-                            <div class="text-blue-500 font-bold text-xl group-open:rotate-180 transition-transform">▾</div>
-                        </summary>
-                        <div class="p-4 bg-slate-50 border-t border-slate-200">
-                            <p class="text-[10px] font-bold text-blue-600 uppercase mb-1 underline">Tratamiento:</p>
-                            <p class="text-sm text-slate-700 whitespace-pre-wrap mb-3">${d.tratamiento || 'Sin detalles'}</p>
-                            <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1 underline">Insumos:</p>
-                            <div class="space-y-1">
-                                ${d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `
+        if (snap.empty) {
+            contenedor.innerHTML = `
+                <div class="p-6 bg-orange-50 text-orange-700 rounded-xl border border-orange-100 text-center">
+                    <p class="font-bold">No se encontraron registros para la CI: ${ci}</p>
+                </div>`;
+            return;
+        }
+
+        contenedor.innerHTML = ""; 
+        
+        // Convertimos a array para ordenar por fecha si Firebase no tiene el índice compuesto
+        let resultados = [];
+        snap.forEach(doc => resultados.push(doc.data()));
+        resultados.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
+
+        resultados.forEach(d => {
+            const div = document.createElement('div');
+            div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl shadow-sm overflow-hidden hover:border-blue-200 transition-colors";
+            
+            // Lógica para el prefijo del doctor
+            const drPrefijo = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
+
+            div.innerHTML = `
+                <details class="group">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 list-none">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${d.fechaSimple || 'S/F'}</span>
+                            <h3 class="font-black text-blue-900 uppercase leading-none mt-1">${d.paciente || 'PACIENTE SIN NOMBRE'}</h3>
+                            <p class="text-[10px] text-gray-500 uppercase mt-1 font-semibold">${drPrefijo} ${d.doctor || 'No asignado'}</p>
+                        </div>
+                        <div class="text-blue-500 font-bold text-xl group-open:rotate-180 transition-transform duration-300">▾</div>
+                    </summary>
+                    <div class="p-4 bg-slate-50 border-t border-slate-200">
+                        <div class="mb-4">
+                            <p class="text-[10px] font-bold text-blue-600 uppercase mb-1 border-b border-blue-100">Tratamiento / Evolución:</p>
+                            <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || 'Sin detalles registrados.'}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1 border-b border-emerald-100">Detalle de Insumos:</p>
+                            <div class="space-y-1 mt-2">
+                                ${d.listaDetalladaInsumos && d.listaDetalladaInsumos.length > 0 ? d.listaDetalladaInsumos.map(ins => `
                                     <div class="flex justify-between text-[11px] text-slate-600 border-b border-dotted border-slate-300 pb-1">
-                                        <span>${ins.nombre} (x${ins.cant})</span>
-                                        <span class="font-bold">$${ins.precio.toFixed(2)}</span>
-                                    </div>`).join('') : '<p class="text-xs italic text-gray-400">Sin insumos.</p>'}
-                            </div>
-                            <div class="mt-4 pt-2 border-t border-slate-300 flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-500">TOTAL COBRADO:</span>
-                                <span class="text-lg font-black text-slate-900">$${(d.montoVenta || 0).toFixed(2)}</span>
+                                        <span>${ins.nombre} <span class="text-slate-400 font-normal">x${ins.cant}</span></span>
+                                        <span class="font-bold text-slate-800">$${parseFloat(ins.precio || 0).toFixed(2)}</span>
+                                    </div>`).join('') : '<p class="text-xs italic text-gray-400">No se registraron insumos en esta visita.</p>'}
                             </div>
                         </div>
-                    </details>`;
-                contenedor.appendChild(div);
-            });
-        } catch (e) { console.error(e); }
-    };
+
+                        <div class="mt-4 pt-3 border-t-2 border-slate-200 flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Total de la consulta:</span>
+                            <span class="text-xl font-black text-slate-900">$${(d.montoVenta || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </details>`;
+            contenedor.appendChild(div);
+        });
+    } catch (e) { 
+        console.error("Error en buscador:", e);
+        contenedor.innerHTML = `<p class="p-4 text-red-500 text-center font-bold bg-red-50 rounded-lg">Error de conexión: ${e.message}</p>`;
+    }
+};
 
     window.autocompletarPorCedula = async (ci) => {
         if (!ci) return;
@@ -1069,6 +1072,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
