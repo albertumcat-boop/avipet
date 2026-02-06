@@ -791,7 +791,7 @@ window.buscarPorCedula = async () => {
     const input = document.getElementById('searchCI');
     const contenedor = document.getElementById('resultadosBusqueda');
     
-    if (!input || !input.value.trim()) {
+   if (!input.value || !input.value.trim()) {
         alert("⚠️ Por favor, ingrese una cédula para buscar.");
         return;
     }
@@ -1072,6 +1072,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
