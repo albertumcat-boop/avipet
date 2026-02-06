@@ -1149,22 +1149,28 @@ ${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior."
         document.body.classList.add('receta-modo');
         setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
     };
-    window.guardarResumenDelDia = async () => {
+   window.guardarResumenDelDia = async () => {
     if (!confirm("¿Guardar el cierre de caja en la base de datos?")) return;
     
     try {
+        // Capturamos los datos actuales del front
         const bruto = document.getElementById('repBruto').innerText;
         const gastos = document.getElementById('repGastos').innerText;
-        const docs = document.getElementById('repDocs').innerText;
         const neto = document.getElementById('repNeto').innerText;
         const pacientes = document.getElementById('totalPacientes').innerText;
+
+        // CAPTURA INDIVIDUAL DE DOCTORES (Los nuevos IDs)
+        const pagoSandoval = document.getElementById('repDocSandoval').innerText;
+        const pagoSilva = document.getElementById('repDocSilva').innerText;
 
         await addDoc(collection(db, "cierres_diarios"), {
             fecha: serverTimestamp(),
             fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
             bruto: bruto,
             gastos: gastos,
-            doctores: docs,
+            // Guardamos ambos por separado para que el historial sea exacto
+            pagoDarwinSandoval: pagoSandoval,
+            pagoJoanSilva: pagoSilva,
             netoAvipet: neto,
             pacientes: pacientes
         });
@@ -1176,6 +1182,7 @@ ${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior."
     }
 };
 </script>
+
 
 
 
