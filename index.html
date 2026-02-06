@@ -1044,36 +1044,51 @@ window.cargarReporte = async () => {
         contenido += `------------------------------------------\n`;
         
         // Desglose de cada paciente atendido
-        document.querySelectorAll('#listaReporte > div').forEach(div => { 
-            contenido += div.innerText.replace(/\n/g, " | ") + "\n"; 
-        });
+        const filas = document.querySelectorAll('#listaReporte > div');
+        if (filas.length > 0) {
+            filas.forEach(div => { 
+                contenido += div.innerText.replace(/\n/g, " | ") + "\n"; 
+            });
+        } else {
+            contenido += "No hay pacientes registrados hoy.\n";
+        }
 
         contenido += `------------------------------------------\n`;
         
-        // CAPTURA DE LOS NUEVOS IDS
-        const pagoSandoval = document.getElementById('repDocSandoval')?.innerText || "$0.00";
-        const pagoSilva = document.getElementById('repDocSilva')?.innerText || "$0.00";
+        // CAPTURA DE LOS IDS (Corregido: Nombres de variables coinciden)
+        const pSandoval = document.getElementById('repDocSandoval')?.innerText || "$0.00";
+        const pSilva = document.getElementById('repDocSilva')?.innerText || "$0.00";
         const netoAvipet = document.getElementById('repNeto')?.innerText || "$0.00";
+        const bruto = document.getElementById('repBruto')?.innerText || "$0.00";
 
-        contenido += `PAGO DR. SANDOVAL: ${pSandoval}\n`;
-        contenido += `PAGO DR. SILVA: ${pSilva}\n`;
+        contenido += `RESUMEN FINANCIERO:\n`;
+        contenido += `BRUTO TOTAL:      ${bruto}\n`;
         contenido += `------------------------------------------\n`;
-        contenido += `NETO AVIPET (AVÍCOLA): ${netoAvipet}\n`;
+        contenido += `PAGO DR. SANDOVAL: ${pSandoval}\n`;
+        contenido += `PAGO DR. SILVA:    ${pSilva}\n`;
+        contenido += `------------------------------------------\n`;
+        contenido += `NETO AVIPET:       ${netoAvipet}\n`;
         contenido += `------------------------------------------\n`;
 
         const blob = new Blob([contenido], { type: 'text/plain' });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
+        a.href = url;
         a.download = `Cierre_${new Date().toLocaleDateString().replace(/\//g, '-')}.txt`;
-        document.body.appendChild(a); // Recomendado para compatibilidad
+        document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        
+        // Limpieza
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+
     } catch (e) {
         console.error("Error al descargar:", e);
-        alert("❌ No se pudo generar el TXT. Asegúrate de que el reporte esté cargado.");
+        alert("❌ Error: " + e.message);
     }
 };
-
    window.agregarInsumoManual = () => {
     const n = document.getElementById('nombreExtra');
     const c = document.getElementById('costoExtra');
@@ -1211,6 +1226,7 @@ ${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior."
     }
 };
 </script>
+
 
 
 
