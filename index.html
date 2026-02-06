@@ -332,7 +332,64 @@
     // --- IMPORTACIONES ---
     import { db } from './firebase-config.js';
     import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const CONFIG_SERVICIOS = {
+    // CONSULTAS
+    "CONSULTA GENERAL": { precio: 0, porc: 40 },
+    "CONSULTA OFTALMOLÓGICA": { precio: 0, porc: 12.5 },
+    "CONSULTA CAMADA 3-4 CACHORROS": { precio: 0, porc: 40 },
+    "CONSULTA CAMADA HASTA 8 CACHORROS": { precio: 0, porc: 40 },
+    "CONSULTA CAMADA MAS DE 8 CACHORROS": { precio: 0, porc: 40 },
 
+    // PROCEDIMIENTOS Y OTROS
+    "ABSCESO": { precio: 0, porc: 50 },
+    "ECOGRAFÍA": { precio: 0, porc: 40 },
+    "COLOCACION VIA": { precio: 0, porc: 50 },
+    "ADMINISTRACION MEDICINA": { precio: 0, porc: 50 },
+    "TOMA DE MUESTRA SANGRE": { precio: 0, porc: 50 },
+
+    // VACUNAS
+    "VACUNA SEXTUPLE": { precio: 0, porc: 50 },
+    "VACUNA PUPPY": { precio: 0, porc: 50 },
+    "VACUNA ANTIRRÁBICA": { precio: 0, porc: 50 },
+    "VACUNA KC (TOS DE LAS PERRERAS)": { precio: 0, porc: 50 },
+    "VACUNA TRIPLE FELINA": { precio: 0, porc: 50 },
+    "VACUNA QUINTUPLE FELINA": { precio: 0, porc: 50 },
+    "VACUNA BIOVETA": { precio: 0, porc: 50 },
+
+    // LABORATORIO
+    "HEMATOLOGÍA COMPLETA": { precio: 0, porc: 34.78 },
+    "QUÍMICA SANGUÍNEA": { precio: 0, porc: 50 },
+    "DESCARTE HEMOPARASITO": { precio: 0, porc: 50 },
+    "DISTEMPER": { precio: 0, porc: 50 },
+    "PARVOVIRUS/CORONAVIRUS": { precio: 0, porc: 50 },
+    "FILARIASIS": { precio: 0, porc: 50 },
+    "SIDA/LEUCEMIA": { precio: 0, porc: 50 },
+    "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precio: 0, porc: 50 },
+    "EXAMEN DE HECES": { precio: 0, porc: 50 },
+    "EXAMENES DE ORINA": { precio: 0, porc: 50 },
+    "CITOLOGIA 1 OIDO": { precio: 0, porc: 50 },
+    "CITOLOGIA 2 OIDOS": { precio: 0, porc: 50 },
+    "RASPADO PIEL": { precio: 0, porc: 50 },
+    "PERFIL ANEMICO": { precio: 0, porc: 17.5 }, // Caso especial monto fijo
+    "CITOLOGIA FLUIDOS, SECRECIONES": { precio: 0, porc: 50 },
+
+    // EUTANASIA Y FINAL
+    "EUTANASIA HASTA 5KG": { precio: 0, porc: 50 },
+    "EUTANASIA HASTA 15KG": { precio: 0, porc: 50 },
+    "EUTANASIA HASTA 25KG": { precio: 0, porc: 50 },
+    "EUTANASIA HASTA 35KG": { precio: 0, porc: 50 },
+    "KG ADICIONAL": { precio: 0, porc: 0 },
+    "DISPOSICION": { precio: 0, porc: 0 },
+    "CREMACION CON CENIZAS": { precio: 0, porc: 0 },
+
+    // REFERIDOS
+    "REFERIDO: EXAMEN DE HECES": { precio: 0, porc: 50 },
+    "REFERIDO: EXAMENES DE ORINA": { precio: 0, porc: 50 },
+    "REFERIDO: CULTIVOS": { precio: 0, porc: 50 },
+    "REFERIDO: DESCARTE HEMOPARASITO": { precio: 0, porc: 50 },
+    "REFERIDO: DISTEMPER": { precio: 0, porc: 50 },
+    "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precio: 0, porc: 50 }
+};
     // --- VARIABLES GLOBALES ---
     const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
     let doctorVerificado = ""; 
@@ -515,6 +572,10 @@ window.insertarServicio = (v) => {
     const inputPrecioVenta = document.getElementById('precioVenta');
     let nombreFinal = v;
     let precioFinal = 0;
+    
+    // --- NUEVO: Obtener porcentaje de la Lista Maestra ---
+    // Si el servicio no está en la lista, usamos 30% por defecto
+    let porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
 
     // 1. Lógica para KG ADICIONAL
     if (v === "KG ADICIONAL") {
@@ -523,6 +584,7 @@ window.insertarServicio = (v) => {
             const numKgs = parseFloat(kgs);
             nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
             precioFinal = numKgs * 7;
+            porcentajeServicio = 0; // Según tu lista, este no lleva % o es 0
         } else return;
     } 
     // 2. Lógica para DISPOSICION / CREMACION
@@ -530,6 +592,7 @@ window.insertarServicio = (v) => {
         const monto = prompt(`Ingrese el precio pactado para ${v}:`);
         if (monto && !isNaN(monto)) {
             precioFinal = parseFloat(monto);
+            porcentajeServicio = 0; // Ajustar si estos llevan comisión
         } else return;
     }
     // 3. Servicios normales y Combos Automáticos
@@ -551,24 +614,29 @@ window.insertarServicio = (v) => {
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
 
+    // --- FILA DE TÍTULO (Ahora guarda el porcentaje oculto) ---
     const filaTitulo = document.createElement('tr');
-    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black";
+    // Guardamos el porcentaje y el precio en atributos 'data' para el cálculo final
+    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
+    filaTitulo.setAttribute('data-grupo', grupoID);
+    filaTitulo.setAttribute('data-precio', precioFinal);
+    filaTitulo.setAttribute('data-porc', porcentajeServicio); 
+
     filaTitulo.innerHTML = `
-        <td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})</td>
+        <td colspan="3" class="p-2 text-[11px] uppercase">
+            🔹 ${nombreFinal} ($${precioFinal.toFixed(2)}) 
+            <span class="text-[9px] text-blue-500 ml-2">[${porcentajeServicio}% Doc]</span>
+        </td>
         <td class="p-2 text-center">
             <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
         </td>`;
     cuerpo.appendChild(filaTitulo);
 
-    // --- LÓGICA DE INSUMOS ---
+    // --- LÓGICA DE INSUMOS (Se mantiene igual) ---
     let listaNuevos = [];
-
-    // Fijos (Guantes, Alcohol, Hojas) solo si la tabla está vacía
     if (!cuerpo.querySelector('.insumo-fila')) {
         listaNuevos = [...insumosFijosMedicos];
     }
-
-    // Vacunas (Jeringa, Xeruk, Crema) solo si NO hay otra vacuna ya en la tabla
     if (v.includes("VACUNA")) {
         const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td'))
                                  .some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
@@ -576,8 +644,6 @@ window.insertarServicio = (v) => {
             listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
         }
     }
-
-    // Insumos específicos de la receta
     if (recetas[v] && recetas[v].insumos) {
         listaNuevos = [...listaNuevos, ...recetas[v].insumos];
     }
@@ -592,7 +658,9 @@ window.insertarServicio = (v) => {
             <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
         cuerpo.appendChild(tr);
     });
-
+    
+    if(window.calcularTodo) window.calcularTodo();
+};
     window.calcularTodo(); 
     document.getElementById('selectorServicios').value = "";
 };
@@ -878,6 +946,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
