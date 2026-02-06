@@ -268,13 +268,18 @@
             </div>
             
             <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500">
-                <p class="text-[10px] font-bold uppercase text-blue-600 mb-1">Dres. (Sando/Silva)</p>
-                <div class="text-[9px] font-bold text-slate-700 space-y-0.5">
-                    <div class="flex justify-between uppercase">Sandoval: <span id="repDocSandoval" class="text-blue-700 font-black">$0.00</span></div>
-                    <div class="flex justify-between uppercase">Silva: <span id="repDocSilva" class="text-blue-700 font-black">$0.00</span></div>
-                </div>
-            </div>
-
+    <p class="text-[10px] font-bold uppercase text-blue-600 mb-2 leading-tight">Ganancias por Doctor</p>
+    <div class="space-y-2">
+        <div class="flex justify-between items-center border-b border-blue-100 pb-1">
+            <span class="text-[11px] font-black text-slate-700 uppercase">Dr. Sandoval:</span>
+            <span id="repDocSandoval" class="text-[12px] font-black text-blue-700 font-mono">$0.00</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-[11px] font-black text-slate-700 uppercase">Dr. Silva:</span>
+            <span id="repDocSilva" class="text-[12px] font-black text-blue-700 font-mono">$0.00</span>
+        </div>
+    </div>
+</div>
             <div class="p-4 bg-emerald-100 rounded-2xl border-l-4 border-emerald-600">
                 <p class="text-[10px] font-bold uppercase text-emerald-700">Neto Avipet</p>
                 <p id="repNeto" class="text-2xl font-black text-slate-800">$0.00</p>
@@ -1034,16 +1039,40 @@ window.cargarReporte = async () => {
     }
 };
     window.descargarReporte = () => {
+    try {
         let contenido = `REPORTE AVIPET - ${new Date().toLocaleDateString()}\n`;
         contenido += `------------------------------------------\n`;
-        document.querySelectorAll('#listaReporte > div').forEach(div => { contenido += div.innerText.replace(/\n/g, " | ") + "\n"; });
-        contenido += `------------------------------------------\nTOTAL DOCTORES: ${document.getElementById('repDocs').innerText}\n`;
+        
+        // Desglose de cada paciente atendido
+        document.querySelectorAll('#listaReporte > div').forEach(div => { 
+            contenido += div.innerText.replace(/\n/g, " | ") + "\n"; 
+        });
+
+        contenido += `------------------------------------------\n`;
+        
+        // CAPTURA DE LOS NUEVOS IDS
+        const pagoSandoval = document.getElementById('repDocSandoval')?.innerText || "$0.00";
+        const pagoSilva = document.getElementById('repDocSilva')?.innerText || "$0.00";
+        const netoAvipet = document.getElementById('repNeto')?.innerText || "$0.00";
+
+        contenido += `PAGO DR. SANDOVAL: ${pSandoval}\n`;
+        contenido += `PAGO DR. SILVA: ${pSilva}\n`;
+        contenido += `------------------------------------------\n`;
+        contenido += `NETO AVIPET (AVÍCOLA): ${netoAvipet}\n`;
+        contenido += `------------------------------------------\n`;
+
         const blob = new Blob([contenido], { type: 'text/plain' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `Cierre_${new Date().toLocaleDateString().replace(/\//g, '-')}.txt`;
+        document.body.appendChild(a); // Recomendado para compatibilidad
         a.click();
-    };
+        document.body.removeChild(a);
+    } catch (e) {
+        console.error("Error al descargar:", e);
+        alert("❌ No se pudo generar el TXT. Asegúrate de que el reporte esté cargado.");
+    }
+};
 
    window.agregarInsumoManual = () => {
     const n = document.getElementById('nombreExtra');
@@ -1182,6 +1211,7 @@ ${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior."
     }
 };
 </script>
+
 
 
 
