@@ -235,14 +235,12 @@
         </select>
     </div>
     
-    <!-- TEXTAREA EDITABLE (Pantalla) -->
     <textarea id="hTratamiento" 
-              class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none" 
-              placeholder="Escriba aquí el diagnóstico y tratamiento..."></textarea>
+          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none" 
+          placeholder="Escriba aquí el diagnóstico y tratamiento..."
+          oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
 
-    <!-- DIV PARA IMPRESIÓN (Sin cortes) -->
-    <div id="hTratamientoPrint" class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
-</div>
+<div id="hTratamientoPrint" class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
 
             <div id="contenedorInsumos" class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
                 <table class="w-full text-[11px] text-left">
@@ -670,9 +668,6 @@ window.insertarServicio = (v) => {
     document.getElementById('selectorServicios').value = "";
 };
     
-    window.calcularTodo(); 
-    document.getElementById('selectorServicios').value = "";
-};
    window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
     // 1. Prevenir que la página salte
     if (event) event.preventDefault();
@@ -704,37 +699,43 @@ window.insertarServicio = (v) => {
 };
 }; // <-- Esta llave es la que faltaba para cerrar la función
 
-   window.guardarFirebase = async (imp) => {
-    if (!doctorVerificado) return alert("⚠️ Requiere firma del doctor.");
+ window.guardarFirebase = async (imp) => {
+    // 1. Verificación de Seguridad y Firma
+    if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor para procesar el pago.");
+
     try {
         const mascota = document.getElementById('hNombre').value.trim();
         const cedula = document.getElementById('hCI').value.trim();
-        if(!mascota || !cedula) return alert("⚠️ Nombre y Cédula obligatorios.");
+        const propietario = document.getElementById('hProp').value.trim();
+        const tratamiento = document.getElementById('hTratamiento').value.trim();
+        const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
+
+        if (!mascota || !cedula) return alert("⚠️ Los campos de Nombre del Paciente y Cédula son obligatorios.");
 
         const ahora = new Date();
         const fechaManual = `${ahora.getDate()}/${ahora.getMonth() + 1}/${ahora.getFullYear()}`;
 
-        // 1. Recopilar detalle de insumos para el historial
+        // 2. Recopilar detalle de insumos para el historial médico
         const detalleInsumos = [];
         document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
             detalleInsumos.push({
-                nombre: fila.cells[0].innerText.replace('➕ ', ''),
-                cant: parseInt(fila.querySelector('.i-cant').value) || 0,
+                nombre: fila.cells[0].innerText.replace('➕ ', '').replace('🔹 ', ''),
+                cant: parseFloat(fila.querySelector('.i-cant').value) || 0,
                 precio: parseFloat(fila.querySelector('.i-cost').value) || 0
             });
         });
 
-        // --- ✅ NUEVA LÓGICA: COMISIÓN SOBRE GANANCIA NETA POR SERVICIO ---
+        // 3. LÓGICA FINANCIERA: Cálculo de Comisión Neta por Servicio
         let pagoDoctorVariable = 0;
         let totalGastosInsumos = 0;
 
-        // Recorremos cada servicio principal
+        // Recorremos cada bloque de servicio principal
         document.querySelectorAll('.servicio-principal').forEach(fila => {
             const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
             const porcentajeDoc = parseFloat(fila.getAttribute('data-porc')) || 0;
             const grupoID = fila.getAttribute('data-grupo');
 
-            // Calculamos los gastos exclusivos de este servicio
+            // Sumamos insumos vinculados únicamente a este servicio (usando el grupoID)
             let gastosDeEsteServicio = 0;
             document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
                 const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
@@ -744,47 +745,56 @@ window.insertarServicio = (v) => {
 
             totalGastosInsumos += gastosDeEsteServicio;
 
-            // REGLA DE ORO: (Precio - Gastos) * %
+            // REGLA DE ORO: (Precio del Servicio - Sus Insumos) * Porcentaje del Doctor
             const netoServicio = precioServicio - gastosDeEsteServicio;
             const comisionEsteServicio = netoServicio * (porcentajeDoc / 100);
             
             pagoDoctorVariable += comisionEsteServicio;
         });
-        // ------------------------------------------------------------------
 
-        const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
-        
-        // El montoInsumos real es el que calculamos sumando todos los grupos
+        // 4. Cálculos finales de utilidad
         const montoInsumosFinal = totalGastosInsumos;
         const netoTotalConsulta = montoVenta - montoInsumosFinal;
+        const pagoAvipetFinal = netoTotalConsulta - pagoDoctorVariable;
 
+        // 5. Guardado en Firebase Firestore
         await addDoc(collection(db, "consultas"), {
             paciente: mascota, 
             cedula: cedula, 
+            propietario: propietario,
             doctor: doctorVerificado,
-            montoVenta: montoVenta, 
-            montoInsumos: montoInsumosFinal, 
-            pagoDoctor: pagoDoctorVariable, 
-            // Avipet se queda con el neto total menos lo que cobró el doctor
-            pagoAvipet: netoTotalConsulta - pagoDoctorVariable,
+            tratamiento: tratamiento,
+            montoVenta: parseFloat(montoVenta.toFixed(2)), 
+            montoInsumos: parseFloat(montoInsumosFinal.toFixed(2)), 
+            pagoDoctor: parseFloat(pagoDoctorVariable.toFixed(2)), 
+            pagoAvipet: parseFloat(pagoAvipetFinal.toFixed(2)),
             listaDetalladaInsumos: detalleInsumos, 
             fecha: serverTimestamp(), 
-            fechaSimple: fechaManual,
-            propietario: document.getElementById('hProp').value.trim(), 
-            tratamiento: document.getElementById('hTratamiento').value.trim()
+            fechaSimple: fechaManual
         });
 
-        // --- LÓGICA DE IMPRESIÓN ---
+        // 6. Manejo de Impresión y Finalización
         if (imp) {
-            const tratamientoTexto = document.getElementById('hTratamiento').value;
+            // Sincronizar espejo para impresión
             const espejo = document.getElementById('hTratamientoPrint');
-            if(espejo) espejo.innerText = tratamientoTexto;
-            window.print();
+            if (espejo) espejo.innerText = tratamiento;
+            
+            alert("✅ Registro guardado. Preparando impresión...");
+            
+            // Retraso breve para que el navegador renderice el texto en el área de impresión
+            setTimeout(() => { 
+                window.print(); 
+                location.reload(); 
+            }, 600);
+        } else {
+            alert("✅ Consulta guardada exitosamente en la nube.");
+            location.reload();
         }
 
-        alert("✅ Guardado exitosamente con cálculos de ganancia neta.");
-        location.reload();
-    } catch (e) { alert("❌ Error: " + e.message); }
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        alert("❌ Error crítico al guardar en base de datos: " + error.message);
+    }
 };
     // --- BUSCADOR CORREGIDO ---
 window.buscarPorCedula = async () => {
@@ -1072,6 +1082,7 @@ ${costoInsumosPorc > 30 ? "⚠️ ALERTA: El costo de insumos está por encima d
     }
 };
 </script>
+
 
 
 
