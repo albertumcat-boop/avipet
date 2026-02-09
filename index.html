@@ -79,10 +79,10 @@
                     <div class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg">A</div>
                     <div>
                         <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
-                        <select id="selectDoctor" onchange="validarAccesoDoctor(this.value)" class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
+                        <select id="selectDoctor" onchange="window.validarAccesoDoctor(this.value)" class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
                             <option value="">-- SELECCIONE DOCTOR --</option>
                             <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
-                            <option value="Joan Silva">DR. JOAN SILVA</option>
+                            <option value="Joan Silva">DRA. JOAN SILVA</option>
                         </select>
                         <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700">DOCTOR CARGO</h2>
                     </div>
@@ -127,10 +127,49 @@
                 <div class="bg-slate-100 p-3 no-print">
                     <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">Añadir Servicios Rápidos:</label>
                     <select id="selectorServicios" class="menu-desplegable" onchange="window.insertarServicio(this.value)">
-                        <option value="">-- SELECCIONE SERVICIO --</option>
-                        <optgroup label="CONSULTAS">
+                        <option value="">-- SELECCIONE UN SERVICIO --</option>
+                        <optgroup label="🩺 CONSULTAS">
                             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
                             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+                            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+                            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+                            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+                        </optgroup>
+                        <optgroup label="💉 VACUNAS">
+                            <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
+                            <option value="VACUNA PUPPY">VACUNA PUPPY</option>
+                            <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+                            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
+                            <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+                            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+                            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
+                        </optgroup>
+                        <optgroup label="🔬 LABORATORIO">
+                            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+                            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+                            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
+                            <option value="DISTEMPER">DISTEMPER</option>
+                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
+                            <option value="FILARIASIS">FILARIASIS</option>
+                            <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
+                            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
+                            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+                            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
+                            <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
+                            <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
+                            <option value="RASPADO PIEL">RASPADO PIEL</option>
+                            <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
+                        </optgroup>
+                        <optgroup label="🐾 OTROS PROCEDIMIENTOS">
+                            <option value="ABSCESO">ABSCESO</option>
+                            <option value="ECOGRAFÍA">ECOGRAFÍA</option>
+                            <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
+                            <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
+                            <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
+                            <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
+                            <option value="KG ADICIONAL">KG ADICIONAL</option>
+                            <option value="DISPOSICION">DISPOSICIÓN</option>
+                            <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
                         </optgroup>
                     </select>
                 </div>
@@ -148,13 +187,19 @@
                 <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
                     <input type="text" id="nombreExtra" placeholder="Añadir algo extra..." class="flex-1 text-[10px] p-2 border rounded bg-white">
                     <input type="number" id="costoExtra" placeholder="0.00" class="w-14 text-[10px] p-2 border rounded bg-white">
-                    <button onclick="agregarInsumoManual()" class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">+ AGREGAR</button>
+                    <button onclick="window.agregarInsumoManual()" class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">+ AGREGAR</button>
                 </div>
             </div>
 
-            <div class="no-print bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 mb-4 text-center">
-                <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
-                <input type="number" id="precioVenta" value="0" oninput="calcularTodo()" class="text-4xl font-black w-full bg-transparent text-center text-blue-700 outline-none">
+            <div class="no-print flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center">
+                    <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
+                    <input type="number" id="precioVenta" value="0" oninput="window.calcularTodo()" class="text-4xl font-black w-full bg-transparent text-center text-blue-700 outline-none">
+                </div>
+                <div id="displayGananciaDoctor" class="flex-1 bg-green-50 p-6 rounded-3xl border-2 border-green-200 text-center">
+                    <label class="text-[10px] text-green-600 font-bold uppercase block mb-1">Ganancia Doctor ($)</label>
+                    <p id="montoDoctor" class="text-4xl font-black text-green-700 font-mono">$ 0.00</p>
+                </div>
                 <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
             </div>
 
@@ -205,7 +250,7 @@
                     <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
                 </div>
                 <div class="flex justify-between items-center pt-1">
-                    <span class="text-[11px] font-black uppercase text-blue-800">Dr. Joan Silva:</span>
+                    <span class="text-[11px] font-black uppercase text-blue-800">Dra. Joan Silva:</span>
                     <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
                 </div>
             </div>
@@ -568,33 +613,62 @@ window.insertarServicio = async (v) => {
         n.value = ""; c.value = ""; window.calcularTodo(); 
     };
     // ==========================================================================
-    // [05] MOTOR FINANCIERO (REGLA DE ORO)
-    // ==========================================================================
-    window.calcularTodo = async () => {
-        let totalComisionDoctores = 0;
-        let totalGastosInsumos = 0;
-        const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-        let porcGlobal = configSnap.exists() ? configSnap.data().porcentajeDoc : null;
-        const totalVentaBruta = parseFloat(document.getElementById('precioVenta').value) || 0;
+// [05] MOTOR FINANCIERO (REGLA DE ORO) - CALIBRADO PARA EL NUEVO HTML
+// ==========================================================================
+window.calcularTodo = async () => {
+    let totalComisionDoctores = 0;
+    let totalGastosInsumos = 0;
 
-        document.querySelectorAll('.servicio-principal').forEach(fila => {
-            const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-            const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
-            const porcAEfectuar = (porcGlobal !== null) ? porcGlobal : porcServicioDefault;
-            const grupoID = fila.getAttribute('data-grupo');
-            let gastosGrupo = 0;
-            document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
-                gastosGrupo += (parseFloat(insumo.querySelector('.i-cant').value) || 0) * (parseFloat(insumo.querySelector('.i-cost').value) || 0);
-            });
-            totalGastosInsumos += gastosGrupo;
-            totalComisionDoctores += Math.max(0, precioServicio - gastosGrupo) * (porcAEfectuar / 100);
+    // 1. Buscamos si hay una configuración global en Firebase
+    const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+    let porcGlobal = configSnap.exists() ? configSnap.data().porcentajeDoc : null;
+    
+    // 2. Capturamos lo que se le está cobrando al cliente
+    const totalVentaBruta = parseFloat(document.getElementById('precioVenta').value) || 0;
+
+    // 3. Recorremos cada servicio agregado para calcular sus insumos y comisión
+    document.querySelectorAll('.servicio-principal').forEach(fila => {
+        const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+        const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
+        const porcAEfectuar = (porcGlobal !== null) ? porcGlobal : porcServicioDefault;
+        
+        const grupoID = fila.getAttribute('data-grupo');
+        let gastosGrupo = 0;
+
+        // Sumamos los insumos de este grupo específico
+        document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
+            const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
+            const cost = parseFloat(insumo.querySelector('.i-cost').value) || 0;
+            gastosGrupo += (cant * cost);
         });
 
-        if (document.getElementById('gastoInsumos')) document.getElementById('gastoInsumos').value = totalGastosInsumos.toFixed(2);
-        if (document.getElementById('labelNeto')) document.getElementById('labelNeto').innerText = `$${(totalVentaBruta - totalGastosInsumos).toFixed(2)}`;
-        if (document.getElementById('labelDr')) document.getElementById('labelDr').innerText = `$${totalComisionDoctores.toFixed(2)}`;
-        if (document.getElementById('labelTienda')) document.getElementById('labelTienda').innerText = `$${(totalVentaBruta - totalGastosInsumos - totalComisionDoctores).toFixed(2)}`;
-    };
+        totalGastosInsumos += gastosGrupo;
+        
+        // REGLA: (Precio Servicio - Insumos) * % Doctor
+        totalComisionDoctores += Math.max(0, precioServicio - gastosGrupo) * (porcAEfectuar / 100);
+    });
+
+    // 4. ACTUALIZACIÓN DE LA INTERFAZ (IDs sincronizados con tu nuevo HTML)
+    
+    // Mostramos el gasto total de insumos (oculto para el cliente)
+    if (document.getElementById('gastoInsumos')) {
+        document.getElementById('gastoInsumos').value = totalGastosInsumos.toFixed(2);
+    }
+
+    // El monto que le toca al Doctor (Darwin o Joan)
+    const displayDr = document.getElementById('montoDoctor');
+    if (displayDr) {
+        displayDr.innerText = `$ ${totalComisionDoctores.toFixed(2)}`;
+    }
+
+    // Para depuración en consola (Soldadura de prueba)
+    console.log("Cálculo Final Avipet:", {
+        venta: totalVentaBruta,
+        insumos: totalGastosInsumos,
+        pagoDoctor: totalComisionDoctores,
+        utilidadAvipet: (totalVentaBruta - totalGastosInsumos - totalComisionDoctores).toFixed(2)
+    });
+};
 
     // ==========================================================================
     // [06] BUSCADOR Y AUTOCOMPLETADO
@@ -1240,6 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... resto de tu código
 });
 </script>
+
 
 
 
