@@ -349,10 +349,24 @@
         collection, addDoc, query, where, getDocs, serverTimestamp, 
         doc, getDoc, setDoc, updateDoc // <--- Ajuste realizado aquí
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// [01] IMPORTACIONES... (Ya lo tienes)
 
+// ==========================================================================
+// [02] UTILIDADES DE PRECISIÓN Y DATA MAESTRA
+// ==========================================================================
+
+// ==========================================================================
+    // [02] CATÁLOGOS, DATA MAESTRA Y UTILIDADES
     // ==========================================================================
-    // [02] CATÁLOGOS Y DATA MAESTRA
-    // ==========================================================================
+
+    // Función de normalización: El "limpiador" de nombres para evitar errores de precisión
+    const normalizarNombre = (n) => {
+        if (!n) return "";
+        return n.toLowerCase()
+                .replace(/\s+/g, '') // Quita todos los espacios
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quita acentos/tildes
+    };
+
     const CONFIG_SERVICIOS = {
         "CONSULTA GENERAL": { precio: 0, porc: 40 },
         "CONSULTA OFTALMOLÓGICA": { precio: 0, porc: 12.5 },
@@ -477,18 +491,22 @@
     };
 
   // ==========================================================================
-// [04] GESTIÓN DE SERVICIOS E INSUMOS (OPTIMIZADO)
+// [04] GESTIÓN DE SERVICIOS E INSUMOS (OPTIMIZADO CON NORMALIZACIÓN)
 // ==========================================================================
 window.insertarServicio = async (v) => {
     if (!v) return;
     const area = document.getElementById('hTratamiento');
-    // Eliminamos la suma directa aquí para que calcularTodo() mande
+    
     let nombreFinal = v;
     let precioFinal = 0;
     let porcentajeServicio = 30; 
 
+    // --- NORMALIZACIÓN PARA BÚSQUEDA ROBUSTA ---
+    const vLimpio = normalizarNombre(v);
+
     // --- CONEXIÓN CON FIREBASE / RESPALDO ---
     try {
+        // Buscamos en Firebase (Usamos el ID original 'v' pero si falla, buscamos en el respaldo normalizado)
         const docRef = doc(db, "servicios_maestro", v);
         const docSnap = await getDoc(docRef);
         
@@ -497,17 +515,24 @@ window.insertarServicio = async (v) => {
             precioFinal = parseFloat(data.precioVenta) || 0;
             porcentajeServicio = parseFloat(data.porcDoc) || 30;
         } else {
-            precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
-            porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
+            // Si no está en Firebase, buscamos en el código local usando normalización
+            const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+            const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+
+            precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
+            porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
         }
     } catch (e) {
-        console.warn("⚠️ Usando respaldo local por error de conexión.");
-        precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
-        porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
+        console.warn("⚠️ Error de conexión. Usando respaldo local con normalización.");
+        const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+        const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+        
+        precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
+        porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
     }
 
-    // --- LÓGICA DE EXCEPCIONES ---
-    if (v === "KG ADICIONAL") {
+    // --- LÓGICA DE EXCEPCIONES (Respetando tus reglas de negocio) ---
+    if (vLimpio.includes("kgadicional")) {
         const kgs = prompt("Ingrese la cantidad de KG adicionales:");
         if (kgs && !isNaN(kgs)) {
             const numKgs = parseFloat(kgs);
@@ -516,7 +541,7 @@ window.insertarServicio = async (v) => {
             porcentajeServicio = 0; 
         } else return;
     } 
-    else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
+    else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
         const monto = prompt(`Precio pactado para ${v}:`);
         if (monto && !isNaN(monto)) {
             precioFinal = parseFloat(monto);
@@ -524,10 +549,10 @@ window.insertarServicio = async (v) => {
         } else return;
     }
     else {
-        // Combos automáticos
+        // Combos automáticos (Lógica de fidelización)
         if (serviciosEnLista.length > 0) {
-            if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
-            if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
+            if (vLimpio.includes("vacunakc")) { precioFinal = 40; nombreFinal += " (Combo)"; }
+            if (vLimpio.includes("hematologiacompleta")) { precioFinal = 20; nombreFinal += " (Combo)"; }
         }
     }
 
@@ -541,7 +566,6 @@ window.insertarServicio = async (v) => {
     
     const filaTitulo = document.createElement('tr');
     filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
-    // Estas etiquetas 'data' son los electrodos que usará el motor financiero para calcular todo
     filaTitulo.setAttribute('data-grupo', grupoID);
     filaTitulo.setAttribute('data-precio', precioFinal);
     filaTitulo.setAttribute('data-porc', porcentajeServicio); 
@@ -560,18 +584,19 @@ window.insertarServicio = async (v) => {
 
     // --- GESTIÓN DE INSUMOS ---
     let listaNuevos = [];
-    // Si es el primer servicio, agregamos los gastos fijos de clínica (Guantes, etc)
     if (cuerpo.querySelectorAll('.servicio-principal').length === 1) { 
         listaNuevos = [...insumosFijosMedicos]; 
     }
     
-    if (v.includes("VACUNA")) {
+    if (vLimpio.includes("vacuna")) {
         const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL"));
         if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
     }
 
-    if (recetas[v]?.insumos) { 
-        listaNuevos = [...listaNuevos, ...recetas[v].insumos]; 
+    // Buscar insumos en recetas con nombre normalizado
+    const llaveRecetaIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+    if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) { 
+        listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos]; 
     }
 
     listaNuevos.forEach(insumo => {
@@ -585,7 +610,6 @@ window.insertarServicio = async (v) => {
         cuerpo.appendChild(tr);
     });
 
-    // Lanzamos el motor financiero para que actualice los totales globales
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
 };
@@ -1121,45 +1145,76 @@ document.addEventListener('DOMContentLoaded', () => {
 // 1. RENDERIZAR TABLA DE SERVICIOS
 window.renderizarTablaMaestra = async () => {
     const tabla = document.getElementById('tablaMaestraServicios');
-    if (!tabla) return;
-    tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center animate-pulse'>Cargando catálogo...</td></tr>";
+    if (!tabla) {
+        console.error("❌ Error: No se encontró el elemento 'tablaMaestraServicios' en el HTML.");
+        return;
+    }
+    
+    tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center animate-pulse text-blue-500 font-bold'>⏳ Conectando con la nube...</td></tr>";
 
     try {
+        // IMPORTANTE: Verifica que en Firebase tu colección se llame exactamente "servicios_maestro"
         const querySnapshot = await getDocs(collection(db, "servicios_maestro"));
-        tabla.innerHTML = "";
+        
+        if (querySnapshot.empty) {
+            tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-orange-500 font-bold'>⚠️ La base de datos está vacía en Firebase.</td></tr>";
+            return;
+        }
+
+        tabla.innerHTML = ""; // Limpiamos el mensaje de carga
 
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
-            const id = docSnap.id;
+            const id = docSnap.id; // El nombre del servicio (Ej: "CONSULTA GENERAL")
+            
+            // Creamos un ID seguro para los inputs (quitando espacios) para evitar errores de selector
+            const safeID = id.replace(/\s+/g, '_');
+
             const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-slate-50 transition-colors";
             tr.innerHTML = `
-                <td class="p-3 font-bold uppercase text-slate-700">${id}</td>
+                <td class="p-3 font-bold uppercase text-slate-700 text-[11px]">${id}</td>
                 <td class="p-3">
-                    <input type="number" id="p-${id}" value="${data.precioVenta}" step="0.01" class="w-full border rounded p-1 text-center font-bold text-blue-600">
+                    <input type="number" id="precio-${safeID}" value="${data.precioVenta || 0}" step="0.01" 
+                        class="w-full border border-slate-200 rounded p-1 text-center font-bold text-blue-600 focus:border-blue-400 outline-none">
                 </td>
                 <td class="p-3">
-                    <input type="number" id="d-${id}" value="${data.porcDoc}" step="0.1" class="w-full border rounded p-1 text-center font-bold text-orange-600">
+                    <input type="number" id="porc-${safeID}" value="${data.porcDoc || 30}" step="0.1" 
+                        class="w-full border border-slate-200 rounded p-1 text-center font-bold text-orange-600 focus:border-orange-400 outline-none">
                 </td>
                 <td class="p-3 text-center">
-                    <button onclick="window.actualizarPrecioIndividual('${id}')" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 transition shadow-sm">
-                        💾 OK
+                    <button onclick="window.actualizarPrecioIndividual('${id}', '${safeID}')" 
+                        class="bg-blue-600 text-white px-4 py-1 rounded shadow hover:bg-emerald-600 transition-all text-[10px] font-black uppercase">
+                        💾 Guardar
                     </button>
                 </td>`;
             tabla.appendChild(tr);
         });
+        
+        console.log("✅ Renderización completa: " + querySnapshot.size + " servicios cargados.");
+
     } catch (e) {
-        console.error("Error al renderizar tabla:", e);
-        tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-red-500'>Error al conectar con la nube.</td></tr>";
+        console.error("❌ Error crítico al renderizar tabla:", e);
+        tabla.innerHTML = `<tr><td colspan='4' class='p-4 text-center text-red-500'>Error: ${e.message}</td></tr>`;
     }
 };
 
-// 2. ACTUALIZAR PRECIO INDIVIDUAL (Ajuste para asegurar el efecto visual)
+// 2. ACTUALIZAR PRECIO INDIVIDUAL (Blindado contra espacios y caracteres)
 window.actualizarPrecioIndividual = async (id) => {
-    const nuevoPrecio = parseFloat(document.getElementById(`p-${id}`).value);
-    const nuevoPorc = parseFloat(document.getElementById(`d-${id}`).value);
+    // Usamos Template Literals con comillas para que los espacios no rompan el selector
+    const inputPrecio = document.getElementById(`p-${id}`);
+    const inputPorc = document.getElementById(`d-${id}`);
+
+    if (!inputPrecio || !inputPorc) {
+        console.error("No se encontraron los inputs para:", id);
+        return;
+    }
+
+    const nuevoPrecio = parseFloat(inputPrecio.value);
+    const nuevoPorc = parseFloat(inputPorc.value);
     
-    // Capturamos el botón usando el evento actual
-    const btn = window.event.target; 
+    // Capturamos el botón de forma segura
+    const btn = window.event ? window.event.currentTarget : null; 
 
     if (isNaN(nuevoPrecio) || isNaN(nuevoPorc)) return alert("⚠️ Valores no válidos");
 
@@ -1169,25 +1224,26 @@ window.actualizarPrecioIndividual = async (id) => {
             porcDoc: nuevoPorc
         }, { merge: true });
         
-        // --- EFECTO VISUAL DE ÉXITO ---
-        const originalText = btn.innerText;
-        btn.innerText = "✅ OK"; // Cambiamos texto
-        btn.disabled = true; // Evitamos doble clic mientras procesa
-        
-        // Cambiamos el color: de azul a esmeralda
-        btn.classList.remove('bg-blue-600');
-        btn.classList.add('bg-emerald-500');
-        
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.disabled = false;
-            btn.classList.remove('bg-emerald-500');
-            btn.classList.add('bg-blue-600');
-        }, 2000);
-
         console.log(`Sincronización exitosa: ${id}`);
 
+        // --- EFECTO VISUAL DE ÉXITO (El "pulido" del botón) ---
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "✅ OK"; 
+            btn.disabled = true; 
+            
+            // Cambiamos colores de alerta a éxito
+            btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+            }, 2000);
+        }
+
     } catch (e) {
+        console.error("Error Firebase:", e);
         alert("❌ Error al guardar: " + e.message);
     }
 };
@@ -1363,6 +1419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 </script>
+
 
 
 
