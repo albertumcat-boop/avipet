@@ -67,6 +67,9 @@
             <button onclick="showTab('historia')" id="tabH" class="tab-active py-2 text-[11px] px-2 uppercase font-bold">Historia Clínica</button>
             <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">Buscador</button>
             <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">Finanzas / Caja</button>
+            <button onclick="showTab('config_precios')" class="px-4 py-2 font-black text-[10px] uppercase bg-slate-100 rounded-lg shadow-sm border border-slate-200">
+    ⚙️ Ajustes de Precios
+</button>
         </nav>
 
         <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
@@ -206,6 +209,60 @@
                 </div>
             </div>
         </section>
+       <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
+        <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">🛠 Panel de Control Maestro</h2>
+        <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos de Materiales</p>
+
+        <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+            <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
+                💉 Servicios y Ganancias
+            </button>
+            <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
+                📦 Costo de Insumos
+            </button>
+        </div>
+
+        <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between">
+             <div>
+                <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
+                <p class="text-[9px] text-orange-400">Usa esto solo para subir los datos del código a la nube por primera vez.</p>
+             </div>
+             <button onclick="window.inicializarBaseDeDatosCompleta()" class="bg-orange-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-orange-600">
+                🚀 Sincronizar Todo
+             </button>
+        </div>
+
+        <div id="subTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+            <table class="w-full text-left text-[12px]">
+                <thead>
+                    <tr class="text-blue-900 font-black uppercase text-[10px]">
+                        <th class="p-3">Servicio / Tratamiento</th>
+                        <th class="p-3 w-28 text-center">Precio ($)</th>
+                        <th class="p-3 w-28 text-center">Doc (%)</th>
+                        <th class="p-3 w-24 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMaestraServicios" class="bg-white divide-y">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="subTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+            <table class="w-full text-left text-[12px]">
+                <thead>
+                    <tr class="text-emerald-900 font-black uppercase text-[10px]">
+                        <th class="p-3">Insumo / Material</th>
+                        <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
+                        <th class="p-3 w-24 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMaestraInsumos" class="bg-white divide-y">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</section>
     </main>
 </body>
 <script type="module">
@@ -344,89 +401,120 @@
         }
     };
 
-    // ==========================================================================
-    // [04] GESTIÓN DE SERVICIOS E INSUMOS (DRAMA Y LÓGICA)
-    // ==========================================================================
-    window.insertarServicio = async (v) => {
-        if (!v) return;
-        const area = document.getElementById('hTratamiento');
-        const inputPrecioVenta = document.getElementById('precioVenta');
-        let nombreFinal = v;
-        let precioFinal = 0;
-        let porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
+   // ==========================================================================
+// [04] GESTIÓN DE SERVICIOS E INSUMOS (VERSIÓN DINÁMICA FIREBASE)
+// ==========================================================================
+window.insertarServicio = async (v) => {
+    if (!v) return;
+    const area = document.getElementById('hTratamiento');
+    const inputPrecioVenta = document.getElementById('precioVenta');
+    let nombreFinal = v;
+    let precioFinal = 0;
+    let porcentajeServicio = 30; // Por defecto
 
-        if (v === "KG ADICIONAL") {
-            const kgs = prompt("Ingrese la cantidad de KG adicionales:");
-            if (kgs && !isNaN(kgs)) {
-                const numKgs = parseFloat(kgs);
-                nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-                precioFinal = numKgs * 7;
-                porcentajeServicio = 0; 
-            } else return;
-        } 
-        else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
-            const monto = prompt(`Ingrese el precio pactado para ${v}:`);
-            if (monto && !isNaN(monto)) {
-                precioFinal = parseFloat(monto);
-                porcentajeServicio = 0;
-            } else return;
-        }
-        else {
+    // --- CONEXIÓN CON EL PANEL DE CONTROL (FIREBASE) ---
+    try {
+        const docRef = doc(db, "servicios_maestro", v);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            precioFinal = parseFloat(data.precioVenta) || 0;
+            porcentajeServicio = parseFloat(data.porcDoc) || 30;
+        } else {
+            // RESPALDO: Si no está en Firebase, usa las recetas del código
             precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
-            if (serviciosEnLista.length > 0) {
-                if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
-                if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
-            }
+            porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
         }
+    } catch (e) {
+        console.warn("Error leyendo Firebase, usando respaldo local.");
+        precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
+        porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
+    }
 
-        const grupoID = "srv-" + Date.now();
-        serviciosEnLista.push(v);
-        area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
-        let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
-        inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
-
-        document.getElementById('contenedorInsumos').classList.remove('hidden');
-        const cuerpo = document.getElementById('listaInsumosDinamica');
-        const filaTitulo = document.createElement('tr');
-        filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
-        filaTitulo.setAttribute('data-grupo', grupoID);
-        filaTitulo.setAttribute('data-precio', precioFinal);
-        filaTitulo.setAttribute('data-porc', porcentajeServicio); 
-
-        filaTitulo.innerHTML = `
-            <td colspan="3" class="p-2 text-[11px] uppercase">
-                🔹 ${nombreFinal} ($${precioFinal.toFixed(2)}) 
-                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
-                    ${porcentajeServicio.toFixed(1)}% DOC
-                </span>
-            </td>
-            <td class="p-2 text-center">
-                <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
-            </td>`;
-        cuerpo.appendChild(filaTitulo);
-
-        let listaNuevos = [];
-        if (!cuerpo.querySelector('.insumo-fila')) { listaNuevos = [...insumosFijosMedicos]; }
-        if (v.includes("VACUNA")) {
-            const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
-            if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+    // --- LÓGICA DE EXCEPCIONES (KG, CREMACIÓN, COMBOS) ---
+    if (v === "KG ADICIONAL") {
+        const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+        if (kgs && !isNaN(kgs)) {
+            const numKgs = parseFloat(kgs);
+            nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
+            precioFinal = numKgs * 7; // Puedes cambiar este 7 por una variable si quieres
+            porcentajeServicio = 0; 
+        } else return;
+    } 
+    else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
+        const monto = prompt(`Ingrese el precio pactado para ${v}:`);
+        if (monto && !isNaN(monto)) {
+            precioFinal = parseFloat(monto);
+            porcentajeServicio = 0;
+        } else return;
+    }
+    else {
+        // Lógica de Combos (Precios especiales si ya hay otros servicios)
+        if (serviciosEnLista.length > 0) {
+            if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
+            if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
         }
-        if (recetas[v] && recetas[v].insumos) { listaNuevos = [...listaNuevos, ...recetas[v].insumos]; }
+    }
 
-        listaNuevos.forEach(insumo => {
-            const tr = document.createElement('tr');
-            tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
-            tr.innerHTML = `
-                <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
-                <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
-                <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
-                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
-            cuerpo.appendChild(tr);
-        });
-        await window.calcularTodo();
-        document.getElementById('selectorServicios').value = "";
-    };
+    // --- RENDERIZADO EN LA INTERFAZ ---
+    const grupoID = "srv-" + Date.now();
+    serviciosEnLista.push(v);
+    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
+    
+    let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
+    inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
 
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    
+    // Crear Fila de Título del Servicio
+    const filaTitulo = document.createElement('tr');
+    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
+    filaTitulo.setAttribute('data-grupo', grupoID);
+    filaTitulo.setAttribute('data-precio', precioFinal);
+    filaTitulo.setAttribute('data-porc', porcentajeServicio); 
+
+    filaTitulo.innerHTML = `
+        <td colspan="3" class="p-2 text-[11px] uppercase">
+            🔹 ${nombreFinal} ($${precioFinal.toFixed(2)}) 
+            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
+                ${porcentajeServicio.toFixed(1)}% DOC
+            </span>
+        </td>
+        <td class="p-2 text-center">
+            <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
+        </td>`;
+    cuerpo.appendChild(filaTitulo);
+
+    // --- CARGA DE INSUMOS ASOCIADOS ---
+    let listaNuevos = [];
+    if (!cuerpo.querySelector('.insumo-fila')) { listaNuevos = [...insumosFijosMedicos]; }
+    
+    if (v.includes("VACUNA")) {
+        const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
+        if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+    }
+
+    if (recetas[v] && recetas[v].insumos) { 
+        listaNuevos = [...listaNuevos, ...recetas[v].insumos]; 
+    }
+
+    // Renderizar cada insumo con su precio editable
+    listaNuevos.forEach(insumo => {
+        const tr = document.createElement('tr');
+        tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+            <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
+            <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
+            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+        cuerpo.appendChild(tr);
+    });
+
+    await window.calcularTodo();
+    document.getElementById('selectorServicios').value = "";
+};
     window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
         if (event) event.preventDefault();
         if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
@@ -596,7 +684,18 @@
             document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
         } catch (e) { console.error(e); }
     };
-
+// Función para actualizar un servicio específico en la DB
+window.actualizarPrecioMaestro = async (nombreServicio, nuevoPrecio, nuevoPorcentaje) => {
+    try {
+        await setDoc(doc(db, "servicios_maestro", nombreServicio), {
+            precioVenta: parseFloat(nuevoPrecio),
+            porcentajeDoc: parseFloat(nuevoPorcentaje)
+        }, { merge: true });
+        alert("✅ Servicio actualizado en la nube.");
+    } catch (e) {
+        console.error("Error actualizando: ", e);
+    }
+};
     window.guardarConfiguracion = async () => {
         const ins = document.getElementById('cfgInsumos').value;
         const por = document.getElementById('cfgPorcentaje').value;
@@ -606,57 +705,370 @@
         } catch (e) { alert("❌ Error"); }
     };
 
-    window.guardarFirebase = async (imp) => {
-        if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor.");
+   window.guardarFirebase = async (imp) => {
+    if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor.");
+
+    try {
+        // 1. Obtener configuración global de porcentaje (si existe)
+        const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+        let porcGlobal = (configSnap.exists() && configSnap.data().porcentajeDoc > 0) ? configSnap.data().porcentajeDoc : null;
+
+        const dInput = (id) => document.getElementById(id).value.trim();
+        const montoVentaTotal = parseFloat(document.getElementById('precioVenta').value) || 0;
+        
+        const detalleInsumos = [];
+        let totalGastos = 0;
+        let pagoDoctorTotal = 0;
+
+        // 2. Procesar cada servicio principal para calcular comisiones e insumos
+        const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
+        
+        serviciosPrincipales.forEach(fila => {
+            const grupoID = fila.getAttribute('data-grupo');
+            const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+            
+            // Usamos el porcentaje de la nube (vía atributo) o el global
+            const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
+            const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
+
+            let gastosEsteServicio = 0;
+
+            // Buscamos los insumos amarrados a este servicio específico
+            document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
+                const nombre = insumoFila.cells[0].innerText.replace('➕ ', '').replace('🔹 ', '').trim();
+                const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
+                const costoUnidad = parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
+                const subtotalInsumo = cant * costoUnidad;
+
+                gastosEsteServicio += subtotalInsumo;
+                
+                // Guardamos en el detalle para la historia clínica
+                detalleInsumos.push({ nombre, cant, precio: costoUnidad });
+            });
+
+            totalGastos += gastosEsteServicio;
+            
+            // REGLA RADICAL: Ganancia Doc = (Precio Servicio - Insumos) * %
+            pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
+        });
+
+        // 3. Preparar el envío a Firebase
+        const dataConsulta = {
+            cedula: dInput('hCI'),
+            propietario: dInput('hProp'),
+            paciente: dInput('hNombre'),
+            doctor: doctorVerificado,
+            tratamiento: dInput('hTratamiento'),
+            montoVenta: montoVentaTotal,
+            montoInsumos: totalGastos,
+            pagoDoctor: pagoDoctorTotal,
+            pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+            listaDetalladaInsumos: detalleInsumos,
+            fecha: serverTimestamp(),
+            fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
+        };
+
+        // 4. Guardar en la nube
+        await addDoc(collection(db, "consultas"), dataConsulta);
+
+        // 5. Manejo de impresión y reinicio
+        if (imp) {
+            document.getElementById('hTratamientoPrint').innerText = dInput('hTratamiento');
+            alert("✅ Consulta guardada y lista para imprimir.");
+            setTimeout(() => { window.print(); location.reload(); }, 600);
+        } else {
+            alert("✅ Consulta guardada exitosamente.");
+            location.reload();
+        }
+
+    } catch (e) {
+        console.error("Error al guardar:", e);
+        alert("❌ Error crítico al guardar: " + e.message);
+    }
+};
+    window.cambiarSubTabConfig = (tab) => {
+    const isServ = tab === 'servicios';
+    // Switch de visualización
+    document.getElementById('subTabServicios').classList.toggle('hidden', !isServ);
+    document.getElementById('subTabInsumos').classList.toggle('hidden', isServ);
+    
+    // Switch de botones
+    const btnServ = document.getElementById('btnTabServ');
+    const btnIns = document.getElementById('btnTabIns');
+    
+    if(isServ) {
+        btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm";
+        btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
+        window.renderizarTablaMaestra();
+    } else {
+        btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-emerald-600 shadow-sm";
+        btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
+        window.renderizarTablaInsumos();
+    }
+};
+
+// ==========================================================================
+// [08] INICIALIZACIÓN CON CANDADO DE SEGURIDAD
+// ==========================================================================
+window.showTab = (t) => {
+    // 1. FILTRO DE SEGURIDAD PARA PRECIOS
+    if (t === 'config_precios') {
+        const clave = prompt("🔐 ACCESO RESTRINGIDO\nIngrese clave de administrador para gestionar costos y ganancias:");
+        
+        // Define aquí tu clave (por ejemplo: 'CAPITAN2026')
+        if (clave !== 'AVIPET2026') { 
+            alert("🚫 Clave incorrecta. Acceso denegado.");
+            // Si la clave falla, forzamos el regreso a la historia clínica
+            t = 'historia'; 
+        }
+    }
+
+    // 2. CONTROL DE VISIBILIDAD (Solo una sección activa a la vez)
+    document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
+    document.getElementById('sectionBuscador').classList.toggle('hidden', t !== 'buscador');
+    document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
+    
+    const sectionConfig = document.getElementById('sectionConfigPrecios');
+    if (sectionConfig) {
+        sectionConfig.classList.toggle('hidden', t !== 'config_precios');
+    }
+
+    // 3. CARGA DE DATOS DINÁMICOS
+    if (t === 'reporte') {
+        window.cargarReporte();
+    }
+    
+    if (t === 'config_precios') {
+        // Al entrar con éxito, por defecto mostramos la tabla de servicios
+        window.renderizarTablaMaestra();
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const cfg = async () => {
         try {
-            const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-            let porcGlobal = configSnap.exists() ? configSnap.data().porcentajeDoc : null;
-            const dInput = (id) => document.getElementById(id).value.trim();
-            const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
-            const detalleInsumos = [];
-            document.querySelectorAll('#listaInsumosDinamica tr.insumo-fila').forEach(fila => {
-                detalleInsumos.push({ nombre: fila.cells[0].innerText.replace('➕ ', '').replace('🔹 ', ''), cant: parseFloat(fila.querySelector('.i-cant').value) || 0, precio: parseFloat(fila.querySelector('.i-cost').value) || 0 });
-            });
-            let pagoDoc = 0, totalGastos = 0;
-            document.querySelectorAll('.servicio-principal').forEach(fila => {
-                const pServ = parseFloat(fila.getAttribute('data-precio')) || 0;
-                const pEfect = (porcGlobal !== null) ? porcGlobal : parseFloat(fila.getAttribute('data-porc'));
-                let gServ = 0;
-                document.querySelectorAll(`.${fila.getAttribute('data-grupo')}.insumo-fila`).forEach(i => gServ += (parseFloat(i.querySelector('.i-cant').value)||0)*(parseFloat(i.querySelector('.i-cost').value)||0));
-                totalGastos += gServ;
-                pagoDoc += (Math.max(0, pServ - gServ) * (pEfect / 100));
-            });
-            await addDoc(collection(db, "consultas"), {
-                cedula: dInput('hCI'), propietario: dInput('hProp'), paciente: dInput('hNombre'), doctor: doctorVerificado, tratamiento: dInput('hTratamiento'),
-                montoVenta, montoInsumos: totalGastos, pagoDoctor: pagoDoc, pagoAvipet: (montoVenta - totalGastos - pagoDoc),
-                listaDetalladaInsumos: detalleInsumos, fecha: serverTimestamp(), fechaSimple: `${new Date().getDate()}/${new Date().getMonth()+1}/${new Date().getFullYear()}`
-            });
-            if (imp) { document.getElementById('hTratamientoPrint').innerText = dInput('hTratamiento'); alert("✅ Guardado."); setTimeout(() => { window.print(); location.reload(); }, 600); }
-            else { alert("✅ Guardado."); location.reload(); }
-        } catch (e) { alert("❌ Error: " + e.message); }
-    };
-
-    // ==========================================================================
-    // [08] INICIALIZACIÓN
-    // ==========================================================================
-    window.showTab = (t) => {
-        document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
-        document.getElementById('sectionBuscador').classList.toggle('hidden', t !== 'buscador');
-        document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
-        if(t === 'reporte') window.cargarReporte();
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const cfg = async () => {
             const snap = await getDoc(doc(db, "configuracion", "tarifas"));
             if (snap.exists()) {
-                if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = snap.data().insumoBase;
-                if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = snap.data().porcentajeDoc;
+                const data = snap.data();
+                if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
+                if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
             }
-        };
-        cfg();
+        } catch (error) {
+            console.error("Error al cargar configuración inicial:", error);
+        }
+    };
+    cfg();
+});
+    // ==========================================================================
+// [09] FUNCIONES DEL PANEL DE CONTROL (SERVICIOS E INSUMOS)
+// ==========================================================================
+
+// 1. RENDERIZAR TABLA DE SERVICIOS
+window.renderizarTablaMaestra = async () => {
+    const tabla = document.getElementById('tablaMaestraServicios');
+    if (!tabla) return;
+    tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center animate-pulse'>Cargando catálogo...</td></tr>";
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "servicios_maestro"));
+        tabla.innerHTML = "";
+
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-3 font-bold uppercase text-slate-700">${id}</td>
+                <td class="p-3">
+                    <input type="number" id="p-${id}" value="${data.precioVenta}" step="0.01" class="w-full border rounded p-1 text-center font-bold text-blue-600">
+                </td>
+                <td class="p-3">
+                    <input type="number" id="d-${id}" value="${data.porcDoc}" step="0.1" class="w-full border rounded p-1 text-center font-bold text-orange-600">
+                </td>
+                <td class="p-3 text-center">
+                    <button onclick="window.actualizarPrecioIndividual('${id}')" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 transition shadow-sm">
+                        💾 OK
+                    </button>
+                </td>`;
+            tabla.appendChild(tr);
+        });
+    } catch (e) {
+        console.error("Error al renderizar tabla:", e);
+        tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-red-500'>Error al conectar con la nube.</td></tr>";
+    }
+};
+
+// 2. ACTUALIZAR PRECIO INDIVIDUAL
+window.actualizarPrecioIndividual = async (id) => {
+    const nuevoPrecio = parseFloat(document.getElementById(`p-${id}`).value);
+    const nuevoPorc = parseFloat(document.getElementById(`d-${id}`).value);
+
+    if (isNaN(nuevoPrecio) || isNaN(nuevoPorc)) return alert("⚠️ Valores no válidos");
+
+    try {
+        await setDoc(doc(db, "servicios_maestro", id), {
+            precioVenta: nuevoPrecio,
+            porcDoc: nuevoPorc
+        }, { merge: true });
+        
+        // Efecto visual de éxito
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "✅";
+        btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+        
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+        }, 2000);
+
+    } catch (e) {
+        alert("❌ Error al guardar: " + e.message);
+    }
+};
+
+// 3. RENDERIZAR TABLA DE INSUMOS
+window.renderizarTablaInsumos = async () => {
+    const tabla = document.getElementById('tablaMaestraInsumos');
+    if (!tabla) return;
+    tabla.innerHTML = "<tr><td colspan='3' class='p-4 text-center animate-pulse'>Cargando insumos...</td></tr>";
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
+        tabla.innerHTML = "";
+
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-3 font-bold uppercase text-slate-700">${id}</td>
+                <td class="p-3">
+                    <input type="number" id="costo-${id}" value="${data.costo}" step="0.01" class="w-full border rounded p-1 text-center font-bold text-emerald-600">
+                </td>
+                <td class="p-3 text-center">
+                    <button onclick="window.actualizarCostoInsumo('${id}')" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase hover:bg-emerald-700 transition shadow-sm">
+                        💾 OK
+                    </button>
+                </td>`;
+            tabla.appendChild(tr);
+        });
+    } catch (e) {
+        tabla.innerHTML = "<tr><td colspan='3' class='p-4 text-center text-red-500'>Error al cargar insumos.</td></tr>";
+    }
+};
+
+// 4. ACTUALIZAR COSTO DE INSUMO
+window.actualizarCostoInsumo = async (id) => {
+    const nuevoCosto = parseFloat(document.getElementById(`costo-${id}`).value);
+    if (isNaN(nuevoCosto)) return;
+
+    try {
+        await setDoc(doc(db, "insumos_maestro", id), { costo: nuevoCosto }, { merge: true });
+        alert(`✅ Costo de ${id} actualizado.`);
+    } catch (e) {
+        alert("❌ Error");
+    }
+};
+
+// 5. FUNCIÓN DE INICIALIZACIÓN TOTAL (Solo para la primera vez)
+window.inicializarBaseDeDatosCompleta = async () => {
+    if(!confirm("⚠️ Esto sobrescribirá los precios en la nube con los del código. ¿Continuar?")) return;
+    
+    try {
+        // Subir Servicios
+        for (const [nombre, data] of Object.entries(recetas)) {
+            const porc = (CONFIG_SERVICIOS[nombre]) ? CONFIG_SERVICIOS[nombre].porc : 30;
+            await setDoc(doc(db, "servicios_maestro", nombre), {
+                precioVenta: data.precioVenta,
+                porcDoc: porc
+            }, { merge: true });
+        }
+
+        // Subir Insumos Fijos
+        const todosLosInsumos = [...insumosFijosMedicos, ...insumosBaseVacuna];
+        for (const ins of todosLosInsumos) {
+            await setDoc(doc(db, "insumos_maestro", ins.nombre), {
+                costo: ins.costo
+            }, { merge: true });
+        }
+
+        alert("🚀 Sincronización Completa. Ahora puedes editar todo desde las tablas.");
+        window.renderizarTablaMaestra();
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+};
+    // ==========================================================================
+// [08] MOTOR DE SINCRONIZACIÓN Y ARRANQUE (PEGA ESTO AL FINAL)
+// ==========================================================================
+
+// 1. EL MOTOR: Esta función busca los precios en la nube y los mete en el catálogo del código
+window.sincronizarCatalogosDesdeNube = async () => {
+    try {
+        console.log("🔄 Conectando con la base de datos de Avipet...");
+        const querySnapshot = await getDocs(collection(db, "servicios_maestro"));
+        
+        querySnapshot.forEach((docSnap) => {
+            const id = docSnap.id;
+            const data = docSnap.data();
+            
+            // Si el servicio existe en tus recetas (bloque 02), le ponemos el precio de la nube
+            if (recetas[id]) {
+                recetas[id].precioVenta = parseFloat(data.precioVenta);
+            }
+            // Actualizamos también el porcentaje para el doctor
+            if (CONFIG_SERVICIOS[id]) {
+                CONFIG_SERVICIOS[id].porc = parseFloat(data.porcDoc);
+            }
+        });
+        console.log("✅ Catálogos actualizados con éxito.");
+    } catch (e) {
+        console.error("❌ Error en sincronización:", e);
+    }
+};
+
+// 2. EL ENCENDIDO: Esto se ejecuta apenas abres la página
+document.addEventListener('DOMContentLoaded', () => {
+    const inicializarTodo = async () => {
+        // Carga la configuración de tarifas generales
+        try {
+            const snap = await getDoc(doc(db, "configuracion", "tarifas"));
+            if (snap.exists()) {
+                const data = snap.data();
+                if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
+                if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
+            }
+        } catch (error) {
+            console.error("Error inicial:", error);
+        }
+
+        // ⚡ EJECUTAMOS EL MOTOR PARA QUE LOS PRECIOS SE ACTUALICEN
+        await window.sincronizarCatalogosDesdeNube();
+    };
+
+    inicializarTodo();
+});
+    window.sincronizarCatalogos = async () => {
+    const snapServicios = await getDocs(collection(db, "servicios_maestro"));
+    snapServicios.forEach(docSnap => {
+        const id = docSnap.id;
+        const data = docSnap.data();
+        // Aquí "pisamos" el precio de la receta con el de la nube
+        if (recetas[id]) {
+            recetas[id].precioVenta = data.precioVenta;
+            if (CONFIG_SERVICIOS[id]) CONFIG_SERVICIOS[id].porc = data.porcDoc;
+        }
     });
+};
+
+// Y llámala en tu DOMContentLoaded (Sección [08])
+document.addEventListener('DOMContentLoaded', () => {
+    window.sincronizarCatalogos(); // <--- ESTO ES LO QUE HACE QUE LOS CAMBIOS SE VEAN
+    // ... resto de tu código
+});
 </script>
+
 
 
 
