@@ -285,7 +285,27 @@
                 <p id="repNeto" class="text-2xl font-black text-slate-800">$0.00</p>
             </div>
         </div>
+<div class="p-4 bg-white rounded-3xl shadow-sm border border-slate-200 mb-6">
+    <div class="flex items-center gap-2 mb-4">
+        <span class="p-2 bg-amber-100 text-amber-600 rounded-lg text-lg">⚙️</span>
+        <h3 class="text-sm font-black text-slate-700 uppercase">Configuración de Tarifas</h3>
+    </div>
 
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-50 p-3 rounded-2xl">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Gasto Insumo Base ($)</label>
+            <input type="number" id="cfgInsumos" step="0.01" class="w-full bg-transparent text-lg font-black text-slate-700 focus:outline-none" value="5.00">
+        </div>
+        <div class="bg-slate-50 p-3 rounded-2xl">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">% Ganancia Doctor</label>
+            <input type="number" id="cfgPorcentaje" class="w-full bg-transparent text-lg font-black text-slate-700 focus:outline-none" value="40">
+        </div>
+    </div>
+
+    <button onclick="guardarConfiguracion()" class="w-full mt-4 py-3 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all">
+        Actualizar Reglas de Cálculo
+    </button>
+</div>
         <div class="flex flex-col gap-2">
             <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[11px] hover:bg-slate-700 transition-colors">
                 🔄 Actualizar Cierre
@@ -309,7 +329,11 @@
 <script type="module">
     // --- IMPORTACIONES ---
     import { db } from './firebase-config.js';
-    import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { 
+        collection, addDoc, query, where, getDocs, serverTimestamp, 
+        doc, getDoc, setDoc 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 const CONFIG_SERVICIOS = {
     // CONSULTAS
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
@@ -373,22 +397,33 @@ const CONFIG_SERVICIOS = {
     let doctorVerificado = ""; 
     let serviciosEnLista = [];
 
-  // ✅ CÓDIGO OPTIMIZADO: Cálculo granular de Ganancia Neta y Comisiones
-window.calcularTodo = () => {
+  // ✅ CÓDIGO AJUSTADO: Conexión con Configuración Global y Cálculo Granular
+window.calcularTodo = async () => { // Agregamos async para poder leer de la nube
     let totalComisionDoctores = 0;
     let totalGastosInsumos = 0;
     
-    // Obtenemos el precio de venta total ingresado en el campo principal
+    // 0. Intentar obtener configuración global de la nube (Si existe)
+    // Esto permite que el cambio en Finanzas mande sobre el cálculo
+    const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+    let porcGlobal = null;
+    if (configSnap.exists()) {
+        porcGlobal = configSnap.data().porcentajeDoc;
+    }
+
     const inputVenta = document.getElementById('precioVenta');
     const totalVentaBruta = parseFloat(inputVenta ? inputVenta.value : 0) || 0;
 
-    // 1. Recorrer cada servicio principal en la tabla para cálculos individuales
+    // 1. Recorrer cada servicio principal
     document.querySelectorAll('.servicio-principal').forEach(filaServicio => {
         const precioServicio = parseFloat(filaServicio.getAttribute('data-precio')) || 0;
-        const porcServicio = parseFloat(filaServicio.getAttribute('data-porc')) || 0;
+        
+        // Prioridad: Si hay porcentaje global en Finanzas, usamos ese. Si no, el del servicio.
+        const porcServicioDefault = parseFloat(filaServicio.getAttribute('data-porc')) || 0;
+        const porcAEfectuar = (porcGlobal !== null) ? porcGlobal : porcServicioDefault;
+        
         const grupoID = filaServicio.getAttribute('data-grupo');
 
-        // 2. Calcular gastos de insumos VINCULADOS a este servicio mediante el grupoID
+        // 2. Calcular gastos de insumos VINCULADOS
         let gastosGrupo = 0;
         document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
             const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
@@ -398,172 +433,168 @@ window.calcularTodo = () => {
 
         totalGastosInsumos += gastosGrupo;
 
-        // 3. Aplicar "Regla de Oro" por servicio: (Precio - Gasto) * Porcentaje
-        // Usamos Math.max(0, ...) para evitar comisiones negativas si el gasto supera el precio
+        // 3. Aplicar "Regla de Oro" con el porcentaje dinámico
         const netoServicio = Math.max(0, precioServicio - gastosGrupo);
-        const comisionServicio = netoServicio * (porcServicio / 100);
+        const comisionServicio = netoServicio * (porcAEfectuar / 100);
         
         totalComisionDoctores += comisionServicio;
     });
 
-    // 4. Calcular el neto total para la tienda (Venta Total - Todos los Insumos)
+    // 4. Calcular el neto total para la tienda
     const netoTotalEmpresa = totalVentaBruta - totalGastosInsumos;
     const pagoFinalTienda = netoTotalEmpresa - totalComisionDoctores;
 
-    // 5. Actualización de la Interfaz de Usuario (UI)
-    // Campo de gasto total (input)
+    // 5. Actualización de la Interfaz (UI)
     const inputGasto = document.getElementById('gastoInsumos');
     if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
 
-    // Etiquetas de resultados (Labels/Spans)
-    const lNeto = document.getElementById('labelNeto');   // Utilidad antes de pagar al Dr.
-    const lDr = document.getElementById('labelDr');       // Pago al Dr. Sandoval/Silva
-    const lTienda = document.getElementById('labelTienda'); // Ganancia real de Avipet
+    const lNeto = document.getElementById('labelNeto');
+    const lDr = document.getElementById('labelDr');
+    const lTienda = document.getElementById('labelTienda');
 
     if (lNeto)   lNeto.innerText   = `$${netoTotalEmpresa.toFixed(2)}`;
-    if (lDr)     lDr.innerText     = `$${totalComisionDoctores.toFixed(2)}`;
+    if (lDr)      lDr.innerText     = `$${totalComisionDoctores.toFixed(2)}`;
     if (lTienda) lTienda.innerText = `$${pagoFinalTienda.toFixed(2)}`;
 };
-    // --- SEGURIDAD Y ACCESO ---
-    window.validarAccesoDoctor = (nombre) => {
-        if (!nombre) {
-            doctorVerificado = "";
-            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-            return;
-        }
-        const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
-        if (pinIngresado === pinsDoctores[nombre]) {
-            doctorVerificado = nombre; 
-            const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
-            document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
-            alert(`✅ Identidad confirmada, ${prefijo}${nombre}`);
-            window.calcularTodo();
-        } else {
-            alert("❌ PIN INCORRECTO.");
-            document.getElementById('selectDoctor').value = "";
-            doctorVerificado = "";
-            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
-        }
-    };
 
+// --- SEGURIDAD Y ACCESO (SE MANTIENE IGUAL, SOLO ASEGURAMOS EL LLAMADO ASYNC) ---
+window.validarAccesoDoctor = async (nombre) => { // Agregamos async
+    if (!nombre) {
+        doctorVerificado = "";
+        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+        return;
+    }
+    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
+    if (pinIngresado === pinsDoctores[nombre]) {
+        doctorVerificado = nombre; 
+        const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+        document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
+        alert(`✅ Identidad confirmada, ${prefijo}${nombre}`);
+        await window.calcularTodo(); // Agregamos await
+    } else {
+        alert("❌ PIN INCORRECTO.");
+        document.getElementById('selectDoctor').value = "";
+        doctorVerificado = "";
+        document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+    }
+};
     // --- NAVEGACIÓN ---
-    window.showTab = (t) => {
-        const sH = document.getElementById('sectionHistoria');
-        const sB = document.getElementById('sectionBuscador');
-        const sR = document.getElementById('sectionReporte');
+window.showTab = (t) => {
+    const sH = document.getElementById('sectionHistoria');
+    const sB = document.getElementById('sectionBuscador');
+    const sR = document.getElementById('sectionReporte');
 
-        if(sH) sH.classList.toggle('hidden', t !== 'historia');
-        if(sB) sB.classList.toggle('hidden', t !== 'buscador');
-        if(sR) sR.classList.toggle('hidden', t !== 'reporte');
-        
-        document.querySelectorAll('nav button').forEach(b => {
-            b.className = "py-2 text-gray-500 text-[11px] px-2 uppercase font-bold";
-        });
-        
-        const tabId = t === 'historia' ? 'H' : (t === 'buscador' ? 'B' : 'R');
-        const tabEl = document.getElementById('tab' + tabId);
-        if (tabEl) tabEl.className = "tab-active py-2 text-[11px] px-2 uppercase font-bold text-blue-600 border-b-2 border-blue-600";
+    if(sH) sH.classList.toggle('hidden', t !== 'historia');
+    if(sB) sB.classList.toggle('hidden', t !== 'buscador');
+    if(sR) sR.classList.toggle('hidden', t !== 'reporte');
+    
+    document.querySelectorAll('nav button').forEach(b => {
+        b.className = "py-2 text-gray-500 text-[11px] px-2 uppercase font-bold";
+    });
+    
+    const tabId = t === 'historia' ? 'H' : (t === 'buscador' ? 'B' : 'R');
+    const tabEl = document.getElementById('tab' + tabId);
+    if (tabEl) tabEl.className = "tab-active py-2 text-[11px] px-2 uppercase font-bold text-blue-600 border-b-2 border-blue-600";
 
-        if(t === 'reporte') window.cargarReporte();
-    };
+    // Ajuste: Solo ejecuta si la función existe para evitar que el script se rompa
+    if(t === 'reporte' && typeof window.cargarReporte === 'function') {
+        window.cargarReporte();
+    }
+};
 
-   // --- RECETAS E INSUMOS ---
-    const insumosFijosMedicos = [
-        { nombre: "Guantes de examen", costo: 0.50 }, 
-        { nombre: "Algodón y Alcohol", costo: 0.10 }, 
-        { nombre: "Hojas/Papelería", costo: 0.10 }
-    ];
+// --- RECETAS E INSUMOS (Mantenidos intactos por tu lógica) ---
+const insumosFijosMedicos = [
+    { nombre: "Guantes de examen", costo: 0.50 }, 
+    { nombre: "Algodón y Alcohol", costo: 0.10 }, 
+    { nombre: "Hojas/Papelería", costo: 0.10 }
+];
 
-    const insumosBaseVacuna = [
-        { nombre: "Jeringa 3cc", costo: 0.25 }, 
-        { nombre: "Xeruk", costo: 0.10 }, 
-        { nombre: "Crema", costo: 0.10 }
-    ];
-   const recetas = {
-        "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Crema", costo: 0.50 }] },
-        "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
-        "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] },
-        "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] },
-        "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] },
-        
-        "ABSCESO": { precioVenta: 25, insumos: [
-            { nombre: "Jelco", costo: 4.50 }, { nombre: "Agua Oxigenada", costo: 0.50 }, { nombre: "Compresa", costo: 0.50 }, 
-            { nombre: "Antibiotico", costo: 0.50 }, { nombre: "Antinflamatorio", costo: 0.50 }, { nombre: "Sedacion", costo: 0.50 }
-        ]},
+const insumosBaseVacuna = [
+    { nombre: "Jeringa 3cc", costo: 0.25 }, 
+    { nombre: "Xeruk", costo: 0.10 }, 
+    { nombre: "Crema", costo: 0.10 }
+];
 
-        "ECOGRAFÍA": { precioVenta: 40, insumos: [
-            { nombre: "Gel Ecográfico", costo: 1.00 }, { nombre: "Papel Absorbente", costo: 0.50 }, { nombre: "Toallín/Servilletas", costo: 0.30 }
-        ]},
+const recetas = {
+    "CONSULTA GENERAL": { precioVenta: 30, insumos: [{ nombre: "Crema", costo: 0.50 }] },
+    "CONSULTA OFTALMOLÓGICA": { precioVenta: 80, insumos: [{ nombre: "Tiras Fluoresceína/Insumos", costo: 2.50 }] },
+    "CONSULTA CAMADA 3-4 CACHORROS": { precioVenta: 50, insumos: [{ nombre: "Insumos Camada", costo: 2.00 }] },
+    "CONSULTA CAMADA HASTA 8 CACHORROS": { precioVenta: 80, insumos: [{ nombre: "Insumos Camada Grande", costo: 4.00 }] },
+    "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta: 100, insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }] },
+    
+    "ABSCESO": { precioVenta: 25, insumos: [
+        { nombre: "Jelco", costo: 4.50 }, { nombre: "Agua Oxigenada", costo: 0.50 }, { nombre: "Compresa", costo: 0.50 }, 
+        { nombre: "Antibiotico", costo: 0.50 }, { nombre: "Antinflamatorio", costo: 0.50 }, { nombre: "Sedacion", costo: 0.50 }
+    ]},
 
-        "COLOCACION VIA": { precioVenta: 15, insumos: [
-            { nombre: "Jelco", costo: 1.50 }, { nombre: "Jeringa 5cc", costo: 0.50 }, { nombre: "Adhesivo", costo: 0.30 }, 
-            { nombre: "Mariposa", costo: 1.00 }, { nombre: "Obturador", costo: 1.00 }
-        ]},
+    "ECOGRAFÍA": { precioVenta: 40, insumos: [
+        { nombre: "Gel Ecográfico", costo: 1.00 }, { nombre: "Papel Absorbente", costo: 0.50 }, { nombre: "Toallín/Servilletas", costo: 0.30 }
+    ]},
 
-        "ADMINISTRACION MEDICINA": { precioVenta: 10, insumos: [
-            { nombre: "Jeringa", costo: 0.50 }, { nombre: "Medicamento (Nombre y Precio)", costo: 0.00 }
-        ]},
+    "COLOCACION VIA": { precioVenta: 15, insumos: [
+        { nombre: "Jelco", costo: 1.50 }, { nombre: "Jeringa 5cc", costo: 0.50 }, { nombre: "Adhesivo", costo: 0.30 }, 
+        { nombre: "Mariposa", costo: 1.00 }, { nombre: "Obturador", costo: 1.00 }
+    ]},
 
-        "TOMA DE MUESTRA SANGRE": { precioVenta: 10, insumos: [
-            { nombre: "Jeringa", costo: 0.50 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Tubo Morado o Naranja", costo: 1.20 }
-        ]},
+    "ADMINISTRACION MEDICINA": { precioVenta: 10, insumos: [
+        { nombre: "Jeringa", costo: 0.50 }, { nombre: "Medicamento (Nombre y Precio)", costo: 0.00 }
+    ]},
 
-        // --- VACUNAS (El resto de insumos van por la lógica automática) ---
-        "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] },
-        "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] },
-        "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] },
-        "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta: 45, insumos: [{ nombre: "Vial KC", costo: 9.00 }] },
-        "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] },
-        "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] },
-        "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] },
+    "TOMA DE MUESTRA SANGRE": { precioVenta: 10, insumos: [
+        { nombre: "Jeringa", costo: 0.50 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Tubo Morado o Naranja", costo: 1.20 }
+    ]},
 
-        // --- LABORATORIO ---
-        "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] },
-        "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
-        "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] },
-        "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] },
-        "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] },
-        "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] },
-        "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] },
-        "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] },
-        "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] },
-        "EXAMEN DE HECES": { precioVenta: 10, insumos: [{ nombre: "Portas/Solución/Envase", costo: 1.50 }] },
-        "EXAMENES DE ORINA": { precioVenta: 10, insumos: [{ nombre: "Tira Reactiva/Sedimento", costo: 2.00 }] },
-        "CITOLOGIA 1 OIDO": { precioVenta: 15, insumos: [{ nombre: "Hisopo/Tincion", costo: 2.50 }] },
-        "CITOLOGIA 2 OIDOS": { precioVenta: 20, insumos: [{ nombre: "Hisopos/Tinciones", costo: 4.00 }] },
-        "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] },
-        "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] },
-        "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] },
+    "VACUNA SEXTUPLE": { precioVenta: 40, insumos: [{ nombre: "Vial Sextuple", costo: 8.50 }] },
+    "VACUNA PUPPY": { precioVenta: 40, insumos: [{ nombre: "Vial Puppy", costo: 7.00 }] },
+    "VACUNA ANTIRRÁBICA": { precioVenta: 30, insumos: [{ nombre: "Vial Antirrábica", costo: 4.00 }] },
+    "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta: 45, insumos: [{ nombre: "Vial KC", costo: 9.00 }] },
+    "VACUNA TRIPLE FELINA": { precioVenta: 45, insumos: [{ nombre: "Vial Triple Felina", costo: 10.00 }] },
+    "VACUNA QUINTUPLE FELINA": { precioVenta: 50, insumos: [{ nombre: "Vial Quintuple Felina", costo: 15.00 }] },
+    "VACUNA BIOVETA": { precioVenta: 60, insumos: [{ nombre: "Vial Bioveta", costo: 6.50 }] },
 
-        // --- EUTANASIA ---
-        "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [
-            { nombre: "Propofol", costo: 4.00 }, { nombre: "Xilacina", costo: 1.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 1.00 }
-        ]},
-        "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [
-            { nombre: "Propofol", costo: 7.00 }, { nombre: "Xilacina", costo: 2.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 1.50 }
-        ]},
-        "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [
-            { nombre: "Propofol", costo: 10.00 }, { nombre: "Xilacina", costo: 3.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 2.00 }
-        ]},
-        "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [
-            { nombre: "Propofol", costo: 15.00 }, { nombre: "Xilacina", costo: 4.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 3.00 }
-        ]},
+    "HEMATOLOGÍA COMPLETA": { precioVenta: 23, insumos: [{ nombre: "Tubo EDTA/Reactivos", costo: 4.50 }] },
+    "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
+    "PERFIL 20": { precioVenta: 50, insumos: [{ nombre: "Kit Perfil 20", costo: 22.00 }] },
+    "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] },
+    "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] },
+    "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] },
+    "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] },
+    "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] },
+    "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] },
+    "EXAMEN DE HECES": { precioVenta: 10, insumos: [{ nombre: "Portas/Solución/Envase", costo: 1.50 }] },
+    "EXAMENES DE ORINA": { precioVenta: 10, insumos: [{ nombre: "Tira Reactiva/Sedimento", costo: 2.00 }] },
+    "CITOLOGIA 1 OIDO": { precioVenta: 15, insumos: [{ nombre: "Hisopo/Tincion", costo: 2.50 }] },
+    "CITOLOGIA 2 OIDOS": { precioVenta: 20, insumos: [{ nombre: "Hisopos/Tinciones", costo: 4.00 }] },
+    "RASPADO PIEL": { precioVenta: 10, insumos: [{ nombre: "Hoja Bisturí/Aceite/Porta", costo: 3.00 }] },
+    "PERFIL ANEMICO": { precioVenta: 25, insumos: [{ nombre: "Kit Anemia", costo: 8.00 }] },
+    "CITOLOGIA FLUIDOS, SECRECIONES": { precioVenta: 20, insumos: [{ nombre: "Insumos Citología Especial", costo: 5.00 }] },
 
-        // --- OTROS ---
-        "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] },
-        "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] },
-        "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] },
+    "EUTANASIA HASTA 5KG": { precioVenta: 80, insumos: [
+        { nombre: "Propofol", costo: 4.00 }, { nombre: "Xilacina", costo: 1.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 1.00 }
+    ]},
+    "EUTANASIA HASTA 15KG": { precioVenta: 110, insumos: [
+        { nombre: "Propofol", costo: 7.00 }, { nombre: "Xilacina", costo: 2.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 1.50 }
+    ]},
+    "EUTANASIA HASTA 25KG": { precioVenta: 140, insumos: [
+        { nombre: "Propofol", costo: 10.00 }, { nombre: "Xilacina", costo: 3.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 2.00 }
+    ]},
+    "EUTANASIA HASTA 35KG": { precioVenta: 170, insumos: [
+        { nombre: "Propofol", costo: 15.00 }, { nombre: "Xilacina", costo: 4.00 }, { nombre: "Mariposa", costo: 1.00 }, { nombre: "Jeringas 10-20cc", costo: 3.00 }
+    ]},
 
-        // --- REFERIDOS ---
-        "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
-        "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
-        "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] },
-        "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] },
-        "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
-        "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] }
-    };
+    "KG ADICIONAL": { precioVenta: 7, insumos: [{ nombre: "Peso Extra", costo: 0.00 }] },
+    "DISPOSICION": { precioVenta: 0, insumos: [{ nombre: "Logística Disposición", costo: 10.00 }] },
+    "CREMACION CON CENIZAS": { precioVenta: 0, insumos: [{ nombre: "Servicio Cremación/Urna", costo: 60.00 }] },
 
-window.insertarServicio = (v) => {
+    "REFERIDO: EXAMEN DE HECES": { precioVenta: 14, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
+    "REFERIDO: EXAMENES DE ORINA": { precioVenta: 16, insumos: [{ nombre: "Logística Laboratorio Ext.", costo: 8.00 }] },
+    "REFERIDO: CULTIVOS": { precioVenta: 65, insumos: [{ nombre: "Toma de Muestra/Envío", costo: 25.00 }] },
+    "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta: 30, insumos: [{ nombre: "Logística Lab Ext.", costo: 15.00 }] },
+    "REFERIDO: DISTEMPER": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] },
+    "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precioVenta: 25, insumos: [{ nombre: "Logística Lab Ext.", costo: 12.00 }] }
+};
+
+window.insertarServicio = async (v) => { // Agregamos async aquí
     if (!v) return;
     const area = document.getElementById('hTratamiento');
     const inputPrecioVenta = document.getElementById('precioVenta');
@@ -580,7 +611,7 @@ window.insertarServicio = (v) => {
             const numKgs = parseFloat(kgs);
             nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
             precioFinal = numKgs * 7;
-            porcentajeServicio = 0; // Sin comisión para el doctor por KG extra
+            porcentajeServicio = 0; 
         } else return;
     } 
     else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
@@ -591,10 +622,8 @@ window.insertarServicio = (v) => {
         } else return;
     }
     else {
-        // Precio estándar desde el objeto recetas
         precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
         
-        // Ajuste automático de Combos (Vacunas y Hematología)
         if (serviciosEnLista.length > 0) {
             if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { 
                 precioFinal = 40; 
@@ -607,18 +636,14 @@ window.insertarServicio = (v) => {
         }
     }
 
-    // 3. Crear identificador único para el grupo de este servicio
     const grupoID = "srv-" + Date.now();
     serviciosEnLista.push(v);
     
-    // 4. Actualizar el área de texto del tratamiento (lo que ve el dueño)
     area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
     
-    // 5. Actualizar el total de venta en el input
     let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
     inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
 
-    // 6. Dibujar la fila del Servicio en la tabla de insumos
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
 
@@ -640,10 +665,9 @@ window.insertarServicio = (v) => {
         </td>`;
     cuerpo.appendChild(filaTitulo);
 
-    // 7. Cargar Insumos Automáticos (Fijos, Vacunas y Recetas)
     let listaNuevos = [];
     if (!cuerpo.querySelector('.insumo-fila')) {
-        listaNuevos = [...insumosFijosMedicos]; // Material base si es el primer servicio
+        listaNuevos = [...insumosFijosMedicos]; 
     }
     if (v.includes("VACUNA")) {
         const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td'))
@@ -654,7 +678,6 @@ window.insertarServicio = (v) => {
         listaNuevos = [...listaNuevos, ...recetas[v].insumos];
     }
 
-    // 8. Renderizar filas de insumos vinculadas al grupoID
     listaNuevos.forEach(insumo => {
         const tr = document.createElement('tr');
         tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
@@ -666,60 +689,54 @@ window.insertarServicio = (v) => {
         cuerpo.appendChild(tr);
     });
     
-    // 9. Recalcular todo y resetear el selector
-    window.calcularTodo(); 
+    await window.calcularTodo(); // Agregamos await aquí
     document.getElementById('selectorServicios').value = "";
 };
     
-window.eliminarServicioCompleto = (idGrupo, precioARestar, event) => {
-    // 1. Prevenir que la página salte o recargue
+window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => { // Agregamos async aquí
     if (event) event.preventDefault();
-
-    // 2. Confirmación (Mantiene la seguridad de la operación)
     if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
 
-    // 3. Borrar los INSUMOS vinculados (filas con la clase del grupoID)
     document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
 
-    // 4. Borrar el ENCABEZADO del servicio (buscado por su data-grupo)
     const filaTitulo = document.querySelector(`[data-grupo="${idGrupo}"]`);
     if (filaTitulo) filaTitulo.remove();
 
-    // 5. Restar el precio del total de venta en el input principal
     const inputPrecioVenta = document.getElementById('precioVenta');
     if (inputPrecioVenta) {
         const actual = parseFloat(inputPrecioVenta.value) || 0;
         inputPrecioVenta.value = Math.max(0, actual - precioARestar).toFixed(2);
     }
 
-    // 6. RECALCULAR TODO (Actualiza comisiones de doctores y utilidad de Avipet)
     if (typeof window.calcularTodo === "function") {
-        window.calcularTodo();
+        await window.calcularTodo(); // Agregamos await aquí
     }
-}; // <-- Llave de cierre única y correcta para la función
+};
+
 window.guardarFirebase = async (imp) => {
     if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor para procesar el pago.");
 
     try {
+        // --- 0. LEER CONFIGURACIÓN GLOBAL (AJUSTE NECESARIO) ---
+        const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+        let porcGlobal = null;
+        if (configSnap.exists()) {
+            porcGlobal = configSnap.data().porcentajeDoc;
+        }
+
         // --- 1. CAPTURA DE DATOS (CLIENTE Y PACIENTE) ---
         const cedula = document.getElementById('hCI').value.trim();
         const propietario = document.getElementById('hProp').value.trim();
-        
-        // Ajustados a tus IDs del HTML: hTlf y hMail
         const telefono = document.getElementById('hTlf')?.value.trim() || "";
         const correo = document.getElementById('hMail')?.value.trim() || "";
-        const direccion = document.getElementById('hDir')?.value.trim() || ""; // Por si añades dirección luego
-
+        const direccion = document.getElementById('hDir')?.value.trim() || "";
         const mascota = document.getElementById('hNombre').value.trim();
         const raza = document.getElementById('hRaza')?.value.trim() || "";
         const especie = document.getElementById('hEspecie')?.value.trim() || "";
         const edad = document.getElementById('hEdad')?.value.trim() || "";
         const sexo = document.getElementById('hSexo')?.value.trim() || "";
         const peso = document.getElementById('hPeso')?.value.trim() || "";
-
-        // ✅ CAPTURA DEL ESTADO DE CLIENTE PROBLEMÁTICO
         const alertaCliente = document.getElementById('hAlerta')?.checked || false;
-
         const tratamiento = document.getElementById('hTratamiento').value.trim();
         const montoVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
 
@@ -738,13 +755,16 @@ window.guardarFirebase = async (imp) => {
             });
         });
 
-        // --- 3. LÓGICA FINANCIERA ---
+        // --- 3. LÓGICA FINANCIERA (CONECTADA A CONFIGURACIÓN) ---
         let pagoDoctorVariable = 0;
         let totalGastosInsumos = 0;
 
         document.querySelectorAll('.servicio-principal').forEach(fila => {
             const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-            const porcentajeDoc = parseFloat(fila.getAttribute('data-porc')) || 0;
+            // Si hay un porcentaje global en Finanzas, manda sobre el del servicio
+            const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
+            const porcAEfectuar = (porcGlobal !== null) ? porcGlobal : porcServicioDefault;
+            
             const grupoID = fila.getAttribute('data-grupo');
 
             let gastosDeEsteServicio = 0;
@@ -755,8 +775,8 @@ window.guardarFirebase = async (imp) => {
             });
 
             totalGastosInsumos += gastosDeEsteServicio;
-            const netoServicio = precioServicio - gastosDeEsteServicio;
-            pagoDoctorVariable += (netoServicio * (porcentajeDoc / 100));
+            const netoServicio = Math.max(0, precioServicio - gastosDeEsteServicio);
+            pagoDoctorVariable += (netoServicio * (porcAEfectuar / 100));
         });
 
         const montoInsumosFinal = totalGastosInsumos;
@@ -765,23 +785,9 @@ window.guardarFirebase = async (imp) => {
 
         // --- 4. GUARDADO EN FIREBASE FIRESTORE ---
         await addDoc(collection(db, "consultas"), {
-            // Datos Cliente
-            cedula: cedula,
-            propietario: propietario,
-            correo: correo,
-            telefono: telefono,
-            direccion: direccion,
-            alerta: alertaCliente, // ✅ SE GUARDA EL STATUS DE "REF. INTERNA"
-            
-            // Datos Paciente
-            paciente: mascota,
-            raza: raza,
-            especie: especie,
-            edad: edad,
-            sexo: sexo,
-            peso: peso,
-            
-            // Datos Médicos y Financieros
+            cedula, propietario, correo, telefono, direccion, 
+            alerta: alertaCliente,
+            paciente: mascota, raza, especie, edad, sexo, peso,
             doctor: doctorVerificado,
             tratamiento: tratamiento,
             montoVenta: parseFloat(montoVenta.toFixed(2)),
@@ -812,12 +818,13 @@ window.guardarFirebase = async (imp) => {
         alert("❌ Error: " + error.message);
     }
 };
-    // --- BUSCADOR CORREGIDO ---
+
+// --- BUSCADOR CORREGIDO ---
 window.buscarPorCedula = async () => {
     const input = document.getElementById('searchCI');
     const contenedor = document.getElementById('resultadosBusqueda');
     
-   if (!input.value || !input.value.trim()) {
+    if (!input.value || !input.value.trim()) {
         alert("⚠️ Por favor, ingrese una cédula para buscar.");
         return;
     }
@@ -830,25 +837,17 @@ window.buscarPorCedula = async () => {
         </div>`;
     
     try {
-        // Añadimos orderBy para que las consultas más nuevas salgan primero
-        const q = query(
-            collection(db, "consultas"), 
-            where("cedula", "==", ci)
-        );
-        
+        const q = query(collection(db, "consultas"), where("cedula", "==", ci));
         const snap = await getDocs(q);
         
         if (snap.empty) {
-            contenedor.innerHTML = `
-                <div class="p-6 bg-orange-50 text-orange-700 rounded-xl border border-orange-100 text-center">
-                    <p class="font-bold">No se encontraron registros para la CI: ${ci}</p>
-                </div>`;
+            contenedor.innerHTML = `<div class="p-6 bg-orange-50 text-orange-700 rounded-xl border border-orange-100 text-center">
+                <p class="font-bold">No se encontraron registros para la CI: ${ci}</p>
+            </div>`;
             return;
         }
 
         contenedor.innerHTML = ""; 
-        
-        // Convertimos a array para ordenar por fecha si Firebase no tiene el índice compuesto
         let resultados = [];
         snap.forEach(doc => resultados.push(doc.data()));
         resultados.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
@@ -856,8 +855,6 @@ window.buscarPorCedula = async () => {
         resultados.forEach(d => {
             const div = document.createElement('div');
             div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl shadow-sm overflow-hidden hover:border-blue-200 transition-colors";
-            
-            // Lógica para el prefijo del doctor
             const drPrefijo = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
             div.innerHTML = `
@@ -875,7 +872,6 @@ window.buscarPorCedula = async () => {
                             <p class="text-[10px] font-bold text-blue-600 uppercase mb-1 border-b border-blue-100">Tratamiento / Evolución:</p>
                             <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || 'Sin detalles registrados.'}</p>
                         </div>
-                        
                         <div>
                             <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1 border-b border-emerald-100">Detalle de Insumos:</p>
                             <div class="space-y-1 mt-2">
@@ -886,7 +882,6 @@ window.buscarPorCedula = async () => {
                                     </div>`).join('') : '<p class="text-xs italic text-gray-400">No se registraron insumos en esta visita.</p>'}
                             </div>
                         </div>
-
                         <div class="mt-4 pt-3 border-t-2 border-slate-200 flex justify-between items-center">
                             <span class="text-[10px] font-bold text-slate-400 uppercase">Total de la consulta:</span>
                             <span class="text-xl font-black text-slate-900">$${(d.montoVenta || 0).toFixed(2)}</span>
@@ -900,42 +895,37 @@ window.buscarPorCedula = async () => {
         contenedor.innerHTML = `<p class="p-4 text-red-500 text-center font-bold bg-red-50 rounded-lg">Error de conexión: ${e.message}</p>`;
     }
 };
-
- window.autocompletarPorCedula = async (ci) => {
+window.autocompletarPorCedula = async (ci) => {
     if (!ci) return;
     try {
         const q = query(collection(db, "consultas"), where("cedula", "==", ci.trim()));
         const snap = await getDocs(q);
 
         if (!snap.empty) {
-            // Convertimos y ordenamos por fecha (el más reciente arriba)
             let registros = [];
             snap.forEach(doc => registros.push(doc.data()));
             registros.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
             
-            const d = registros[0]; // Tomamos la última visita conocida
+            const d = registros[0]; 
 
             // --- 👤 DATOS DEL CLIENTE (PROPIETARIO) ---
             const inputProp = document.getElementById('hProp');
             if (inputProp) {
                 inputProp.value = d.propietario || "";
                 
-                // 🚩 LÓGICA DE ALERTA SUTIL
-                // Si el registro tiene alerta, ponemos el nombre en rojo
+                // 🚩 LÓGICA DE ALERTA SUTIL (Mantenida intacta)
                 if (d.alerta === true) {
-                    inputProp.style.color = "#b91c1c"; // Rojo oscuro
+                    inputProp.style.color = "#b91c1c"; 
                     inputProp.style.fontWeight = "bold";
-                    // Marcamos también el checkbox de alerta para que el Dr. sepa que está activa
                     if (document.getElementById('hAlerta')) document.getElementById('hAlerta').checked = true;
                     alert("⚠️ NOTA: Este cliente tiene una restricción administrativa.");
                 } else {
-                    inputProp.style.color = ""; // Color original
+                    inputProp.style.color = ""; 
                     inputProp.style.fontWeight = "";
                     if (document.getElementById('hAlerta')) document.getElementById('hAlerta').checked = false;
                 }
             }
 
-            // Sincronización con los IDs de tu HTML (hTlf y hMail)
             if (document.getElementById('hMail')) document.getElementById('hMail').value = d.correo || "";
             if (document.getElementById('hTlf')) document.getElementById('hTlf').value = d.telefono || "";
             if (document.getElementById('hDir')) document.getElementById('hDir').value = d.direccion || "";
@@ -950,7 +940,6 @@ window.buscarPorCedula = async () => {
 
             console.log("✅ Ficha completa recuperada para:", d.paciente);
         } else {
-            // Si no hay registros, limpiamos el color del nombre por si acaso
             if (document.getElementById('hProp')) {
                 document.getElementById('hProp').style.color = "";
                 document.getElementById('hProp').style.fontWeight = "";
@@ -960,35 +949,34 @@ window.buscarPorCedula = async () => {
         console.error("Error al recuperar ficha:", e); 
     }
 };
-   // --- FINANZAS Y REPORTES CORREGIDO ---
+
+// --- FINANZAS Y REPORTES CORREGIDO ---
 window.cargarReporte = async () => {
     const listaDiv = document.getElementById('listaReporte');
     if (!listaDiv) return;
-    listaDiv.innerHTML = "<p class='text-center py-4'>Sincronizando caja...</p>";
+    listaDiv.innerHTML = "<p class='text-center py-4 text-[11px] font-bold text-blue-600 animate-pulse'>Sincronizando caja...</p>";
     
     try {
         const querySnapshot = await getDocs(collection(db, "consultas"));
         listaDiv.innerHTML = "";
         
-        // Inicializamos variables de suma
         let bruto = 0, gastos = 0, netoAvipet = 0, contador = 0;
-        let sandovalTotal = 0, silvaTotal = 0; // Acumuladores individuales
+        let sandovalTotal = 0, silvaTotal = 0; 
 
         const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
 
         querySnapshot.forEach((docSnap) => {
             const d = docSnap.data();
+            // Ajuste: Nos aseguramos de comparar fechas correctamente
             if(d.fechaSimple === hoy) { 
                 const pVenta = parseFloat(d.montoVenta) || 0;
                 const pGasto = parseFloat(d.montoInsumos) || 0;
                 const pagoRealDoc = parseFloat(d.pagoDoctor) || 0; 
                 
-                // 1. Sumamos a los totales generales
                 bruto += pVenta; 
                 gastos += pGasto; 
                 
-                // 2. LÓGICA DE SEPARACIÓN POR DOCTOR
-                // Comparamos el nombre guardado en la base de datos
+                // LÓGICA DE SEPARACIÓN POR DOCTOR (Mantenida intacta)
                 const nombreDoc = d.doctor || "";
                 if(nombreDoc.includes("Darwin Sandoval")) {
                     sandovalTotal += pagoRealDoc;
@@ -996,9 +984,7 @@ window.cargarReporte = async () => {
                     silvaTotal += pagoRealDoc;
                 }
                 
-                // 3. AVIPET gana: Venta - Gastos - Lo que cobró el Doctor
                 netoAvipet += (pVenta - pGasto - pagoRealDoc);
-                
                 contador++;
 
                 listaDiv.innerHTML += `
@@ -1015,12 +1001,11 @@ window.cargarReporte = async () => {
             }
         });
 
-        // --- RENDERIZADO EN EL FRONT ---
-        document.getElementById('totalPacientes').innerText = contador;
-        document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
-        document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
+        // ACTUALIZACIÓN DE UI (Sin cambios en tus IDs)
+        if(document.getElementById('totalPacientes')) document.getElementById('totalPacientes').innerText = contador;
+        if(document.getElementById('repBruto')) document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
+        if(document.getElementById('repGastos')) document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
         
-        // Pintamos los totales individuales en las cajitas nuevas
         if(document.getElementById('repDocSandoval')) {
             document.getElementById('repDocSandoval').innerText = `$${sandovalTotal.toFixed(2)}`;
         }
@@ -1028,14 +1013,13 @@ window.cargarReporte = async () => {
             document.getElementById('repDocSilva').innerText = `$${silvaTotal.toFixed(2)}`;
         }
 
-        // Pintamos el neto de Avipet
-        document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
+        if(document.getElementById('repNeto')) document.getElementById('repNeto').innerText = `$${netoAvipet.toFixed(2)}`;
 
-        if(contador === 0) listaDiv.innerHTML = "<p class='text-center py-6 text-slate-400 italic'>No hay registros hoy.</p>";
+        if(contador === 0) listaDiv.innerHTML = "<p class='text-center py-6 text-slate-400 italic text-[11px]'>No hay registros hoy.</p>";
         
     } catch (e) { 
         console.error("Error en reporte:", e); 
-        listaDiv.innerHTML = "<p class='text-center py-4 text-red-500'>Error al cargar datos.</p>";
+        listaDiv.innerHTML = "<p class='text-center py-4 text-red-500 text-[11px]'>Error al cargar datos.</p>";
     }
 };
     window.descargarReporte = () => {
@@ -1043,7 +1027,6 @@ window.cargarReporte = async () => {
         let contenido = `REPORTE AVIPET - ${new Date().toLocaleDateString()}\n`;
         contenido += `------------------------------------------\n`;
         
-        // Desglose de cada paciente atendido
         const filas = document.querySelectorAll('#listaReporte > div');
         if (filas.length > 0) {
             filas.forEach(div => { 
@@ -1055,7 +1038,6 @@ window.cargarReporte = async () => {
 
         contenido += `------------------------------------------\n`;
         
-        // CAPTURA DE LOS IDS (Corregido: Nombres de variables coinciden)
         const pSandoval = document.getElementById('repDocSandoval')?.innerText || "$0.00";
         const pSilva = document.getElementById('repDocSilva')?.innerText || "$0.00";
         const netoAvipet = document.getElementById('repNeto')?.innerText || "$0.00";
@@ -1065,7 +1047,7 @@ window.cargarReporte = async () => {
         contenido += `BRUTO TOTAL:      ${bruto}\n`;
         contenido += `------------------------------------------\n`;
         contenido += `PAGO DR. SANDOVAL: ${pSandoval}\n`;
-        contenido += `PAGO DR. SILVA:    ${pSilva}\n`;
+        contenido += `PAGO DRA. SILVA:   ${pSilva}\n`; // Ajustado Dra. por coherencia
         contenido += `------------------------------------------\n`;
         contenido += `NETO AVIPET:       ${netoAvipet}\n`;
         contenido += `------------------------------------------\n`;
@@ -1078,7 +1060,6 @@ window.cargarReporte = async () => {
         document.body.appendChild(a);
         a.click();
         
-        // Limpieza
         setTimeout(() => {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
@@ -1089,20 +1070,19 @@ window.cargarReporte = async () => {
         alert("❌ Error: " + e.message);
     }
 };
-   window.agregarInsumoManual = () => {
+
+window.agregarInsumoManual = () => {
     const n = document.getElementById('nombreExtra');
     const c = document.getElementById('costoExtra');
     
     if (!n.value) return alert("Ingrese nombre del insumo.");
 
-    // Buscamos el ID del último servicio agregado para vincular este insumo
     const todasLasFilas = document.querySelectorAll('.servicio-principal');
     const ultimoGrupo = todasLasFilas.length > 0 
         ? todasLasFilas[todasLasFilas.length - 1].getAttribute('data-grupo') 
-        : "manual"; // Si no hay servicios, queda como manual independiente
+        : "manual"; 
 
     const tr = document.createElement('tr');
-    // Le asignamos la clase del grupo para que calcularTodo lo tome en cuenta
     tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrupo}`;
     
     tr.innerHTML = `
@@ -1118,12 +1098,12 @@ window.cargarReporte = async () => {
 
     document.getElementById('listaInsumosDinamica').appendChild(tr);
     
-    // Limpiar campos y RECALCULAR
     n.value = ""; 
     c.value = ""; 
     window.calcularTodo(); 
 };
-  window.generarReporteMensual = async () => {
+
+window.generarReporteMensual = async () => {
     const mesAno = prompt("Ingrese Mes/Año a analizar (ej: 02/2026):");
     if (!mesAno) return;
 
@@ -1131,7 +1111,7 @@ window.cargarReporte = async () => {
         const q = query(collection(db, "consultas"));
         const snap = await getDocs(q);
         
-        const contenedorLista = document.getElementById('tablaReportes'); // Necesitas este ID en tu HTML
+        const contenedorLista = document.getElementById('tablaReportes'); 
         if (contenedorLista) contenedorLista.innerHTML = ""; 
 
         let stats = { bruto: 0, insumos: 0, docs: 0, neto: 0, pacientes: 0 };
@@ -1139,14 +1119,12 @@ window.cargarReporte = async () => {
         snap.forEach(doc => {
             const d = doc.data();
             if (d.fechaSimple && d.fechaSimple.includes(mesAno)) {
-                // 1. Cálculos financieros
                 stats.bruto += parseFloat(d.montoVenta || 0);
                 stats.insumos += parseFloat(d.montoInsumos || 0);
                 stats.docs += parseFloat(d.pagoDoctor || 0);
                 stats.neto += parseFloat(d.pagoAvipet || 0);
                 stats.pacientes++;
 
-                // 2. 🚩 GENERAR FILA VISUAL CON ALERTA
                 if (contenedorLista) {
                     const claseAlerta = d.alerta ? "text-red-600 font-bold bg-red-50" : "text-slate-700";
                     const iconoAlerta = d.alerta ? "⚠️ " : "";
@@ -1166,53 +1144,74 @@ window.cargarReporte = async () => {
 
         if (stats.pacientes === 0) return alert("No hay datos para ese período.");
 
-        // --- CÁLCULO DE COMPORTAMIENTO ---
-        const margenNeto = (stats.neto / stats.bruto) * 100;
-        const costoInsumosPorc = (stats.insumos / stats.bruto) * 100;
+        const margenNeto = stats.bruto > 0 ? (stats.neto / stats.bruto) * 100 : 0;
         const promedioTicket = stats.bruto / stats.pacientes;
 
-        const resumen = `
-📈 ANÁLISIS - AVIPET (${mesAno})
+        const resumen = `📈 ANÁLISIS - AVIPET (${mesAno})
 ---------------------------------------
 🐾 Pacientes: ${stats.pacientes}
 💰 Venta Total: $${stats.bruto.toFixed(2)}
 🏢 GANANCIA LIMPIA: $${stats.neto.toFixed(2)}
 📊 UTILIDAD: ${margenNeto.toFixed(1)}%
 🎟️ TICKET PROMEDIO: $${promedioTicket.toFixed(2)}
----------------------------------------
-${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior." : ""}
-        `;
+---------------------------------------`;
 
         alert(resumen);
 
     } catch (e) {
+        console.error("Error mensual:", e);
         alert("Error: " + e.message);
     }
 };
-    window.imprimirRecetaLimpia = () => {
-        document.body.classList.add('receta-modo');
-        setTimeout(() => { window.print(); document.body.classList.remove('receta-modo'); }, 300);
-    };
-   window.guardarResumenDelDia = async () => {
+
+window.guardarConfiguracion = async () => {
+    const insumos = document.getElementById('cfgInsumos').value;
+    const porcentaje = document.getElementById('cfgPorcentaje').value;
+
+    if(!insumos || !porcentaje) return alert("❌ Completa ambos campos");
+
+    try {
+        await setDoc(doc(db, "configuracion", "tarifas"), {
+            insumoBase: parseFloat(insumos),
+            porcentajeDoc: parseFloat(porcentaje),
+            fechaActualizacion: new Date().toLocaleString(),
+            actualizadoPor: "Administrador"
+        });
+        alert("✅ Tarifas actualizadas en la nube.");
+    } catch (e) {
+        console.error("Error al guardar config:", e);
+        alert("❌ Error al guardar.");
+    }
+};
+
+window.cargarConfiguracionActual = async () => {
+    try {
+        const docSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
+            if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
+        }
+    } catch (e) {
+        console.log("Configuración inicial pendiente.");
+    }
+};
+
+window.guardarResumenDelDia = async () => {
     if (!confirm("¿Guardar el cierre de caja en la base de datos?")) return;
     
     try {
-        // Capturamos los datos actuales del front
         const bruto = document.getElementById('repBruto').innerText;
         const gastos = document.getElementById('repGastos').innerText;
         const neto = document.getElementById('repNeto').innerText;
         const pacientes = document.getElementById('totalPacientes').innerText;
-
-        // CAPTURA INDIVIDUAL DE DOCTORES (Los nuevos IDs)
         const pagoSandoval = document.getElementById('repDocSandoval').innerText;
         const pagoSilva = document.getElementById('repDocSilva').innerText;
 
         await addDoc(collection(db, "cierres_diarios"), {
             fecha: serverTimestamp(),
             fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
-            bruto: bruto,
-            gastos: gastos,
-            // Guardamos ambos por separado para que el historial sea exacto
+            bruto, gastos,
             pagoDarwinSandoval: pagoSandoval,
             pagoJoanSilva: pagoSilva,
             netoAvipet: neto,
@@ -1225,10 +1224,9 @@ ${contenedorLista ? "✅ La lista detallada se ha cargado en la tabla inferior."
         alert("❌ Error al guardar: " + e.message); 
     }
 };
-</script>
 
-
-
+// Inicialización
+window.cargarConfiguracionActual();
 
 
 
