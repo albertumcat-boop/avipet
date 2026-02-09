@@ -1390,7 +1390,22 @@ const funcionesGlobales = {
 Object.keys(funcionesGlobales).forEach(key => {
     window[key] = funcionesGlobales[key];
 });
-
+window.subirConfiguracionInicial = async () => {
+    console.log("🚀 Iniciando carga masiva a Firebase...");
+    try {
+        for (const [nombre, datos] of Object.entries(CONFIG_SERVICIOS)) {
+            await setDoc(doc(db, "servicios_maestro", nombre), {
+                precioVenta: datos.precio || 0,
+                porcDoc: datos.porc || 30
+            }, { merge: true });
+            console.log(`✅ Subido: ${nombre}`);
+        }
+        alert("¡Carga completa! Ahora refresca la página y entra a Ajustes.");
+    } catch (e) {
+        console.error("Error en carga masiva:", e);
+        alert("Error: " + e.message);
+    }
+};
 // ==========================================================================
 // [08] INICIALIZACIÓN ÚNICA (BORRA CUALQUIER OTRO DOMContentLoaded)
 // ==========================================================================
@@ -1419,6 +1434,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 </script>
+
 
 
 
