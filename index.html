@@ -176,55 +176,56 @@
             </div>
         </section>
 
-       <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
+      <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
-        <h2 class="font-black text-center mb-2 uppercase text-blue-900 text-2xl">Gestión de Caja Diaria</h2>
+        <h2 class="font-black text-center mb-2 uppercase text-slate-700 text-2xl tracking-tighter">Gestión de Caja Diaria</h2>
         
         <div class="text-center mb-4">
-            <span class="bg-slate-500 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase">
-                Pacientes: <span id="totalPacientes">0</span>
+            <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-bold uppercase border border-slate-200">
+                Pacientes: <span id="totalPacientes" class="text-slate-800">0</span>
             </span>
         </div>
 
         <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
 
         <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="p-4 bg-slate-100 rounded-2xl">
-                <p class="text-[10px] font-bold uppercase text-slate-500">Bruto Total</p>
-                <p id="repBruto" class="text-2xl font-black text-slate-800">$0.00</p>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p class="text-[10px] font-bold uppercase text-slate-400">Bruto Total</p>
+                <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
             </div>
-            <div class="p-4 bg-red-50 rounded-2xl border-l-4 border-red-500">
-                <p class="text-[10px] font-bold uppercase text-red-600">Gastos Insumos</p>
-                <p id="repGastos" class="text-2xl font-black text-red-700">$0.00</p>
+
+            <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400">
+                <p class="text-[10px] font-bold uppercase text-amber-600">Costos Operativos</p>
+                <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono">$0.00</p>
             </div>
             
-            <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-500 col-span-2 space-y-2">
+            <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-400 col-span-2 space-y-2">
                 <div class="flex justify-between items-center border-b border-blue-100 pb-1">
-                    <span class="text-[11px] font-black uppercase text-blue-900">Dr. Darwin Sandoval:</span>
-                    <span id="repDocSandoval" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
+                    <span class="text-[11px] font-black uppercase text-blue-800">Dr. Darwin Sandoval:</span>
+                    <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
                 </div>
                 <div class="flex justify-between items-center pt-1">
-                    <span class="text-[11px] font-black uppercase text-blue-900">Dr. Joan Silva:</span>
-                    <span id="repDocSilva" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
+                    <span class="text-[11px] font-black uppercase text-blue-800">Dr. Joan Silva:</span>
+                    <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
                 </div>
             </div>
 
-            <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-inner">
-                <p class="text-[10px] font-bold uppercase text-emerald-600">Neto Tienda (Avipet)</p>
-                <p id="repNeto" class="text-3xl font-black text-emerald-700">$0.00</p>
+            <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-sm">
+                <p class="text-[10px] font-bold uppercase text-emerald-600">Utilidad Neta (Avipet)</p>
+                <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
             </div>
         </div>
 
         <div class="flex flex-col gap-2">
-            <button onclick="cargarReporte()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-transform">
-                🔄 ACTUALIZAR CIERRE DEL DÍA
+            <button onclick="cargarReporte()" class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
+                🔄 Actualizar Balance
             </button>
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="descargarReporte()" class="bg-slate-200 text-slate-700 py-3 rounded-xl font-black text-[10px] hover:bg-slate-300">
-                    📥 DESCARGAR TXT
+                <button onclick="descargarReporte()" class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
+                    📥 Descargar TXT
                 </button>
-                <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700">
-                    💾 GUARDAR EN NUBE
+                <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
+                    💾 Guardar en Nube
                 </button>
             </div>
         </div>
@@ -891,7 +892,72 @@ window.cambiarSubTabConfig = (tab) => {
         }
     }
 };
+// ==========================================================================
+// [08-C] RENDERIZAR TABLA DE INSUMOS (RELLENAR LOS DATOS)
+// ==========================================================================
+window.renderizarTablaInsumos = async () => {
+    // Buscamos el cuerpo de la tabla según el ID de tu HTML
+    const tabla = document.getElementById('tablaMaestraInsumos');
+    if (!tabla) {
+        console.error("❌ No encontré la tabla 'tablaMaestraInsumos'");
+        return;
+    }
 
+    // Mensaje temporal de carga
+    tabla.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-emerald-600 font-bold animate-pulse text-[10px]">🔄 CARGANDO INSUMOS...</td></tr>';
+
+    try {
+        // Traemos la colección de la base de datos
+        const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
+        
+        if (querySnapshot.empty) {
+            tabla.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-orange-500 font-bold text-[10px]">⚠️ NO HAY DATOS. PULSA EL BOTÓN NARANJA.</td></tr>';
+            return;
+        }
+
+        tabla.innerHTML = ""; // Limpiar mensaje de carga
+
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id; // El nombre del insumo es el ID del documento
+
+            const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-emerald-50 transition";
+            tr.innerHTML = `
+                <td class="p-3 font-bold uppercase text-slate-700 text-[11px]">${id}</td>
+                <td class="p-3">
+                    <div class="flex items-center justify-center gap-1">
+                        <span class="text-slate-400 font-bold">$</span>
+                        <input type="number" id="costo-${id}" value="${data.costo || 0}" step="0.01" 
+                               class="w-20 border rounded px-2 py-1 text-center font-black text-emerald-700 bg-white border-emerald-200">
+                    </div>
+                </td>
+                <td class="p-3 text-center">
+                    <button onclick="window.actualizarCostoInsumo('${id}')" 
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm transition-all active:scale-90">
+                        💾 GUARDAR
+                    </button>
+                </td>
+            `;
+            tabla.appendChild(tr);
+        });
+    } catch (error) {
+        console.error("Error al cargar insumos:", error);
+        tabla.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-500 text-[10px]">❌ ERROR AL CARGAR: ${error.message}</td></tr>`;
+    }
+};
+
+// --- FUNCIÓN PARA GUARDAR CAMBIOS INDIVIDUALES ---
+window.actualizarCostoInsumo = async (idInsumo) => {
+    const nuevoCosto = document.getElementById(`costo-${idInsumo}`).value;
+    try {
+        const docRef = doc(db, "insumos_maestro", idInsumo);
+        await updateDoc(docRef, { costo: parseFloat(nuevoCosto) });
+        alert(`✅ ${idInsumo} actualizado correctamente.`);
+    } catch (e) {
+        alert("❌ Error al actualizar: " + e.message);
+    }
+};
 // ==========================================================================
 // [08] INICIALIZACIÓN CON CANDADO DE SEGURIDAD (LOGICA RESPETADA)
 // ==========================================================================
@@ -1176,6 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... resto de tu código
 });
 </script>
+
 
 
 
