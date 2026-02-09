@@ -92,36 +92,44 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
-                <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-                    <div class="header-box italic">Ficha Técnica de Mascota</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="col-span-2">
-                            <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
-                            <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
-                        </div>
-                        <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
-                    </div>
-                </div>
-                <div class="p-3 space-y-2">
-                    <div class="header-box italic">Datos del Propietario</div>
-                    <div>
-                        <div class="flex justify-between items-center">
-                            <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
-                            <label class="flex items-center gap-1 cursor-pointer no-print opacity-60"><input type="checkbox" id="hAlerta" class="w-3 h-3 accent-red-600"><span class="text-[8px] font-bold text-slate-400 italic">Ref. Interna</span></label>
-                        </div>
-                        <input id="hProp" class="border-b w-full uppercase">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" onblur="autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700"></div>
-                        <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
-                    </div>
-                    <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
-                </div>
+           <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
+    <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
+        <div class="header-box italic">Ficha Técnica de Mascota</div>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="col-span-2">
+                <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
+                <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
             </div>
+            <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
+            <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
+            <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
+            <div class="grid grid-cols-2 gap-1">
+                <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
+                <div><label class="text-[9px] font-bold text-slate-400">SEXO</label><input id="hSexo" class="border-b w-full uppercase"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-3 space-y-2">
+        <div class="header-box italic">Datos del Propietario</div>
+        <div>
+            <div class="flex justify-between items-center">
+                <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
+                <label class="flex items-center gap-1 cursor-pointer no-print opacity-60">
+                    <input type="checkbox" id="hAlerta" class="w-3 h-3 accent-red-600">
+                    <span class="text-[8px] font-bold text-slate-400 italic">Ref. Interna</span>
+                </label>
+            </div>
+            <input id="hProp" class="border-b w-full uppercase">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" onblur="autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700"></div>
+            <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
+        </div>
+        <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
+        <div><label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label><input id="hDir" class="border-b w-full uppercase text-[10px]"></div>
+    </div>
+</div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
@@ -468,18 +476,18 @@
         }
     };
 
-   // ==========================================================================
-// [04] GESTIÓN DE SERVICIOS E INSUMOS (VERSIÓN DINÁMICA FIREBASE)
+  // ==========================================================================
+// [04] GESTIÓN DE SERVICIOS E INSUMOS (OPTIMIZADO)
 // ==========================================================================
 window.insertarServicio = async (v) => {
     if (!v) return;
     const area = document.getElementById('hTratamiento');
-    const inputPrecioVenta = document.getElementById('precioVenta');
+    // Eliminamos la suma directa aquí para que calcularTodo() mande
     let nombreFinal = v;
     let precioFinal = 0;
-    let porcentajeServicio = 30; // Por defecto
+    let porcentajeServicio = 30; 
 
-    // --- CONEXIÓN CON EL PANEL DE CONTROL (FIREBASE) ---
+    // --- CONEXIÓN CON FIREBASE / RESPALDO ---
     try {
         const docRef = doc(db, "servicios_maestro", v);
         const docSnap = await getDoc(docRef);
@@ -489,55 +497,51 @@ window.insertarServicio = async (v) => {
             precioFinal = parseFloat(data.precioVenta) || 0;
             porcentajeServicio = parseFloat(data.porcDoc) || 30;
         } else {
-            // RESPALDO: Si no está en Firebase, usa las recetas del código
             precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
             porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
         }
     } catch (e) {
-        console.warn("Error leyendo Firebase, usando respaldo local.");
+        console.warn("⚠️ Usando respaldo local por error de conexión.");
         precioFinal = recetas[v] ? recetas[v].precioVenta : 0;
         porcentajeServicio = (CONFIG_SERVICIOS[v]) ? CONFIG_SERVICIOS[v].porc : 30;
     }
 
-    // --- LÓGICA DE EXCEPCIONES (KG, CREMACIÓN, COMBOS) ---
+    // --- LÓGICA DE EXCEPCIONES ---
     if (v === "KG ADICIONAL") {
         const kgs = prompt("Ingrese la cantidad de KG adicionales:");
         if (kgs && !isNaN(kgs)) {
             const numKgs = parseFloat(kgs);
             nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-            precioFinal = numKgs * 7; // Puedes cambiar este 7 por una variable si quieres
+            precioFinal = numKgs * 7; 
             porcentajeServicio = 0; 
         } else return;
     } 
     else if (v === "DISPOSICION" || v === "CREMACION CON CENIZAS") {
-        const monto = prompt(`Ingrese el precio pactado para ${v}:`);
+        const monto = prompt(`Precio pactado para ${v}:`);
         if (monto && !isNaN(monto)) {
             precioFinal = parseFloat(monto);
             porcentajeServicio = 0;
         } else return;
     }
     else {
-        // Lógica de Combos (Precios especiales si ya hay otros servicios)
+        // Combos automáticos
         if (serviciosEnLista.length > 0) {
             if (v === "VACUNA KC (TOS DE LAS PERRERAS)") { precioFinal = 40; nombreFinal += " (Combo)"; }
             if (v === "HEMATOLOGÍA COMPLETA") { precioFinal = 20; nombreFinal += " (Combo)"; }
         }
     }
 
-    // --- RENDERIZADO EN LA INTERFAZ ---
+    // --- RENDERIZADO ---
     const grupoID = "srv-" + Date.now();
     serviciosEnLista.push(v);
-    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal + ": ";
+    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal;
     
-    let totalVentaActual = parseFloat(inputPrecioVenta.value) || 0;
-    inputPrecioVenta.value = (totalVentaActual + precioFinal).toFixed(2);
-
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
     
-    // Crear Fila de Título del Servicio
     const filaTitulo = document.createElement('tr');
     filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
+    // Estas etiquetas 'data' son los electrodos que usará el motor financiero para calcular todo
     filaTitulo.setAttribute('data-grupo', grupoID);
     filaTitulo.setAttribute('data-precio', precioFinal);
     filaTitulo.setAttribute('data-porc', porcentajeServicio); 
@@ -554,20 +558,22 @@ window.insertarServicio = async (v) => {
         </td>`;
     cuerpo.appendChild(filaTitulo);
 
-    // --- CARGA DE INSUMOS ASOCIADOS ---
+    // --- GESTIÓN DE INSUMOS ---
     let listaNuevos = [];
-    if (!cuerpo.querySelector('.insumo-fila')) { listaNuevos = [...insumosFijosMedicos]; }
+    // Si es el primer servicio, agregamos los gastos fijos de clínica (Guantes, etc)
+    if (cuerpo.querySelectorAll('.servicio-principal').length === 1) { 
+        listaNuevos = [...insumosFijosMedicos]; 
+    }
     
     if (v.includes("VACUNA")) {
-        const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL") || td.innerText.includes("JERINGA"));
+        const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL"));
         if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
     }
 
-    if (recetas[v] && recetas[v].insumos) { 
+    if (recetas[v]?.insumos) { 
         listaNuevos = [...listaNuevos, ...recetas[v].insumos]; 
     }
 
-    // Renderizar cada insumo con su precio editable
     listaNuevos.forEach(insumo => {
         const tr = document.createElement('tr');
         tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
@@ -579,6 +585,7 @@ window.insertarServicio = async (v) => {
         cuerpo.appendChild(tr);
     });
 
+    // Lanzamos el motor financiero para que actualice los totales globales
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
 };
@@ -613,25 +620,36 @@ window.insertarServicio = async (v) => {
         n.value = ""; c.value = ""; window.calcularTodo(); 
     };
     // ==========================================================================
-// [05] MOTOR FINANCIERO (REGLA DE ORO) - CALIBRADO PARA EL NUEVO HTML
+// [05] MOTOR FINANCIERO (PRECISIÓN AVIPET)
 // ==========================================================================
 window.calcularTodo = async () => {
     let totalComisionDoctores = 0;
     let totalGastosInsumos = 0;
+    let totalVentaCalculada = 0; // Para sincronizar con los servicios en tabla
 
-    // 1. Buscamos si hay una configuración global en Firebase
-    const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-    let porcGlobal = configSnap.exists() ? configSnap.data().porcentajeDoc : null;
+    let porcGlobal = null;
+
+    // 1. Intento obtener configuración global (con seguro contra fallos de red)
+    try {
+        const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+        if (configSnap.exists()) {
+            porcGlobal = configSnap.data().porcentajeDoc;
+        }
+    } catch (e) {
+        console.warn("⚠️ No se pudo conectar a Firebase para tarifas globales. Usando porcentajes por servicio.");
+    }
+
+    // 2. Recorremos los servicios agregados
+    const filasServicios = document.querySelectorAll('.servicio-principal');
     
-    // 2. Capturamos lo que se le está cobrando al cliente
-    const totalVentaBruta = parseFloat(document.getElementById('precioVenta').value) || 0;
-
-    // 3. Recorremos cada servicio agregado para calcular sus insumos y comisión
-    document.querySelectorAll('.servicio-principal').forEach(fila => {
+    filasServicios.forEach(fila => {
         const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
         const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
-        const porcAEfectuar = (porcGlobal !== null) ? porcGlobal : porcServicioDefault;
         
+        // REGLA: Si hay global manda global, si no, manda el del servicio
+        const porcAEfectuar = (porcGlobal !== null && porcGlobal !== undefined) ? porcGlobal : porcServicioDefault;
+        
+        totalVentaCalculada += precioServicio;
         const grupoID = fila.getAttribute('data-grupo');
         let gastosGrupo = 0;
 
@@ -644,32 +662,28 @@ window.calcularTodo = async () => {
 
         totalGastosInsumos += gastosGrupo;
         
-        // REGLA: (Precio Servicio - Insumos) * % Doctor
+        // REGLA DE ORO: (Precio - Gastos) * % Doctor
+        // Math.max(0, ...) evita que si los insumos son más caros que el servicio, el doctor deba dinero
         totalComisionDoctores += Math.max(0, precioServicio - gastosGrupo) * (porcAEfectuar / 100);
     });
 
-    // 4. ACTUALIZACIÓN DE LA INTERFAZ (IDs sincronizados con tu nuevo HTML)
+    // 3. ACTUALIZACIÓN DINÁMICA DE LA INTERFAZ
     
-    // Mostramos el gasto total de insumos (oculto para el cliente)
-    if (document.getElementById('gastoInsumos')) {
-        document.getElementById('gastoInsumos').value = totalGastosInsumos.toFixed(2);
-    }
+    // Actualizamos el precio de venta total para que coincida con la tabla
+    const inputVenta = document.getElementById('precioVenta');
+    if (inputVenta) inputVenta.value = totalVentaCalculada.toFixed(2);
 
-    // El monto que le toca al Doctor (Darwin o Joan)
+    // Gasto total de insumos (para control interno)
+    const inputGasto = document.getElementById('gastoInsumos');
+    if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
+
+    // Pago al Doctor
     const displayDr = document.getElementById('montoDoctor');
-    if (displayDr) {
-        displayDr.innerText = `$ ${totalComisionDoctores.toFixed(2)}`;
-    }
+    if (displayDr) displayDr.innerText = `$ ${totalComisionDoctores.toFixed(2)}`;
 
-    // Para depuración en consola (Soldadura de prueba)
-    console.log("Cálculo Final Avipet:", {
-        venta: totalVentaBruta,
-        insumos: totalGastosInsumos,
-        pagoDoctor: totalComisionDoctores,
-        utilidadAvipet: (totalVentaBruta - totalGastosInsumos - totalComisionDoctores).toFixed(2)
-    });
+    // 4. LOG DE SEGURIDAD (Soldadura de prueba)
+    console.log(`📊 Balance: Venta: $${totalVentaCalculada} | Insumos: $${totalGastosInsumos} | Dr: $${totalComisionDoctores.toFixed(2)}`);
 };
-
     // ==========================================================================
     // [06] BUSCADOR Y AUTOCOMPLETADO
     // ==========================================================================
@@ -866,7 +880,6 @@ window.actualizarPrecioMaestro = async (nombreServicio, nuevoPrecio, nuevoPorcen
             const grupoID = fila.getAttribute('data-grupo');
             const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
             
-            // Usamos el porcentaje de la nube (vía atributo) o el global
             const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
             const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
 
@@ -881,8 +894,12 @@ window.actualizarPrecioMaestro = async (nombreServicio, nuevoPrecio, nuevoPorcen
 
                 gastosEsteServicio += subtotalInsumo;
                 
-                // Guardamos en el detalle para la historia clínica
-                detalleInsumos.push({ nombre, cant, precio: costoUnidad });
+                // --- CORRECCIÓN TÉCNICA: Estandarizado a 'costo' ---
+                detalleInsumos.push({ 
+                    nombre: nombre, 
+                    cant: cant, 
+                    costo: costoUnidad // Antes decía 'precio'
+                });
             });
 
             totalGastos += gastosEsteServicio;
@@ -912,7 +929,8 @@ window.actualizarPrecioMaestro = async (nombreServicio, nuevoPrecio, nuevoPorcen
 
         // 5. Manejo de impresión y reinicio
         if (imp) {
-            document.getElementById('hTratamientoPrint').innerText = dInput('hTratamiento');
+            const tArea = document.getElementById('hTratamientoPrint');
+            if (tArea) tArea.innerText = dInput('hTratamiento');
             alert("✅ Consulta guardada y lista para imprimir.");
             setTimeout(() => { window.print(); location.reload(); }, 600);
         } else {
@@ -1249,71 +1267,103 @@ window.inicializarBaseDeDatosCompleta = async () => {
 // [08] MOTOR DE SINCRONIZACIÓN Y ARRANQUE (PEGA ESTO AL FINAL)
 // ==========================================================================
 
-// 1. EL MOTOR: Esta función busca los precios en la nube y los mete en el catálogo del código
-window.sincronizarCatalogosDesdeNube = async () => {
+
+    window.sincronizarCatalogos = async () => {
     try {
-        console.log("🔄 Conectando con la base de datos de Avipet...");
-        const querySnapshot = await getDocs(collection(db, "servicios_maestro"));
+        const snapServicios = await getDocs(collection(db, "servicios_maestro"));
+        console.log("🔄 Sincronizando catálogos desde la nube...");
         
-        querySnapshot.forEach((docSnap) => {
+        snapServicios.forEach(docSnap => {
             const id = docSnap.id;
             const data = docSnap.data();
-            
-            // Si el servicio existe en tus recetas (bloque 02), le ponemos el precio de la nube
+            const precioNube = parseFloat(data.precioVenta) || 0;
+            const porcNube = parseFloat(data.porcDoc) || 30;
+
+            // 1. Si el servicio ya existe en el código, actualizamos valores
             if (recetas[id]) {
-                recetas[id].precioVenta = parseFloat(data.precioVenta);
-            }
-            // Actualizamos también el porcentaje para el doctor
-            if (CONFIG_SERVICIOS[id]) {
-                CONFIG_SERVICIOS[id].porc = parseFloat(data.porcDoc);
+                recetas[id].precioVenta = precioNube;
+                if (CONFIG_SERVICIOS[id]) CONFIG_SERVICIOS[id].porc = porcNube;
+            } 
+            // 2. REFUERZO: Si el servicio es NUEVO en Firebase, lo creamos en el código
+            else {
+                recetas[id] = { precioVenta: precioNube, insumos: [] };
+                CONFIG_SERVICIOS[id] = { precio: 0, porc: porcNube };
+                
+                // Agregamos la opción al selector visual (HTML) si existe
+                const selector = document.getElementById('selectorServicios');
+                if (selector) {
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.textContent = id;
+                    selector.appendChild(opt);
+                }
             }
         });
-        console.log("✅ Catálogos actualizados con éxito.");
+        console.log("✅ Catálogos sincronizados con éxito.");
     } catch (e) {
         console.error("❌ Error en sincronización:", e);
     }
 };
+    // ... (Aquí van todas tus funciones anteriores: insertarServicio, guardarFirebase, etc.)
 
-// 2. EL ENCENDIDO: Esto se ejecuta apenas abres la página
-document.addEventListener('DOMContentLoaded', () => {
-    const inicializarTodo = async () => {
-        // Carga la configuración de tarifas generales
-        try {
-            const snap = await getDoc(doc(db, "configuracion", "tarifas"));
-            if (snap.exists()) {
-                const data = snap.data();
-                if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
-                if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
-            }
-        } catch (error) {
-            console.error("Error inicial:", error);
-        }
-
-        // ⚡ EJECUTAMOS EL MOTOR PARA QUE LOS PRECIOS SE ACTUALICEN
-        await window.sincronizarCatalogosDesdeNube();
-    };
-
-    inicializarTodo();
-});
-    window.sincronizarCatalogos = async () => {
-    const snapServicios = await getDocs(collection(db, "servicios_maestro"));
-    snapServicios.forEach(docSnap => {
-        const id = docSnap.id;
-        const data = docSnap.data();
-        // Aquí "pisamos" el precio de la receta con el de la nube
-        if (recetas[id]) {
-            recetas[id].precioVenta = data.precioVenta;
-            if (CONFIG_SERVICIOS[id]) CONFIG_SERVICIOS[id].porc = data.porcDoc;
-        }
-    });
+// ==========================================================================
+// [07] PUENTE DE CONEXIÓN GLOBAL (Sustituye tu bloque anterior por este)
+// ==========================================================================
+const funcionesGlobales = {
+    insertarServicio,
+    calcularTodo,
+    agregarInsumoManual,
+    eliminarServicioCompleto,
+    validarAccesoDoctor,
+    buscarPorCedula,
+    autocompletarPorCedula,
+    guardarFirebase, // Esta es vital para que el botón Guardar funcione
+    showTab,
+    cargarReporte,
+    cambiarSubTabConfig,
+    actualizarPrecioIndividual,
+    actualizarCostoInsumo,
+    renderizarTablaMaestra,
+    renderizarTablaInsumos,
+    sincronizarCatalogos,
+    inicializarBaseDeDatosCompleta,
+    guardarConfiguracion
 };
 
-// Y llámala en tu DOMContentLoaded (Sección [08])
-document.addEventListener('DOMContentLoaded', () => {
-    window.sincronizarCatalogos(); // <--- ESTO ES LO QUE HACE QUE LOS CAMBIOS SE VEAN
-    // ... resto de tu código
+// Exponemos las funciones al objeto window para que los botones HTML las encuentren
+Object.keys(funcionesGlobales).forEach(key => {
+    window[key] = funcionesGlobales[key];
+});
+
+// ==========================================================================
+// [08] INICIALIZACIÓN ÚNICA (BORRA CUALQUIER OTRO DOMContentLoaded)
+// ==========================================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("🚢 Avipet System: Iniciando motores...");
+    
+    // 1. Sincronizar precios desde la nube (Indispensable)
+    await window.sincronizarCatalogos();
+    
+    // 2. Cargar tarifas globales y fecha
+    try {
+        const snap = await getDoc(doc(db, "configuracion", "tarifas"));
+        if (snap.exists()) {
+            const data = snap.data();
+            if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
+            if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
+        }
+    } catch (e) { 
+        console.warn("Error en arranque:", e); 
+    }
+
+    const fechaInput = document.getElementById('fechaDoc');
+    if (fechaInput) {
+        const hoy = new Date();
+        fechaInput.value = hoy.toLocaleDateString('es-ES');
+    }
 });
 </script>
+
 
 
 
