@@ -287,15 +287,14 @@
     </div>
 </section>
     </main>
-</body>
 <script type="module">
     // ==========================================================================
-    // [01] IMPORTACIONES Y CONFIGURACIÓN FIREBASE
+    // [01] IMPORTACIONES Y CONFIGURACIÓN FIREBASE (AJUSTE: UPDATEDOC AÑADIDO)
     // ==========================================================================
     import { db } from './firebase-config.js';
     import { 
         collection, addDoc, query, where, getDocs, serverTimestamp, 
-        doc, getDoc, setDoc 
+        doc, getDoc, setDoc, updateDoc // <--- Ajuste realizado aquí
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // ==========================================================================
@@ -568,7 +567,6 @@ window.insertarServicio = async (v) => {
         document.getElementById('listaInsumosDinamica').appendChild(tr);
         n.value = ""; c.value = ""; window.calcularTodo(); 
     };
-
     // ==========================================================================
     // [05] MOTOR FINANCIERO (REGLA DE ORO)
     // ==========================================================================
@@ -1242,6 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... resto de tu código
 });
 </script>
+
 
 
 
