@@ -1218,15 +1218,23 @@ window.guardarResumenDelDia = async () => {
             pacientes: pacientes
         });
         
-        alert("✅ Cierre guardado exitosamente en la nube.");
+       alert("✅ Cierre de caja registrado exitosamente.");
     } catch (e) { 
-        console.error("Error al guardar cierre:", e);
-        alert("❌ Error al guardar: " + e.message); 
+        console.error("Error al guardar cierre diario:", e);
+        alert("❌ Error al guardar cierre: " + e.message); 
     }
 };
 
-// Inicialización
-window.cargarConfiguracionActual();
+// --- INICIALIZACIÓN DE SERVICIOS AL CARGAR LA PÁGINA ---
+// Esta función asegura que las tarifas y porcentajes se carguen apenas abre el sistema
+window.addEventListener('DOMContentLoaded', () => {
+    window.cargarConfiguracionActual();
+    console.log("⚓ Sistema Avipet: Workflows 'soldados' y listos.");
+});
+
+// --- FIN DEL SCRIPT DE GESTIÓN AVIPET ---
+</script>
+
 
 
 
