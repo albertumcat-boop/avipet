@@ -68,8 +68,8 @@
             <button onclick="showTab('buscador')" id="tabB" class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">Buscador</button>
             <button onclick="showTab('reporte')" id="tabR" class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">Finanzas / Caja</button>
             <button onclick="showTab('config_precios')" class="px-4 py-2 font-black text-[10px] uppercase bg-slate-100 rounded-lg shadow-sm border border-slate-200">
-    ⚙️ Ajustes de Precios
-</button>
+                ⚙️ Ajustes de Precios
+            </button>
         </nav>
 
         <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
@@ -230,7 +230,8 @@
         </div>
     </div>
 </section>
-       <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
+
+<section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
         <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">🛠 Panel de Control Maestro</h2>
         <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos de Materiales</p>
@@ -244,17 +245,17 @@
             </button>
         </div>
 
-        <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between">
-             <div>
+        <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
+             <div class="flex-1">
                 <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
                 <p class="text-[9px] text-orange-400">Usa esto solo para subir los datos del código a la nube por primera vez.</p>
              </div>
-             <button onclick="window.inicializarBaseDeDatosCompleta()" class="bg-orange-600 text-white p-4 rounded-xl font-black uppercase text-[10px] w-full mb-6 shadow-lg active:scale-95 transition-transform">
-    🚀 Sincronizar Todo (Código -> Nube)
-</button>
+             <button onclick="window.inicializarBaseDeDatosCompleta()" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
+                🚀 Sincronizar Todo
+             </button>
         </div>
 
-        <div id="subTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+        <div id="contenedorTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
             <table class="w-full text-left text-[12px]">
                 <thead>
                     <tr class="text-blue-900 font-black uppercase text-[10px]">
@@ -269,7 +270,7 @@
             </table>
         </div>
 
-        <div id="subTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+        <div id="contenedorTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
             <table class="w-full text-left text-[12px]">
                 <thead>
                     <tr class="text-emerald-900 font-black uppercase text-[10px]">
@@ -851,24 +852,43 @@ window.actualizarPrecioMaestro = async (nombreServicio, nuevoPrecio, nuevoPorcen
         alert("❌ Error crítico al guardar: " + e.message);
     }
 };
-    window.cambiarSubTabConfig = (tab) => {
+   // ==========================================================================
+// [08-B] CONTROL DE SUB-PESTAÑAS (SERVICIOS VS INSUMOS)
+// ==========================================================================
+window.cambiarSubTabConfig = (tab) => {
     const isServ = tab === 'servicios';
-    // Switch de visualización
-    document.getElementById('subTabServicios').classList.toggle('hidden', !isServ);
-    document.getElementById('subTabInsumos').classList.toggle('hidden', isServ);
     
-    // Switch de botones
+    // 1. Switch de visualización (Usando los IDs del HTML ajustado)
+    const divServ = document.getElementById('contenedorTabServicios');
+    const divIns = document.getElementById('contenedorTabInsumos');
+    
+    if (divServ && divIns) {
+        divServ.classList.toggle('hidden', !isServ);
+        divIns.classList.toggle('hidden', isServ);
+    }
+    
+    // 2. Switch de estilo de botones
     const btnServ = document.getElementById('btnTabServ');
     const btnIns = document.getElementById('btnTabIns');
     
     if(isServ) {
+        // Estilo Activo para Servicios (Azul)
         btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm";
         btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
-        window.renderizarTablaMaestra();
+        
+        // Cargar datos de la nube
+        if (typeof window.renderizarTablaMaestra === 'function') {
+            window.renderizarTablaMaestra();
+        }
     } else {
+        // Estilo Activo para Insumos (Esmeralda)
         btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-emerald-600 shadow-sm";
         btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
-        window.renderizarTablaInsumos();
+        
+        // Cargar datos de la nube
+        if (typeof window.renderizarTablaInsumos === 'function') {
+            window.renderizarTablaInsumos();
+        }
     }
 };
 
@@ -1156,6 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... resto de tu código
 });
 </script>
+
 
 
 
