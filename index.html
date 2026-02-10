@@ -385,10 +385,11 @@
     // [01] IMPORTACIONES Y CONFIGURACIÓN FIREBASE
     // ==========================================================================
     import { db } from './firebase-config.js';
-    import { 
-        collection, addDoc, query, where, getDocs, serverTimestamp, 
-        doc, getDoc, setDoc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { 
+    collection, addDoc, query, where, getDocs, serverTimestamp, 
+    doc, getDoc, setDoc, updateDoc,
+    orderBy // <--- SOLDADURA REALIZADA: Agregamos la herramienta de ordenamiento
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // ==========================================================================
     // [02] CATÁLOGOS, DATA MAESTRA Y UTILIDADES
@@ -1646,6 +1647,7 @@ window.inyectarInsumosMaestros = async () => {
     }
 };
 </script>
+
 
 
 
