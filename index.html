@@ -232,18 +232,18 @@
                 </div>
             </div>
 
-            <div class="no-print flex flex-col md:flex-row gap-4 mb-4">
-                <div class="flex-1 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center">
-                    <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
-                    <input type="number" id="precioVenta" value="0" oninput="window.calcularTodo()" class="text-4xl font-black w-full bg-transparent text-center text-blue-700 outline-none">
-                </div>
-                <div id="displayGananciaDoctor" class="flex-1 bg-green-50 p-6 rounded-3xl border-2 border-green-200 text-center">
-                    <label class="text-[10px] text-green-600 font-bold uppercase block mb-1">Ganancia Doctor ($)</label>
-                    <p id="montoDoctor" class="text-4xl font-black text-green-700 font-mono">$ 0.00</p>
-                </div>
-                <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
-            </div>
+            <div class="no-print flex justify-center mb-6">
+    <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
+        <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">Monto Total a Cobrar ($)</label>
+        <input type="number" id="precioVenta" value="0" oninput="window.calcularTodo()" 
+               class="text-5xl font-black w-full bg-transparent text-center text-blue-700 outline-none placeholder-blue-300">
+    </div>
 
+    <div id="displayGananciaDoctor" class="hidden">
+        <p id="montoDoctor">$ 0.00</p>
+    </div>
+    <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
+</div>
             <div class="grid grid-cols-2 gap-3">
                 <button type="button" onclick="guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">Guardar Datos</button>
                 <button type="button" onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">Guardar e Imprimir</button>
@@ -532,121 +532,142 @@ const recetas = {
         }
     };
 
-    // ==========================================================================
-    // [04] GESTIÓN DE SERVICIOS E INSUMOS
-    // ==========================================================================
     window.insertarServicio = async (v) => {
-        if (!v) return;
-        const area = document.getElementById('hTratamiento');
+    if (!v) return;
+    const area = document.getElementById('hTratamiento');
+    
+    let nombreFinal = v;
+    let precioFinal = 0;
+    let porcentajeServicio = 30; 
+
+    const vLimpio = normalizarNombre(v);
+
+    try {
+        const docRef = doc(db, "servicios_maestro", v);
+        const docSnap = await getDoc(docRef);
         
-        let nombreFinal = v;
-        let precioFinal = 0;
-        let porcentajeServicio = 30; 
-
-        const vLimpio = normalizarNombre(v);
-
-        try {
-            const docRef = doc(db, "servicios_maestro", v);
-            const docSnap = await getDoc(docRef);
-            
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                precioFinal = parseFloat(data.precioVenta) || 0;
-                porcentajeServicio = parseFloat(data.porcDoc) || 30;
-            } else {
-                const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
-                const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
-
-                precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
-                porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
-            }
-        } catch (e) {
-            console.warn("⚠️ Error de conexión. Usando respaldo local con normalización.");
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            precioFinal = parseFloat(data.precioVenta) || 0;
+            porcentajeServicio = parseFloat(data.porcDoc) || 30;
+        } else {
             const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
             const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
-            
+
             precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
             porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
         }
+    } catch (e) {
+        console.warn("⚠️ Error de conexión. Usando respaldo local con normalización.");
+        const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+        const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+        
+        precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
+        porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
+    }
 
-        // Excepciones de negocio
-        if (vLimpio.includes("kgadicional")) {
-            const kgs = prompt("Ingrese la cantidad de KG adicionales:");
-            if (kgs && !isNaN(kgs)) {
-                const numKgs = parseFloat(kgs);
-                nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-                precioFinal = numKgs * 7; 
-                porcentajeServicio = 0; 
-            } else return;
+    // ========== SECCIÓN RECTIFICADA POR ALBERT (EXCEPCIONES DE NEGOCIO) ==========
+    if (vLimpio.includes("kgadicional")) {
+        const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+        if (kgs && !isNaN(kgs)) {
+            const numKgs = parseFloat(kgs);
+            nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
+            precioFinal = numKgs * 7; 
+            porcentajeServicio = 0; 
+        } else return;
+    } 
+    else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
+        const monto = prompt(`Precio pactado para ${v}:`);
+        if (monto && !isNaN(monto)) {
+            precioFinal = parseFloat(monto);
+            porcentajeServicio = 0;
+        } else return;
+    }
+    else {
+        // Lógica de Combos Específicos por Familia
+        if (vLimpio.includes("vacunakc")) {
+            const tieneOtraVacuna = serviciosEnLista.some(s => {
+                const n = normalizarNombre(s);
+                return n.includes("vacuna") || n.includes("sextuple") || n.includes("puppy") || n.includes("antirrabica") || n.includes("triplefelina");
+            });
+
+            if (tieneOtraVacuna) {
+                precioFinal = 40; 
+                nombreFinal += " (Combo)";
+            } else {
+                precioFinal = 45;
+            }
         } 
-        else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
-            const monto = prompt(`Precio pactado para ${v}:`);
-            if (monto && !isNaN(monto)) {
-                precioFinal = parseFloat(monto);
-                porcentajeServicio = 0;
-            } else return;
-        }
-        else {
-            if (serviciosEnLista.length > 0) {
-                if (vLimpio.includes("vacunakc")) { precioFinal = 40; nombreFinal += " (Combo)"; }
-                if (vLimpio.includes("hematologiacompleta")) { precioFinal = 20; nombreFinal += " (Combo)"; }
+        else if (vLimpio.includes("hematologiacompleta")) {
+            const tieneOtroLab = serviciosEnLista.some(s => {
+                const n = normalizarNombre(s);
+                return n.includes("quimica") || n.includes("hemoparasito") || n.includes("heces") || n.includes("orina") || n.includes("perfil") || n.includes("citologia");
+            });
+
+            if (tieneOtroLab) {
+                precioFinal = 20;
+                nombreFinal += " (Combo)";
+            } else {
+                precioFinal = 23;
             }
         }
+    }
+    // ========== FIN DE LA SECCIÓN RECTIFICADA ==========
 
-        const grupoID = "srv-" + Date.now();
-        serviciosEnLista.push(v);
-        area.value += (area.value ? "\n" : "") + "=> " + nombreFinal;
-        
-        document.getElementById('contenedorInsumos').classList.remove('hidden');
-        const cuerpo = document.getElementById('listaInsumosDinamica');
-        
-        const filaTitulo = document.createElement('tr');
-        filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
-        filaTitulo.setAttribute('data-grupo', grupoID);
-        filaTitulo.setAttribute('data-precio', precioFinal);
-        filaTitulo.setAttribute('data-porc', porcentajeServicio); 
+    const grupoID = "srv-" + Date.now();
+    serviciosEnLista.push(v);
+    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal;
+    
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    
+    const filaTitulo = document.createElement('tr');
+    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
+    filaTitulo.setAttribute('data-grupo', grupoID);
+    filaTitulo.setAttribute('data-precio', precioFinal);
+    filaTitulo.setAttribute('data-porc', porcentajeServicio); 
 
-        filaTitulo.innerHTML = `
-            <td colspan="3" class="p-2 text-[11px] uppercase">
-                🔹 ${nombreFinal} ($${precioFinal.toFixed(2)}) 
-                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
-                    ${porcentajeServicio.toFixed(1)}% DOC
-                </span>
-            </td>
-            <td class="p-2 text-center">
-                <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
-            </td>`;
-        cuerpo.appendChild(filaTitulo);
+    filaTitulo.innerHTML = `
+        <td colspan="3" class="p-2 text-[11px] uppercase">
+            🔹 ${nombreFinal} ($${precioFinal.toFixed(2)}) 
+            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
+                ${porcentajeServicio.toFixed(1)}% DOC
+            </span>
+        </td>
+        <td class="p-2 text-center">
+            <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
+        </td>`;
+    cuerpo.appendChild(filaTitulo);
 
-        let listaNuevos = [];
-        if (cuerpo.querySelectorAll('.servicio-principal').length === 1) { 
-            listaNuevos = [...insumosFijosMedicos]; 
-        }
-        
-        if (vLimpio.includes("vacuna")) {
-            const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL"));
-            if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-        }
+    let listaNuevos = [];
+    if (cuerpo.querySelectorAll('.servicio-principal').length === 1) { 
+        listaNuevos = [...insumosFijosMedicos]; 
+    }
+    
+    if (vLimpio.includes("vacuna")) {
+        const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL"));
+        if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+    }
 
-        const llaveRecetaIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
-        if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) { 
-            listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos]; 
-        }
+    const llaveRecetaIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+    if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) { 
+        listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos]; 
+    }
 
-        listaNuevos.forEach(insumo => {
-            const tr = document.createElement('tr');
-            tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
-            tr.innerHTML = `
-                <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
-                <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
-                <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
-                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
-            cuerpo.appendChild(tr);
-        });
+    listaNuevos.forEach(insumo => {
+        const tr = document.createElement('tr');
+        tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+            <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
+            <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
+            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+        cuerpo.appendChild(tr);
+    });
 
-        await window.calcularTodo();
-        document.getElementById('selectorServicios').value = "";
-    };
+    await window.calcularTodo();
+    document.getElementById('selectorServicios').value = "";
+};
 
     window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
         if (event) event.preventDefault();
@@ -683,56 +704,68 @@ const recetas = {
     // [05] MOTOR FINANCIERO
     // ==========================================================================
     window.calcularTodo = async () => {
-        let totalComisionDoctores = 0;
-        let totalGastosInsumos = 0;
-        let totalVentaCalculada = 0;
+    let totalComisionDoctores = 0;
+    let totalGastosInsumos = 0;
+    let totalVentaCalculada = 0;
 
-        let porcGlobal = null;
-
+    // 1. En lugar de ir a la nube cada vez, intentamos usar una variable global
+    // Si no existe, la buscamos UNA VEZ.
+    if (window.porcGlobalCache === undefined) {
         try {
+            const { getDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
             const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-            if (configSnap.exists()) {
-                // Se unifica a porcDoc en la DB, pero aquí respetamos porcentajeDoc si ya existe
-                porcGlobal = configSnap.data().porcDoc ?? configSnap.data().porcentajeDoc ?? null;
-            }
+            window.porcGlobalCache = configSnap.exists() ? (configSnap.data().porcDoc ?? configSnap.data().porcentajeDoc) : null;
         } catch (e) {
-            console.warn("⚠️ No se pudo conectar a Firebase para tarifas globales. Usando porcentajes por servicio.");
+            window.porcGlobalCache = null;
         }
+    }
 
-        const filasServicios = document.querySelectorAll('.servicio-principal');
+    const filasServicios = document.querySelectorAll('.servicio-principal');
+    
+    filasServicios.forEach(fila => {
+        const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+        const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
         
-        filasServicios.forEach(fila => {
-            const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-            const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
-            
-            const porcAEfectuar = (porcGlobal !== null && porcGlobal !== undefined) ? porcGlobal : porcServicioDefault;
-            
-            totalVentaCalculada += precioServicio;
-            const grupoID = fila.getAttribute('data-grupo');
-            let gastosGrupo = 0;
+        // Prioridad: 1. Porcentaje Global de la DB | 2. Porcentaje específico del servicio
+        const porcAEfectuar = (window.porcGlobalCache !== null && window.porcGlobalCache !== undefined) 
+                               ? window.porcGlobalCache 
+                               : porcServicioDefault;
+        
+        totalVentaCalculada += precioServicio;
+        
+        const grupoID = fila.getAttribute('data-grupo');
+        let gastosGrupo = 0;
 
-            document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
-                const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
-                const cost = parseFloat(insumo.querySelector('.i-cost').value) || 0;
-                gastosGrupo += (cant * cost);
-            });
-
-            totalGastosInsumos += gastosGrupo;
-            
-            totalComisionDoctores += Math.max(0, precioServicio - gastosGrupo) * (porcAEfectuar / 100);
+        // 2. SUMA DE INSUMOS (Aquí es donde el combo se "desarma" y se suma correctamente)
+        const insumosDelGrupo = document.querySelectorAll(`.${grupoID}.insumo-fila`);
+        insumosDelGrupo.forEach(insumo => {
+            const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
+            const cost = parseFloat(insumo.querySelector('.i-cost').value) || 0;
+            gastosGrupo += (cant * cost);
         });
 
-        const inputVenta = document.getElementById('precioVenta');
-        if (inputVenta) inputVenta.value = totalVentaCalculada.toFixed(2);
+        totalGastosInsumos += gastosGrupo;
+        
+        // 3. CÁLCULO DE COMISIÓN (Base Neta)
+        // Se resta el gasto de insumos ANTES de aplicar el porcentaje
+        const utilidadNetaServicio = precioServicio - gastosGrupo;
+        if (utilidadNetaServicio > 0) {
+            totalComisionDoctores += (utilidadNetaServicio * (porcAEfectuar / 100));
+        }
+    });
 
-        const inputGasto = document.getElementById('gastoInsumos');
-        if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
+    // 4. ACTUALIZAR INTERFAZ
+    const inputVenta = document.getElementById('precioVenta');
+    if (inputVenta) inputVenta.value = totalVentaCalculada.toFixed(2);
 
-        const displayDr = document.getElementById('montoDoctor');
-        if (displayDr) displayDr.innerText = `$ ${totalComisionDoctores.toFixed(2)}`;
+    const inputGasto = document.getElementById('gastoInsumos');
+    if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
 
-        console.log(`📊 Balance: Venta: $${totalVentaCalculada} | Insumos: $${totalGastosInsumos} | Dr: $${totalComisionDoctores.toFixed(2)}`);
-    };
+    const displayDr = document.getElementById('montoDoctor');
+    if (displayDr) displayDr.innerText = `$ ${totalComisionDoctores.toFixed(2)}`;
+
+    console.log(`✅ Combo Calculado: Bruto $${totalVentaCalculada} | Insumos $${totalGastosInsumos} | Dr $${totalComisionDoctores.toFixed(2)}`);
+};
 
     // ==========================================================================
     // [06] BUSCADOR Y AUTOCOMPLETADO
@@ -1166,22 +1199,37 @@ window.agregarInsumoNuevoManual = async () => {
     }
 };
 
-    window.actualizarCostoInsumo = async (idInsumo) => {
-        const input = document.getElementById(`costo-${idInsumo}`);
-        if (!input) return;
-        const nuevoCosto = parseFloat(input.value);
-        if (isNaN(nuevoCosto)) {
-            alert("⚠️ Costo inválido");
-            return;
+   window.actualizarCostoInsumo = async (idInsumo) => {
+    const input = document.getElementById(`costo-${idInsumo}`);
+    if (!input) return;
+    const nuevoCosto = parseFloat(input.value);
+    
+    if (isNaN(nuevoCosto)) {
+        alert("⚠️ Costo inválido");
+        return;
+    }
+
+    try {
+        // 1. Guardar en Firebase
+        const docRef = doc(db, "insumos_maestro", idInsumo);
+        await updateDoc(docRef, { costo: nuevoCosto });
+
+        console.log(`✅ ${idInsumo} actualizado en la nube a $${nuevoCosto}`);
+
+        // 2. ⚡ PASO CRUCIAL: Recargar los datos en la memoria del programa
+        // Esto hace que el buscador de servicios "vea" el nuevo precio de inmediato
+        if (typeof window.cargarDatosMaestros === 'function') {
+            await window.cargarDatosMaestros(); 
+            console.log("🔄 Memoria interna sincronizada con los nuevos costos.");
         }
-        try {
-            const docRef = doc(db, "insumos_maestro", idInsumo);
-            await updateDoc(docRef, { costo: nuevoCosto });
-            alert(`✅ ${idInsumo} actualizado correctamente.`);
-        } catch (e) {
-            alert("❌ Error al actualizar: " + e.message);
-        }
-    };
+
+        alert(`✅ ${idInsumo} actualizado y sincronizado.`);
+
+    } catch (e) {
+        console.error("Error al actualizar:", e);
+        alert("❌ Error al actualizar: " + e.message);
+    }
+};
 
     // ==========================================================================
     // [09] INICIALIZACIÓN BASE DE DATOS (SERVICIOS + INSUMOS) DESDE CÓDIGO
@@ -1333,38 +1381,48 @@ window.agregarInsumoNuevoManual = async () => {
     // ==========================================================================
     // [12] CAMBIO DE TABS PRINCIPALES
     // ==========================================================================
-    window.showTab = async (t) => {
-        if (t === 'config_precios') {
-            const clave = prompt("🔐 ACCESO RESTRINGIDO\nIngrese clave de administrador para gestionar costos y ganancias:");
-            if (clave !== 'AVIPET2026') { 
-                alert("🚫 Clave incorrecta. Acceso denegado.");
-                t = 'historia'; 
-            }
+   window.showTab = async (t) => {
+    // 1. Validación de Seguridad
+    if (t === 'config_precios') {
+        const clave = prompt("🔐 ACCESO RESTRINGIDO\nIngrese clave de administrador:");
+        if (clave !== 'AVIPET2026') { 
+            alert("🚫 Clave incorrecta.");
+            t = 'historia'; 
         }
+    }
 
-        document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
-        document.getElementById('sectionBuscador').classList.toggle('hidden', t !== 'buscador');
-        document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
-        
-        const sectionConfig = document.getElementById('sectionConfigPrecios');
-        if (sectionConfig) {
-            sectionConfig.classList.toggle('hidden', t !== 'config_precios');
-        }
+    // 2. Control de Visibilidad de Secciones
+    document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
+    document.getElementById('sectionBuscador').classList.toggle('hidden', t !== 'buscador');
+    document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
+    
+    const sectionConfig = document.getElementById('sectionConfigPrecios');
+    if (sectionConfig) {
+        sectionConfig.classList.toggle('hidden', t !== 'config_precios');
+    }
 
-        if (t === 'reporte') {
-            window.cargarReporte();
+    // 3. ⚡ ACCIONES AL ACTIVAR CADA PESTAÑA
+    
+    if (t === 'reporte') {
+        window.cargarReporte();
+    }
+
+    // Si vuelves a la Historia, forzamos la lectura de nuevos precios de insumos
+    if (t === 'historia') {
+        console.log("🔄 Sincronizando precios para la consulta...");
+        if (typeof window.inicializarLogicaServicios === 'function') {
+            await window.inicializarLogicaServicios(); 
         }
-        
-        if (t === 'config_precios') {
-            console.log("🛠️ Cargando tablas de gestión desde la nube...");
-            if (typeof window.renderizarTablaMaestra === 'function') {
-                await window.renderizarTablaMaestra();
-            }
-            if (typeof window.renderizarTablaInsumos === 'function') {
-                await window.renderizarTablaInsumos();
-            }
+    }
+    
+    if (t === 'config_precios') {
+        console.log("🛠️ Cargando gestión de costos...");
+        // Por defecto, al entrar a configuración, mostramos la sub-tab de servicios
+        if (typeof window.cambiarSubTabConfig === 'function') {
+            window.cambiarSubTabConfig('servicios');
         }
-    };
+    }
+};
 
     // ==========================================================================
     // [13] ARRANQUE (DOMContentLoaded)
@@ -1495,6 +1553,7 @@ window.inyectarInsumosMaestros = async () => {
     }
 };
 </script>
+
 
 
 
