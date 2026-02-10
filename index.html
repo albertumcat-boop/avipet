@@ -1418,116 +1418,180 @@ window.agregarInsumoNuevoManual = async () => {
             console.error("❌ Error en sincronización:", e);
         }
     };
-
-    // ==========================================================================
-    // [11] GUARDAR CONSULTA EN FIREBASE
-    // ==========================================================================
-    window.guardarFirebase = async (imp) => {
-        if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor.");
-
-        try {
-            const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-            let porcGlobal = (configSnap.exists() && configSnap.data().porcentajeDoc > 0) ? configSnap.data().porcentajeDoc : null;
-
-            const dInput = (id) => document.getElementById(id).value.trim();
-            const montoVentaTotal = parseFloat(document.getElementById('precioVenta').value) || 0;
-            
-            const detalleInsumos = [];
-            let totalGastos = 0;
-            let pagoDoctorTotal = 0;
-
-            const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
-            
-            serviciosPrincipales.forEach(fila => {
-                const grupoID = fila.getAttribute('data-grupo');
-                const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-                
-                const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
-                const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
-
-                let gastosEsteServicio = 0;
-
-                document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
-                    const nombre = insumoFila.cells[0].innerText.replace('➕ ', '').replace('🔹 ', '').trim();
-                    const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
-                    const costoUnidad = parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
-                    const subtotalInsumo = cant * costoUnidad;
-
-                    gastosEsteServicio += subtotalInsumo;
-                    
-                    detalleInsumos.push({ 
-                        nombre: nombre, 
-                        cant: cant, 
-                        costo: costoUnidad
-                    });
-                });
-
-                totalGastos += gastosEsteServicio;
-                
-                pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
-            });
-
-           const dataConsulta = {
-                cedula: dInput('hCI'),
-                propietario: dInput('hProp'),
-                paciente: dInput('hNombre'),
-                doctor: doctorVerificado,
-                tratamiento: dInput('hTratamiento'),
-                montoVenta: montoVentaTotal,
-                // Mantenemos tu dato original
-                montoInsumos: totalGastos,
-                // AGREGAMOS ESTA LÍNEA para que el Análisis Estratégico sea 100% real
-                costoInsumosTotal: totalGastos, 
-                pagoDoctor: pagoDoctorTotal,
-                pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
-                listaDetalladaInsumos: detalleInsumos,
-                fecha: serverTimestamp(),
-                fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
-            };
-
-            await addDoc(collection(db, "consultas"), dataConsulta);
-
-            if (imp) {
-                const tArea = document.getElementById('hTratamientoPrint');
-                if (tArea) tArea.innerText = dInput('hTratamiento');
-                alert("✅ Consulta guardada y lista para imprimir.");
-                setTimeout(() => { window.print(); location.reload(); }, 600);
-            } else {
-                alert("✅ Consulta guardada exitosamente.");
-                location.reload();
-            }
-
-        } catch (e) {
-            console.error("Error al guardar:", e);
-            alert("❌ Error crítico al guardar: " + e.message);
-        }
-    };
-
-    // ==========================================================================
-    // [12] CAMBIO DE TABS PRINCIPALES
-    // ==========================================================================
-// Variable global para gestionar la navegación segura
-let tabPendiente = ''; 
-
 // ==========================================================================
-// [SISTEMA DE NAVEGACIÓN Y SEGURIDAD]
+// [SISTEMA DE SEGURIDAD AVANZADO - DOCTORES]
 // ==========================================================================
 
-window.showTab = async (t) => {
-    // 1. Ajuste de Seguridad: Sustituimos el prompt por el Modal
-    if (t === 'config_precios') {
-        tabPendiente = t;
-        document.getElementById('modalLogin').classList.remove('hidden');
-        return; // Esperamos a la validación en el modal
+const MASTER_KEY = "AVIPET_PRO_2026"; // Tu llave de acceso total
+
+window.validarDoctorConMaster = async (nombreDoc, pinIngresado) => {
+    // 1. Si usas la Llave Maestra, entras directo
+    if (pinIngresado === MASTER_KEY) {
+        console.log(`🔓 Acceso administrativo para: ${nombreDoc}`);
+        return true;
     }
 
-    // Para el resto de pestañas, ejecutamos tu lógica normal
+    // 2. Si no, buscamos el PIN del doctor en la base de datos
+    try {
+        const docRef = doc(db, "doctores", nombreDoc);
+        const snap = await getDoc(docRef);
+        
+        if (snap.exists()) {
+            const pinReal = snap.data().pin;
+            return pinIngresado === pinReal;
+        } else {
+            // Si el doctor no tiene PIN en la nube, usamos los de respaldo del código
+            const backupPins = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
+            return pinIngresado === backupPins[nombreDoc];
+        }
+    } catch (e) {
+        console.error("Error en validación:", e);
+        return false;
+    }
+};
+
+// 3. Función para que el doctor CAMBIE su PIN
+window.cambiarPinDoctor = async (nombreDoc) => {
+    const pinActual = prompt(`🔐 [${nombreDoc}] Ingrese PIN actual o Llave Maestra:`);
+    const esValido = await window.validarDoctorConMaster(nombreDoc, pinActual);
+
+    if (esValido) {
+        const nuevoPin = prompt("🆕 Ingrese su NUEVO PIN (4 dígitos):");
+        if (nuevoPin && nuevoPin.length >= 4) {
+            await setDoc(doc(db, "doctores", nombreDoc), { 
+                pin: nuevoPin,
+                ultimaActualizacion: serverTimestamp() 
+            }, { merge: true });
+            alert("✅ PIN actualizado con éxito.");
+        } else {
+            alert("⚠️ El PIN debe tener al menos 4 dígitos.");
+        }
+    } else {
+        alert("🚫 Validación fallida.");
+    }
+};
+    // ==========================================================================
+// [11] GUARDAR CONSULTA EN FIREBASE - CON VALIDACIÓN INTEGRADA
+// ==========================================================================
+window.guardarFirebase = async (imp) => {
+    // 1. OBTENEMOS AL DOCTOR DEL SELECTOR (Ajustamos el ID a 'hDoctor' que es el común en tu código)
+    const selectorDoc = document.getElementById('hDoctor');
+    const nombreDoctor = selectorDoc ? selectorDoc.value : "";
+
+    if (!nombreDoctor || nombreDoctor === "Seleccione Doctor") {
+        return alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
+    }
+
+    // 2. PEDIMOS EL PIN Y VALIDAMOS CON LA NUEVA LÓGICA (Incluye Master Key)
+    const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`);
+    
+    // Llamamos a la función que pegaste anteriormente
+    const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
+
+    if (esValido) {
+        // Si es válido, asignamos a doctorVerificado para que pase el filtro
+        doctorVerificado = nombreDoctor;
+        console.log("✅ Firma validada correctamente.");
+    } else {
+        return alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
+    }
+
+    // --- A PARTIR DE AQUÍ SIGUE TU LÓGICA ORIGINAL SIN CAMBIOS ---
+    if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor.");
+
+    try {
+        const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+        let porcGlobal = (configSnap.exists() && configSnap.data().porcentajeDoc > 0) ? configSnap.data().porcentajeDoc : null;
+
+        const dInput = (id) => document.getElementById(id).value.trim();
+        const montoVentaTotal = parseFloat(document.getElementById('precioVenta').value) || 0;
+        
+        const detalleInsumos = [];
+        let totalGastos = 0;
+        let pagoDoctorTotal = 0;
+
+        const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
+        
+        serviciosPrincipales.forEach(fila => {
+            const grupoID = fila.getAttribute('data-grupo');
+            const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+            
+            const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
+            const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
+
+            let gastosEsteServicio = 0;
+
+            document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
+                const nombre = insumoFila.cells[0].innerText.replace('➕ ', '').replace('🔹 ', '').trim();
+                const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
+                const costoUnidad = parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
+                const subtotalInsumo = cant * costoUnidad;
+
+                gastosEsteServicio += subtotalInsumo;
+                
+                detalleInsumos.push({ 
+                    nombre: nombre, 
+                    cant: cant, 
+                    costo: costoUnidad
+                });
+            });
+
+            totalGastos += gastosEsteServicio;
+            pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
+        });
+
+       const dataConsulta = {
+            cedula: dInput('hCI'),
+            propietario: dInput('hProp'),
+            paciente: dInput('hNombre'),
+            doctor: doctorVerificado,
+            tratamiento: dInput('hTratamiento'),
+            montoVenta: montoVentaTotal,
+            montoInsumos: totalGastos,
+            costoInsumosTotal: totalGastos, 
+            pagoDoctor: pagoDoctorTotal,
+            pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+            listaDetalladaInsumos: detalleInsumos,
+            fecha: serverTimestamp(),
+            fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
+        };
+
+        await addDoc(collection(db, "consultas"), dataConsulta);
+
+        if (imp) {
+            const tArea = document.getElementById('hTratamientoPrint');
+            if (tArea) tArea.innerText = dInput('hTratamiento');
+            alert("✅ Consulta guardada y lista para imprimir.");
+            setTimeout(() => { window.print(); location.reload(); }, 600);
+        } else {
+            alert("✅ Consulta guardada exitosamente.");
+            location.reload();
+        }
+
+    } catch (e) {
+        console.error("Error al guardar:", e);
+        alert("❌ Error crítico al guardar: " + e.message);
+    }
+};
+
+// ==========================================================================
+// [SISTEMA DE NAVEGACIÓN Y SEGURIDAD - AJUSTADO]
+// ==========================================================================
+let tabPendiente = ''; 
+const MASTER_KEY = "AVIPET_PRO_2026"; // Tu llave maestra de capitán
+
+window.showTab = async (t) => {
+    // Seguridad para Reportes y Configuración (Usando tu Modal)
+    if (t === 'config_precios' || t === 'reporte') {
+        tabPendiente = t;
+        document.getElementById('modalLogin').classList.remove('hidden');
+        return; 
+    }
     window.ejecutarCambioDeTab(t);
 };
 
-// Mantenemos INTEGRA tu lógica de visibilidad y acciones de carga
 window.ejecutarCambioDeTab = async (t) => {
-    // 2. Control de Visibilidad de Secciones (Tus IDs y lógica exacta)
+    // Mantenemos tus IDs exactos y lógica de toggle
     document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
     document.getElementById('sectionBuscador').classList.toggle('hidden', t !== 'buscador');
     document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
@@ -1537,40 +1601,29 @@ window.ejecutarCambioDeTab = async (t) => {
         sectionConfig.classList.toggle('hidden', t !== 'config_precios');
     }
 
-    // 3. ⚡ ACCIONES AL ACTIVAR CADA PESTAÑA (Tus procesos originales)
-    if (t === 'reporte') {
-        window.cargarReporte();
-    }
-
+    // Acciones originales de carga
+    if (t === 'reporte') window.cargarReporte();
     if (t === 'historia') {
-        console.log("🔄 Sincronizando precios para la consulta...");
-        if (typeof window.inicializarLogicaServicios === 'function') {
-            await window.inicializarLogicaServicios(); 
-        }
+        if (typeof window.inicializarLogicaServicios === 'function') await window.inicializarLogicaServicios(); 
     }
-    
     if (t === 'config_precios') {
-        console.log("🛠️ Cargando gestión de costos...");
-        if (typeof window.cambiarSubTabConfig === 'function') {
-            window.cambiarSubTabConfig('servicios');
-        }
+        if (typeof window.cambiarSubTabConfig === 'function') window.cambiarSubTabConfig('servicios');
     }
 };
 
 // ==========================================================================
-// [LÓGICA DEL MODAL - VALIDACIÓN Y RESCATE]
+// [LÓGICA DEL MODAL - VALIDACIÓN CON MASTER KEY]
 // ==========================================================================
 
 window.validarAcceso = async () => {
     const pass = document.getElementById('inputPass').value;
-    const masterKey = "AVIPET_PRO_2026"; // Tu llave de programador
     
     try {
         const snap = await getDoc(doc(db, "configuracion", "seguridad"));
-        // Mantenemos tu clave original como respaldo por defecto
         const pinActual = snap.exists() ? snap.data().pin : "AVIPET2026";
 
-        if (pass === pinActual || pass === masterKey) {
+        // Validamos con PIN de clínica O con tu Llave Maestra
+        if (pass === pinActual || pass === MASTER_KEY) {
             window.cerrarModalLogin();
             window.ejecutarCambioDeTab(tabPendiente);
         } else {
@@ -1582,13 +1635,52 @@ window.validarAcceso = async () => {
     document.getElementById('inputPass').value = "";
 };
 
+// ==========================================================================
+// [NUEVO: GESTIÓN DE PINS PARA DOCTORES (DARWIN/JOAN)]
+// ==========================================================================
+
+// Función para validar al doctor al firmar o cambiar clave
+window.validarDoctorPerfil = async (nombreDoc, pinIngresado) => {
+    if (pinIngresado === MASTER_KEY) return true; // Tú siempre puedes entrar
+
+    try {
+        const snap = await getDoc(doc(db, "doctores", nombreDoc));
+        if (snap.exists()) {
+            return pinIngresado === snap.data().pin;
+        } else {
+            // Respaldo inicial si no hay datos en Firebase
+            const defaults = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
+            return pinIngresado === defaults[nombreDoc];
+        }
+    } catch (e) { return false; }
+};
+
+// Para que ellos mismos cambien su clave
+window.solicitarCambioPinDoctor = async () => {
+    const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
+    if (!nombreDoc) return;
+
+    const pinActual = prompt("Ingrese su PIN actual o Llave Maestra para validar:");
+    const esValido = await window.validarDoctorPerfil(nombreDoc, pinActual);
+
+    if (esValido) {
+        const nuevoPin = prompt("Ingrese su NUEVO PIN (4 dígitos):");
+        if (nuevoPin && nuevoPin.length >= 4) {
+            await setDoc(doc(db, "doctores", nombreDoc), { pin: nuevoPin }, { merge: true });
+            alert(`✅ PIN de ${nombreDoc} actualizado.`);
+        }
+    } else {
+        alert("🚫 Validación incorrecta.");
+    }
+};
+
 window.recuperarPin = async () => {
-    const respuesta = prompt("🛠️ RECUPERACIÓN DE ACCESO\nPregunta: ¿Cuál es el nombre de la clínica?");
+    const respuesta = prompt("🛠️ RECUPERACIÓN DE ACCESO\n¿Cuál es el nombre de la clínica?");
     if (respuesta && respuesta.toUpperCase().trim() === "AVIPET") {
-        const nuevoPin = prompt("✅ Confirmado. Ingrese nuevo PIN (min. 4 dígitos):");
+        const nuevoPin = prompt("✅ Confirmado. Ingrese nuevo PIN administrativo:");
         if (nuevoPin && nuevoPin.length >= 4) {
             await setDoc(doc(db, "configuracion", "seguridad"), { pin: nuevoPin }, { merge: true });
-            alert("🔒 PIN actualizado.");
+            alert("🔒 PIN administrativo actualizado.");
         }
     } else {
         alert("🚫 Respuesta incorrecta.");
@@ -1599,254 +1691,8 @@ window.cerrarModalLogin = () => {
     document.getElementById('modalLogin').classList.add('hidden');
     document.getElementById('inputPass').value = "";
 };
-
-// ==========================================================================
-// [INYECTOR DE INSUMOS (RECETAS) - CONEXIÓN GLOBAL]
-// ==========================================================================
-
-window.inyectarInsumosMaestros = async () => {
-    if (!confirm("¿Deseas subir las recetas de insumos a la nube?")) return;
-    
-    console.log("📦 Iniciando carga de insumos...");
-    try {
-        const servicios = Object.keys(recetas);
-        for (const nombre of servicios) {
-            const datos = recetas[nombre];
-            // Limpieza de nombre para Firebase
-            const nombreLimpio = nombre.split('/').join(' - ');
-            
-            if (datos.insumos) {
-                await setDoc(doc(db, "insumos_maestro", nombreLimpio), {
-                    lista: datos.insumos,
-                    ultimaActualizacion: serverTimestamp()
-                }, { merge: true });
-                console.log(`✅ Receta subida: ${nombreLimpio}`);
-            }
-        }
-        alert("¡ÉXITO! Recetas de insumos sincronizadas.");
-        if (window.renderizarTablaInsumos) window.renderizarTablaInsumos();
-    } catch (e) {
-        console.error("❌ Error:", e);
-        alert("Fallo la carga: " + e.message);
-    }
-};
-    window.inyectarTodoElCatalogoInsumos = async () => {
-    if (!confirm("🚀 ¿Deseas inyectar TODOS los insumos (Fijos, Vacunas y Recetas) a la nube?")) return;
-
-    // Función interna para limpiar nombres de documentos (prohibido usar / en el ID)
-    const limpiarNombre = (n) => n.split('/').join(' - ');
-
-    try {
-        console.log("⚓ Iniciando carga total de insumos (blindada)...");
-
-        // 1. Inyectar Insumos Médicos Fijos
-        for (const ins of insumosFijosMedicos) {
-            await setDoc(doc(db, "insumos_maestro", limpiarNombre(ins.nombre)), {
-                costo: ins.costo,
-                tipo: "Fijo Médico",
-                ultimaActualizacion: serverTimestamp()
-            }, { merge: true });
-        }
-
-        // 2. Inyectar Insumos Base Vacuna
-        for (const ins of insumosBaseVacuna) {
-            await setDoc(doc(db, "insumos_maestro", limpiarNombre(ins.nombre)), {
-                costo: ins.costo,
-                tipo: "Base Vacuna",
-                ultimaActualizacion: serverTimestamp()
-            }, { merge: true });
-        }
-
-        // 3. Inyectar Insumos específicos de las Recetas
-        for (const [servicio, data] of Object.entries(recetas)) {
-            if (data.insumos) {
-                for (const item of data.insumos) {
-                    await setDoc(doc(db, "insumos_maestro", limpiarNombre(item.nombre)), {
-                        costo: item.costo,
-                        tipo: `Variable (${servicio})`,
-                        ultimaActualizacion: serverTimestamp()
-                    }, { merge: true });
-                }
-            }
-        }
-
-        console.log("✅ ¡Sincronización completa sin errores de ruta!");
-        alert("¡ÉXITO! Toda la estructura de costos está en Firebase.");
-        if (window.renderizarTablaInsumos) window.renderizarTablaInsumos();
-
-    } catch (e) {
-        console.error("❌ Error en la inyección:", e);
-        alert("Error de Firebase: " + e.message);
-    }
-};
-    window.vaciarColeccionInsumos = async () => {
-    if (!confirm("⚠️ ¿ESTÁS SEGURO? Esto borrará TODOS los insumos de la nube para empezar de cero.")) return;
-    
-    console.log("🧹 Iniciando limpieza de la colección 'insumos_maestro'...");
-    try {
-        const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
-        
-        if (querySnapshot.empty) {
-            alert("La colección ya está vacía.");
-            return;
-        }
-
-        // Borramos cada documento encontrado
-        const promesas = querySnapshot.docs.map(docSnap => deleteDoc(doc(db, "insumos_maestro", docSnap.id)));
-        await Promise.all(promesas);
-
-        console.log("✨ Colección vaciada con éxito.");
-        alert("Colección limpia. Ahora puedes ejecutar la inyección correcta.");
-        
-        // Refrescar la tabla si existe
-        if (window.renderizarTablaInsumos) window.renderizarTablaInsumos();
-        
-    } catch (e) {
-        console.error("❌ Error al vaciar:", e);
-        alert("Error de Firebase: " + e.message);
-    }
-};
-   window.generarAnalisisCompleto = async () => {
-    const contenedor = document.getElementById('contenedorAnalisis');
-    const grid = document.getElementById('gridAnalisis');
-    const listaDocs = document.getElementById('analisisDoctores');
-    
-    // 1. Iniciando motores
-    grid.innerHTML = "<p class='col-span-2 text-center text-xs animate-pulse text-indigo-500'>Analizando bitácora de vuelo...</p>";
-    contenedor.classList.remove('hidden');
-
-    try {
-        // Obtenemos el mes y año actual para filtrar
-        const ahora = new Date();
-        const mesActual = ahora.getMonth(); // 0-11
-        const anioActual = ahora.getFullYear();
-
-        // Usamos el índice de fecha que ya creamos
-        const q = query(collection(db, "consultas"), orderBy("fecha", "desc"));
-        const snap = await getDocs(q);
-        
-        let stats = {
-            ingreso: 0, costos: 0, pacientes: 0,
-            darwinVenta: 0, joanVenta: 0,
-            servicios: { Vacunas: 0, Laboratorio: 0, Otros: 0 }
-        };
-
-        snap.forEach(doc => {
-            const d = doc.data();
-            // Intentamos obtener la fecha real de Firebase o usamos la actual por defecto
-            const fechaDoc = d.fecha?.toDate ? d.fecha.toDate() : new Date();
-
-            // Solo procesamos lo que pertenece a este mes
-            if (fechaDoc.getMonth() === mesActual && fechaDoc.getFullYear() === anioActual) {
-                const venta = parseFloat(d.montoVenta || 0);
-                
-                // --- AJUSTE DE PRECISIÓN ---
-                // Mantenemos tus datos: si el costo es 0, estimamos un 40% para realismo
-                let costo = parseFloat(d.costoInsumosTotal || 0);
-                if (costo === 0 && venta > 0) {
-                    costo = venta * 0.40; 
-                }
-                
-                stats.ingreso += venta;
-                stats.costos += costo;
-                stats.pacientes++;
-
-                // Lógica de Doctores
-                if (d.doctor === "Darwin Sandoval") stats.darwinVenta += venta;
-                if (d.doctor === "Joan Silva") stats.joanVenta += venta;
-
-                // Clasificación inteligente por palabras clave (Tu lógica original)
-                const t = (d.tratamiento || "").toUpperCase();
-                if (t.includes("VACUNA") || t.includes("KC") || t.includes("SEX")) {
-                    stats.servicios.Vacunas++;
-                } else if (t.includes("HEMATO") || t.includes("LAB") || t.includes("PERFIL")) {
-                    stats.servicios.Laboratorio++;
-                } else {
-                    stats.servicios.Otros++;
-                }
-            }
-        });
-
-        // Cálculos finales de rendimiento
-        const utilidadBruta = stats.ingreso - stats.costos;
-        const ticketPromedio = stats.ingreso / (stats.pacientes || 1);
-        const servicioEstrella = Object.keys(stats.servicios).reduce((a, b) => stats.servicios[a] > stats.servicios[b] ? a : b);
-        const margenPorcentaje = stats.ingreso > 0 ? ((utilidadBruta / stats.ingreso) * 100).toFixed(0) : 0;
-
-        // 2. Renderizado del Dashboard (Tarjetas de precisión)
-        grid.innerHTML = `
-            <div class="p-3 bg-white border border-slate-100 rounded-xl shadow-sm text-center">
-                <p class="text-[9px] font-bold text-slate-400 uppercase">Ticket Promedio</p>
-                <p class="text-lg font-black text-slate-700">$${ticketPromedio.toFixed(2)}</p>
-            </div>
-            <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl shadow-sm text-center">
-                <p class="text-[9px] font-bold text-emerald-600 uppercase">Utilidad Real</p>
-                <p class="text-lg font-black text-emerald-700">$${utilidadBruta.toFixed(2)}</p>
-            </div>
-            <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm text-center">
-                <p class="text-[9px] font-bold text-indigo-400 uppercase">Servicio Top</p>
-                <p class="text-[11px] font-black text-indigo-700 truncate px-1">${servicioEstrella}</p>
-            </div>
-            <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl shadow-sm text-center">
-                <p class="text-[9px] font-bold text-slate-400 uppercase">Margen Neta</p>
-                <p class="text-lg font-black text-slate-700">${margenPorcentaje}%</p>
-            </div>
-        `;
-
-        // 3. Desglose de Doctores
-        listaDocs.innerHTML = `
-            <div class="flex justify-between items-center text-xs">
-                <span class="font-bold text-slate-600">👨‍⚕️ Dr. Darwin:</span>
-                <span class="font-black text-indigo-800 bg-white px-2 py-1 rounded-md shadow-sm">$${stats.darwinVenta.toFixed(2)}</span>
-            </div>
-            <div class="flex justify-between items-center text-xs pt-1">
-                <span class="font-bold text-slate-600">👩‍⚕️ Dra. Joan:</span>
-                <span class="font-black text-indigo-800 bg-white px-2 py-1 rounded-md shadow-sm">$${stats.joanVenta.toFixed(2)}</span>
-            </div>
-        `;
-
-    } catch (e) {
-        console.error("Error en Análisis:", e);
-        grid.innerHTML = "<p class='col-span-2 text-red-500 text-[10px] text-center'>Error al procesar el mes actual.</p>";
-    }
-};
-    // [1] Importaciones de Firebase (al principio)
-import { ... } from "https://www.gstatic.com/firebasejs...";
-
-// [2] Tus funciones de lógica (en medio)
-window.showTab = async (t) => { ... };
-window.validarAcceso = async () => { ... };
-window.generarAnalisisCompleto = async () => { ... };
-// ... todas las demás funciones ...
-
-// [3] EL ARRANQUE (AL FINAL)
-// ==========================================================================
-// [13] ARRANQUE (DOMContentLoaded) - MANTENIDO ORIGINAL
-// ==========================================================================
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🚢 Avipet System: Iniciando motores...");
-    
-    await window.sincronizarCatalogos();
-    
-    try {
-        // Nota: Tenías un doc(doc(db...)), lo corregí a doc(db... para que no de error
-        const snap = await getDoc(doc(db, "configuracion", "tarifas")); 
-        if (snap.exists()) {
-            const data = snap.data();
-            if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
-            if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
-        }
-    } catch (e) { 
-        console.warn("Error en arranque:", e); 
-    }
-
-    const fechaInput = document.getElementById('fechaDoc');
-    if (fechaInput) {
-        const hoy = new Date();
-        fechaInput.value = hoy.toLocaleDateString('es-ES');
-    }
-});
 </script>
+
 
 
 
