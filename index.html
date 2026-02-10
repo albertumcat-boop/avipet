@@ -1017,7 +1017,29 @@
             alert("❌ Error al guardar: " + e.message);
         }
     };
-
+// ==========================================================================
+// [09-C] INYECCIÓN INICIAL DE DATOS (Solo usar si la tabla sale vacía)
+// ==========================================================================
+window.inyectarDatosMaestros = async () => {
+    if (!confirm("¿Deseas subir todos los servicios de CONFIG_SERVICIOS a Firebase?")) return;
+    
+    console.log("🚀 Iniciando inyección masiva...");
+    try {
+        for (const [nombre, datos] of Object.entries(CONFIG_SERVICIOS)) {
+            await setDoc(doc(db, "servicios_maestro", nombre), {
+                precioVenta: datos.precio || 0,
+                porcDoc: datos.porc || 30,
+                ultimaActualizacion: serverTimestamp()
+            }, { merge: true });
+            console.log(`✅ Inyectado: ${nombre}`);
+        }
+        alert("¡Inyección exitosa! La tabla se actualizará ahora.");
+        window.renderizarTablaMaestra(); // Refrescamos la tabla automáticamente
+    } catch (e) {
+        console.error("❌ Fallo la inyección:", e);
+        alert("Error al inyectar: " + e.message);
+    }
+};
     // Renderizar tabla de insumos
     window.renderizarTablaInsumos = async () => {
         const tabla = document.getElementById('tablaMaestraInsumos');
@@ -1294,6 +1316,7 @@
         }
     });
 </script>
+
 
 
 
