@@ -93,43 +93,70 @@
             </div>
 
            <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
-    <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-        <div class="header-box italic">Ficha Técnica de Mascota</div>
-        <div class="grid grid-cols-2 gap-2">
-            <div class="col-span-2">
-                <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
-                <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
-            </div>
-            <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
-            <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
-            <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full"></div>
-            <div class="grid grid-cols-2 gap-1">
-                <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
-                <div><label class="text-[9px] font-bold text-slate-400">SEXO</label><input id="hSexo" class="border-b w-full uppercase"></div>
-            </div>
-        </div>
-    </div>
+                <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
+                    <div class="header-box italic">Ficha Técnica de Mascota</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="col-span-2">
+                            <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
+                            <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400">ESPECIE</label>
+                            <input id="hEspecie" class="border-b w-full uppercase">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400">RAZA</label>
+                            <input id="hRaza" class="border-b w-full uppercase">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
+                            <input id="hPeso" class="border-b w-full">
+                        </div>
+                        <div class="grid grid-cols-2 gap-1">
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400">EDAD</label>
+                                <input id="hEdad" class="border-b w-full uppercase">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400">SEXO</label>
+                                <input id="hSexo" class="border-b w-full uppercase">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="p-3 space-y-2">
-        <div class="header-box italic">Datos del Propietario</div>
-        <div>
-            <div class="flex justify-between items-center">
-                <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
-                <label class="flex items-center gap-1 cursor-pointer no-print opacity-60">
-                    <input type="checkbox" id="hAlerta" class="w-3 h-3 accent-red-600">
-                    <span class="text-[8px] font-bold text-slate-400 italic">Ref. Interna</span>
-                </label>
+                <div class="p-3 space-y-2">
+                    <div class="header-box italic">Datos del Propietario</div>
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
+                            <label class="flex items-center gap-1 cursor-pointer no-print opacity-60">
+                                <input type="checkbox" id="hAlerta" class="w-3 h-3 accent-red-600">
+                                <span class="text-[8px] font-bold text-slate-400 italic">Ref. Interna</span>
+                            </label>
+                        </div>
+                        <input id="hProp" class="border-b w-full uppercase">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
+                            <input id="hCI" onblur="autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400">TELÉFONO</label>
+                            <input id="hTlf" class="border-b w-full">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label>
+                        <input id="hMail" class="border-b w-full">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label>
+                        <input id="hDir" class="border-b w-full uppercase text-[10px]">
+                    </div>
+                </div>
             </div>
-            <input id="hProp" class="border-b w-full uppercase">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-            <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" onblur="autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700"></div>
-            <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
-        </div>
-        <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
-        <div><label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label><input id="hDir" class="border-b w-full uppercase text-[10px]"></div>
-    </div>
-</div>
 
             <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
                 <div class="bg-slate-100 p-3 no-print">
@@ -188,7 +215,12 @@
             <div id="contenedorInsumos" class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
                 <table class="w-full text-[11px] text-left">
                     <thead class="bg-blue-600 text-white uppercase italic">
-                        <tr><th class="p-2">Insumo</th><th class="p-2 w-16 text-center">Cant.</th><th class="p-2 w-16 text-center">Precio $</th><th class="p-2 w-10"></th></tr>
+                        <tr>
+                            <th class="p-2">Insumo</th>
+                            <th class="p-2 w-16 text-center">Cant.</th>
+                            <th class="p-2 w-16 text-center">Precio $</th>
+                            <th class="p-2 w-10"></th>
+                        </tr>
                     </thead>
                     <tbody id="listaInsumosDinamica" class="bg-white"></tbody>
                 </table>
@@ -199,15 +231,13 @@
                 </div>
             </div>
 
+            <!-- BLOQUE DE PRECIOS: SOLO PRECIO COBRADO, SIN GANANCIA DOCTOR -->
             <div class="no-print flex flex-col md:flex-row gap-4 mb-4">
                 <div class="flex-1 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center">
                     <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1">Precio Cobrado ($)</label>
                     <input type="number" id="precioVenta" value="0" oninput="window.calcularTodo()" class="text-4xl font-black w-full bg-transparent text-center text-blue-700 outline-none">
                 </div>
-                <div id="displayGananciaDoctor" class="flex-1 bg-green-50 p-6 rounded-3xl border-2 border-green-200 text-center">
-                    <label class="text-[10px] text-green-600 font-bold uppercase block mb-1">Ganancia Doctor ($)</label>
-                    <p id="montoDoctor" class="text-4xl font-black text-green-700 font-mono">$ 0.00</p>
-                </div>
+                <!-- Se mantiene el input oculto de gastoInsumos para la lógica interna -->
                 <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
             </div>
 
@@ -229,142 +259,138 @@
             </div>
         </section>
 
-      <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
-    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
-        <h2 class="font-black text-center mb-2 uppercase text-slate-700 text-2xl tracking-tighter">Gestión de Caja Diaria</h2>
-        
-        <div class="text-center mb-4">
-            <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-bold uppercase border border-slate-200">
-                Pacientes: <span id="totalPacientes" class="text-slate-800">0</span>
-            </span>
-        </div>
-
-        <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
-
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <p class="text-[10px] font-bold uppercase text-slate-400">Bruto Total</p>
-                <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
-            </div>
-
-            <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400">
-                <p class="text-[10px] font-bold uppercase text-amber-600">Costos Operativos</p>
-                <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono">$0.00</p>
-            </div>
-            
-            <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-400 col-span-2 space-y-2">
-                <div class="flex justify-between items-center border-b border-blue-100 pb-1">
-                    <span class="text-[11px] font-black uppercase text-blue-800">Dr. Darwin Sandoval:</span>
-                    <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
+        <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
+                <h2 class="font-black text-center mb-2 uppercase text-slate-700 text-2xl tracking-tighter">Gestión de Caja Diaria</h2>
+                
+                <div class="text-center mb-4">
+                    <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-bold uppercase border border-slate-200">
+                        Pacientes: <span id="totalPacientes" class="text-slate-800">0</span>
+                    </span>
                 </div>
-                <div class="flex justify-between items-center pt-1">
-                    <span class="text-[11px] font-black uppercase text-blue-800">Dra. Joan Silva:</span>
-                    <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
+
+                <div id="listaReporte" class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] font-bold uppercase text-slate-400">Bruto Total</p>
+                        <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400">
+                        <p class="text-[10px] font-bold uppercase text-amber-600">Costos Operativos</p>
+                        <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono">$0.00</p>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-400 col-span-2 space-y-2">
+                    <div class="flex justify-between items-center border-b border-blue-100 pb-1">
+                        <span class="text-[11px] font-black uppercase text-blue-800">Dr. Darwin Sandoval:</span>
+                        <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-[11px] font-black uppercase text-blue-800">Dra. Joan Silva:</span>
+                        <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-sm">
+                    <p class="text-[10px] font-bold uppercase text-emerald-600">Utilidad Neta (Avipet)</p>
+                    <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
+                </div>
+
+                <div class="flex flex-col gap-2 mt-4">
+                    <button onclick="cargarReporte()" class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
+                        🔄 Actualizar Balance
+                    </button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="descargarReporte()" class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
+                            📥 Descargar TXT
+                        </button>
+                        <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
+                            💾 Guardar en Nube
+                        </button>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-sm">
-                <p class="text-[10px] font-bold uppercase text-emerald-600">Utilidad Neta (Avipet)</p>
-                <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
+        <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
+                <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">🛠 Panel de Control Maestro</h2>
+                <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos de Materiales</p>
+
+                <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+                    <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
+                        💉 Servicios y Ganancias
+                    </button>
+                    <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
+                        📦 Costo de Insumos
+                    </button>
+                </div>
+
+                <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
+                        <p class="text-[9px] text-orange-400">Usa esto solo para subir los datos del código a la nube por primera vez.</p>
+                    </div>
+                    <button onclick="window.inicializarBaseDeDatosCompleta()" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
+                        🚀 Sincronizar Todo
+                    </button>
+                </div>
+
+                <div id="contenedorTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+                    <table class="w-full text-left text-[12px]">
+                        <thead>
+                            <tr class="text-blue-900 font-black uppercase text-[10px]">
+                                <th class="p-3">Servicio / Tratamiento</th>
+                                <th class="p-3 w-28 text-center">Precio ($)</th>
+                                <th class="p-3 w-28 text-center">Doc (%)</th>
+                                <th class="p-3 w-24 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMaestraServicios" class="bg-white divide-y">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="contenedorTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+                    <table class="w-full text-left text-[12px]">
+                        <thead>
+                            <tr class="text-emerald-900 font-black uppercase text-[10px]">
+                                <th class="p-3">Insumo / Material</th>
+                                <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
+                                <th class="p-3 w-24 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMaestraInsumos" class="bg-white divide-y">
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-
-        <div class="flex flex-col gap-2">
-            <button onclick="cargarReporte()" class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
-                🔄 Actualizar Balance
-            </button>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="descargarReporte()" class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
-                    📥 Descargar TXT
-                </button>
-                <button onclick="guardarResumenDelDia()" class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
-                    💾 Guardar en Nube
-                </button>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
-        <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">🛠 Panel de Control Maestro</h2>
-        <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos de Materiales</p>
-
-        <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
-            <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
-                💉 Servicios y Ganancias
-            </button>
-            <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
-                📦 Costo de Insumos
-            </button>
-        </div>
-
-        <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
-             <div class="flex-1">
-                <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
-                <p class="text-[9px] text-orange-400">Usa esto solo para subir los datos del código a la nube por primera vez.</p>
-             </div>
-             <button onclick="window.inicializarBaseDeDatosCompleta()" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
-                🚀 Sincronizar Todo
-             </button>
-        </div>
-
-        <div id="contenedorTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-            <table class="w-full text-left text-[12px]">
-                <thead>
-                    <tr class="text-blue-900 font-black uppercase text-[10px]">
-                        <th class="p-3">Servicio / Tratamiento</th>
-                        <th class="p-3 w-28 text-center">Precio ($)</th>
-                        <th class="p-3 w-28 text-center">Doc (%)</th>
-                        <th class="p-3 w-24 text-center">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaMaestraServicios" class="bg-white divide-y">
-                    </tbody>
-            </table>
-        </div>
-
-        <div id="contenedorTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-            <table class="w-full text-left text-[12px]">
-                <thead>
-                    <tr class="text-emerald-900 font-black uppercase text-[10px]">
-                        <th class="p-3">Insumo / Material</th>
-                        <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
-                        <th class="p-3 w-24 text-center">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaMaestraInsumos" class="bg-white divide-y">
-                    </tbody>
-            </table>
-        </div>
-    </div>
-</section>
+        </section>
     </main>
+</body>
 <script type="module">
     // ==========================================================================
-    // [01] IMPORTACIONES Y CONFIGURACIÓN FIREBASE (AJUSTE: UPDATEDOC AÑADIDO)
+    // [01] IMPORTACIONES Y CONFIGURACIÓN FIREBASE
     // ==========================================================================
     import { db } from './firebase-config.js';
-    import { 
-        collection, addDoc, query, where, getDocs, serverTimestamp, 
-        doc, getDoc, setDoc, updateDoc // <--- Ajuste realizado aquí
+    import {
+        collection, addDoc, query, where, getDocs, serverTimestamp,
+        doc, getDoc, setDoc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-// [01] IMPORTACIONES... (Ya lo tienes)
 
-// ==========================================================================
-// [02] UTILIDADES DE PRECISIÓN Y DATA MAESTRA
-// ==========================================================================
-
-// ==========================================================================
+    // ==========================================================================
     // [02] CATÁLOGOS, DATA MAESTRA Y UTILIDADES
     // ==========================================================================
 
-    // Función de normalización: El "limpiador" de nombres para evitar errores de precisión
+    // Normalizador de nombres (para acentos, espacios, etc.)
     const normalizarNombre = (n) => {
         if (!n) return "";
         return n.toLowerCase()
-                .replace(/\s+/g, '') // Quita todos los espacios
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quita acentos/tildes
+            .replace(/\s+/g, '')
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     };
 
     const CONFIG_SERVICIOS = {
@@ -416,14 +442,14 @@
     };
 
     const insumosFijosMedicos = [
-        { nombre: "Guantes de examen", costo: 0.50 }, 
-        { nombre: "Algodón y Alcohol", costo: 0.10 }, 
+        { nombre: "Guantes de examen", costo: 0.50 },
+        { nombre: "Algodón y Alcohol", costo: 0.10 },
         { nombre: "Hojas/Papelería", costo: 0.10 }
     ];
 
     const insumosBaseVacuna = [
-        { nombre: "Jeringa 3cc", costo: 0.25 }, 
-        { nombre: "Xeruk", costo: 0.10 }, 
+        { nombre: "Jeringa 3cc", costo: 0.25 },
+        { nombre: "Xeruk", costo: 0.10 },
         { nombre: "Crema", costo: 0.10 }
     ];
 
@@ -470,14 +496,18 @@
     // [03] VARIABLES DE ESTADO Y SEGURIDAD
     // ==========================================================================
     const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
-    let doctorVerificado = ""; 
+    let doctorVerificado = "";
     let serviciosEnLista = [];
 
     window.validarAccesoDoctor = async (nombre) => {
-        if (!nombre) { doctorVerificado = ""; document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR"; return; }
+        if (!nombre) {
+            doctorVerificado = "";
+            document.getElementById('doctorPrint').innerText = "SELECCIONE DOCTOR";
+            return;
+        }
         const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
         if (pinIngresado === pinsDoctores[nombre]) {
-            doctorVerificado = nombre; 
+            doctorVerificado = nombre;
             const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
             document.getElementById('doctorPrint').innerText = prefijo + nombre.toUpperCase();
             alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
@@ -490,129 +520,122 @@
         }
     };
 
-  // ==========================================================================
-// [04] GESTIÓN DE SERVICIOS E INSUMOS (OPTIMIZADO CON NORMALIZACIÓN)
-// ==========================================================================
-window.insertarServicio = async (v) => {
-    if (!v) return;
-    const area = document.getElementById('hTratamiento');
-    
-    let nombreFinal = v;
-    let precioFinal = 0;
-    let porcentajeServicio = 30; 
+    // ==========================================================================
+    // [04] GESTIÓN DE SERVICIOS E INSUMOS
+    // ==========================================================================
+    window.insertarServicio = async (v) => {
+        if (!v) return;
+        const area = document.getElementById('hTratamiento');
 
-    // --- NORMALIZACIÓN PARA BÚSQUEDA ROBUSTA ---
-    const vLimpio = normalizarNombre(v);
+        let nombreFinal = v;
+        let precioFinal = 0;
+        let porcentajeServicio = 30;
 
-    // --- CONEXIÓN CON FIREBASE / RESPALDO ---
-    try {
-        // Buscamos en Firebase (Usamos el ID original 'v' pero si falla, buscamos en el respaldo normalizado)
-        const docRef = doc(db, "servicios_maestro", v);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            precioFinal = parseFloat(data.precioVenta) || 0;
-            porcentajeServicio = parseFloat(data.porcDoc) || 30;
-        } else {
-            // Si no está en Firebase, buscamos en el código local usando normalización
+        const vLimpio = normalizarNombre(v);
+
+        try {
+            const docRef = doc(db, "servicios_maestro", v);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                precioFinal = parseFloat(data.precioVenta) || 0;
+                porcentajeServicio = parseFloat(data.porcDoc) || 30;
+            } else {
+                const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+                const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+
+                precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
+                porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
+            }
+        } catch (e) {
+            console.warn("⚠️ Error de conexión. Usando respaldo local con normalización.");
             const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
             const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
 
             precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
             porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
         }
-    } catch (e) {
-        console.warn("⚠️ Error de conexión. Usando respaldo local con normalización.");
-        const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
-        const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
-        
-        precioFinal = llaveReceta ? recetas[llaveReceta].precioVenta : 0;
-        porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
-    }
 
-    // --- LÓGICA DE EXCEPCIONES (Respetando tus reglas de negocio) ---
-    if (vLimpio.includes("kgadicional")) {
-        const kgs = prompt("Ingrese la cantidad de KG adicionales:");
-        if (kgs && !isNaN(kgs)) {
-            const numKgs = parseFloat(kgs);
-            nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-            precioFinal = numKgs * 7; 
-            porcentajeServicio = 0; 
-        } else return;
-    } 
-    else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
-        const monto = prompt(`Precio pactado para ${v}:`);
-        if (monto && !isNaN(monto)) {
-            precioFinal = parseFloat(monto);
-            porcentajeServicio = 0;
-        } else return;
-    }
-    else {
-        // Combos automáticos (Lógica de fidelización)
-        if (serviciosEnLista.length > 0) {
-            if (vLimpio.includes("vacunakc")) { precioFinal = 40; nombreFinal += " (Combo)"; }
-            if (vLimpio.includes("hematologiacompleta")) { precioFinal = 20; nombreFinal += " (Combo)"; }
+        // Excepciones de negocio
+        if (vLimpio.includes("kgadicional")) {
+            const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+            if (kgs && !isNaN(kgs)) {
+                const numKgs = parseFloat(kgs);
+                nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
+                precioFinal = numKgs * 7;
+                porcentajeServicio = 0;
+            } else return;
+        } else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
+            const monto = prompt(`Precio pactado para ${v}:`);
+            if (monto && !isNaN(monto)) {
+                precioFinal = parseFloat(monto);
+                porcentajeServicio = 0;
+            } else return;
+        } else {
+            // Combos automáticos
+            if (serviciosEnLista.length > 0) {
+                if (vLimpio.includes("vacunakc")) { precioFinal = 40; nombreFinal += " (Combo)"; }
+                if (vLimpio.includes("hematologiacompleta")) { precioFinal = 20; nombreFinal += " (Combo)"; }
+            }
         }
-    }
 
-    // --- RENDERIZADO ---
-    const grupoID = "srv-" + Date.now();
-    serviciosEnLista.push(v);
-    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal;
-    
-    document.getElementById('contenedorInsumos').classList.remove('hidden');
-    const cuerpo = document.getElementById('listaInsumosDinamica');
-    
-    const filaTitulo = document.createElement('tr');
-    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
-    filaTitulo.setAttribute('data-grupo', grupoID);
-    filaTitulo.setAttribute('data-precio', precioFinal);
-    filaTitulo.setAttribute('data-porc', porcentajeServicio); 
+        // Renderizado
+        const grupoID = "srv-" + Date.now();
+        serviciosEnLista.push(v);
+        area.value += (area.value ? "\n" : "") + "=> " + nombreFinal;
 
-    filaTitulo.innerHTML = `
-        <td colspan="3" class="p-2 text-[11px] uppercase">
-            🔹 ${nombreFinal} ($${precioFinal.toFixed(2)}) 
-            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
-                ${porcentajeServicio.toFixed(1)}% DOC
-            </span>
-        </td>
-        <td class="p-2 text-center">
-            <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
-        </td>`;
-    cuerpo.appendChild(filaTitulo);
+        document.getElementById('contenedorInsumos').classList.remove('hidden');
+        const cuerpo = document.getElementById('listaInsumosDinamica');
 
-    // --- GESTIÓN DE INSUMOS ---
-    let listaNuevos = [];
-    if (cuerpo.querySelectorAll('.servicio-principal').length === 1) { 
-        listaNuevos = [...insumosFijosMedicos]; 
-    }
-    
-    if (vLimpio.includes("vacuna")) {
-        const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL"));
-        if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-    }
+        const filaTitulo = document.createElement('tr');
+        filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
+        filaTitulo.setAttribute('data-grupo', grupoID);
+        filaTitulo.setAttribute('data-precio', precioFinal);
+        filaTitulo.setAttribute('data-porc', porcentajeServicio);
 
-    // Buscar insumos en recetas con nombre normalizado
-    const llaveRecetaIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
-    if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) { 
-        listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos]; 
-    }
+        filaTitulo.innerHTML = `
+            <td colspan="3" class="p-2 text-[11px] uppercase">
+                🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})
+                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
+                    ${porcentajeServicio.toFixed(1)}% DOC
+                </span>
+            </td>
+            <td class="p-2 text-center">
+                <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)" class="text-red-500 font-bold text-lg">×</button>
+            </td>`;
+        cuerpo.appendChild(filaTitulo);
 
-    listaNuevos.forEach(insumo => {
-        const tr = document.createElement('tr');
-        tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`; 
-        tr.innerHTML = `
-            <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
-            <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
-            <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
-            <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
-        cuerpo.appendChild(tr);
-    });
+        let listaNuevos = [];
+        if (cuerpo.querySelectorAll('.servicio-principal').length === 1) {
+            listaNuevos = [...insumosFijosMedicos];
+        }
 
-    await window.calcularTodo();
-    document.getElementById('selectorServicios').value = "";
-};
+        if (vLimpio.includes("vacuna")) {
+            const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("VIAL"));
+            if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+        }
+
+        const llaveRecetaIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+        if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) {
+            listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos];
+        }
+
+        listaNuevos.forEach(insumo => {
+            const tr = document.createElement('tr');
+            tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`;
+            tr.innerHTML = `
+                <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+                <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
+                <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
+                <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+            cuerpo.appendChild(tr);
+        });
+
+        await window.calcularTodo();
+        document.getElementById('selectorServicios').value = "";
+    };
+
     window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
         if (event) event.preventDefault();
         if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
@@ -632,7 +655,7 @@ window.insertarServicio = async (v) => {
         const c = document.getElementById('costoExtra');
         if (!n.value) return alert("Ingrese nombre del insumo.");
         const todasLasFilas = document.querySelectorAll('.servicio-principal');
-        const ultimoGrupo = todasLasFilas.length > 0 ? todasLasFilas[todasLasFilas.length - 1].getAttribute('data-grupo') : "manual"; 
+        const ultimoGrupo = todasLasFilas.length > 0 ? todasLasFilas[todasLasFilas.length - 1].getAttribute('data-grupo') : "manual";
         const tr = document.createElement('tr');
         tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrupo}`;
         tr.innerHTML = `
@@ -641,73 +664,64 @@ window.insertarServicio = async (v) => {
             <td class="p-2 text-center"><input type="number" value="${parseFloat(c.value || 0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
             <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
         document.getElementById('listaInsumosDinamica').appendChild(tr);
-        n.value = ""; c.value = ""; window.calcularTodo(); 
+        n.value = ""; c.value = ""; window.calcularTodo();
     };
+
     // ==========================================================================
-// [05] MOTOR FINANCIERO (PRECISIÓN AVIPET)
-// ==========================================================================
-window.calcularTodo = async () => {
-    let totalComisionDoctores = 0;
-    let totalGastosInsumos = 0;
-    let totalVentaCalculada = 0; // Para sincronizar con los servicios en tabla
+    // [05] MOTOR FINANCIERO
+    // ==========================================================================
+    window.calcularTodo = async () => {
+        let totalComisionDoctores = 0;
+        let totalGastosInsumos = 0;
+        let totalVentaCalculada = 0;
 
-    let porcGlobal = null;
+        let porcGlobal = null;
 
-    // 1. Intento obtener configuración global (con seguro contra fallos de red)
-    try {
-        const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-        if (configSnap.exists()) {
-            porcGlobal = configSnap.data().porcentajeDoc;
+        try {
+            const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+            if (configSnap.exists()) {
+                // Se unifica a porcDoc en la DB, pero aquí respetamos porcentajeDoc si ya existe
+                porcGlobal = configSnap.data().porcDoc ?? configSnap.data().porcentajeDoc ?? null;
+            }
+        } catch (e) {
+            console.warn("⚠️ No se pudo conectar a Firebase para tarifas globales. Usando porcentajes por servicio.");
         }
-    } catch (e) {
-        console.warn("⚠️ No se pudo conectar a Firebase para tarifas globales. Usando porcentajes por servicio.");
-    }
 
-    // 2. Recorremos los servicios agregados
-    const filasServicios = document.querySelectorAll('.servicio-principal');
-    
-    filasServicios.forEach(fila => {
-        const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-        const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
-        
-        // REGLA: Si hay global manda global, si no, manda el del servicio
-        const porcAEfectuar = (porcGlobal !== null && porcGlobal !== undefined) ? porcGlobal : porcServicioDefault;
-        
-        totalVentaCalculada += precioServicio;
-        const grupoID = fila.getAttribute('data-grupo');
-        let gastosGrupo = 0;
+        const filasServicios = document.querySelectorAll('.servicio-principal');
 
-        // Sumamos los insumos de este grupo específico
-        document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
-            const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
-            const cost = parseFloat(insumo.querySelector('.i-cost').value) || 0;
-            gastosGrupo += (cant * cost);
+        filasServicios.forEach(fila => {
+            const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+            const porcServicioDefault = parseFloat(fila.getAttribute('data-porc')) || 0;
+
+            const porcAEfectuar = (porcGlobal !== null && porcGlobal !== undefined) ? porcGlobal : porcServicioDefault;
+
+            totalVentaCalculada += precioServicio;
+            const grupoID = fila.getAttribute('data-grupo');
+            let gastosGrupo = 0;
+
+            document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumo => {
+                const cant = parseFloat(insumo.querySelector('.i-cant').value) || 0;
+                const cost = parseFloat(insumo.querySelector('.i-cost').value) || 0;
+                gastosGrupo += (cant * cost);
+            });
+
+            totalGastosInsumos += gastosGrupo;
+
+            totalComisionDoctores += Math.max(0, precioServicio - gastosGrupo) * (porcAEfectuar / 100);
         });
 
-        totalGastosInsumos += gastosGrupo;
-        
-        // REGLA DE ORO: (Precio - Gastos) * % Doctor
-        // Math.max(0, ...) evita que si los insumos son más caros que el servicio, el doctor deba dinero
-        totalComisionDoctores += Math.max(0, precioServicio - gastosGrupo) * (porcAEfectuar / 100);
-    });
+        const inputVenta = document.getElementById('precioVenta');
+        if (inputVenta) inputVenta.value = totalVentaCalculada.toFixed(2);
 
-    // 3. ACTUALIZACIÓN DINÁMICA DE LA INTERFAZ
-    
-    // Actualizamos el precio de venta total para que coincida con la tabla
-    const inputVenta = document.getElementById('precioVenta');
-    if (inputVenta) inputVenta.value = totalVentaCalculada.toFixed(2);
+        const inputGasto = document.getElementById('gastoInsumos');
+        if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
 
-    // Gasto total de insumos (para control interno)
-    const inputGasto = document.getElementById('gastoInsumos');
-    if (inputGasto) inputGasto.value = totalGastosInsumos.toFixed(2);
+        const displayDr = document.getElementById('montoDoctor');
+        if (displayDr) displayDr.innerText = `$ ${totalComisionDoctores.toFixed(2)}`;
 
-    // Pago al Doctor
-    const displayDr = document.getElementById('montoDoctor');
-    if (displayDr) displayDr.innerText = `$ ${totalComisionDoctores.toFixed(2)}`;
+        console.log(`📊 Balance: Venta: $${totalVentaCalculada} | Insumos: $${totalGastosInsumos} | Dr: $${totalComisionDoctores.toFixed(2)}`);
+    };
 
-    // 4. LOG DE SEGURIDAD (Soldadura de prueba)
-    console.log(`📊 Balance: Venta: $${totalVentaCalculada} | Insumos: $${totalGastosInsumos} | Dr: $${totalComisionDoctores.toFixed(2)}`);
-};
     // ==========================================================================
     // [06] BUSCADOR Y AUTOCOMPLETADO
     // ==========================================================================
@@ -737,7 +751,7 @@ window.calcularTodo = async () => {
                             <p class="text-[10px] font-bold text-blue-600 border-b mb-1">TRATAMIENTO:</p>
                             <p class="text-sm text-slate-700 whitespace-pre-wrap mb-4">${d.tratamiento}</p>
                             <p class="text-[10px] font-bold text-emerald-600 border-b mb-1">INSUMOS:</p>
-                            <div class="space-y-1">${d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `<div class="flex justify-between text-[11px] border-b border-dotted"><span>${ins.nombre} x${ins.cant}</span><b>$${parseFloat(ins.precio).toFixed(2)}</b></div>`).join('') : ''}</div>
+                            <div class="space-y-1">${d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `<div class="flex justify-between text-[11px] border-b border-dotted"><span>${ins.nombre} x${ins.cant}</span><b>$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b></div>`).join('') : ''}</div>
                             <div class="mt-4 pt-3 border-t-2 flex justify-between"><span class="text-[10px] font-bold">TOTAL:</span><span class="text-xl font-black">$${(d.montoVenta || 0).toFixed(2)}</span></div>
                         </div>
                     </details>`;
@@ -781,659 +795,92 @@ window.calcularTodo = async () => {
     };
 
     // ==========================================================================
-    // [07] FINANZAS Y CIERRES
+    // [07] FINANZAS Y CIERRES (REPORTE)
     // ==========================================================================
-   window.cargarReporte = async () => {
-    const listaDiv = document.getElementById('listaReporte');
-    const netoDiv = document.getElementById('repNeto');
-    if (!listaDiv) return;
+    window.cargarReporte = async () => {
+        const listaDiv = document.getElementById('listaReporte');
+        const netoDiv = document.getElementById('repNeto');
+        if (!listaDiv) return;
 
-    listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400'>🔄 SINCRONIZANDO CAJA...</p>";
+        listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400'>🔄 SINCRONIZANDO CAJA...</p>";
 
-    try {
-        const querySnapshot = await getDocs(collection(db, "consultas"));
-        listaDiv.innerHTML = "";
-        
-        let bruto = 0, gastos = 0, netoAvipet = 0, contador = 0;
-        let sandovalTotal = 0, silvaTotal = 0;
-        
-        const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
-
-        querySnapshot.forEach((docSnap) => {
-            const d = docSnap.data();
-            
-            if(d.fechaSimple === hoy) { 
-                const pVenta = parseFloat(d.montoVenta) || 0;
-                const pGasto = parseFloat(d.montoInsumos) || 0;
-                const pagoRealDoc = parseFloat(d.pagoDoctor) || 0;
-
-                bruto += pVenta; 
-                gastos += pGasto;
-                
-                // Identificar Doctor y sumar su parte
-                let colorBorde = "border-l-slate-400";
-                if(d.doctor.includes("Darwin Sandoval")) {
-                    sandovalTotal += pagoRealDoc;
-                    colorBorde = "border-l-blue-500";
-                } else if(d.doctor.includes("Joan Silva")) {
-                    silvaTotal += pagoRealDoc;
-                    colorBorde = "border-l-emerald-500";
-                }
-
-                netoAvipet += (pVenta - pGasto - pagoRealDoc);
-                contador++;
-
-                // Renderizado de la fila en la lista
-                listaDiv.innerHTML += `
-                    <div class="py-3 border-b flex justify-between items-center bg-white px-3 mb-2 rounded-xl shadow-sm border-l-4 ${colorBorde}">
-                        <div>
-                            <p class="font-black text-[11px] uppercase text-slate-700">${d.paciente}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">🩺 ${d.doctor}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-black text-[12px] text-slate-800">$${pVenta.toFixed(2)}</p>
-                            <p class="text-[8px] font-bold text-blue-600">Comisión: $${pagoRealDoc.toFixed(2)}</p>
-                        </div>
-                    </div>`;
-            }
-        });
-
-        // Actualización de los contadores en pantalla
-        document.getElementById('totalPacientes').innerText = contador;
-        document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
-        document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
-        document.getElementById('repDocSandoval').innerText = `$${sandovalTotal.toFixed(2)}`;
-        document.getElementById('repDocSilva').innerText = `$${silvaTotal.toFixed(2)}`;
-        
-        // El resultado final para Avipet
-        if(netoDiv) {
-            netoDiv.innerText = `$${netoAvipet.toFixed(2)}`;
-            // Si el neto es bajo, lo pone en naranja; si es bueno, en verde
-            netoDiv.className = netoAvipet > 0 ? "text-3xl font-black text-emerald-700" : "text-3xl font-black text-orange-600";
-        }
-
-        if(contador === 0) {
-            listaDiv.innerHTML = "<p class='text-center py-4 text-slate-400 font-bold uppercase text-[10px]'>No hay consultas registradas hoy</p>";
-        }
-
-    } catch (e) { 
-        console.error("Error al cargar reporte:", e);
-        listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold'>Error de conexión</p>";
-    }
-};
-// Función para actualizar un servicio específico en la DB
-window.actualizarPrecioMaestro = async (nombreServicio, nuevoPrecio, nuevoPorcentaje) => {
-    try {
-        await setDoc(doc(db, "servicios_maestro", nombreServicio), {
-            precioVenta: parseFloat(nuevoPrecio),
-            porcentajeDoc: parseFloat(nuevoPorcentaje)
-        }, { merge: true });
-        alert("✅ Servicio actualizado en la nube.");
-    } catch (e) {
-        console.error("Error actualizando: ", e);
-    }
-};
-    window.guardarConfiguracion = async () => {
-        const ins = document.getElementById('cfgInsumos').value;
-        const por = document.getElementById('cfgPorcentaje').value;
         try {
-            await setDoc(doc(db, "configuracion", "tarifas"), { insumoBase: parseFloat(ins), porcentajeDoc: parseFloat(por), fechaActualizacion: new Date().toLocaleString() });
-            alert("✅ Tarifas actualizadas.");
-        } catch (e) { alert("❌ Error"); }
-    };
+            const querySnapshot = await getDocs(collection(db, "consultas"));
+            listaDiv.innerHTML = "";
 
-   window.guardarFirebase = async (imp) => {
-    if (!doctorVerificado) return alert("⚠️ Error: Requiere firma del doctor.");
+            let bruto = 0, gastos = 0, netoAvipet = 0, contador = 0;
+            let sandovalTotal = 0, silvaTotal = 0;
 
-    try {
-        // 1. Obtener configuración global de porcentaje (si existe)
-        const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-        let porcGlobal = (configSnap.exists() && configSnap.data().porcentajeDoc > 0) ? configSnap.data().porcentajeDoc : null;
+            const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
 
-        const dInput = (id) => document.getElementById(id).value.trim();
-        const montoVentaTotal = parseFloat(document.getElementById('precioVenta').value) || 0;
-        
-        const detalleInsumos = [];
-        let totalGastos = 0;
-        let pagoDoctorTotal = 0;
+            querySnapshot.forEach((docSnap) => {
+                const d = docSnap.data();
 
-        // 2. Procesar cada servicio principal para calcular comisiones e insumos
-        const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
-        
-        serviciosPrincipales.forEach(fila => {
-            const grupoID = fila.getAttribute('data-grupo');
-            const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-            
-            const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
-            const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
+                if (d.fechaSimple === hoy) {
+                    const pVenta = parseFloat(d.montoVenta) || 0;
+                    const pGasto = parseFloat(d.montoInsumos) || 0;
+                    const pagoRealDoc = parseFloat(d.pagoDoctor) || 0;
 
-            let gastosEsteServicio = 0;
+                    bruto += pVenta;
+                    gastos += pGasto;
 
-            // Buscamos los insumos amarrados a este servicio específico
-            document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
-                const nombre = insumoFila.cells[0].innerText.replace('➕ ', '').replace('🔹 ', '').trim();
-                const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
-                const costoUnidad = parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
-                const subtotalInsumo = cant * costoUnidad;
+                    let colorBorde = "border-l-slate-400";
+                    if (d.doctor.includes("Darwin Sandoval")) {
+                        sandovalTotal += pagoRealDoc;
+                        colorBorde = "border-l-blue-500";
+                    } else if (d.doctor.includes("Joan Silva")) {
+                        silvaTotal += pagoRealDoc;
+                        colorBorde = "border-l-emerald-500";
+                    }
 
-                gastosEsteServicio += subtotalInsumo;
-                
-                // --- CORRECCIÓN TÉCNICA: Estandarizado a 'costo' ---
-                detalleInsumos.push({ 
-                    nombre: nombre, 
-                    cant: cant, 
-                    costo: costoUnidad // Antes decía 'precio'
-                });
+                    netoAvipet += (pVenta - pGasto - pagoRealDoc);
+                    contador++;
+
+                    listaDiv.innerHTML += `
+                        <div class="py-3 border-b flex justify-between items-center bg-white px-3 mb-2 rounded-xl shadow-sm border-l-4 ${colorBorde}">
+                            <div>
+                                <p class="font-black text-[11px] uppercase text-slate-700">${d.paciente}</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">🩺 ${d.doctor}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-black text-[12px] text-slate-800">$${pVenta.toFixed(2)}</p>
+                                <p class="text-[8px] font-bold text-blue-600">Comisión: $${pagoRealDoc.toFixed(2)}</p>
+                            </div>
+                        </div>`;
+                }
             });
 
-            totalGastos += gastosEsteServicio;
-            
-            // REGLA RADICAL: Ganancia Doc = (Precio Servicio - Insumos) * %
-            pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
-        });
+            document.getElementById('totalPacientes').innerText = contador;
+            document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
+            document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
+            document.getElementById('repDocSandoval').innerText = `$${sandovalTotal.toFixed(2)}`;
+            document.getElementById('repDocSilva').innerText = `$${silvaTotal.toFixed(2)}`;
 
-        // 3. Preparar el envío a Firebase
-        const dataConsulta = {
-            cedula: dInput('hCI'),
-            propietario: dInput('hProp'),
-            paciente: dInput('hNombre'),
-            doctor: doctorVerificado,
-            tratamiento: dInput('hTratamiento'),
-            montoVenta: montoVentaTotal,
-            montoInsumos: totalGastos,
-            pagoDoctor: pagoDoctorTotal,
-            pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
-            listaDetalladaInsumos: detalleInsumos,
-            fecha: serverTimestamp(),
-            fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
-        };
-
-        // 4. Guardar en la nube
-        await addDoc(collection(db, "consultas"), dataConsulta);
-
-        // 5. Manejo de impresión y reinicio
-        if (imp) {
-            const tArea = document.getElementById('hTratamientoPrint');
-            if (tArea) tArea.innerText = dInput('hTratamiento');
-            alert("✅ Consulta guardada y lista para imprimir.");
-            setTimeout(() => { window.print(); location.reload(); }, 600);
-        } else {
-            alert("✅ Consulta guardada exitosamente.");
-            location.reload();
-        }
-
-    } catch (e) {
-        console.error("Error al guardar:", e);
-        alert("❌ Error crítico al guardar: " + e.message);
-    }
-};
-   // ==========================================================================
-// [08-B] CONTROL DE SUB-PESTAÑAS (SERVICIOS VS INSUMOS)
-// ==========================================================================
-window.cambiarSubTabConfig = (tab) => {
-    const isServ = tab === 'servicios';
-    
-    // 1. Switch de visualización (Usando los IDs del HTML ajustado)
-    const divServ = document.getElementById('contenedorTabServicios');
-    const divIns = document.getElementById('contenedorTabInsumos');
-    
-    if (divServ && divIns) {
-        divServ.classList.toggle('hidden', !isServ);
-        divIns.classList.toggle('hidden', isServ);
-    }
-    
-    // 2. Switch de estilo de botones
-    const btnServ = document.getElementById('btnTabServ');
-    const btnIns = document.getElementById('btnTabIns');
-    
-    if(isServ) {
-        // Estilo Activo para Servicios (Azul)
-        btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm";
-        btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
-        
-        // Cargar datos de la nube
-        if (typeof window.renderizarTablaMaestra === 'function') {
-            window.renderizarTablaMaestra();
-        }
-    } else {
-        // Estilo Activo para Insumos (Esmeralda)
-        btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-emerald-600 shadow-sm";
-        btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
-        
-        // Cargar datos de la nube
-        if (typeof window.renderizarTablaInsumos === 'function') {
-            window.renderizarTablaInsumos();
-        }
-    }
-};
-// ==========================================================================
-// [08-C] RENDERIZAR TABLA DE INSUMOS (RELLENAR LOS DATOS)
-// ==========================================================================
-window.renderizarTablaInsumos = async () => {
-    // Buscamos el cuerpo de la tabla según el ID de tu HTML
-    const tabla = document.getElementById('tablaMaestraInsumos');
-    if (!tabla) {
-        console.error("❌ No encontré la tabla 'tablaMaestraInsumos'");
-        return;
-    }
-
-    // Mensaje temporal de carga
-    tabla.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-emerald-600 font-bold animate-pulse text-[10px]">🔄 CARGANDO INSUMOS...</td></tr>';
-
-    try {
-        // Traemos la colección de la base de datos
-        const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
-        
-        if (querySnapshot.empty) {
-            tabla.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-orange-500 font-bold text-[10px]">⚠️ NO HAY DATOS. PULSA EL BOTÓN NARANJA.</td></tr>';
-            return;
-        }
-
-        tabla.innerHTML = ""; // Limpiar mensaje de carga
-
-        querySnapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id; // El nombre del insumo es el ID del documento
-
-            const tr = document.createElement('tr');
-            tr.className = "border-b hover:bg-emerald-50 transition";
-            tr.innerHTML = `
-                <td class="p-3 font-bold uppercase text-slate-700 text-[11px]">${id}</td>
-                <td class="p-3">
-                    <div class="flex items-center justify-center gap-1">
-                        <span class="text-slate-400 font-bold">$</span>
-                        <input type="number" id="costo-${id}" value="${data.costo || 0}" step="0.01" 
-                               class="w-20 border rounded px-2 py-1 text-center font-black text-emerald-700 bg-white border-emerald-200">
-                    </div>
-                </td>
-                <td class="p-3 text-center">
-                    <button onclick="window.actualizarCostoInsumo('${id}')" 
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm transition-all active:scale-90">
-                        💾 GUARDAR
-                    </button>
-                </td>
-            `;
-            tabla.appendChild(tr);
-        });
-    } catch (error) {
-        console.error("Error al cargar insumos:", error);
-        tabla.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-500 text-[10px]">❌ ERROR AL CARGAR: ${error.message}</td></tr>`;
-    }
-};
-
-// --- FUNCIÓN PARA GUARDAR CAMBIOS INDIVIDUALES ---
-window.actualizarCostoInsumo = async (idInsumo) => {
-    const nuevoCosto = document.getElementById(`costo-${idInsumo}`).value;
-    try {
-        const docRef = doc(db, "insumos_maestro", idInsumo);
-        await updateDoc(docRef, { costo: parseFloat(nuevoCosto) });
-        alert(`✅ ${idInsumo} actualizado correctamente.`);
-    } catch (e) {
-        alert("❌ Error al actualizar: " + e.message);
-    }
-};
-// ==========================================================================
-// [08] INICIALIZACIÓN CON CANDADO DE SEGURIDAD (LOGICA RESPETADA)
-// ==========================================================================
-window.showTab = async (t) => {
-    // 1. FILTRO DE SEGURIDAD PARA PRECIOS
-    if (t === 'config_precios') {
-        const clave = prompt("🔐 ACCESO RESTRINGIDO\nIngrese clave de administrador para gestionar costos y ganancias:");
-        
-        if (clave !== 'AVIPET2026') { 
-            alert("🚫 Clave incorrecta. Acceso denegado.");
-            // Si la clave falla, forzamos el regreso a la historia clínica
-            t = 'historia'; 
-        }
-    }
-
-    // 2. CONTROL DE VISIBILIDAD (Solo una sección activa a la vez - Tu lógica de toggle)
-    document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
-    document.getElementById('sectionBuscador').classList.toggle('hidden', t !== 'buscador');
-    document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
-    
-    const sectionConfig = document.getElementById('sectionConfigPrecios');
-    if (sectionConfig) {
-        sectionConfig.classList.toggle('hidden', t !== 'config_precios');
-    }
-
-    // 3. CARGA DE DATOS DINÁMICOS
-    // Al entrar a Reportes, actualizamos el cierre
-    if (t === 'reporte') {
-        window.cargarReporte();
-    }
-    
-    // Al entrar a Configuración con éxito, cargamos las tablas de la nube
-    if (t === 'config_precios') {
-        console.log("🛠️ Cargando tablas de gestión desde la nube...");
-        
-        // Verificamos que las funciones existan antes de llamarlas para evitar errores
-        if (typeof window.renderizarTablaMaestra === 'function') {
-            await window.renderizarTablaMaestra();
-        }
-        if (typeof window.renderizarTablaInsumos === 'function') {
-            await window.renderizarTablaInsumos();
-        }
-    }
-};
-
-// Listener de carga inicial para configurar datos de base
-document.addEventListener('DOMContentLoaded', () => {
-    const cfg = async () => {
-        try {
-            // Sincronizamos los catálogos del código con la nube al arrancar
-            if (typeof window.sincronizarCatalogosDesdeNube === 'function') {
-                await window.sincronizarCatalogosDesdeNube();
+            if (netoDiv) {
+                netoDiv.innerText = `$${netoAvipet.toFixed(2)}`;
+                netoDiv.className = netoAvipet > 0 ? "text-3xl font-black text-emerald-700" : "text-3xl font-black text-orange-600";
             }
 
-            const snap = await getDoc(doc(db, "configuracion", "tarifas"));
-            if (snap.exists()) {
-                const data = snap.data();
-                if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
-                if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
+            if (contador === 0) {
+                listaDiv.innerHTML = "<p class='text-center py-4 text-slate-400 font-bold uppercase text-[10px]'>No hay consultas registradas hoy</p>";
             }
-        } catch (error) {
-            console.error("Error al cargar configuración inicial:", error);
+
+        } catch (e) {
+            console.error("Error al cargar reporte:", e);
+            listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold'>Error de conexión</p>";
         }
     };
-    cfg();
-});
-    // ==========================================================================
-// [09] FUNCIONES DEL PANEL DE CONTROL (SERVICIOS E INSUMOS)
-// ==========================================================================
+    // ... aquí termina tu función renderizarTablaMaestra o el bloque [09]
 
-// 1. RENDERIZAR TABLA DE SERVICIOS
-window.renderizarTablaMaestra = async () => {
-    const tabla = document.getElementById('tablaMaestraServicios');
-    if (!tabla) {
-        console.error("❌ Error: No se encontró el elemento 'tablaMaestraServicios' en el HTML.");
-        return;
-    }
-    
-    tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center animate-pulse text-blue-500 font-bold'>⏳ Conectando con la nube...</td></tr>";
+    // >>> PEGA AQUÍ LA FUNCIÓN NUEVA <<<
+    window.actualizarPrecioIndividual = async (idOriginal, safeID) => {
+        // (Todo el código que te pasé antes...)
+    };
 
-    try {
-        // IMPORTANTE: Verifica que en Firebase tu colección se llame exactamente "servicios_maestro"
-        const querySnapshot = await getDocs(collection(db, "servicios_maestro"));
-        
-        if (querySnapshot.empty) {
-            tabla.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-orange-500 font-bold'>⚠️ La base de datos está vacía en Firebase.</td></tr>";
-            return;
-        }
-
-        tabla.innerHTML = ""; // Limpiamos el mensaje de carga
-
-        querySnapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id; // El nombre del servicio (Ej: "CONSULTA GENERAL")
-            
-            // Creamos un ID seguro para los inputs (quitando espacios) para evitar errores de selector
-            const safeID = id.replace(/\s+/g, '_');
-
-            const tr = document.createElement('tr');
-            tr.className = "border-b hover:bg-slate-50 transition-colors";
-            tr.innerHTML = `
-                <td class="p-3 font-bold uppercase text-slate-700 text-[11px]">${id}</td>
-                <td class="p-3">
-                    <input type="number" id="precio-${safeID}" value="${data.precioVenta || 0}" step="0.01" 
-                        class="w-full border border-slate-200 rounded p-1 text-center font-bold text-blue-600 focus:border-blue-400 outline-none">
-                </td>
-                <td class="p-3">
-                    <input type="number" id="porc-${safeID}" value="${data.porcDoc || 30}" step="0.1" 
-                        class="w-full border border-slate-200 rounded p-1 text-center font-bold text-orange-600 focus:border-orange-400 outline-none">
-                </td>
-                <td class="p-3 text-center">
-                    <button onclick="window.actualizarPrecioIndividual('${id}', '${safeID}')" 
-                        class="bg-blue-600 text-white px-4 py-1 rounded shadow hover:bg-emerald-600 transition-all text-[10px] font-black uppercase">
-                        💾 Guardar
-                    </button>
-                </td>`;
-            tabla.appendChild(tr);
-        });
-        
-        console.log("✅ Renderización completa: " + querySnapshot.size + " servicios cargados.");
-
-    } catch (e) {
-        console.error("❌ Error crítico al renderizar tabla:", e);
-        tabla.innerHTML = `<tr><td colspan='4' class='p-4 text-center text-red-500'>Error: ${e.message}</td></tr>`;
-    }
-};
-
-// 2. ACTUALIZAR PRECIO INDIVIDUAL (Blindado contra espacios y caracteres)
-window.actualizarPrecioIndividual = async (id) => {
-    // Usamos Template Literals con comillas para que los espacios no rompan el selector
-    const inputPrecio = document.getElementById(`p-${id}`);
-    const inputPorc = document.getElementById(`d-${id}`);
-
-    if (!inputPrecio || !inputPorc) {
-        console.error("No se encontraron los inputs para:", id);
-        return;
-    }
-
-    const nuevoPrecio = parseFloat(inputPrecio.value);
-    const nuevoPorc = parseFloat(inputPorc.value);
-    
-    // Capturamos el botón de forma segura
-    const btn = window.event ? window.event.currentTarget : null; 
-
-    if (isNaN(nuevoPrecio) || isNaN(nuevoPorc)) return alert("⚠️ Valores no válidos");
-
-    try {
-        await setDoc(doc(db, "servicios_maestro", id), {
-            precioVenta: nuevoPrecio,
-            porcDoc: nuevoPorc
-        }, { merge: true });
-        
-        console.log(`Sincronización exitosa: ${id}`);
-
-        // --- EFECTO VISUAL DE ÉXITO (El "pulido" del botón) ---
-        if (btn) {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "✅ OK"; 
-            btn.disabled = true; 
-            
-            // Cambiamos colores de alerta a éxito
-            btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                btn.classList.replace('bg-emerald-500', 'bg-blue-600');
-            }, 2000);
-        }
-
-    } catch (e) {
-        console.error("Error Firebase:", e);
-        alert("❌ Error al guardar: " + e.message);
-    }
-};
-// 3. RENDERIZAR TABLA DE INSUMOS
-window.renderizarTablaInsumos = async () => {
-    const tabla = document.getElementById('tablaMaestraInsumos');
-    if (!tabla) return;
-    tabla.innerHTML = "<tr><td colspan='3' class='p-4 text-center animate-pulse'>Cargando insumos...</td></tr>";
-
-    try {
-        const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
-        tabla.innerHTML = "";
-
-        querySnapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="p-3 font-bold uppercase text-slate-700">${id}</td>
-                <td class="p-3">
-                    <input type="number" id="costo-${id}" value="${data.costo}" step="0.01" class="w-full border rounded p-1 text-center font-bold text-emerald-600">
-                </td>
-                <td class="p-3 text-center">
-                    <button onclick="window.actualizarCostoInsumo('${id}')" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase hover:bg-emerald-700 transition shadow-sm">
-                        💾 OK
-                    </button>
-                </td>`;
-            tabla.appendChild(tr);
-        });
-    } catch (e) {
-        tabla.innerHTML = "<tr><td colspan='3' class='p-4 text-center text-red-500'>Error al cargar insumos.</td></tr>";
-    }
-};
-
-// 4. ACTUALIZAR COSTO DE INSUMO
-window.actualizarCostoInsumo = async (id) => {
-    const nuevoCosto = parseFloat(document.getElementById(`costo-${id}`).value);
-    if (isNaN(nuevoCosto)) return;
-
-    try {
-        await setDoc(doc(db, "insumos_maestro", id), { costo: nuevoCosto }, { merge: true });
-        alert(`✅ Costo de ${id} actualizado.`);
-    } catch (e) {
-        alert("❌ Error");
-    }
-};
-
-// 5. FUNCIÓN DE INICIALIZACIÓN TOTAL (Solo para la primera vez)
-window.inicializarBaseDeDatosCompleta = async () => {
-    if(!confirm("⚠️ Esto sobrescribirá los precios en la nube con los del código. ¿Continuar?")) return;
-    
-    try {
-        // Subir Servicios
-        for (const [nombre, data] of Object.entries(recetas)) {
-            const porc = (CONFIG_SERVICIOS[nombre]) ? CONFIG_SERVICIOS[nombre].porc : 30;
-            await setDoc(doc(db, "servicios_maestro", nombre), {
-                precioVenta: data.precioVenta,
-                porcDoc: porc
-            }, { merge: true });
-        }
-
-        // Subir Insumos Fijos
-        const todosLosInsumos = [...insumosFijosMedicos, ...insumosBaseVacuna];
-        for (const ins of todosLosInsumos) {
-            await setDoc(doc(db, "insumos_maestro", ins.nombre), {
-                costo: ins.costo
-            }, { merge: true });
-        }
-
-        alert("🚀 Sincronización Completa. Ahora puedes editar todo desde las tablas.");
-        window.renderizarTablaMaestra();
-    } catch (e) {
-        alert("Error: " + e.message);
-    }
-};
-    // ==========================================================================
-// [08] MOTOR DE SINCRONIZACIÓN Y ARRANQUE (PEGA ESTO AL FINAL)
-// ==========================================================================
-
-
-    window.sincronizarCatalogos = async () => {
-    try {
-        const snapServicios = await getDocs(collection(db, "servicios_maestro"));
-        console.log("🔄 Sincronizando catálogos desde la nube...");
-        
-        snapServicios.forEach(docSnap => {
-            const id = docSnap.id;
-            const data = docSnap.data();
-            const precioNube = parseFloat(data.precioVenta) || 0;
-            const porcNube = parseFloat(data.porcDoc) || 30;
-
-            // 1. Si el servicio ya existe en el código, actualizamos valores
-            if (recetas[id]) {
-                recetas[id].precioVenta = precioNube;
-                if (CONFIG_SERVICIOS[id]) CONFIG_SERVICIOS[id].porc = porcNube;
-            } 
-            // 2. REFUERZO: Si el servicio es NUEVO en Firebase, lo creamos en el código
-            else {
-                recetas[id] = { precioVenta: precioNube, insumos: [] };
-                CONFIG_SERVICIOS[id] = { precio: 0, porc: porcNube };
-                
-                // Agregamos la opción al selector visual (HTML) si existe
-                const selector = document.getElementById('selectorServicios');
-                if (selector) {
-                    const opt = document.createElement('option');
-                    opt.value = id;
-                    opt.textContent = id;
-                    selector.appendChild(opt);
-                }
-            }
-        });
-        console.log("✅ Catálogos sincronizados con éxito.");
-    } catch (e) {
-        console.error("❌ Error en sincronización:", e);
-    }
-};
-    // ... (Aquí van todas tus funciones anteriores: insertarServicio, guardarFirebase, etc.)
-
-// ==========================================================================
-// [07] PUENTE DE CONEXIÓN GLOBAL (Sustituye tu bloque anterior por este)
-// ==========================================================================
-const funcionesGlobales = {
-    insertarServicio,
-    calcularTodo,
-    agregarInsumoManual,
-    eliminarServicioCompleto,
-    validarAccesoDoctor,
-    buscarPorCedula,
-    autocompletarPorCedula,
-    guardarFirebase, // Esta es vital para que el botón Guardar funcione
-    showTab,
-    cargarReporte,
-    cambiarSubTabConfig,
-    actualizarPrecioIndividual,
-    actualizarCostoInsumo,
-    renderizarTablaMaestra,
-    renderizarTablaInsumos,
-    sincronizarCatalogos,
-    inicializarBaseDeDatosCompleta,
-    guardarConfiguracion
-};
-
-// Exponemos las funciones al objeto window para que los botones HTML las encuentren
-Object.keys(funcionesGlobales).forEach(key => {
-    window[key] = funcionesGlobales[key];
-});
-window.subirConfiguracionInicial = async () => {
-    console.log("🚀 Iniciando carga masiva a Firebase...");
-    try {
-        for (const [nombre, datos] of Object.entries(CONFIG_SERVICIOS)) {
-            await setDoc(doc(db, "servicios_maestro", nombre), {
-                precioVenta: datos.precio || 0,
-                porcDoc: datos.porc || 30
-            }, { merge: true });
-            console.log(`✅ Subido: ${nombre}`);
-        }
-        alert("¡Carga completa! Ahora refresca la página y entra a Ajustes.");
-    } catch (e) {
-        console.error("Error en carga masiva:", e);
-        alert("Error: " + e.message);
-    }
-};
-// ==========================================================================
-// [08] INICIALIZACIÓN ÚNICA (BORRA CUALQUIER OTRO DOMContentLoaded)
-// ==========================================================================
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🚢 Avipet System: Iniciando motores...");
-    
-    // 1. Sincronizar precios desde la nube (Indispensable)
-    await window.sincronizarCatalogos();
-    
-    // 2. Cargar tarifas globales y fecha
-    try {
-        const snap = await getDoc(doc(db, "configuracion", "tarifas"));
-        if (snap.exists()) {
-            const data = snap.data();
-            if(document.getElementById('cfgInsumos')) document.getElementById('cfgInsumos').value = data.insumoBase;
-            if(document.getElementById('cfgPorcentaje')) document.getElementById('cfgPorcentaje').value = data.porcentajeDoc;
-        }
-    } catch (e) { 
-        console.warn("Error en arranque:", e); 
-    }
-
-    const fechaInput = document.getElementById('fechaDoc');
-    if (fechaInput) {
-        const hoy = new Date();
-        fechaInput.value = hoy.toLocaleDateString('es-ES');
-    }
-});
+// Esta es la "tapa" del motor, nada de lógica debe ir después de esto:
 </script>
+</script>
+
 
 
 
