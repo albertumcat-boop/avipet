@@ -1467,14 +1467,17 @@ window.agregarInsumoNuevoManual = async () => {
                 pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
             });
 
-            const dataConsulta = {
+           const dataConsulta = {
                 cedula: dInput('hCI'),
                 propietario: dInput('hProp'),
                 paciente: dInput('hNombre'),
                 doctor: doctorVerificado,
                 tratamiento: dInput('hTratamiento'),
                 montoVenta: montoVentaTotal,
+                // Mantenemos tu dato original
                 montoInsumos: totalGastos,
+                // AGREGAMOS ESTA LÍNEA para que el Análisis Estratégico sea 100% real
+                costoInsumosTotal: totalGastos, 
                 pagoDoctor: pagoDoctorTotal,
                 pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
                 listaDetalladaInsumos: detalleInsumos,
@@ -1503,8 +1506,12 @@ window.agregarInsumoNuevoManual = async () => {
     // ==========================================================================
     // [12] CAMBIO DE TABS PRINCIPALES
     // ==========================================================================
-  // Variable para recordar el destino tras la validación
+// Variable global para gestionar la navegación segura
 let tabPendiente = ''; 
+
+// ==========================================================================
+// [SISTEMA DE NAVEGACIÓN Y SEGURIDAD]
+// ==========================================================================
 
 window.showTab = async (t) => {
     // 1. Ajuste de Seguridad: Sustituimos el prompt por el Modal
@@ -1550,7 +1557,9 @@ window.ejecutarCambioDeTab = async (t) => {
     }
 };
 
-// --- Lógica del Modal (Validación y Rescate) ---
+// ==========================================================================
+// [LÓGICA DEL MODAL - VALIDACIÓN Y RESCATE]
+// ==========================================================================
 
 window.validarAcceso = async () => {
     const pass = document.getElementById('inputPass').value;
@@ -1590,7 +1599,11 @@ window.cerrarModalLogin = () => {
     document.getElementById('modalLogin').classList.add('hidden');
     document.getElementById('inputPass').value = "";
 };
-    // [09-C] INYECTOR DE INSUMOS (RECETAS) - CONEXIÓN GLOBAL
+
+// ==========================================================================
+// [INYECTOR DE INSUMOS (RECETAS) - CONEXIÓN GLOBAL]
+// ==========================================================================
+
 window.inyectarInsumosMaestros = async () => {
     if (!confirm("¿Deseas subir las recetas de insumos a la nube?")) return;
     
@@ -1834,6 +1847,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 </script>
+
 
 
 
