@@ -1320,7 +1320,35 @@ window.inyectarDatosMaestros = async () => {
             fechaInput.value = hoy.toLocaleDateString('es-ES');
         }
     });
+    // [09-C] INYECTOR DE INSUMOS (RECETAS) - CONEXIÓN GLOBAL
+window.inyectarInsumosMaestros = async () => {
+    if (!confirm("¿Deseas subir las recetas de insumos a la nube?")) return;
+    
+    console.log("📦 Iniciando carga de insumos...");
+    try {
+        const servicios = Object.keys(recetas);
+        for (const nombre of servicios) {
+            const datos = recetas[nombre];
+            // Limpieza de nombre para Firebase
+            const nombreLimpio = nombre.split('/').join(' - ');
+            
+            if (datos.insumos) {
+                await setDoc(doc(db, "insumos_maestro", nombreLimpio), {
+                    lista: datos.insumos,
+                    ultimaActualizacion: serverTimestamp()
+                }, { merge: true });
+                console.log(`✅ Receta subida: ${nombreLimpio}`);
+            }
+        }
+        alert("¡ÉXITO! Recetas de insumos sincronizadas.");
+        if (window.renderizarTablaInsumos) window.renderizarTablaInsumos();
+    } catch (e) {
+        console.error("❌ Error:", e);
+        alert("Fallo la carga: " + e.message);
+    }
+};
 </script>
+
 
 
 
