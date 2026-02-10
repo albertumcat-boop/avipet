@@ -1397,7 +1397,35 @@ window.inyectarInsumosMaestros = async () => {
         alert("Error de Firebase: " + e.message);
     }
 };
+    window.vaciarColeccionInsumos = async () => {
+    if (!confirm("⚠️ ¿ESTÁS SEGURO? Esto borrará TODOS los insumos de la nube para empezar de cero.")) return;
+    
+    console.log("🧹 Iniciando limpieza de la colección 'insumos_maestro'...");
+    try {
+        const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
+        
+        if (querySnapshot.empty) {
+            alert("La colección ya está vacía.");
+            return;
+        }
+
+        // Borramos cada documento encontrado
+        const promesas = querySnapshot.docs.map(docSnap => deleteDoc(doc(db, "insumos_maestro", docSnap.id)));
+        await Promise.all(promesas);
+
+        console.log("✨ Colección vaciada con éxito.");
+        alert("Colección limpia. Ahora puedes ejecutar la inyección correcta.");
+        
+        // Refrescar la tabla si existe
+        if (window.renderizarTablaInsumos) window.renderizarTablaInsumos();
+        
+    } catch (e) {
+        console.error("❌ Error al vaciar:", e);
+        alert("Error de Firebase: " + e.message);
+    }
+};
 </script>
+
 
 
 
