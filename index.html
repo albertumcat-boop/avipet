@@ -669,14 +669,28 @@ const recetas = {
     document.getElementById('selectorServicios').value = "";
 };
 
-  window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
+ window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
     if (event) event.preventDefault();
     if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
 
+    const area = document.getElementById('hTratamiento');
     const filaTitulo = document.querySelector(`[data-grupo="${idGrupo}"]`);
+    
     if (filaTitulo) {
+        // --- NUEVO: Limpieza de Tratamiento y Descripción ---
+        // Extraemos el nombre tal cual se muestra (sin el emoji ni el precio)
+        // Ejemplo: de "🔹 VACUNA KC ($45.00)" extraemos "VACUNA KC"
+        const nombreParaTexto = filaTitulo.innerText.split('($')[0].replace('🔹', '').trim();
+        
+        if (area && area.value) {
+            const lineas = area.value.split('\n');
+            // Filtramos el array: mantenemos solo las líneas que NO incluyen el nombre que borramos
+            const lineasLimpias = lineas.filter(linea => !linea.includes("=> " + nombreParaTexto));
+            area.value = lineasLimpias.join('\n');
+        }
+
+        // 1. Limpiamos el array de control
         const nombreBorrando = normalizarNombre(filaTitulo.innerText);
-        // 1. Limpiamos el array de control (Vital para la lógica de combos)
         const index = serviciosEnLista.indexOf(nombreBorrando);
         if (index !== -1) serviciosEnLista.splice(index, 1);
         
@@ -692,11 +706,9 @@ const recetas = {
     filasRestantes.forEach(fila => {
         const texto = normalizarNombre(fila.innerText);
         
-        // --- CASO VACUNA KC ---
         if (texto.includes("vacunakc")) {
             const tieneOtraVacuna = Array.from(filasRestantes).some(f => {
                 const n = normalizarNombre(f.innerText);
-                // Buscamos OTRA vacuna que no sea la propia fila de la KC
                 return f !== fila && (n.includes("vacuna") || n.includes("sextuple") || n.includes("puppy") || n.includes("antirrabica"));
             });
 
@@ -707,11 +719,9 @@ const recetas = {
             }
         }
         
-        // --- CASO HEMATOLOGÍA ---
         if (texto.includes("hematologiacompleta")) {
             const tieneOtroLab = Array.from(filasRestantes).some(f => {
                 const n = normalizarNombre(f.innerText);
-                // Buscamos OTRO lab que no sea la propia hematología
                 return f !== fila && (n.includes("quimica") || n.includes("hemoparasito") || n.includes("perfil") || n.includes("examen"));
             });
 
@@ -723,10 +733,9 @@ const recetas = {
         }
     });
 
-    // 4. Actualizar el input de precio (Tu lógica original)
+    // 4. Actualizar el input de precio (Recálculo real basado en lo que quedó)
     const inputPrecioVenta = document.getElementById('precioVenta');
     if (inputPrecioVenta) {
-        // Recalculamos el total basándonos en lo que REALMENTE quedó en las filas
         let nuevoTotalVenta = 0;
         document.querySelectorAll('.servicio-principal').forEach(f => {
             nuevoTotalVenta += parseFloat(f.getAttribute('data-precio')) || 0;
@@ -737,7 +746,6 @@ const recetas = {
     // 5. Recalcular todo (Darwin y Joan reciben el monto correcto)
     await window.calcularTodo();
 };
-
     window.agregarInsumoManual = () => {
         const n = document.getElementById('nombreExtra');
         const c = document.getElementById('costoExtra');
@@ -826,44 +834,74 @@ const recetas = {
     // [06] BUSCADOR Y AUTOCOMPLETADO
     // ==========================================================================
     window.buscarPorCedula = async () => {
-        const input = document.getElementById('searchCI');
-        const contenedor = document.getElementById('resultadosBusqueda');
-        if (!input.value || !input.value.trim()) return alert("⚠️ Ingrese una cédula.");
-        const ci = input.value.trim();
-        contenedor.innerHTML = `<div class="text-center py-8"><div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2"></div><p>Buscando...</p></div>`;
-        try {
-            const q = query(collection(db, "consultas"), where("cedula", "==", ci));
-            const snap = await getDocs(q);
-            if (snap.empty) { 
-                contenedor.innerHTML = `<p class="p-6 text-center">No hay registros para: ${ci}</p>`; 
-                return; 
-            }
-            contenedor.innerHTML = ""; 
-            let resultados = []; 
-            snap.forEach(doc => resultados.push(doc.data()));
-            resultados.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
-            resultados.forEach(d => {
-                const div = document.createElement('div');
-                div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden";
-                const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
-                div.innerHTML = `
-                    <details class="group">
-                        <summary class="flex justify-between p-4 cursor-pointer">
-                            <div><span class="text-[10px] text-slate-400 font-bold">${d.fechaSimple || 'S/F'}</span><h3 class="font-black text-blue-900 uppercase">${d.paciente}</h3><p class="text-[10px] uppercase">${drPref} ${d.doctor}</p></div>
-                            <div class="text-blue-500 text-xl group-open:rotate-180 transition-transform">▾</div>
-                        </summary>
-                        <div class="p-4 bg-slate-50 border-t border-slate-200">
-                            <p class="text-[10px] font-bold text-blue-600 border-b mb-1">TRATAMIENTO:</p>
-                            <p class="text-sm text-slate-700 whitespace-pre-wrap mb-4">${d.tratamiento}</p>
-                            <p class="text-[10px] font-bold text-emerald-600 border-b mb-1">INSUMOS:</p>
-                            <div class="space-y-1">${d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `<div class="flex justify-between text-[11px] border-b border-dotted"><span>${ins.nombre} x${ins.cant}</span><b>$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b></div>`).join('') : ''}</div>
-                            <div class="mt-4 pt-3 border-t-2 flex justify-between"><span class="text-[10px] font-bold">TOTAL:</span><span class="text-xl font-black">$${(d.montoVenta || 0).toFixed(2)}</span></div>
+    const input = document.getElementById('searchCI');
+    const contenedor = document.getElementById('resultadosBusqueda');
+    
+    if (!input.value || !input.value.trim()) return alert("⚠️ Ingrese una cédula.");
+    
+    const ci = input.value.trim();
+    contenedor.innerHTML = `<div class="text-center py-8"><div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2"></div><p>Buscando...</p></div>`;
+    
+    try {
+        // 1. SOLDADURA DE PRECISIÓN: Añadimos orderBy directamente en la consulta de Firebase
+        // Esto pone lo más reciente al principio desde el servidor
+        const q = query(
+            collection(db, "consultas"), 
+            where("cedula", "==", ci), 
+            orderBy("fecha", "desc") 
+        );
+
+        const snap = await getDocs(q);
+        
+        if (snap.empty) { 
+            contenedor.innerHTML = `<p class="p-6 text-center">No hay registros para: ${ci}</p>`; 
+            return; 
+        }
+        
+        contenedor.innerHTML = ""; 
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            const div = document.createElement('div');
+            div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden";
+            
+            // Mantenemos el trato correcto para la Dra. Joan Silva y el Dr. Darwin Sandoval
+            const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
+            
+            div.innerHTML = `
+                <details class="group">
+                    <summary class="flex justify-between p-4 cursor-pointer">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold">${d.fechaSimple || 'S/F'}</span>
+                            <h3 class="font-black text-blue-900 uppercase">${d.paciente}</h3>
+                            <p class="text-[10px] uppercase">${drPref} ${d.doctor}</p>
                         </div>
-                    </details>`;
-                contenedor.appendChild(div);
-            });
-        } catch (e) { console.error(e); }
-    };
+                        <div class="text-blue-500 text-xl group-open:rotate-180 transition-transform">▾</div>
+                    </summary>
+                    <div class="p-4 bg-slate-50 border-t border-slate-200">
+                        <p class="text-[10px] font-bold text-blue-600 border-b mb-1">TRATAMIENTO:</p>
+                        <p class="text-sm text-slate-700 whitespace-pre-wrap mb-4">${d.tratamiento}</p>
+                        <p class="text-[10px] font-bold text-emerald-600 border-b mb-1">INSUMOS:</p>
+                        <div class="space-y-1">
+                            ${d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `
+                                <div class="flex justify-between text-[11px] border-b border-dotted">
+                                    <span>${ins.nombre} x${ins.cant}</span>
+                                    <b>$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b>
+                                </div>`).join('') : ''}
+                        </div>
+                        <div class="mt-4 pt-3 border-t-2 flex justify-between">
+                            <span class="text-[10px] font-bold">TOTAL:</span>
+                            <span class="text-xl font-black">$${(d.montoVenta || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </details>`;
+            contenedor.appendChild(div);
+        });
+    } catch (e) { 
+        console.error("Error en búsqueda:", e);
+        // Si sale un error de índice, Firebase te dará un link en la consola para crearlo.
+    }
+};
 
     window.autocompletarPorCedula = async (ci) => {
         if (!ci) return;
@@ -1608,6 +1646,7 @@ window.inyectarInsumosMaestros = async () => {
     }
 };
 </script>
+
 
 
 
