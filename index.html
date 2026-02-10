@@ -185,7 +185,7 @@
                             <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
                             <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
                             <option value="DISTEMPER">DISTEMPER</option>
-                            <option value="PARVOVIRUS/CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
+                            <option value="PARVOVIRUS - CORONAVIRUS">PARVOVIRUS/CORONAVIRUS</option>
                             <option value="FILARIASIS">FILARIASIS</option>
                             <option value="SIDA/LEUCEMIA">SIDA/LEUCEMIA</option>
                             <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
@@ -418,7 +418,7 @@
         "QUÍMICA SANGUÍNEA": { precio: 0, porc: 50 },
         "DESCARTE HEMOPARASITO": { precio: 0, porc: 50 },
         "DISTEMPER": { precio: 0, porc: 50 },
-        "PARVOVIRUS/CORONAVIRUS": { precio: 0, porc: 50 },
+        "PARVOVIRUS - CORONAVIRUS": { precio: 0, porc: 50 },
         "FILARIASIS": { precio: 0, porc: 50 },
         "SIDA/LEUCEMIA": { precio: 0, porc: 50 },
         "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precio: 0, porc: 50 },
@@ -441,7 +441,7 @@
         "REFERIDO: CULTIVOS": { precio: 0, porc: 50 },
         "REFERIDO: DESCARTE HEMOPARASITO": { precio: 0, porc: 50 },
         "REFERIDO: DISTEMPER": { precio: 0, porc: 50 },
-        "REFERIDO: PARVOVIRUS/CORONAVIRUS": { precio: 0, porc: 50 }
+        "REFERIDO: PARVOVIRUS - CORONAVIRUS": { precio: 0, porc: 50 }
     };
 
     const insumosFijosMedicos = [
@@ -478,7 +478,7 @@
         "QUÍMICA SANGUÍNEA": { precioVenta: 60, insumos: [{ nombre: "Tubo Seco/Reactivos Química", costo: 10.00 }] },
         "DESCARTE HEMOPARASITO": { precioVenta: 50, insumos: [{ nombre: "Test Hemoparásitos", costo: 9.00 }] },
         "DISTEMPER": { precioVenta: 35, insumos: [{ nombre: "Kit Test Distemper", costo: 11.00 }] },
-        "PARVOVIRUS/CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] },
+        "PARVOVIRUS - CORONAVIRUS": { precioVenta: 35, insumos: [{ nombre: "Kit Test Parvo/Corona", costo: 12.00 }] },
         "FILARIASIS": { precioVenta: 40, insumos: [{ nombre: "Kit Test Filarias", costo: 11.00 }] },
         "SIDA/LEUCEMIA": { precioVenta: 40, insumos: [{ nombre: "Kit Test Sida/Leucemia", costo: 15.00 }] },
         "HEMATOLOGIA+QUIMICA+HEMOPARASITOS": { precioVenta: 110, insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }] },
@@ -1017,30 +1017,28 @@
             alert("❌ Error al guardar: " + e.message);
         }
     };
-// ==========================================================================
-// [09-C] INYECCIÓN INICIAL DE DATOS (Solo usar si la tabla sale vacía)
-// ==========================================================================
 window.inyectarDatosMaestros = async () => {
-    if (!confirm("¿Deseas subir los servicios a Firebase?")) return;
+    if (!confirm("¿Deseas subir todos los servicios a la nube?")) return;
     
-    console.log("🚀 Iniciando inyección masiva (versión corregida)...");
+    console.log("🚀 Iniciando inyección masiva blindada...");
     try {
         for (const [nombre, datos] of Object.entries(CONFIG_SERVICIOS)) {
-            // CORRECCIÓN AQUÍ: Cambiamos las "/" por "-" para que Firebase no falle
-            const nombreSeguro = nombre.replace(/\//g, '-'); 
+            // Esta línea limpia el nombre: quita "/" y los pone como "-"
+            const nombreLimpio = nombre.split('/').join(' - '); 
             
-            await setDoc(doc(db, "servicios_maestro", nombreSeguro), {
+            await setDoc(doc(db, "servicios_maestro", nombreLimpio), {
                 precioVenta: datos.precio || 0,
                 porcDoc: datos.porc || 30,
                 ultimaActualizacion: serverTimestamp()
             }, { merge: true });
-            console.log(`✅ Inyectado: ${nombreSeguro}`);
+            
+            console.log(`✅ Inyectado con éxito: ${nombreLimpio}`);
         }
-        alert("¡Inyección exitosa! Ahora los servicios están en la nube.");
+        alert("¡ÉXITO TOTAL! Todos los servicios están ahora en la nube.");
         window.renderizarTablaMaestra();
     } catch (e) {
-        console.error("❌ Fallo la inyección:", e);
-        alert("Error: " + e.message);
+        console.error("❌ Error en la inyección:", e);
+        alert("Error de Firebase: " + e.message);
     }
 };
     // Renderizar tabla de insumos
@@ -1319,6 +1317,7 @@ window.inyectarDatosMaestros = async () => {
         }
     });
 </script>
+
 
 
 
