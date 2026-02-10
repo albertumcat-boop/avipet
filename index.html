@@ -321,61 +321,65 @@
         </section>
 
         <!-- ========== CONFIG PRECIOS ========== -->
-        <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
-                <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">🛠 Panel de Control Maestro</h2>
-                <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos de Materiales</p>
+       <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
+        <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">🛠 Panel de Control Maestro</h2>
+        <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos de Materiales</p>
 
-                <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
-                    <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
-                        💉 Servicios y Ganancias
-                    </button>
-                    <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
-                        📦 Costo de Insumos
-                    </button>
-                </div>
+        <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+            <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
+                💉 Servicios y Ganancias
+            </button>
+            <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns" class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
+                📦 Costo de Insumos
+            </button>
+        </div>
 
-                <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
-                        <p class="text-[9px] text-orange-400">Usa esto solo para subir los datos del código a la nube por primera vez.</p>
-                    </div>
-                    <button onclick="window.inicializarBaseDeDatosCompleta()" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
-                        🚀 Sincronizar Todo
-                    </button>
-                </div>
+        <div id="areaBtnAgregarInsumo" class="hidden mb-4 flex justify-end">
+            <button onclick="window.agregarInsumoNuevoManual()" 
+                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md font-black text-[10px] uppercase transition-all">
+                ➕ Agregar Insumo Nuevo
+            </button>
+        </div>
 
-                <div id="contenedorTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-                    <table class="w-full text-left text-[12px]">
-                        <thead>
-                            <tr class="text-blue-900 font-black uppercase text-[10px]">
-                                <th class="p-3">Servicio / Tratamiento</th>
-                                <th class="p-3 w-28 text-center">Precio ($)</th>
-                                <th class="p-3 w-28 text-center">Doc (%)</th>
-                                <th class="p-3 w-24 text-center">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaMaestraServicios" class="bg-white divide-y">
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="contenedorTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-                    <table class="w-full text-left text-[12px]">
-                        <thead>
-                            <tr class="text-emerald-900 font-black uppercase text-[10px]">
-                                <th class="p-3">Insumo / Material</th>
-                                <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
-                                <th class="p-3 w-24 text-center">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaMaestraInsumos" class="bg-white divide-y">
-                        </tbody>
-                    </table>
-                </div>
+        <div id="bannerSincro" class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
+            <div class="flex-1">
+                <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
+                <p class="text-[9px] text-orange-400">Usa esto solo para subir los datos del código a la nube por primera vez.</p>
             </div>
-        </section>
-    </main>
+            <button onclick="window.inicializarBaseDeDatosCompleta()" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
+                🚀 Sincronizar Todo
+            </button>
+        </div>
+
+        <div id="contenedorTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+            <table class="w-full text-left text-[12px]">
+                <thead>
+                    <tr class="text-blue-900 font-black uppercase text-[10px]">
+                        <th class="p-3">Servicio / Tratamiento</th>
+                        <th class="p-3 w-28 text-center">Precio ($)</th>
+                        <th class="p-3 w-28 text-center">Doc (%)</th>
+                        <th class="p-3 w-24 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMaestraServicios" class="bg-white divide-y"></tbody>
+            </table>
+        </div>
+
+        <div id="contenedorTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+            <table class="w-full text-left text-[12px]">
+                <thead>
+                    <tr class="text-emerald-900 font-black uppercase text-[10px]">
+                        <th class="p-3">Insumo / Material</th>
+                        <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
+                        <th class="p-3 w-24 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMaestraInsumos" class="bg-white divide-y"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
 <script type="module">
     // ==========================================================================
     // [01] IMPORTACIONES Y CONFIGURACIÓN FIREBASE
@@ -889,36 +893,47 @@ const recetas = {
     // ==========================================================================
 
     // Cambiar subtabs
-    window.cambiarSubTabConfig = (tab) => {
-        const isServ = tab === 'servicios';
+   window.cambiarSubTabConfig = (tab) => {
+    const isServ = tab === 'servicios';
+    
+    const divServ = document.getElementById('contenedorTabServicios');
+    const divIns = document.getElementById('contenedorTabInsumos');
+    
+    // Selectores de los botones y banners adicionales
+    const areaBtnAgregar = document.getElementById('areaBtnAgregarInsumo');
+    const bannerSincro = document.getElementById('bannerSincro');
+
+    // 1. Intercambiar visibilidad de tablas
+    if (divServ && divIns) {
+        divServ.classList.toggle('hidden', !isServ);
+        divIns.classList.toggle('hidden', isServ);
+    }
+
+    // 2. Control de botones contextuales (Agregar vs Sincronizar)
+    if (areaBtnAgregar) areaBtnAgregar.classList.toggle('hidden', isServ);
+    if (bannerSincro) bannerSincro.classList.toggle('hidden', !isServ);
+    
+    const btnServ = document.getElementById('btnTabServ');
+    const btnIns = document.getElementById('btnTabIns');
+    
+    if(isServ) {
+        // Estilo pestaña Servicios (Azul)
+        btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm";
+        btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
         
-        const divServ = document.getElementById('contenedorTabServicios');
-        const divIns = document.getElementById('contenedorTabInsumos');
-        
-        if (divServ && divIns) {
-            divServ.classList.toggle('hidden', !isServ);
-            divIns.classList.toggle('hidden', isServ);
+        if (typeof window.renderizarTablaMaestra === 'function') {
+            window.renderizarTablaMaestra();
         }
+    } else {
+        // Estilo pestaña Insumos (Esmeralda/Verde)
+        btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-emerald-600 shadow-sm";
+        btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
         
-        const btnServ = document.getElementById('btnTabServ');
-        const btnIns = document.getElementById('btnTabIns');
-        
-        if(isServ) {
-            btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm";
-            btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
-            
-            if (typeof window.renderizarTablaMaestra === 'function') {
-                window.renderizarTablaMaestra();
-            }
-        } else {
-            btnIns.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-emerald-600 shadow-sm";
-            btnServ.className = "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
-            
-            if (typeof window.renderizarTablaInsumos === 'function') {
-                window.renderizarTablaInsumos();
-            }
+        if (typeof window.renderizarTablaInsumos === 'function') {
+            window.renderizarTablaInsumos();
         }
-    };
+    }
+};
 
     // Renderizar tabla de servicios
     window.renderizarTablaMaestra = async () => {
@@ -1046,55 +1061,99 @@ window.inyectarDatosMaestros = async () => {
         alert("Error de Firebase: " + e.message);
     }
 };
-    // Renderizar tabla de insumos
     window.renderizarTablaInsumos = async () => {
-        const tabla = document.getElementById('tablaMaestraInsumos');
-        if (!tabla) {
-            console.error("❌ No encontré la tabla 'tablaMaestraInsumos'");
+    const tabla = document.getElementById('tablaMaestraInsumos');
+    if (!tabla) {
+        console.error("❌ No encontré la tabla 'tablaMaestraInsumos'");
+        return;
+    }
+
+    tabla.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-emerald-600 font-bold animate-pulse text-[10px]">🔄 CARGANDO INSUMOS...</td></tr>';
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
+        
+        if (querySnapshot.empty) {
+            tabla.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-orange-500 font-bold text-[10px]">⚠️ NO HAY DATOS. AGREGA UNO NUEVO.</td></tr>';
             return;
         }
 
-        tabla.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-emerald-600 font-bold animate-pulse text-[10px]">🔄 CARGANDO INSUMOS...</td></tr>';
+        tabla.innerHTML = "";
 
-        try {
-            const querySnapshot = await getDocs(collection(db, "insumos_maestro"));
-            
-            if (querySnapshot.empty) {
-                tabla.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-orange-500 font-bold text-[10px]">⚠️ NO HAY DATOS. PULSA EL BOTÓN NARANJA.</td></tr>';
-                return;
-            }
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id;
 
-            tabla.innerHTML = "";
-
-            querySnapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const id = docSnap.id;
-
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-emerald-50 transition";
-                tr.innerHTML = `
-                    <td class="p-3 font-bold uppercase text-slate-700 text-[11px]">${id}</td>
-                    <td class="p-3">
-                        <div class="flex items-center justify-center gap-1">
-                            <span class="text-slate-400 font-bold">$</span>
-                            <input type="number" id="costo-${id}" value="${data.costo || 0}" step="0.01"
-                                   class="w-20 border rounded px-2 py-1 text-center font-black text-emerald-700 bg-white border-emerald-200">
-                        </div>
-                    </td>
-                    <td class="p-3 text-center">
+            const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-emerald-50 transition";
+            tr.innerHTML = `
+                <td class="p-3 font-bold uppercase text-slate-700 text-[11px]">${id}</td>
+                <td class="p-3">
+                    <div class="flex items-center justify-center gap-1">
+                        <span class="text-slate-400 font-bold">$</span>
+                        <input type="number" id="costo-${id}" value="${data.costo || 0}" step="0.01"
+                               class="w-20 border rounded px-2 py-1 text-center font-black text-emerald-700 bg-white border-emerald-200">
+                    </div>
+                </td>
+                <td class="p-3 text-center">
+                    <div class="flex justify-center gap-2">
                         <button onclick="window.actualizarCostoInsumo('${id}')"
-                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm transition-all active:scale-90">
-                            💾 GUARDAR
+                                title="Guardar cambios"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-black shadow-sm transition-all active:scale-90">
+                            💾
                         </button>
-                    </td>
-                `;
-                tabla.appendChild(tr);
-            });
-        } catch (error) {
-            console.error("Error al cargar insumos:", error);
-            tabla.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-500 text-[10px]">❌ ERROR AL CARGAR: ${error.message}</td></tr>`;
-        }
-    };
+                        <button onclick="window.eliminarInsumoIndividual('${id}')"
+                                title="Eliminar insumo"
+                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black shadow-sm transition-all active:scale-90">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            `;
+            tabla.appendChild(tr);
+        });
+    } catch (error) {
+        console.error("Error al cargar insumos:", error);
+        tabla.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500 text-[10px]">❌ ERROR: ${error.message}</td></tr>`;
+    }
+};
+    // Función para eliminar un solo insumo
+window.eliminarInsumoIndividual = async (idInsumo) => {
+    if (!confirm(`¿Estás seguro de eliminar "${idInsumo}" de la lista?`)) return;
+
+    try {
+        await deleteDoc(doc(db, "insumos_maestro", idInsumo));
+        console.log(`✅ Insumo eliminado: ${idInsumo}`);
+        // Refrescamos la tabla automáticamente
+        await window.renderizarTablaInsumos();
+    } catch (e) {
+        alert("❌ Error al eliminar: " + e.message);
+    }
+};
+
+// Función para agregar un insumo totalmente nuevo
+window.agregarInsumoNuevoManual = async () => {
+    const nombre = prompt("Ingrese el nombre del nuevo insumo:");
+    if (!nombre || nombre.trim() === "") return;
+
+    const costo = parseFloat(prompt(`Ingrese el costo para "${nombre}":`, "0.00"));
+    if (isNaN(costo)) return alert("⚠️ El costo debe ser un número válido.");
+
+    // Limpiamos el nombre por si trae barras inclinadas
+    const nombreLimpio = nombre.split('/').join(' - ').trim();
+
+    try {
+        await setDoc(doc(db, "insumos_maestro", nombreLimpio), {
+            costo: costo,
+            ultimaActualizacion: serverTimestamp()
+        }, { merge: true });
+
+        alert("✅ Insumo agregado correctamente.");
+        await window.renderizarTablaInsumos();
+    } catch (e) {
+        alert("❌ Error al guardar: " + e.message);
+    }
+};
 
     window.actualizarCostoInsumo = async (idInsumo) => {
         const input = document.getElementById(`costo-${idInsumo}`);
@@ -1425,6 +1484,7 @@ window.inyectarInsumosMaestros = async () => {
     }
 };
 </script>
+
 
 
 
