@@ -1021,23 +1021,26 @@
 // [09-C] INYECCIÓN INICIAL DE DATOS (Solo usar si la tabla sale vacía)
 // ==========================================================================
 window.inyectarDatosMaestros = async () => {
-    if (!confirm("¿Deseas subir todos los servicios de CONFIG_SERVICIOS a Firebase?")) return;
+    if (!confirm("¿Deseas subir los servicios a Firebase?")) return;
     
-    console.log("🚀 Iniciando inyección masiva...");
+    console.log("🚀 Iniciando inyección masiva (versión corregida)...");
     try {
         for (const [nombre, datos] of Object.entries(CONFIG_SERVICIOS)) {
-            await setDoc(doc(db, "servicios_maestro", nombre), {
+            // CORRECCIÓN AQUÍ: Cambiamos las "/" por "-" para que Firebase no falle
+            const nombreSeguro = nombre.replace(/\//g, '-'); 
+            
+            await setDoc(doc(db, "servicios_maestro", nombreSeguro), {
                 precioVenta: datos.precio || 0,
                 porcDoc: datos.porc || 30,
                 ultimaActualizacion: serverTimestamp()
             }, { merge: true });
-            console.log(`✅ Inyectado: ${nombre}`);
+            console.log(`✅ Inyectado: ${nombreSeguro}`);
         }
-        alert("¡Inyección exitosa! La tabla se actualizará ahora.");
-        window.renderizarTablaMaestra(); // Refrescamos la tabla automáticamente
+        alert("¡Inyección exitosa! Ahora los servicios están en la nube.");
+        window.renderizarTablaMaestra();
     } catch (e) {
         console.error("❌ Fallo la inyección:", e);
-        alert("Error al inyectar: " + e.message);
+        alert("Error: " + e.message);
     }
 };
     // Renderizar tabla de insumos
@@ -1316,6 +1319,7 @@ window.inyectarDatosMaestros = async () => {
         }
     });
 </script>
+
 
 
 
