@@ -303,7 +303,22 @@
                         <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
                     </div>
                 </div>
+<div id="contenedorAnalisis" class="hidden mt-6 pt-6 border-t-2 border-slate-100 animate-fadeIn">
+    <h3 class="text-center font-black text-indigo-900 uppercase text-sm mb-4 tracking-widest">📊 Análisis Estratégico Mensual</h3>
+    
+    <div id="gridAnalisis" class="grid grid-cols-2 gap-3 mb-4">
+        </div>
 
+    <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 mb-6">
+        <p class="text-[10px] font-bold uppercase text-indigo-600 mb-2">Desempeño de Equipo</p>
+        <div id="analisisDoctores" class="space-y-2">
+            </div>
+    </div>
+</div>
+
+<button onclick="generarAnalisisCompleto()" class="w-full mb-4 bg-indigo-600 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-all uppercase text-xs">
+    📈 Generar Análisis Inteligente
+</button>
                 <div class="flex flex-col gap-2">
                     <button onclick="cargarReporte()" class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
                         🔄 Actualizar Balance
@@ -1646,7 +1661,97 @@ window.inyectarInsumosMaestros = async () => {
         alert("Error de Firebase: " + e.message);
     }
 };
+    window.generarAnalisisCompleto = async () => {
+    const contenedor = document.getElementById('contenedorAnalisis');
+    const grid = document.getElementById('gridAnalisis');
+    const listaDocs = document.getElementById('analisisDoctores');
+    
+    // 1. Iniciando motores
+    grid.innerHTML = "<p class='col-span-2 text-center text-xs animate-pulse text-indigo-500'>Analizando bitácora de vuelo...</p>";
+    contenedor.classList.remove('hidden');
+
+    try {
+        // Obtenemos el mes y año actual para filtrar
+        const ahora = new Date();
+        const mesActual = ahora.getMonth(); // 0-11
+        const anioActual = ahora.getFullYear();
+
+        const q = query(collection(db, "consultas"), orderBy("fecha", "desc"));
+        const snap = await getDocs(q);
+        
+        let stats = {
+            ingreso: 0, costos: 0, pacientes: 0,
+            darwinVenta: 0, joanVenta: 0,
+            servicios: { Vacunas: 0, Laboratorio: 0, Otros: 0 }
+        };
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const fechaDoc = d.fecha?.toDate ? d.fecha.toDate() : new Date();
+
+            // Solo procesamos lo que pertenece a este mes
+            if (fechaDoc.getMonth() === mesActual && fechaDoc.getFullYear() === anioActual) {
+                const venta = parseFloat(d.montoVenta || 0);
+                const costo = parseFloat(d.costoInsumosTotal || 0);
+                
+                stats.ingreso += venta;
+                stats.costos += costo;
+                stats.pacientes++;
+
+                if (d.doctor === "Darwin Sandoval") stats.darwinVenta += venta;
+                if (d.doctor === "Joan Silva") stats.joanVenta += venta;
+
+                // Clasificación inteligente por palabras clave
+                const t = (d.tratamiento || "").toUpperCase();
+                if (t.includes("VACUNA") || t.includes("KC") || t.includes("SEX")) stats.servicios.Vacunas++;
+                else if (t.includes("HEMATO") || t.includes("LAB") || t.includes("PERFIL")) stats.servicios.Laboratorio++;
+                else stats.servicios.Otros++;
+            }
+        });
+
+        const utilidadBruta = stats.ingreso - stats.costos;
+        const ticketPromedio = stats.ingreso / (stats.pacientes || 1);
+        const servicioEstrella = Object.keys(stats.servicios).reduce((a, b) => stats.servicios[a] > stats.servicios[b] ? a : b);
+
+        // 2. Renderizado del Dashboard (Tarjetas de precisión)
+        grid.innerHTML = `
+            <div class="p-3 bg-white border border-slate-100 rounded-xl shadow-sm text-center">
+                <p class="text-[9px] font-bold text-slate-400 uppercase">Ticket Promedio</p>
+                <p class="text-lg font-black text-slate-700">$${ticketPromedio.toFixed(2)}</p>
+            </div>
+            <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl shadow-sm text-center">
+                <p class="text-[9px] font-bold text-emerald-600 uppercase">Utilidad Real</p>
+                <p class="text-lg font-black text-emerald-700">$${utilidadBruta.toFixed(2)}</p>
+            </div>
+            <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm text-center">
+                <p class="text-[9px] font-bold text-indigo-400 uppercase">Servicio Top</p>
+                <p class="text-[11px] font-black text-indigo-700 truncate px-1">${servicioEstrella}</p>
+            </div>
+            <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl shadow-sm text-center">
+                <p class="text-[9px] font-bold text-slate-400 uppercase">Margen Neta</p>
+                <p class="text-lg font-black text-slate-700">${stats.ingreso > 0 ? ((utilidadBruta/stats.ingreso)*100).toFixed(0) : 0}%</p>
+            </div>
+        `;
+
+        // 3. Desglose de Doctores
+        listaDocs.innerHTML = `
+            <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-600">👨‍⚕️ Dr. Darwin:</span>
+                <span class="font-black text-indigo-800 bg-white px-2 py-1 rounded-md shadow-sm">$${stats.darwinVenta.toFixed(2)}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs pt-1">
+                <span class="font-bold text-slate-600">👩‍⚕️ Dra. Joan:</span>
+                <span class="font-black text-indigo-800 bg-white px-2 py-1 rounded-md shadow-sm">$${stats.joanVenta.toFixed(2)}</span>
+            </div>
+        `;
+
+    } catch (e) {
+        console.error("Error en Análisis:", e);
+        grid.innerHTML = "<p class='col-span-2 text-red-500 text-[10px] text-center'>Error al procesar el mes actual.</p>";
+    }
+};
 </script>
+
 
 
 
