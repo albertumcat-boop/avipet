@@ -1347,7 +1347,55 @@ window.inyectarInsumosMaestros = async () => {
         alert("Fallo la carga: " + e.message);
     }
 };
+    window.inyectarTodoElCatalogoInsumos = async () => {
+    if (!confirm("🚀 ¿Deseas inyectar TODOS los insumos (Fijos, Vacunas y Recetas) a la nube?")) return;
+
+    try {
+        console.log("⚓ Iniciando carga total de insumos...");
+
+        // 1. Inyectar Insumos Médicos Fijos
+        for (const ins of insumosFijosMedicos) {
+            await setDoc(doc(db, "insumos_maestro", ins.nombre), {
+                costo: ins.costo,
+                tipo: "Fijo Médico",
+                ultimaActualizacion: serverTimestamp()
+            }, { merge: true });
+        }
+
+        // 2. Inyectar Insumos Base Vacuna
+        for (const ins of insumosBaseVacuna) {
+            await setDoc(doc(db, "insumos_maestro", ins.nombre), {
+                costo: ins.costo,
+                tipo: "Base Vacuna",
+                ultimaActualizacion: serverTimestamp()
+            }, { merge: true });
+        }
+
+        // 3. Inyectar Insumos específicos de las Recetas
+        // Nota: Esto extrae los materiales únicos que están dentro de cada servicio
+        for (const [servicio, data] of Object.entries(recetas)) {
+            if (data.insumos) {
+                for (const item of data.insumos) {
+                    await setDoc(doc(db, "insumos_maestro", item.nombre), {
+                        costo: item.costo,
+                        tipo: `Variable (${servicio})`,
+                        ultimaActualizacion: serverTimestamp()
+                    }, { merge: true });
+                }
+            }
+        }
+
+        console.log("✅ ¡Sincronización completa de insumos!");
+        alert("¡ÉXITO! Toda la estructura de costos está en Firebase.");
+        if (window.renderizarTablaInsumos) window.renderizarTablaInsumos();
+
+    } catch (e) {
+        console.error("❌ Error en la inyección:", e);
+        alert("Error de conexión: " + e.message);
+    }
+};
 </script>
+
 
 
 
