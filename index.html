@@ -669,19 +669,58 @@ const recetas = {
     document.getElementById('selectorServicios').value = "";
 };
 
-    window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
-        if (event) event.preventDefault();
-        if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
-        document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
-        const filaTitulo = document.querySelector(`[data-grupo="${idGrupo}"]`);
-        if (filaTitulo) filaTitulo.remove();
-        const inputPrecioVenta = document.getElementById('precioVenta');
-        if (inputPrecioVenta) {
-            const actual = parseFloat(inputPrecioVenta.value) || 0;
-            inputPrecioVenta.value = Math.max(0, actual - precioARestar).toFixed(2);
+   window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
+    if (event) event.preventDefault();
+    if (!confirm("¿Eliminar este servicio y sus insumos?")) return;
+
+    // 1. Identificar qué servicio estamos borrando antes de quitarlo
+    const filaTitulo = document.querySelector(`[data-grupo="${idGrupo}"]`);
+    if (filaTitulo) {
+        const nombreBorrando = filaTitulo.innerText.toUpperCase();
+        // Quitamos el servicio del array de control para que la lógica de combo se actualice
+        const index = serviciosEnLista.findIndex(s => nombreBorrando.includes(normalizarNombre(s).toUpperCase()));
+        if (index !== -1) serviciosEnLista.splice(index, 1);
+        
+        filaTitulo.remove();
+    }
+
+    // 2. Borrar insumos asociados
+    document.querySelectorAll('.' + idGrupo).forEach(el => el.remove());
+
+    // 3. RE-EVALUACIÓN DE PRECIOS (La "Soldadura" de retorno)
+    const filasRestantes = document.querySelectorAll('.servicio-principal');
+    
+    // Si solo queda un servicio, verificamos si debe volver a precio normal
+    if (filasRestantes.length === 1) {
+        const filaQueda = filasRestantes[0];
+        const textoQueda = filaQueda.innerText.toUpperCase();
+        
+        // Si quedó la KC sola -> vuelve a 45
+        if (textoQueda.includes("VACUNAKC")) {
+            filaQueda.setAttribute('data-precio', 45);
+            filaQueda.querySelector('td').innerHTML = filaQueda.querySelector('td').innerHTML
+                .replace("40.00", "45.00")
+                .replace("(COMBO)", "");
         }
-        await window.calcularTodo();
-    };
+        // Si quedó Hematología sola -> vuelve a 23
+        else if (textoQueda.includes("HEMATOLOGIA")) {
+            filaQueda.setAttribute('data-precio', 23);
+            filaQueda.querySelector('td').innerHTML = filaQueda.querySelector('td').innerHTML
+                .replace("20.00", "23.00")
+                .replace("(COMBO)", "");
+        }
+    }
+
+    // 4. Actualizar el input de precio (respetando tu lógica original)
+    const inputPrecioVenta = document.getElementById('precioVenta');
+    if (inputPrecioVenta) {
+        const actual = parseFloat(inputPrecioVenta.value) || 0;
+        inputPrecioVenta.value = Math.max(0, actual - precioARestar).toFixed(2);
+    }
+
+    // 5. Recalcular todo para actualizar comisiones de Darwin/Joan
+    await window.calcularTodo();
+};
 
     window.agregarInsumoManual = () => {
         const n = document.getElementById('nombreExtra');
@@ -1553,6 +1592,7 @@ window.inyectarInsumosMaestros = async () => {
     }
 };
 </script>
+
 
 
 
