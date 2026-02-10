@@ -1351,12 +1351,15 @@ window.inyectarInsumosMaestros = async () => {
     window.inyectarTodoElCatalogoInsumos = async () => {
     if (!confirm("🚀 ¿Deseas inyectar TODOS los insumos (Fijos, Vacunas y Recetas) a la nube?")) return;
 
+    // Función interna para limpiar nombres de documentos (prohibido usar / en el ID)
+    const limpiarNombre = (n) => n.split('/').join(' - ');
+
     try {
-        console.log("⚓ Iniciando carga total de insumos...");
+        console.log("⚓ Iniciando carga total de insumos (blindada)...");
 
         // 1. Inyectar Insumos Médicos Fijos
         for (const ins of insumosFijosMedicos) {
-            await setDoc(doc(db, "insumos_maestro", ins.nombre), {
+            await setDoc(doc(db, "insumos_maestro", limpiarNombre(ins.nombre)), {
                 costo: ins.costo,
                 tipo: "Fijo Médico",
                 ultimaActualizacion: serverTimestamp()
@@ -1365,7 +1368,7 @@ window.inyectarInsumosMaestros = async () => {
 
         // 2. Inyectar Insumos Base Vacuna
         for (const ins of insumosBaseVacuna) {
-            await setDoc(doc(db, "insumos_maestro", ins.nombre), {
+            await setDoc(doc(db, "insumos_maestro", limpiarNombre(ins.nombre)), {
                 costo: ins.costo,
                 tipo: "Base Vacuna",
                 ultimaActualizacion: serverTimestamp()
@@ -1373,11 +1376,10 @@ window.inyectarInsumosMaestros = async () => {
         }
 
         // 3. Inyectar Insumos específicos de las Recetas
-        // Nota: Esto extrae los materiales únicos que están dentro de cada servicio
         for (const [servicio, data] of Object.entries(recetas)) {
             if (data.insumos) {
                 for (const item of data.insumos) {
-                    await setDoc(doc(db, "insumos_maestro", item.nombre), {
+                    await setDoc(doc(db, "insumos_maestro", limpiarNombre(item.nombre)), {
                         costo: item.costo,
                         tipo: `Variable (${servicio})`,
                         ultimaActualizacion: serverTimestamp()
@@ -1386,16 +1388,17 @@ window.inyectarInsumosMaestros = async () => {
             }
         }
 
-        console.log("✅ ¡Sincronización completa de insumos!");
+        console.log("✅ ¡Sincronización completa sin errores de ruta!");
         alert("¡ÉXITO! Toda la estructura de costos está en Firebase.");
         if (window.renderizarTablaInsumos) window.renderizarTablaInsumos();
 
     } catch (e) {
         console.error("❌ Error en la inyección:", e);
-        alert("Error de conexión: " + e.message);
+        alert("Error de Firebase: " + e.message);
     }
 };
 </script>
+
 
 
 
