@@ -323,7 +323,6 @@
         <select id="selectorMedicamentos" class="menu-desplegable"
                 onchange="window.agregarMedicamento(this.value)">
           <option value="">-- SELECCIONE UN MEDICAMENTO --</option>
-          <option value="Avipet">Avipet</option>
           <option value="Piroyet">Piroyet</option>
           <option value="Enrofloxacina">Enrofloxacina</option>
           <option value="Sulfatrim">Sulfatrim</option>
@@ -817,7 +816,6 @@
     </button>
   </div>
 </section>
-BLOQUE 3 (INICIO SCRIPT: CONFIGURACIONES, SERVICIOS, INSUMOS, MÉDICOS, INSERCIÓN SERVICIOS, INSUMOS, CÁLCULOS, BUSCADOR, AUTOCOMPLETAR, ESPERA)
 <script type="module">
   import { db } from './firebase-config.js';
   import {
@@ -895,39 +893,34 @@ BLOQUE 3 (INICIO SCRIPT: CONFIGURACIONES, SERVICIOS, INSUMOS, MÉDICOS, INSERCI�
     { nombre: "Crema", costo: 0.10 }
   ];
 
-  // NUEVO: CONFIGURACIÓN DE MEDICAMENTOS
   const CONFIG_MEDICAMENTOS = {
-    "Avipet": { tipo: "porcentaje", porcAvipet: 60 },
-    "Piroyet": { gananciaAvipet: 10 },
-    "Enrofloxacina": { gananciaAvipet: 5 },
-    "Sulfatrim": { gananciaAvipet: 5 },
-    "Dexametasona": { gananciaAvipet: 4 },
-    "Carprofen": { gananciaAvipet: 10 },
-    "Flunixin": { gananciaAvipet: 5 },
-    "Metadol": { gananciaAvipet: 5 },
-    "Complejo B": { gananciaAvipet: 5 },
-    "Suero hiperinmune": { gananciaAvipetPorMl: 10 },
-    "Bromuro de hioscina": { gananciaAvipet: 10 },
-    "Fenobarbital": { gananciaAvipet: 5 },
-    "Gastrine": { gananciaAvipet: 7 },
-    "Ranitidina": { gananciaAvipet: 5 },
-    "Metoclopramida": { gananciaAvipet: 5 },
-    "Furosemina": { gananciaAvipet: 5 },
-    "Vit K": { gananciaAvipet: 5 },
-    "Eritrogen": { gananciaAvipet: 5 },
-    "Aminovit": { gananciaAvipet: 10 },
-    "Oxitetraciclina": { gananciaAvipet: 5 },
-    "Pimobendan": { gananciaAvipet: 0 },
-    "Ceftriaxona": { gananciaAvipet: 12 },
-    "Adrenalina / Epin": { gananciaAvipet: 14 },
-    "Artrosan": { gananciaAvipet: 20 },
-    "Lisavac": { gananciaAvipet: 5 },
-    "Soroglobulin": { gananciaAvipet: 25 },
-    "Infervac": { gananciaAvipet: 0 }
-  };
-
-  // Acumulador de ganancia por medicamentos
-  let totalGananciaMedicamentos = 0;
+  "Piroyet":           { precioCliente: 10 },
+  "Enrofloxacina":     { precioCliente: 5  },
+  "Sulfatrim":         { precioCliente: 5  },
+  "Dexametasona":      { precioCliente: 4  },
+  "Carprofen":         { precioCliente: 10 },
+  "Flunixin":          { precioCliente: 5  },
+  "Metadol":           { precioCliente: 5  },
+  "Complejo B":        { precioCliente: 5  },
+  "Suero hiperinmune": { precioClientePorMl: 10 },
+  "Bromuro de hioscina": { precioCliente: 10 },
+  "Fenobarbital":      { precioCliente: 5  },
+  "Gastrine":          { precioCliente: 7  },
+  "Ranitidina":        { precioCliente: 5  },
+  "Metoclopramida":    { precioCliente: 5  },
+  "Furosemina":        { precioCliente: 5  },
+  "Vit K":             { precioCliente: 5  },
+  "Eritrogen":         { precioCliente: 5  },
+  "Aminovit":          { precioCliente: 10 },
+  "Oxitetraciclina":   { precioCliente: 5  },
+  "Pimobendan":        { precioCliente: 0  },
+  "Ceftriaxona":       { precioCliente: 12 },
+  "Adrenalina / Epin": { precioCliente: 14 },
+  "Artrosan":          { precioCliente: 20 }, // 20 $ por 1 ml (1 ml x 20kg)
+  "Lisavac":           { precioCliente: 5  }, // 5 $ por 1 ml (1 ml x kg)
+  "Soroglobulin":      { precioCliente: 25 },
+  "Infervac":          { precioCliente: 0  }
+};
 
   const recetas = {
     "CONSULTA GENERAL": {
@@ -1184,28 +1177,51 @@ BLOQUE 3 (INICIO SCRIPT: CONFIGURACIONES, SERVICIOS, INSUMOS, MÉDICOS, INSERCI�
   };
 
   window.solicitarCambioPinDoctor = async () => {
-    const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
-    if (!nombreDoc) return;
+  const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
+  if (!nombreDoc) return;
 
-    const pinActual = prompt("Ingrese su PIN actual o Llave Maestra para validar:");
-    if (!pinActual) return;
+  // SOLO valida con llave maestra o PIN administrativo de seguridad,
+  // NO pide el PIN anterior del doctor (porque se olvidó).
+  const claveAdmin = prompt("🔐 Recuperación de PIN\nIngrese la Llave Maestra o PIN administrativo:");
+  if (!claveAdmin) return;
 
-    const esValido = await window.validarDoctorPerfil(nombreDoc, pinActual);
+  // MASTER_KEY siempre es válida
+  if (claveAdmin === MASTER_KEY) {
+    const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
+    if (nuevoPin && nuevoPin.length >= 4) {
+      await setDoc(
+        doc(db, "doctores", nombreDoc),
+        { pin: nuevoPin },
+        { merge: true }
+      );
+      alert(`✅ PIN de ${nombreDoc} actualizado por recuperación (Llave Maestra).`);
+    }
+    return;
+  }
 
-    if (esValido) {
-      const nuevoPin = prompt("Ingrese su NUEVO PIN (4 dígitos):");
+  // Opcional: también puedes permitir usar el PIN administrativo de "configuracion/seguridad"
+  try {
+    const snapSeg = await getDoc(doc(db, "configuracion", "seguridad"));
+    const pinAdmin = snapSeg.exists() ? (snapSeg.data().pin || "AVIPET2026") : "AVIPET2026";
+
+    if (claveAdmin === pinAdmin) {
+      const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
       if (nuevoPin && nuevoPin.length >= 4) {
         await setDoc(
           doc(db, "doctores", nombreDoc),
           { pin: nuevoPin },
           { merge: true }
         );
-        alert(`✅ PIN de ${nombreDoc} actualizado.`);
+        alert(`✅ PIN de ${nombreDoc} actualizado por administrador.`);
       }
     } else {
-      alert("🚫 Validación incorrecta.");
+      alert("🚫 Clave administrativa incorrecta.");
     }
-  };
+  } catch (e) {
+    console.error("Error validando clave admin:", e);
+    alert("❌ Error al validar clave administrativa.");
+  }
+};
 
   // =========================================================
   // [04] VALIDAR DOCTOR
@@ -1417,50 +1433,116 @@ BLOQUE 3 (INICIO SCRIPT: CONFIGURACIONES, SERVICIOS, INSUMOS, MÉDICOS, INSERCI�
     document.getElementById('selectorServicios').value = "";
   };
 
-  // =========================================================
-  // [NUEVO] AGREGAR MEDICAMENTOS
-  // =========================================================
-  window.agregarMedicamento = (nombreMed) => {
-    if (!nombreMed) return;
-    const cfg = CONFIG_MEDICAMENTOS[nombreMed];
-    if (!cfg) return;
+ window.agregarMedicamento = (nombreMed) => {
+  if (!nombreMed) return;
+  const cfg = CONFIG_MEDICAMENTOS[nombreMed];
+  if (!cfg) return;
 
-    let ganancia = 0;
-    let descripcion = nombreMed;
+  let precioCliente = 0;
+  let descripcion = nombreMed;
 
-    if (nombreMed === "Suero hiperinmune") {
-      const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
-      if (!ml || isNaN(ml)) {
-        document.getElementById('selectorMedicamentos').value = "";
-        return;
-      }
-      const cantMl = parseFloat(ml);
-      ganancia = (cfg.gananciaAvipetPorMl || 0) * cantMl;
-      descripcion += ` (${cantMl} ml)`;
-    } else if (cfg.tipo === "porcentaje") {
-      const monto = prompt(`Ingrese el monto cobrado por ${nombreMed} para calcular 60% Avipet:`);
-      if (!monto || isNaN(monto)) {
-        document.getElementById('selectorMedicamentos').value = "";
-        return;
-      }
-      const m = parseFloat(monto);
-      ganancia = m * (cfg.porcAvipet / 100);
-      descripcion += ` (60% Avipet de $${m.toFixed(2)})`;
-    } else {
-      ganancia = cfg.gananciaAvipet || 0;
+  // SUERO HIPERINMUNE: por ml
+  if (nombreMed === "Suero hiperinmune") {
+    const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
+    if (!ml || isNaN(ml) || parseFloat(ml) <= 0) {
+      document.getElementById('selectorMedicamentos').value = "";
+      return;
     }
+    const cantMl = parseFloat(ml);
+    precioCliente = (cfg.precioClientePorMl || 0) * cantMl;
+    descripcion  += ` (${cantMl} ml)`;
 
-    totalGananciaMedicamentos += ganancia;
-
-    const area = document.getElementById('hTratamiento');
-    if (area) {
-      area.value += (area.value ? "\n" : "") + `=> MEDICAMENTO: ${descripcion} [Avipet +$${ganancia.toFixed(2)}]`;
-      document.getElementById('hTratamientoPrint').innerText = area.value;
+  // ARTROSAN: 1 ml cada 20 kg
+  } else if (nombreMed === "Artrosan") {
+    const kg = prompt("Ingrese el peso del paciente (kg) para Artrosan (1 ml cada 20 kg):");
+    if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
+      document.getElementById('selectorMedicamentos').value = "";
+      return;
     }
+    const pesoKg = parseFloat(kg);
+    const mlNecesarios = pesoKg / 20; // 1 ml / 20 kg
+    precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
+    descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
 
-    document.getElementById('selectorMedicamentos').value = "";
-  };
+  // LISAVAC: 1 ml por kg
+  } else if (nombreMed === "Lisavac") {
+    const kg = prompt("Ingrese el peso del paciente (kg) para Lisavac (1 ml por kg):");
+    if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
+      document.getElementById('selectorMedicamentos').value = "";
+      return;
+    }
+    const pesoKg = parseFloat(kg);
+    const mlNecesarios = pesoKg; // 1 ml x kg
+    precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
+    descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
 
+  // RESTO: monto fijo
+  } else {
+    precioCliente = cfg.precioCliente || 0;
+  }
+
+  // Sumar al monto total a cobrar
+  const inputVenta = document.getElementById('precioVenta');
+  const montoActual = parseFloat(inputVenta.value) || 0;
+  const nuevoMonto  = montoActual + precioCliente;
+  inputVenta.value  = nuevoMonto.toFixed(2);
+
+  // Anotar en el tratamiento como texto
+  const area = document.getElementById('hTratamiento');
+  if (area) {
+    area.value += (area.value ? "\n" : "") +
+      `=> MEDICAMENTO: ${descripcion} ($${precioCliente.toFixed(2)})`;
+    document.getElementById('hTratamientoPrint').innerText = area.value;
+  }
+
+  // AGREGAR INSUMOS BÁSICOS (jeringa, alcohol, algodón) como insumos del último servicio
+  const cuerpo = document.getElementById('listaInsumosDinamica');
+  document.getElementById('contenedorInsumos').classList.remove('hidden');
+
+  const todasLasFilasServicios = document.querySelectorAll('.servicio-principal');
+  const ultimoGrupo =
+    todasLasFilasServicios.length > 0
+      ? todasLasFilasServicios[todasLasFilasServicios.length - 1].getAttribute('data-grupo')
+      : "medicamentos";
+
+  const insumosMedicamento = [
+    { nombre: "Jeringa para medicamento", costo: 0.50 },
+    { nombre: "Algodón para medicamento", costo: 0.10 },
+    { nombre: "Alcohol para medicamento", costo: 0.10 }
+  ];
+
+  insumosMedicamento.forEach(insumo => {
+    const tr = document.createElement('tr');
+    tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrupo}`;
+    tr.innerHTML = `
+      <td class="p-2 font-bold text-[11px] italic">
+        ➕ ${insumo.nombre.toUpperCase()}
+      </td>
+      <td class="p-2 text-center">
+        <input type="number" value="1"
+               oninput="window.calcularTodo()"
+               class="i-cant w-12 text-center border rounded">
+      </td>
+      <td class="p-2 text-center">
+        <input type="number"
+               value="${insumo.costo.toFixed(2)}"
+               step="0.01"
+               oninput="window.calcularTodo()"
+               class="i-cost w-16 text-center border rounded">
+      </td>
+      <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
+          onclick="this.parentElement.remove(); window.calcularTodo()">
+        ✕
+      </td>`;
+    cuerpo.appendChild(tr);
+  });
+
+  // Recalcular costos de insumos y comisión doctor (40%) según tu motor
+  window.calcularTodo();
+
+  // Reset selector
+  document.getElementById('selectorMedicamentos').value = "";
+};
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -2295,27 +2377,24 @@ BLOQUE 3 (INICIO SCRIPT: CONFIGURACIONES, SERVICIOS, INSUMOS, MÉDICOS, INSERCI�
       });
 
       const dataConsulta = {
-        cedula: dInput('hCI'),
-        propietario: dInput('hProp'),
-        paciente: dInput('hNombre'),
-        doctor: doctorVerificado,
-        tratamiento: dInput('hTratamiento'),
-        montoVenta: montoVentaTotal,
-        montoInsumos: totalGastos,
-        costoInsumosTotal: totalGastos,
-        pagoDoctor: pagoDoctorTotal,
-        pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal) + totalGananciaMedicamentos,
-        gananciaMedicamentos: totalGananciaMedicamentos,
-        listaDetalladaInsumos: detalleInsumos,
-        fecha: serverTimestamp(),
-        fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
-        alerta: !!document.getElementById('hAlerta')?.checked,
-        color: dInput('hColor')
-      };
+  cedula: dInput('hCI'),
+  propietario: dInput('hProp'),
+  paciente: dInput('hNombre'),
+  doctor: doctorVerificado,
+  tratamiento: dInput('hTratamiento'),
+  montoVenta: montoVentaTotal,
+  montoInsumos: totalGastos,
+  costoInsumosTotal: totalGastos,
+  pagoDoctor: pagoDoctorTotal,
+  pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+  listaDetalladaInsumos: detalleInsumos,
+  fecha: serverTimestamp(),
+  fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+  alerta: !!document.getElementById('hAlerta')?.checked,
+  color: dInput('hColor')
+};
 
-      await addDoc(collection(db, "consultas"), dataConsulta);
-      // Reiniciar acumulador de medicamentos para la siguiente consulta
-      totalGananciaMedicamentos = 0;
+await addDoc(collection(db, "consultas"), dataConsulta);
 
       if (imp) {
         const tArea = document.getElementById('hTratamientoPrint');
@@ -2848,6 +2927,7 @@ BLOQUE 3 (INICIO SCRIPT: CONFIGURACIONES, SERVICIOS, INSUMOS, MÉDICOS, INSERCI�
 
 </body>
 </html> 
+
 
 
 
