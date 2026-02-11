@@ -209,7 +209,8 @@
             <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
             <input id="hPeso" class="border-b w-full">
           </div>
-          <div class="grid grid-cols-2 gap-1">
+          <!-- AJUSTADO: 3 columnas EDAD / SEXO / COLOR -->
+          <div class="grid grid-cols-3 gap-1">
             <div>
               <label class="text-[9px] font-bold text-slate-400">EDAD</label>
               <input id="hEdad" class="border-b w-full uppercase">
@@ -217,6 +218,10 @@
             <div>
               <label class="text-[9px] font-bold text-slate-400">SEXO</label>
               <input id="hSexo" class="border-b w-full uppercase">
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-400">COLOR</label>
+              <input id="hColor" class="border-b w-full uppercase">
             </div>
           </div>
         </div>
@@ -270,6 +275,8 @@
             <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
             <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
             <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+            <!-- NUEVO SERVICIO -->
+            <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
           </optgroup>
           <optgroup label="💉 VACUNAS">
             <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
@@ -308,9 +315,46 @@
             <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
           </optgroup>
         </select>
+
+        <!-- NUEVO: LISTA DESPLEGABLE DE MEDICAMENTOS -->
+        <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
+          Añadir Medicamentos (Ganancia Fija Avipet):
+        </label>
+        <select id="selectorMedicamentos" class="menu-desplegable"
+                onchange="window.agregarMedicamento(this.value)">
+          <option value="">-- SELECCIONE UN MEDICAMENTO --</option>
+          <option value="Avipet">Avipet</option>
+          <option value="Piroyet">Piroyet</option>
+          <option value="Enrofloxacina">Enrofloxacina</option>
+          <option value="Sulfatrim">Sulfatrim</option>
+          <option value="Dexametasona">Dexametasona</option>
+          <option value="Carprofen">Carprofen</option>
+          <option value="Flunixin">Flunixin</option>
+          <option value="Metadol">Metadol</option>
+          <option value="Complejo B">Complejo B</option>
+          <option value="Suero hiperinmune">Suero hiperinmune (por ml)</option>
+          <option value="Bromuro de hioscina">Bromuro de hioscina</option>
+          <option value="Fenobarbital">Fenobarbital</option>
+          <option value="Gastrine">Gastrine</option>
+          <option value="Ranitidina">Ranitidina</option>
+          <option value="Metoclopramida">Metoclopramida</option>
+          <option value="Furosemina">Furosemina</option>
+          <option value="Vit K">Vit K</option>
+          <option value="Eritrogen">Eritrogen</option>
+          <option value="Aminovit">Aminovit</option>
+          <option value="Oxitetraciclina">Oxitetraciclina</option>
+          <option value="Pimobendan">Pimobendan</option>
+          <option value="Ceftriaxona">Ceftriaxona</option>
+          <option value="Adrenalina / Epin">Adrenalina / Epin</option>
+          <option value="Artrosan">Artrosan 1 ml x 20kg</option>
+          <option value="Lisavac">Lisavac 1 ml x kg</option>
+          <option value="Soroglobulin">Soroglobulin</option>
+          <option value="Infervac">Infervac</option>
+        </select>
+
       </div>
       <textarea id="hTratamiento"
-                class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none"
+          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none"
                 placeholder="Escriba aquí el diagnóstico..."
                 oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
       <div id="hTratamientoPrint"
@@ -387,7 +431,6 @@
       ➕ Enviar a Cola de Espera
     </button>
   </section>
-
   <!-- ========== BUSCADOR ========== -->
   <section id="sectionBuscador" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 max-w-2xl mx-auto">
@@ -446,7 +489,7 @@
         </div>
       </div>
 
-      <!-- Bloque análisis inteligente (igual que ya tenías) -->
+      <!-- Bloque análisis inteligente -->
       <div id="contenedorAnalisis"
            class="hidden mt-6 pt-6 border-t-2 border-slate-100 animate-fadeIn">
         <h3 class="text-center font-black text-indigo-900 uppercase text-sm mb-4 tracking-widest">
@@ -511,7 +554,7 @@
       </div>
 
       <div id="bannerSincro"
-           class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
+           class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items.center justify-between gap-4">
         <div class="flex-1">
           <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
           <p class="text-[9px] text-orange-400">
@@ -589,7 +632,193 @@
     </button>
   </div>
 </section>
-  <script type="module">
+
+  <!-- ========== REPORTE / CAJA ========== -->
+  <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
+      <h2 class="font-black text-center mb-2 uppercase text-slate-700 text-2xl tracking-tighter">
+        Gestión de Caja Diaria
+      </h2>
+
+      <div class="text-center mb-4">
+        <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-bold uppercase border border-slate-200">
+          Pacientes: <span id="totalPacientes" class="text-slate-800">0</span>
+        </span>
+      </div>
+
+      <div id="listaReporte"
+           class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
+
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+          <p class="text-[10px] font-bold uppercase text-slate-400">Bruto Total</p>
+          <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
+        </div>
+        <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400">
+          <p class="text-[10px] font-bold uppercase text-amber-600">Costos Operativos</p>
+          <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono">$0.00</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-400 col-span-2 space-y-2">
+          <div class="flex justify-between items-center border-b border-blue-100 pb-1">
+            <span class="text-[11px] font-black uppercase text-blue-800">Dr. Darwin Sandoval:</span>
+            <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
+          </div>
+          <div class="flex justify-between items-center pt-1">
+            <span class="text-[11px] font-black uppercase text-blue-800">Dra. Joan Silva:</span>
+            <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
+          </div>
+        </div>
+        <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-sm">
+          <p class="text-[10px] font-bold uppercase text-emerald-600">Utilidad Neta (Avipet)</p>
+          <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
+        </div>
+      </div>
+
+      <!-- Bloque análisis inteligente -->
+      <div id="contenedorAnalisis"
+           class="hidden mt-6 pt-6 border-t-2 border-slate-100 animate-fadeIn">
+        <h3 class="text-center font-black text-indigo-900 uppercase text-sm mb-4 tracking-widest">
+          📊 Análisis Estratégico Mensual
+        </h3>
+        <div id="gridAnalisis" class="grid grid-cols-2 gap-3 mb-4"></div>
+        <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 mb-6">
+          <p class="text-[10px] font-bold uppercase text-indigo-600 mb-2">Desempeño de Equipo</p>
+          <div id="analisisDoctores" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <button onclick="generarAnalisisCompleto && generarAnalisisCompleto()"
+              class="w-full mb-4 bg-indigo-600 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-all uppercase text-xs">
+        📈 Generar Análisis Inteligente
+      </button>
+      <div class="flex flex-col gap-2">
+        <button onclick="cargarReporte()"
+                class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
+          🔄 Actualizar Balance
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="descargarReporte && descargarReporte()"
+                  class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
+            📥 Descargar TXT
+          </button>
+          <button onclick="guardarResumenDelDia && guardarResumenDelDia()"
+                  class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
+            💾 Guardar en Nube
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CONFIG PRECIOS ========== -->
+  <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
+      <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">
+        🛠 Panel de Control Maestro
+      </h2>
+      <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">
+        Gestión de Tarifas, Comisiones y Costos de Materiales
+      </p>
+
+      <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+        <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ"
+                class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
+          💉 Servicios y Ganancias
+        </button>
+        <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns"
+                class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
+          📦 Costo de Insumos
+        </button>
+      </div>
+
+      <div id="areaBtnAgregarInsumo" class="hidden mb-4 flex justify-end">
+        <button onclick="window.agregarInsumoNuevoManual()"
+                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md font-black text-[10px] uppercase transition-all">
+          ➕ Agregar Insumo Nuevo
+        </button>
+      </div>
+
+      <div id="bannerSincro"
+           class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items.center justify-between gap-4">
+        <div class="flex-1">
+          <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
+          <p class="text-[9px] text-orange-400">
+            Usa esto solo para subir los datos del código a la nube por primera vez.
+          </p>
+        </div>
+        <button onclick="window.inicializarBaseDeDatosCompleta()"
+                class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
+          🚀 Sincronizar Todo
+        </button>
+      </div>
+
+      <div id="contenedorTabServicios"
+           class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+        <table class="w-full text-left text-[12px]">
+          <thead>
+          <tr class="text-blue-900 font-black uppercase text-[10px]">
+            <th class="p-3">Servicio / Tratamiento</th>
+            <th class="p-3 w-28 text-center">Precio ($)</th>
+            <th class="p-3 w-28 text-center">Doc (%)</th>
+            <th class="p-3 w-24 text-center">Acción</th>
+          </tr>
+          </thead>
+          <tbody id="tablaMaestraServicios" class="bg-white divide-y"></tbody>
+        </table>
+      </div>
+
+      <div id="contenedorTabInsumos"
+           class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+        <table class="w-full text-left text-[12px]">
+          <thead>
+          <tr class="text-emerald-900 font-black uppercase text-[10px]">
+            <th class="p-3">Insumo / Material</th>
+            <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
+            <th class="p-3 w-24 text-center">Acción</th>
+          </tr>
+          </thead>
+          <tbody id="tablaMaestraInsumos" class="bg-white divide-y"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SALA DE ESPERA ========== -->
+  <section id="sectionEspera" class="hidden p-4 animate-fadeIn">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-3xl mx-auto">
+      <h2 class="text-xl font-black text-blue-900 mb-4 uppercase">Pacientes en Espera</h2>
+      <div id="listaEspera" class="space-y-2 max-h-80 overflow-y-auto text-[11px]"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- MODAL LOGIN -->
+<section id="modalLogin"
+         class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+  <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-xs w-full border border-slate-200">
+    <h3 class="text-center font-black text-slate-700 uppercase text-sm mb-4">
+      🔐 Acceso Privado
+    </h3>
+        <input type="password" id="inputPass"
+           placeholder="Ingrese PIN"
+           class="w-full p-3 rounded-xl border border-slate-200 mb-2 text-center text-lg font-mono">
+    <button onclick="validarAcceso()"
+            class="w-full bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs mb-3">
+      Entrar
+    </button>
+    <button onclick="recuperarPin()"
+            class="w-full text-slate-400 text-[10px] uppercase font-bold hover:text-indigo-600 transition-colors">
+      He olvidado mi PIN
+    </button>
+    <button onclick="cerrarModalLogin()"
+            class="w-full mt-2 text-red-400 text-[10px] uppercase font-bold">
+      Cancelar
+    </button>
+  </div>
+</section>
+BLOQUE 3 (INICIO SCRIPT: CONFIGURACIONES, SERVICIOS, INSUMOS, MÉDICOS, INSERCIÓN SERVICIOS, INSUMOS, CÁLCULOS, BUSCADOR, AUTOCOMPLETAR, ESPERA)
+<script type="module">
   import { db } from './firebase-config.js';
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
@@ -610,6 +839,7 @@
     "CONSULTA CAMADA 3-4 CACHORROS": { precio: 0, porc: 40 },
     "CONSULTA CAMADA HASTA 8 CACHORROS": { precio: 0, porc: 40 },
     "CONSULTA CAMADA MAS DE 8 CACHORROS": { precio: 0, porc: 40 },
+    "CONSULTA DE EMERGENCIA": { precio: 0, porc: 40 }, // NUEVO
     "ABSCESO": { precio: 0, porc: 50 },
     "ECOGRAFÍA": { precio: 0, porc: 40 },
     "COLOCACION VIA": { precio: 0, porc: 50 },
@@ -665,6 +895,40 @@
     { nombre: "Crema", costo: 0.10 }
   ];
 
+  // NUEVO: CONFIGURACIÓN DE MEDICAMENTOS
+  const CONFIG_MEDICAMENTOS = {
+    "Avipet": { tipo: "porcentaje", porcAvipet: 60 },
+    "Piroyet": { gananciaAvipet: 10 },
+    "Enrofloxacina": { gananciaAvipet: 5 },
+    "Sulfatrim": { gananciaAvipet: 5 },
+    "Dexametasona": { gananciaAvipet: 4 },
+    "Carprofen": { gananciaAvipet: 10 },
+    "Flunixin": { gananciaAvipet: 5 },
+    "Metadol": { gananciaAvipet: 5 },
+    "Complejo B": { gananciaAvipet: 5 },
+    "Suero hiperinmune": { gananciaAvipetPorMl: 10 },
+    "Bromuro de hioscina": { gananciaAvipet: 10 },
+    "Fenobarbital": { gananciaAvipet: 5 },
+    "Gastrine": { gananciaAvipet: 7 },
+    "Ranitidina": { gananciaAvipet: 5 },
+    "Metoclopramida": { gananciaAvipet: 5 },
+    "Furosemina": { gananciaAvipet: 5 },
+    "Vit K": { gananciaAvipet: 5 },
+    "Eritrogen": { gananciaAvipet: 5 },
+    "Aminovit": { gananciaAvipet: 10 },
+    "Oxitetraciclina": { gananciaAvipet: 5 },
+    "Pimobendan": { gananciaAvipet: 0 },
+    "Ceftriaxona": { gananciaAvipet: 12 },
+    "Adrenalina / Epin": { gananciaAvipet: 14 },
+    "Artrosan": { gananciaAvipet: 20 },
+    "Lisavac": { gananciaAvipet: 5 },
+    "Soroglobulin": { gananciaAvipet: 25 },
+    "Infervac": { gananciaAvipet: 0 }
+  };
+
+  // Acumulador de ganancia por medicamentos
+  let totalGananciaMedicamentos = 0;
+
   const recetas = {
     "CONSULTA GENERAL": {
       precioVenta: 30,
@@ -685,6 +949,10 @@
     "CONSULTA CAMADA MAS DE 8 CACHORROS": {
       precioVenta: 100,
       insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }]
+    },
+    "CONSULTA DE EMERGENCIA": {      // NUEVO
+      precioVenta: 40,
+      insumos: [{ nombre: "Crema", costo: 0.50 }]
     },
     "ABSCESO": {
       precioVenta: 25,
@@ -940,7 +1208,7 @@
   };
 
   // =========================================================
-  // [04] VALIDAR DOCTOR (USA validarDoctorConMaster)
+  // [04] VALIDAR DOCTOR
   // =========================================================
   window.validarAccesoDoctor = async (nombre) => {
     if (!nombre) {
@@ -976,7 +1244,7 @@
   };
 
   // =========================================================
-  // [05] INSERTAR SERVICIO (TU LÓGICA ORIGINAL)
+  // [05] INSERTAR SERVICIO
   // =========================================================
   window.insertarServicio = async (v) => {
     if (!v) return;
@@ -1062,6 +1330,18 @@
         } else {
           precioFinal = 23;
         }
+      } else if (vLimpio.includes("vacunaantirrabica")) {
+        // ANTIRRÁBICA: sola 30, en combo con otra vacuna 25
+        const tieneOtraVacuna = serviciosEnLista.some(s => {
+          const n = normalizarNombre(s);
+          return n.includes("vacuna") && !n.includes("antirrabica");
+        });
+        if (tieneOtraVacuna) {
+          precioFinal = 25;
+          nombreFinal += " (Combo)";
+        } else {
+          precioFinal = 30;
+        }
       }
     }
 
@@ -1138,7 +1418,51 @@
   };
 
   // =========================================================
-  // [06] ELIMINAR SERVICIO COMPLETO (LÓGICA ORIGINAL)
+  // [NUEVO] AGREGAR MEDICAMENTOS
+  // =========================================================
+  window.agregarMedicamento = (nombreMed) => {
+    if (!nombreMed) return;
+    const cfg = CONFIG_MEDICAMENTOS[nombreMed];
+    if (!cfg) return;
+
+    let ganancia = 0;
+    let descripcion = nombreMed;
+
+    if (nombreMed === "Suero hiperinmune") {
+      const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
+      if (!ml || isNaN(ml)) {
+        document.getElementById('selectorMedicamentos').value = "";
+        return;
+      }
+      const cantMl = parseFloat(ml);
+      ganancia = (cfg.gananciaAvipetPorMl || 0) * cantMl;
+      descripcion += ` (${cantMl} ml)`;
+    } else if (cfg.tipo === "porcentaje") {
+      const monto = prompt(`Ingrese el monto cobrado por ${nombreMed} para calcular 60% Avipet:`);
+      if (!monto || isNaN(monto)) {
+        document.getElementById('selectorMedicamentos').value = "";
+        return;
+      }
+      const m = parseFloat(monto);
+      ganancia = m * (cfg.porcAvipet / 100);
+      descripcion += ` (60% Avipet de $${m.toFixed(2)})`;
+    } else {
+      ganancia = cfg.gananciaAvipet || 0;
+    }
+
+    totalGananciaMedicamentos += ganancia;
+
+    const area = document.getElementById('hTratamiento');
+    if (area) {
+      area.value += (area.value ? "\n" : "") + `=> MEDICAMENTO: ${descripcion} [Avipet +$${ganancia.toFixed(2)}]`;
+      document.getElementById('hTratamientoPrint').innerText = area.value;
+    }
+
+    document.getElementById('selectorMedicamentos').value = "";
+  };
+
+  // =========================================================
+  // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
   window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
     if (event) event.preventDefault();
@@ -1226,9 +1550,6 @@
     await window.calcularTodo();
   };
 
-  // =========================================================
-  // [07] INSUMO MANUAL
-  // =========================================================
   window.agregarInsumoManual = () => {
     const n = document.getElementById('nombreExtra');
     const c = document.getElementById('costoExtra');
@@ -1468,6 +1789,8 @@
         document.getElementById('hEdad').value = d.edad || "";
         document.getElementById('hSexo').value = d.sexo || "";
         document.getElementById('hPeso').value = d.peso || "";
+        const hColor = document.getElementById('hColor');
+        if (hColor) hColor.value = d.color || "";
       }
     } catch (e) {
       console.error(e);
@@ -1479,20 +1802,21 @@
   // =========================================================
   window.enviarAColaEspera = async () => {
     try {
-      const d = (id) => document.getElementById(id)?.value.trim() || "";
+      const dVal = (id) => document.getElementById(id)?.value.trim() || "";
 
       const dataEspera = {
-        cedula: d('hCI'),
-        propietario: d('hProp'),
-        paciente: d('hNombre'),
-        especie: d('hEspecie'),
-        raza: d('hRaza'),
-        edad: d('hEdad'),
-        sexo: d('hSexo'),
-        peso: d('hPeso'),
-        telefono: d('hTlf'),
-        correo: d('hMail'),
-        direccion: d('hDir'),
+        cedula: dVal('hCI'),
+        propietario: dVal('hProp'),
+        paciente: dVal('hNombre'),
+        especie: dVal('hEspecie'),
+        raza: dVal('hRaza'),
+        edad: dVal('hEdad'),
+        sexo: dVal('hSexo'),
+        peso: dVal('hPeso'),
+        telefono: dVal('hTlf'),
+        correo: dVal('hMail'),
+        direccion: dVal('hDir'),
+        color: dVal('hColor'), // NUEVO
         fechaIngreso: serverTimestamp(),
         fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
         estado: "en_espera"
@@ -1510,7 +1834,8 @@
       alert("❌ Error al enviar a espera: " + e.message);
     }
   };
-    // =========================================================
+
+  // =========================================================
   // [11] REPORTE / CAJA
   // =========================================================
   window.cargarReporte = async () => {
@@ -1599,7 +1924,6 @@
         "<p class='text-center text-red-500 font-bold'>Error de conexión</p>";
     }
   };
-
   // =========================================================
   // [12] PANEL DE CONTROL: SERVICIOS E INSUMOS
   // =========================================================
@@ -1628,7 +1952,7 @@
       }
       if (btnIns) {
         btnIns.className =
-          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
+          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg.white/50";
       }
       if (typeof window.renderizarTablaMaestra === 'function') {
         window.renderizarTablaMaestra();
@@ -1640,7 +1964,7 @@
       }
       if (btnServ) {
         btnServ.className =
-          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
+          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg.white/50";
       }
       if (typeof window.renderizarTablaInsumos === 'function') {
         window.renderizarTablaInsumos();
@@ -1889,7 +2213,7 @@
   };
 
   // =========================================================
-  // [16] GUARDAR CONSULTA EN FIREBASE (FIRMA DOCTOR)
+  // [16] GUARDAR CONSULTA EN FIREBASE
   // =========================================================
   window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
@@ -1970,23 +2294,28 @@
           (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
       });
 
-     const dataConsulta = {
-  cedula: dInput('hCI'),
-  propietario: dInput('hProp'),
-  paciente: dInput('hNombre'),
-  doctor: doctorVerificado,
-  tratamiento: dInput('hTratamiento'),
-  montoVenta: montoVentaTotal,
-  montoInsumos: totalGastos,
-  costoInsumosTotal: totalGastos,
-  pagoDoctor: pagoDoctorTotal,
-  pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
-  listaDetalladaInsumos: detalleInsumos,
-  fecha: serverTimestamp(),
-  fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
-  alerta: !!document.getElementById('hAlerta')?.checked
-};
+      const dataConsulta = {
+        cedula: dInput('hCI'),
+        propietario: dInput('hProp'),
+        paciente: dInput('hNombre'),
+        doctor: doctorVerificado,
+        tratamiento: dInput('hTratamiento'),
+        montoVenta: montoVentaTotal,
+        montoInsumos: totalGastos,
+        costoInsumosTotal: totalGastos,
+        pagoDoctor: pagoDoctorTotal,
+        pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal) + totalGananciaMedicamentos,
+        gananciaMedicamentos: totalGananciaMedicamentos,
+        listaDetalladaInsumos: detalleInsumos,
+        fecha: serverTimestamp(),
+        fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+        alerta: !!document.getElementById('hAlerta')?.checked,
+        color: dInput('hColor')
+      };
+
       await addDoc(collection(db, "consultas"), dataConsulta);
+      // Reiniciar acumulador de medicamentos para la siguiente consulta
+      totalGananciaMedicamentos = 0;
 
       if (imp) {
         const tArea = document.getElementById('hTratamientoPrint');
@@ -2007,7 +2336,7 @@
   };
 
   // =========================================================
-  // [17] SEGURIDAD: MODAL ADMIN (CAJA / CONFIG)
+  // [17] SEGURIDAD: MODAL ADMIN
   // =========================================================
   let tabPendiente = '';
 
@@ -2122,16 +2451,22 @@
       cont.innerHTML = "";
       items.forEach(p => {
         const div = document.createElement('div');
-        div.className = "border rounded-lg p-2 bg-slate-50 flex justify-between items-center";
+        div.className = "border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";
         div.innerHTML = `
           <div>
             <p class="font-bold uppercase text-[11px] text-slate-700">${p.paciente}</p>
             <p class="text-[9px] text-slate-500">${p.propietario} • CI: ${p.cedula}</p>
           </div>
-          <button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase"
-                  onclick="window.abrirPacienteDesdeEspera('${p.id}')">
-            Atender
-          </button>
+          <div class="flex gap-2">
+            <button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase"
+                    onclick="window.abrirPacienteDesdeEspera('${p.id}')">
+              Atender
+            </button>
+            <button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase"
+                    onclick="window.eliminarDeSalaEspera('${p.id}')">
+              Eliminar
+            </button>
+          </div>
         `;
         cont.appendChild(div);
       });
@@ -2164,6 +2499,7 @@
       set('hTlf', d.telefono);
       set('hMail', d.correo);
       set('hDir', d.direccion);
+      set('hColor', d.color); // NUEVO
 
       await updateDoc(docRef, { estado: "atendiendo", fechaAtencion: serverTimestamp() });
 
@@ -2174,286 +2510,328 @@
       alert("❌ Error al abrir paciente desde espera: " + e.message);
     }
   };
-// =========================================================
-// [20] ANÁLISIS INTELIGENTE MENSUAL
-// =========================================================
-window.generarAnalisisCompleto = async () => {
-  const contAnalisis     = document.getElementById('contenedorAnalisis');
-  const gridAnalisis     = document.getElementById('gridAnalisis');
-  const analisisDoctores = document.getElementById('analisisDoctores');
 
-  if (!contAnalisis || !gridAnalisis || !analisisDoctores) return;
-
-  // Limpiar
-  gridAnalisis.innerHTML     = "";
-  analisisDoctores.innerHTML = "";
-
-  // Mostrar bloque de análisis
-  contAnalisis.classList.remove('hidden');
-
-  try {
-    // Mes actual
-    const hoy = new Date();
-    const mes  = hoy.getMonth() + 1;
-    const anio = hoy.getFullYear();
-
-    const snap = await getDocs(collection(db, "consultas"));
-    const registrosMes = [];
-
-    snap.forEach(docSnap => {
-      const d = docSnap.data();
-      if (!d.fechaSimple) return;
-      const [diaStr, mesStr, anioStr] = d.fechaSimple.split('/');
-      const m = parseInt(mesStr, 10);
-      const y = parseInt(anioStr, 10);
-      if (m === mes && y === anio) {
-        registrosMes.push(d);
-      }
-    });
-
-    if (registrosMes.length === 0) {
-      gridAnalisis.innerHTML =
-        `<div class="col-span-2 text-center text-slate-400 text-[11px] font-bold uppercase">
-           No hay datos para este mes.
-         </div>`;
-      return;
+  // [24B] ELIMINAR PACIENTE DE LA SALA DE ESPERA
+  window.eliminarDeSalaEspera = async (idEspera) => {
+    if (!confirm("⚠️ ¿Eliminar este paciente de la cola de espera?")) return;
+    try {
+      const docRef = doc(db, "espera", idEspera);
+      await updateDoc(docRef, { estado: "eliminado", fechaEliminacion: serverTimestamp() });
+      alert("✅ Paciente eliminado de la sala de espera.");
+      window.cargarListaEspera();
+    } catch (e) {
+      console.error("Error eliminando de sala de espera:", e);
+      alert("❌ No se pudo eliminar de la lista: " + e.message);
     }
+  };
 
-    let totalBruto        = 0;
-    let totalGastos       = 0;
-    let totalPagoDoctores = 0;
-    let totalNeto         = 0;
+  // =========================================================
+  // [20] ANÁLISIS INTELIGENTE MENSUAL
+  // =========================================================
+  window.generarAnalisisCompleto = async () => {
+    const contAnalisis     = document.getElementById('contenedorAnalisis');
+    const gridAnalisis     = document.getElementById('gridAnalisis');
+    const analisisDoctores = document.getElementById('analisisDoctores');
 
-    let mapaDoctores  = {}; // { doctor: { bruto, pacientes, pago } }
-    let mapaServicios = {}; // { servicio: conteo }
+    if (!contAnalisis || !gridAnalisis || !analisisDoctores) return;
 
-    registrosMes.forEach(d => {
-      const bruto   = parseFloat(d.montoVenta)   || 0;
-      const gasto   = parseFloat(d.montoInsumos) || 0;
-      const pagoDoc = parseFloat(d.pagoDoctor)   || 0;
-      const neto    = bruto - gasto - pagoDoc;
+    gridAnalisis.innerHTML     = "";
+    analisisDoctores.innerHTML = "";
+    contAnalisis.classList.remove('hidden');
 
-      totalBruto        += bruto;
-      totalGastos       += gasto;
-      totalPagoDoctores += pagoDoc;
-      totalNeto         += neto;
+    try {
+      const hoy = new Date();
+      const mes  = hoy.getMonth() + 1;
+      const anio = hoy.getFullYear();
 
-      const docName = d.doctor || "SIN DOCTOR";
-      if (!mapaDoctores[docName]) {
-        mapaDoctores[docName] = { bruto: 0, pacientes: 0, pago: 0 };
+      const snap = await getDocs(collection(db, "consultas"));
+      const registrosMes = [];
+
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        if (!d.fechaSimple) return;
+        const [diaStr, mesStr, anioStr] = d.fechaSimple.split('/');
+        const m = parseInt(mesStr, 10);
+        const y = parseInt(anioStr, 10);
+        if (m === mes && y === anio) {
+          registrosMes.push(d);
+        }
+      });
+
+      if (registrosMes.length === 0) {
+        gridAnalisis.innerHTML =
+          `<div class="col-span-2 text-center text-slate-400 text-[11px] font-bold uppercase">
+             No hay datos para este mes.
+           </div>`;
+        return;
       }
-      mapaDoctores[docName].bruto     += bruto;
-      mapaDoctores[docName].pacientes += 1;
-      mapaDoctores[docName].pago      += pagoDoc;
 
-      // Extraer servicios del tratamiento (líneas que empiezan por =>)
-      if (d.tratamiento) {
-        d.tratamiento.split('\n').forEach(linea => {
-          const l = linea.trim();
-          if (l.startsWith("=>") || l.startsWith("=&gt;") || l.startsWith("=&amp;gt;")) {
-            const nombreServ = l
-              .replace("=>", "")
-              .replace("=&gt;", "")
-              .replace("=&amp;gt;", "")
-              .trim()
-              .toUpperCase();
-            if (!mapaServicios[nombreServ]) mapaServicios[nombreServ] = 0;
-            mapaServicios[nombreServ] += 1;
-          }
-        });
-      }
-    });
+      let totalBruto        = 0;
+      let totalGastos       = 0;
+      let totalPagoDoctores = 0;
+      let totalNeto         = 0;
 
-    const margenDoctor = totalBruto > 0 ? ((totalPagoDoctores / totalBruto) * 100) : 0;
-    const margenNeto   = totalBruto > 0 ? ((totalNeto / totalBruto) * 100) : 0;
+      let mapaDoctores  = {};
+      let mapaServicios = {};
 
-    // Tarjetas resumen
-    gridAnalisis.innerHTML = `
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-        <p class="text-[9px] uppercase font-bold text-slate-400">Ventas Brutas Mes</p>
-        <p class="text-xl font-black text-slate-800 font-mono">$${totalBruto.toFixed(2)}</p>
-      </div>
-      <div class="p-3 bg-amber-50 rounded-xl border border-amber-200">
-        <p class="text-[9px] uppercase font-bold text-amber-600">Costos Operativos Mes</p>
-        <p class="text-xl font-black text-amber-700 font-mono">$${totalGastos.toFixed(2)}</p>
-      </div>
-      <div class="p-3 bg-blue-50 rounded-xl border border-blue-200">
-        <p class="text-[9px] uppercase font-bold text-blue-600">Pagos a Doctores</p>
-        <p class="text-xl font-black text-blue-700 font-mono">
-          $${totalPagoDoctores.toFixed(2)} (${margenDoctor.toFixed(1)}%)
-        </p>
-      </div>
-      <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-        <p class="text-[9px] uppercase font-bold text-emerald-600">Utilidad Neta Mes</p>
-        <p class="text-xl font-black text-emerald-700 font-mono">
-          $${totalNeto.toFixed(2)} (${margenNeto.toFixed(1)}%)
-        </p>
-      </div>
-    `;
+      registrosMes.forEach(d => {
+        const bruto   = parseFloat(d.montoVenta)   || 0;
+        const gasto   = parseFloat(d.montoInsumos) || 0;
+        const pagoDoc = parseFloat(d.pagoDoctor)   || 0;
+        const neto    = bruto - gasto - pagoDoc;
 
-    // Ranking de doctores
-    Object.entries(mapaDoctores).forEach(([docName, info]) => {
-      const promTicket = info.pacientes > 0 ? (info.bruto / info.pacientes) : 0;
-      const li = document.createElement('div');
-      li.className =
-        "flex justify-between items-center text-[11px] bg-white px-3 py-2 rounded-xl border border-slate-100";
-      li.innerHTML = `
-        <div>
-          <p class="font-black text-slate-700 uppercase">${docName}</p>
-          <p class="text-[9px] text-slate-400">Pacientes: ${info.pacientes}</p>
+        totalBruto        += bruto;
+        totalGastos       += gasto;
+        totalPagoDoctores += pagoDoc;
+        totalNeto         += neto;
+
+        const docName = d.doctor || "SIN DOCTOR";
+        if (!mapaDoctores[docName]) {
+          mapaDoctores[docName] = { bruto: 0, pacientes: 0, pago: 0 };
+        }
+        mapaDoctores[docName].bruto     += bruto;
+        mapaDoctores[docName].pacientes += 1;
+        mapaDoctores[docName].pago      += pagoDoc;
+
+        if (d.tratamiento) {
+          d.tratamiento.split('\n').forEach(linea => {
+            const l = linea.trim();
+            if (l.startsWith("=>") || l.startsWith("=&gt;") || l.startsWith("=&amp;gt;")) {
+              const nombreServ = l
+                .replace("=>", "")
+                .replace("=&gt;", "")
+                .replace("=&amp;gt;", "")
+                .trim()
+                .toUpperCase();
+              if (!mapaServicios[nombreServ]) mapaServicios[nombreServ] = 0;
+              mapaServicios[nombreServ] += 1;
+            }
+          });
+        }
+      });
+
+      const margenDoctor = totalBruto > 0 ? ((totalPagoDoctores / totalBruto) * 100) : 0;
+      const margenNeto   = totalBruto > 0 ? ((totalNeto / totalBruto) * 100) : 0;
+
+      gridAnalisis.innerHTML = `
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <p class="text-[9px] uppercase font-bold text-slate-400">Ventas Brutas Mes</p>
+          <p class="text-xl font-black text-slate-800 font-mono">$${totalBruto.toFixed(2)}</p>
         </div>
-        <div class="text-right">
-          <p class="text-[10px] font-bold text-slate-500">
-            Bruto: $${info.bruto.toFixed(2)}
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200">
+          <p class="text-[9px] uppercase font-bold text-amber-600">Costos Operativos Mes</p>
+          <p class="text-xl font-black text-amber-700 font-mono">$${totalGastos.toFixed(2)}</p>
+        </div>
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-200">
+          <p class="text-[9px] uppercase font-bold text-blue-600">Pagos a Doctores</p>
+          <p class="text-xl font-black text-blue-700 font-mono">
+            $${totalPagoDoctores.toFixed(2)} (${margenDoctor.toFixed(1)}%)
           </p>
-          <p class="text-[10px] font-bold text-blue-600">
-            Comisión: $${info.pago.toFixed(2)}
-          </p>
-          <p class="text-[9px] text-emerald-600">
-            Ticket prom.: $${promTicket.toFixed(2)}
+        </div>
+        <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+          <p class="text-[9px] uppercase font-bold text-emerald-600">Utilidad Neta Mes</p>
+          <p class="text-xl font-black text-emerald-700 font-mono">
+            $${totalNeto.toFixed(2)} (${margenNeto.toFixed(1)}%)
           </p>
         </div>
       `;
-      analisisDoctores.appendChild(li);
-    });
 
-    // Top 3 servicios
-    const serviciosOrdenados = Object.entries(mapaServicios)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3);
-
-    if (serviciosOrdenados.length > 0) {
-      const divServ = document.createElement('div');
-      divServ.className =
-        "col-span-2 bg-white rounded-2xl border border-slate-100 p-3";
-      divServ.innerHTML = `
-        <p class="text-[9px] uppercase font-bold text-indigo-600 mb-2">
-          Servicios Estrella del Mes
-        </p>
-        ${serviciosOrdenados.map(([nombre, cnt]) => `
-          <div class="flex justify-between text-[10px] border-b border-dotted py-1">
-            <span class="font-bold text-slate-700">${nombre}</span>
-            <span class="text-slate-500">x${cnt}</span>
+      Object.entries(mapaDoctores).forEach(([docName, info]) => {
+        const promTicket = info.pacientes > 0 ? (info.bruto / info.pacientes) : 0;
+        const li = document.createElement('div');
+        li.className =
+          "flex justify-between items-center text-[11px] bg-white px-3 py-2 rounded-xl border border-slate-100";
+        li.innerHTML = `
+          <div>
+            <p class="font-black text-slate-700 uppercase">${docName}</p>
+            <p class="text-[9px] text-slate-400">Pacientes: ${info.pacientes}</p>
           </div>
-        `).join('')}
-      `;
-      gridAnalisis.appendChild(divServ);
+          <div class="text-right">
+            <p class="text-[10px] font-bold text-slate-500">
+              Bruto: $${info.bruto.toFixed(2)}
+            </p>
+            <p class="text-[10px] font-bold text-blue-600">
+              Comisión: $${info.pago.toFixed(2)}
+            </p>
+            <p class="text-[9px] text-emerald-600">
+              Ticket prom.: $${promTicket.toFixed(2)}
+            </p>
+          </div>
+        `;
+        analisisDoctores.appendChild(li);
+      });
+
+      const serviciosOrdenados = Object.entries(mapaServicios)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+
+      if (serviciosOrdenados.length > 0) {
+        const divServ = document.createElement('div');
+        divServ.className =
+          "col-span-2 bg-white rounded-2xl border border-slate-100 p-3";
+        divServ.innerHTML = `
+          <p class="text-[9px] uppercase font-bold text-indigo-600 mb-2">
+            Servicios Estrella del Mes
+          </p>
+          ${serviciosOrdenados.map(([nombre, cnt]) => `
+            <div class="flex justify-between text-[10px] border-b border-dotted py-1">
+              <span class="font-bold text-slate-700">${nombre}</span>
+              <span class="text-slate-500">x${cnt}</span>
+            </div>
+          `).join('')}
+        `;
+        gridAnalisis.appendChild(divServ);
+      }
+
+    } catch (e) {
+      console.error("Error en análisis:", e);
+      alert("❌ Error al generar análisis: " + e.message);
     }
+  };
 
-  } catch (e) {
-    console.error("Error en análisis:", e);
-    alert("❌ Error al generar análisis: " + e.message);
-  }
-};
+  // =========================================================
+  // [21] GUARDAR RESUMEN DEL DÍA EN LA NUBE
+  // =========================================================
+  window.guardarResumenDelDia = async () => {
+    try {
+      const hoy = new Date();
+      const fechaSimple =
+        `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
 
-// =========================================================
-// [21] GUARDAR RESUMEN DEL DÍA EN LA NUBE
-// =========================================================
-window.guardarResumenDelDia = async () => {
-  try {
-    const hoy = new Date();
-    const fechaSimple =
-      `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
+      const snap = await getDocs(collection(db, "consultas"));
 
-    const snap = await getDocs(collection(db, "consultas"));
+      let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
+      let pacientes = 0;
 
-    let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
-    let pacientes = 0;
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        if (d.fechaSimple === fechaSimple) {
+          const b = parseFloat(d.montoVenta)  || 0;
+          const g = parseFloat(d.montoInsumos)|| 0;
+          const p = parseFloat(d.pagoDoctor)  || 0;
+          const n = b - g - p;
+          bruto      += b;
+          gastos     += g;
+          pagoDoctor += p;
+          neto       += n;
+          pacientes++;
+        }
+      });
 
-    snap.forEach(docSnap => {
-      const d = docSnap.data();
-      if (d.fechaSimple === fechaSimple) {
-        const b = parseFloat(d.montoVenta)  || 0;
-        const g = parseFloat(d.montoInsumos)|| 0;
-        const p = parseFloat(d.pagoDoctor)  || 0;
-        const n = b - g - p;
-        bruto      += b;
-        gastos     += g;
-        pagoDoctor += p;
-        neto       += n;
-        pacientes++;
-      }
-    });
+      const resumen = {
+        fecha: serverTimestamp(),
+        fechaSimple,
+        pacientes,
+        bruto,
+        gastos,
+        pagoDoctor,
+        neto
+      };
 
-    const resumen = {
-      fecha: serverTimestamp(),
-      fechaSimple,
-      pacientes,
-      bruto,
-      gastos,
-      pagoDoctor,
-      neto
-    };
+      await addDoc(collection(db, "resumen_caja"), resumen);
+      alert("✅ Resumen del día guardado en la nube.");
+    } catch (e) {
+      console.error("Error guardando resumen:", e);
+      alert("❌ No se pudo guardar el resumen: " + e.message);
+    }
+  };
 
-    await addDoc(collection(db, "resumen_caja"), resumen);
-    alert("✅ Resumen del día guardado en la nube.");
-  } catch (e) {
-    console.error("Error guardando resumen:", e);
-    alert("❌ No se pudo guardar el resumen: " + e.message);
-  }
-};
+  // =========================================================
+  // [22] DESCARGAR REPORTE TXT DEL DÍA
+  // =========================================================
+  window.descargarReporte = async () => {
+    try {
+      const hoy = new Date();
+      const fechaSimple =
+        `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
 
-// =========================================================
-// [22] DESCARGAR REPORTE TXT DEL DÍA
-// =========================================================
-window.descargarReporte = async () => {
-  try {
-    const hoy = new Date();
-    const fechaSimple =
-      `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
+      const snap = await getDocs(collection(db, "consultas"));
 
-    const snap = await getDocs(collection(db, "consultas"));
+      let lineas = [];
+      let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
+      let pacientes = 0;
 
-    let lineas = [];
-    let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
-    let pacientes = 0;
+      lineas.push(`RESUMEN DE CAJA - ${fechaSimple}`);
+      lineas.push("====================================");
 
-    lineas.push(`RESUMEN DE CAJA - ${fechaSimple}`);
-    lineas.push("====================================");
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        if (d.fechaSimple === fechaSimple) {
+          const b = parseFloat(d.montoVenta)  || 0;
+          const g = parseFloat(d.montoInsumos)|| 0;
+          const p = parseFloat(d.pagoDoctor)  || 0;
+          const n = b - g - p;
 
-    snap.forEach(docSnap => {
-      const d = docSnap.data();
-      if (d.fechaSimple === fechaSimple) {
-        const b = parseFloat(d.montoVenta)  || 0;
-        const g = parseFloat(d.montoInsumos)|| 0;
-        const p = parseFloat(d.pagoDoctor)  || 0;
-        const n = b - g - p;
+          bruto      += b;
+          gastos     += g;
+          pagoDoctor += p;
+          neto       += n;
+          pacientes++;
 
-        bruto      += b;
-        gastos     += g;
-        pagoDoctor += p;
-        neto       += n;
-        pacientes++;
+          lineas.push(
+            `PACIENTE: ${d.paciente} | DR: ${d.doctor} | BRUTO: $${b.toFixed(2)} | INSUMOS: $${g.toFixed(2)} | DOC: $${p.toFixed(2)} | NETO: $${n.toFixed(2)}`
+          );
+        }
+      });
 
-        lineas.push(
-          `PACIENTE: ${d.paciente} | DR: ${d.doctor} | BRUTO: $${b.toFixed(2)} | INSUMOS: $${g.toFixed(2)} | DOC: $${p.toFixed(2)} | NETO: $${n.toFixed(2)}`
-        );
-      }
-    });
+     lineas.push("------------------------------------");
+      lineas.push(`PACIENTES: ${pacientes}`);
+      lineas.push(`BRUTO TOTAL: $${bruto.toFixed(2)}`);
+      lineas.push(`GASTOS INSUMOS: $${gastos.toFixed(2)}`);
+      lineas.push(`PAGOS DOCTORES: $${pagoDoctor.toFixed(2)}`);
+      lineas.push(`UTILIDAD NETA AVIPET: $${neto.toFixed(2)}`);
 
-    lineas.push("------------------------------------");
-    lineas.push(`PACIENTES: ${pacientes}`);
-    lineas.push(`BRUTO TOTAL: $${bruto.toFixed(2)}`);
-    lineas.push(`GASTOS INSUMOS: $${gastos.toFixed(2)}`);
-    lineas.push(`PAGOS DOCTORES: $${pagoDoctor.toFixed(2)}`);
-    lineas.push(`UTILIDAD NETA AVIPET: $${neto.toFixed(2)}`);
+      const contenido = lineas.join("\n");
+      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+      const url  = URL.createObjectURL(blob);
 
-    const contenido = lineas.join("\n");
-    const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-    const url  = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_caja_${fechaSimple.replace(/\//g, "-")}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Error al descargar reporte:", e);
+      alert("❌ No se pudo generar el TXT: " + e.message);
+    }
+  };
+  // =========================================================
+  // [NUEVO] RECETA SIN COSTOS (IMPRESIÓN SIMPLE)
+  // =========================================================
+  window.imprimirRecetaLimpia = () => {
+    const texto = document.getElementById('hTratamiento')?.value || "";
+    const paciente = document.getElementById('hNombre')?.value || "";
+    const propietario = document.getElementById('hProp')?.value || "";
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reporte_caja_${fechaSimple.replace(/\//g, "-")}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    console.error("Error al descargar reporte:", e);
-    alert("❌ No se pudo generar el TXT: " + e.message);
-  }
-};
+    const ventana = window.open("", "_blank", "width=800,height=600");
+    if (!ventana) return;
+
+    ventana.document.write(`
+      <html>
+      <head>
+        <title>Receta - AVIPET</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { font-size: 18px; margin-bottom: 5px; }
+          h2 { font-size: 14px; margin-bottom: 10px; }
+          pre { white-space: pre-wrap; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>AVIPET - Receta sin costos</h1>
+        <h2>Paciente: ${paciente} | Propietario: ${propietario}</h2>
+        <hr/>
+        <pre>${texto}</pre>
+      </body>
+      </html>
+    `);
+    ventana.document.close();
+    ventana.focus();
+    ventana.print();
+  };
+
   // =========================================================
   // [19] INICIALIZACIÓN BÁSICA
   // =========================================================
@@ -2467,8 +2845,10 @@ window.descargarReporte = async () => {
     window.ejecutarCambioDeTab('historia');
   });
 </script>
+
 </body>
-</html>
+</html> 
+
 
 
 
