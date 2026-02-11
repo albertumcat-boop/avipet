@@ -2444,7 +2444,17 @@ let insumosBaseMedicamentoAgregados = false;
   fecha: serverTimestamp(),
   fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
   alerta: !!document.getElementById('hAlerta')?.checked,
-  color: dInput('hColor')
+  color: dInput('hColor'),
+
+  // NUEVO: guardar todos los datos que luego quieres autocompletar
+  telefono: dInput('hTlf'),
+  correo: dInput('hMail'),
+  direccion: dInput('hDir'),
+  especie: dInput('hEspecie'),
+  raza: dInput('hRaza'),
+  edad: dInput('hEdad'),
+  sexo: dInput('hSexo'),
+  peso: dInput('hPeso')
 };
 
 await addDoc(collection(db, "consultas"), dataConsulta);
@@ -2980,6 +2990,7 @@ await addDoc(collection(db, "consultas"), dataConsulta);
 
 </body>
 </html> 
+
 
 
 
