@@ -163,18 +163,18 @@
             <option value="Joan Silva">DRA. JOAN SILVA</option>
           </select>
           <!-- Botones PIN -->
-          <div class="no-print mt-1 flex gap-2">
-            <button type="button"
-                    class="text-[9px] text-blue-500 underline"
-                    onclick="if(window.doctorVerificado){ window.cambiarPinDoctor(window.doctorVerificado); } else { alert('Seleccione y valide un doctor primero.'); }">
-              Cambiar mi PIN
-            </button>
-           <button type="button"
-        class="text-[9px] text-blue-500 underline"
-        onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
-  Cambiar mi PIN
-</button>
-          </div>
+<div class="no-print mt-1 flex gap-2">
+  <button type="button"
+          class="text-[9px] text-blue-500 underline"
+          onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
+    Cambiar mi PIN
+  </button>
+  <button type="button"
+          class="text-[9px] text-red-500 underline"
+          onclick="window.solicitarCambioPinDoctor()">
+    Olvidé mi PIN
+  </button>
+</div>
           <h2 id="doctorPrint"
               class="hidden print:block font-bold text-sm uppercase text-slate-700">
             DOCTOR CARGO
@@ -1141,7 +1141,7 @@ let insumosBaseMedicamentoAgregados = false;
     }
   };
 
-  window.cambiarPinDoctor = async (nombreDoc) => {
+ window.cambiarPinDoctor = async (nombreDoc) => {
   if (!nombreDoc) {
     alert("Seleccione un doctor en la lista primero.");
     return;
@@ -2957,6 +2957,7 @@ await addDoc(collection(db, "consultas"), dataConsulta);
 
 </body>
 </html> 
+
 
 
 
