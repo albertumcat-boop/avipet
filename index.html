@@ -169,11 +169,11 @@
                     onclick="if(window.doctorVerificado){ window.cambiarPinDoctor(window.doctorVerificado); } else { alert('Seleccione y valide un doctor primero.'); }">
               Cambiar mi PIN
             </button>
-            <button type="button"
-                    class="text-[9px] text-red-500 underline"
-                    onclick="window.solicitarCambioPinDoctor()">
-              Olvidé mi PIN
-            </button>
+           <button type="button"
+        class="text-[9px] text-blue-500 underline"
+        onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
+  Cambiar mi PIN
+</button>
           </div>
           <h2 id="doctorPrint"
               class="hidden print:block font-bold text-sm uppercase text-slate-700">
@@ -1142,26 +1142,32 @@ let insumosBaseMedicamentoAgregados = false;
   };
 
   window.cambiarPinDoctor = async (nombreDoc) => {
-    const pinActual = prompt(`🔐 [${nombreDoc}] Ingrese PIN actual o Llave Maestra:`);
-    if (!pinActual) return;
-    const esValido = await window.validarDoctorConMaster(nombreDoc, pinActual);
+  if (!nombreDoc) {
+    alert("Seleccione un doctor en la lista primero.");
+    return;
+  }
 
-    if (esValido) {
-      const nuevoPin = prompt("🆕 Ingrese su NUEVO PIN (4 dígitos):");
-      if (nuevoPin && nuevoPin.length >= 4) {
-        await setDoc(
-          doc(db, "doctores", nombreDoc),
-          { pin: nuevoPin, ultimaActualizacion: serverTimestamp() },
-          { merge: true }
-        );
-        alert("✅ PIN actualizado con éxito.");
-      } else {
-        alert("⚠️ El PIN debe tener al menos 4 dígitos.");
-      }
+  const pinActual = prompt(`🔐 [${nombreDoc}] Ingrese PIN actual o Llave Maestra:`);
+  if (!pinActual) return;
+
+  const esValido = await window.validarDoctorConMaster(nombreDoc, pinActual);
+
+  if (esValido) {
+    const nuevoPin = prompt("🆕 Ingrese su NUEVO PIN (4 dígitos):");
+    if (nuevoPin && nuevoPin.length >= 4) {
+      await setDoc(
+        doc(db, "doctores", nombreDoc),
+        { pin: nuevoPin, ultimaActualizacion: serverTimestamp() },
+        { merge: true }
+      );
+      alert("✅ PIN actualizado con éxito.");
     } else {
-      alert("🚫 Validación fallida.");
+      alert("⚠️ El PIN debe tener al menos 4 dígitos.");
     }
-  };
+  } else {
+    alert("🚫 Validación fallida.");
+  }
+};
 
   window.validarDoctorPerfil = async (nombreDoc, pinIngresado) => {
     if (pinIngresado === MASTER_KEY) return true;
@@ -1182,12 +1188,11 @@ let insumosBaseMedicamentoAgregados = false;
   const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
   if (!nombreDoc) return;
 
-  // SOLO valida con llave maestra o PIN administrativo de seguridad,
-  // NO pide el PIN anterior del doctor (porque se olvidó).
+  // Preguntar clave de recuperación (llave maestra o PIN admin)
   const claveAdmin = prompt("🔐 Recuperación de PIN\nIngrese la Llave Maestra o PIN administrativo:");
   if (!claveAdmin) return;
 
-  // MASTER_KEY siempre es válida
+  // 1) MASTER_KEY siempre es válida
   if (claveAdmin === MASTER_KEY) {
     const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
     if (nuevoPin && nuevoPin.length >= 4) {
@@ -1201,7 +1206,7 @@ let insumosBaseMedicamentoAgregados = false;
     return;
   }
 
-  // Opcional: también puedes permitir usar el PIN administrativo de "configuracion/seguridad"
+  // 2) También permite usar el PIN administrativo de "configuracion/seguridad"
   try {
     const snapSeg = await getDoc(doc(db, "configuracion", "seguridad"));
     const pinAdmin = snapSeg.exists() ? (snapSeg.data().pin || "AVIPET2026") : "AVIPET2026";
@@ -2952,6 +2957,7 @@ await addDoc(collection(db, "consultas"), dataConsulta);
 
 </body>
 </html> 
+
 
 
 
