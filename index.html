@@ -1112,6 +1112,8 @@
   const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
   let doctorVerificado = "";
   let serviciosEnLista = [];
+  // Para no duplicar insumos base de medicamentos
+let insumosBaseMedicamentoAgregados = false;
 
   // =========================================================
   // [15] SEGURIDAD AVANZADA DOCTORES (PIN+MASTER)
@@ -1460,7 +1462,7 @@
       return;
     }
     const pesoKg = parseFloat(kg);
-    const mlNecesarios = pesoKg / 20; // 1 ml / 20 kg
+    const mlNecesarios = pesoKg / 20;
     precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
     descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
 
@@ -1472,7 +1474,7 @@
       return;
     }
     const pesoKg = parseFloat(kg);
-    const mlNecesarios = pesoKg; // 1 ml x kg
+    const mlNecesarios = pesoKg;
     precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
     descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
 
@@ -1481,13 +1483,35 @@
     precioCliente = cfg.precioCliente || 0;
   }
 
-  // Sumar al monto total a cobrar
-  const inputVenta = document.getElementById('precioVenta');
-  const montoActual = parseFloat(inputVenta.value) || 0;
-  const nuevoMonto  = montoActual + precioCliente;
-  inputVenta.value  = nuevoMonto.toFixed(2);
+  // 1) CREAR UNA FILA "SERVICIO PRINCIPAL" PARA EL MEDICAMENTO
+  const cuerpo = document.getElementById('listaInsumosDinamica');
+  document.getElementById('contenedorInsumos').classList.remove('hidden');
 
-  // Anotar en el tratamiento como texto
+  const grupoID = "med-" + Date.now(); // id único para el medicamento
+
+ const porcentajeServicioMedicamento = 40; // 40% doctor, 60% Avipet, igual que otras consultas
+
+  const filaTitulo = document.createElement('tr');
+  filaTitulo.className =
+    "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
+  filaTitulo.setAttribute('data-grupo', grupoID);
+  filaTitulo.setAttribute('data-precio', precioCliente);
+  filaTitulo.setAttribute('data-porc', porcentajeServicioMedicamento);
+
+  filaTitulo.innerHTML = `
+    <td colspan="3" class="p-2 text-[11px] uppercase">
+      💊 ${descripcion} ($${precioCliente.toFixed(2)})
+      <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-purple-200">
+        MEDICAMENTO
+      </span>
+    </td>
+    <td class="p-2 text-center">
+      <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioCliente}, event)"
+              class="text-red-500 font-bold text-lg">×</button>
+    </td>`;
+  cuerpo.appendChild(filaTitulo);
+
+  // 2) ANOTAR EN EL TRATAMIENTO
   const area = document.getElementById('hTratamiento');
   if (area) {
     area.value += (area.value ? "\n" : "") +
@@ -1495,52 +1519,53 @@
     document.getElementById('hTratamientoPrint').innerText = area.value;
   }
 
-  // AGREGAR INSUMOS BÁSICOS (jeringa, alcohol, algodón) como insumos del último servicio
-  const cuerpo = document.getElementById('listaInsumosDinamica');
-  document.getElementById('contenedorInsumos').classList.remove('hidden');
+  // 3) SUMAR AL MONTO TOTAL A COBRAR
+  const inputVenta = document.getElementById('precioVenta');
+  const montoActual = parseFloat(inputVenta.value) || 0;
+  const nuevoMonto  = montoActual + precioCliente;
+  inputVenta.value  = nuevoMonto.toFixed(2);
 
-  const todasLasFilasServicios = document.querySelectorAll('.servicio-principal');
-  const ultimoGrupo =
-    todasLasFilasServicios.length > 0
-      ? todasLasFilasServicios[todasLasFilasServicios.length - 1].getAttribute('data-grupo')
-      : "medicamentos";
+  // 4) INSUMOS BASE DE MEDICAMENTO: SOLO LA PRIMERA VEZ
+  if (!insumosBaseMedicamentoAgregados) {
+    const insumosMedicamento = [
+      { nombre: "Jeringa para medicamento", costo: 0.50 },
+      { nombre: "Algodón para medicamento", costo: 0.10 },
+      { nombre: "Alcohol para medicamento", costo: 0.10 }
+    ];
 
-  const insumosMedicamento = [
-    { nombre: "Jeringa para medicamento", costo: 0.50 },
-    { nombre: "Algodón para medicamento", costo: 0.10 },
-    { nombre: "Alcohol para medicamento", costo: 0.10 }
-  ];
+    insumosMedicamento.forEach(insumo => {
+      const tr = document.createElement('tr');
+      tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;
+      tr.innerHTML = `
+        <td class="p-2 font-bold text-[11px] italic">
+          ➕ ${insumo.nombre.toUpperCase()}
+        </td>
+        <td class="p-2 text-center">
+          <input type="number" value="1"
+                 oninput="window.calcularTodo()"
+                 class="i-cant w-12 text-center border rounded">
+        </td>
+        <td class="p-2 text-center">
+          <input type="number"
+                 value="${insumo.costo.toFixed(2)}"
+                 step="0.01"
+                 oninput="window.calcularTodo()"
+                 class="i-cost w-16 text-center border rounded">
+        </td>
+        <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
+            onclick="this.parentElement.remove(); window.calcularTodo()">
+          ✕
+        </td>`;
+      cuerpo.appendChild(tr);
+    });
 
-  insumosMedicamento.forEach(insumo => {
-    const tr = document.createElement('tr');
-    tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrupo}`;
-    tr.innerHTML = `
-      <td class="p-2 font-bold text-[11px] italic">
-        ➕ ${insumo.nombre.toUpperCase()}
-      </td>
-      <td class="p-2 text-center">
-        <input type="number" value="1"
-               oninput="window.calcularTodo()"
-               class="i-cant w-12 text-center border rounded">
-      </td>
-      <td class="p-2 text-center">
-        <input type="number"
-               value="${insumo.costo.toFixed(2)}"
-               step="0.01"
-               oninput="window.calcularTodo()"
-               class="i-cost w-16 text-center border rounded">
-      </td>
-      <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
-          onclick="this.parentElement.remove(); window.calcularTodo()">
-        ✕
-      </td>`;
-    cuerpo.appendChild(tr);
-  });
+    insumosBaseMedicamentoAgregados = true;
+  }
 
-  // Recalcular costos de insumos y comisión doctor (40%) según tu motor
+  // 5) RECALCULAR COSTOS E INGRESOS
   window.calcularTodo();
 
-  // Reset selector
+  // 6) RESET SELECTOR
   document.getElementById('selectorMedicamentos').value = "";
 };
   // =========================================================
@@ -2927,6 +2952,7 @@ await addDoc(collection(db, "consultas"), dataConsulta);
 
 </body>
 </html> 
+
 
 
 
