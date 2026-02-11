@@ -1648,6 +1648,27 @@ let insumosBaseMedicamentoAgregados = false;
           }
         }
       }
+      // NUEVO: Recalcular VACUNA ANTIRRÁBICA cuando se elimina algún servicio
+      if (texto.includes("vacunaantirrabica")) {
+        // Ver si todavía existe alguna OTRA vacuna (distinta de la antirrábica)
+        const tieneOtraVacuna = Array.from(filasRestantes).some(f => {
+          if (f === fila) return false;
+          const n = normalizarNombre(f.innerText);
+          return n.includes("vacuna") && !n.includes("antirrabica");
+        });
+
+        // Si ya NO hay otra vacuna, la antirrábica debe volver a su precio normal: 30
+        if (!tieneOtraVacuna) {
+          fila.setAttribute('data-precio', 30);
+          const td = fila.querySelector('td');
+          if (td) {
+            td.innerHTML = td.innerHTML
+              .replace("25.00", "30.00")
+              .replace("(Combo)", "")
+              .replace("(COMBO)", "");
+          }
+        }
+      }
     });
 
     const inputPrecioVenta = document.getElementById('precioVenta');
@@ -1863,51 +1884,53 @@ let insumosBaseMedicamentoAgregados = false;
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA
   // =========================================================
-  window.autocompletarPorCedula = async (ci) => {
-    if (!ci) return;
-    try {
-      const q = query(collection(db, "consultas"), where("cedula", "==", ci.trim()));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const registros = [];
-        snap.forEach(docSnap => registros.push(docSnap.data()));
-        registros.sort(
-          (a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0)
-        );
-        const d = registros[0];
+ window.autocompletarPorCedula = async (ci) => {
+  if (!ci) return;
+  try {
+    const q = query(collection(db, "consultas"), where("cedula", "==", ci.trim()));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const registros = [];
+      snap.forEach(docSnap => registros.push(docSnap.data()));
+      registros.sort(
+        (a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0)
+      );
+      const d = registros[0];
 
-        const inputProp = document.getElementById('hProp');
-        if (inputProp) {
-          inputProp.value = d.propietario || "";
-          if (d.alerta === true) {
-            inputProp.style.color = "#b91c1c";
-            inputProp.style.fontWeight = "bold";
-            const chk = document.getElementById('hAlerta');
-            if (chk) chk.checked = true;
-            alert("⚠️ NOTA: Este cliente tiene una restricción administrativa.");
-          } else {
-            inputProp.style.color = "";
-            inputProp.style.fontWeight = "";
-            const chk = document.getElementById('hAlerta');
-            if (chk) chk.checked = false;
-          }
+      console.log("Registro usado para autocompletar:", d); // <-- SOLO ESTO NUEVO
+
+      const inputProp = document.getElementById('hProp');
+      if (inputProp) {
+        inputProp.value = d.propietario || "";
+        if (d.alerta === true) {
+          inputProp.style.color = "#b91c1c";
+          inputProp.style.fontWeight = "bold";
+          const chk = document.getElementById('hAlerta');
+          if (chk) chk.checked = true;
+          alert("⚠️ NOTA: Este cliente tiene una restricción administrativa.");
+        } else {
+          inputProp.style.color = "";
+          inputProp.style.fontWeight = "";
+          const chk = document.getElementById('hAlerta');
+          if (chk) chk.checked = false;
         }
-        document.getElementById('hMail').value = d.correo || "";
-        document.getElementById('hTlf').value = d.telefono || "";
-        document.getElementById('hDir').value = d.direccion || "";
-        document.getElementById('hNombre').value = d.paciente || "";
-        document.getElementById('hRaza').value = d.raza || "";
-        document.getElementById('hEspecie').value = d.especie || "";
-        document.getElementById('hEdad').value = d.edad || "";
-        document.getElementById('hSexo').value = d.sexo || "";
-        document.getElementById('hPeso').value = d.peso || "";
-        const hColor = document.getElementById('hColor');
-        if (hColor) hColor.value = d.color || "";
       }
-    } catch (e) {
-      console.error(e);
+      document.getElementById('hMail').value    = d.correo    || "";
+      document.getElementById('hTlf').value     = d.telefono  || "";
+      document.getElementById('hDir').value     = d.direccion || "";
+      document.getElementById('hNombre').value  = d.paciente  || "";
+      document.getElementById('hRaza').value    = d.raza      || "";
+      document.getElementById('hEspecie').value = d.especie   || "";
+      document.getElementById('hEdad').value    = d.edad      || "";
+      document.getElementById('hSexo').value    = d.sexo      || "";
+      document.getElementById('hPeso').value    = d.peso      || "";
+      const hColor = document.getElementById('hColor');
+      if (hColor) hColor.value = d.color || "";
     }
-  };
+  } catch (e) {
+    console.error(e);
+  }
+};
 
   // =========================================================
   // [23] RECEPCIÓN: ENVIAR A COLA DE ESPERA
@@ -2957,6 +2980,7 @@ await addDoc(collection(db, "consultas"), dataConsulta);
 
 </body>
 </html> 
+
 
 
 
