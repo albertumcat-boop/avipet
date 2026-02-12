@@ -160,127 +160,300 @@
   </nav>
 
 <!-- ========== HISTORIA CLÍNICA ========== -->
-<section id="sectionHistoria"
-         class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
+  <section id="sectionHistoria"
+           class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-  <!-- Encabezado -->
-  <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
-    <div class="flex items-center gap-3">
-      <div
-        class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg">
-        A
+    <!-- Encabezado -->
+    <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg">
+          A
+        </div>
+        <div>
+          <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
+          <select id="selectDoctor"
+                  onchange="window.validarAccesoDoctor(this.value)"
+                  class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
+            <option value="">-- SELECCIONE DOCTOR --</option>
+            <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
+            <option value="Joan Silva">DRA. JOAN SILVA</option>
+          </select>
+          <!-- Botones PIN -->
+          <div class="no-print mt-1 flex gap-2">
+            <button type="button"
+                    class="text-[9px] text-blue-500 underline"
+                    onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
+              Cambiar mi PIN
+            </button>
+            <button type="button"
+                    class="text-[9px] text-red-500 underline"
+                    onclick="window.solicitarCambioPinDoctor()">
+              Olvidé mi PIN
+            </button>
+          </div>
+          <h2 id="doctorPrint"
+              class="hidden print:block font-bold text-sm uppercase text-slate-700">
+            DOCTOR CARGO
+          </h2>
+        </div>
       </div>
-      <div>
-        <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
+      <div class="text-right">
+        <input type="text" id="fechaDoc"
+               class="w-24 text-right font-black text-xs text-slate-500 bg-transparent"
+               readonly>
+      </div>
+    </div>
 
-        <select id="selectDoctor"
-                onchange="window.validarAccesoDoctor(this.value)"
-                class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
-          <option value="">-- SELECCIONE DOCTOR --</option>
-          <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
-          <option value="Joan Silva">DRA. JOAN SILVA</option>
+    <!-- Ficha Mascota / Propietario -->
+    <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
+      <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
+        <div class="header-box italic">Ficha Técnica de Mascota</div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="col-span-2">
+            <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
+            <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400">ESPECIE</label>
+            <input id="hEspecie" class="border-b w-full uppercase">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400">RAZA</label>
+            <input id="hRaza" class="border-b w-full uppercase">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
+            <input id="hPeso" class="border-b w-full">
+          </div>
+          <!-- AJUSTADO: 3 columnas EDAD / SEXO / COLOR -->
+          <div class="grid grid-cols-3 gap-1">
+            <div>
+              <label class="text-[9px] font-bold text-slate-400">EDAD</label>
+              <input id="hEdad" class="border-b w-full uppercase">
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-400">SEXO</label>
+              <input id="hSexo" class="border-b w-full uppercase">
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-400">COLOR</label>
+              <input id="hColor" class="border-b w-full uppercase">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 space-y-2">
+        <div class="header-box italic">Datos del Propietario</div>
+        <div>
+          <div class="flex justify-between items-center">
+            <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
+            <label class="flex items-center gap-1 cursor-pointer no-print opacity-60">
+              <input type="checkbox" id="hAlerta" class="w-3 h-3 accent-red-600">
+              <span class="text-[8px] font-bold text-slate-400 italic">Ref. Interna</span>
+            </label>
+          </div>
+          <input id="hProp" class="border-b w-full uppercase">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
+            <input id="hCI" onblur="window.autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400">TELÉFONO</label>
+            <input id="hTlf" class="border-b w-full">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label>
+          <input id="hMail" class="border-b w-full">
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label>
+          <input id="hDir" class="border-b w-full uppercase text-[10px]">
+        </div>
+      </div>
+    </div>
+
+    <!-- Servicios -->
+    <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
+      <div class="bg-slate-100 p-3 no-print">
+        <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
+          Añadir Servicios Rápidos:
+        </label>
+        <select id="selectorServicios" class="menu-desplegable"
+                onchange="window.insertarServicio(this.value)">
+          <option value="">-- SELECCIONE UN SERVICIO --</option>
+          <optgroup label="🩺 CONSULTAS">
+            <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
+            <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+            <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
+          </optgroup>
+          <optgroup label="💉 VACUNAS">
+            <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
+            <option value="VACUNA PUPPY">VACUNA PUPPY</option>
+            <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
+            <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
+          </optgroup>
+          <optgroup label="🔬 LABORATORIO">
+            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
+            <option value="DISTEMPER">DISTEMPER</option>
+            <option value="PARVOVIRUS - CORONAVIRUS">PARVOVIRUS - CORONAVIRUS</option>
+            <option value="FILARIASIS">FILARIASIS</option>
+            <option value="SIDA - LEUCEMIA">SIDA - LEUCEMIA</option>
+            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
+            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
+            <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
+            <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
+            <option value="RASPADO PIEL">RASPADO PIEL</option>
+            <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
+          </optgroup>
+          <optgroup label="🐾 OTROS PROCEDIMIENTOS">
+            <option value="ABSCESO">ABSCESO</option>
+            <option value="ECOGRAFÍA">ECOGRAFÍA</option>
+            <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
+            <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
+            <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
+            <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
+            <option value="KG ADICIONAL">KG ADICIONAL</option>
+            <option value="DISPOSICION">DISPOSICIÓN</option>
+            <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
+          </optgroup>
         </select>
 
-        <!-- Botones PIN -->
-        <div class="no-print mt-1 flex gap-2">
-          <button type="button"
-                  class="text-[9px] text-blue-500 underline"
-                  onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
-            Cambiar mi PIN
-          </button>
-          <button type="button"
-                  class="text-[9px] text-red-500 underline"
-                  onclick="window.solicitarCambioPinDoctor()">
-            Olvidé mi PIN
-          </button>
-        </div>
-
-        <h2 id="doctorPrint"
-            class="hidden print:block font-bold text-sm uppercase text-slate-700">
-          DOCTOR CARGO
-        </h2>
+        <!-- NUEVO: LISTA DESPLEGABLE DE MEDICAMENTOS -->
+        <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
+          Añadir Medicamentos:
+        </label>
+        <select id="selectorMedicamentos" class="menu-desplegable"
+                onchange="window.agregarMedicamento(this.value)">
+          <option value="">-- SELECCIONE UN MEDICAMENTO --</option>
+          <option value="Piroyet">Piroyet</option>
+          <option value="Enrofloxacina">Enrofloxacina</option>
+          <option value="Sulfatrim">Sulfatrim</option>
+          <option value="Dexametasona">Dexametasona</option>
+          <option value="Carprofen">Carprofen</option>
+          <option value="Flunixin">Flunixin</option>
+          <option value="Metadol">Metadol</option>
+          <option value="Complejo B">Complejo B</option>
+          <option value="Suero hiperinmune">Suero hiperinmune (por ml)</option>
+          <option value="Bromuro de hioscina">Bromuro de hioscina</option>
+          <option value="Fenobarbital">Fenobarbital</option>
+          <option value="Gastrine">Gastrine</option>
+          <option value="Ranitidina">Ranitidina</option>
+          <option value="Metoclopramida">Metoclopramida</option>
+          <option value="Furosemina">Furosemina</option>
+          <option value="Vit K">Vit K</option>
+          <option value="Eritrogen">Eritrogen</option>
+          <option value="Aminovit">Aminovit</option>
+          <option value="Oxitetraciclina">Oxitetraciclina</option>
+          <option value="Pimobendan">Pimobendan</option>
+          <option value="Ceftriaxona">Ceftriaxona</option>
+          <option value="Adrenalina / Epin">Adrenalina / Epin</option>
+          <option value="Artrosan">Artrosan 1 ml x 20kg</option>
+          <option value="Lisavac">Lisavac 1 ml x kg</option>
+          <option value="Soroglobulin">Soroglobulin</option>
+          <option value="Infervac">Infervac</option>
+        </select>
       </div>
-    </div>
-    <div class="text-right">
-      <input type="text" id="fechaDoc"
-             class="w-24 text-right font-black text-xs text-slate-500 bg-transparent"
-             readonly>
-    </div>
-  </div>
-
-  <!-- Ficha Mascota / Propietario -->
-  <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
-    <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-      <div class="header-box italic">Ficha Técnica de Mascota</div>
-      <div class="grid grid-cols-2 gap-2">
-        <div class="col-span-2">
-          <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
-          <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
-        </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">ESPECIE</label>
-          <input id="hEspecie" class="border-b w-full uppercase">
-        </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">RAZA</label>
-          <input id="hRaza" class="border-b w-full uppercase">
-        </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
-          <input id="hPeso" class="border-b w-full">
-        </div>
-        <!-- 3 columnas EDAD / SEXO / COLOR -->
-        <div class="grid grid-cols-3 gap-1">
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">EDAD</label>
-            <input id="hEdad" class="border-b w-full uppercase">
-          </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">SEXO</label>
-            <input id="hSexo" class="border-b w-full uppercase">
-          </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">COLOR</label>
-            <input id="hColor" class="border-b w-full uppercase">
-          </div>
-        </div>
-      </div>
+      <textarea id="hTratamiento"
+          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none"
+                placeholder="Escriba aquí el diagnóstico..."
+                oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
+      <div id="hTratamientoPrint"
+           class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
     </div>
 
-    <div class="p-3 space-y-2">
-      <div class="header-box italic">Datos del Propietario</div>
-      <div>
-        <div class="flex justify-between items-center">
-          <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
-          <label class="flex items-center gap-1 cursor-pointer no-print opacity-60">
-            <input type="checkbox" id="hAlerta" class="w-3 h-3 accent-red-600">
-            <span class="text-[8px] font-bold text-slate-400 italic">Ref. Interna</span>
-          </label>
-        </div>
-        <input id="hProp" class="border-b w-full uppercase">
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
-          <input id="hCI"
-                 onblur="window.autocompletarPorCedula(this.value)"
-                 class="border-b w-full font-bold text-blue-700">
-        </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">TELÉFONO</label>
-          <input id="hTlf" class="border-b w-full">
-        </div>
-      </div>
-      <div>
-        <label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label>
-        <input id="hMail" class="border-b w-full">
-      </div>
-      <div>
-        <label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label>
-        <input id="hDir" class="border-b w-full uppercase text-[10px]">
+    <!-- Insumos -->
+    <div id="contenedorInsumos"
+         class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
+      <table class="w-full text-[11px] text-left">
+        <thead class="bg-blue-600 text-white uppercase italic">
+        <tr>
+          <th class="p-2">Insumo</th>
+          <th class="p-2 w-16 text-center">Cant.</th>
+          <th class="p-2 w-16 text-center">Precio $</th>
+          <th class="p-2 w-10"></th>
+        </tr>
+        </thead>
+        <tbody id="listaInsumosDinamica" class="bg-white"></tbody>
+      </table>
+      <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
+        <input type="text" id="nombreExtra"
+               placeholder="Añadir algo extra..."
+               class="flex-1 text-[10px] p-2 border rounded bg-white">
+        <input type="number" id="costoExtra"
+               placeholder="0.00"
+               class="w-14 text-[10px] p-2 border rounded bg-white">
+        <button onclick="window.agregarInsumoManual()"
+                class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">
+          + AGREGAR
+        </button>
       </div>
     </div>
-  </div>
+
+    <!-- Monto (solo precio cobrado) -->
+    <div class="no-print flex justify-center mb-6">
+      <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
+        <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">
+          Monto Total a Cobrar ($)
+        </label>
+        <input type="number" id="precioVenta" value="0"
+               oninput="window.calcularTodo()"
+               class="text-5xl font-black w-full bg-transparent text-center text-blue-700 outline-none placeholder-blue-300">
+      </div>
+    </div>
+    <div id="displayGananciaDoctor" class="hidden">
+      <p id="montoDoctor">$ 0.00</p>
+    </div>
+    <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
+
+    <!-- Botones Guardar -->
+    <div class="grid grid-cols-2 gap-3">
+      <button type="button"
+              onclick="guardarFirebase(false)"
+              class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">
+        Guardar Datos
+      </button>
+      <button type="button"
+              onclick="guardarFirebase(true)"
+              class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">
+        Guardar e Imprimir
+      </button>
+    </div>
+
+    <!-- 📄 Receta Sin Costos -->
+    <button type="button"
+            onclick="imprimirRecetaLimpia && imprimirRecetaLimpia()"
+            class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
+      📄 Receta Sin Costos
+    </button>
+
+    <!-- 💉 Hoja de Vacunas del Paciente -->
+    <button type="button"
+            onclick="window.abrirHojaVacunasDesdeHistoria()"
+            class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
+      💉 Hoja de Vacunas del Paciente
+    </button>
+
+    <!-- NUEVO: Recepción → Cola de Espera -->
+    <button type="button"
+            onclick="window.enviarAColaEspera()"
+            class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
+      ➕ Enviar a Cola de Espera
+    </button>
+  </section>
 
   <!-- ========== HOJA DE VACUNAS / DESPARASITACIONES ========== -->
   <section id="sectionHojaVacunas"
@@ -395,104 +568,79 @@
         </span>
       </div>
       <table class="w-full text-[9px]">
-  <thead class="bg-slate-50 text-slate-700 uppercase">
-    <tr>
-      <th class="border-b border-slate-400 py-2 text-left">Fecha Vacunación</th>
-      <th class="border-b border-slate-400 py-2 text-left">Lote / Vacuna</th>
-      <th class="border-b border-slate-400 py-2 text-left">Peso</th>
-      <th class="border-b border-slate-400 py-2 text-left">Próxima vacunación</th>
-      <th class="border-b border-slate-400 py-2 text-left">Sello / Firma</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr class="h-12">
-      <td class="border-b border-slate-300 px-1">
-        <input class="w-full text-[9px]">
-      </td>
-      <td class="border-b border-slate-300 px-1">
-        <input class="w-full text-[9px]">
-      </td>
-      <td class="border-b border-slate-300 px-1">
-        <input class="w-full text-[9px]">
-      </td>
-      <td class="border-b border-slate-300 px-1">
-        <input class="w-full text-[9px]">
-      </td>
-      <td class="border-b border-slate-300 px-1">
-        <input class="w-full text-[9px]">
-      </td>
-    </tr>
-    <tr class="h-12">
-      <!-- igual que arriba -->
-    </tr>
-    <tr class="h-12">
-      <!-- igual que arriba -->
-    </tr>
-  </tbody>
-</table>
+        <thead class="bg-slate-50 text-slate-700 uppercase">
           <tr>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+            <th class="border-b border-slate-400 py-1 text-left">Fecha</th>
+            <th class="border-b border-slate-400 py-1 text-left">Desparasitante</th>
+            <th class="border-b border-slate-400 py-1 text-left">Edad / Peso</th>
+            <th class="border-b border-slate-400 py-1 text-left">Próxima desparasitación</th>
+            <th class="border-b border-slate-400 py-1 text-left">Firma / Sello</th>
           </tr>
-          <tr>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+        </thead>
+        <tbody>
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <tr>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- VACUNAS / CONTROL DE VACUNA -->
+    <!-- CONTROL DE VACUNA -->
     <div class="border border-slate-400 rounded-lg mb-3">
       <div class="bg-slate-100 px-2 py-1 border-b border-slate-400 flex justify-between items-center">
         <span class="text-[10px] font-black uppercase text-slate-700">
-          VACUNAS - CONTROL DE VACUNA
+          CONTROL DE VACUNA
         </span>
       </div>
       <table class="w-full text-[9px]">
         <thead class="bg-slate-50 text-slate-700 uppercase">
           <tr>
-            <th class="border-b border-slate-400 p-1 text-left">Fecha Vacunación</th>
-            <th class="border-b border-slate-400 p-1 text-left">Lote / Vacuna</th>
-            <th class="border-b border-slate-400 p-1 text-left">Peso</th>
-            <th class="border-b border-slate-400 p-1 text-left">Próxima vacunación</th>
-            <th class="border-b border-slate-400 p-1 text-left">Sello / Firma</th>
+            <th class="border-b border-slate-400 py-2 text-left">Fecha Vacunación</th>
+            <th class="border-b border-slate-400 py-2 text-left">Lote / Vacuna</th>
+            <th class="border-b border-slate-400 py-2 text-left">Peso</th>
+            <th class="border-b border-slate-400 py-2 text-left">Próxima vacunación</th>
+            <th class="border-b border-slate-400 py-2 text-left">Sello / Firma</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <tr>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <tr>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
-            <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
         </tbody>
       </table>
@@ -513,95 +661,6 @@
     </div>
   </section>
 
-  <!-- Servicios -->
-  <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
-    <div class="bg-slate-100 p-3 no-print">
-      <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
-        Añadir Servicios Rápidos:
-      </label>
-      <select id="selectorServicios" class="menu-desplegable"
-              onchange="window.insertarServicio(this.value)">
-        <option value="">-- SELECCIONE UN SERVICIO --</option>
-        <!-- ... todo tu listado de servicios ... -->
-      </select>
-
-      <!-- Lista desplegable de medicamentos -->
-      <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
-        Añadir Medicamentos:
-      </label>
-      <select id="selectorMedicamentos" class="menu-desplegable"
-              onchange="window.agregarMedicamento(this.value)">
-        <option value="">-- SELECCIONE UN MEDICAMENTO --</option>
-        <!-- ... todo tu listado de medicamentos ... -->
-      </select>
-    </div>
-
-    <textarea id="hTratamiento"
-              class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none"
-              placeholder="Escriba aquí el diagnóstico..."
-              oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
-    <div id="hTratamientoPrint"
-         class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
-  </div>
-
-  <!-- Insumos -->
-  <div id="contenedorInsumos"
-       class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
-    <!-- ... todo tu bloque de insumos, igual que lo tienes ... -->
-  </div>
-
-  <!-- Monto (solo precio cobrado) -->
-  <div class="no-print flex justify-center mb-6">
-    <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
-      <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">
-        Monto Total a Cobrar ($)
-      </label>
-      <input type="number" id="precioVenta" value="0"
-             oninput="window.calcularTodo()"
-             class="text-5xl font-black w-full bg-transparent text-center text-blue-700 outline-none placeholder-blue-300">
-    </div>
-  </div>
-  <div id="displayGananciaDoctor" class="hidden">
-    <p id="montoDoctor">$ 0.00</p>
-  </div>
-  <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
-
-  <!-- Botones Guardar -->
-  <div class="grid grid-cols-2 gap-3">
-    <button type="button"
-            onclick="guardarFirebase(false)"
-            class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">
-      Guardar Datos
-    </button>
-    <button type="button"
-            onclick="guardarFirebase(true)"
-            class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">
-      Guardar e Imprimir
-    </button>
-  </div>
-
-  <!-- 📄 Receta Sin Costos -->
-  <button type="button"
-          onclick="imprimirRecetaLimpia && imprimirRecetaLimpia()"
-          class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
-    📄 Receta Sin Costos
-  </button>
-
-  <!-- 💉 Hoja de Vacunas del Paciente -->
-  <button type="button"
-          onclick="window.abrirHojaVacunasDesdeHistoria()"
-          class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
-    💉 Hoja de Vacunas del Paciente
-  </button>
-
-  <!-- NUEVO: Recepción → Cola de Espera -->
-  <button type="button"
-          onclick="window.enviarAColaEspera()"
-          class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
-    ➕ Enviar a Cola de Espera
-  </button>
-
-</section>
   <!-- ========== BUSCADOR ========== -->
   <section id="sectionBuscador" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 max-w-2xl mx-auto">
@@ -3377,6 +3436,7 @@ window.imprimirHojaVacunas = () => {
 
 </body>
 </html>
+
 
 
 
