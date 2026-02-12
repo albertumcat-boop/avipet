@@ -75,43 +75,60 @@
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
     @media print {
-      .no-print, button, select, nav, #loginSection,
-      .finanzas-ocultar, .menu-desplegable { display:none !important; }
-      body {
-        background-color:white !important;
-        padding:0; margin:0;
-      }
-      .print-area {
-        border:none !important;
-        box-shadow:none !important;
-        width:100% !important;
-      }
-      #doctorPrint {
-        display:block !important;
-        font-weight:800;
-        text-transform:uppercase;
-        font-size:14px;
-        color:black;
-        margin-top:10px;
-      }
-      #hTratamiento { display:none !important; }
-      #hTratamientoPrint {
-        display:block !important;
-        border:none !important;
-        height:auto !important;
-        overflow:visible !important;
-        white-space:pre-wrap !important;
-        font-size:13px;
-        line-height:1.6;
-        color:black !important;
-        width:100% !important;
-      }
-      input {
-        border:none !important;
-        color:black !important;
-        font-weight:bold;
-      }
-    }
+  .no-print, button, select, nav, #loginSection,
+  .finanzas-ocultar, .menu-desplegable { display:none !important; }
+
+  body {
+    background-color:white !important;
+    padding:0; margin:0;
+  }
+
+  .print-area {
+    border:none !important;
+    box-shadow:none !important;
+    width:100% !important;
+  }
+
+  #doctorPrint {
+    display:block !important;
+    font-weight:800;
+    text-transform:uppercase;
+    font-size:14px;
+    color:black;
+    margin-top:10px;
+  }
+
+  #hTratamiento { display:none !important; }
+
+  #hTratamientoPrint {
+    display:block !important;
+    border:none !important;
+    height:auto !important;
+    overflow:visible !important;
+    white-space:pre-wrap !important;
+    font-size:13px;
+    line-height:1.6;
+    color:black !important;
+    width:100% !important;
+  }
+
+  input {
+    border:none !important;
+    color:black !important;
+    font-weight:bold;
+  }
+
+  /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN --- */
+  #sectionHojaVacunas {
+    border:none !important;
+    box-shadow:none !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    page-break-after:auto;
+  }
+}
   </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -259,7 +276,211 @@
         </div>
       </div>
     </div>
+<!-- ========== HOJA DE VACUNAS / DESPARASITACIONES ========== -->
+<section id="sectionHojaVacunas"
+         class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-4 print-area text-[11px]">
 
+  <!-- ENCABEZADO CON LOGO DE DOCTOR + DIRECCIÓN FIJA -->
+  <div class="border-b border-slate-400 pb-2 mb-3 flex items-start gap-3">
+    <!-- Logo dinámico del doctor -->
+    <div class="w-16 h-16 border border-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
+      <img id="hv_logoDoctor"
+           src=""
+           alt="Logo Doctor"
+           class="max-w-full max-h-full object-contain">
+    </div>
+
+    <div class="flex-1">
+      <h2 id="hv_nombreDoctor"
+          class="text-xs font-black text-slate-800 uppercase tracking-wide">
+        <!-- Nombre doctor dinámico -->
+      </h2>
+      <p id="hv_clinicaDoctor"
+         class="text-[10px] text-slate-600 leading-tight">
+        <!-- Clínica / texto secundario -->
+      </p>
+      <p class="mt-1 text-[9px] text-slate-500 leading-snug">
+        DIRECCIÓN: Av. Francisco de Miranda, Sector Buena Vista, a 600mts del Metro La California
+        (frente al Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435),
+        Petare - Edo. Miranda.
+      </p>
+    </div>
+
+    <div class="text-right">
+      <p class="text-[9px] font-bold text-slate-500 uppercase">Fecha</p>
+      <input type="text" id="hv_fecha"
+             class="w-24 text-right font-black text-xs text-slate-700 bg-transparent border-b border-slate-400"
+             readonly>
+    </div>
+  </div>
+
+  <!-- DATOS DEL PROPIETARIO / PACIENTE -->
+  <div class="border border-slate-400 rounded-lg p-2 mb-3">
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE (PROPIETARIO):</span>
+        <input id="hv_propietario"
+               class="w-full border-b border-slate-400 uppercase text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">C.I:</span>
+        <input id="hv_cedula"
+               class="w-full border-b border-slate-400 text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">TLF:</span>
+        <input id="hv_telefono"
+               class="w-full border-b border-slate-400 text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">DIRECCIÓN:</span>
+        <input id="hv_direccion"
+               class="w-full border-b border-slate-400 uppercase text-[10px]">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 mt-2">
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">ESPECIE:</span>
+        <input id="hv_especie"
+               class="w-full border-b border-slate-400 uppercase text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">RAZA:</span>
+        <input id="hv_raza"
+               class="w-full border-b border-slate-400 uppercase text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE (PACIENTE):</span>
+        <input id="hv_paciente"
+               class="w-full border-b border-slate-400 uppercase text-[11px]">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-4 gap-2 mt-2">
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">EDAD:</span>
+        <input id="hv_edad"
+               class="w-full border-b border-slate-400 uppercase text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">SEXO:</span>
+        <input id="hv_sexo"
+               class="w-full border-b border-slate-400 uppercase text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">PESO:</span>
+        <input id="hv_peso"
+               class="w-full border-b border-slate-400 text-[11px]">
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase text-slate-500">COLOR:</span>
+        <input id="hv_color"
+               class="w-full border-b border-slate-400 uppercase text-[11px]">
+      </div>
+    </div>
+  </div>
+
+  <!-- DESPARASITACIONES -->
+  <div class="border border-slate-400 rounded-lg mb-3">
+    <div class="bg-slate-100 px-2 py-1 border-b border-slate-400">
+      <span class="text-[10px] font-black uppercase text-slate-700">
+        DESPARASITACIONES
+      </span>
+    </div>
+    <table class="w-full text-[9px]">
+      <thead class="bg-slate-50 text-slate-700 uppercase">
+        <tr>
+          <th class="border-b border-slate-400 p-1 text-left">Fecha</th>
+          <th class="border-b border-slate-400 p-1 text-left">Desparasitante</th>
+          <th class="border-b border-slate-400 p-1 text-left">Edad / Peso</th>
+          <th class="border-b border-slate-400 p-1 text-left">Próxima desparasitación</th>
+          <th class="border-b border-slate-400 p-1 text-left">Firma / Sello</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- varias filas vacías para ir llenando -->
+        <tr>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+        </tr>
+        <tr>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+        </tr>
+        <tr>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- VACUNAS / CONTROL DE VACUNA -->
+  <div class="border border-slate-400 rounded-lg mb-3">
+    <div class="bg-slate-100 px-2 py-1 border-b border-slate-400 flex justify-between items-center">
+      <span class="text-[10px] font-black uppercase text-slate-700">
+        VACUNAS - CONTROL DE VACUNA
+      </span>
+    </div>
+    <table class="w-full text-[9px]">
+      <thead class="bg-slate-50 text-slate-700 uppercase">
+        <tr>
+          <th class="border-b border-slate-400 p-1 text-left">Fecha Vacunación</th>
+          <th class="border-b border-slate-400 p-1 text-left">Lote / Vacuna</th>
+          <th class="border-b border-slate-400 p-1 text-left">Peso</th>
+          <th class="border-b border-slate-400 p-1 text-left">Próxima vacunación</th>
+          <th class="border-b border-slate-400 p-1 text-left">Sello / Firma</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+        </tr>
+        <tr>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+        </tr>
+        <tr>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+          <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+ <!-- BOTONES -->
+<div class="no-print flex flex-col sm:flex-row justify-between gap-2 mt-3">
+  <button type="button"
+          onclick="window.volverAHistoriaDesdeVacunas()"
+          class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
+    ⬅ Volver a Historia Clínica
+  </button>
+  <button type="button"
+          onclick="window.imprimirHojaVacunas()"
+          class="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-black text-[10px] uppercase">
+    🖨 Imprimir Hoja de Vacunas
+  </button>
+</div>
     <!-- Servicios -->
     <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
       <div class="bg-slate-100 p-3 no-print">
@@ -418,17 +639,24 @@
       </button>
     </div>
     <button type="button"
-            onclick="imprimirRecetaLimpia && imprimirRecetaLimpia()"
-            class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
-      📄 Receta Sin Costos
-    </button>
-    <!-- NUEVO: Recepción → Cola de Espera -->
-    <button type="button"
-            onclick="window.enviarAColaEspera()"
-            class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
-      ➕ Enviar a Cola de Espera
-    </button>
-  </section>
+        onclick="imprimirRecetaLimpia && imprimirRecetaLimpia()"
+        class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
+  📄 Receta Sin Costos
+</button>
+
+<!-- 💉 Hoja de Vacunas del Paciente -->
+<button type="button"
+        onclick="window.abrirHojaVacunasDesdeHistoria()"
+        class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
+  💉 Hoja de Vacunas del Paciente
+</button>
+
+<!-- NUEVO: Recepción → Cola de Espera -->
+<button type="button"
+        onclick="window.enviarAColaEspera()"
+        class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
+  ➕ Enviar a Cola de Espera
+</button>
   <!-- ========== BUSCADOR ========== -->
   <section id="sectionBuscador" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 max-w-2xl mx-auto">
@@ -3013,7 +3241,7 @@ window.exportarHistorialAExcel = async () => {
       return;
     }
 
-    // Columnas que irán al Excel
+    // Columnas que irán al Excel (AGREGAMOS 'tratamiento')
     const encabezados = [
       "fechaSimple",
       "cedula",
@@ -3033,7 +3261,8 @@ window.exportarHistorialAExcel = async () => {
       "montoVenta",
       "montoInsumos",
       "pagoDoctor",
-      "pagoAvipet"
+      "pagoAvipet",
+      "tratamiento"          // ← NUEVA COLUMNA
     ];
 
     const filas = [];
@@ -3064,6 +3293,7 @@ window.exportarHistorialAExcel = async () => {
         if (val === undefined || val === null) val = "";
 
         // Limpiar saltos de línea y ; para no romper el CSV
+        // (tratamiento puede tener saltos de línea)
         val = String(val)
           .replace(/\r?\n/g, " ")
           .replace(/;/g, ",");
@@ -3100,11 +3330,117 @@ window.exportarHistorialAExcel = async () => {
     alert("❌ No se pudo exportar el historial: " + e.message);
   }
 };
+  // Copia datos de la Historia Clínica a la Hoja de Vacunas
+window.abrirHojaVacunasDesdeHistoria = () => {
+  const dVal = (id) => document.getElementById(id)?.value.trim() || "";
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || "";
+  };
 
+  // Fecha de emisión de la hoja
+  const f = new Date();
+  const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
+  set('hv_fecha', fechaStr);
+
+  // Datos de propietario/paciente desde la Historia
+  set('hv_propietario', dVal('hProp'));
+  set('hv_cedula',      dVal('hCI'));
+  set('hv_telefono',    dVal('hTlf'));
+  set('hv_direccion',   dVal('hDir'));
+
+  set('hv_especie',     dVal('hEspecie'));
+  set('hv_raza',        dVal('hRaza'));
+  set('hv_paciente',    dVal('hNombre'));
+  set('hv_edad',        dVal('hEdad'));
+  set('hv_sexo',        dVal('hSexo'));
+  set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
+  set('hv_color',       dVal('hColor'));
+
+  // Datos de doctor (logo, nombre, clínica)
+  if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
+    const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
+
+    const elLogo   = document.getElementById('hv_logoDoctor');
+    const elNombre = document.getElementById('hv_nombreDoctor');
+    const elClin   = document.getElementById('hv_clinicaDoctor');
+
+    if (elLogo) {
+      elLogo.src = conf.logo || "";
+      elLogo.alt = conf.nombre || "Logo Doctor";
+    }
+    if (elNombre) elNombre.textContent = conf.nombre || "";
+    if (elClin)   elClin.textContent   = conf.clinica || "";
+  }
+
+  // Mostrar hoja vacunas y ocultar historia
+  document.getElementById('sectionHistoria')?.classList.add('hidden');
+  document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
+};
+  // Hacerlo global al window para usarlo desde cualquier parte si ya no lo es
+window.CONFIG_DOCTORES = {
+  "DR_PEREZ": {
+    nombre: "Dr. Juan Pérez",
+    clinica: "AVIPET - Medicina Veterinaria",
+    logo: "img/logos/dr_perez.png"
+  },
+  "DR_LOPEZ": {
+    nombre: "Dra. Ana López",
+    clinica: "AVIPET - Cirugía y Medicina Felina",
+    logo: "img/logos/dr_lopez.png"
+  }
+  // agrega más doctores...
+};
+
+window.doctorActivoId = null;
+
+// En tu lógica de PIN, cuando autentiques al doctor:
+function onDoctorAutenticado(doctorId) {
+  // doctorId será "DR_PEREZ", "DR_LOPEZ", etc.
+  window.doctorActivoId = doctorId;
+  // resto de tu lógica...
+}
+  window.imprimirHojaVacunas = () => {
+  const main = document.querySelector('main');
+  if (!main) {
+    window.print();
+    return;
+  }
+
+  const secciones = main.querySelectorAll('section');
+  const visiblesOriginal = [];
+
+  secciones.forEach(sec => {
+    if (!sec.classList.contains('hidden')) {
+      visiblesOriginal.push(sec.id);
+    }
+    if (sec.id !== 'sectionHojaVacunas') {
+      sec.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
+
+  window.print();
+
+  setTimeout(() => {
+    secciones.forEach(sec => {
+      if (sec.id !== 'sectionHojaVacunas') {
+        if (visiblesOriginal.includes(sec.id)) {
+          sec.classList.remove('hidden');
+        }
+      }
+    });
+    if (visiblesOriginal.includes('sectionHistoria')) {
+      document.getElementById('sectionHistoria')?.classList.remove('hidden');
+    }
+  }, 500);
+};
 </script>
 
 </body>
 </html> 
+
 
 
 
