@@ -155,13 +155,13 @@
         </div>
         <div>
           <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
-          <select id="selectDoctor"
-                  window.validarAccesoDoctor(this.value)
-                  class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
-            <option value="">-- SELECCIONE DOCTOR --</option>
-            <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
-            <option value="Joan Silva">DRA. JOAN SILVA</option>
-          </select>
+<select id="selectDoctor"
+        onchange="window.validarAccesoDoctor(this.value)"
+        class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
+  <option value="">-- SELECCIONE DOCTOR --</option>
+  <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
+  <option value="Joan Silva">DRA. JOAN SILVA</option>
+</select>
           <!-- Botones PIN -->
 <div class="no-print mt-1 flex gap-2">
   <button type="button"
@@ -3103,6 +3103,7 @@ window.exportarHistorialAExcel = async () => {
 
 </body>
 </html> 
+
 
 
 
