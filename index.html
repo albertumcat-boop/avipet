@@ -422,7 +422,11 @@
             class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
       📄 Receta Sin Costos
     </button>
-
+<button type="button"
+        onclick="window.exportarHistorialAExcel()"
+        class="no-print bg-amber-500 text-white py-2 px-4 rounded-xl font-black uppercase text-xs mt-3">
+  📥 Exportar Historial (prueba)
+</button>
     <!-- NUEVO: Recepción → Cola de Espera -->
     <button type="button"
             onclick="window.enviarAColaEspera()"
@@ -3001,6 +3005,7 @@ window.exportarHistorialAExcel = async () => {
   try {
     // Usar el doctor actualmente verificado / firmante (global en window)
     const doctorActual = window.doctorVerificado || "";
+    console.log("DEBUG: exportarHistorialAExcel, doctorActual =", doctorActual);
     if (!doctorActual) {
       alert("No hay doctor verificado para exportar historial.");
       return;
@@ -3078,6 +3083,7 @@ window.exportarHistorialAExcel = async () => {
       return;
     }
 
+    console.log("DEBUG: filas a exportar =", filas.length);
     const contenido = filas.join("\n");
     const blob = new Blob([contenido], { type: "text/csv;charset=utf-8" });
 
@@ -3103,6 +3109,7 @@ window.exportarHistorialAExcel = async () => {
 
 </body>
 </html> 
+
 
 
 
