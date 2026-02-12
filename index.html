@@ -74,7 +74,7 @@
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-   @media print {
+  @media print {
   .no-print, button, select, nav, #loginSection,
   .finanzas-ocultar, .menu-desplegable { display:none !important; }
 
@@ -395,16 +395,41 @@
         </span>
       </div>
       <table class="w-full text-[9px]">
-        <thead class="bg-slate-50 text-slate-700 uppercase">
-          <tr>
-            <th class="border-b border-slate-400 p-1 text-left">Fecha</th>
-            <th class="border-b border-slate-400 p-1 text-left">Desparasitante</th>
-            <th class="border-b border-slate-400 p-1 text-left">Edad / Peso</th>
-            <th class="border-b border-slate-400 p-1 text-left">Próxima desparasitación</th>
-            <th class="border-b border-slate-400 p-1 text-left">Firma / Sello</th>
-          </tr>
-        </thead>
-        <tbody>
+  <thead class="bg-slate-50 text-slate-700 uppercase">
+    <tr>
+      <th class="border-b border-slate-400 py-2 text-left">Fecha Vacunación</th>
+      <th class="border-b border-slate-400 py-2 text-left">Lote / Vacuna</th>
+      <th class="border-b border-slate-400 py-2 text-left">Peso</th>
+      <th class="border-b border-slate-400 py-2 text-left">Próxima vacunación</th>
+      <th class="border-b border-slate-400 py-2 text-left">Sello / Firma</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="h-12">
+      <td class="border-b border-slate-300 px-1">
+        <input class="w-full text-[9px]">
+      </td>
+      <td class="border-b border-slate-300 px-1">
+        <input class="w-full text-[9px]">
+      </td>
+      <td class="border-b border-slate-300 px-1">
+        <input class="w-full text-[9px]">
+      </td>
+      <td class="border-b border-slate-300 px-1">
+        <input class="w-full text-[9px]">
+      </td>
+      <td class="border-b border-slate-300 px-1">
+        <input class="w-full text-[9px]">
+      </td>
+    </tr>
+    <tr class="h-12">
+      <!-- igual que arriba -->
+    </tr>
+    <tr class="h-12">
+      <!-- igual que arriba -->
+    </tr>
+  </tbody>
+</table>
           <tr>
             <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
             <td class="border-b border-slate-300 p-1"><input class="w-full border-b border-slate-300 text-[9px]"></td>
@@ -3330,47 +3355,29 @@ function onDoctorAutenticado(doctorId) {
   // resto de tu lógica...
 }
 
-// Imprimir SOLO la Hoja de Vacunas
 window.imprimirHojaVacunas = () => {
-  const main = document.querySelector('main');
-  if (!main) {
-    window.print();
-    return;
-  }
+  const hv   = document.getElementById('sectionHojaVacunas');
+  const hist = document.getElementById('sectionHistoria');
 
-  const secciones = main.querySelectorAll('section');
-  const visiblesOriginal = [];
+  // 1) Asegurar que la hoja de vacunas esté visible
+  if (hv) hv.classList.remove('hidden');
+  // Opcional: ocultar historia para que no moleste visualmente
+  if (hist) hist.classList.add('hidden');
 
-  secciones.forEach(sec => {
-    if (!sec.classList.contains('hidden')) {
-      visiblesOriginal.push(sec.id);
-    }
-    if (sec.id !== 'sectionHojaVacunas') {
-      sec.classList.add('hidden');
-    }
-  });
-
-  document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
-
+  // 2) Llamar a imprimir tal como está la pantalla
   window.print();
 
+  // 3) Restaurar pantalla después de imprimir
   setTimeout(() => {
-    secciones.forEach(sec => {
-      if (sec.id !== 'sectionHojaVacunas') {
-        if (visiblesOriginal.includes(sec.id)) {
-          sec.classList.remove('hidden');
-        }
-      }
-    });
-    if (visiblesOriginal.includes('sectionHistoria')) {
-      document.getElementById('sectionHistoria')?.classList.remove('hidden');
-    }
+    if (hist) hist.classList.remove('hidden');
+    if (hv)   hv.classList.add('hidden');
   }, 500);
 };
 </script>
 
 </body>
 </html>
+
 
 
 
