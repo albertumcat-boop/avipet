@@ -156,7 +156,7 @@
         <div>
           <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
           <select id="selectDoctor"
-                  onchange="window.validarAccesoDoctor(this.value)"
+                  window.validarAccesoDoctor(this.value)
                   class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
             <option value="">-- SELECCIONE DOCTOR --</option>
             <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
@@ -242,7 +242,7 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
-            <input id="hCI" onblur="autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700">
+           <input id="hCI" onblur="window.autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700">
           </div>
           <div>
             <label class="text-[9px] font-bold text-slate-400">TELÉFONO</label>
@@ -1110,7 +1110,7 @@
 // [03] ESTADO
 // =========================================================
 const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
-// Hacer doctorVerificado global en window para poder inspeccionarlo y reutilizarlo
+// Hacer doctorVerificado global en window
 window.doctorVerificado = "";
 let serviciosEnLista = [];
 // Para no duplicar insumos base de medicamentos
@@ -1231,42 +1231,45 @@ let insumosBaseMedicamentoAgregados = false;
   }
 };
 
-  / =========================================================
-  // [04] VALIDAR DOCTOR
   // =========================================================
-  window.validarAccesoDoctor = async (nombre) => {
-    if (!nombre) {
-      window.doctorVerificado = "";
-      const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-      return;
-    }
-    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
-    if (!pinIngresado) {
-      const sel = document.getElementById('selectDoctor');
-      if (sel) sel.value = "";
-      return;
-    }
+// [04] VALIDAR DOCTOR
+// =========================================================
+window.validarAccesoDoctor = async (nombre) => {
+  // Si se limpia el select (elige opción vacía)
+  if (!nombre) {
+    window.doctorVerificado = "";
+    const dPrint = document.getElementById('doctorPrint');
+    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+    return;
+  }
 
-    const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
+  // Pedir PIN o Llave Maestra
+  const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
+  if (!pinIngresado) {
+    // Si cancela o deja vacío, se revierte la selección
+    const sel = document.getElementById('selectDoctor');
+    if (sel) sel.value = "";
+    return;
+  }
 
-    if (esValido) {
-      window.doctorVerificado = nombre;
-      const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
-      const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
-      alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
-      await window.calcularTodo();
-    } else {
-      alert("❌ PIN INCORRECTO.");
-      const sel = document.getElementById('selectDoctor');
-      if (sel) sel.value = "";
-      window.doctorVerificado = "";
-      const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-    }
-  };
+  const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
 
+  if (esValido) {
+    window.doctorVerificado = nombre;
+    const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+    const dPrint = document.getElementById('doctorPrint');
+    if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
+    alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
+    await window.calcularTodo();
+  } else {
+    alert("❌ PIN INCORRECTO.");
+    const sel = document.getElementById('selectDoctor');
+    if (sel) sel.value = "";
+    window.doctorVerificado = "";
+    const dPrint = document.getElementById('doctorPrint');
+    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+  }
+};
   // =========================================================
   // [05] INSERTAR SERVICIO
   // =========================================================
@@ -2349,140 +2352,139 @@ let insumosBaseMedicamentoAgregados = false;
   };
 
   // =========================================================
-  // [16] GUARDAR CONSULTA EN FIREBASE
-  // =========================================================
-  window.guardarFirebase = async (imp) => {
-    const selectorDoc = document.getElementById('selectDoctor');
-    const nombreDoctor = selectorDoc ? selectorDoc.value : "";
+// [16] GUARDAR CONSULTA EN FIREBASE
+// =========================================================
+window.guardarFirebase = async (imp) => {
+  const selectorDoc = document.getElementById('selectDoctor');
+  const nombreDoctor = selectorDoc ? selectorDoc.value : "";
 
-    if (!nombreDoctor) {
-      alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
-      return;
-    }
+  if (!nombreDoctor) {
+    alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
+    return;
+  }
 
-    const pinIngresado = prompt(
-      `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
-    );
-    if (!pinIngresado) return;
+  const pinIngresado = prompt(
+    `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
+  );
+  if (!pinIngresado) return;
 
-    const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
+  const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
 
-    if (esValido) {
-      window.doctorVerificado = nombreDoctor;
-      console.log("✅ Firma validada correctamente.");
-    } else {
-      alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
-      return;
-    }
+  if (esValido) {
+    window.doctorVerificado = nombreDoctor;
+    console.log("✅ Firma validada correctamente.");
+  } else {
+    alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
+    return;
+  }
 
-    if (!window.doctorVerificado) {
-      alert("⚠️ Error: Requiere firma del doctor.");
-      return;
-    }
+  if (!window.doctorVerificado) {
+    alert("⚠️ Error: Requiere firma del doctor.");
+    return;
+  }
 
-    try {
-      const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-      let porcGlobal =
-        (configSnap.exists() && (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc) > 0)
-          ? (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc)
-          : null;
+  try {
+    const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+    let porcGlobal =
+      (configSnap.exists() && (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc) > 0)
+        ? (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc)
+        : null;
 
-      const dInput = (id) => document.getElementById(id).value.trim();
-      const montoVentaTotal =
-        parseFloat(document.getElementById('precioVenta').value) || 0;
+    const dInput = (id) => document.getElementById(id).value.trim();
+    const montoVentaTotal =
+      parseFloat(document.getElementById('precioVenta').value) || 0;
 
-      const detalleInsumos = [];
-      let totalGastos = 0;
-      let pagoDoctorTotal = 0;
+    const detalleInsumos = [];
+    let totalGastos = 0;
+    let pagoDoctorTotal = 0;
 
-      const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
+    const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
 
-      serviciosPrincipales.forEach(fila => {
-        const grupoID = fila.getAttribute('data-grupo');
-        const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+    serviciosPrincipales.forEach(fila => {
+      const grupoID = fila.getAttribute('data-grupo');
+      const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
 
-        const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
-        const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
+      const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
+      const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
 
-        let gastosEsteServicio = 0;
+      let gastosEsteServicio = 0;
 
-        document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
-          const nombre = insumoFila.cells[0].innerText
-            .replace('➕ ', '')
-            .replace('🔹 ', '')
-            .trim();
-          const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
-          const costoUnidad =
-            parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
-          const subtotalInsumo = cant * costoUnidad;
+      document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
+        const nombre = insumoFila.cells[0].innerText
+          .replace('➕ ', '')
+          .replace('🔹 ', '')
+          .trim();
+        const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
+        const costoUnidad =
+          parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
+        const subtotalInsumo = cant * costoUnidad;
 
-          gastosEsteServicio += subtotalInsumo;
+        gastosEsteServicio += subtotalInsumo;
 
-          detalleInsumos.push({
-            nombre,
-            cant,
-            costo: costoUnidad
-          });
+        detalleInsumos.push({
+          nombre,
+          cant,
+          costo: costoUnidad
         });
-
-        totalGastos += gastosEsteServicio;
-        pagoDoctorTotal +=
-          (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
       });
 
-      const dataConsulta = {
-        cedula: dInput('hCI'),
-        propietario: dInput('hProp'),
-        paciente: dInput('hNombre'),
-        doctor: window.doctorVerificado,
-        tratamiento: dInput('hTratamiento'),
-        montoVenta: montoVentaTotal,
-        montoInsumos: totalGastos,
-        costoInsumosTotal: totalGastos,
-        pagoDoctor: pagoDoctorTotal,
-        pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
-        listaDetalladaInsumos: detalleInsumos,
-        fecha: serverTimestamp(),
-        fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
-        alerta: !!document.getElementById('hAlerta')?.checked,
-        color: dInput('hColor'),
+      totalGastos += gastosEsteServicio;
+      pagoDoctorTotal +=
+        (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
+    });
 
-        // NUEVO: guardar todos los datos que luego quieres autocompletar
-        telefono: dInput('hTlf'),
-        correo: dInput('hMail'),
-        direccion: dInput('hDir'),
-        especie: dInput('hEspecie'),
-        raza: dInput('hRaza'),
-        edad: dInput('hEdad'),
-        sexo: dInput('hSexo'),
-        peso: dInput('hPeso')
-      };
+    const dataConsulta = {
+      cedula: dInput('hCI'),
+      propietario: dInput('hProp'),
+      paciente: dInput('hNombre'),
+      doctor: window.doctorVerificado,
+      tratamiento: dInput('hTratamiento'),
+      montoVenta: montoVentaTotal,
+      montoInsumos: totalGastos,
+      costoInsumosTotal: totalGastos,
+      pagoDoctor: pagoDoctorTotal,
+      pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+      listaDetalladaInsumos: detalleInsumos,
+      fecha: serverTimestamp(),
+      fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+      alerta: !!document.getElementById('hAlerta')?.checked,
+      color: dInput('hColor'),
 
-      await addDoc(collection(db, "consultas"), dataConsulta);
+      // NUEVO: guardar todos los datos que luego quieres autocompletar
+      telefono: dInput('hTlf'),
+      correo: dInput('hMail'),
+      direccion: dInput('hDir'),
+      especie: dInput('hEspecie'),
+      raza: dInput('hRaza'),
+      edad: dInput('hEdad'),
+      sexo: dInput('hSexo'),
+      peso: dInput('hPeso')
+    };
 
-      // NUEVO: generar y descargar Excel automáticamente después de guardar
-      if (typeof window.exportarHistorialAExcel === 'function') {
-        window.exportarHistorialAExcel();
-      }
+    await addDoc(collection(db, "consultas"), dataConsulta);
 
-      if (imp) {
-        const tArea = document.getElementById('hTratamientoPrint');
-        if (tArea) tArea.innerText = dInput('hTratamiento');
-        alert("✅ Consulta guardada y lista para imprimir.");
-        setTimeout(() => {
-          window.print();
-          location.reload();
-        }, 600);
-      } else {
-        alert("✅ Consulta guardada exitosamente.");
-        location.reload();
-      }
-    } catch (e) {
-      console.error("Error al guardar:", e);
-      alert("❌ Error crítico al guardar: " + e.message);
+    // NUEVO: generar y descargar Excel automáticamente después de guardar
+    if (typeof window.exportarHistorialAExcel === 'function') {
+      window.exportarHistorialAExcel();
     }
-  };
 
+    if (imp) {
+      const tArea = document.getElementById('hTratamientoPrint');
+      if (tArea) tArea.innerText = dInput('hTratamiento');
+      alert("✅ Consulta guardada y lista para imprimir.");
+      setTimeout(() => {
+        window.print();
+        location.reload();
+      }, 600);
+    } else {
+      alert("✅ Consulta guardada exitosamente.");
+      location.reload();
+    }
+  } catch (e) {
+    console.error("Error al guardar:", e);
+    alert("❌ Error crítico al guardar: " + e.message);
+  }
+};
   // =========================================================
   // [17] SEGURIDAD: MODAL ADMIN
   // =========================================================
@@ -2992,7 +2994,7 @@ let insumosBaseMedicamentoAgregados = false;
     }
     window.ejecutarCambioDeTab('historia');
   });
- // =========================================================
+// =========================================================
 // [NUEVO] EXPORTAR HISTORIAL CLÍNICO A EXCEL (CSV) POR DOCTOR
 // =========================================================
 window.exportarHistorialAExcel = async () => {
@@ -3101,6 +3103,7 @@ window.exportarHistorialAExcel = async () => {
 
 </body>
 </html> 
+
 
 
 
