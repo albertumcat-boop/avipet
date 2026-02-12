@@ -159,7 +159,7 @@
     </button>
   </nav>
 
-<!-- ========== HISTORIA CLÍNICA ========== -->
+  <!-- ========== HISTORIA CLÍNICA ========== -->
   <section id="sectionHistoria"
            class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
@@ -281,8 +281,7 @@
     <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
       <div class="bg-slate-100 p-3 no-print">
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
-          Añadir Servicios Rápidos:
-        </label>
+          Añadir Servicios Rápidos:</label>
         <select id="selectorServicios" class="menu-desplegable"
                 onchange="window.insertarServicio(this.value)">
           <option value="">-- SELECCIONE UN SERVICIO --</option>
@@ -334,8 +333,7 @@
 
         <!-- NUEVO: LISTA DESPLEGABLE DE MEDICAMENTOS -->
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
-          Añadir Medicamentos:
-        </label>
+          Añadir Medicamentos:</label>
         <select id="selectorMedicamentos" class="menu-desplegable"
                 onchange="window.agregarMedicamento(this.value)">
           <option value="">-- SELECCIONE UN MEDICAMENTO --</option>
@@ -368,7 +366,7 @@
         </select>
       </div>
       <textarea id="hTratamiento"
-          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none"
+          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg.white outline-none"
                 placeholder="Escriba aquí el diagnóstico..."
                 oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
       <div id="hTratamientoPrint"
@@ -407,8 +405,7 @@
     <div class="no-print flex justify-center mb-6">
       <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
         <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">
-          Monto Total a Cobrar ($)
-        </label>
+          Monto Total a Cobrar ($)</label>
         <input type="number" id="precioVenta" value="0"
                oninput="window.calcularTodo()"
                class="text-5xl font-black w-full bg-transparent text-center text-blue-700 outline-none placeholder-blue-300">
@@ -493,72 +490,91 @@
       </div>
     </div>
 
-    <!-- DATOS DEL PROPIETARIO / PACIENTE -->
-    <div class="border border-slate-400 rounded-lg p-2 mb-3">
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE (PROPIETARIO):</span>
-          <input id="hv_propietario"
-                 class="w-full border-b border-slate-400 uppercase text-[11px]">
+    <!-- DATOS DEL PACIENTE Y DEL PROPIETARIO (ORDENADOS COMO EN HISTORIA) -->
+  <div class="border border-slate-400 rounded-lg p-2 mb-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+      <!-- Paciente -->
+      <div class="border border-slate-300 rounded-md p-2">
+        <div class="text-center mb-1">
+          <span class="text-[9px] font-black uppercase text-slate-500">Ficha Técnica de Mascota</span>
         </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">C.I:</span>
-          <input id="hv_cedula"
-                 class="w-full border-b border-slate-400 text-[11px]">
-        </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">TLF:</span>
-          <input id="hv_telefono"
-                 class="w-full border-b border-slate-400 text-[11px]">
-        </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">DIRECCIÓN:</span>
-          <input id="hv_direccion"
-                 class="w-full border-b border-slate-400 uppercase text-[10px]">
+        <div class="space-y-1">
+          <div>
+            <span class="text-[9px] font-bold uppercase text-slate-500">MASCOTA:</span>
+            <input id="hv_paciente"
+                   class="w-full border-b border-slate-400 uppercase text-[11px] font-bold text-emerald-700">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">ESPECIE:</span>
+              <input id="hv_especie"
+                     class="w-full border-b border-slate-400 uppercase text-[11px]">
+            </div>
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">RAZA:</span>
+              <input id="hv_raza"
+                     class="w-full border-b border-slate-400 uppercase text-[11px]">
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">EDAD:</span>
+              <input id="hv_edad"
+                     class="w-full border-b border-slate-400 uppercase text-[11px]">
+            </div>
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">SEXO:</span>
+              <input id="hv_sexo"
+                     class="w-full border-b border-slate-400 uppercase text-[11px]">
+            </div>
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">COLOR:</span>
+              <input id="hv_color"
+                     class="w-full border-b border-slate-400 uppercase text-[11px]">
+            </div>
+          </div>
+          <div>
+            <span class="text-[9px] font-bold uppercase text-slate-500">PESO (KG):</span>
+            <input id="hv_peso"
+                   class="w-full border-b border-slate-400 text-[11px]">
+          </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-2 mt-2">
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">ESPECIE:</span>
-          <input id="hv_especie"
-                 class="w-full border-b border-slate-400 uppercase text-[11px]">
+      <!-- Propietario -->
+      <div class="border border-slate-300 rounded-md p-2">
+        <div class="text-center mb-1">
+          <span class="text-[9px] font-black uppercase text-slate-500">Datos del Propietario</span>
         </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">RAZA:</span>
-          <input id="hv_raza"
-                 class="w-full border-b border-slate-400 uppercase text-[11px]">
-        </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE (PACIENTE):</span>
-          <input id="hv_paciente"
-                 class="w-full border-b border-slate-400 uppercase text-[11px]">
+        <div class="space-y-1">
+          <div>
+            <span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE Y APELLIDO:</span>
+            <input id="hv_propietario"
+                   class="w-full border-b border-slate-400 uppercase text-[11px]">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">CÉDULA:</span>
+              <input id="hv_cedula"
+                     class="w-full border-b border-slate-400 text-[11px]">
+            </div>
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">TELÉFONO:</span>
+              <input id="hv_telefono"
+                     class="w-full border-b border-slate-400 text-[11px]">
+            </div>
+          </div>
+          <div>
+            <span class="text-[9px] font-bold uppercase text-slate-500">DIRECCIÓN:</span>
+            <input id="hv_direccion"
+                   class="w-full border-b border-slate-400 uppercase text-[10px]">
+          </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-2 mt-2">
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">EDAD:</span>
-          <input id="hv_edad"
-                 class="w-full border-b border-slate-400 uppercase text-[11px]">
-        </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">SEXO:</span>
-          <input id="hv_sexo"
-                 class="w-full border-b border-slate-400 uppercase text-[11px]">
-        </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">PESO:</span>
-          <input id="hv_peso"
-                 class="w-full border-b border-slate-400 text-[11px]">
-        </div>
-        <div>
-          <span class="text-[9px] font-bold uppercase text-slate-500">COLOR:</span>
-          <input id="hv_color"
-                 class="w-full border-b border-slate-400 uppercase text-[11px]">
-        </div>
-      </div>
     </div>
+  </div>
 
     <!-- DESPARASITACIONES -->
     <div class="border border-slate-400 rounded-lg mb-3">
@@ -621,7 +637,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr class="h-16">
+                    <tr class="h-16">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -636,6 +652,56 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
           <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DESPARASITACIONES (SEGUNDA TABLA) -->
+    <div class="border border-slate-400 rounded-lg mb-3">
+      <div class="bg-slate-100 px-2 py-1 border-b border-slate-400">
+        <span class="text-[10px] font-black uppercase text-slate-700">
+          DESPARASITACIONES
+        </span>
+      </div>
+      <table class="w-full text-[9px]">
+        <thead class="bg-slate-50 text-slate-700 uppercase">
+          <tr>
+            <th class="border-b border-slate-400 py-1 text-left">Fecha</th>
+            <th class="border-b border-slate-400 py-1 text-left">Desparasitante</th>
+            <th class="border-b border-slate-400 py-1 text-left">Edad / Peso</th>
+            <th class="border-b border-slate-400 py-1 text-left">Próxima desparasitación</th>
+            <th class="border-b border-slate-400 py-1 text-left">Firma / Sello</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -863,190 +929,6 @@
   </div>
 </section>
 
-  <!-- ========== REPORTE / CAJA ========== -->
-  <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
-    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
-      <h2 class="font-black text-center mb-2 uppercase text-slate-700 text-2xl tracking-tighter">
-        Gestión de Caja Diaria
-      </h2>
-
-      <div class="text-center mb-4">
-        <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-bold uppercase border border-slate-200">
-          Pacientes: <span id="totalPacientes" class="text-slate-800">0</span>
-        </span>
-      </div>
-
-      <div id="listaReporte"
-           class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
-
-      <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-          <p class="text-[10px] font-bold uppercase text-slate-400">Bruto Total</p>
-          <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
-        </div>
-        <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400">
-          <p class="text-[10px] font-bold uppercase text-amber-600">Costos Operativos</p>
-          <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono">$0.00</p>
-        </div>
-        <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-400 col-span-2 space-y-2">
-          <div class="flex justify-between items-center border-b border-blue-100 pb-1">
-            <span class="text-[11px] font-black uppercase text-blue-800">Dr. Darwin Sandoval:</span>
-            <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
-          </div>
-          <div class="flex justify-between items-center pt-1">
-            <span class="text-[11px] font-black uppercase text-blue-800">Dra. Joan Silva:</span>
-            <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
-          </div>
-        </div>
-        <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-sm">
-          <p class="text-[10px] font-bold uppercase text-emerald-600">Utilidad Neta (Avipet)</p>
-          <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
-        </div>
-      </div>
-
-      <!-- Bloque análisis inteligente -->
-      <div id="contenedorAnalisis"
-           class="hidden mt-6 pt-6 border-t-2 border-slate-100 animate-fadeIn">
-        <h3 class="text-center font-black text-indigo-900 uppercase text-sm mb-4 tracking-widest">
-          📊 Análisis Estratégico Mensual
-        </h3>
-        <div id="gridAnalisis" class="grid grid-cols-2 gap-3 mb-4"></div>
-        <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 mb-6">
-          <p class="text-[10px] font-bold uppercase text-indigo-600 mb-2">Desempeño de Equipo</p>
-          <div id="analisisDoctores" class="space-y-2"></div>
-        </div>
-      </div>
-
-      <button onclick="generarAnalisisCompleto && generarAnalisisCompleto()"
-              class="w-full mb-4 bg-indigo-600 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-all uppercase text-xs">
-        📈 Generar Análisis Inteligente
-      </button>
-      <div class="flex flex-col gap-2">
-        <button onclick="cargarReporte()"
-                class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
-          🔄 Actualizar Balance
-        </button>
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="descargarReporte && descargarReporte()"
-                  class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
-            📥 Descargar TXT
-          </button>
-          <button onclick="guardarResumenDelDia && guardarResumenDelDia()"
-                  class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
-            💾 Guardar en Nube
-          </button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========== CONFIG PRECIOS ========== -->
-  <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
-      <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">
-        🛠 Panel de Control Maestro
-      </h2>
-      <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">
-        Gestión de Tarifas, Comisiones y Costos de Materiales
-      </p>
-
-      <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
-        <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ"
-                class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
-          💉 Servicios y Ganancias
-        </button>
-        <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns"
-                class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
-          📦 Costo de Insumos
-        </button>
-      </div>
-
-      <div id="areaBtnAgregarInsumo" class="hidden mb-4 flex justify-end">
-        <button onclick="window.agregarInsumoNuevoManual()"
-                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md font-black text-[10px] uppercase transition-all">
-          ➕ Agregar Insumo Nuevo
-        </button>
-      </div>
-
-      <div id="bannerSincro"
-           class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items.center justify-between gap-4">
-        <div class="flex-1">
-          <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
-          <p class="text-[9px] text-orange-400">
-            Usa esto solo para subir los datos del código a la nube por primera vez.
-          </p>
-        </div>
-        <button onclick="window.inicializarBaseDeDatosCompleta()"
-                class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
-          🚀 Sincronizar Todo
-        </button>
-      </div>
-
-      <div id="contenedorTabServicios"
-           class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-        <table class="w-full text-left text-[12px]">
-          <thead>
-          <tr class="text-blue-900 font-black uppercase text-[10px]">
-            <th class="p-3">Servicio / Tratamiento</th>
-            <th class="p-3 w-28 text-center">Precio ($)</th>
-            <th class="p-3 w-28 text-center">Doc (%)</th>
-            <th class="p-3 w-24 text-center">Acción</th>
-          </tr>
-          </thead>
-          <tbody id="tablaMaestraServicios" class="bg-white divide-y"></tbody>
-        </table>
-      </div>
-
-      <div id="contenedorTabInsumos"
-           class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-        <table class="w-full text-left text-[12px]">
-          <thead>
-          <tr class="text-emerald-900 font-black uppercase text-[10px]">
-            <th class="p-3">Insumo / Material</th>
-            <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
-            <th class="p-3 w-24 text-center">Acción</th>
-          </tr>
-          </thead>
-          <tbody id="tablaMaestraInsumos" class="bg-white divide-y"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========== SALA DE ESPERA ========== -->
-  <section id="sectionEspera" class="hidden p-4 animate-fadeIn">
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-3xl mx-auto">
-      <h2 class="text-xl font-black text-blue-900 mb-4 uppercase">Pacientes en Espera</h2>
-      <div id="listaEspera" class="space-y-2 max-h-80 overflow-y-auto text-[11px]"></div>
-    </div>
-  </section>
-
-</main>
-
-<!-- MODAL LOGIN -->
-<section id="modalLogin"
-         class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-  <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-xs w-full border border-slate-200">
-    <h3 class="text-center font-black text-slate-700 uppercase text-sm mb-4">
-      🔐 Acceso Privado
-    </h3>
-        <input type="password" id="inputPass"
-           placeholder="Ingrese PIN"
-           class="w-full p-3 rounded-xl border border-slate-200 mb-2 text-center text-lg font-mono">
-    <button onclick="validarAcceso()"
-            class="w-full bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs mb-3">
-      Entrar
-    </button>
-    <button onclick="recuperarPin()"
-            class="w-full text-slate-400 text-[10px] uppercase font-bold hover:text-indigo-600 transition-colors">
-      He olvidado mi PIN
-    </button>
-    <button onclick="cerrarModalLogin()"
-            class="w-full mt-2 text-red-400 text-[10px] uppercase font-bold">
-      Cancelar
-    </button>
-  </div>
-</section>
 <script type="module">
   import { db } from './firebase-config.js';
   import {
@@ -1338,16 +1220,15 @@
   };
 
   // =========================================================
-// [03] ESTADO
-// =========================================================
-const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
-// Hacer doctorVerificado global en window
-window.doctorVerificado = "";
-let serviciosEnLista = [];
-// Para no duplicar insumos base de medicamentos
-let insumosBaseMedicamentoAgregados = false;
-
+  // [03] ESTADO
   // =========================================================
+  const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
+  // Hacer doctorVerificado global en window
+  window.doctorVerificado = "";
+  let serviciosEnLista = [];
+  // Para no duplicar insumos base de medicamentos
+  let insumosBaseMedicamentoAgregados = false;
+    // =========================================================
   // [15] SEGURIDAD AVANZADA DOCTORES (PIN+MASTER)
   // =========================================================
   const MASTER_KEY = "AVIPET2026";
@@ -1373,33 +1254,33 @@ let insumosBaseMedicamentoAgregados = false;
     }
   };
 
- window.cambiarPinDoctor = async (nombreDoc) => {
-  if (!nombreDoc) {
-    alert("Seleccione un doctor en la lista primero.");
-    return;
-  }
-
-  const pinActual = prompt(`🔐 [${nombreDoc}] Ingrese PIN actual o Llave Maestra:`);
-  if (!pinActual) return;
-
-  const esValido = await window.validarDoctorConMaster(nombreDoc, pinActual);
-
-  if (esValido) {
-    const nuevoPin = prompt("🆕 Ingrese su NUEVO PIN (4 dígitos):");
-    if (nuevoPin && nuevoPin.length >= 4) {
-      await setDoc(
-        doc(db, "doctores", nombreDoc),
-        { pin: nuevoPin, ultimaActualizacion: serverTimestamp() },
-        { merge: true }
-      );
-      alert("✅ PIN actualizado con éxito.");
-    } else {
-      alert("⚠️ El PIN debe tener al menos 4 dígitos.");
+  window.cambiarPinDoctor = async (nombreDoc) => {
+    if (!nombreDoc) {
+      alert("Seleccione un doctor en la lista primero.");
+      return;
     }
-  } else {
-    alert("🚫 Validación fallida.");
-  }
-};
+
+    const pinActual = prompt(`🔐 [${nombreDoc}] Ingrese PIN actual o Llave Maestra:`);
+    if (!pinActual) return;
+
+    const esValido = await window.validarDoctorConMaster(nombreDoc, pinActual);
+
+    if (esValido) {
+      const nuevoPin = prompt("🆕 Ingrese su NUEVO PIN (4 dígitos):");
+      if (nuevoPin && nuevoPin.length >= 4) {
+        await setDoc(
+          doc(db, "doctores", nombreDoc),
+          { pin: nuevoPin, ultimaActualizacion: serverTimestamp() },
+          { merge: true }
+        );
+        alert("✅ PIN actualizado con éxito.");
+      } else {
+        alert("⚠️ El PIN debe tener al menos 4 dígitos.");
+      }
+    } else {
+      alert("🚫 Validación fallida.");
+    }
+  };
 
   window.validarDoctorPerfil = async (nombreDoc, pinIngresado) => {
     if (pinIngresado === MASTER_KEY) return true;
@@ -1417,33 +1298,15 @@ let insumosBaseMedicamentoAgregados = false;
   };
 
   window.solicitarCambioPinDoctor = async () => {
-  const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
-  if (!nombreDoc) return;
+    const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
+    if (!nombreDoc) return;
 
-  // Preguntar clave de recuperación (llave maestra o PIN admin)
-  const claveAdmin = prompt("🔐 Recuperación de PIN\nIngrese la Llave Maestra o PIN administrativo:");
-  if (!claveAdmin) return;
+    // Preguntar clave de recuperación (llave maestra o PIN admin)
+    const claveAdmin = prompt("🔐 Recuperación de PIN\nIngrese la Llave Maestra o PIN administrativo:");
+    if (!claveAdmin) return;
 
-  // 1) MASTER_KEY siempre es válida
-  if (claveAdmin === MASTER_KEY) {
-    const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
-    if (nuevoPin && nuevoPin.length >= 4) {
-      await setDoc(
-        doc(db, "doctores", nombreDoc),
-        { pin: nuevoPin },
-        { merge: true }
-      );
-      alert(`✅ PIN de ${nombreDoc} actualizado por recuperación (Llave Maestra).`);
-    }
-    return;
-  }
-
-  // 2) También permite usar el PIN administrativo de "configuracion/seguridad"
-  try {
-    const snapSeg = await getDoc(doc(db, "configuracion", "seguridad"));
-    const pinAdmin = snapSeg.exists() ? (snapSeg.data().pin || "AVIPET2026") : "AVIPET2026";
-
-    if (claveAdmin === pinAdmin) {
+    // 1) MASTER_KEY siempre es válida
+    if (claveAdmin === MASTER_KEY) {
       const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
       if (nuevoPin && nuevoPin.length >= 4) {
         await setDoc(
@@ -1451,56 +1314,75 @@ let insumosBaseMedicamentoAgregados = false;
           { pin: nuevoPin },
           { merge: true }
         );
-        alert(`✅ PIN de ${nombreDoc} actualizado por administrador.`);
+        alert(`✅ PIN de ${nombreDoc} actualizado por recuperación (Llave Maestra).`);
       }
-    } else {
-      alert("🚫 Clave administrativa incorrecta.");
+      return;
     }
-  } catch (e) {
-    console.error("Error validando clave admin:", e);
-    alert("❌ Error al validar clave administrativa.");
-  }
-};
+
+    // 2) También permite usar el PIN administrativo de "configuracion/seguridad"
+    try {
+      const snapSeg = await getDoc(doc(db, "configuracion", "seguridad"));
+      const pinAdmin = snapSeg.exists() ? (snapSeg.data().pin || "AVIPET2026") : "AVIPET2026";
+
+      if (claveAdmin === pinAdmin) {
+        const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
+        if (nuevoPin && nuevoPin.length >= 4) {
+          await setDoc(
+            doc(db, "doctores", nombreDoc),
+            { pin: nuevoPin },
+            { merge: true }
+          );
+          alert(`✅ PIN de ${nombreDoc} actualizado por administrador.`);
+        }
+      } else {
+        alert("🚫 Clave administrativa incorrecta.");
+      }
+    } catch (e) {
+      console.error("Error validando clave admin:", e);
+      alert("❌ Error al validar clave administrativa.");
+    }
+  };
 
   // =========================================================
-// [04] VALIDAR DOCTOR
-// =========================================================
-window.validarAccesoDoctor = async (nombre) => {
-  // Si se limpia el select (elige opción vacía)
-  if (!nombre) {
-    window.doctorVerificado = "";
-    const dPrint = document.getElementById('doctorPrint');
-    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-    return;
-  }
+  // [04] VALIDAR DOCTOR
+  // =========================================================
+  window.validarAccesoDoctor = async (nombre) => {
+    // Si se limpia el select (elige opción vacía)
+    if (!nombre) {
+      window.doctorVerificado = "";
+      const dPrint = document.getElementById('doctorPrint');
+      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+      return;
+    }
 
-  // Pedir PIN o Llave Maestra
-  const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
-  if (!pinIngresado) {
-    // Si cancela o deja vacío, se revierte la selección
-    const sel = document.getElementById('selectDoctor');
-    if (sel) sel.value = "";
-    return;
-  }
+    // Pedir PIN o Llave Maestra
+    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
+    if (!pinIngresado) {
+      // Si cancela o deja vacío, se revierte la selección
+      const sel = document.getElementById('selectDoctor');
+      if (sel) sel.value = "";
+      return;
+    }
 
-  const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
+    const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
 
-  if (esValido) {
-    window.doctorVerificado = nombre;
-    const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
-    const dPrint = document.getElementById('doctorPrint');
-    if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
-    alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
-    await window.calcularTodo();
-  } else {
-    alert("❌ PIN INCORRECTO.");
-    const sel = document.getElementById('selectDoctor');
-    if (sel) sel.value = "";
-    window.doctorVerificado = "";
-    const dPrint = document.getElementById('doctorPrint');
-    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-  }
-};
+    if (esValido) {
+      window.doctorVerificado = nombre;
+      const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+      const dPrint = document.getElementById('doctorPrint');
+      if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
+      alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
+      await window.calcularTodo();
+    } else {
+      alert("❌ PIN INCORRECTO.");
+      const sel = document.getElementById('selectDoctor');
+      if (sel) sel.value = "";
+      window.doctorVerificado = "";
+      const dPrint = document.getElementById('doctorPrint');
+      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+    }
+  };
+
   // =========================================================
   // [05] INSERTAR SERVICIO
   // =========================================================
@@ -1670,144 +1552,143 @@ window.validarAccesoDoctor = async (nombre) => {
         </td>`;
       cuerpo.appendChild(tr);
     });
-
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
   };
+    window.agregarMedicamento = (nombreMed) => {
+    if (!nombreMed) return;
+    const cfg = CONFIG_MEDICAMENTOS[nombreMed];
+    if (!cfg) return;
 
- window.agregarMedicamento = (nombreMed) => {
-  if (!nombreMed) return;
-  const cfg = CONFIG_MEDICAMENTOS[nombreMed];
-  if (!cfg) return;
+    let precioCliente = 0;
+    let descripcion = nombreMed;
 
-  let precioCliente = 0;
-  let descripcion = nombreMed;
+    // SUERO HIPERINMUNE: por ml
+    if (nombreMed === "Suero hiperinmune") {
+      const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
+      if (!ml || isNaN(ml) || parseFloat(ml) <= 0) {
+        document.getElementById('selectorMedicamentos').value = "";
+        return;
+      }
+      const cantMl = parseFloat(ml);
+      precioCliente = (cfg.precioClientePorMl || 0) * cantMl;
+      descripcion  += ` (${cantMl} ml)`;
 
-  // SUERO HIPERINMUNE: por ml
-  if (nombreMed === "Suero hiperinmune") {
-    const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
-    if (!ml || isNaN(ml) || parseFloat(ml) <= 0) {
-      document.getElementById('selectorMedicamentos').value = "";
-      return;
+    // ARTROSAN: 1 ml cada 20 kg
+    } else if (nombreMed === "Artrosan") {
+      const kg = prompt("Ingrese el peso del paciente (kg) para Artrosan (1 ml cada 20 kg):");
+      if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
+        document.getElementById('selectorMedicamentos').value = "";
+        return;
+      }
+      const pesoKg = parseFloat(kg);
+      const mlNecesarios = pesoKg / 20;
+      precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
+      descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
+
+    // LISAVAC: 1 ml por kg
+    } else if (nombreMed === "Lisavac") {
+      const kg = prompt("Ingrese el peso del paciente (kg) para Lisavac (1 ml por kg):");
+      if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
+        document.getElementById('selectorMedicamentos').value = "";
+        return;
+      }
+      const pesoKg = parseFloat(kg);
+      const mlNecesarios = pesoKg;
+      precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
+      descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
+
+    // RESTO: monto fijo
+    } else {
+      precioCliente = cfg.precioCliente || 0;
     }
-    const cantMl = parseFloat(ml);
-    precioCliente = (cfg.precioClientePorMl || 0) * cantMl;
-    descripcion  += ` (${cantMl} ml)`;
 
-  // ARTROSAN: 1 ml cada 20 kg
-  } else if (nombreMed === "Artrosan") {
-    const kg = prompt("Ingrese el peso del paciente (kg) para Artrosan (1 ml cada 20 kg):");
-    if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
-      document.getElementById('selectorMedicamentos').value = "";
-      return;
+    // 1) CREAR UNA FILA "SERVICIO PRINCIPAL" PARA EL MEDICAMENTO
+    const cuerpo = document.getElementById('listaInsumosDinamica');
+    document.getElementById('contenedorInsumos').classList.remove('hidden');
+
+    const grupoID = "med-" + Date.now(); // id único para el medicamento
+
+    const porcentajeServicioMedicamento = 40; // 40% doctor, 60% Avipet, igual que otras consultas
+
+    const filaTitulo = document.createElement('tr');
+    filaTitulo.className =
+      "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
+    filaTitulo.setAttribute('data-grupo', grupoID);
+    filaTitulo.setAttribute('data-precio', precioCliente);
+    filaTitulo.setAttribute('data-porc', porcentajeServicioMedicamento);
+
+    filaTitulo.innerHTML = `
+      <td colspan="3" class="p-2 text-[11px] uppercase">
+        💊 ${descripcion} ($${precioCliente.toFixed(2)})
+        <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-purple-200">
+          MEDICAMENTO
+        </span>
+      </td>
+      <td class="p-2 text-center">
+        <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioCliente}, event)"
+                class="text-red-500 font-bold text-lg">×</button>
+      </td>`;
+    cuerpo.appendChild(filaTitulo);
+
+    // 2) ANOTAR EN EL TRATAMIENTO
+    const area = document.getElementById('hTratamiento');
+    if (area) {
+      area.value += (area.value ? "\n" : "") +
+        `=> MEDICAMENTO: ${descripcion} ($${precioCliente.toFixed(2)})`;
+      document.getElementById('hTratamientoPrint').innerText = area.value;
     }
-    const pesoKg = parseFloat(kg);
-    const mlNecesarios = pesoKg / 20;
-    precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
-    descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
 
-  // LISAVAC: 1 ml por kg
-  } else if (nombreMed === "Lisavac") {
-    const kg = prompt("Ingrese el peso del paciente (kg) para Lisavac (1 ml por kg):");
-    if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
-      document.getElementById('selectorMedicamentos').value = "";
-      return;
+    // 3) SUMAR AL MONTO TOTAL A COBRAR
+    const inputVenta = document.getElementById('precioVenta');
+    const montoActual = parseFloat(inputVenta.value) || 0;
+    const nuevoMonto  = montoActual + precioCliente;
+    inputVenta.value  = nuevoMonto.toFixed(2);
+
+    // 4) INSUMOS BASE DE MEDICAMENTO: SOLO LA PRIMERA VEZ
+    if (!insumosBaseMedicamentoAgregados) {
+      const insumosMedicamento = [
+        { nombre: "Jeringa para medicamento", costo: 0.50 },
+        { nombre: "Algodón para medicamento", costo: 0.10 },
+        { nombre: "Alcohol para medicamento", costo: 0.10 }
+      ];
+
+      insumosMedicamento.forEach(insumo => {
+        const tr = document.createElement('tr');
+        tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;
+        tr.innerHTML = `
+          <td class="p-2 font-bold text-[11px] italic">
+            ➕ ${insumo.nombre.toUpperCase()}
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" value="1"
+                   oninput="window.calcularTodo()"
+                   class="i-cant w-12 text-center border rounded">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number"
+                   value="${insumo.costo.toFixed(2)}"
+                   step="0.01"
+                   oninput="window.calcularTodo()"
+                   class="i-cost w-16 text-center border rounded">
+          </td>
+          <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
+              onclick="this.parentElement.remove(); window.calcularTodo()">
+            ✕
+          </td>`;
+        cuerpo.appendChild(tr);
+      });
+
+      insumosBaseMedicamentoAgregados = true;
     }
-    const pesoKg = parseFloat(kg);
-    const mlNecesarios = pesoKg;
-    precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
-    descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
 
-  // RESTO: monto fijo
-  } else {
-    precioCliente = cfg.precioCliente || 0;
-  }
+    // 5) RECALCULAR COSTOS E INGRESOS
+    window.calcularTodo();
 
-  // 1) CREAR UNA FILA "SERVICIO PRINCIPAL" PARA EL MEDICAMENTO
-  const cuerpo = document.getElementById('listaInsumosDinamica');
-  document.getElementById('contenedorInsumos').classList.remove('hidden');
+    // 6) RESET SELECTOR
+    document.getElementById('selectorMedicamentos').value = "";
+  };
 
-  const grupoID = "med-" + Date.now(); // id único para el medicamento
-
- const porcentajeServicioMedicamento = 40; // 40% doctor, 60% Avipet, igual que otras consultas
-
-  const filaTitulo = document.createElement('tr');
-  filaTitulo.className =
-    "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
-  filaTitulo.setAttribute('data-grupo', grupoID);
-  filaTitulo.setAttribute('data-precio', precioCliente);
-  filaTitulo.setAttribute('data-porc', porcentajeServicioMedicamento);
-
-  filaTitulo.innerHTML = `
-    <td colspan="3" class="p-2 text-[11px] uppercase">
-      💊 ${descripcion} ($${precioCliente.toFixed(2)})
-      <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-purple-200">
-        MEDICAMENTO
-      </span>
-    </td>
-    <td class="p-2 text-center">
-      <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioCliente}, event)"
-              class="text-red-500 font-bold text-lg">×</button>
-    </td>`;
-  cuerpo.appendChild(filaTitulo);
-
-  // 2) ANOTAR EN EL TRATAMIENTO
-  const area = document.getElementById('hTratamiento');
-  if (area) {
-    area.value += (area.value ? "\n" : "") +
-      `=> MEDICAMENTO: ${descripcion} ($${precioCliente.toFixed(2)})`;
-    document.getElementById('hTratamientoPrint').innerText = area.value;
-  }
-
-  // 3) SUMAR AL MONTO TOTAL A COBRAR
-  const inputVenta = document.getElementById('precioVenta');
-  const montoActual = parseFloat(inputVenta.value) || 0;
-  const nuevoMonto  = montoActual + precioCliente;
-  inputVenta.value  = nuevoMonto.toFixed(2);
-
-  // 4) INSUMOS BASE DE MEDICAMENTO: SOLO LA PRIMERA VEZ
-  if (!insumosBaseMedicamentoAgregados) {
-    const insumosMedicamento = [
-      { nombre: "Jeringa para medicamento", costo: 0.50 },
-      { nombre: "Algodón para medicamento", costo: 0.10 },
-      { nombre: "Alcohol para medicamento", costo: 0.10 }
-    ];
-
-    insumosMedicamento.forEach(insumo => {
-      const tr = document.createElement('tr');
-      tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;
-      tr.innerHTML = `
-        <td class="p-2 font-bold text-[11px] italic">
-          ➕ ${insumo.nombre.toUpperCase()}
-        </td>
-        <td class="p-2 text-center">
-          <input type="number" value="1"
-                 oninput="window.calcularTodo()"
-                 class="i-cant w-12 text-center border rounded">
-        </td>
-        <td class="p-2 text-center">
-          <input type="number"
-                 value="${insumo.costo.toFixed(2)}"
-                 step="0.01"
-                 oninput="window.calcularTodo()"
-                 class="i-cost w-16 text-center border rounded">
-        </td>
-        <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
-            onclick="this.parentElement.remove(); window.calcularTodo()">
-          ✕
-        </td>`;
-      cuerpo.appendChild(tr);
-    });
-
-    insumosBaseMedicamentoAgregados = true;
-  }
-
-  // 5) RECALCULAR COSTOS E INGRESOS
-  window.calcularTodo();
-
-  // 6) RESET SELECTOR
-  document.getElementById('selectorMedicamentos').value = "";
-};
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -2119,53 +2000,53 @@ window.validarAccesoDoctor = async (nombre) => {
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA
   // =========================================================
- window.autocompletarPorCedula = async (ci) => {
-  if (!ci) return;
-  try {
-    const q = query(collection(db, "consultas"), where("cedula", "==", ci.trim()));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      const registros = [];
-      snap.forEach(docSnap => registros.push(docSnap.data()));
-      registros.sort(
-        (a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0)
-      );
-      const d = registros[0];
+  window.autocompletarPorCedula = async (ci) => {
+    if (!ci) return;
+    try {
+      const q = query(collection(db, "consultas"), where("cedula", "==", ci.trim()));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const registros = [];
+        snap.forEach(docSnap => registros.push(docSnap.data()));
+        registros.sort(
+          (a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0)
+        );
+        const d = registros[0];
 
-      console.log("Registro usado para autocompletar:", d); // <-- SOLO ESTO NUEVO
+        console.log("Registro usado para autocompletar:", d); // <-- SOLO ESTO NUEVO
 
-      const inputProp = document.getElementById('hProp');
-      if (inputProp) {
-        inputProp.value = d.propietario || "";
-        if (d.alerta === true) {
-          inputProp.style.color = "#b91c1c";
-          inputProp.style.fontWeight = "bold";
-          const chk = document.getElementById('hAlerta');
-          if (chk) chk.checked = true;
-          alert("⚠️ NOTA: Este cliente tiene una restricción administrativa.");
-        } else {
-          inputProp.style.color = "";
-          inputProp.style.fontWeight = "";
-          const chk = document.getElementById('hAlerta');
-          if (chk) chk.checked = false;
+        const inputProp = document.getElementById('hProp');
+        if (inputProp) {
+          inputProp.value = d.propietario || "";
+          if (d.alerta === true) {
+            inputProp.style.color = "#b91c1c";
+            inputProp.style.fontWeight = "bold";
+            const chk = document.getElementById('hAlerta');
+            if (chk) chk.checked = true;
+            alert("⚠️ NOTA: Este cliente tiene una restricción administrativa.");
+          } else {
+            inputProp.style.color = "";
+            inputProp.style.fontWeight = "";
+            const chk = document.getElementById('hAlerta');
+            if (chk) chk.checked = false;
+          }
         }
+        document.getElementById('hMail').value    = d.correo    || "";
+        document.getElementById('hTlf').value     = d.telefono  || "";
+        document.getElementById('hDir').value     = d.direccion || "";
+        document.getElementById('hNombre').value  = d.paciente  || "";
+        document.getElementById('hRaza').value    = d.raza      || "";
+        document.getElementById('hEspecie').value = d.especie   || "";
+        document.getElementById('hEdad').value    = d.edad      || "";
+        document.getElementById('hSexo').value    = d.sexo      || "";
+        document.getElementById('hPeso').value    = d.peso      || "";
+        const hColor = document.getElementById('hColor');
+        if (hColor) hColor.value = d.color || "";
       }
-      document.getElementById('hMail').value    = d.correo    || "";
-      document.getElementById('hTlf').value     = d.telefono  || "";
-      document.getElementById('hDir').value     = d.direccion || "";
-      document.getElementById('hNombre').value  = d.paciente  || "";
-      document.getElementById('hRaza').value    = d.raza      || "";
-      document.getElementById('hEspecie').value = d.especie   || "";
-      document.getElementById('hEdad').value    = d.edad      || "";
-      document.getElementById('hSexo').value    = d.sexo      || "";
-      document.getElementById('hPeso').value    = d.peso      || "";
-      const hColor = document.getElementById('hColor');
-      if (hColor) hColor.value = d.color || "";
+    } catch (e) {
+      console.error(e);
     }
-  } catch (e) {
-    console.error(e);
-  }
-};
+  };
 
   // =========================================================
   // [23] RECEPCIÓN: ENVIAR A COLA DE ESPERA
@@ -2294,6 +2175,7 @@ window.validarAccesoDoctor = async (nombre) => {
         "<p class='text-center text-red-500 font-bold'>Error de conexión</p>";
     }
   };
+
   // =========================================================
   // [12] PANEL DE CONTROL: SERVICIOS E INSUMOS
   // =========================================================
@@ -2322,7 +2204,7 @@ window.validarAccesoDoctor = async (nombre) => {
       }
       if (btnIns) {
         btnIns.className =
-          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg.white/50";
+          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
       }
       if (typeof window.renderizarTablaMaestra === 'function') {
         window.renderizarTablaMaestra();
@@ -2334,7 +2216,7 @@ window.validarAccesoDoctor = async (nombre) => {
       }
       if (btnServ) {
         btnServ.className =
-          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg.white/50";
+          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
       }
       if (typeof window.renderizarTablaInsumos === 'function') {
         window.renderizarTablaInsumos();
@@ -2480,7 +2362,6 @@ window.validarAccesoDoctor = async (nombre) => {
       alert("Error: " + e.message);
     }
   };
-
   window.renderizarTablaInsumos = async () => {
     const tabla = document.getElementById('tablaMaestraInsumos');
     if (!tabla) {
@@ -2583,140 +2464,141 @@ window.validarAccesoDoctor = async (nombre) => {
   };
 
   // =========================================================
-// [16] GUARDAR CONSULTA EN FIREBASE
-// =========================================================
-window.guardarFirebase = async (imp) => {
-  const selectorDoc = document.getElementById('selectDoctor');
-  const nombreDoctor = selectorDoc ? selectorDoc.value : "";
+  // [16] GUARDAR CONSULTA EN FIREBASE
+  // =========================================================
+  window.guardarFirebase = async (imp) => {
+    const selectorDoc = document.getElementById('selectDoctor');
+    const nombreDoctor = selectorDoc ? selectorDoc.value : "";
 
-  if (!nombreDoctor) {
-    alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
-    return;
-  }
+    if (!nombreDoctor) {
+      alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
+      return;
+    }
 
-  const pinIngresado = prompt(
-    `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
-  );
-  if (!pinIngresado) return;
+    const pinIngresado = prompt(
+      `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
+    );
+    if (!pinIngresado) return;
 
-  const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
+    const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
 
-  if (esValido) {
-    window.doctorVerificado = nombreDoctor;
-    console.log("✅ Firma validada correctamente.");
-  } else {
-    alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
-    return;
-  }
+    if (esValido) {
+      window.doctorVerificado = nombreDoctor;
+      console.log("✅ Firma validada correctamente.");
+    } else {
+      alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
+      return;
+    }
 
-  if (!window.doctorVerificado) {
-    alert("⚠️ Error: Requiere firma del doctor.");
-    return;
-  }
+    if (!window.doctorVerificado) {
+      alert("⚠️ Error: Requiere firma del doctor.");
+      return;
+    }
 
-  try {
-    const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-    let porcGlobal =
-      (configSnap.exists() && (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc) > 0)
-        ? (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc)
-        : null;
+    try {
+      const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+      let porcGlobal =
+        (configSnap.exists() && (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc) > 0)
+          ? (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc)
+          : null;
 
-    const dInput = (id) => document.getElementById(id).value.trim();
-    const montoVentaTotal =
-      parseFloat(document.getElementById('precioVenta').value) || 0;
+      const dInput = (id) => document.getElementById(id).value.trim();
+      const montoVentaTotal =
+        parseFloat(document.getElementById('precioVenta').value) || 0;
 
-    const detalleInsumos = [];
-    let totalGastos = 0;
-    let pagoDoctorTotal = 0;
+      const detalleInsumos = [];
+      let totalGastos = 0;
+      let pagoDoctorTotal = 0;
 
-    const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
+      const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
 
-    serviciosPrincipales.forEach(fila => {
-      const grupoID = fila.getAttribute('data-grupo');
-      const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+      serviciosPrincipales.forEach(fila => {
+        const grupoID = fila.getAttribute('data-grupo');
+        const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
 
-      const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
-      const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
+        const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
+        const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
 
-      let gastosEsteServicio = 0;
+        let gastosEsteServicio = 0;
 
-      document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
-        const nombre = insumoFila.cells[0].innerText
-          .replace('➕ ', '')
-          .replace('🔹 ', '')
-          .trim();
-        const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
-        const costoUnidad =
-          parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
-        const subtotalInsumo = cant * costoUnidad;
+        document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
+          const nombre = insumoFila.cells[0].innerText
+            .replace('➕ ', '')
+            .replace('🔹 ', '')
+            .trim();
+          const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
+          const costoUnidad =
+            parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
+          const subtotalInsumo = cant * costoUnidad;
 
-        gastosEsteServicio += subtotalInsumo;
+          gastosEsteServicio += subtotalInsumo;
 
-        detalleInsumos.push({
-          nombre,
-          cant,
-          costo: costoUnidad
+          detalleInsumos.push({
+            nombre,
+            cant,
+            costo: costoUnidad
+          });
         });
+
+        totalGastos += gastosEsteServicio;
+        pagoDoctorTotal +=
+          (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
       });
 
-      totalGastos += gastosEsteServicio;
-      pagoDoctorTotal +=
-        (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
-    });
+      const dataConsulta = {
+        cedula: dInput('hCI'),
+        propietario: dInput('hProp'),
+        paciente: dInput('hNombre'),
+        doctor: window.doctorVerificado,
+        tratamiento: dInput('hTratamiento'),
+        montoVenta: montoVentaTotal,
+        montoInsumos: totalGastos,
+        costoInsumosTotal: totalGastos,
+        pagoDoctor: pagoDoctorTotal,
+        pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+        listaDetalladaInsumos: detalleInsumos,
+        fecha: serverTimestamp(),
+        fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+        alerta: !!document.getElementById('hAlerta')?.checked,
+        color: dInput('hColor'),
 
-    const dataConsulta = {
-      cedula: dInput('hCI'),
-      propietario: dInput('hProp'),
-      paciente: dInput('hNombre'),
-      doctor: window.doctorVerificado,
-      tratamiento: dInput('hTratamiento'),
-      montoVenta: montoVentaTotal,
-      montoInsumos: totalGastos,
-      costoInsumosTotal: totalGastos,
-      pagoDoctor: pagoDoctorTotal,
-      pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
-      listaDetalladaInsumos: detalleInsumos,
-      fecha: serverTimestamp(),
-      fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
-      alerta: !!document.getElementById('hAlerta')?.checked,
-      color: dInput('hColor'),
+        // NUEVO: guardar todos los datos que luego quieres autocompletar
+        telefono: dInput('hTlf'),
+        correo: dInput('hMail'),
+        direccion: dInput('hDir'),
+        especie: dInput('hEspecie'),
+        raza: dInput('hRaza'),
+        edad: dInput('hEdad'),
+        sexo: dInput('hSexo'),
+        peso: dInput('hPeso')
+      };
 
-      // NUEVO: guardar todos los datos que luego quieres autocompletar
-      telefono: dInput('hTlf'),
-      correo: dInput('hMail'),
-      direccion: dInput('hDir'),
-      especie: dInput('hEspecie'),
-      raza: dInput('hRaza'),
-      edad: dInput('hEdad'),
-      sexo: dInput('hSexo'),
-      peso: dInput('hPeso')
-    };
+      await addDoc(collection(db, "consultas"), dataConsulta);
 
-    await addDoc(collection(db, "consultas"), dataConsulta);
+      // EXPORTAR HISTORIAL AUTOMÁTICAMENTE DESPUÉS DE GUARDAR
+      console.log("DEBUG: voy a llamar a exportarHistorialAExcel, doctorVerificado =", window.doctorVerificado);
+      if (typeof window.exportarHistorialAExcel === 'function') {
+        window.exportarHistorialAExcel();
+      }
 
-    // EXPORTAR HISTORIAL AUTOMÁTICAMENTE DESPUÉS DE GUARDAR
-    console.log("DEBUG: voy a llamar a exportarHistorialAExcel, doctorVerificado =", window.doctorVerificado);
-    if (typeof window.exportarHistorialAExcel === 'function') {
-      window.exportarHistorialAExcel();
-    }
-
-    if (imp) {
-      const tArea = document.getElementById('hTratamientoPrint');
-      if (tArea) tArea.innerText = dInput('hTratamiento');
-      alert("✅ Consulta guardada y lista para imprimir.");
-      setTimeout(() => {
-        window.print();
+      if (imp) {
+        const tArea = document.getElementById('hTratamientoPrint');
+        if (tArea) tArea.innerText = dInput('hTratamiento');
+        alert("✅ Consulta guardada y lista para imprimir.");
+        setTimeout(() => {
+          window.print();
+          // NO recargamos para no interrumpir descargas
+        }, 600);
+      } else {
+        alert("✅ Consulta guardada exitosamente.");
         // NO recargamos para no interrumpir descargas
-      }, 600);
-    } else {
-      alert("✅ Consulta guardada exitosamente.");
-      // NO recargamos para no interrumpir descargas
+      }
+    } catch (e) {
+      console.error("Error al guardar:", e);
+      alert("❌ Error crítico al guardar: " + e.message);
     }
-  } catch (e) {
-    console.error("Error al guardar:", e);
-    alert("❌ Error crítico al guardar: " + e.message);
-  }
-};
+  };
+
   // =========================================================
   // [17] SEGURIDAD: MODAL ADMIN
   // =========================================================
@@ -3156,7 +3038,7 @@ window.guardarFirebase = async (imp) => {
         }
       });
 
-     lineas.push("------------------------------------");
+      lineas.push("------------------------------------");
       lineas.push(`PACIENTES: ${pacientes}`);
       lineas.push(`BRUTO TOTAL: $${bruto.toFixed(2)}`);
       lineas.push(`GASTOS INSUMOS: $${gastos.toFixed(2)}`);
@@ -3179,6 +3061,7 @@ window.guardarFirebase = async (imp) => {
       alert("❌ No se pudo generar el TXT: " + e.message);
     }
   };
+
   // =========================================================
   // [NUEVO] RECETA SIN COSTOS (IMPRESIÓN SIMPLE)
   // =========================================================
@@ -3226,216 +3109,217 @@ window.guardarFirebase = async (imp) => {
     }
     window.ejecutarCambioDeTab('historia');
   });
-// =========================================================
-// [NUEVO] EXPORTAR HISTORIAL CLÍNICO A EXCEL (CSV) POR DOCTOR
-// =========================================================
-window.exportarHistorialAExcel = async () => {
-  try {
-    // Usar el doctor actualmente verificado / firmante (global en window)
-    const doctorActual = window.doctorVerificado || "";
-    console.log("DEBUG: exportarHistorialAExcel, doctorActual =", doctorActual);
-    if (!doctorActual) {
-      alert("No hay doctor verificado para exportar historial.");
-      return;
-    }
 
-    const snap = await getDocs(collection(db, "consultas"));
-    if (snap.empty) {
-      alert("No hay registros en HISTORIAL (consultas) para exportar.");
-      return;
-    }
+  // =========================================================
+  // [NUEVO] EXPORTAR HISTORIAL CLÍNICO A EXCEL (CSV) POR DOCTOR
+  // =========================================================
+  window.exportarHistorialAExcel = async () => {
+    try {
+      // Usar el doctor actualmente verificado / firmante (global en window)
+      const doctorActual = window.doctorVerificado || "";
+      console.log("DEBUG: exportarHistorialAExcel, doctorActual =", doctorActual);
+      if (!doctorActual) {
+        alert("No hay doctor verificado para exportar historial.");
+        return;
+      }
 
-    // Columnas que irán al Excel (AGREGAMOS 'tratamiento')
-    const encabezados = [
-      "fechaSimple",
-      "cedula",
-      "propietario",
-      "paciente",
-      "doctor",
-      "telefono",
-      "correo",
-      "direccion",
-      "especie",
-      "raza",
-      "edad",
-      "sexo",
-      "peso",
-      "color",
-      "alerta",
-      "montoVenta",
-      "montoInsumos",
-      "pagoDoctor",
-      "pagoAvipet",
-      "tratamiento"          // ← NUEVA COLUMNA
-    ];
+      const snap = await getDocs(collection(db, "consultas"));
+      if (snap.empty) {
+        alert("No hay registros en HISTORIAL (consultas) para exportar.");
+        return;
+      }
 
-    const filas = [];
-    filas.push(encabezados.join(";")); // separador ;
+      // Columnas que irán al Excel (AGREGAMOS 'tratamiento')
+      const encabezados = [
+        "fechaSimple",
+        "cedula",
+        "propietario",
+        "paciente",
+        "doctor",
+        "telefono",
+        "correo",
+        "direccion",
+        "especie",
+        "raza",
+        "edad",
+        "sexo",
+        "peso",
+        "color",
+        "alerta",
+        "montoVenta",
+        "montoInsumos",
+        "pagoDoctor",
+        "pagoAvipet",
+        "tratamiento"          // ← NUEVA COLUMNA
+      ];
 
-    let hayFilasDoctor = false;
+      const filas = [];
+      filas.push(encabezados.join(";")); // separador ;
 
-    snap.forEach(docSnap => {
-      const d = docSnap.data();
+      let hayFilasDoctor = false;
 
-      // Filtrar solo las consultas de este doctor
-      if ((d.doctor || "") !== doctorActual) return;
-      hayFilasDoctor = true;
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
 
-      const fila = encabezados.map(col => {
-        let val = d[col];
+        // Filtrar solo las consultas de este doctor
+        if ((d.doctor || "") !== doctorActual) return;
+        hayFilasDoctor = true;
 
-        // Booleanos -> SI / NO
-        if (typeof val === "boolean") {
-          val = val ? "SI" : "NO";
-        }
+        const fila = encabezados.map(col => {
+          let val = d[col];
 
-        // Números -> cambiar punto por coma (si quieres formato ES)
-        if (typeof val === "number") {
-          val = val.toString().replace(".", ",");
-        }
+          // Booleanos -> SI / NO
+          if (typeof val === "boolean") {
+            val = val ? "SI" : "NO";
+          }
 
-        if (val === undefined || val === null) val = "";
+          // Números -> cambiar punto por coma (si quieres formato ES)
+          if (typeof val === "number") {
+            val = val.toString().replace(".", ",");
+          }
 
-        // Limpiar saltos de línea y ; para no romper el CSV
-        // (tratamiento puede tener saltos de línea)
-        val = String(val)
-          .replace(/\r?\n/g, " ")
-          .replace(/;/g, ",");
+          if (val === undefined || val === null) val = "";
 
-        return `"${val}"`;
+          // Limpiar saltos de línea y ; para no romper el CSV
+          // (tratamiento puede tener saltos de línea)
+          val = String(val)
+            .replace(/\r?\n/g, " ")
+            .replace(/;/g, ",");
+
+          return `"${val}"`;
+        });
+
+        filas.push(fila.join(";"));
       });
 
-      filas.push(fila.join(";"));
-    });
+      if (!hayFilasDoctor) {
+        alert(`No hay registros para el doctor: ${doctorActual}`);
+        return;
+      }
 
-    if (!hayFilasDoctor) {
-      alert(`No hay registros para el doctor: ${doctorActual}`);
-      return;
+      console.log("DEBUG: filas a exportar =", filas.length);
+      const contenido = filas.join("\n");
+      const blob = new Blob([contenido], { type: "text/csv;charset=utf-8" });
+
+      const hoy = new Date();
+      const nombreArchivo =
+        `historial_${doctorActual.replace(/\s+/g, '_')}_${hoy.getFullYear()}-${hoy.getMonth() + 1}-${hoy.getDate()}.csv`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Error al exportar historial:", e);
+      alert("❌ No se pudo exportar el historial: " + e.message);
+    }
+  };
+  // Copia datos de la Historia Clínica a la Hoja de Vacunas
+  window.abrirHojaVacunasDesdeHistoria = () => {
+    const dVal = (id) => document.getElementById(id)?.value.trim() || "";
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val || "";
+    };
+
+    // Fecha de emisión de la hoja
+    const f = new Date();
+    const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
+    set('hv_fecha', fechaStr);
+
+    // Datos de propietario/paciente desde la Historia
+    set('hv_propietario', dVal('hProp'));
+    set('hv_cedula',      dVal('hCI'));
+    set('hv_telefono',    dVal('hTlf'));
+    set('hv_direccion',   dVal('hDir'));
+
+    set('hv_especie',     dVal('hEspecie'));
+    set('hv_raza',        dVal('hRaza'));
+    set('hv_paciente',    dVal('hNombre'));
+    set('hv_edad',        dVal('hEdad'));
+    set('hv_sexo',        dVal('hSexo'));
+    set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
+    set('hv_color',       dVal('hColor'));
+
+    // Datos de doctor (logo, nombre, clínica)
+    if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
+      const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
+
+      const elLogo   = document.getElementById('hv_logoDoctor');
+      const elNombre = document.getElementById('hv_nombreDoctor');
+      const elClin   = document.getElementById('hv_clinicaDoctor');
+
+      if (elLogo) {
+        elLogo.src = conf.logo || "";
+        elLogo.alt = conf.nombre || "Logo Doctor";
+      }
+      if (elNombre) elNombre.textContent = conf.nombre || "";
+      if (elClin)   elClin.textContent   = conf.clinica || "";
     }
 
-    console.log("DEBUG: filas a exportar =", filas.length);
-    const contenido = filas.join("\n");
-    const blob = new Blob([contenido], { type: "text/csv;charset=utf-8" });
-
-    const hoy = new Date();
-    const nombreArchivo =
-      `historial_${doctorActual.replace(/\s+/g, '_')}_${hoy.getFullYear()}-${hoy.getMonth() + 1}-${hoy.getDate()}.csv`;
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = nombreArchivo;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    console.error("Error al exportar historial:", e);
-    alert("❌ No se pudo exportar el historial: " + e.message);
-  }
-};
-  // Copia datos de la Historia Clínica a la Hoja de Vacunas
-// Copia datos de la Historia Clínica a la Hoja de Vacunas
-window.abrirHojaVacunasDesdeHistoria = () => {
-  const dVal = (id) => document.getElementById(id)?.value.trim() || "";
-  const set = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = val || "";
+    // Mostrar hoja vacunas y ocultar historia
+    document.getElementById('sectionHistoria')?.classList.add('hidden');
+    document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
   };
 
-  // Fecha de emisión de la hoja
-  const f = new Date();
-  const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
-  set('hv_fecha', fechaStr);
+  // Volver desde la Hoja de Vacunas a la Historia
+  window.volverAHistoriaDesdeVacunas = () => {
+    document.getElementById('sectionHojaVacunas')?.classList.add('hidden');
+    document.getElementById('sectionHistoria')?.classList.remove('hidden');
+  };
 
-  // Datos de propietario/paciente desde la Historia
-  set('hv_propietario', dVal('hProp'));
-  set('hv_cedula',      dVal('hCI'));
-  set('hv_telefono',    dVal('hTlf'));
-  set('hv_direccion',   dVal('hDir'));
-
-  set('hv_especie',     dVal('hEspecie'));
-  set('hv_raza',        dVal('hRaza'));
-  set('hv_paciente',    dVal('hNombre'));
-  set('hv_edad',        dVal('hEdad'));
-  set('hv_sexo',        dVal('hSexo'));
-  set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
-  set('hv_color',       dVal('hColor'));
-
-  // Datos de doctor (logo, nombre, clínica)
-  if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
-    const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
-
-    const elLogo   = document.getElementById('hv_logoDoctor');
-    const elNombre = document.getElementById('hv_nombreDoctor');
-    const elClin   = document.getElementById('hv_clinicaDoctor');
-
-    if (elLogo) {
-      elLogo.src = conf.logo || "";
-      elLogo.alt = conf.nombre || "Logo Doctor";
+  // Configuración de doctores para logo y textos
+  window.CONFIG_DOCTORES = {
+    "DR_PEREZ": {
+      nombre: "Dr. Juan Pérez",
+      clinica: "AVIPET - Medicina Veterinaria",
+      logo: "img/logos/dr_perez.png"
+    },
+    "DR_LOPEZ": {
+      nombre: "Dra. Ana López",
+      clinica: "AVIPET - Cirugía y Medicina Felina",
+      logo: "img/logos/dr_lopez.png"
     }
-    if (elNombre) elNombre.textContent = conf.nombre || "";
-    if (elClin)   elClin.textContent   = conf.clinica || "";
+    // agrega más doctores...
+  };
+
+  window.doctorActivoId = null;
+
+  // (Opcional) Cuando autentiques al doctor, fija doctorActivoId
+  // Ejemplo de función genérica:
+  function onDoctorAutenticado(doctorId) {
+    // doctorId será "DR_PEREZ", "DR_LOPEZ", etc.
+    window.doctorActivoId = doctorId;
+    // resto de tu lógica...
   }
 
-  // Mostrar hoja vacunas y ocultar historia
-  document.getElementById('sectionHistoria')?.classList.add('hidden');
-  document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
-};
+  window.imprimirHojaVacunas = () => {
+    const hv   = document.getElementById('sectionHojaVacunas');
+    const hist = document.getElementById('sectionHistoria');
 
-// Volver desde la Hoja de Vacunas a la Historia
-window.volverAHistoriaDesdeVacunas = () => {
-  document.getElementById('sectionHojaVacunas')?.classList.add('hidden');
-  document.getElementById('sectionHistoria')?.classList.remove('hidden');
-};
+    // 1) Asegurar que la hoja de vacunas esté visible
+    if (hv) hv.classList.remove('hidden');
+    // Opcional: ocultar historia para que no moleste visualmente
+    if (hist) hist.classList.add('hidden');
 
-// Configuración de doctores para logo y textos
-window.CONFIG_DOCTORES = {
-  "DR_PEREZ": {
-    nombre: "Dr. Juan Pérez",
-    clinica: "AVIPET - Medicina Veterinaria",
-    logo: "img/logos/dr_perez.png"
-  },
-  "DR_LOPEZ": {
-    nombre: "Dra. Ana López",
-    clinica: "AVIPET - Cirugía y Medicina Felina",
-    logo: "img/logos/dr_lopez.png"
-  }
-  // agrega más doctores...
-};
+    // 2) Llamar a imprimir tal como está la pantalla
+    window.print();
 
-window.doctorActivoId = null;
-
-// (Opcional) Cuando autentiques al doctor, fija doctorActivoId
-// Ejemplo de función genérica:
-function onDoctorAutenticado(doctorId) {
-  // doctorId será "DR_PEREZ", "DR_LOPEZ", etc.
-  window.doctorActivoId = doctorId;
-  // resto de tu lógica...
-}
-
-window.imprimirHojaVacunas = () => {
-  const hv   = document.getElementById('sectionHojaVacunas');
-  const hist = document.getElementById('sectionHistoria');
-
-  // 1) Asegurar que la hoja de vacunas esté visible
-  if (hv) hv.classList.remove('hidden');
-  // Opcional: ocultar historia para que no moleste visualmente
-  if (hist) hist.classList.add('hidden');
-
-  // 2) Llamar a imprimir tal como está la pantalla
-  window.print();
-
-  // 3) Restaurar pantalla después de imprimir
-  setTimeout(() => {
-    if (hist) hist.classList.remove('hidden');
-    if (hv)   hv.classList.add('hidden');
-  }, 500);
-};
+    // 3) Restaurar pantalla después de imprimir
+    setTimeout(() => {
+      if (hist) hist.classList.remove('hidden');
+      if (hv)   hv.classList.add('hidden');
+    }, 500);
+  };
 </script>
 
 </body>
 </html>
+
 
 
 
