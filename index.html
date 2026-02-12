@@ -456,7 +456,7 @@
   <section id="sectionHojaVacunas"
            class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-4 print-area text-[11px]">
 
-    <!-- ENCABEZADO CON LOGO DE DOCTOR + DIRECCIÓN FIJA -->
+    <!-- ENCABEZADO CON LOGO DE DOCTOR (SIN DIRECCIÓN FIJA) -->
     <div class="border-b border-slate-400 pb-2 mb-3 flex items-start gap-3">
       <!-- Logo dinámico del doctor -->
       <div class="w-16 h-16 border border-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
@@ -475,11 +475,6 @@
            class="text-[10px] text-slate-600 leading-tight">
           <!-- Clínica / texto secundario -->
         </p>
-        <p class="mt-1 text-[9px] text-slate-500 leading-snug">
-          DIRECCIÓN: Av. Francisco de Miranda, Sector Buena Vista, a 600mts del Metro La California
-          (frente al Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435),
-          Petare - Edo. Miranda.
-        </p>
       </div>
 
       <div class="text-right">
@@ -491,135 +486,92 @@
     </div>
 
     <!-- DATOS DEL PACIENTE Y DEL PROPIETARIO (ORDENADOS COMO EN HISTORIA) -->
-  <div class="border border-slate-400 rounded-lg p-2 mb-3">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+    <div class="border border-slate-400 rounded-lg p-2 mb-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
 
-      <!-- Paciente -->
-      <div class="border border-slate-300 rounded-md p-2">
-        <div class="text-center mb-1">
-          <span class="text-[9px] font-black uppercase text-slate-500">Ficha Técnica de Mascota</span>
-        </div>
-        <div class="space-y-1">
-          <div>
-            <span class="text-[9px] font-bold uppercase text-slate-500">MASCOTA:</span>
-            <input id="hv_paciente"
-                   class="w-full border-b border-slate-400 uppercase text-[11px] font-bold text-emerald-700">
+        <!-- Paciente -->
+        <div class="border border-slate-300 rounded-md p-2">
+          <div class="text-center mb-1">
+            <span class="text-[9px] font-black uppercase text-slate-500">Ficha Técnica de Mascota</span>
           </div>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="space-y-1">
             <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">ESPECIE:</span>
-              <input id="hv_especie"
-                     class="w-full border-b border-slate-400 uppercase text-[11px]">
+              <span class="text-[9px] font-bold uppercase text-slate-500">MASCOTA:</span>
+              <input id="hv_paciente"
+                     class="w-full border-b border-slate-400 uppercase text-[11px] font-bold text-emerald-700">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <span class="text-[9px] font-bold uppercase text-slate-500">ESPECIE:</span>
+                <input id="hv_especie"
+                       class="w-full border-b border-slate-400 uppercase text-[11px]">
+              </div>
+              <div>
+                <span class="text-[9px] font-bold uppercase text-slate-500">RAZA:</span>
+                <input id="hv_raza"
+                       class="w-full border-b border-slate-400 uppercase text-[11px]">
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <span class="text-[9px] font-bold uppercase text-slate-500">EDAD:</span>
+                <input id="hv_edad"
+                       class="w-full border-b border-slate-400 uppercase text-[11px]">
+              </div>
+              <div>
+                <span class="text-[9px] font-bold uppercase text-slate-500">SEXO:</span>
+                <input id="hv_sexo"
+                       class="w-full border-b border-slate-400 uppercase text-[11px]">
+              </div>
+              <div>
+                <span class="text-[9px] font-bold uppercase text-slate-500">COLOR:</span>
+                <input id="hv_color"
+                       class="w-full border-b border-slate-400 uppercase text-[11px]">
+              </div>
             </div>
             <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">RAZA:</span>
-              <input id="hv_raza"
-                     class="w-full border-b border-slate-400 uppercase text-[11px]">
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">EDAD:</span>
-              <input id="hv_edad"
-                     class="w-full border-b border-slate-400 uppercase text-[11px]">
-            </div>
-            <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">SEXO:</span>
-              <input id="hv_sexo"
-                     class="w-full border-b border-slate-400 uppercase text-[11px]">
-            </div>
-            <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">COLOR:</span>
-              <input id="hv_color"
-                     class="w-full border-b border-slate-400 uppercase text-[11px]">
-            </div>
-          </div>
-          <div>
-            <span class="text-[9px] font-bold uppercase text-slate-500">PESO (KG):</span>
-            <input id="hv_peso"
-                   class="w-full border-b border-slate-400 text-[11px]">
-          </div>
-        </div>
-      </div>
-
-      <!-- Propietario -->
-      <div class="border border-slate-300 rounded-md p-2">
-        <div class="text-center mb-1">
-          <span class="text-[9px] font-black uppercase text-slate-500">Datos del Propietario</span>
-        </div>
-        <div class="space-y-1">
-          <div>
-            <span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE Y APELLIDO:</span>
-            <input id="hv_propietario"
-                   class="w-full border-b border-slate-400 uppercase text-[11px]">
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">CÉDULA:</span>
-              <input id="hv_cedula"
-                     class="w-full border-b border-slate-400 text-[11px]">
-            </div>
-            <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">TELÉFONO:</span>
-              <input id="hv_telefono"
+              <span class="text-[9px] font-bold uppercase text-slate-500">PESO (KG):</span>
+              <input id="hv_peso"
                      class="w-full border-b border-slate-400 text-[11px]">
             </div>
           </div>
-          <div>
-            <span class="text-[9px] font-bold uppercase text-slate-500">DIRECCIÓN:</span>
-            <input id="hv_direccion"
-                   class="w-full border-b border-slate-400 uppercase text-[10px]">
+        </div>
+
+        <!-- Propietario -->
+        <div class="border border-slate-300 rounded-md p-2">
+          <div class="text-center mb-1">
+            <span class="text-[9px] font-black uppercase text-slate-500">Datos del Propietario</span>
+          </div>
+          <div class="space-y-1">
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE Y APELLIDO:</span>
+              <input id="hv_propietario"
+                     class="w-full border-b border-slate-400 uppercase text-[11px]">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <span class="text-[9px] font-bold uppercase text-slate-500">CÉDULA:</span>
+                <input id="hv_cedula"
+                       class="w-full border-b border-slate-400 text-[11px]">
+              </div>
+              <div>
+                <span class="text-[9px] font-bold uppercase text-slate-500">TELÉFONO:</span>
+                <input id="hv_telefono"
+                       class="w-full border-b border-slate-400 text-[11px]">
+              </div>
+            </div>
+            <div>
+              <span class="text-[9px] font-bold uppercase text-slate-500">DIRECCIÓN:</span>
+              <input id="hv_direccion"
+                     class="w-full border-b border-slate-400 uppercase text-[10px]">
+            </div>
           </div>
         </div>
-      </div>
 
-    </div>
-  </div>
-
-    <!-- DESPARASITACIONES -->
-    <div class="border border-slate-400 rounded-lg mb-3">
-      <div class="bg-slate-100 px-2 py-1 border-b border-slate-400">
-        <span class="text-[10px] font-black uppercase text-slate-700">
-          DESPARASITACIONES
-        </span>
       </div>
-      <table class="w-full text-[9px]">
-        <thead class="bg-slate-50 text-slate-700 uppercase">
-          <tr>
-            <th class="border-b border-slate-400 py-1 text-left">Fecha</th>
-            <th class="border-b border-slate-400 py-1 text-left">Desparasitante</th>
-            <th class="border-b border-slate-400 py-1 text-left">Edad / Peso</th>
-            <th class="border-b border-slate-400 py-1 text-left">Próxima desparasitación</th>
-            <th class="border-b border-slate-400 py-1 text-left">Firma / Sello</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="h-10">
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-          </tr>
-          <tr class="h-10">
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-          </tr>
-          <tr class="h-10">
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-          </tr>
-        </tbody>
-      </table>
     </div>
 
-    <!-- CONTROL DE VACUNA -->
+    <!-- CONTROL DE VACUNA (8 filas, como dejamos antes) -->
     <div class="border border-slate-400 rounded-lg mb-3">
       <div class="bg-slate-100 px-2 py-1 border-b border-slate-400 flex justify-between items-center">
         <span class="text-[10px] font-black uppercase text-slate-700">
@@ -637,13 +589,7 @@
           </tr>
         </thead>
         <tbody>
-                    <tr class="h-16">
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-          </tr>
+          <!-- 1 -->
           <tr class="h-16">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -651,6 +597,7 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
+          <!-- 2 -->
           <tr class="h-16">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -658,6 +605,47 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
+          <!-- 3 -->
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 4 -->
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 5 -->
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 6 -->
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 7 -->
+          <tr class="h-16">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 8 -->
           <tr class="h-16">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -669,7 +657,7 @@
       </table>
     </div>
 
-    <!-- DESPARASITACIONES (SEGUNDA TABLA) -->
+    <!-- DESPARASITACIONES (ÚNICO RECUADRO) -->
     <div class="border border-slate-400 rounded-lg mb-3">
       <div class="bg-slate-100 px-2 py-1 border-b border-slate-400">
         <span class="text-[10px] font-black uppercase text-slate-700">
@@ -710,6 +698,13 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- PIE: DIRECCIÓN FIJA -->
+    <div class="mt-4 pt-2 border-t border-slate-300 text-[9px] text-slate-500 leading-snug">
+      DIRECCIÓN: Av. Francisco de Miranda, Sector Buena Vista, a 600mts del Metro La California
+      (frente al Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435),
+      Petare - Edo. Miranda.
     </div>
 
     <!-- BOTONES HOJA VACUNAS -->
@@ -3319,6 +3314,7 @@
 
 </body>
 </html>
+
 
 
 
