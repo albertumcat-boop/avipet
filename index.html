@@ -422,11 +422,6 @@
             class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
       📄 Receta Sin Costos
     </button>
-<button type="button"
-        onclick="window.exportarHistorialAExcel()"
-        class="no-print bg-amber-500 text-white py-2 px-4 rounded-xl font-black uppercase text-xs mt-3">
-  📥 Exportar Historial (prueba)
-</button>
     <!-- NUEVO: Recepción → Cola de Espera -->
     <button type="button"
             onclick="window.enviarAColaEspera()"
@@ -2467,7 +2462,8 @@ window.guardarFirebase = async (imp) => {
 
     await addDoc(collection(db, "consultas"), dataConsulta);
 
-    // NUEVO: generar y descargar Excel automáticamente después de guardar
+    // EXPORTAR HISTORIAL AUTOMÁTICAMENTE DESPUÉS DE GUARDAR
+    console.log("DEBUG: voy a llamar a exportarHistorialAExcel, doctorVerificado =", window.doctorVerificado);
     if (typeof window.exportarHistorialAExcel === 'function') {
       window.exportarHistorialAExcel();
     }
@@ -2478,11 +2474,11 @@ window.guardarFirebase = async (imp) => {
       alert("✅ Consulta guardada y lista para imprimir.");
       setTimeout(() => {
         window.print();
-        location.reload();
+        // NO recargamos para no interrumpir descargas
       }, 600);
     } else {
       alert("✅ Consulta guardada exitosamente.");
-      location.reload();
+      // NO recargamos para no interrumpir descargas
     }
   } catch (e) {
     console.error("Error al guardar:", e);
@@ -3109,6 +3105,7 @@ window.exportarHistorialAExcel = async () => {
 
 </body>
 </html> 
+
 
 
 
