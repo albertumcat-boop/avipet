@@ -456,7 +456,7 @@
   <section id="sectionHojaVacunas"
            class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-4 print-area text-[11px]">
 
-    <!-- ENCABEZADO CON LOGO DE DOCTOR (SIN DIRECCIÓN FIJA) -->
+    <!-- ENCABEZADO CON LOGO DE DOCTOR + TÍTULO CONTROL DE VACUNAS -->
     <div class="border-b border-slate-400 pb-2 mb-3 flex items-start gap-3">
       <!-- Logo dinámico del doctor -->
       <div class="w-16 h-16 border border-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
@@ -467,13 +467,19 @@
       </div>
 
       <div class="flex-1">
+        <!-- NOMBRE DEL DOCTOR (DINÁMICO) -->
         <h2 id="hv_nombreDoctor"
             class="text-xs font-black text-slate-800 uppercase tracking-wide">
           <!-- Nombre doctor dinámico -->
         </h2>
+        <!-- CLÍNICA / TEXTO SECUNDARIO (DINÁMICO) -->
         <p id="hv_clinicaDoctor"
-           class="text-[10px] text-slate-600 leading-tight">
+           class="text-[10px] text-slate-600 leading-tight mb-1">
           <!-- Clínica / texto secundario -->
+        </p>
+        <!-- TÍTULO FIJO DE LA HOJA -->
+        <p class="text-sm font-black text-blue-700 uppercase tracking-wide">
+          CONTROL DE VACUNAS
         </p>
       </div>
 
@@ -571,11 +577,11 @@
       </div>
     </div>
 
-    <!-- CONTROL DE VACUNA (8 filas, como dejamos antes) -->
+    <!-- CONTROL DE VACUNAS (6 filas) -->
     <div class="border border-slate-400 rounded-lg mb-3">
       <div class="bg-slate-100 px-2 py-1 border-b border-slate-400 flex justify-between items-center">
         <span class="text-[10px] font-black uppercase text-slate-700">
-          CONTROL DE VACUNA
+          CONTROL DE VACUNAS
         </span>
       </div>
       <table class="w-full text-[9px]">
@@ -637,27 +643,11 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <!-- 7 -->
-          <tr class="h-16">
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-          </tr>
-          <!-- 8 -->
-          <tr class="h-16">
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-          </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- DESPARASITACIONES (ÚNICO RECUADRO) -->
+    <!-- DESPARASITACIONES (6 filas: 3 originales + 3 nuevas) -->
     <div class="border border-slate-400 rounded-lg mb-3">
       <div class="bg-slate-100 px-2 py-1 border-b border-slate-400">
         <span class="text-[10px] font-black uppercase text-slate-700">
@@ -675,6 +665,7 @@
           </tr>
         </thead>
         <tbody>
+          <!-- 1 -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -682,6 +673,7 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
+          <!-- 2 -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -689,6 +681,31 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
+          <!-- 3 -->
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 4 (nueva) -->
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 5 (nueva) -->
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 6 (nueva) -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -721,7 +738,6 @@
       </button>
     </div>
   </section>
-
   <!-- ========== BUSCADOR ========== -->
   <section id="sectionBuscador" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 max-w-2xl mx-auto">
@@ -3314,6 +3330,7 @@
 
 </body>
 </html>
+
 
 
 
