@@ -1107,12 +1107,13 @@
   };
 
   // =========================================================
-  // [03] ESTADO
-  // =========================================================
-  const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
-  let doctorVerificado = "";
-  let serviciosEnLista = [];
-  // Para no duplicar insumos base de medicamentos
+// [03] ESTADO
+// =========================================================
+const pinsDoctores = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
+// Hacer doctorVerificado global en window para poder inspeccionarlo y reutilizarlo
+window.doctorVerificado = "";
+let serviciosEnLista = [];
+// Para no duplicar insumos base de medicamentos
 let insumosBaseMedicamentoAgregados = false;
 
   // =========================================================
@@ -1230,12 +1231,12 @@ let insumosBaseMedicamentoAgregados = false;
   }
 };
 
-  // =========================================================
+  / =========================================================
   // [04] VALIDAR DOCTOR
   // =========================================================
   window.validarAccesoDoctor = async (nombre) => {
     if (!nombre) {
-      doctorVerificado = "";
+      window.doctorVerificado = "";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
       return;
@@ -1250,7 +1251,7 @@ let insumosBaseMedicamentoAgregados = false;
     const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
 
     if (esValido) {
-      doctorVerificado = nombre;
+      window.doctorVerificado = nombre;
       const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
@@ -1260,7 +1261,7 @@ let insumosBaseMedicamentoAgregados = false;
       alert("❌ PIN INCORRECTO.");
       const sel = document.getElementById('selectDoctor');
       if (sel) sel.value = "";
-      doctorVerificado = "";
+      window.doctorVerificado = "";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
     }
@@ -2350,137 +2351,138 @@ let insumosBaseMedicamentoAgregados = false;
   // =========================================================
   // [16] GUARDAR CONSULTA EN FIREBASE
   // =========================================================
- window.guardarFirebase = async (imp) => {
-  const selectorDoc = document.getElementById('selectDoctor');
-  const nombreDoctor = selectorDoc ? selectorDoc.value : "";
+  window.guardarFirebase = async (imp) => {
+    const selectorDoc = document.getElementById('selectDoctor');
+    const nombreDoctor = selectorDoc ? selectorDoc.value : "";
 
-  if (!nombreDoctor) {
-    alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
-    return;
-  }
+    if (!nombreDoctor) {
+      alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
+      return;
+    }
 
-  const pinIngresado = prompt(
-    `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
-  );
-  if (!pinIngresado) return;
+    const pinIngresado = prompt(
+      `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
+    );
+    if (!pinIngresado) return;
 
-  const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
+    const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
 
-  if (esValido) {
-    doctorVerificado = nombreDoctor;
-    console.log("✅ Firma validada correctamente.");
-  } else {
-    alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
-    return;
-  }
+    if (esValido) {
+      window.doctorVerificado = nombreDoctor;
+      console.log("✅ Firma validada correctamente.");
+    } else {
+      alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
+      return;
+    }
 
-  if (!doctorVerificado) {
-    alert("⚠️ Error: Requiere firma del doctor.");
-    return;
-  }
+    if (!window.doctorVerificado) {
+      alert("⚠️ Error: Requiere firma del doctor.");
+      return;
+    }
 
-  try {
-    const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-    let porcGlobal =
-      (configSnap.exists() && (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc) > 0)
-        ? (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc)
-        : null;
+    try {
+      const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+      let porcGlobal =
+        (configSnap.exists() && (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc) > 0)
+          ? (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc)
+          : null;
 
-    const dInput = (id) => document.getElementById(id).value.trim();
-    const montoVentaTotal =
-      parseFloat(document.getElementById('precioVenta').value) || 0;
+      const dInput = (id) => document.getElementById(id).value.trim();
+      const montoVentaTotal =
+        parseFloat(document.getElementById('precioVenta').value) || 0;
 
-    const detalleInsumos = [];
-    let totalGastos = 0;
-    let pagoDoctorTotal = 0;
+      const detalleInsumos = [];
+      let totalGastos = 0;
+      let pagoDoctorTotal = 0;
 
-    const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
+      const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
 
-    serviciosPrincipales.forEach(fila => {
-      const grupoID = fila.getAttribute('data-grupo');
-      const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
+      serviciosPrincipales.forEach(fila => {
+        const grupoID = fila.getAttribute('data-grupo');
+        const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
 
-      const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
-      const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
+        const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
+        const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
 
-      let gastosEsteServicio = 0;
+        let gastosEsteServicio = 0;
 
-      document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
-        const nombre = insumoFila.cells[0].innerText
-          .replace('➕ ', '')
-          .replace('🔹 ', '')
-          .trim();
-        const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
-        const costoUnidad =
-          parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
-        const subtotalInsumo = cant * costoUnidad;
+        document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
+          const nombre = insumoFila.cells[0].innerText
+            .replace('➕ ', '')
+            .replace('🔹 ', '')
+            .trim();
+          const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
+          const costoUnidad =
+            parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
+          const subtotalInsumo = cant * costoUnidad;
 
-        gastosEsteServicio += subtotalInsumo;
+          gastosEsteServicio += subtotalInsumo;
 
-        detalleInsumos.push({
-          nombre,
-          cant,
-          costo: costoUnidad
+          detalleInsumos.push({
+            nombre,
+            cant,
+            costo: costoUnidad
+          });
         });
+
+        totalGastos += gastosEsteServicio;
+        pagoDoctorTotal +=
+          (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
       });
 
-      totalGastos += gastosEsteServicio;
-      pagoDoctorTotal +=
-        (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
-    });
+      const dataConsulta = {
+        cedula: dInput('hCI'),
+        propietario: dInput('hProp'),
+        paciente: dInput('hNombre'),
+        doctor: window.doctorVerificado,
+        tratamiento: dInput('hTratamiento'),
+        montoVenta: montoVentaTotal,
+        montoInsumos: totalGastos,
+        costoInsumosTotal: totalGastos,
+        pagoDoctor: pagoDoctorTotal,
+        pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+        listaDetalladaInsumos: detalleInsumos,
+        fecha: serverTimestamp(),
+        fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+        alerta: !!document.getElementById('hAlerta')?.checked,
+        color: dInput('hColor'),
 
-    const dataConsulta = {
-      cedula: dInput('hCI'),
-      propietario: dInput('hProp'),
-      paciente: dInput('hNombre'),
-      doctor: doctorVerificado,
-      tratamiento: dInput('hTratamiento'),
-      montoVenta: montoVentaTotal,
-      montoInsumos: totalGastos,
-      costoInsumosTotal: totalGastos,
-      pagoDoctor: pagoDoctorTotal,
-      pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
-      listaDetalladaInsumos: detalleInsumos,
-      fecha: serverTimestamp(),
-      fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
-      alerta: !!document.getElementById('hAlerta')?.checked,
-      color: dInput('hColor'),
+        // NUEVO: guardar todos los datos que luego quieres autocompletar
+        telefono: dInput('hTlf'),
+        correo: dInput('hMail'),
+        direccion: dInput('hDir'),
+        especie: dInput('hEspecie'),
+        raza: dInput('hRaza'),
+        edad: dInput('hEdad'),
+        sexo: dInput('hSexo'),
+        peso: dInput('hPeso')
+      };
 
-      // NUEVO: guardar todos los datos que luego quieres autocompletar
-      telefono: dInput('hTlf'),
-      correo: dInput('hMail'),
-      direccion: dInput('hDir'),
-      especie: dInput('hEspecie'),
-      raza: dInput('hRaza'),
-      edad: dInput('hEdad'),
-      sexo: dInput('hSexo'),
-      peso: dInput('hPeso')
-    };
+      await addDoc(collection(db, "consultas"), dataConsulta);
 
-    await addDoc(collection(db, "consultas"), dataConsulta);
+      // NUEVO: generar y descargar Excel automáticamente después de guardar
+      if (typeof window.exportarHistorialAExcel === 'function') {
+        window.exportarHistorialAExcel();
+      }
 
-    // NUEVO: generar y descargar Excel automáticamente después de guardar
-    if (typeof window.exportarHistorialAExcel === 'function') {
-      window.exportarHistorialAExcel();
-    }
-
-    if (imp) {
-      const tArea = document.getElementById('hTratamientoPrint');
-      if (tArea) tArea.innerText = dInput('hTratamiento');
-      alert("✅ Consulta guardada y lista para imprimir.");
-      setTimeout(() => {
-        window.print();
+      if (imp) {
+        const tArea = document.getElementById('hTratamientoPrint');
+        if (tArea) tArea.innerText = dInput('hTratamiento');
+        alert("✅ Consulta guardada y lista para imprimir.");
+        setTimeout(() => {
+          window.print();
+          location.reload();
+        }, 600);
+      } else {
+        alert("✅ Consulta guardada exitosamente.");
         location.reload();
-      }, 600);
-    } else {
-      alert("✅ Consulta guardada exitosamente.");
-      location.reload();
+      }
+    } catch (e) {
+      console.error("Error al guardar:", e);
+      alert("❌ Error crítico al guardar: " + e.message);
     }
-  } catch (e) {
-    console.error("Error al guardar:", e);
-    alert("❌ Error crítico al guardar: " + e.message);
-  }
-};
+  };
+
   // =========================================================
   // [17] SEGURIDAD: MODAL ADMIN
   // =========================================================
@@ -2995,8 +2997,8 @@ let insumosBaseMedicamentoAgregados = false;
 // =========================================================
 window.exportarHistorialAExcel = async () => {
   try {
-    // Usar el doctor actualmente verificado / firmante
-    const doctorActual = doctorVerificado || "";
+    // Usar el doctor actualmente verificado / firmante (global en window)
+    const doctorActual = window.doctorVerificado || "";
     if (!doctorActual) {
       alert("No hay doctor verificado para exportar historial.");
       return;
@@ -3094,10 +3096,12 @@ window.exportarHistorialAExcel = async () => {
     alert("❌ No se pudo exportar el historial: " + e.message);
   }
 };
+
 </script>
 
 </body>
 </html> 
+
 
 
 
