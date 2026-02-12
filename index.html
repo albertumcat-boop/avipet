@@ -578,7 +578,7 @@
       </div>
     </div>
 
-    <!-- CONTROL DE VACUNAS (4 filas, más compacto) -->
+    <!-- CONTROL DE VACUNAS (6 filas, más compacto) -->
     <div class="border border-slate-400 rounded-lg mb-2">
       <div class="bg-slate-100 px-2 py-1 border-b border-slate-400 flex justify-between items-center">
         <span class="text-[10px] font-black uppercase text-slate-700">
@@ -621,6 +621,22 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
           <!-- 4 -->
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 5 -->
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
+          <!-- 6 -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -1324,45 +1340,57 @@
   };
 
   // =========================================================
-  // [04] VALIDAR DOCTOR
-  // =========================================================
-  window.validarAccesoDoctor = async (nombre) => {
-    // Si se limpia el select (elige opción vacía)
-    if (!nombre) {
-      window.doctorVerificado = "";
-      const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-      return;
-    }
+// [04] VALIDAR DOCTOR
+// =========================================================
+window.validarAccesoDoctor = async (nombre) => {
+  // Si se limpia el select (elige opción vacía)
+  if (!nombre) {
+    window.doctorVerificado = "";
+    const dPrint = document.getElementById('doctorPrint');
+    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+    // limpiar doctorActivoId
+    window.doctorActivoId = null;
+    return;
+  }
 
-    // Pedir PIN o Llave Maestra
-    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
-    if (!pinIngresado) {
-      // Si cancela o deja vacío, se revierte la selección
-      const sel = document.getElementById('selectDoctor');
-      if (sel) sel.value = "";
-      return;
-    }
+  // Pedir PIN o Llave Maestra
+  const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
+  if (!pinIngresado) {
+    // Si cancela o deja vacío, se revierte la selección
+    const sel = document.getElementById('selectDoctor');
+    if (sel) sel.value = "";
+    return;
+  }
 
-    const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
+  const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
 
-    if (esValido) {
-      window.doctorVerificado = nombre;
-      const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
-      const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
-      alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
-      await window.calcularTodo();
+  if (esValido) {
+    window.doctorVerificado = nombre;
+    const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+    const dPrint = document.getElementById('doctorPrint');
+    if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
+    alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
+    await window.calcularTodo();
+
+    // >>> NUEVO: fijar doctorActivoId según el nombre seleccionado <<<
+    if (nombre === "Darwin Sandoval") {
+      onDoctorAutenticado("DR_DARWIN");
+    } else if (nombre === "Joan Silva") {
+      onDoctorAutenticado("DR_JOAN");
     } else {
-      alert("❌ PIN INCORRECTO.");
-      const sel = document.getElementById('selectDoctor');
-      if (sel) sel.value = "";
-      window.doctorVerificado = "";
-      const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+      onDoctorAutenticado(null);
     }
-  };
 
+  } else {
+    alert("❌ PIN INCORRECTO.");
+    const sel = document.getElementById('selectDoctor');
+    if (sel) sel.value = "";
+    window.doctorVerificado = "";
+    const dPrint = document.getElementById('doctorPrint');
+    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+    window.doctorActivoId = null;
+  }
+};
   // =========================================================
   // [05] INSERTAR SERVICIO
   // =========================================================
@@ -3199,83 +3227,72 @@
     }
   };
   // Copia datos de la Historia Clínica a la Hoja de Vacunas
-  window.abrirHojaVacunasDesdeHistoria = () => {
-    const dVal = (id) => document.getElementById(id)?.value.trim() || "";
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el) el.value = val || "";
-    };
+window.abrirHojaVacunasDesdeHistoria = () => {
+  const dVal = (id) => document.getElementById(id)?.value.trim() || "";
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || "";
+  };
 
-    // Fecha de emisión de la hoja
-    const f = new Date();
-    const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
-    set('hv_fecha', fechaStr);
+  // Fecha de emisión de la hoja
+  const f = new Date();
+  const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
+  set('hv_fecha', fechaStr);
 
-    // Datos de propietario/paciente desde la Historia
-    set('hv_propietario', dVal('hProp'));
-    set('hv_cedula',      dVal('hCI'));
-    set('hv_telefono',    dVal('hTlf'));
-    set('hv_direccion',   dVal('hDir'));
+  // Datos de propietario/paciente desde la Historia
+  set('hv_propietario', dVal('hProp'));
+  set('hv_cedula',      dVal('hCI'));
+  set('hv_telefono',    dVal('hTlf'));
+  set('hv_direccion',   dVal('hDir'));
 
-    set('hv_especie',     dVal('hEspecie'));
-    set('hv_raza',        dVal('hRaza'));
-    set('hv_paciente',    dVal('hNombre'));
-    set('hv_edad',        dVal('hEdad'));
-    set('hv_sexo',        dVal('hSexo'));
-    set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
-    set('hv_color',       dVal('hColor'));
+  set('hv_especie',     dVal('hEspecie'));
+  set('hv_raza',        dVal('hRaza'));
+  set('hv_paciente',    dVal('hNombre'));
+  set('hv_edad',        dVal('hEdad'));
+  set('hv_sexo',        dVal('hSexo'));
+  set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
+  set('hv_color',       dVal('hColor'));
 
-    // Datos de doctor (logo, nombre, clínica)
-    if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
-      const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
+  // Datos de doctor (logo, nombre, clínica) usando doctorActivoId
+  if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
+    const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
 
-      const elLogo   = document.getElementById('hv_logoDoctor');
-      const elNombre = document.getElementById('hv_nombreDoctor');
-      const elClin   = document.getElementById('hv_clinicaDoctor');
+    const elLogo   = document.getElementById('hv_logoDoctor');
+    const elNombre = document.getElementById('hv_nombreDoctor');
+    const elClin   = document.getElementById('hv_clinicaDoctor');
 
-      if (elLogo) {
-        elLogo.src = conf.logo || "";
-        elLogo.alt = conf.nombre || "Logo Doctor";
-      }
-      if (elNombre) elNombre.textContent = conf.nombre || "";
-      if (elClin)   elClin.textContent   = conf.clinica || "";
+    if (elLogo) {
+      elLogo.src = conf.logo || "";
+      elLogo.alt = conf.nombre || "Logo Doctor";
     }
+    if (elNombre) elNombre.textContent = conf.nombre || "";
+    if (elClin)   elClin.textContent   = conf.clinica || "";
+  }
 
-    // Mostrar hoja vacunas y ocultar historia
-    document.getElementById('sectionHistoria')?.classList.add('hidden');
-    document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
-  };
-
-  // Volver desde la Hoja de Vacunas a la Historia
-  window.volverAHistoriaDesdeVacunas = () => {
-    document.getElementById('sectionHojaVacunas')?.classList.add('hidden');
-    document.getElementById('sectionHistoria')?.classList.remove('hidden');
-  };
+  // Mostrar hoja vacunas y ocultar historia
+  document.getElementById('sectionHistoria')?.classList.add('hidden');
+  document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
+};
 
   // Configuración de doctores para logo y textos
-  window.CONFIG_DOCTORES = {
-    "DR_PEREZ": {
-      nombre: "Dr. Juan Pérez",
-      clinica: "AVIPET - Medicina Veterinaria",
-      logo: "img/logos/dr_perez.png"
-    },
-    "DR_LOPEZ": {
-      nombre: "Dra. Ana López",
-      clinica: "AVIPET - Cirugía y Medicina Felina",
-      logo: "img/logos/dr_lopez.png"
-    }
-    // agrega más doctores...
-  };
-
-  window.doctorActivoId = null;
-
-  // (Opcional) Cuando autentiques al doctor, fija doctorActivoId
-  // Ejemplo de función genérica:
-  function onDoctorAutenticado(doctorId) {
-    // doctorId será "DR_PEREZ", "DR_LOPEZ", etc.
-    window.doctorActivoId = doctorId;
-    // resto de tu lógica...
+window.CONFIG_DOCTORES = {
+  "DR_DARWIN": {
+    nombre: "Dr. Darwin Sandoval",
+    clinica: "AVIPET - Medicina Veterinaria",
+    logo: "C:\Users\Usuario\Desktop\petshop-admin\img\logo darwin.jpg"   // ← AJUSTA ESTA RUTA
+  },
+  "DR_JOAN": {
+    nombre: "Dra. Joan Silva",
+    clinica: "AVIPET - Medicina Veterinaria",
+    logo: "C:\Users\Usuario\Desktop\petshop-admin\img\logo joan.jpg"     // ← AJUSTA ESTA RUTA
   }
+};
+window.doctorActivoId = null;
+
+// Función genérica para fijar el doctor activo (la usaremos desde validarAccesoDoctor)
+function onDoctorAutenticado(doctorId) {
+  window.doctorActivoId = doctorId;
+}
 
   window.imprimirHojaVacunas = () => {
     const hv   = document.getElementById('sectionHojaVacunas');
@@ -3299,6 +3316,7 @@
 
 </body>
 </html>
+
 
 
 
