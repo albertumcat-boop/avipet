@@ -2616,10 +2616,13 @@
     }
   };
 
+ // =========================================================
+  // [17-18] SEGURIDAD Y NAVEGACIÓN (UNIFICADO)
   // =========================================================
-  // [17] SEGURIDAD: MODAL ADMIN
-  // =========================================================
-  let tabPendiente = '';
+  
+  // Declaramos la variable UNA SOLA VEZ al inicio
+  let tabPendiente = ''; 
+  const MASTER_KEY = "AVIPET_MASTER_2026"; // Asegúrate de tener tu llave maestra
 
   window.validarAcceso = async () => {
     const pass = document.getElementById('inputPass').value;
@@ -2635,21 +2638,21 @@
       }
     } catch (e) {
       console.error("Error seguridad:", e);
+      // Plan B: Si falla la red, permitir acceso con Master Key local
+      if (pass === MASTER_KEY) {
+        window.cerrarModalLogin();
+        window.ejecutarCambioDeTab(tabPendiente);
+      }
     }
     document.getElementById('inputPass').value = "";
   };
 
   window.recuperarPin = async () => {
-    const respuesta =
-      prompt("🛠️ RECUPERACIÓN DE ACCESO\n¿Cuál es el nombre de la clínica?");
+    const respuesta = prompt("🛠️ RECUPERACIÓN DE ACCESO\n¿Cuál es el nombre de la clínica?");
     if (respuesta && respuesta.toUpperCase().trim() === "AVIPET") {
       const nuevoPin = prompt("✅ Confirmado. Ingrese nuevo PIN administrativo:");
       if (nuevoPin && nuevoPin.length >= 4) {
-        await setDoc(
-          doc(db, "configuracion", "seguridad"),
-          { pin: nuevoPin },
-          { merge: true }
-        );
+        await setDoc(doc(db, "configuracion", "seguridad"), { pin: nuevoPin }, { merge: true });
         alert("🔒 PIN administrativo actualizado.");
       }
     } else {
@@ -2662,13 +2665,6 @@
     document.getElementById('inputPass').value = "";
   };
 
- // =========================================================
-  // [18] NAVEGACIÓN TABS (AJUSTADO PARA MODO OFFLINE)
-  // =========================================================
-  
-  // Definimos esta variable fuera para que el sistema recuerde a dónde iba el usuario tras loguearse
-  let tabPendiente = ''; 
-
   window.showTab = async (t) => {
     // Si intenta entrar a Configuración o Reportes, pedimos login
     if (t === 'config_precios' || t === 'reporte') {
@@ -2676,8 +2672,8 @@
       const modal = document.getElementById('modalLogin');
       if (modal) {
         modal.classList.remove('hidden');
+        document.getElementById('inputPass').focus();
       } else {
-        // Si no tienes el modal implementado aún, deja pasar para probar
         window.ejecutarCambioDeTab(t);
       }
       return;
@@ -2687,47 +2683,47 @@
 
   window.ejecutarCambioDeTab = async (t) => {
     // 1. Ocultar/Mostrar Secciones Principales
-    document.getElementById('sectionHistoria')?.classList.toggle('hidden', t !== 'historia');
-    document.getElementById('sectionBuscador')?.classList.toggle('hidden', t !== 'buscador');
-    document.getElementById('sectionReporte')?.classList.toggle('hidden', t !== 'reporte');
-    document.getElementById('sectionEspera')?.classList.toggle('hidden', t !== 'espera');
-    document.getElementById('sectionHojaVacunas')?.classList.toggle('hidden', t !== 'vacunas');
+    const secciones = ['sectionHistoria', 'sectionBuscador', 'sectionReporte', 'sectionEspera', 'sectionHojaVacunas', 'sectionConfigPrecios'];
+    secciones.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
 
-    const sectionConfig = document.getElementById('sectionConfigPrecios');
-    if (sectionConfig) {
-      sectionConfig.classList.toggle('hidden', t !== 'config_precios');
+    const activa = {
+      'historia': 'sectionHistoria',
+      'buscador': 'sectionBuscador',
+      'reporte': 'sectionReporte',
+      'espera': 'sectionEspera',
+      'vacunas': 'sectionHojaVacunas',
+      'config_precios': 'sectionConfigPrecios'
+    }[t];
+
+    if (document.getElementById(activa)) {
+      document.getElementById(activa).classList.remove('hidden');
     }
 
-    // 2. Actualizar Estilo de los Botones del Menú (Tabs)
-    const tabs = {
-      'historia': document.getElementById('tabH'),
-      'buscador': document.getElementById('tabB'),
-      'reporte': document.getElementById('tabR'),
-      'espera': document.getElementById('tabE')
+    // 2. Actualizar Estilo de los Botones (Tabs)
+    const botones = {
+      'historia': 'tabH',
+      'buscador': 'tabB',
+      'reporte': 'tabR',
+      'espera': 'tabE'
     };
 
-    Object.keys(tabs).forEach(key => {
-      if (tabs[key]) {
-        tabs[key].classList.toggle('tab-active', t === key);
-        tabs[key].classList.toggle('text-blue-600', t === key);
-        tabs[key].classList.toggle('text-gray-500', t !== key);
+    Object.keys(botones).forEach(key => {
+      const btn = document.getElementById(botones[key]);
+      if (btn) {
+        btn.classList.toggle('tab-active', t === key);
+        btn.classList.toggle('text-blue-600', t === key);
+        btn.classList.toggle('text-gray-500', t !== key);
       }
     });
 
-    // 3. Disparar Carga de Datos (Si hay funciones definidas)
-    if (t === 'reporte' && typeof window.cargarReporte === 'function') {
-      window.cargarReporte();
-    }
-    if (t === 'espera' && typeof window.cargarListaEspera === 'function') {
-      window.cargarListaEspera();
-    }
-    if (t === 'config_precios') {
-      if (typeof window.cambiarSubTabConfig === 'function') {
-        window.cambiarSubTabConfig('servicios');
-      }
-    }
+    // 3. Disparar Carga de Datos
+    if (t === 'reporte' && typeof window.cargarReporte === 'function') window.cargarReporte();
+    if (t === 'espera' && typeof window.cargarListaEspera === 'function') window.cargarListaEspera();
+    if (t === 'config_precios' && typeof window.cambiarSubTabConfig === 'function') window.cambiarSubTabConfig('servicios');
   };
-
   // =========================================================
   // [24] DOCTOR: VER Y ABRIR COLA DE ESPERA
   // =========================================================
@@ -3361,6 +3357,7 @@
 
 </body>
 </html>
+
 
 
 
