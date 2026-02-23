@@ -1231,13 +1231,14 @@
   let serviciosEnLista = [];
   // Para no duplicar insumos base de medicamentos
   let insumosBaseMedicamentoAgregados = false;
-  // =========================================================
+ // =========================================================
   // [15] SEGURIDAD AVANZADA DOCTORES (PIN+MASTER)
   // =========================================================
-  const MASTER_KEY = "AVIPET2026";
-
+  
+  // Usamos la misma clave que definiremos abajo para no repetir
   window.validarDoctorConMaster = async (nombreDoc, pinIngresado) => {
-    if (pinIngresado === MASTER_KEY) {
+    // Compara con la llave maestra global
+    if (pinIngresado === "AVIPET2026") { 
       console.log(`🔓 Acceso admin para: ${nombreDoc}`);
       return true;
     }
@@ -1248,6 +1249,7 @@
         const pinReal = snap.data().pin;
         return pinIngresado === pinReal;
       } else {
+        // Pines de respaldo para Darwin Sandoval y Joan Silva
         const backupPins = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
         return pinIngresado === backupPins[nombreDoc];
       }
@@ -2620,9 +2622,11 @@
   // [17-18] SEGURIDAD Y NAVEGACIÓN (UNIFICADO)
   // =========================================================
   
-  // Declaramos la variable UNA SOLA VEZ al inicio
-  let tabPendiente = ''; 
-  const MASTER_KEY = "AVIPET_MASTER_2026"; // Asegúrate de tener tu llave maestra
+  // Definimos estas variables solo si no han sido creadas antes
+  if (typeof tabPendiente === 'undefined') window.tabPendiente = '';
+  
+  // LLAVE MAESTRA ÚNICA PARA TODO EL SISTEMA
+  window.MASTER_KEY_SISTEMA = "AVIPET2026"; 
 
   window.validarAcceso = async () => {
     const pass = document.getElementById('inputPass').value;
@@ -2630,18 +2634,17 @@
       const snap = await getDoc(doc(db, "configuracion", "seguridad"));
       const pinActual = snap.exists() ? snap.data().pin : "AVIPET2026";
 
-      if (pass === pinActual || pass === MASTER_KEY) {
+      if (pass === pinActual || pass === window.MASTER_KEY_SISTEMA) {
         window.cerrarModalLogin();
-        window.ejecutarCambioDeTab(tabPendiente);
+        window.ejecutarCambioDeTab(window.tabPendiente);
       } else {
         alert("🚫 PIN Incorrecto.");
       }
     } catch (e) {
       console.error("Error seguridad:", e);
-      // Plan B: Si falla la red, permitir acceso con Master Key local
-      if (pass === MASTER_KEY) {
+      if (pass === window.MASTER_KEY_SISTEMA) {
         window.cerrarModalLogin();
-        window.ejecutarCambioDeTab(tabPendiente);
+        window.ejecutarCambioDeTab(window.tabPendiente);
       }
     }
     document.getElementById('inputPass').value = "";
@@ -2662,7 +2665,8 @@
 
   window.cerrarModalLogin = () => {
     document.getElementById('modalLogin').classList.add('hidden');
-    document.getElementById('inputPass').value = "";
+    const inp = document.getElementById('inputPass');
+    if (inp) inp.value = "";
   };
 
   window.showTab = async (t) => {
@@ -3357,6 +3361,7 @@
 
 </body>
 </html>
+
 
 
 
