@@ -432,7 +432,7 @@
 
     <!-- 📄 Receta Sin Costos -->
     <button type="button"
-            onclick="imprimirRecetaLimpia && imprimirRecetaLimpia()"
+            onclick="window.imprimirRecetaLimpia()"
             class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
       📄 Receta Sin Costos
     </button>
@@ -578,7 +578,7 @@
       </div>
     </div>
 
-    <!-- CONTROL DE VACUNAS (6 filas, más compacto) -->
+    <!-- CONTROL DE VACUNAS -->
     <div class="border border-slate-400 rounded-lg mb-2">
       <div class="bg-slate-100 px-2 py-1 border-b border-slate-400 flex justify-between items-center">
         <span class="text-[10px] font-black uppercase text-slate-700">
@@ -596,7 +596,7 @@
           </tr>
         </thead>
         <tbody>
-          <!-- 1 -->
+          <!-- 6 filas -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -604,7 +604,6 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <!-- 2 -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -612,7 +611,6 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <!-- 3 -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -620,7 +618,13 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <!-- 4 -->
+          <tr class="h-10">
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+                        <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
+          </tr>
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -628,15 +632,6 @@
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
           </tr>
-          <!-- 5 -->
-          <tr class="h-10">
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-            <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
-          </tr>
-          <!-- 6 -->
           <tr class="h-10">
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
             <td class="border-b border-slate-300 px-1"><input class="w-full text-[9px]"></td>
@@ -712,7 +707,7 @@
     <!-- BOTONES HOJA VACUNAS -->
     <div class="no-print flex flex-col sm:flex-row justify-between gap-2 mt-2">
       <button type="button"
-              onclick="window.volverAHistoriaDesdeVacunas()"
+              onclick="window.volverAHistoriaDesdeVacunas && window.volverAHistoriaDesdeVacunas()"
               class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
         ⬅ Volver a Historia Clínica
       </button>
@@ -723,6 +718,7 @@
       </button>
     </div>
   </section>
+
   <!-- ========== BUSCADOR ========== -->
   <section id="sectionBuscador" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 max-w-2xl mx-auto">
@@ -794,21 +790,21 @@
         </div>
       </div>
 
-      <button onclick="generarAnalisisCompleto && generarAnalisisCompleto()"
+      <button onclick="window.generarAnalisisCompleto()"
               class="w-full mb-4 bg-indigo-600 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-all uppercase text-xs">
         📈 Generar Análisis Inteligente
       </button>
       <div class="flex flex-col gap-2">
-        <button onclick="cargarReporte()"
+        <button onclick="window.cargarReporte()"
                 class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
           🔄 Actualizar Balance
         </button>
         <div class="grid grid-cols-2 gap-2">
-          <button onclick="descargarReporte && descargarReporte()"
+          <button onclick="window.descargarReporte()"
                   class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
             📥 Descargar TXT
           </button>
-          <button onclick="guardarResumenDelDia && guardarResumenDelDia()"
+          <button onclick="window.guardarResumenDelDia()"
                   class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
             💾 Guardar en Nube
           </button>
@@ -839,14 +835,14 @@
       </div>
 
       <div id="areaBtnAgregarInsumo" class="hidden mb-4 flex justify-end">
-        <button onclick="window.agregarInsumoNuevoManual()"
+        <button onclick="window.agregarInsumoNuevoManual && window.agregarInsumoNuevoManual()"
                 class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md font-black text-[10px] uppercase transition-all">
           ➕ Agregar Insumo Nuevo
         </button>
       </div>
 
       <div id="bannerSincro"
-           class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items.center justify-between gap-4">
+           class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
         <div class="flex-1">
           <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
           <p class="text-[9px] text-orange-400">
@@ -910,15 +906,15 @@
     <input type="password" id="inputPass"
            placeholder="Ingrese PIN"
            class="w-full p-3 rounded-xl border border-slate-200 mb-2 text-center text-lg font-mono">
-    <button onclick="validarAcceso()"
+    <button onclick="window.validarAcceso()"
             class="w-full bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs mb-3">
       Entrar
     </button>
-    <button onclick="recuperarPin()"
+    <button onclick="window.recuperarPin()"
             class="w-full text-slate-400 text-[10px] uppercase font-bold hover:text-indigo-600 transition-colors">
       He olvidado mi PIN
     </button>
-    <button onclick="cerrarModalLogin()"
+    <button onclick="window.cerrarModalLogin()"
             class="w-full mt-2 text-red-400 text-[10px] uppercase font-bold">
       Cancelar
     </button>
@@ -930,7 +926,8 @@
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
     doc, getDoc, setDoc, updateDoc, orderBy,
-    enableIndexedDbPersistence 
+    enableIndexedDbPersistence,
+    deleteDoc                    // ← IMPORTAMOS deleteDoc LOCALMENTE
   } from "./firebase-firestore.js"; // <--- CAMBIO A RUTA LOCAL
 
   // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
@@ -941,6 +938,7 @@
           console.warn("Persistencia no soportada por este navegador.");
       }
   });
+
   // ========= [02] UTILIDADES Y CATÁLOGOS =========
   const normalizarNombre = (n) => {
     if (!n) return "";
@@ -1233,7 +1231,7 @@
   let serviciosEnLista = [];
   // Para no duplicar insumos base de medicamentos
   let insumosBaseMedicamentoAgregados = false;
-    // =========================================================
+  // =========================================================
   // [15] SEGURIDAD AVANZADA DOCTORES (PIN+MASTER)
   // =========================================================
   const MASTER_KEY = "AVIPET2026";
@@ -1349,57 +1347,58 @@
   };
 
   // =========================================================
-// [04] VALIDAR DOCTOR
-// =========================================================
-window.validarAccesoDoctor = async (nombre) => {
-  // Si se limpia el select (elige opción vacía)
-  if (!nombre) {
-    window.doctorVerificado = "";
-    const dPrint = document.getElementById('doctorPrint');
-    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-    // limpiar doctorActivoId
-    window.doctorActivoId = null;
-    return;
-  }
-
-  // Pedir PIN o Llave Maestra
-  const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
-  if (!pinIngresado) {
-    // Si cancela o deja vacío, se revierte la selección
-    const sel = document.getElementById('selectDoctor');
-    if (sel) sel.value = "";
-    return;
-  }
-
-  const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
-
-  if (esValido) {
-    window.doctorVerificado = nombre;
-    const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
-    const dPrint = document.getElementById('doctorPrint');
-    if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
-    alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
-    await window.calcularTodo();
-
-    // >>> NUEVO: fijar doctorActivoId según el nombre seleccionado <<<
-    if (nombre === "Darwin Sandoval") {
-      onDoctorAutenticado("DR_DARWIN");
-    } else if (nombre === "Joan Silva") {
-      onDoctorAutenticado("DR_JOAN");
-    } else {
-      onDoctorAutenticado(null);
+  // [04] VALIDAR DOCTOR
+  // =========================================================
+  window.validarAccesoDoctor = async (nombre) => {
+    // Si se limpia el select (elige opción vacía)
+    if (!nombre) {
+      window.doctorVerificado = "";
+      const dPrint = document.getElementById('doctorPrint');
+      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+      // limpiar doctorActivoId
+      window.doctorActivoId = null;
+      return;
     }
 
-  } else {
-    alert("❌ PIN INCORRECTO.");
-    const sel = document.getElementById('selectDoctor');
-    if (sel) sel.value = "";
-    window.doctorVerificado = "";
-    const dPrint = document.getElementById('doctorPrint');
-    if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-    window.doctorActivoId = null;
-  }
-};
+    // Pedir PIN o Llave Maestra
+    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
+    if (!pinIngresado) {
+      // Si cancela o deja vacío, se revierte la selección
+      const sel = document.getElementById('selectDoctor');
+      if (sel) sel.value = "";
+      return;
+    }
+
+    const esValido = await window.validarDoctorConMaster(nombre, pinIngresado);
+
+    if (esValido) {
+      window.doctorVerificado = nombre;
+      const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+      const dPrint = document.getElementById('doctorPrint');
+      if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
+      alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
+      await window.calcularTodo();
+
+      // >>> NUEVO: fijar doctorActivoId según el nombre seleccionado <<<
+      if (nombre === "Darwin Sandoval") {
+        onDoctorAutenticado("DR_DARWIN");
+      } else if (nombre === "Joan Silva") {
+        onDoctorAutenticado("DR_JOAN");
+      } else {
+        onDoctorAutenticado(null);
+      }
+
+    } else {
+      alert("❌ PIN INCORRECTO.");
+      const sel = document.getElementById('selectDoctor');
+      if (sel) sel.value = "";
+      window.doctorVerificado = "";
+      const dPrint = document.getElementById('doctorPrint');
+      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+      window.doctorActivoId = null;
+    }
+  };
+
   // =========================================================
   // [05] INSERTAR SERVICIO
   // =========================================================
@@ -1572,7 +1571,8 @@ window.validarAccesoDoctor = async (nombre) => {
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
   };
-    window.agregarMedicamento = (nombreMed) => {
+
+  window.agregarMedicamento = (nombreMed) => {
     if (!nombreMed) return;
     const cfg = CONFIG_MEDICAMENTOS[nombreMed];
     if (!cfg) return;
@@ -1626,7 +1626,7 @@ window.validarAccesoDoctor = async (nombre) => {
 
     const grupoID = "med-" + Date.now(); // id único para el medicamento
 
-    const porcentajeServicioMedicamento = 40; // 40% doctor, 60% Avipet, igual que otras consultas
+    const porcentajeServicioMedicamento = 40; // 40% doctor, 60% Avipet
 
     const filaTitulo = document.createElement('tr');
     filaTitulo.className =
@@ -2233,7 +2233,7 @@ window.validarAccesoDoctor = async (nombre) => {
       }
       if (btnServ) {
         btnServ.className =
-          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50";
+          "flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg.white/50";
       }
       if (typeof window.renderizarTablaInsumos === 'function') {
         window.renderizarTablaInsumos();
@@ -2379,6 +2379,7 @@ window.validarAccesoDoctor = async (nombre) => {
       alert("Error: " + e.message);
     }
   };
+
   window.renderizarTablaInsumos = async () => {
     const tabla = document.getElementById('tablaMaestraInsumos');
     if (!tabla) {
@@ -2466,12 +2467,9 @@ window.validarAccesoDoctor = async (nombre) => {
     if (!confirm(`⚠️ ¿Estás seguro de eliminar "${idInsumo}" de la lista?`)) return;
 
     try {
-      const { deleteDoc, doc: dDoc } =
-        await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-
+      // USAMOS deleteDoc YA IMPORTADO LOCAL, SIN IMPORT DINÁMICO
       console.log(`🗑️ Eliminando de la nube: ${idInsumo}...`);
-      await deleteDoc(dDoc(db, "insumos_maestro", idInsumo));
-
+      await deleteDoc(doc(db, "insumos_maestro", idInsumo));
       console.log(`✅ Insumo "${idInsumo}" eliminado.`);
       await window.renderizarTablaInsumos();
     } catch (e) {
@@ -2604,11 +2602,9 @@ window.validarAccesoDoctor = async (nombre) => {
         alert("✅ Consulta guardada y lista para imprimir.");
         setTimeout(() => {
           window.print();
-          // NO recargamos para no interrumpir descargas
         }, 600);
       } else {
         alert("✅ Consulta guardada exitosamente.");
-        // NO recargamos para no interrumpir descargas
       }
     } catch (e) {
       console.error("Error al guardar:", e);
@@ -2914,7 +2910,7 @@ window.validarAccesoDoctor = async (nombre) => {
           <p class="text-xl font-black text-emerald-700 font-mono">
             $${totalNeto.toFixed(2)} (${margenNeto.toFixed(1)}%)
           </p>
-        </div>
+                  </div>
       `;
 
       Object.entries(mapaDoctores).forEach(([docName, info]) => {
@@ -3167,7 +3163,7 @@ window.validarAccesoDoctor = async (nombre) => {
         "montoInsumos",
         "pagoDoctor",
         "pagoAvipet",
-        "tratamiento"          // ← NUEVA COLUMNA
+        "tratamiento"
       ];
 
       const filas = [];
@@ -3198,7 +3194,6 @@ window.validarAccesoDoctor = async (nombre) => {
           if (val === undefined || val === null) val = "";
 
           // Limpiar saltos de línea y ; para no romper el CSV
-          // (tratamiento puede tener saltos de línea)
           val = String(val)
             .replace(/\r?\n/g, " ")
             .replace(/;/g, ",");
@@ -3235,73 +3230,76 @@ window.validarAccesoDoctor = async (nombre) => {
       alert("❌ No se pudo exportar el historial: " + e.message);
     }
   };
+
   // Copia datos de la Historia Clínica a la Hoja de Vacunas
-window.abrirHojaVacunasDesdeHistoria = () => {
-  const dVal = (id) => document.getElementById(id)?.value.trim() || "";
-  const set = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = val || "";
+  window.abrirHojaVacunasDesdeHistoria = () => {
+    const dVal = (id) => document.getElementById(id)?.value.trim() || "";
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val || "";
+    };
+
+    // Fecha de emisión de la hoja
+    const f = new Date();
+    const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
+    set('hv_fecha', fechaStr);
+
+    // Datos de propietario/paciente desde la Historia
+    set('hv_propietario', dVal('hProp'));
+    set('hv_cedula',      dVal('hCI'));
+    set('hv_telefono',    dVal('hTlf'));
+    set('hv_direccion',   dVal('hDir'));
+
+    set('hv_especie',     dVal('hEspecie'));
+    set('hv_raza',        dVal('hRaza'));
+    set('hv_paciente',    dVal('hNombre'));
+    set('hv_edad',        dVal('hEdad'));
+    set('hv_sexo',        dVal('hSexo'));
+    set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
+    set('hv_color',       dVal('hColor'));
+
+    // Datos de doctor (logo, nombre, clínica) usando doctorActivoId
+    if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
+      const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
+
+      const elLogo   = document.getElementById('hv_logoDoctor');
+      const elNombre = document.getElementById('hv_nombreDoctor');
+      const elClin   = document.getElementById('hv_clinicaDoctor');
+
+      if (elLogo) {
+        elLogo.src = conf.logo || "";
+        elLogo.alt = conf.nombre || "Logo Doctor";
+      }
+      if (elNombre) elNombre.textContent = conf.nombre || "";
+      if (elClin)   elClin.textContent   = conf.clinica || "";
+    }
+
+    // Mostrar hoja vacunas y ocultar historia
+    document.getElementById('sectionHistoria')?.classList.add('hidden');
+    document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
   };
 
-  // Fecha de emisión de la hoja
-  const f = new Date();
-  const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
-  set('hv_fecha', fechaStr);
-
-  // Datos de propietario/paciente desde la Historia
-  set('hv_propietario', dVal('hProp'));
-  set('hv_cedula',      dVal('hCI'));
-  set('hv_telefono',    dVal('hTlf'));
-  set('hv_direccion',   dVal('hDir'));
-
-  set('hv_especie',     dVal('hEspecie'));
-  set('hv_raza',        dVal('hRaza'));
-  set('hv_paciente',    dVal('hNombre'));
-  set('hv_edad',        dVal('hEdad'));
-  set('hv_sexo',        dVal('hSexo'));
-  set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
-  set('hv_color',       dVal('hColor'));
-
-  // Datos de doctor (logo, nombre, clínica) usando doctorActivoId
-  if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
-    const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
-
-    const elLogo   = document.getElementById('hv_logoDoctor');
-    const elNombre = document.getElementById('hv_nombreDoctor');
-    const elClin   = document.getElementById('hv_clinicaDoctor');
-
-    if (elLogo) {
-      elLogo.src = conf.logo || "";
-      elLogo.alt = conf.nombre || "Logo Doctor";
-    }
-    if (elNombre) elNombre.textContent = conf.nombre || "";
-    if (elClin)   elClin.textContent   = conf.clinica || "";
-  }
-
-  // Mostrar hoja vacunas y ocultar historia
-  document.getElementById('sectionHistoria')?.classList.add('hidden');
-  document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
-};
-
   // Configuración de doctores para logo y textos
-window.CONFIG_DOCTORES = {
-  "DR_DARWIN": {
-    nombre: "Dr. Darwin Sandoval",
-    clinica: "AVIPET - Medicina Veterinaria",
-    logo: "petshop-admin\img\logo_darwin.jpg"   // ← AJUSTA ESTA RUTA
-  },
-  "DR_JOAN": {
-    nombre: "Dra. Joan Silva",
-    clinica: "AVIPET - Medicina Veterinaria",
-    logo: "petshop-admin\img\logo_joan.jpg"     // ← AJUSTA ESTA RUTA
-  }
-};
-window.doctorActivoId = null;
+  window.CONFIG_DOCTORES = {
+    "DR_DARWIN": {
+      nombre: "Dr. Darwin Sandoval",
+      clinica: "AVIPET - Medicina Veterinaria",
+      // RUTA CORREGIDA CON BARRAS NORMALES
+      logo: "petshop-admin/img/logo_darwin.jpg"
+    },
+    "DR_JOAN": {
+      nombre: "Dra. Joan Silva",
+      clinica: "AVIPET - Medicina Veterinaria",
+      // RUTA CORREGIDA CON BARRAS NORMALES
+      logo: "petshop-admin/img/logo_joan.jpg"
+    }
+  };
+  window.doctorActivoId = null;
 
-// Función genérica para fijar el doctor activo (la usaremos desde validarAccesoDoctor)
-function onDoctorAutenticado(doctorId) {
-  window.doctorActivoId = doctorId;
-}
+  // Función genérica para fijar el doctor activo (la usaremos desde validarAccesoDoctor)
+  function onDoctorAutenticado(doctorId) {
+    window.doctorActivoId = doctorId;
+  }
 
   window.imprimirHojaVacunas = () => {
     const hv   = document.getElementById('sectionHojaVacunas');
@@ -3325,6 +3323,8 @@ function onDoctorAutenticado(doctorId) {
 
 </body>
 </html>
+
+
 
 
 
