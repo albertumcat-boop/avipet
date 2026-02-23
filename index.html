@@ -929,9 +929,18 @@
   import { db } from './firebase-config.js';
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, orderBy
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    doc, getDoc, setDoc, updateDoc, orderBy,
+    enableIndexedDbPersistence 
+  } from "./firebase-firestore.js"; // <--- CAMBIO A RUTA LOCAL
 
+  // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
+  enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code == 'failed-precondition') {
+          console.warn("Persistencia falló: Múltiples pestañas abiertas.");
+      } else if (err.code == 'unimplemented') {
+          console.warn("Persistencia no soportada por este navegador.");
+      }
+  });
   // ========= [02] UTILIDADES Y CATÁLOGOS =========
   const normalizarNombre = (n) => {
     if (!n) return "";
@@ -3316,6 +3325,7 @@ function onDoctorAutenticado(doctorId) {
 
 </body>
 </html>
+
 
 
 
