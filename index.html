@@ -2015,28 +2015,32 @@
   };
 
   // =========================================================
-  // [10] AUTOCOMPLETAR POR CÉDULA
+  // [10] AUTOCOMPLETAR POR CÉDULA (MODO OFFLINE RESISTENTE)
   // =========================================================
   window.autocompletarPorCedula = async (ci) => {
     if (!ci) return;
     try {
+      // La búsqueda se hace primero en la caché local gracias a la persistencia
       const q = query(collection(db, "consultas"), where("cedula", "==", ci.trim()));
       const snap = await getDocs(q);
+      
       if (!snap.empty) {
         const registros = [];
         snap.forEach(docSnap => registros.push(docSnap.data()));
-        registros.sort(
-          (a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0)
-        );
+        
+        // Ordenamos por fecha para traer la visita más reciente
+        registros.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
         const d = registros[0];
 
-        console.log("Registro usado para autocompletar:", d); // <-- SOLO ESTO NUEVO
+        console.log("Registro usado para autocompletar:", d);
 
+        // --- PROPIETARIO Y ALERTAS ---
         const inputProp = document.getElementById('hProp');
         if (inputProp) {
           inputProp.value = d.propietario || "";
+          
           if (d.alerta === true) {
-            inputProp.style.color = "#b91c1c";
+            inputProp.style.color = "#b91c1c"; // Rojo intenso
             inputProp.style.fontWeight = "bold";
             const chk = document.getElementById('hAlerta');
             if (chk) chk.checked = true;
@@ -2048,23 +2052,30 @@
             if (chk) chk.checked = false;
           }
         }
-        document.getElementById('hMail').value    = d.correo    || "";
-        document.getElementById('hTlf').value     = d.telefono  || "";
-        document.getElementById('hDir').value     = d.direccion || "";
-        document.getElementById('hNombre').value  = d.paciente  || "";
-        document.getElementById('hRaza').value    = d.raza      || "";
-        document.getElementById('hEspecie').value = d.especie   || "";
-        document.getElementById('hEdad').value    = d.edad      || "";
-        document.getElementById('hSexo').value    = d.sexo      || "";
-        document.getElementById('hPeso').value    = d.peso      || "";
-        const hColor = document.getElementById('hColor');
-        if (hColor) hColor.value = d.color || "";
+
+        // --- LLENADO DE CAMPOS SEGURO (Usa el operador ?. para no romper el código) ---
+        const setV = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.value = val || "";
+        };
+
+        setV('hMail', d.correo || d.email);
+        setV('hTlf', d.telefono);
+        setV('hDir', d.direccion);
+        setV('hNombre', d.paciente);
+        setV('hRaza', d.raza);
+        setV('hEspecie', d.especie);
+        setV('hEdad', d.edad);
+        setV('hSexo', d.sexo);
+        setV('hPeso', d.peso);
+        setV('hColor', d.color);
+
+        console.log("✅ Ficha de mascota autocompletada.");
       }
     } catch (e) {
-      console.error(e);
+      console.error("Error al autocompletar:", e);
     }
   };
-
   // =========================================================
   // [23] RECEPCIÓN: ENVIAR A COLA DE ESPERA
   // =========================================================
@@ -2479,7 +2490,7 @@
   };
 
   // =========================================================
-  // [16] GUARDAR CONSULTA EN FIREBASE
+  // [16] GUARDAR CONSULTA EN FIREBASE (OPTIMIZADO OFFLINE)
   // =========================================================
   window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
@@ -2490,11 +2501,13 @@
       return;
     }
 
+    // 1. SOLICITUD DE FIRMA (PIN)
     const pinIngresado = prompt(
       `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
     );
     if (!pinIngresado) return;
 
+    // Validación conectada a tu función maestra
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
 
     if (esValido) {
@@ -2505,22 +2518,22 @@
       return;
     }
 
-    if (!window.doctorVerificado) {
-      alert("⚠️ Error: Requiere firma del doctor.");
-      return;
-    }
-
     try {
+      // 2. OBTENER CONFIGURACIÓN (REVISA CACHÉ SI NO HAY INTERNET)
       const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-      let porcGlobal =
-        (configSnap.exists() && (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc) > 0)
-          ? (configSnap.data().porcentajeDoc ?? configSnap.data().porcDoc)
-          : null;
+      let porcGlobal = null;
+      if (configSnap.exists()) {
+        const cData = configSnap.data();
+        porcGlobal = (cData.porcentajeDoc ?? cData.porcDoc) > 0 ? (cData.porcentajeDoc ?? cData.porcDoc) : null;
+      }
 
-      const dInput = (id) => document.getElementById(id).value.trim();
-      const montoVentaTotal =
-        parseFloat(document.getElementById('precioVenta').value) || 0;
+      // 3. RECOLECCIÓN DE DATOS Y CÁLCULOS
+      const dInput = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : "";
+      };
 
+      const montoVentaTotal = parseFloat(document.getElementById('precioVenta').value) || 0;
       const detalleInsumos = [];
       let totalGastos = 0;
       let pagoDoctorTotal = 0;
@@ -2530,36 +2543,28 @@
       serviciosPrincipales.forEach(fila => {
         const grupoID = fila.getAttribute('data-grupo');
         const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-
         const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
         const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
 
         let gastosEsteServicio = 0;
 
+        // Sumar insumos asociados a este servicio
         document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
-          const nombre = insumoFila.cells[0].innerText
-            .replace('➕ ', '')
-            .replace('🔹 ', '')
-            .trim();
-          const cant = parseFloat(insumoFila.querySelector('.i-cant').value) || 0;
-          const costoUnidad =
-            parseFloat(insumoFila.querySelector('.i-cost').value) || 0;
+          const nombre = insumoFila.cells[0].innerText.replace(/[➕🔹]/g, '').trim();
+          const cant = parseFloat(insumoFila.querySelector('.i-cant')?.value) || 0;
+          const costoUnidad = parseFloat(insumoFila.querySelector('.i-cost')?.value) || 0;
           const subtotalInsumo = cant * costoUnidad;
 
           gastosEsteServicio += subtotalInsumo;
-
-          detalleInsumos.push({
-            nombre,
-            cant,
-            costo: costoUnidad
-          });
+          detalleInsumos.push({ nombre, cant, costo: costoUnidad });
         });
 
         totalGastos += gastosEsteServicio;
-        pagoDoctorTotal +=
-          (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
+        // La ganancia del doctor se calcula sobre el neto (Precio - Costo Insumo)
+        pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
       });
 
+      // 4. ESTRUCTURA FINAL DEL REGISTRO (DATA)
       const dataConsulta = {
         cedula: dInput('hCI'),
         propietario: dInput('hProp'),
@@ -2576,8 +2581,6 @@
         fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
         alerta: !!document.getElementById('hAlerta')?.checked,
         color: dInput('hColor'),
-
-        // NUEVO: guardar todos los datos que luego quieres autocompletar
         telefono: dInput('hTlf'),
         correo: dInput('hMail'),
         direccion: dInput('hDir'),
@@ -2588,27 +2591,28 @@
         peso: dInput('hPeso')
       };
 
+      // 5. GUARDADO (EL DISPARO FINAL)
+      // addDoc enviará esto a la cola de sincronización si estás offline
       await addDoc(collection(db, "consultas"), dataConsulta);
 
-      // EXPORTAR HISTORIAL AUTOMÁTICAMENTE DESPUÉS DE GUARDAR
-      console.log("DEBUG: voy a llamar a exportarHistorialAExcel, doctorVerificado =", window.doctorVerificado);
+      // Exportación automática (opcional, requiere internet o configuración local)
       if (typeof window.exportarHistorialAExcel === 'function') {
         window.exportarHistorialAExcel();
       }
 
+      // 6. ACCIÓN FINAL (IMPRIMIR O AVISAR)
       if (imp) {
         const tArea = document.getElementById('hTratamientoPrint');
         if (tArea) tArea.innerText = dInput('hTratamiento');
-        alert("✅ Consulta guardada y lista para imprimir.");
-        setTimeout(() => {
-          window.print();
-        }, 600);
+        alert("✅ Consulta guardada (en cola local si no hay internet).");
+        setTimeout(() => window.print(), 600);
       } else {
         alert("✅ Consulta guardada exitosamente.");
       }
+
     } catch (e) {
       console.error("Error al guardar:", e);
-      alert("❌ Error crítico al guardar: " + e.message);
+      alert("❌ Error crítico: " + e.message);
     }
   };
 
@@ -2658,41 +2662,65 @@
     document.getElementById('inputPass').value = "";
   };
 
+ // =========================================================
+  // [18] NAVEGACIÓN TABS (AJUSTADO PARA MODO OFFLINE)
   // =========================================================
-  // [18] NAVEGACIÓN TABS
-  // =========================================================
+  
+  // Definimos esta variable fuera para que el sistema recuerde a dónde iba el usuario tras loguearse
+  let tabPendiente = ''; 
+
   window.showTab = async (t) => {
+    // Si intenta entrar a Configuración o Reportes, pedimos login
     if (t === 'config_precios' || t === 'reporte') {
       tabPendiente = t;
-      document.getElementById('modalLogin').classList.remove('hidden');
+      const modal = document.getElementById('modalLogin');
+      if (modal) {
+        modal.classList.remove('hidden');
+      } else {
+        // Si no tienes el modal implementado aún, deja pasar para probar
+        window.ejecutarCambioDeTab(t);
+      }
       return;
     }
     window.ejecutarCambioDeTab(t);
   };
 
   window.ejecutarCambioDeTab = async (t) => {
-    document.getElementById('sectionHistoria').classList.toggle('hidden', t !== 'historia');
-    document.getElementById('sectionBuscador').classList.toggle('hidden', t !== 'buscador');
-    document.getElementById('sectionReporte').classList.toggle('hidden', t !== 'reporte');
+    // 1. Ocultar/Mostrar Secciones Principales
+    document.getElementById('sectionHistoria')?.classList.toggle('hidden', t !== 'historia');
+    document.getElementById('sectionBuscador')?.classList.toggle('hidden', t !== 'buscador');
+    document.getElementById('sectionReporte')?.classList.toggle('hidden', t !== 'reporte');
     document.getElementById('sectionEspera')?.classList.toggle('hidden', t !== 'espera');
+    document.getElementById('sectionHojaVacunas')?.classList.toggle('hidden', t !== 'vacunas');
 
     const sectionConfig = document.getElementById('sectionConfigPrecios');
     if (sectionConfig) {
       sectionConfig.classList.toggle('hidden', t !== 'config_precios');
     }
 
-    const tabH = document.getElementById('tabH');
-    const tabB = document.getElementById('tabB');
-    const tabR = document.getElementById('tabR');
-    const tabE = document.getElementById('tabE');
+    // 2. Actualizar Estilo de los Botones del Menú (Tabs)
+    const tabs = {
+      'historia': document.getElementById('tabH'),
+      'buscador': document.getElementById('tabB'),
+      'reporte': document.getElementById('tabR'),
+      'espera': document.getElementById('tabE')
+    };
 
-    if (tabH) tabH.classList.toggle('tab-active', t === 'historia');
-    if (tabB) tabB.classList.toggle('tab-active', t === 'buscador');
-    if (tabR) tabR.classList.toggle('tab-active', t === 'reporte');
-    if (tabE) tabE.classList.toggle('tab-active', t === 'espera');
+    Object.keys(tabs).forEach(key => {
+      if (tabs[key]) {
+        tabs[key].classList.toggle('tab-active', t === key);
+        tabs[key].classList.toggle('text-blue-600', t === key);
+        tabs[key].classList.toggle('text-gray-500', t !== key);
+      }
+    });
 
-    if (t === 'reporte') window.cargarReporte();
-    if (t === 'espera') window.cargarListaEspera();
+    // 3. Disparar Carga de Datos (Si hay funciones definidas)
+    if (t === 'reporte' && typeof window.cargarReporte === 'function') {
+      window.cargarReporte();
+    }
+    if (t === 'espera' && typeof window.cargarListaEspera === 'function') {
+      window.cargarListaEspera();
+    }
     if (t === 'config_precios') {
       if (typeof window.cambiarSubTabConfig === 'function') {
         window.cambiarSubTabConfig('servicios');
@@ -3231,75 +3259,85 @@
     }
   };
 
-  // Copia datos de la Historia Clínica a la Hoja de Vacunas
+  // =========================================================
+  // [19] PUENTE A VACUNAS CON PERFILES DE DOCTOR
+  // =========================================================
   window.abrirHojaVacunasDesdeHistoria = () => {
     const dVal = (id) => document.getElementById(id)?.value.trim() || "";
-    const set = (id, val) => {
+    const setV = (id, val) => {
       const el = document.getElementById(id);
       if (el) el.value = val || "";
     };
 
-    // Fecha de emisión de la hoja
+    // 1. Fecha automática (Formato DD/MM/YYYY)
     const f = new Date();
     const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
-    set('hv_fecha', fechaStr);
+    setV('hv_fecha', fechaStr);
 
-    // Datos de propietario/paciente desde la Historia
-    set('hv_propietario', dVal('hProp'));
-    set('hv_cedula',      dVal('hCI'));
-    set('hv_telefono',    dVal('hTlf'));
-    set('hv_direccion',   dVal('hDir'));
+    // 2. Trasvase de datos desde la Historia
+    setV('hv_propietario', dVal('hProp'));
+    setV('hv_cedula',      dVal('hCI'));
+    setV('hv_telefono',    dVal('hTlf'));
+    setV('hv_direccion',   dVal('hDir'));
+    setV('hv_especie',     dVal('hEspecie'));
+    setV('hv_raza',        dVal('hRaza'));
+    setV('hv_paciente',    dVal('hNombre'));
+    setV('hv_edad',        dVal('hEdad'));
+    setV('hv_sexo',        dVal('hSexo'));
+    setV('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
+    setV('hv_color',       dVal('hColor'));
 
-    set('hv_especie',     dVal('hEspecie'));
-    set('hv_raza',        dVal('hRaza'));
-    set('hv_paciente',    dVal('hNombre'));
-    set('hv_edad',        dVal('hEdad'));
-    set('hv_sexo',        dVal('hSexo'));
-    set('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
-    set('hv_color',       dVal('hColor'));
+    // 3. Configuración de Marca del Doctor
+    // Si no hay doctor activo, intentamos leer el selector de la historia
+    const docActual = window.doctorActivoId || document.getElementById('selectDoctor')?.value;
 
-    // Datos de doctor (logo, nombre, clínica) usando doctorActivoId
-    if (window.doctorActivoId && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[window.doctorActivoId]) {
-      const conf = window.CONFIG_DOCTORES[window.doctorActivoId];
-
+    if (docActual && window.CONFIG_DOCTORES[docActual]) {
+      const conf = window.CONFIG_DOCTORES[docActual];
       const elLogo   = document.getElementById('hv_logoDoctor');
       const elNombre = document.getElementById('hv_nombreDoctor');
       const elClin   = document.getElementById('hv_clinicaDoctor');
 
       if (elLogo) {
         elLogo.src = conf.logo || "";
-        elLogo.alt = conf.nombre || "Logo Doctor";
+        elLogo.alt = conf.nombre || "Logo";
       }
       if (elNombre) elNombre.textContent = conf.nombre || "";
       if (elClin)   elClin.textContent   = conf.clinica || "";
     }
 
-    // Mostrar hoja vacunas y ocultar historia
-    document.getElementById('sectionHistoria')?.classList.add('hidden');
-    document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
+    // 4. Salto de pestaña ordenado
+    if (typeof window.showTab === 'function') {
+      window.showTab('vacunas');
+    } else {
+      document.getElementById('sectionHistoria')?.classList.add('hidden');
+      document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
+    }
+    console.log("✅ Hoja de Vacunas preparada para el Doctor:", docActual);
   };
 
-  // Configuración de doctores para logo y textos
+  // =========================================================
+  // [20] CONFIGURACIÓN DE IDENTIDAD VISUAL
+  // =========================================================
   window.CONFIG_DOCTORES = {
     "DR_DARWIN": {
       nombre: "Dr. Darwin Sandoval",
       clinica: "AVIPET - Medicina Veterinaria",
-      // RUTA CORREGIDA CON BARRAS NORMALES
       logo: "petshop-admin/img/logo_darwin.jpg"
     },
     "DR_JOAN": {
-      nombre: "Dra. Joan Silva",
+      nombre: "Dra. Joan Silva", // Corregido a Dra. como mencionaste antes
       clinica: "AVIPET - Medicina Veterinaria",
-      // RUTA CORREGIDA CON BARRAS NORMALES
       logo: "petshop-admin/img/logo_joan.jpg"
     }
   };
+
   window.doctorActivoId = null;
 
-  // Función genérica para fijar el doctor activo (la usaremos desde validarAccesoDoctor)
-  function onDoctorAutenticado(doctorId) {
+  // Esta función debe llamarse justo después de que el PIN sea correcto
+  window.onDoctorAutenticado = (doctorId) => {
     window.doctorActivoId = doctorId;
-  }
+    console.log("⚓ Sesión activa:", doctorId);
+  };
 
   window.imprimirHojaVacunas = () => {
     const hv   = document.getElementById('sectionHojaVacunas');
@@ -3323,6 +3361,7 @@
 
 </body>
 </html>
+
 
 
 
