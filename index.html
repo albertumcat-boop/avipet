@@ -926,10 +926,8 @@
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
     doc, getDoc, setDoc, updateDoc, orderBy,
-    enableIndexedDbPersistence,
-    deleteDoc                    // ← IMPORTAMOS deleteDoc LOCALMENTE
-  } from "./firebase-firestore.js"; // <--- CAMBIO A RUTA LOCAL
-
+    enableIndexedDbPersistence, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // <--- RUTA DE EMERGENCIA
   // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
   enableIndexedDbPersistence(db).catch((err) => {
       if (err.code == 'failed-precondition') {
@@ -1231,14 +1229,16 @@
   let serviciosEnLista = [];
   // Para no duplicar insumos base de medicamentos
   let insumosBaseMedicamentoAgregados = false;
- // =========================================================
-  // [15] SEGURIDAD AVANZADA DOCTORES (PIN+MASTER)
+// =========================================================
+  // [15] SEGURIDAD AVANZADA DOCTORES (PIN + MASTER)
   // =========================================================
   
-  // Usamos la misma clave que definiremos abajo para no repetir
+  // Usamos la misma llave para todo el sistema
+  window.MASTER_KEY_SISTEMA = "AVIPET2026"; 
+
   window.validarDoctorConMaster = async (nombreDoc, pinIngresado) => {
-    // Compara con la llave maestra global
-    if (pinIngresado === "AVIPET2026") { 
+    // 1. Validar contra Llave Maestra
+    if (pinIngresado === window.MASTER_KEY_SISTEMA) { 
       console.log(`🔓 Acceso admin para: ${nombreDoc}`);
       return true;
     }
@@ -1246,24 +1246,22 @@
       const docRef = doc(db, "doctores", nombreDoc);
       const snap = await getDoc(docRef);
       if (snap.exists()) {
-        const pinReal = snap.data().pin;
-        return pinIngresado === pinReal;
+        return pinIngresado === snap.data().pin;
       } else {
-        // Pines de respaldo para Darwin Sandoval y Joan Silva
+        // Pines de respaldo locales (Modo Offline)
         const backupPins = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
         return pinIngresado === backupPins[nombreDoc];
       }
     } catch (e) {
       console.error("Error en validación:", e);
-      return false;
+      // Plan B: Si falla la red, usar los pines de respaldo
+      const backupPins = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
+      return pinIngresado === backupPins[nombreDoc];
     }
   };
 
   window.cambiarPinDoctor = async (nombreDoc) => {
-    if (!nombreDoc) {
-      alert("Seleccione un doctor en la lista primero.");
-      return;
-    }
+    if (!nombreDoc) return alert("Seleccione un doctor en la lista primero.");
 
     const pinActual = prompt(`🔐 [${nombreDoc}] Ingrese PIN actual o Llave Maestra:`);
     if (!pinActual) return;
@@ -1273,9 +1271,8 @@
     if (esValido) {
       const nuevoPin = prompt("🆕 Ingrese su NUEVO PIN (4 dígitos):");
       if (nuevoPin && nuevoPin.length >= 4) {
-        await setDoc(
-          doc(db, "doctores", nombreDoc),
-          { pin: nuevoPin, ultimaActualizacion: serverTimestamp() },
+        await setDoc(doc(db, "doctores", nombreDoc), 
+          { pin: nuevoPin, ultimaActualizacion: serverTimestamp() }, 
           { merge: true }
         );
         alert("✅ PIN actualizado con éxito.");
@@ -1287,44 +1284,24 @@
     }
   };
 
-  window.validarDoctorPerfil = async (nombreDoc, pinIngresado) => {
-    if (pinIngresado === MASTER_KEY) return true;
-    try {
-      const snap = await getDoc(doc(db, "doctores", nombreDoc));
-      if (snap.exists()) {
-        return pinIngresado === snap.data().pin;
-      } else {
-        const defaults = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
-        return pinIngresado === defaults[nombreDoc];
-      }
-    } catch (e) {
-      return false;
-    }
-  };
-
   window.solicitarCambioPinDoctor = async () => {
     const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
     if (!nombreDoc) return;
 
-    // Preguntar clave de recuperación (llave maestra o PIN admin)
     const claveAdmin = prompt("🔐 Recuperación de PIN\nIngrese la Llave Maestra o PIN administrativo:");
     if (!claveAdmin) return;
 
-    // 1) MASTER_KEY siempre es válida
-    if (claveAdmin === MASTER_KEY) {
+    // 1) Validar con la llave maestra global
+    if (claveAdmin === window.MASTER_KEY_SISTEMA) {
       const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
       if (nuevoPin && nuevoPin.length >= 4) {
-        await setDoc(
-          doc(db, "doctores", nombreDoc),
-          { pin: nuevoPin },
-          { merge: true }
-        );
-        alert(`✅ PIN de ${nombreDoc} actualizado por recuperación (Llave Maestra).`);
+        await setDoc(doc(db, "doctores", nombreDoc), { pin: nuevoPin }, { merge: true });
+        alert(`✅ PIN de ${nombreDoc} actualizado por recuperación.`);
       }
       return;
     }
 
-    // 2) También permite usar el PIN administrativo de "configuracion/seguridad"
+    // 2) Validar con el PIN administrativo de la nube
     try {
       const snapSeg = await getDoc(doc(db, "configuracion", "seguridad"));
       const pinAdmin = snapSeg.exists() ? (snapSeg.data().pin || "AVIPET2026") : "AVIPET2026";
@@ -1332,11 +1309,7 @@
       if (claveAdmin === pinAdmin) {
         const nuevoPin = prompt(`Ingrese el NUEVO PIN para ${nombreDoc} (mínimo 4 dígitos):`);
         if (nuevoPin && nuevoPin.length >= 4) {
-          await setDoc(
-            doc(db, "doctores", nombreDoc),
-            { pin: nuevoPin },
-            { merge: true }
-          );
+          await setDoc(doc(db, "doctores", nombreDoc), { pin: nuevoPin }, { merge: true });
           alert(`✅ PIN de ${nombreDoc} actualizado por administrador.`);
         }
       } else {
@@ -1344,8 +1317,14 @@
       }
     } catch (e) {
       console.error("Error validando clave admin:", e);
-      alert("❌ Error al validar clave administrativa.");
+      alert("❌ Error al validar clave.");
     }
+  };
+
+  // Función requerida por el selector de doctores
+  window.validarAccesoDoctor = (idSelect) => {
+    const el = document.getElementById(idSelect);
+    if (el) console.log("Cambiando sesión a:", el.value);
   };
 
   // =========================================================
@@ -2619,20 +2598,19 @@
   };
 
  // =========================================================
-  // [17-18] SEGURIDAD Y NAVEGACIÓN (UNIFICADO)
+  // [17-18] SEGURIDAD Y NAVEGACIÓN (VERSIÓN FINAL)
   // =========================================================
   
-  // Definimos estas variables solo si no han sido creadas antes
-  if (typeof tabPendiente === 'undefined') window.tabPendiente = '';
-  
-  // LLAVE MAESTRA ÚNICA PARA TODO EL SISTEMA
+  // 1. Inicialización de Globales
+  if (typeof window.tabPendiente === 'undefined') window.tabPendiente = '';
   window.MASTER_KEY_SISTEMA = "AVIPET2026"; 
 
+  // 2. Validación de Acceso Administrativo
   window.validarAcceso = async () => {
     const pass = document.getElementById('inputPass').value;
     try {
       const snap = await getDoc(doc(db, "configuracion", "seguridad"));
-      const pinActual = snap.exists() ? snap.data().pin : "AVIPET2026";
+      const pinActual = snap.exists() ? (snap.data().pin || "AVIPET2026") : "AVIPET2026";
 
       if (pass === pinActual || pass === window.MASTER_KEY_SISTEMA) {
         window.cerrarModalLogin();
@@ -2641,42 +2619,27 @@
         alert("🚫 PIN Incorrecto.");
       }
     } catch (e) {
-      console.error("Error seguridad:", e);
+      console.warn("Modo Offline: Verificando con Master Key.");
       if (pass === window.MASTER_KEY_SISTEMA) {
         window.cerrarModalLogin();
         window.ejecutarCambioDeTab(window.tabPendiente);
+      } else {
+        alert("🚫 Error de conexión y PIN incorrecto.");
       }
     }
     document.getElementById('inputPass').value = "";
   };
 
-  window.recuperarPin = async () => {
-    const respuesta = prompt("🛠️ RECUPERACIÓN DE ACCESO\n¿Cuál es el nombre de la clínica?");
-    if (respuesta && respuesta.toUpperCase().trim() === "AVIPET") {
-      const nuevoPin = prompt("✅ Confirmado. Ingrese nuevo PIN administrativo:");
-      if (nuevoPin && nuevoPin.length >= 4) {
-        await setDoc(doc(db, "configuracion", "seguridad"), { pin: nuevoPin }, { merge: true });
-        alert("🔒 PIN administrativo actualizado.");
-      }
-    } else {
-      alert("🚫 Respuesta incorrecta.");
-    }
-  };
-
-  window.cerrarModalLogin = () => {
-    document.getElementById('modalLogin').classList.add('hidden');
-    const inp = document.getElementById('inputPass');
-    if (inp) inp.value = "";
-  };
-
+  // 3. Control de Pestañas (The Gateway)
   window.showTab = async (t) => {
     // Si intenta entrar a Configuración o Reportes, pedimos login
     if (t === 'config_precios' || t === 'reporte') {
-      tabPendiente = t;
+      window.tabPendiente = t; // Guardamos destino
       const modal = document.getElementById('modalLogin');
       if (modal) {
         modal.classList.remove('hidden');
-        document.getElementById('inputPass').focus();
+        const input = document.getElementById('inputPass');
+        if (input) input.focus();
       } else {
         window.ejecutarCambioDeTab(t);
       }
@@ -2685,28 +2648,35 @@
     window.ejecutarCambioDeTab(t);
   };
 
+  // 4. Ejecución del Cambio (DOM Manipulation)
   window.ejecutarCambioDeTab = async (t) => {
-    // 1. Ocultar/Mostrar Secciones Principales
-    const secciones = ['sectionHistoria', 'sectionBuscador', 'sectionReporte', 'sectionEspera', 'sectionHojaVacunas', 'sectionConfigPrecios'];
+    // A. Ocultar todas las secciones
+    const secciones = [
+      'sectionHistoria', 'sectionBuscador', 'sectionReporte', 
+      'sectionEspera', 'sectionHojaVacunas', 'sectionConfigPrecios'
+    ];
+    
     secciones.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.add('hidden');
     });
 
-    const activa = {
+    // B. Mostrar sección activa
+    const mapaSecciones = {
       'historia': 'sectionHistoria',
       'buscador': 'sectionBuscador',
       'reporte': 'sectionReporte',
       'espera': 'sectionEspera',
       'vacunas': 'sectionHojaVacunas',
       'config_precios': 'sectionConfigPrecios'
-    }[t];
+    };
 
-    if (document.getElementById(activa)) {
-      document.getElementById(activa).classList.remove('hidden');
+    const activaId = mapaSecciones[t];
+    if (activaId && document.getElementById(activaId)) {
+      document.getElementById(activaId).classList.remove('hidden');
     }
 
-    // 2. Actualizar Estilo de los Botones (Tabs)
+    // C. Actualizar estado visual de los botones del menú
     const botones = {
       'historia': 'tabH',
       'buscador': 'tabB',
@@ -2717,16 +2687,28 @@
     Object.keys(botones).forEach(key => {
       const btn = document.getElementById(botones[key]);
       if (btn) {
-        btn.classList.toggle('tab-active', t === key);
-        btn.classList.toggle('text-blue-600', t === key);
-        btn.classList.toggle('text-gray-500', t !== key);
+        const isActive = (t === key);
+        btn.classList.toggle('tab-active', isActive);
+        btn.classList.toggle('text-blue-600', isActive);
+        btn.classList.toggle('text-gray-500', !isActive);
       }
     });
 
-    // 3. Disparar Carga de Datos
+    // D. Carga de datos bajo demanda
     if (t === 'reporte' && typeof window.cargarReporte === 'function') window.cargarReporte();
     if (t === 'espera' && typeof window.cargarListaEspera === 'function') window.cargarListaEspera();
-    if (t === 'config_precios' && typeof window.cambiarSubTabConfig === 'function') window.cambiarSubTabConfig('servicios');
+    if (t === 'config_precios' && typeof window.cambiarSubTabConfig === 'function') {
+        window.cambiarSubTabConfig('servicios');
+    }
+    
+    console.log(`⚓ Navegación exitosa a: ${t}`);
+  };
+
+  window.cerrarModalLogin = () => {
+    const modal = document.getElementById('modalLogin');
+    if (modal) modal.classList.add('hidden');
+    const inp = document.getElementById('inputPass');
+    if (inp) inp.value = "";
   };
   // =========================================================
   // [24] DOCTOR: VER Y ABRIR COLA DE ESPERA
@@ -3042,49 +3024,61 @@
   };
 
   // =========================================================
-  // [22] DESCARGAR REPORTE TXT DEL DÍA
+  // [22] DESCARGAR REPORTE TXT DEL DÍA (OPTIMIZADO)
   // =========================================================
   window.descargarReporte = async () => {
     try {
       const hoy = new Date();
-      const fechaSimple =
-        `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
+      const fechaSimple = `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
 
-      const snap = await getDocs(collection(db, "consultas"));
+      // OPTIMIZACIÓN: Solo pedimos las consultas de hoy a la base de datos
+      const q = query(collection(db, "consultas"), where("fechaSimple", "==", fechaSimple));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        alert("📅 No hay registros para la fecha de hoy: " + fechaSimple);
+        return;
+      }
 
       let lineas = [];
       let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
       let pacientes = 0;
 
-      lineas.push(`RESUMEN DE CAJA - ${fechaSimple}`);
-      lineas.push("====================================");
+      lineas.push(`AVIPET - RESUMEN DE CAJA - ${fechaSimple}`);
+      lineas.push("====================================================================");
+      lineas.push(`Generado por: ${window.doctorVerificado || "Administrador"}`);
+      lineas.push("====================================================================\n");
 
       snap.forEach(docSnap => {
         const d = docSnap.data();
-        if (d.fechaSimple === fechaSimple) {
-          const b = parseFloat(d.montoVenta)  || 0;
-          const g = parseFloat(d.montoInsumos)|| 0;
-          const p = parseFloat(d.pagoDoctor)  || 0;
-          const n = b - g - p;
+        const b = parseFloat(d.montoVenta)   || 0;
+        const g = parseFloat(d.montoInsumos) || 0;
+        const p = parseFloat(d.pagoDoctor)   || 0;
+        const n = b - g - p;
 
-          bruto      += b;
-          gastos     += g;
-          pagoDoctor += p;
-          neto       += n;
-          pacientes++;
+        bruto      += b;
+        gastos     += g;
+        pagoDoctor += p;
+        neto       += n;
+        pacientes++;
 
-          lineas.push(
-            `PACIENTE: ${d.paciente} | DR: ${d.doctor} | BRUTO: $${b.toFixed(2)} | INSUMOS: $${g.toFixed(2)} | DOC: $${p.toFixed(2)} | NETO: $${n.toFixed(2)}`
-          );
-        }
+        // Formateo tipo recibo
+        lineas.push(`[${pacientes}] PACIENTE: ${d.paciente.padEnd(15)} | DR: ${d.doctor.padEnd(15)}`);
+        lineas.push(`    VENTA: $${b.toFixed(2).padStart(8)} | INSUMOS: $${g.toFixed(2).padStart(8)} | DOC: $${p.toFixed(2).padStart(8)} | NETO: $${n.toFixed(2).padStart(8)}`);
+        lineas.push(`    TRATAMIENTO: ${d.tratamiento ? d.tratamiento.substring(0, 50) + "..." : "N/A"}`);
+        lineas.push("--------------------------------------------------------------------");
       });
 
-      lineas.push("------------------------------------");
-      lineas.push(`PACIENTES: ${pacientes}`);
-      lineas.push(`BRUTO TOTAL: $${bruto.toFixed(2)}`);
-      lineas.push(`GASTOS INSUMOS: $${gastos.toFixed(2)}`);
-      lineas.push(`PAGOS DOCTORES: $${pagoDoctor.toFixed(2)}`);
+      lineas.push("\n====================================");
+      lineas.push(`   RESUMEN FINAL`);
+      lineas.push("====================================");
+      lineas.push(`PACIENTES ATENDIDOS:  ${pacientes}`);
+      lineas.push(`BRUTO TOTAL (VENTAS): $${bruto.toFixed(2)}`);
+      lineas.push(`COSTO INSUMOS:        $${gastos.toFixed(2)}`);
+      lineas.push(`PAGOS A DOCTORES:     $${pagoDoctor.toFixed(2)}`);
+      lineas.push(`------------------------------------`);
       lineas.push(`UTILIDAD NETA AVIPET: $${neto.toFixed(2)}`);
+      lineas.push("====================================");
 
       const contenido = lineas.join("\n");
       const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
@@ -3092,14 +3086,16 @@
 
       const a = document.createElement('a');
       a.href = url;
-      a.download = `reporte_caja_${fechaSimple.replace(/\//g, "-")}.txt`;
+      a.download = `Caja_Avipet_${fechaSimple.replace(/\//g, "-")}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      console.log("✅ Reporte TXT generado y descargado.");
     } catch (e) {
       console.error("Error al descargar reporte:", e);
-      alert("❌ No se pudo generar el TXT: " + e.message);
+      alert("❌ Error al generar reporte: " + e.message);
     }
   };
 
@@ -3361,6 +3357,7 @@
 
 </body>
 </html>
+
 
 
 
