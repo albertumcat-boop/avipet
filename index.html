@@ -499,26 +499,30 @@
 <section id="sectionHojaVacunas"
          class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col"
          style="height: 92vh;">
-    <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento:</label>
-    <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white">
-      <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
-      <option value="test_rapido">Certificado de Tests Rápidos</option>
-    </select>
-  </div>
 
-<div class="relative w-full">
-  <div class="absolute -top-4 left-0 z-50">
-    <div class="w-48 h-16 overflow-hidden flex items-center">
-      <img src="avipet.png" 
-           alt="Logo Avipet" 
-           class="w-full h-full object-contain scale-125">
+    <div class="no-print flex items-center gap-2 mb-2">
+       <label class="font-black text-slate-700 text-[10px] uppercase shrink-0">📄 Tipo de Documento:</label>
+       <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white">
+         <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
+         <option value="test_rapido">Certificado de Tests Rápidos</option>
+       </select>
     </div>
-  </div>
 
-  <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center justify-end h-16">
-     <h1 class="text-2xl font-bold text-slate-800">AVIPET</h1>
-  </div>
-</div>
+    <div class="relative w-full border-b-2 border-slate-800 pb-1 mb-2">
+      <div class="absolute -top-4 left-0 z-50">
+        <div class="w-48 h-16 overflow-hidden flex items-center">
+          <img src="avipet.png" 
+               alt="Logo Avipet" 
+               class="w-full h-full object-contain scale-125">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end h-16">
+         <h1 class="text-2xl font-bold text-slate-800">AVIPET</h1>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-start mb-2">
       <div class="flex-1 flex flex-col items-center text-center">
         <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
         <p id="hv_clinicaDoctor" class="text-[10px] text-slate-700 leading-tight font-medium"></p>
@@ -630,9 +634,9 @@
         <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
       </div>
     </div>
-  </div>
 
- <footer class="mt-auto pt-2 footer-direccion"> <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
+  <footer class="mt-auto pt-2 footer-direccion"> 
+    <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
       <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
       Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado).<br>
       Caracas - Miranda. Teléfono: (0212) 271-0435
@@ -3317,6 +3321,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
