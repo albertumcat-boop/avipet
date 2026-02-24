@@ -122,39 +122,42 @@
 @media print {
   @page {
     size: letter;
-    margin: 0.8cm; /* Margen de seguridad para impresoras comunes */
+    margin: 0.8cm; 
   }
 
   body {
     background: white !important;
+    overflow: hidden !important; /* Evita scrolls fantasma */
   }
 
   #sectionHojaVacunas {
     display: flex !important;
     flex-direction: column !important;
-    height: 100vh !important; /* Forzamos a que use exactamente el alto de la hoja */
+    height: 98vh !important; /* Un poco menos de 100 para evitar desbordes por margen de impresora */
     border: none !important;
     box-shadow: none !important;
     width: 100% !important;
-    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     position: relative !important;
   }
 
-  /* El pie de página (Dirección) anclado al final de la primera hoja */
+  /* El truco para que el contenido no choque con el pie de página */
+  .flex-grow {
+    margin-bottom: 60px !important; /* Espacio de seguridad para que el texto no tape la dirección */
+  }
+
   .footer-direccion {
     position: absolute !important;
     bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    width: 100% !important;
     text-align: center !important;
-    border-top: 1px solid #ccc !important;
-    padding-top: 10px !important;
+    border-top: 1px solid #94a3b8 !important; /* slate-300 */
+    padding-top: 8px !important;
+    background: white !important;
   }
 
-  /* Ocultamos cualquier cosa que pueda causar scroll extra */
-  .no-print, button, nav {
+  .no-print {
     display: none !important;
   }
 }
@@ -483,136 +486,144 @@
 
   <!-- ========== HOJA DE VACUNAS / DESPARASITACIONES ========== -->
 <section id="sectionHojaVacunas"
-         class="hidden bg-white p-2 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative">
-
-  <div class="no-print mb-4 bg-slate-100 p-2 rounded-lg flex items-center gap-3 border border-slate-300">
+         class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative"
+         style="min-height: 27cm; display: flex; flex-direction: column;"> <div class="no-print mb-2 bg-slate-100 p-2 rounded-lg flex items-center gap-3 border border-slate-300">
     <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento:</label>
-    <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1.5 border border-slate-400 rounded font-bold text-xs bg-white">
+    <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white">
       <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
       <option value="test_rapido">Certificado de Tests Rápidos</option>
     </select>
   </div>
 
   <div class="flex-grow">
-    <div class="border-b border-slate-400 pb-1 mb-2 flex items-start gap-3">
-      <div class="w-12 h-12 border border-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
+    <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-start gap-3">
+      <div class="w-12 h-12 border border-slate-300 rounded-lg flex items-center justify-center overflow-hidden bg-slate-50">
         <img id="hv_logoDoctor" src="" alt="Logo" class="max-w-full max-h-full object-contain">
       </div>
       <div class="flex-1 flex flex-col items-center text-center">
-        <h2 id="hv_nombreDoctor" class="text-[11px] font-black text-slate-800 uppercase tracking-wide"></h2>
-        <p id="hv_clinicaDoctor" class="text-[9px] text-slate-600 leading-tight"></p>
-        <p id="tituloFormatoDinamico" class="text-[11px] font-black text-blue-700 uppercase">CONTROL DE VACUNAS</p>
+        <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
+        <p id="hv_clinicaDoctor" class="text-[10px] text-slate-700 leading-tight font-medium"></p>
+        <p id="tituloFormatoDinamico" class="text-[12px] font-black text-blue-800 uppercase mt-1">CONTROL DE VACUNAS</p>
       </div>
       <div class="text-right">
-        <p class="text-[8px] font-bold text-slate-500 uppercase">Fecha</p>
-        <input type="text" id="hv_fecha" class="w-20 text-right font-black text-xs text-slate-700 bg-transparent border-b border-slate-400" readonly>
+        <p class="text-[8px] font-bold text-slate-500 uppercase">Fecha Emisión</p>
+        <input type="text" id="hv_fecha" class="w-24 text-right font-black text-xs text-slate-800 bg-transparent border-b border-slate-400" readonly>
       </div>
     </div>
 
-    <div class="border border-slate-400 rounded-lg p-2 mb-2">
-      <div class="grid grid-cols-2 gap-4">
-        <div class="border border-slate-300 rounded-md p-1.5">
-          <div class="text-center mb-1 border-b border-slate-200"><span class="text-[8px] font-black uppercase text-slate-500">Ficha Técnica</span></div>
+    <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="border border-slate-400 rounded p-1.5">
           <div class="space-y-1">
-            <div><span class="text-[8px] font-bold text-slate-500 uppercase">MASCOTA:</span><input id="hv_paciente" class="w-full border-b border-slate-400 uppercase text-[10px] font-black text-emerald-700"></div>
+            <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">PACIENTE:</span><input id="hv_paciente" class="flex-1 font-black text-emerald-800 uppercase text-[10px]"></div>
             <div class="grid grid-cols-2 gap-1">
-              <div><span class="text-[8px] font-bold text-slate-500 uppercase">ESPECIE:</span><input id="hv_especie" class="w-full border-b border-slate-400 uppercase text-[9px]"></div>
-              <div><span class="text-[8px] font-bold text-slate-500 uppercase">RAZA:</span><input id="hv_raza" class="w-full border-b border-slate-400 uppercase text-[9px]"></div>
+              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">ESPECIE:</span><input id="hv_especie" class="flex-1 text-[9px] uppercase"></div>
+              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">RAZA:</span><input id="hv_raza" class="flex-1 text-[9px] uppercase"></div>
             </div>
             <div class="grid grid-cols-3 gap-1">
-              <div><span class="text-[8px] font-bold text-slate-500 uppercase">EDAD:</span><input id="hv_edad" class="w-full border-b border-slate-400 text-[9px]"></div>
-              <div><span class="text-[8px] font-bold text-slate-500 uppercase">SEXO:</span><input id="hv_sexo" class="w-full border-b border-slate-400 text-[9px]"></div>
-              <div><span class="text-[8px] font-bold text-slate-500 uppercase">COLOR:</span><input id="hv_color" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">EDAD:</span><input id="hv_edad" class="w-full text-[9px]"></div>
+              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">SEXO:</span><input id="hv_sexo" class="w-full text-[9px]"></div>
+              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">COLOR:</span><input id="hv_color" class="w-full text-[9px]"></div>
             </div>
           </div>
         </div>
 
-        <div class="border border-slate-300 rounded-md p-1.5">
-          <div class="text-center mb-1 border-b border-slate-200"><span class="text-[8px] font-black uppercase text-slate-500">Propietario</span></div>
+        <div class="border border-slate-400 rounded p-1.5">
           <div class="space-y-1">
-            <div><span class="text-[8px] font-bold text-slate-500 uppercase">NOMBRE:</span><input id="hv_propietario" class="w-full border-b border-slate-400 uppercase text-[10px]"></div>
+            <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">DUEÑO:</span><input id="hv_propietario" class="flex-1 font-bold text-[10px] uppercase"></div>
             <div class="grid grid-cols-2 gap-1">
-              <div><span class="text-[8px] font-bold text-slate-500 uppercase">CÉDULA:</span><input id="hv_cedula" class="w-full border-b border-slate-400 text-[9px]"></div>
-              <div><span class="text-[8px] font-bold text-slate-500 uppercase">TELÉFONO:</span><input id="hv_telefono" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">CÉDULA:</span><input id="hv_cedula" class="flex-1 text-[9px]"></div>
+              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">TLF:</span><input id="hv_telefono" class="flex-1 text-[9px]"></div>
             </div>
-            <div><span class="text-[8px] font-bold text-slate-500 uppercase">DIRECCIÓN:</span><input id="hv_direccion" class="w-full border-b border-slate-400 uppercase text-[8px]"></div>
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-16">DIRECCIÓN:</span><input id="hv_direccion" class="flex-1 text-[8px] uppercase"></div>
           </div>
         </div>
-      </div>
     </div>
 
     <div id="bloqueVacunas">
-      <div class="border border-slate-400 rounded-lg mb-2">
-        <div class="bg-slate-50 px-2 py-0.5 border-b border-slate-400 font-black text-[9px]">CONTROL DE VACUNAS</div>
+      <div class="border border-slate-800 rounded mb-2 overflow-hidden">
+        <div class="bg-slate-800 text-white px-2 py-0.5 font-black text-[9px] text-center uppercase tracking-widest">Control de Vacunación</div>
         <table class="w-full text-[9px]">
-          <thead class="text-slate-700 uppercase border-b border-slate-400">
-            <tr>
-              <th class="py-1 text-left px-1">Fecha</th>
-              <th class="py-1 text-left px-1">Lote / Vacuna</th>
-              <th class="py-1 text-left px-1">Peso</th>
-              <th class="py-1 text-left px-1">Próxima</th>
-              <th class="py-1 text-left px-1">Sello</th>
+          <thead class="bg-slate-100 border-b border-slate-400">
+            <tr class="text-center font-bold">
+              <th class="py-1 border-r border-slate-300 w-20">Fecha</th>
+              <th class="py-1 border-r border-slate-300">Vacuna / Lote</th>
+              <th class="py-1 border-r border-slate-300 w-14">Peso</th>
+              <th class="py-1 border-r border-slate-300 w-20">Próxima</th>
+              <th class="py-1">Firma/Sello</th>
             </tr>
           </thead>
           <tbody>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td class="border-r border-slate-200"><input class="w-full text-center"></td><td class="border-r border-slate-200"><input class="w-full px-1"></td><td class="border-r border-slate-200"><input class="w-full text-center"></td><td class="border-r border-slate-200"><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
-      <div class="border border-slate-400 rounded-lg">
-        <div class="bg-slate-50 px-2 py-0.5 border-b border-slate-400 font-black text-[9px]">DESPARASITACIONES</div>
+
+      <div class="border border-slate-800 rounded overflow-hidden">
+        <div class="bg-slate-800 text-white px-2 py-0.5 font-black text-[9px] text-center uppercase tracking-widest">Desparasitaciones Internas / Externas</div>
         <table class="w-full text-[9px]">
-          <tr>
-              <th class="py-1 text-left px-1">Fecha</th>
-              <th class="py-1 text-left px-1">Peso</th>
-              <th class="py-1 text-left px-1">Próxima</th>
-              <th class="py-1 text-left px-1">Sello</th>
+          <thead class="bg-slate-100 border-b border-slate-400">
+            <tr class="text-center font-bold">
+              <th class="py-1 border-r border-slate-300 w-20">Fecha</th>
+              <th class="py-1 border-r border-slate-300">Producto</th>
+              <th class="py-1 border-r border-slate-300 w-14">Peso</th>
+              <th class="py-1 border-r border-slate-300 w-20">Próxima</th>
+              <th class="py-1">Firma/Sello</th>
             </tr>
+          </thead>
           <tbody>
-            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
     <div id="bloqueTests" class="hidden">
-      <div class="border border-slate-400 rounded-lg mb-2 overflow-hidden">
-        <div class="bg-slate-50 px-2 py-1 border-b border-slate-400 font-black text-[9px]">RESULTADOS DE TESTS RÁPIDOS</div>
-        <table class="w-full text-[10px]">
-          <thead class="bg-slate-100 uppercase text-[8px] border-b border-slate-300">
+      <div class="border-2 border-slate-800 rounded-lg overflow-hidden">
+        <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">Certificado de Diagnóstico Rápido</div>
+        <table class="w-full text-[11px]">
+          <thead class="bg-slate-200 border-b-2 border-slate-800">
             <tr>
-              <th class="p-2 text-left">Test Analizado</th><th class="p-2 text-center w-32">Resultado</th><th class="p-2 text-left">Observaciones</th>
+              <th class="p-3 text-left">Antígeno / Prueba Analizada</th>
+              <th class="p-3 text-center w-40">Resultado</th>
+              <th class="p-3 text-left">Observaciones</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="h-11 border-b border-slate-200"><td class="px-2 font-bold uppercase">Moquillo (CDV Ag)</td><td class="px-1"><input class="w-full text-center font-black" placeholder="POS / NEG"></td><td><input class="w-full px-1"></td></tr>
-            <tr class="h-11 border-b border-slate-200"><td class="px-2 font-bold uppercase">Parvovirus (CPV Ag)</td><td class="px-1"><input class="w-full text-center font-black" placeholder="POS / NEG"></td><td><input class="w-full px-1"></td></tr>
-            <tr class="h-11 border-b border-slate-200"><td class="px-2 font-bold uppercase">Ehrlichia / Anaplasma</td><td class="px-1"><input class="w-full text-center font-black" placeholder="POS / NEG"></td><td><input class="w-full px-1"></td></tr>
-            <tr class="h-11 border-b border-slate-200"><td class="px-2 font-bold uppercase">Leucemia / Sida (Fel)</td><td class="px-1"><input class="w-full text-center font-black" placeholder="POS / NEG"></td><td><input class="w-full px-1"></td></tr>
-            <tr class="h-11 border-b border-slate-200"><td class="px-2"><input class="w-full font-bold uppercase" placeholder="OTRO TEST..."></td><td class="px-1"><input class="w-full text-center font-black"></td><td><input class="w-full px-1"></td></tr>
+          <tbody class="divide-y divide-slate-400">
+            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Moquillo Canino (CDV Ag)</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
+            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Parvovirus Canino (CPV Ag)</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
+            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Ehrlichia / Anaplasma / Lyme</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
+            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Leucemia / Inmuno (Felinos)</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
+            <tr class="h-14"><td class="px-3 border-t-2 border-slate-800 bg-slate-50"><input class="w-full font-bold uppercase" placeholder="OTRO TEST..."></td><td class="px-2 text-center border-t-2 border-slate-800 bg-slate-50">---</td><td class="px-2 border-l border-slate-300 border-t-2 border-slate-800 bg-slate-50"><input class="w-full"></td></tr>
           </tbody>
         </table>
+      </div>
+      <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
+        <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
       </div>
     </div>
   </div>
 
-  <div class="footer-direccion border-t border-slate-300 text-[7.5px] text-slate-500 text-center pt-1 mt-1 leading-none">
-    Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435), Petare - Edo. Miranda.
-  </div>
+  <footer class="mt-auto pt-2">
+    <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
+      <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
+      Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado).<br>
+      Caracas - Miranda. Teléfono: (0212) 271-0435
+    </div>
+  </footer>
 
-  <div class="no-print flex justify-between gap-2 mt-2">
-    <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-1.5 rounded-lg font-black text-[10px] uppercase">⬅ Volver</button>
-    <button type="button" onclick="window.print()" class="flex-1 bg-emerald-600 text-white py-1.5 rounded-lg font-black text-[10px] uppercase">🖨 Imprimir</button>
+  <div class="no-print flex justify-between gap-4 mt-4">
+    <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-2 rounded-lg font-black text-[10px] uppercase text-slate-600 border border-slate-300">⬅ Volver</button>
+    <button type="button" onclick="window.print()" class="flex-1 bg-blue-700 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨 Imprimir Formato</button>
   </div>
 </section>
   <!-- ========== BUSCADOR ========== -->
@@ -3288,6 +3299,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
