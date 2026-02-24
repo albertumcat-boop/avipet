@@ -206,15 +206,15 @@
   <!-- ========== HISTORIA CLÍNICA ========== -->
 <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 60px;">
+  <div class="flex justify-between items-start border-b-2 border-blue-600 pb-4 mb-4">
     
-    <div class="absolute left-1/2 transform -translate-x-1/2 top-0">
-      <div class="relative w-48 h-48">
-        <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
+    <div class="flex items-center gap-3">
+      <div class="relative w-32 h-12"> 
+        <div class="absolute top-0 left-0 w-48 h-48 p-0 z-50">
+          <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
+        </div>
       </div>
-    </div>
-
-    <div class="flex flex-col items-end text-right z-10">
+    </div> <div class="flex flex-col items-end text-right">
       <select id="selectDoctor"
               onchange="window.validarAccesoDoctor(this.value)"
               class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
@@ -236,7 +236,8 @@
         </button>
       </div>
 
-      <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">
+      <h2 id="doctorPrint"
+          class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">
         DOCTOR CARGO
       </h2>
 
@@ -245,9 +246,7 @@
                class="w-24 text-right font-black text-xs text-slate-500 bg-transparent"
                readonly>
       </div>
-    </div>
-
-  </div>
+    </div> </div>
 
   <div class="grid grid-cols-2 border border-slate-400 text-[11px] mb-4" style="display: grid !important; grid-template-columns: 1fr 1fr !important;">
     <div class="p-3 border-r border-slate-400 space-y-2">
@@ -3307,6 +3306,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
