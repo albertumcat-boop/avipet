@@ -206,7 +206,7 @@
   <!-- ========== HISTORIA CLÍNICA ========== -->
 <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 140px;">
+  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 120px;">
     
     <div class="absolute left-1/2 transform -translate-x-1/2 top-0 text-center">
       <div class="w-48 h-32 mx-auto flex items-center justify-center">
@@ -223,14 +223,21 @@
         <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
         <option value="Joan Silva">DRA. JOAN SILVA</option>
       </select>
+
+      <div class="no-print mt-1 flex gap-2">
+        <button type="button" class="text-[9px] text-blue-500 underline" onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">Cambiar mi PIN</button>
+        <button type="button" class="text-[9px] text-red-500 underline" onclick="window.solicitarCambioPinDoctor()">Olvidé mi PIN</button>
+      </div>
+
       <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">DOCTOR CARGO</h2>
+      
       <div class="text-right mt-1">
         <input type="text" id="fechaDoc" class="w-24 text-right font-black text-xs text-slate-500 bg-transparent" readonly>
       </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-2 border border-slate-400 text-[11px] mb-4" style="display: grid !important; grid-template-columns: 1fr 1fr !important;">
+  <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4" style="display: grid !important; grid-template-columns: 1fr 1fr !important;">
     
     <div class="p-3 border-r border-slate-400 space-y-2">
       <div class="header-box italic">Ficha Técnica de Mascota</div>
@@ -251,7 +258,7 @@
           <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
           <input id="hPeso" class="border-b w-full bg-transparent">
         </div>
-        <div class="grid grid-cols-3 gap-1">
+        <div class="grid grid-cols-3 gap-1 col-span-2">
           <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase bg-transparent"></div>
           <div><label class="text-[9px] font-bold text-slate-400">SEXO</label><input id="hSexo" class="border-b w-full uppercase bg-transparent"></div>
           <div><label class="text-[9px] font-bold text-slate-400">COLOR</label><input id="hColor" class="border-b w-full uppercase bg-transparent"></div>
@@ -272,14 +279,15 @@
         <input id="hProp" class="border-b w-full uppercase bg-transparent">
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700 bg-transparent"></div>
+        <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" onblur="window.autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700 bg-transparent"></div>
         <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full bg-transparent"></div>
       </div>
+      <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full bg-transparent"></div>
       <div><label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label><input id="hDir" class="border-b w-full uppercase text-[10px] bg-transparent"></div>
     </div>
   </div>
-</section>
 
+  </section>
     <!-- Servicios -->
     <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
       <div class="bg-slate-100 p-3 no-print">
@@ -3281,6 +3289,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
