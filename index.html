@@ -206,13 +206,13 @@
   <!-- ========== HISTORIA CLÍNICA ========== -->
 <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 80px;">
+  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 140px;">
     
-    <div class="absolute left-1/2 transform -translate-x-1/2 -top-14 text-center">
-      <div class="w-48 h-48 mx-auto">
+    <div class="absolute left-1/2 transform -translate-x-1/2 top-0 text-center">
+      <div class="w-48 h-32 mx-auto flex items-center justify-center">
         <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
       </div>
-      <p class="text-[10px] font-black text-slate-700 -mt-14 uppercase">RIF: J-00068577-0</p>
+      <p class="text-[10px] font-black text-slate-700 uppercase" style="margin-top: -15px;">RIF: J-00068577-0</p>
     </div>
 
     <div class="flex flex-col items-end text-right z-10">
@@ -252,18 +252,9 @@
           <input id="hPeso" class="border-b w-full bg-transparent">
         </div>
         <div class="grid grid-cols-3 gap-1">
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">EDAD</label>
-            <input id="hEdad" class="border-b w-full uppercase bg-transparent">
-          </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">SEXO</label>
-            <input id="hSexo" class="border-b w-full uppercase bg-transparent">
-          </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">COLOR</label>
-            <input id="hColor" class="border-b w-full uppercase bg-transparent">
-          </div>
+          <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase bg-transparent"></div>
+          <div><label class="text-[9px] font-bold text-slate-400">SEXO</label><input id="hSexo" class="border-b w-full uppercase bg-transparent"></div>
+          <div><label class="text-[9px] font-bold text-slate-400">COLOR</label><input id="hColor" class="border-b w-full uppercase bg-transparent"></div>
         </div>
       </div>
     </div>
@@ -281,23 +272,10 @@
         <input id="hProp" class="border-b w-full uppercase bg-transparent">
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
-          <input id="hCI" onblur="window.autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700 bg-transparent">
-        </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">TELÉFONO</label>
-          <input id="hTlf" class="border-b w-full bg-transparent">
-        </div>
+        <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" class="border-b w-full font-bold text-blue-700 bg-transparent"></div>
+        <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full bg-transparent"></div>
       </div>
-      <div>
-        <label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label>
-        <input id="hMail" class="border-b w-full bg-transparent">
-      </div>
-      <div>
-        <label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label>
-        <input id="hDir" class="border-b w-full uppercase text-[10px] bg-transparent">
-      </div>
+      <div><label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label><input id="hDir" class="border-b w-full uppercase text-[10px] bg-transparent"></div>
     </div>
   </div>
 </section>
@@ -492,7 +470,7 @@
 
     <div class="relative w-full border-b-2 border-slate-800 pb-1 mb-2">
       <div class="absolute left-1/2 transform -translate-x-1/2 top-2 z-50 text-center">
-        <div class="w-48 h-16 overflow-hidden flex items-center justify-center">
+        <div class="w-46 h-10 overflow-hidden flex items-center justify-center">
           <img src="avipet.png" 
                alt="Logo Avipet" 
                class="w-full h-full object-contain scale-125">
@@ -3303,6 +3281,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
