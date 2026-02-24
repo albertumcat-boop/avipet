@@ -482,7 +482,7 @@
   </section>
 
   <!-- ========== HOJA DE VACUNAS / DESPARASITACIONES ========== -->
- <section id="sectionHojaVacunas"
+<section id="sectionHojaVacunas"
          class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-4 print-area text-[11px] relative">
 
   <div class="flex-grow">
@@ -505,101 +505,97 @@
     </div>
 
     <div class="border border-slate-400 rounded-lg p-2 mb-2">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-4">
+        
         <div class="border border-slate-300 rounded-md p-2">
-          <div class="text-center mb-1">
-            <span class="text-[9px] font-black uppercase text-slate-500">Ficha Técnica de Mascota</span>
+          <div class="text-center mb-1 border-b border-slate-200 pb-1">
+            <span class="text-[8px] font-black uppercase text-slate-500">Ficha Técnica</span>
           </div>
           <div class="space-y-1">
             <div>
-              <span class="text-[9px] font-bold uppercase text-slate-500">MASCOTA:</span>
-              <input id="hv_paciente" class="w-full border-b border-slate-400 uppercase text-[11px] font-bold text-emerald-700">
+              <span class="text-[8px] font-bold text-slate-500">MASCOTA:</span>
+              <input id="hv_paciente" class="w-full border-b border-slate-400 uppercase text-[10px] font-bold text-emerald-700">
             </div>
             <div class="grid grid-cols-2 gap-1">
               <div>
-                <span class="text-[9px] font-bold uppercase text-slate-500">ESPECIE:</span>
-                <input id="hv_especie" class="w-full border-b border-slate-400 uppercase text-[10px]">
+                <span class="text-[8px] font-bold text-slate-500">ESPECIE:</span>
+                <input id="hv_especie" class="w-full border-b border-slate-400 uppercase text-[9px]">
               </div>
               <div>
-                <span class="text-[9px] font-bold uppercase text-slate-500">RAZA:</span>
-                <input id="hv_raza" class="w-full border-b border-slate-400 uppercase text-[10px]">
+                <span class="text-[8px] font-bold text-slate-500">RAZA:</span>
+                <input id="hv_raza" class="w-full border-b border-slate-400 uppercase text-[9px]">
               </div>
             </div>
-            <div class="grid grid-cols-3 gap-1">
-              <div><span class="text-[9px] font-bold uppercase text-slate-500">EDAD:</span><input id="hv_edad" class="w-full border-b border-slate-400 uppercase text-[10px]"></div>
-              <div><span class="text-[9px] font-bold uppercase text-slate-500">SEXO:</span><input id="hv_sexo" class="w-full border-b border-slate-400 uppercase text-[10px]"></div>
-              <div><span class="text-[9px] font-bold uppercase text-slate-500">COLOR:</span><input id="hv_color" class="w-full border-b border-slate-400 uppercase text-[10px]"></div>
+            <div class="grid grid-cols-2 gap-1">
+              <div><span class="text-[8px] font-bold text-slate-500">EDAD:</span><input id="hv_edad" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500">PESO:</span><input id="hv_peso" class="w-full border-b border-slate-400 text-[9px]"></div>
             </div>
-            <div><span class="text-[9px] font-bold uppercase text-slate-500">PESO (KG):</span><input id="hv_peso" class="w-full border-b border-slate-400 text-[10px]"></div>
           </div>
         </div>
 
         <div class="border border-slate-300 rounded-md p-2">
-          <div class="text-center mb-1"><span class="text-[9px] font-black uppercase text-slate-500">Datos del Propietario</span></div>
+          <div class="text-center mb-1 border-b border-slate-200 pb-1">
+            <span class="text-[8px] font-black uppercase text-slate-500">Datos del Propietario</span>
+          </div>
           <div class="space-y-1">
-            <div><span class="text-[9px] font-bold uppercase text-slate-500">NOMBRE Y APELLIDO:</span><input id="hv_propietario" class="w-full border-b border-slate-400 uppercase text-[11px]"></div>
-            <div class="grid grid-cols-2 gap-1">
-              <div><span class="text-[9px] font-bold uppercase text-slate-500">CÉDULA:</span><input id="hv_cedula" class="w-full border-b border-slate-400 text-[10px]"></div>
-              <div><span class="text-[9px] font-bold uppercase text-slate-500">TELÉFONO:</span><input id="hv_telefono" class="w-full border-b border-slate-400 text-[10px]"></div>
+            <div>
+              <span class="text-[8px] font-bold text-slate-500">NOMBRE:</span>
+              <input id="hv_propietario" class="w-full border-b border-slate-400 uppercase text-[10px]">
             </div>
-            <div><span class="text-[9px] font-bold uppercase text-slate-500">DIRECCIÓN:</span><input id="hv_direccion" class="w-full border-b border-slate-400 uppercase text-[9px]"></div>
+            <div>
+              <span class="text-[8px] font-bold text-slate-500">TELÉFONO:</span>
+              <input id="hv_telefono" class="w-full border-b border-slate-400 text-[9px]">
+            </div>
+            <div>
+              <span class="text-[8px] font-bold text-slate-500">CÉDULA:</span>
+              <input id="hv_cedula" class="w-full border-b border-slate-400 text-[9px]">
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="border border-slate-400 rounded-lg mb-2">
-      <div class="bg-slate-100 px-2 py-1 border-b border-slate-400"><span class="text-[10px] font-black uppercase text-slate-700">CONTROL DE VACUNAS</span></div>
+      <div class="bg-slate-100 px-2 py-0.5 border-b border-slate-400"><span class="text-[9px] font-black uppercase text-slate-700">CONTROL DE VACUNAS</span></div>
       <table class="w-full text-[9px]">
         <thead class="bg-slate-50 text-slate-700 uppercase">
           <tr>
-            <th class="border-b border-slate-400 py-1 text-left">Fecha Vacunación</th>
-            <th class="border-b border-slate-400 py-1 text-left">Lote / Vacuna</th>
-            <th class="border-b border-slate-400 py-1 text-left">Peso</th>
-            <th class="border-b border-slate-400 py-1 text-left">Próxima</th>
-            <th class="border-b border-slate-400 py-1 text-left">Sello / Firma</th>
+            <th class="border-b border-slate-400 py-1 text-left px-1">Fecha</th>
+            <th class="border-b border-slate-400 py-1 text-left px-1">Lote / Vacuna</th>
+            <th class="border-b border-slate-400 py-1 text-left px-1">Peso</th>
+            <th class="border-b border-slate-400 py-1 text-left px-1">Próxima</th>
+            <th class="border-b border-slate-400 py-1 text-left px-1">Sello</th>
           </tr>
         </thead>
         <tbody>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
         </tbody>
       </table>
     </div>
 
-    <div class="border border-slate-400 rounded-lg mb-2">
-      <div class="bg-slate-100 px-2 py-1 border-b border-slate-400"><span class="text-[10px] font-black uppercase text-slate-700">DESPARASITACIONES</span></div>
+    <div class="border border-slate-400 rounded-lg mb-1">
+      <div class="bg-slate-100 px-2 py-0.5 border-b border-slate-400"><span class="text-[9px] font-black uppercase text-slate-700">DESPARASITACIONES</span></div>
       <table class="w-full text-[9px]">
-        <thead class="bg-slate-50 text-slate-700 uppercase">
-          <tr>
-            <th class="border-b border-slate-400 py-1 text-left">Fecha</th>
-            <th class="border-b border-slate-400 py-1 text-left">Desparasitante</th>
-            <th class="border-b border-slate-400 py-1 text-left">Edad/Peso</th>
-            <th class="border-b border-slate-400 py-1 text-left">Próxima</th>
-            <th class="border-b border-slate-400 py-1 text-left">Firma</th>
-          </tr>
-        </thead>
         <tbody>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
-          <tr class="h-9"><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td><td class="border-b border-slate-300 px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1 w-1/5"><input class="w-full"></td><td class="px-1 w-2/5"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
         </tbody>
       </table>
     </div>
 
-  </div> <div class="footer-direccion mt-2 pt-1 border-t border-slate-300 text-[9px] text-slate-500 leading-tight text-center">
-    DIRECCIÓN: Av. Francisco de Miranda, Sector Buena Vista, a 600mts del Metro La California
-    (frente al Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435),
-    Petare - Edo. Miranda.
   </div>
 
-  <div class="no-print flex flex-col sm:flex-row justify-between gap-2 mt-4">
-    <button type="button" onclick="window.volverAHistoriaDesdeVacunas && window.volverAHistoriaDesdeVacunas()"
+  <div class="footer-direccion border-t border-slate-300 text-[8px] text-slate-500 leading-tight text-center pt-1 mt-1">
+    DIRECCIÓN: Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435), Petare - Edo. Miranda.
+  </div>
+
+  <div class="no-print flex justify-between gap-2 mt-3">
+    <button type="button" onclick="window.volverAHistoriaDesdeVacunas()"
             class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
       ⬅ Volver
     </button>
@@ -3266,6 +3262,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
