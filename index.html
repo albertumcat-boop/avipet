@@ -73,8 +73,23 @@
       to   { opacity:1; transform: translateY(0);     }
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-
+/* Esto soluciona que las hojas se amontonen al imprimir o ver el reporte */
   @media print {
+    .print-area {
+      page-break-before: always; 
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
+
+  /* Este ajuste es para que el logo no empuje los datos hacia abajo */
+  .logo-header {
+    height: 80px; /* Ajusta este valor si los datos aún no coinciden con la hoja blanca */
+    display: flex;
+    align-items: center;
+  }
+ 
+    @media print {
   .no-print, button, select, nav, #loginSection,
   .finanzas-ocultar, .menu-desplegable { display:none !important; }
 
@@ -492,13 +507,17 @@
     </select>
   </div>
 
-<div class="flex-grow">
-  <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center gap-3">
-    <div class="w-48 h-auto">
+<div class="relative w-full">
+  <div class="absolute -top-4 left-0 z-50">
+    <div class="w-48 h-16 overflow-hidden flex items-center">
       <img src="avipet.png" 
            alt="Logo Avipet" 
-           class="max-w-full h-auto object-contain">
+           class="w-full h-full object-contain scale-125">
     </div>
+  </div>
+
+  <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center justify-end h-16">
+     <h1 class="text-2xl font-bold text-slate-800">AVIPET</h1>
   </div>
 </div>
       <div class="flex-1 flex flex-col items-center text-center">
@@ -3299,6 +3318,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
