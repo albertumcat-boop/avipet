@@ -122,18 +122,18 @@
 @media print {
   @page {
     size: letter;
-    margin: 0.8cm; 
+    margin: 0.5cm; /* Reducimos un poco el margen de la hoja */
   }
 
   body {
     background: white !important;
-    overflow: hidden !important; /* Evita scrolls fantasma */
+    overflow: hidden !important;
   }
 
   #sectionHojaVacunas {
     display: flex !important;
     flex-direction: column !important;
-    height: 98vh !important; /* Un poco menos de 100 para evitar desbordes por margen de impresora */
+    height: 95vh !important; /* <--- Bajamos a 95vh para asegurar una sola hoja */
     border: none !important;
     box-shadow: none !important;
     width: 100% !important;
@@ -142,24 +142,22 @@
     position: relative !important;
   }
 
-  /* El truco para que el contenido no choque con el pie de página */
+  /* Reducimos un poco el margen de seguridad */
   .flex-grow {
-    margin-bottom: 60px !important; /* Espacio de seguridad para que el texto no tape la dirección */
+    margin-bottom: 40px !important; 
   }
 
   .footer-direccion {
     position: absolute !important;
-    bottom: 0 !important;
+    bottom: 5px !important; /* Ajuste fino al fondo */
     width: 100% !important;
     text-align: center !important;
-    border-top: 1px solid #94a3b8 !important; /* slate-300 */
-    padding-top: 8px !important;
+    border-top: 1px solid #94a3b8 !important;
+    padding-top: 4px !important;
     background: white !important;
   }
 
-  .no-print {
-    display: none !important;
-  }
+  .no-print { display: none !important; }
 }
   </style>
 </head>
@@ -3299,6 +3297,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
