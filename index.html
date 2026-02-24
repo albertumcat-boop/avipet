@@ -191,15 +191,14 @@
   <!-- ========== HISTORIA CLÍNICA ========== -->
   <section id="sectionHistoria"
            class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
-
-   <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
+<div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
   <div class="flex items-center gap-3">
-   <div class="relative w-32 h-16" style="background-color: transparent !important;"> 
-  <div class="absolute top-0 left-0 w-48 h-48 z-50" style="background-color: transparent !important;">
-    <img src="avipet.png" 
-         alt="Logo Avipet" 
-         class="w-full h-full object-contain"
-         style="background: none !important;">
+    <div class="flex items-center">
+      <div class="w-48 h-auto"> 
+        <img src="avipet.png" alt="Logo Avipet" class="max-w-full h-auto object-contain">
+      </div>
+    </div>
+    <h1 class="text-3xl font-bold text-blue-700">AVIPET</h1> 
   </div>
 </div>
           <select id="selectDoctor"
@@ -494,14 +493,13 @@
   </div>
 
 <div class="flex-grow">
-  <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-start gap-3">
-  <div class="relative w-32 h-16" style="background-color: transparent !important;"> 
-  <div class="absolute top-0 left-0 w-48 h-48 z-50" style="background-color: transparent !important;">
-    <img src="logo.png" 
-         alt="Logo Avipet" 
-         class="w-full h-full object-contain"
-         style="background: none !important;">
-  </div>
+  <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center gap-3">
+    <div class="w-48 h-auto">
+      <img src="avipet.png" 
+           alt="Logo Avipet" 
+           class="max-w-full h-auto object-contain">
+    </div>
+    </div>
 </div>
       <div class="flex-1 flex flex-col items-center text-center">
         <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
@@ -3301,6 +3299,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
