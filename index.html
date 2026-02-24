@@ -217,38 +217,39 @@
   </div>
 </div>
        
-          <select id="selectDoctor"
-                  onchange="window.validarAccesoDoctor(this.value)"
-                  class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
-            <option value="">-- SELECCIONE DOCTOR --</option>
-            <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
-            <option value="Joan Silva">DRA. JOAN SILVA</option>
-          </select>
-          <!-- Botones PIN -->
-          <div class="no-print mt-1 flex gap-2">
-            <button type="button"
-                    class="text-[9px] text-blue-500 underline"
-                    onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
-              Cambiar mi PIN
-            </button>
-            <button type="button"
-                    class="text-[9px] text-red-500 underline"
-                    onclick="window.solicitarCambioPinDoctor()">
-              Olvidé mi PIN
-            </button>
-          </div>
-          <h2 id="doctorPrint"
-              class="hidden print:block font-bold text-sm uppercase text-slate-700">
-            DOCTOR CARGO
-          </h2>
+         <div class="flex flex-col items-end text-right">
+        <select id="selectDoctor"
+                onchange="window.validarAccesoDoctor(this.value)"
+                class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
+          <option value="">-- SELECCIONE DOCTOR --</option>
+          <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
+          <option value="Joan Silva">DRA. JOAN SILVA</option>
+        </select>
+
+        <div class="no-print mt-1 flex gap-2">
+          <button type="button"
+                  class="text-[9px] text-blue-500 underline"
+                  onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
+            Cambiar mi PIN
+          </button>
+          <button type="button"
+                  class="text-[9px] text-red-500 underline"
+                  onclick="window.solicitarCambioPinDoctor()">
+            Olvidé mi PIN
+          </button>
+        </div>
+
+        <h2 id="doctorPrint"
+            class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">
+          DOCTOR CARGO
+        </h2>
+
+        <div class="text-right mt-1">
+          <input type="text" id="fechaDoc"
+                 class="w-24 text-right font-black text-xs text-slate-500 bg-transparent"
+                 readonly>
         </div>
       </div>
-      <div class="text-right">
-        <input type="text" id="fechaDoc"
-               class="w-24 text-right font-black text-xs text-slate-500 bg-transparent"
-               readonly>
-      </div>
-    </div>
     <!-- Ficha Mascota / Propietario -->
     <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
       <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
@@ -3318,6 +3319,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
