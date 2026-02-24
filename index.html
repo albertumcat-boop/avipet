@@ -204,16 +204,17 @@
   </nav>
 
   <!-- ========== HISTORIA CLÍNICA ========== -->
-<section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
-  <div class="flex flex-col items-center border-b-2 border-blue-600 pb-1 mb-2 text-center">
-    
-    <div class="flex flex-col items-center">
-      <div class="w-64 h-24 flex items-center justify-center overflow-hidden"> 
-        <img src="avipet.png" 
-             alt="Logo Avipet" 
-             class="w-full h-full object-contain scale-150"> 
-             </div>
-    </div>
+<section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area relative">
+  <div class="absolute top-4 left-1/2 -translate-x-1/2 z-0">
+    <div class="w-64 h-20 overflow-hidden flex items-center justify-center">
+      <img src="avipet.png" 
+           alt="Logo Avipet" 
+           class="max-w-full h-auto object-contain scale-125 opacity-20"> 
+           </div>
+  </div>
+
+  <div class="relative z-10 border-b-2 border-blue-600 pb-1 mb-2">
+    <div class="h-16"></div> 
   </div>
 </section>
           <select id="selectDoctor"
@@ -3318,6 +3319,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
