@@ -207,15 +207,16 @@
 <section id="sectionHistoria"
            class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-    <!-- Encabezado -->
-    <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-12 h-12 bg-blue-600 flex items-center justify-center text-white font-black text-2xl rounded-lg">
-          A
-        </div>
-        <div>
-          <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
+   <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
+  <div class="flex items-center gap-3">
+   <div class="relative w-32 h-12"> 
+  <div class="absolute top-0 left-0 w-48 h-48 p-0 z-50">
+    <img src="avipet.png" 
+         alt="Logo Avipet" 
+         class="w-full h-full object-contain">
+  </div>
+</div>
+       
           <select id="selectDoctor"
                   onchange="window.validarAccesoDoctor(this.value)"
                   class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none">
@@ -3317,6 +3318,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
