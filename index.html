@@ -194,10 +194,12 @@
 
    <div class="flex justify-between items-center border-b-2 border-blue-600 pb-4 mb-4">
   <div class="flex items-center gap-3">
-   <div class="w-48 h-20 flex items-center justify-center overflow-hidden bg-white">
-  <img src="./avipet.png" 
-       alt="Logo Avipet" 
-       class="max-w-full max-h-full object-contain">
+   <div class="relative w-32 h-16"> 
+  <div class="absolute top-0 left-0 w-48 h-48 bg-white rounded-xl shadow-lg p-2 z-50">
+    <img src="avipet.png" 
+         alt="Logo Avipet" 
+         class="w-full h-full object-contain">
+  </div>
 </div>
           <h1 class="text-xl font-black text-slate-800">AVIPET</h1>
           <select id="selectDoctor"
@@ -493,12 +495,13 @@
 
 <div class="flex-grow">
   <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-start gap-3">
-    <div class="w-48 h-20 flex items-center justify-center overflow-hidden bg-white">
-      <img id="hv_logoDoctor" 
-            <img src="./avipet.png" 
-           alt="Logo Avípet" 
-           class="max-w-full max-h-full object-contain">
-    </div>
+    <div class="relative w-32 h-16"> 
+  <div class="absolute top-0 left-0 w-48 h-48 bg-white rounded-xl shadow-lg p-2 z-50">
+    <img src="avipet.png" 
+         alt="Logo Avipet" 
+         class="w-full h-full object-contain">
+  </div>
+</div>
       <div class="flex-1 flex flex-col items-center text-center">
         <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
         <p id="hv_clinicaDoctor" class="text-[10px] text-slate-700 leading-tight font-medium"></p>
@@ -3297,6 +3300,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
