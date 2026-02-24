@@ -487,9 +487,9 @@
 
   <div class="no-print mb-4 bg-slate-100 p-2 rounded-lg flex items-center gap-3 border border-slate-300">
     <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento:</label>
-    <select id="selectorTipoFormato" onchange="cambiarTipoFormato(this.value)" class="flex-1 p-1.5 border border-slate-400 rounded font-bold text-xs bg-white">
+    <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1.5 border border-slate-400 rounded font-bold text-xs bg-white">
       <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
-      <option value="test_rapido">Certificado de Tests Rápidos (Inmunocromatografía)</option>
+      <option value="test_rapido">Certificado de Tests Rápidos</option>
     </select>
   </div>
 
@@ -519,13 +519,23 @@
               <div><span class="text-[8px] font-bold text-slate-500 uppercase">ESPECIE:</span><input id="hv_especie" class="w-full border-b border-slate-400 uppercase text-[9px]"></div>
               <div><span class="text-[8px] font-bold text-slate-500 uppercase">RAZA:</span><input id="hv_raza" class="w-full border-b border-slate-400 uppercase text-[9px]"></div>
             </div>
+            <div class="grid grid-cols-3 gap-1">
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">EDAD:</span><input id="hv_edad" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">SEXO:</span><input id="hv_sexo" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">COLOR:</span><input id="hv_color" class="w-full border-b border-slate-400 text-[9px]"></div>
+            </div>
           </div>
         </div>
+
         <div class="border border-slate-300 rounded-md p-1.5">
           <div class="text-center mb-1 border-b border-slate-200"><span class="text-[8px] font-black uppercase text-slate-500">Propietario</span></div>
           <div class="space-y-1">
             <div><span class="text-[8px] font-bold text-slate-500 uppercase">NOMBRE:</span><input id="hv_propietario" class="w-full border-b border-slate-400 uppercase text-[10px]"></div>
-            <div><span class="text-[8px] font-bold text-slate-500 uppercase">TELÉFONO:</span><input id="hv_telefono" class="w-full border-b border-slate-400 text-[9px]"></div>
+            <div class="grid grid-cols-2 gap-1">
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">CÉDULA:</span><input id="hv_cedula" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">TELÉFONO:</span><input id="hv_telefono" class="w-full border-b border-slate-400 text-[9px]"></div>
+            </div>
+            <div><span class="text-[8px] font-bold text-slate-500 uppercase">DIRECCIÓN:</span><input id="hv_direccion" class="w-full border-b border-slate-400 uppercase text-[8px]"></div>
           </div>
         </div>
       </div>
@@ -535,37 +545,43 @@
       <div class="border border-slate-400 rounded-lg mb-2">
         <div class="bg-slate-50 px-2 py-0.5 border-b border-slate-400 font-black text-[9px]">CONTROL DE VACUNAS</div>
         <table class="w-full text-[9px]">
-          <thead class="bg-slate-50 text-[8px] uppercase border-b border-slate-300">
+          <thead class="text-slate-700 uppercase border-b border-slate-400">
             <tr>
-              <th class="px-1 text-left">Fecha/Vacuna</th><th class="px-1 text-left">Lote</th><th class="px-1 text-left w-20">Próxima</th>
+              <th class="py-1 text-left px-1">Fecha</th>
+              <th class="py-1 text-left px-1">Lote / Vacuna</th>
+              <th class="py-1 text-left px-1">Peso</th>
+              <th class="py-1 text-left px-1">Próxima</th>
+              <th class="py-1 text-left px-1">Sello</th>
             </tr>
           </thead>
           <tbody>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
       <div class="border border-slate-400 rounded-lg">
         <div class="bg-slate-50 px-2 py-0.5 border-b border-slate-400 font-black text-[9px]">DESPARASITACIONES</div>
         <table class="w-full text-[9px]">
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full" placeholder="Producto"></td><td class="px-1 w-20"><input class="w-full" placeholder="Fecha"></td><td class="px-1 w-20"><input class="w-full" placeholder="Próxima"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+          <tbody>
+            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          </tbody>
         </table>
       </div>
     </div>
 
     <div id="bloqueTests" class="hidden">
       <div class="border border-slate-400 rounded-lg mb-2 overflow-hidden">
-        <div class="bg-slate-50 px-2 py-1 border-b border-slate-400 font-black text-[9px]">RESULTADOS DE INMUNOCROMATOGRAFÍA</div>
+        <div class="bg-slate-50 px-2 py-1 border-b border-slate-400 font-black text-[9px]">RESULTADOS DE TESTS RÁPIDOS</div>
         <table class="w-full text-[10px]">
           <thead class="bg-slate-100 uppercase text-[8px] border-b border-slate-300">
             <tr>
@@ -581,19 +597,16 @@
           </tbody>
         </table>
       </div>
-      <div class="p-2 border border-blue-200 bg-blue-50 rounded text-[9px] text-blue-800 italic">
-        * Los resultados de este test rápido son una ayuda diagnóstica. La interpretación final corresponde al médico veterinario tratante.
-      </div>
     </div>
   </div>
 
-  <div class="footer-direccion border-t border-slate-300 text-[7.5px] text-slate-500 text-center pt-1 mt-2 leading-none">
+  <div class="footer-direccion border-t border-slate-300 text-[7.5px] text-slate-500 text-center pt-1 mt-1 leading-none">
     Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435), Petare - Edo. Miranda.
   </div>
 
-  <div class="no-print flex justify-between gap-2 mt-4">
-    <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-2 rounded-lg font-black text-[10px] uppercase text-slate-600">⬅ Volver</button>
-    <button type="button" onclick="window.print()" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨 Imprimir Formato</button>
+  <div class="no-print flex justify-between gap-2 mt-2">
+    <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-1.5 rounded-lg font-black text-[10px] uppercase">⬅ Volver</button>
+    <button type="button" onclick="window.print()" class="flex-1 bg-emerald-600 text-white py-1.5 rounded-lg font-black text-[10px] uppercase">🖨 Imprimir</button>
   </div>
 </section>
   <!-- ========== BUSCADOR ========== -->
@@ -3269,6 +3282,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
