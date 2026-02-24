@@ -122,38 +122,37 @@
 @media print {
   @page {
     size: letter;
-    margin: 0.5cm; /* Reducimos un poco el margen de la hoja */
+    margin: 0.3cm; /* Margen de papel mínimo */
   }
 
-  body {
-    background: white !important;
-    overflow: hidden !important;
-  }
-
+  /* Ajuste del contenedor principal */
   #sectionHojaVacunas {
     display: flex !important;
     flex-direction: column !important;
-    height: 95vh !important; /* <--- Bajamos a 95vh para asegurar una sola hoja */
-    border: none !important;
-    box-shadow: none !important;
+    height: 92vh !important; /* Forzamos a que todo quepa en el 92% de la hoja */
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 0.2cm !important;
+    border: none !important;
     position: relative !important;
   }
 
-  /* Reducimos un poco el margen de seguridad */
-  .flex-grow {
-    margin-bottom: 40px !important; 
+  /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
+  #sectionHojaVacunas table tbody tr {
+    height: 38px !important; /* <--- Aquí ajustas la altura de las celdas */
   }
 
+  #sectionHojaVacunas table td {
+    vertical-align: middle !important;
+    padding: 0 4px !important;
+  }
+
+  /* ANCLAJE DE LA DIRECCIÓN AL FONDO DE LA HOJA 1 */
   .footer-direccion {
     position: absolute !important;
-    bottom: 5px !important; /* Ajuste fino al fondo */
+    bottom: 0 !important;
+    left: 0 !important;
     width: 100% !important;
-    text-align: center !important;
-    border-top: 1px solid #94a3b8 !important;
-    padding-top: 4px !important;
     background: white !important;
   }
 
@@ -484,8 +483,8 @@
 
   <!-- ========== HOJA DE VACUNAS / DESPARASITACIONES ========== -->
 <section id="sectionHojaVacunas"
-         class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex-col"
-         style="min-height: 27cm;">
+         class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col"
+         style="height: 92vh;">
     <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento:</label>
     <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white">
       <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
@@ -611,8 +610,7 @@
     </div>
   </div>
 
-  <footer class="mt-auto pt-2">
-    <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
+ <footer class="mt-auto pt-2 footer-direccion"> <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
       <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
       Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado).<br>
       Caracas - Miranda. Teléfono: (0212) 271-0435
@@ -3297,6 +3295,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
