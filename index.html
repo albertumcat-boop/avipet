@@ -206,13 +206,13 @@
   <!-- ========== HISTORIA CLÍNICA ========== -->
 <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 120px;">
+  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 140px;">
     
-    <div class="absolute left-1/2 transform -translate-x-1/2 top-0 text-center">
-      <div class="w-48 h-32 mx-auto flex items-center justify-center">
+    <div class="absolute left-1/2 transform -translate-x-1/2 top-2 text-center" style="width: 200px;">
+      <div class="w-48 h-28 mx-auto flex items-center justify-center">
         <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
       </div>
-      <p class="text-[10px] font-black text-slate-700 uppercase" style="margin-top: -15px;">RIF: J-00068577-0</p>
+      <p class="text-[10px] font-black text-slate-700 uppercase" style="margin-top: -10px;">RIF: J-00068577-0</p>
     </div>
 
     <div class="flex flex-col items-end text-right z-10">
@@ -225,8 +225,8 @@
       </select>
 
       <div class="no-print mt-1 flex gap-2">
-        <button type="button" class="text-[9px] text-blue-500 underline" onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">Cambiar mi PIN</button>
-        <button type="button" class="text-[9px] text-red-500 underline" onclick="window.solicitarCambioPinDoctor()">Olvidé mi PIN</button>
+        <button type="button" class="text-[9px] text-blue-500 underline" onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">Cambiar PIN</button>
+        <button type="button" class="text-[9px] text-red-500 underline" onclick="window.solicitarCambioPinDoctor()">Olvidé PIN</button>
       </div>
 
       <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">DOCTOR CARGO</h2>
@@ -237,8 +237,7 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4" style="display: grid !important; grid-template-columns: 1fr 1fr !important;">
-    
+  <div class="grid grid-cols-2 border border-slate-400 text-[11px] mb-4" style="display: grid !important; grid-template-columns: 1fr 1fr !important;">
     <div class="p-3 border-r border-slate-400 space-y-2">
       <div class="header-box italic">Ficha Técnica de Mascota</div>
       <div class="grid grid-cols-2 gap-2">
@@ -246,18 +245,9 @@
           <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
           <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700 bg-transparent">
         </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">ESPECIE</label>
-          <input id="hEspecie" class="border-b w-full uppercase bg-transparent">
-        </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">RAZA</label>
-          <input id="hRaza" class="border-b w-full uppercase bg-transparent">
-        </div>
-        <div>
-          <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
-          <input id="hPeso" class="border-b w-full bg-transparent">
-        </div>
+        <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase bg-transparent"></div>
+        <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase bg-transparent"></div>
+        <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full bg-transparent"></div>
         <div class="grid grid-cols-3 gap-1 col-span-2">
           <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase bg-transparent"></div>
           <div><label class="text-[9px] font-bold text-slate-400">SEXO</label><input id="hSexo" class="border-b w-full uppercase bg-transparent"></div>
@@ -282,11 +272,28 @@
         <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label><input id="hCI" onblur="window.autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700 bg-transparent"></div>
         <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full bg-transparent"></div>
       </div>
-      <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full bg-transparent"></div>
       <div><label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label><input id="hDir" class="border-b w-full uppercase text-[10px] bg-transparent"></div>
     </div>
   </div>
 
+  <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
+      <textarea id="hTratamiento" class="w-full h-64 p-4 text-sm font-medium bg-white outline-none"></textarea>
+      <div id="hTratamientoPrint" class="hidden print:block p-4 whitespace-pre-wrap text-sm"></div>
+  </div>
+
+  <div class="no-print flex justify-center mb-6">
+      <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center">
+          <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1">Monto Total ($)</label>
+          <input type="number" id="precioVenta" value="0" class="text-5xl font-black w-full bg-transparent text-center text-blue-700 outline-none">
+      </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 no-print">
+      <button onclick="guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">Guardar Datos</button>
+      <button onclick="guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">Guardar e Imprimir</button>
+  </div>
+
+</section> <section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl ...">
   </section>
     <!-- Servicios -->
     <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
@@ -3289,6 +3296,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
