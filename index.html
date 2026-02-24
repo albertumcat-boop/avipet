@@ -206,13 +206,12 @@
   <!-- ========== HISTORIA CLÍNICA ========== -->
 <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 140px;">
+  <div class="relative flex justify-end items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 60px;">
     
-    <div class="absolute left-1/2 transform -translate-x-1/2 top-2 text-center" style="width: 200px;">
-      <div class="w-48 h-28 mx-auto flex items-center justify-center">
+    <div class="absolute left-1/2 transform -translate-x-1/2 top-0">
+      <div class="relative w-48 h-48">
         <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
       </div>
-      <p class="text-[10px] font-black text-slate-700 uppercase" style="margin-top: -10px;">RIF: J-00068577-0</p>
     </div>
 
     <div class="flex flex-col items-end text-right z-10">
@@ -225,16 +224,29 @@
       </select>
 
       <div class="no-print mt-1 flex gap-2">
-        <button type="button" class="text-[9px] text-blue-500 underline" onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">Cambiar PIN</button>
-        <button type="button" class="text-[9px] text-red-500 underline" onclick="window.solicitarCambioPinDoctor()">Olvidé PIN</button>
+        <button type="button"
+                class="text-[9px] text-blue-500 underline"
+                onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value || '')">
+          Cambiar mi PIN
+        </button>
+        <button type="button"
+                class="text-[9px] text-red-500 underline"
+                onclick="window.solicitarCambioPinDoctor()">
+          Olvidé mi PIN
+        </button>
       </div>
 
-      <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">DOCTOR CARGO</h2>
-      
+      <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">
+        DOCTOR CARGO
+      </h2>
+
       <div class="text-right mt-1">
-        <input type="text" id="fechaDoc" class="w-24 text-right font-black text-xs text-slate-500 bg-transparent" readonly>
+        <input type="text" id="fechaDoc"
+               class="w-24 text-right font-black text-xs text-slate-500 bg-transparent"
+               readonly>
       </div>
     </div>
+
   </div>
 
   <div class="grid grid-cols-2 border border-slate-400 text-[11px] mb-4" style="display: grid !important; grid-template-columns: 1fr 1fr !important;">
@@ -484,13 +496,12 @@
     </div>
 
     <div class="relative w-full border-b-2 border-slate-800 pb-1 mb-2">
-      <div class="absolute left-1/2 transform -translate-x-1/2 top-2 z-50 text-center">
-        <div class="w-46 h-10 overflow-hidden flex items-center justify-center">
+      <div class="absolute left-1/2 transform -translate-x-1/2 top-2 z-50">
+        <div class="w-48 h-12 overflow-hidden flex items-center justify-center">
           <img src="avipet.png" 
                alt="Logo Avipet" 
                class="w-full h-full object-contain scale-125">
         </div>
-        <p class="text-[9px] font-black text-slate-700 uppercase">RIF: J-00068577-0</p>
       </div>
 
       <div class="flex items-center justify-end h-16">
@@ -3296,6 +3307,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
