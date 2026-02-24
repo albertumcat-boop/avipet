@@ -506,29 +506,23 @@
 
     <div class="border border-slate-400 rounded-lg p-2 mb-2">
       <div class="grid grid-cols-2 gap-4">
-        
         <div class="border border-slate-300 rounded-md p-2">
           <div class="text-center mb-1 border-b border-slate-200 pb-1">
-            <span class="text-[8px] font-black uppercase text-slate-500">Ficha Técnica</span>
+            <span class="text-[8px] font-black uppercase text-slate-500">Ficha Técnica de Mascota</span>
           </div>
           <div class="space-y-1">
             <div>
-              <span class="text-[8px] font-bold text-slate-500">MASCOTA:</span>
+              <span class="text-[8px] font-bold text-slate-500 uppercase">MASCOTA:</span>
               <input id="hv_paciente" class="w-full border-b border-slate-400 uppercase text-[10px] font-bold text-emerald-700">
             </div>
             <div class="grid grid-cols-2 gap-1">
-              <div>
-                <span class="text-[8px] font-bold text-slate-500">ESPECIE:</span>
-                <input id="hv_especie" class="w-full border-b border-slate-400 uppercase text-[9px]">
-              </div>
-              <div>
-                <span class="text-[8px] font-bold text-slate-500">RAZA:</span>
-                <input id="hv_raza" class="w-full border-b border-slate-400 uppercase text-[9px]">
-              </div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">ESPECIE:</span><input id="hv_especie" class="w-full border-b border-slate-400 uppercase text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">RAZA:</span><input id="hv_raza" class="w-full border-b border-slate-400 uppercase text-[9px]"></div>
             </div>
-            <div class="grid grid-cols-2 gap-1">
-              <div><span class="text-[8px] font-bold text-slate-500">EDAD:</span><input id="hv_edad" class="w-full border-b border-slate-400 text-[9px]"></div>
-              <div><span class="text-[8px] font-bold text-slate-500">PESO:</span><input id="hv_peso" class="w-full border-b border-slate-400 text-[9px]"></div>
+            <div class="grid grid-cols-3 gap-1">
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">EDAD:</span><input id="hv_edad" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">SEXO:</span><input id="hv_sexo" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">COLOR:</span><input id="hv_color" class="w-full border-b border-slate-400 text-[9px]"></div>
             </div>
           </div>
         </div>
@@ -538,18 +532,12 @@
             <span class="text-[8px] font-black uppercase text-slate-500">Datos del Propietario</span>
           </div>
           <div class="space-y-1">
-            <div>
-              <span class="text-[8px] font-bold text-slate-500">NOMBRE:</span>
-              <input id="hv_propietario" class="w-full border-b border-slate-400 uppercase text-[10px]">
+            <div><span class="text-[8px] font-bold text-slate-500 uppercase">NOMBRE Y APELLIDO:</span><input id="hv_propietario" class="w-full border-b border-slate-400 uppercase text-[10px]"></div>
+            <div class="grid grid-cols-2 gap-1">
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">CÉDULA:</span><input id="hv_cedula" class="w-full border-b border-slate-400 text-[9px]"></div>
+              <div><span class="text-[8px] font-bold text-slate-500 uppercase">TELÉFONO:</span><input id="hv_telefono" class="w-full border-b border-slate-400 text-[9px]"></div>
             </div>
-            <div>
-              <span class="text-[8px] font-bold text-slate-500">TELÉFONO:</span>
-              <input id="hv_telefono" class="w-full border-b border-slate-400 text-[9px]">
-            </div>
-            <div>
-              <span class="text-[8px] font-bold text-slate-500">CÉDULA:</span>
-              <input id="hv_cedula" class="w-full border-b border-slate-400 text-[9px]">
-            </div>
+            <div><span class="text-[8px] font-bold text-slate-500 uppercase">DIRECCIÓN:</span><input id="hv_direccion" class="w-full border-b border-slate-400 uppercase text-[8px]"></div>
           </div>
         </div>
       </div>
@@ -560,19 +548,22 @@
       <table class="w-full text-[9px]">
         <thead class="bg-slate-50 text-slate-700 uppercase">
           <tr>
-            <th class="border-b border-slate-400 py-1 text-left px-1">Fecha</th>
+            <th class="border-b border-slate-400 py-1 text-left px-1">Fecha Vacunación</th>
             <th class="border-b border-slate-400 py-1 text-left px-1">Lote / Vacuna</th>
             <th class="border-b border-slate-400 py-1 text-left px-1">Peso</th>
             <th class="border-b border-slate-400 py-1 text-left px-1">Próxima</th>
-            <th class="border-b border-slate-400 py-1 text-left px-1">Sello</th>
+            <th class="border-b border-slate-400 py-1 text-left px-1">Sello / Firma</th>
           </tr>
         </thead>
         <tbody>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-10 border-b border-slate-300"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
         </tbody>
       </table>
     </div>
@@ -580,21 +571,31 @@
     <div class="border border-slate-400 rounded-lg mb-1">
       <div class="bg-slate-100 px-2 py-0.5 border-b border-slate-400"><span class="text-[9px] font-black uppercase text-slate-700">DESPARASITACIONES</span></div>
       <table class="w-full text-[9px]">
+        <thead class="bg-slate-50 text-slate-700 uppercase">
+          <tr>
+            <th class="border-b border-slate-400 py-0.5 text-left px-1">Fecha</th>
+            <th class="border-b border-slate-400 py-0.5 text-left px-1">Producto</th>
+            <th class="border-b border-slate-400 py-0.5 text-left px-1">Edad/Peso</th>
+            <th class="border-b border-slate-400 py-0.5 text-left px-1">Próxima</th>
+            <th class="border-b border-slate-400 py-0.5 text-left px-1">Firma</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1 w-1/5"><input class="w-full"></td><td class="px-1 w-2/5"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
-          <tr class="h-8 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
+          <tr class="h-9 border-b border-slate-200"><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td><td class="px-1"><input class="w-full"></td></tr>
         </tbody>
       </table>
     </div>
 
   </div>
 
-  <div class="footer-direccion border-t border-slate-300 text-[8px] text-slate-500 leading-tight text-center pt-1 mt-1">
+  <div class="footer-direccion border-t border-slate-300 text-[8px] text-slate-500 text-center leading-tight pt-1 mt-1">
     DIRECCIÓN: Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado), Tienda Avícola Petare (0212-2710435), Petare - Edo. Miranda.
   </div>
 
-  <div class="no-print flex justify-between gap-2 mt-3">
+  <div class="no-print flex justify-between gap-2 mt-4">
     <button type="button" onclick="window.volverAHistoriaDesdeVacunas()"
             class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
       ⬅ Volver
@@ -3262,6 +3263,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
