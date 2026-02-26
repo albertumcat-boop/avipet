@@ -118,20 +118,19 @@
     font-weight:bold;
   }
 
-  /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
+ /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
   @page {
     size: letter;
     margin: 0.3cm; 
   }
 
-  /* AJUSTE QUIRÚRGICO: Solo aplicamos el estilo si el elemento es visible en pantalla */
-  /* Usamos una propiedad que no bloquea tus botones */
+  /* 1. Por defecto, ocultamos la sección en la impresora para que no salga doble */
   #sectionHojaVacunas {
-    display: none !important; /* Por defecto apagada en impresión */
+    display: none !important;
   }
 
-  /* Solo se enciende si tú la estás viendo (esto no afecta a los botones) */
-  #sectionHojaVacunas:not([style*="display: none"]) {
+  /* 2. Solo si la sección NO tiene la clase 'hidden', la mostramos para imprimir */
+  #sectionHojaVacunas:not(.hidden) {
     display: flex !important;
     flex-direction: column !important;
     height: 92vh !important;
@@ -141,7 +140,7 @@
     border: none !important;
     position: relative !important;
   }
-}
+} /* <--- Este es el cierre del @media print principal. Asegúrate de que esté ahí. */
   /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
   #sectionHojaVacunas table tbody tr {
     height: 38px !important; /* <--- Aquí ajustas la altura de las celdas */
@@ -3319,6 +3318,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
