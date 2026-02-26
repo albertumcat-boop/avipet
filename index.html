@@ -75,9 +75,7 @@
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
 @media print {
-  /* Solo ocultamos las SECCIONES que tengan la clase hidden, no los botones */
-  section.hidden { display: none !important; }
-
+  /* Mantenemos tu lógica de ocultar elementos de la interfaz */
   .no-print, button, select, nav, #loginSection,
   .finanzas-ocultar, .menu-desplegable { display:none !important; }
 
@@ -91,6 +89,9 @@
     box-shadow:none !important;
     width:100% !important;
   }
+
+  /* Ajuste para que la impresora respete tu clase hidden original */
+  section.hidden { display: none !important; }
 
   #doctorPrint {
     display:block !important;
@@ -124,8 +125,21 @@
   /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
   @page {
     size: letter;
-    margin: 0.3cm; 
+    margin: 0.3cm; /* Margen de papel mínimo */
   }
+
+  /* Ajuste del contenedor principal: Solo aplicamos flex si NO está oculto */
+  #sectionHojaVacunas:not(.hidden) {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 92vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0.2cm !important;
+    border: none !important;
+    position: relative !important;
+  }
+}
 
   #sectionHojaVacunas {
     /* Quitamos el display: flex !important de aquí para que section.hidden mande */
@@ -3315,6 +3329,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
