@@ -118,29 +118,24 @@
     font-weight:bold;
   }
 
- /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
+  /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
+@media print {
   @page {
     size: letter;
-    margin: 0.3cm; 
+    margin: 0.3cm; /* Margen de papel mínimo */
   }
 
-  /* 1. Por defecto, ocultamos la sección en la impresora para que no salga doble */
+  /* Ajuste del contenedor principal */
   #sectionHojaVacunas {
-    display: none !important;
-  }
-
-  /* 2. Solo si la sección NO tiene la clase 'hidden', la mostramos para imprimir */
-  #sectionHojaVacunas:not(.hidden) {
     display: flex !important;
     flex-direction: column !important;
-    height: 92vh !important;
+    height: 92vh !important; /* Forzamos a que todo quepa en el 92% de la hoja */
     width: 100% !important;
     margin: 0 !important;
     padding: 0.2cm !important;
     border: none !important;
     position: relative !important;
   }
-} /* <--- Este es el cierre del @media print principal. Asegúrate de que esté ahí. */
   /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
   #sectionHojaVacunas table tbody tr {
     height: 38px !important; /* <--- Aquí ajustas la altura de las celdas */
@@ -3318,6 +3313,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
