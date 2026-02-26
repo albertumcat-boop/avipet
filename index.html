@@ -74,9 +74,9 @@
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
- @media print {
-  /* EL AJUSTE: Si la sección está oculta en el front, que no se imprima */
-  .hidden { display: none !important; }
+@media print {
+  /* Solo ocultamos las SECCIONES que tengan la clase hidden, no los botones */
+  section.hidden { display: none !important; }
 
   .no-print, button, select, nav, #loginSection,
   .finanzas-ocultar, .menu-desplegable { display:none !important; }
@@ -124,12 +124,11 @@
   /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
   @page {
     size: letter;
-    margin: 0.3cm; /* Margen de papel mínimo */
+    margin: 0.3cm; 
   }
 
-  /* Ajuste del contenedor principal */
   #sectionHojaVacunas {
-    /* Mantenemos display: flex solo si NO tiene la clase hidden */
+    /* Quitamos el display: flex !important de aquí para que section.hidden mande */
     flex-direction: column !important;
     height: 92vh !important;
     width: 100% !important;
@@ -139,7 +138,6 @@
     position: relative !important;
   }
 }
-
   /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
   #sectionHojaVacunas table tbody tr {
     height: 38px !important; /* <--- Aquí ajustas la altura de las celdas */
@@ -3317,6 +3315,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
