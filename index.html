@@ -121,14 +121,16 @@
 
       @page {
         size: letter;
-        margin: 0.6cm;
+        /* Aumentamos el margen superior (0.8cm) para que no corte el logo */
+        margin: 0.8cm 0.3cm 0.3cm 0.3cm; 
       }
 
-     /* HOJA DE VACUNAS: Filas grandes y ajuste de página única */
+      /* HOJA DE VACUNAS: Ajuste para proteger el logo y mantener filas grandes */
       #sectionHojaVacunas {
         display: flex !important;
         flex-direction: column !important;
-        height: 99% !important;   /* Aprovechamos casi la totalidad del papel */
+        /* Reducimos ligeramente de 99% a 97% para compensar el nuevo margen superior */
+        height: 97% !important;   
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -137,18 +139,18 @@
         overflow: hidden !important; 
       }
 
-      /* FILAS MÁS GRANDES */
+      /* FILAS MÁS GRANDES (Mantenemos tus 46px) */
       #sectionHojaVacunas table tbody tr {
-        height: 46px !important; /* <--- Altura incrementada para mayor comodidad */
+        height: 46px !important; 
       }
 
       #sectionHojaVacunas table td {
         vertical-align: middle !important;
         padding: 0 8px !important;
-        font-size: 13px !important; /* Letra un poco más grande para las filas nuevas */
+        font-size: 13px !important;
       }
 
-      /* ANCLAJE AL FONDO SIN GENERAR HOJA EXTRA */
+      /* ANCLAJE AL FONDO */
       .footer-direccion {
         position: absolute !important;
         bottom: 0 !important;
@@ -3313,6 +3315,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
