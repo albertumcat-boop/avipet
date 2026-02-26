@@ -119,29 +119,30 @@
         font-weight:bold;
       }
 
-      @page {
+     @page {
         size: letter;
-        /* Aumentamos el margen superior (0.8cm) para que no corte el logo */
-        margin: 0.8cm 0.3cm 0.3cm 0.3cm; 
+        /* Margen de papel: 1cm arriba para asegurar que entre cualquier cabezal de impresora */
+        margin: 1cm 0.3cm 0.3cm 0.3cm; 
       }
 
-      /* HOJA DE VACUNAS: Ajuste para proteger el logo y mantener filas grandes */
+      /* HOJA DE VACUNAS: Bajamos el contenido internamente */
       #sectionHojaVacunas {
         display: flex !important;
         flex-direction: column !important;
-        /* Reducimos ligeramente de 99% a 97% para compensar el nuevo margen superior */
-        height: 97% !important;   
+        /* Bajamos el height al 95% para dar margen de error y que no salga la hoja en blanco */
+        height: 95% !important;   
         width: 100% !important;
         margin: 0 !important;
-        padding: 0 !important;
+        /* Agregamos un padding superior interno de 10px para empujar el logo hacia abajo */
+        padding-top: 10px !important; 
         border: none !important;
         position: relative !important;
         overflow: hidden !important; 
       }
 
-      /* FILAS MÁS GRANDES (Mantenemos tus 46px) */
+      /* FILAS: Ajustamos a 44px para compensar el espacio que le dimos al logo arriba */
       #sectionHojaVacunas table tbody tr {
-        height: 46px !important; 
+        height: 44px !important; 
       }
 
       #sectionHojaVacunas table td {
@@ -150,14 +151,14 @@
         font-size: 13px !important;
       }
 
-      /* ANCLAJE AL FONDO */
+      /* EL FOOTER: Lo aseguramos al fondo */
       .footer-direccion {
         position: absolute !important;
         bottom: 0 !important;
         left: 0 !important;
         width: 100% !important;
         background: white !important;
-        padding-bottom: 2px !important;
+        padding-bottom: 5px !important;
       }
   </style>
 </head>
@@ -3315,6 +3316,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
