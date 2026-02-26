@@ -124,8 +124,14 @@
     margin: 0.3cm; 
   }
 
-  /* EL AJUSTE: Solo aplicamos el estilo si la sección NO tiene la clase 'hidden' */
-  #sectionHojaVacunas:not(.hidden) {
+  /* AJUSTE QUIRÚRGICO: Solo aplicamos el estilo si el elemento es visible en pantalla */
+  /* Usamos una propiedad que no bloquea tus botones */
+  #sectionHojaVacunas {
+    display: none !important; /* Por defecto apagada en impresión */
+  }
+
+  /* Solo se enciende si tú la estás viendo (esto no afecta a los botones) */
+  #sectionHojaVacunas:not([style*="display: none"]) {
     display: flex !important;
     flex-direction: column !important;
     height: 92vh !important;
@@ -134,11 +140,6 @@
     padding: 0.2cm !important;
     border: none !important;
     position: relative !important;
-  }
-
-  /* Y nos aseguramos que si tiene 'hidden', la impresora la respete */
-  #sectionHojaVacunas.hidden {
-    display: none !important;
   }
 }
   /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
@@ -3318,6 +3319,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
