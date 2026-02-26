@@ -75,62 +75,68 @@
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
 @media print {
-  /* Mantenemos tu lógica de ocultar elementos de la interfaz */
+  /* 1. OCULTAMOS LAS HOJAS ESPECÍFICAS SOLO SI TIENEN LA CLASE HIDDEN */
+  /* Esto NO toca botones, solo las secciones de contenido */
+  #sectionHistoria.hidden, 
+  #sectionHojaVacunas.hidden,
+  #sectionConfiguracion.hidden { 
+    display: none !important; 
+  }
+
+  /* 2. TU LÓGICA ORIGINAL DE ELEMENTOS QUE NUNCA SE IMPRIMEN */
   .no-print, button, select, nav, #loginSection,
-  .finanzas-ocultar, .menu-desplegable { display:none !important; }
+  .finanzas-ocultar, .menu-desplegable { 
+    display: none !important; 
+  }
 
   body {
-    background-color:white !important;
-    padding:0; margin:0;
+    background-color: white !important;
+    padding: 0; margin: 0;
   }
 
   .print-area {
-    border:none !important;
-    box-shadow:none !important;
-    width:100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
   }
-
-  /* Ajuste para que la impresora respete tu clase hidden original */
-  section.hidden { display: none !important; }
 
   #doctorPrint {
-    display:block !important;
-    font-weight:800;
-    text-transform:uppercase;
-    font-size:14px;
-    color:black;
-    margin-top:10px;
+    display: block !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 14px;
+    color: black;
+    margin-top: 10px;
   }
 
-  #hTratamiento { display:none !important; }
+  #hTratamiento { display: none !important; }
 
   #hTratamientoPrint {
-    display:block !important;
-    border:none !important;
-    height:auto !important;
-    overflow:visible !important;
-    white-space:pre-wrap !important;
-    font-size:13px;
-    line-height:1.6;
-    color:black !important;
-    width:100% !important;
+    display: block !important;
+    border: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    font-size: 13px;
+    line-height: 1.6;
+    color: black !important;
+    width: 100% !important;
   }
 
   input {
-    border:none !important;
-    color:black !important;
-    font-weight:bold;
+    border: none !important;
+    color: black !important;
+    font-weight: bold;
   }
 
-  /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
+  /* 3. TU CONFIGURACIÓN DE PÁGINA */
   @page {
     size: letter;
-    margin: 0.3cm; /* Margen de papel mínimo */
+    margin: 0.3cm;
   }
 
-  /* Ajuste del contenedor principal: Solo aplicamos flex si NO está oculto */
-  #sectionHojaVacunas:not(.hidden) {
-    display: flex !important;
+  /* 4. AJUSTE DE LA HOJA DE VACUNAS (SIN FORZAR EL DISPLAY) */
+  #sectionHojaVacunas {
     flex-direction: column !important;
     height: 92vh !important;
     width: 100% !important;
@@ -140,7 +146,6 @@
     position: relative !important;
   }
 }
-
   #sectionHojaVacunas {
     /* Quitamos el display: flex !important de aquí para que section.hidden mande */
     flex-direction: column !important;
@@ -3329,6 +3334,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
