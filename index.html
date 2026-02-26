@@ -124,19 +124,21 @@
         margin: 0.3cm;
       }
 
-      /* HOJA DE VACUNAS: Ajustes sin forzar display para no romper botones */
+     /* HOJA DE VACUNAS: Ajuste para eliminar espacio en blanco y centrar en papel */
       #sectionHojaVacunas {
+        display: flex !important; /* Aquí es seguro porque ya estamos dentro de @media print */
         flex-direction: column !important;
-        height: 92vh !important;
+        height: 98% !important;   /* Cambiamos vh por % para evitar saltos de página */
         width: 100% !important;
         margin: 0 !important;
-        padding: 0.2cm !important;
+        padding: 0 !important;    /* Eliminamos aire en los bordes */
         border: none !important;
         position: relative !important;
+        overflow: hidden !important; /* Corta cualquier sobrante que genere la hoja en blanco */
       }
 
       #sectionHojaVacunas table tbody tr {
-        height: 38px !important;
+        height: 35px !important; /* Reducimos 3px para ganar espacio de seguridad */
       }
 
       #sectionHojaVacunas table td {
@@ -144,14 +146,15 @@
         padding: 0 4px !important;
       }
 
+      /* ANCLAJE TOTAL AL FONDO */
       .footer-direccion {
         position: absolute !important;
-        bottom: 0 !important;
+        bottom: -5px !important; /* Empujamos un poco más al límite */
         left: 0 !important;
         width: 100% !important;
         background: white !important;
+        padding-bottom: 5px !important;
       }
-    }
   </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -3308,6 +3311,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
