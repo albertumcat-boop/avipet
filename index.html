@@ -75,88 +75,67 @@
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
 @media print {
-  /* 1. OCULTAMOS LAS HOJAS ESPECÍFICAS SOLO SI TIENEN LA CLASE HIDDEN */
-  /* Esto NO toca botones, solo las secciones de contenido */
-  #sectionHistoria.hidden, 
-  #sectionHojaVacunas.hidden,
-  #sectionConfiguracion.hidden { 
-    display: none !important; 
-  }
-
-  /* 2. TU LÓGICA ORIGINAL DE ELEMENTOS QUE NUNCA SE IMPRIMEN */
   .no-print, button, select, nav, #loginSection,
-  .finanzas-ocultar, .menu-desplegable { 
-    display: none !important; 
-  }
+  .finanzas-ocultar, .menu-desplegable { display:none !important; }
 
   body {
-    background-color: white !important;
-    padding: 0; margin: 0;
+    background-color:white !important;
+    padding:0; margin:0;
   }
 
   .print-area {
-    border: none !important;
-    box-shadow: none !important;
-    width: 100% !important;
+    border:none !important;
+    box-shadow:none !important;
+    width:100% !important;
   }
 
   #doctorPrint {
-    display: block !important;
-    font-weight: 800;
-    text-transform: uppercase;
-    font-size: 14px;
-    color: black;
-    margin-top: 10px;
+    display:block !important;
+    font-weight:800;
+    text-transform:uppercase;
+    font-size:14px;
+    color:black;
+    margin-top:10px;
   }
 
-  #hTratamiento { display: none !important; }
+  #hTratamiento { display:none !important; }
 
   #hTratamientoPrint {
-    display: block !important;
-    border: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    white-space: pre-wrap !important;
-    font-size: 13px;
-    line-height: 1.6;
-    color: black !important;
-    width: 100% !important;
+    display:block !important;
+    border:none !important;
+    height:auto !important;
+    overflow:visible !important;
+    white-space:pre-wrap !important;
+    font-size:13px;
+    line-height:1.6;
+    color:black !important;
+    width:100% !important;
   }
 
   input {
-    border: none !important;
-    color: black !important;
-    font-weight: bold;
+    border:none !important;
+    color:black !important;
+    font-weight:bold;
   }
 
-  /* 3. TU CONFIGURACIÓN DE PÁGINA */
+  /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
+@media print {
   @page {
     size: letter;
-    margin: 0.3cm;
+    margin: 0.3cm; /* Margen de papel mínimo */
   }
 
-  /* 4. AJUSTE DE LA HOJA DE VACUNAS (SIN FORZAR EL DISPLAY) */
+  /* Ajuste del contenedor principal */
   #sectionHojaVacunas {
+    display: flex !important;
     flex-direction: column !important;
-    height: 92vh !important;
+    height: 92vh !important; /* Forzamos a que todo quepa en el 92% de la hoja */
     width: 100% !important;
     margin: 0 !important;
     padding: 0.2cm !important;
     border: none !important;
     position: relative !important;
   }
-}
-  #sectionHojaVacunas {
-    /* Quitamos el display: flex !important de aquí para que section.hidden mande */
-    flex-direction: column !important;
-    height: 92vh !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0.2cm !important;
-    border: none !important;
-    position: relative !important;
-  }
-}
   /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
   #sectionHojaVacunas table tbody tr {
     height: 38px !important; /* <--- Aquí ajustas la altura de las celdas */
@@ -3334,6 +3313,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
