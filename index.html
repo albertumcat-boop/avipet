@@ -74,7 +74,10 @@
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-  @media print {
+ @media print {
+  /* EL AJUSTE: Si la sección está oculta en el front, que no se imprima */
+  .hidden { display: none !important; }
+
   .no-print, button, select, nav, #loginSection,
   .finanzas-ocultar, .menu-desplegable { display:none !important; }
 
@@ -119,7 +122,6 @@
   }
 
   /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
-@media print {
   @page {
     size: letter;
     margin: 0.3cm; /* Margen de papel mínimo */
@@ -127,15 +129,16 @@
 
   /* Ajuste del contenedor principal */
   #sectionHojaVacunas {
-    display: flex !important;
+    /* Mantenemos display: flex solo si NO tiene la clase hidden */
     flex-direction: column !important;
-    height: 92vh !important; /* Forzamos a que todo quepa en el 92% de la hoja */
+    height: 92vh !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0.2cm !important;
     border: none !important;
     position: relative !important;
   }
+}
 
   /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
   #sectionHojaVacunas table tbody tr {
@@ -498,10 +501,10 @@
   </div>
 
   <div class="flex-grow">
-    <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center justify-between relative" style="min-height: 60px;">
+    <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center justify-between relative" style="min-height: 30px;">
       
-      <div class="relative w-32">
-        <div class="absolute left-0 w-32 h-32 z-50" style="top: -55px !important;">
+      <div class="relative w-32 h-0">
+        <div class="absolute left-0 w-32 h-32 z-50" style="top: -65px !important;">
           <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
         </div>
       </div>
@@ -512,6 +515,8 @@
         </h2>
       </div>
 
+      <div class="w-32"></div>
+    </div>
       <div class="w-32 no-print"></div>
     </div>
       <div class="flex-1 flex flex-col items-center text-center">
@@ -3312,6 +3317,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
