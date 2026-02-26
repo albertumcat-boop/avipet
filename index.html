@@ -124,36 +124,38 @@
         margin: 0.3cm;
       }
 
-     /* HOJA DE VACUNAS: Ajuste para eliminar espacio en blanco y centrar en papel */
+     /* HOJA DE VACUNAS: Filas grandes y ajuste de página única */
       #sectionHojaVacunas {
-        display: flex !important; /* Aquí es seguro porque ya estamos dentro de @media print */
+        display: flex !important;
         flex-direction: column !important;
-        height: 98% !important;   /* Cambiamos vh por % para evitar saltos de página */
+        height: 99% !important;   /* Aprovechamos casi la totalidad del papel */
         width: 100% !important;
         margin: 0 !important;
-        padding: 0 !important;    /* Eliminamos aire en los bordes */
+        padding: 0 !important;
         border: none !important;
         position: relative !important;
-        overflow: hidden !important; /* Corta cualquier sobrante que genere la hoja en blanco */
+        overflow: hidden !important; 
       }
 
+      /* FILAS MÁS GRANDES */
       #sectionHojaVacunas table tbody tr {
-        height: 35px !important; /* Reducimos 3px para ganar espacio de seguridad */
+        height: 46px !important; /* <--- Altura incrementada para mayor comodidad */
       }
 
       #sectionHojaVacunas table td {
         vertical-align: middle !important;
-        padding: 0 4px !important;
+        padding: 0 8px !important;
+        font-size: 13px !important; /* Letra un poco más grande para las filas nuevas */
       }
 
-      /* ANCLAJE TOTAL AL FONDO */
+      /* ANCLAJE AL FONDO SIN GENERAR HOJA EXTRA */
       .footer-direccion {
         position: absolute !important;
-        bottom: -5px !important; /* Empujamos un poco más al límite */
+        bottom: 0 !important;
         left: 0 !important;
         width: 100% !important;
         background: white !important;
-        padding-bottom: 5px !important;
+        padding-bottom: 2px !important;
       }
   </style>
 </head>
@@ -498,7 +500,7 @@
     <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center justify-between relative" style="min-height: 30px;">
       
       <div class="relative w-32 h-0">
-        <div class="absolute left-0 w-32 h-32 z-50" style="top: -65px !important;">
+        <div class="absolute left-0 w-32 h-32 z-50" style="top: -50px !important;">
           <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
         </div>
       </div>
@@ -3311,6 +3313,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
