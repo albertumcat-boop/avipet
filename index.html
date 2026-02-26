@@ -6,7 +6,7 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
+ <style>
     body {
       background-color: #f1f5f9;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -74,89 +74,84 @@
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-@media print {
-  .no-print, button, select, nav, #loginSection,
-  .finanzas-ocultar, .menu-desplegable { display:none !important; }
+    /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO ========= */
+    @media print {
+      .no-print, button, select, nav, #loginSection,
+      .finanzas-ocultar, .menu-desplegable { display:none !important; }
 
-  body {
-    background-color:white !important;
-    padding:0; margin:0;
-  }
+      body {
+        background-color:white !important;
+        padding:0; margin:0;
+      }
 
-  .print-area {
-    border:none !important;
-    box-shadow:none !important;
-    width:100% !important;
-  }
+      .print-area {
+        border:none !important;
+        box-shadow:none !important;
+        width:100% !important;
+      }
 
-  #doctorPrint {
-    display:block !important;
-    font-weight:800;
-    text-transform:uppercase;
-    font-size:14px;
-    color:black;
-    margin-top:10px;
-  }
+      #doctorPrint {
+        display:block !important;
+        font-weight:800;
+        text-transform:uppercase;
+        font-size:14px;
+        color:black;
+        margin-top:10px;
+      }
 
-  #hTratamiento { display:none !important; }
+      #hTratamiento { display:none !important; }
 
-  #hTratamientoPrint {
-    display:block !important;
-    border:none !important;
-    height:auto !important;
-    overflow:visible !important;
-    white-space:pre-wrap !important;
-    font-size:13px;
-    line-height:1.6;
-    color:black !important;
-    width:100% !important;
-  }
+      #hTratamientoPrint {
+        display:block !important;
+        border:none !important;
+        height:auto !important;
+        overflow:visible !important;
+        white-space:pre-wrap !important;
+        font-size:13px;
+        line-height:1.6;
+        color:black !important;
+        width:100% !important;
+      }
 
-  input {
-    border:none !important;
-    color:black !important;
-    font-weight:bold;
-  }
+      input {
+        border:none !important;
+        color:black !important;
+        font-weight:bold;
+      }
 
-  /* --- HOJA DE VACUNAS: AJUSTES PARA IMPRESIÓN (UNIFICADO) --- */
-@media print {
-  @page {
-    size: letter;
-    margin: 0.3cm; /* Margen de papel mínimo */
-  }
+      @page {
+        size: letter;
+        margin: 0.3cm;
+      }
 
-  /* Ajuste del contenedor principal */
-  #sectionHojaVacunas {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 92vh !important; /* Forzamos a que todo quepa en el 92% de la hoja */
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0.2cm !important;
-    border: none !important;
-    position: relative !important;
-  }
-  /* FILAS MÁS ALTAS PARA ESCRIBIR COMODAMENTE */
-  #sectionHojaVacunas table tbody tr {
-    height: 38px !important; /* <--- Aquí ajustas la altura de las celdas */
-  }
+      /* HOJA DE VACUNAS: Ajustes sin forzar display para no romper botones */
+      #sectionHojaVacunas {
+        flex-direction: column !important;
+        height: 92vh !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0.2cm !important;
+        border: none !important;
+        position: relative !important;
+      }
 
-  #sectionHojaVacunas table td {
-    vertical-align: middle !important;
-    padding: 0 4px !important;
-  }
+      #sectionHojaVacunas table tbody tr {
+        height: 38px !important;
+      }
 
-  /* ANCLAJE DE LA DIRECCIÓN AL FONDO DE LA HOJA 1 */
-  .footer-direccion {
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    background: white !important;
-  }
+      #sectionHojaVacunas table td {
+        vertical-align: middle !important;
+        padding: 0 4px !important;
+      }
 
-  .no-print { display: none !important; }
-}
+      .footer-direccion {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background: white !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -3313,6 +3308,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
