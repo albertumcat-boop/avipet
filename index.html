@@ -334,8 +334,7 @@
       <div class="bg-slate-100 p-3 no-print">
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
           Añadir Servicios Rápidos:</label>
-        <select id="selectorServicios" class="menu-desplegable"
-                onchange="window.insertarServicio(this.value)">
+        <select id="selectorServicios" class="menu-desplegable" onchange="window.insertarServicio(this.value)">
           <option value="">-- SELECCIONE UN SERVICIO --</option>
           
           <optgroup label="🩺 CONSULTAS">
@@ -361,11 +360,6 @@
             <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
             <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
             <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-            <option value="DISTEMPER">DISTEMPER</option>
-            <option value="PARVOVIRUS - CORONAVIRUS">PARVOVIRUS - CORONAVIRUS</option>
-            <option value="FILARIASIS">FILARIASIS</option>
-            <option value="SIDA - LEUCEMIA">SIDA - LEUCEMIA</option>
-            <option value="TEST HELICOBACTER PYLORI AG">TEST HELICOBACTER PYLORI AG</option>
             <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
             <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
             <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
@@ -398,6 +392,31 @@
             <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
           </optgroup>
         </select>
+
+        <div class="p-3 bg-slate-100 rounded-lg border border-slate-300 mt-4 no-print">
+          <h4 class="text-[10px] font-black text-slate-700 mb-2 uppercase italic">🧪 Panel de Tests Rápidos (Múltiple)</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-white rounded border shadow-inner">
+            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
+              <input type="checkbox" name="testRapido" value="DISTEMPER" class="w-4 h-4"> <span>Distemper</span>
+            </label>
+            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
+              <input type="checkbox" name="testRapido" value="PARVOVIRUS - CORONAVIRUS" class="w-4 h-4"> <span>Parvo - Corona</span>
+            </label>
+            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
+              <input type="checkbox" name="testRapido" value="FILARIASIS" class="w-4 h-4"> <span>Filariasis</span>
+            </label>
+            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
+              <input type="checkbox" name="testRapido" value="SIDA - LEUCEMIA" class="w-4 h-4"> <span>Sida - Leucemia</span>
+            </label>
+            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
+              <input type="checkbox" name="testRapido" value="TEST HELICOBACTER PYLORI AG" class="w-4 h-4"> <span>Helicobacter P.</span>
+            </label>
+          </div>
+          <button type="button" onclick="window.agregarTestsSeleccionados()" 
+                  class="w-full mt-2 bg-blue-600 text-white text-[10px] font-black py-2 rounded hover:bg-blue-700 uppercase shadow-sm">
+            ✅ Agregar Tests Seleccionados
+          </button>
+        </div>
 
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
           Añadir Medicamentos:</label>
@@ -433,14 +452,13 @@
         </select>
       </div>
       <textarea id="hTratamiento"
-          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg.white outline-none"
+          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none border border-slate-200"
                 placeholder="Escriba aquí el diagnóstico..."
                 oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
       <div id="hTratamientoPrint"
            class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
     </div>
 
-    <!-- Insumos -->
     <div id="contenedorInsumos"
          class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
       <table class="w-full text-[11px] text-left">
@@ -456,11 +474,11 @@
       </table>
       <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
         <input type="text" id="nombreExtra"
-               placeholder="Añadir algo extra..."
-               class="flex-1 text-[10px] p-2 border rounded bg-white">
+                placeholder="Añadir algo extra..."
+                class="flex-1 text-[10px] p-2 border rounded bg-white">
         <input type="number" id="costoExtra"
-               placeholder="0.00"
-               class="w-14 text-[10px] p-2 border rounded bg-white">
+                placeholder="0.00"
+                class="w-14 text-[10px] p-2 border rounded bg-white">
         <button onclick="window.agregarInsumoManual()"
                 class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">
           + AGREGAR
@@ -468,7 +486,6 @@
       </div>
     </div>
 
-    <!-- Monto (solo precio cobrado) -->
     <div class="no-print flex justify-center mb-6">
       <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
         <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">
@@ -483,7 +500,6 @@
     </div>
     <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
 
-    <!-- Botones Guardar -->
     <div class="grid grid-cols-2 gap-3">
       <button type="button"
               onclick="guardarFirebase(false)"
@@ -497,28 +513,23 @@
       </button>
     </div>
 
-    <!-- 📄 Receta Sin Costos -->
     <button type="button"
             onclick="window.imprimirRecetaLimpia()"
             class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
       📄 Receta Sin Costos
     </button>
 
-    <!-- 💉 Hoja de Vacunas del Paciente -->
     <button type="button"
             onclick="window.abrirHojaVacunasDesdeHistoria()"
             class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
       💉 Hoja de Vacunas del Paciente
     </button>
 
-    <!-- NUEVO: Recepción → Cola de Espera -->
     <button type="button"
             onclick="window.enviarAColaEspera()"
             class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
       ➕ Enviar a Cola de Espera
     </button>
-  </section>
-
   <section id="sectionHojaVacunas"
          class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col"
          style="height: 92vh;">
@@ -3359,10 +3370,26 @@ window.volverAHistoriaDesdeVacunas = () => {
       bloqueTests.classList.remove('hidden');
     }
   };
+  // --- NUEVA FUNCIÓN PARA LOS TESTS RÁPIDOS ---
+window.agregarTestsSeleccionados = async () => {
+    // Busca los cuadritos marcados en el nuevo panel
+    const seleccionados = document.querySelectorAll('input[name="testRapido"]:checked');
+    
+    if (seleccionados.length === 0) {
+        return alert("Albert, selecciona al menos un test de la lista.");
+    }
+    
+    // Procesa cada test usando la lógica de precios e insumos que ya tienes
+    for (const test of seleccionados) {
+        await window.insertarServicio(test.value);
+        test.checked = false; // Se desmarcan solos para el próximo paciente
+    }
+};
 </script>
 
 </body>
 </html>
+
 
 
 
