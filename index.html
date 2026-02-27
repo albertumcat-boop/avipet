@@ -74,73 +74,75 @@
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-    /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO ========= */
+   /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO ========= */
     @media print {
+      /* 1. OCULTAR TODO LO QUE NO SEA RELEVANTE */
       .no-print, button, select, nav, #loginSection,
-      .finanzas-ocultar, .menu-desplegable { display:none !important; }
+      .finanzas-ocultar, .menu-desplegable, .hidden { 
+        display: none !important; 
+      }
+
+      /* 2. FORZAR QUE SOLO SE VEA LA SECCIÓN ACTIVA */
+      section.hidden {
+        display: none !important;
+      }
 
       body {
-        background-color:white !important;
-        padding:0; margin:0;
+        background-color: white !important;
+        padding: 0; margin: 0;
       }
 
       .print-area {
-        border:none !important;
-        box-shadow:none !important;
-        width:100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        /* Si la sección NO tiene .hidden, se muestra; si la tiene, se oculta */
+        display: block !important;
+      }
+
+      /* Caso específico para Vacunas que usa flex */
+      #sectionHojaVacunas:not(.hidden) {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 94% !important;
+        padding-top: 15px !important;
+        overflow: hidden !important;
       }
 
       #doctorPrint {
-        display:block !important;
-        font-weight:800;
-        text-transform:uppercase;
-        font-size:14px;
-        color:black;
-        margin-top:10px;
+        display: block !important;
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 14px;
+        color: black;
+        margin-top: 10px;
       }
 
-      #hTratamiento { display:none !important; }
+      #hTratamiento { display: none !important; }
 
       #hTratamientoPrint {
-        display:block !important;
-        border:none !important;
-        height:auto !important;
-        overflow:visible !important;
-        white-space:pre-wrap !important;
-        font-size:13px;
-        line-height:1.6;
-        color:black !important;
-        width:100% !important;
+        display: block !important;
+        border: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        white-space: pre-wrap !important;
+        font-size: 13px;
+        line-height: 1.6;
+        color: black !important;
+        width: 100% !important;
       }
 
       input {
-        border:none !important;
-        color:black !important;
-        font-weight:bold;
+        border: none !important;
+        color: black !important;
+        font-weight: bold;
       }
 
       @page {
         size: letter;
-        /* Margen superior de 1.2cm para asegurar que el logo baje y no se corte */
         margin: 1.2cm 0.5cm 0.5cm 0.5cm; 
       }
 
-      /* HOJA DE VACUNAS: Ajuste de altura y padding para proteger el logo */
-      #sectionHojaVacunas {
-        display: flex !important;
-        flex-direction: column !important;
-        /* Bajamos a 94% para compensar el margen superior y evitar hoja en blanco */
-        height: 94% !important;   
-        width: 100% !important;
-        margin: 0 !important;
-        /* Padding extra para empujar el logo hacia abajo dentro de la sección */
-        padding-top: 15px !important; 
-        border: none !important;
-        position: relative !important;
-        overflow: hidden !important; 
-      }
-
-      /* FILAS: Mantenemos un tamaño grande y cómodo */
       #sectionHojaVacunas table tbody tr {
         height: 44px !important; 
       }
@@ -148,10 +150,9 @@
       #sectionHojaVacunas table td {
         vertical-align: middle !important;
         padding: 0 8px !important;
-        font-size: 12px !important; /* Ajuste ligero de fuente para optimizar espacio */
+        font-size: 12px !important;
       }
 
-      /* EL FOOTER: Anclado al fondo */
       .footer-direccion {
         position: absolute !important;
         bottom: 0 !important;
@@ -502,8 +503,7 @@
     </button>
   </section>
 
-  <!-- ========== HOJA DE VACUNAS / DESPARASITACIONES ========== -->
-<section id="sectionHojaVacunas"
+  <section id="sectionHojaVacunas"
          class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col"
          style="height: 92vh;">
   
@@ -516,14 +516,15 @@
   </div>
 
   <div class="flex-grow">
-    <div class="border-b-2 border-slate-800 pb-1 mb-2 flex items-center justify-between relative" style="min-height: 30px;">
+    <div class="border-b-2 border-slate-800 pb-2 mb-2 flex flex-col sm:flex-row items-center justify-between gap-2" style="min-height: 80px;">
       
-      <div class="relative w-32 h-0">
-        <div class="absolute left-0 w-32 h-32 z-50" style="top: -65px !important;">
+      <div class="flex items-center justify-center sm:justify-start">
+        <div class="w-32 h-20">
           <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
         </div>
       </div>
 
+      <div class="flex flex-col items-center sm:items-end text-center sm:text-right">
       <div class="flex-grow text-center">
         <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">
           Tarjeta de Vacunación y Desparasitación
@@ -3332,6 +3333,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
