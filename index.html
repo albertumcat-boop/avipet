@@ -335,63 +335,72 @@
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
           Añadir Servicios Rápidos:</label>
         <select id="selectorServicios" class="menu-desplegable" onchange="window.insertarServicio(this.value)">
-          <option value="">-- SELECCIONE UN SERVICIO --</option>
-          
-          <optgroup label="🩺 CONSULTAS">
-            <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
-            <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
-            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
-            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
-            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
-            <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
-          </optgroup>
+    <option value="">-- SELECCIONE UN SERVICIO --</option>
+    
+    <optgroup label="🩺 CONSULTAS">
+        <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
+        <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+        <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+        <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+        <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+        <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
+    </optgroup>
 
-          <optgroup label="💉 VACUNAS">
-            <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
-            <option value="VACUNA PUPPY">VACUNA PUPPY</option>
-            <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
-            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
-            <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
-            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
-            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
-          </optgroup>
+    <optgroup label="💉 VACUNAS">
+        <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
+        <option value="VACUNA PUPPY">VACUNA PUPPY</option>
+        <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+        <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
+        <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+        <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+        <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
+    </optgroup>
 
-          <optgroup label="🔬 LABORATORIO">
-            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
-            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
-            <option value="DESCARTE HEMOPARASITO">DESCARTE HEMOPARASITO</option>
-            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
-            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
-            <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
-            <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
-            <option value="RASPADO PIEL">RASPADO PIEL</option>
-            <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
-          </optgroup>
+    <optgroup label="🔬 LABORATORIO">
+        <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+        <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+        <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
+        <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+        <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
+        <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
+        <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
+        <option value="RASPADO PIEL">RASPADO PIEL</option>
+        <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
+    </optgroup>
 
-          <optgroup label="📋 REFERIDOS (EXTERNOS)">
-            <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
-            <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
-            <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
-            <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
-            <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
-            <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS - CORONAVIRUS</option>
-            <option value="REFERIDO: BIOPSIA">REFERIDO: BIOPSIA</option>
-            <option value="REFERIDO: PERFIL 20">REFERIDO: PERFIL 20</option>
-          </optgroup>
+    <optgroup label="🧪 TESTS RÁPIDOS">
+        <option value="DESCARTE HEMOPARASITO">TEST HEMOPARÁSITO (4DX/ERL/ANA)</option>
+        <option value="DISTEMPER">TEST DISTEMPER (MOQUILLO)</option>
+        <option value="PARVOVIRUS - CORONAVIRUS">TEST PARVOVIRUS - CORONAVIRUS</option>
+        <option value="FILARIASIS">TEST FILARIASIS</option>
+        <option value="SIDA - LEUCEMIA">TEST SIDA - LEUCEMIA</option>
+        <option value="TEST HELICOBACTER PYLORI AG">TEST HELICOBACTER PYLORI AG</option>
+    </optgroup>
 
-          <optgroup label="🐾 OTROS PROCEDIMIENTOS">
-            <option value="ABSCESO">ABSCESO</option>
-            <option value="ECOGRAFÍA">ECOGRAFÍA</option>
-            <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
-            <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
-            <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
-            <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
-            <option value="KG ADICIONAL">KG ADICIONAL</option>
-            <option value="DISPOSICION">DISPOSICIÓN</option>
-            <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
-          </optgroup>
-        </select>
+    <optgroup label="📋 REFERIDOS (EXTERNOS)">
+        <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
+        <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
+        <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
+        <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
+        <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
+        <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS - CORONAVIRUS</option>
+        <option value="REFERIDO: BIOPSIA">REFERIDO: BIOPSIA</option>
+        <option value="REFERIDO: PERFIL 20">REFERIDO: PERFIL 20</option>
+        <option value="REFERIDO: ECOGRAFÍA">REFERIDO: ECOGRAFÍA ($35)</option>
+    </optgroup>
+
+    <optgroup label="🐾 OTROS PROCEDIMIENTOS">
+        <option value="ABSCESO">ABSCESO</option>
+        <option value="ECOGRAFÍA">ECOGRAFÍA</option>
+        <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
+        <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
+        <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
+        <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
+        <option value="KG ADICIONAL">KG ADICIONAL</option>
+        <option value="DISPOSICION">DISPOSICIÓN</option>
+        <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
+    </optgroup>
+</select>
 
         <div class="p-3 bg-slate-100 rounded-lg border border-slate-300 mt-4 no-print">
           <h4 class="text-[10px] font-black text-slate-700 mb-2 uppercase italic">🧪 Panel de Tests Rápidos (Múltiple)</h4>
@@ -652,31 +661,44 @@
       </div>
     </div>
 
-    <div id="bloqueTests" class="hidden">
-      <div class="border-2 border-slate-800 rounded-lg overflow-hidden">
-        <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">Certificado de Diagnóstico Rápido</div>
-        <table class="w-full text-[11px]">
-          <thead class="bg-slate-200 border-b-2 border-slate-800">
-            <tr>
-              <th class="p-3 text-left">Antígeno / Prueba Analizada</th>
-              <th class="p-3 text-center w-40">Resultado</th>
-              <th class="p-3 text-left">Observaciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-400">
-            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Moquillo Canino (CDV Ag)</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
-            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Parvovirus Canino (CPV Ag)</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
-            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Ehrlichia / Anaplasma / Lyme</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
-            <tr class="h-14"><td class="px-3 font-bold uppercase italic">Leucemia / Inmuno (Felinos)</td><td class="px-2 text-center font-black text-xs">---</td><td class="px-2 border-l border-slate-300"><input class="w-full"></td></tr>
-            <tr class="h-14"><td class="px-3 border-t-2 border-slate-800 bg-slate-50"><input class="w-full font-bold uppercase" placeholder="OTRO TEST..."></td><td class="px-2 text-center border-t-2 border-slate-800 bg-slate-50">---</td><td class="px-2 border-l border-slate-300 border-t-2 border-slate-800 bg-slate-50"><input class="w-full"></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
-        <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
-      </div>
+   <div class="no-print mb-4 p-4 bg-slate-100 rounded-xl border border-slate-300">
+  <label class="block text-[10px] font-black text-slate-700 uppercase mb-2">🧪 Añadir Test al Certificado:</label>
+  <select id="selectorTestCertificado" class="w-full p-2 rounded border-2 border-slate-800 font-bold text-xs uppercase"
+          onchange="window.agregarFilaTest(this.value); this.value=''">
+    <option value="">-- SELECCIONE UN TEST --</option>
+    <option value="Moquillo Canino (CDV Ag)">Moquillo Canino (CDV Ag)</option>
+    <option value="Parvovirus Canino (CPV Ag)">Parvovirus Canino (CPV Ag)</option>
+    <option value="Descarte Hemoparásitos (Ehr/Ana/Lyme)">Hemoparásitos (4DX)</option>
+    <option value="Leucemia / Inmuno Felina">Leucemia / Inmuno Felina</option>
+    <option value="Gusano del Corazón (CHW Ag)">Gusano del Corazón (CHW Ag)</option>
+    <option value="Helicobacter Pylori Ag">Helicobacter Pylori Ag</option>
+    <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
+  </select>
+</div>
+
+<div id="bloqueTests" class="hidden">
+  <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
+    <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">
+      Certificado de Diagnóstico Rápido
     </div>
+    <table class="w-full text-[11px]">
+      <thead class="bg-slate-200 border-b-2 border-slate-800">
+        <tr>
+          <th class="p-3 text-left">Antígeno / Prueba Analizada</th>
+          <th class="p-3 text-center w-40">Resultado</th>
+          <th class="p-3 text-left">Observaciones</th>
+          <th class="no-print p-1 w-8"></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTablaCertificado" class="divide-y divide-slate-400">
+        </tbody>
+    </table>
   </div>
+  
+  <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
+    <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
+  </div>
+</div>
 
  <footer class="mt-auto pt-2 footer-direccion"> <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
       <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
@@ -1048,7 +1070,7 @@
       ]
     },
     "ECOGRAFÍA": {
-      precioVenta: 40,
+      precioVenta: 30,
       insumos: [
         { nombre: "Gel Ecográfico", costo: 1.00 },
         { nombre: "Papel Absorbente", costo: 0.50 },
@@ -1200,6 +1222,10 @@
     "REFERIDO: EXAMEN DE HECES": {
       precioVenta: 10,
       insumos: [{ nombre: "Pago Laboratorio Externo", costo: 5.00 }]
+    },
+    "REFERIDO: ECOGRAFÍA": { 
+        precio: 35, 
+        insumos: [{ nombre: "Pago Laboratorio Externo", costo: 5.00 }] 
     },
     "REFERIDO: EXAMENES DE ORINA": {
       precioVenta: 10,
@@ -3370,25 +3396,56 @@ window.volverAHistoriaDesdeVacunas = () => {
       bloqueTests.classList.remove('hidden');
     }
   };
-  // --- NUEVA FUNCIÓN PARA LOS TESTS RÁPIDOS ---
-window.agregarTestsSeleccionados = async () => {
-    // Busca los cuadritos marcados en el nuevo panel
-    const seleccionados = document.querySelectorAll('input[name="testRapido"]:checked');
+  // --- FUNCIÓN DINÁMICA PARA EL CERTIFICADO DE TESTS ---
+window.agregarFilaTest = (nombre) => {
+    if (!nombre) return;
     
-    if (seleccionados.length === 0) {
-        return alert("Albert, selecciona al menos un test de la lista.");
-    }
+    // Mostramos el bloque si estaba oculto
+    const bloque = document.getElementById('bloqueTests');
+    if (bloque) bloque.classList.remove('hidden');
     
-    // Procesa cada test usando la lógica de precios e insumos que ya tienes
-    for (const test of seleccionados) {
-        await window.insertarServicio(test.value);
-        test.checked = false; // Se desmarcan solos para el próximo paciente
+    const tabla = document.getElementById('cuerpoTablaCertificado');
+    if (!tabla) {
+        console.error("No se encontró el cuerpo de la tabla. Verifica el ID 'cuerpoTablaCertificado'.");
+        return;
     }
+
+    const esOtro = (nombre === "OTRO");
+    
+    const fila = document.createElement('tr');
+    fila.className = "h-14 border-b border-slate-400"; // Altura fija para mantener la estética de tu diseño original
+    
+    fila.innerHTML = `
+        <td class="px-3 font-bold uppercase italic">
+            ${esOtro ? 
+                `<input type="text" class="w-full border-b border-slate-300 outline-none bg-transparent" placeholder="ESCRIBA EL NOMBRE DEL TEST...">` : 
+                nombre}
+        </td>
+        <td class="px-2 text-center">
+            <select class="font-black text-[11px] border rounded p-1 uppercase outline-none bg-white cursor-pointer">
+                <option value="---">---</option>
+                <option value="NEGATIVO (-)">NEGATIVO (-)</option>
+                <option value="POSITIVO (+)">POSITIVO (+)</option>
+                <option value="INVALIDO">INVÁLIDO</option>
+            </select>
+        </td>
+        <td class="px-2 border-l border-slate-300">
+            <input type="text" class="w-full outline-none text-[10px] bg-transparent" placeholder="Añadir nota...">
+        </td>
+        <td class="no-print px-2 text-center">
+            <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold hover:scale-110 transition-transform">
+                ✕
+            </button>
+        </td>
+    `;
+    
+    tabla.appendChild(fila);
 };
 </script>
 
 </body>
 </html>
+
 
 
 
