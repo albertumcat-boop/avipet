@@ -75,93 +75,94 @@
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
    /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO ========= */
-    @media print {
-      /* 1. OCULTAR TODO LO QUE NO SEA RELEVANTE */
-      .no-print, button, select, nav, #loginSection,
-      .finanzas-ocultar, .menu-desplegable, .hidden { 
-        display: none !important; 
-      }
+   @media print {
+  /* 1. OCULTAR TODO LO QUE NO SEA RELEVANTE (PERO NO LOS <select>) */
+  .no-print, button, nav, #loginSection,
+  .finanzas-ocultar, .menu-desplegable, .hidden { 
+    display: none !important; 
+  }
 
-      /* 2. FORZAR QUE SOLO SE VEA LA SECCIÓN ACTIVA */
-      section.hidden {
-        display: none !important;
-      }
+  /* 2. FORZAR QUE SOLO SE VEA LA SECCIÓN ACTIVA */
+  section.hidden {
+    display: none !important;
+  }
 
-      body {
-        background-color: white !important;
-        padding: 0; margin: 0;
-      }
+  body {
+    background-color: white !important;
+    padding: 0;
+    margin: 0;
+  }
 
-      .print-area {
-        border: none !important;
-        box-shadow: none !important;
-        width: 100% !important;
-        /* Si la sección NO tiene .hidden, se muestra; si la tiene, se oculta */
-        display: block !important;
-      }
+  .print-area {
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    /* Si la sección NO tiene .hidden, se muestra; si la tiene, se oculta */
+    display: block !important;
+  }
 
-      /* Caso específico para Vacunas que usa flex */
-      #sectionHojaVacunas:not(.hidden) {
-        display: flex !important;
-        flex-direction: column !important;
-        height: 94% !important;
-        padding-top: 15px !important;
-        overflow: hidden !important;
-      }
+  /* Caso específico para Vacunas que usa flex */
+  #sectionHojaVacunas:not(.hidden) {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 94% !important;
+    padding-top: 15px !important;
+    overflow: hidden !important;
+  }
 
-      #doctorPrint {
-        display: block !important;
-        font-weight: 800;
-        text-transform: uppercase;
-        font-size: 14px;
-        color: black;
-        margin-top: 10px;
-      }
+  #doctorPrint {
+    display: block !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 14px;
+    color: black;
+    margin-top: 10px;
+  }
 
-      #hTratamiento { display: none !important; }
+  #hTratamiento { display: none !important; }
 
-      #hTratamientoPrint {
-        display: block !important;
-        border: none !important;
-        height: auto !important;
-        overflow: visible !important;
-        white-space: pre-wrap !important;
-        font-size: 13px;
-        line-height: 1.6;
-        color: black !important;
-        width: 100% !important;
-      }
+  #hTratamientoPrint {
+    display: block !important;
+    border: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    font-size: 13px;
+    line-height: 1.6;
+    color: black !important;
+    width: 100% !important;
+  }
 
-      input {
-        border: none !important;
-        color: black !important;
-        font-weight: bold;
-      }
+  input {
+    border: none !important;
+    color: black !important;
+    font-weight: bold;
+  }
 
-      @page {
-        size: letter;
-        margin: 1.2cm 0.5cm 0.5cm 0.5cm; 
-      }
+  @page {
+    size: letter;
+    margin: 1.2cm 0.5cm 0.5cm 0.5cm;
+  }
 
-      #sectionHojaVacunas table tbody tr {
-        height: 44px !important; 
-      }
+  #sectionHojaVacunas table tbody tr {
+    height: 44px !important;
+  }
 
-      #sectionHojaVacunas table td {
-        vertical-align: middle !important;
-        padding: 0 8px !important;
-        font-size: 12px !important;
-      }
+  #sectionHojaVacunas table td {
+    vertical-align: middle !important;
+    padding: 0 8px !important;
+    font-size: 12px !important;
+  }
 
-      .footer-direccion {
-        position: absolute !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        background: white !important;
-        padding-bottom: 5px !important;
-      }
-    }
+  .footer-direccion {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: white !important;
+    padding-bottom: 5px !important;
+  }
+}
 
     /* AJUSTE PARA TELÉFONOS: Evita que el logo se monte en las letras */
     @media screen and (max-width: 640px) {
@@ -384,8 +385,6 @@
         <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
         <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
         <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS - CORONAVIRUS</option>
-        <option value="REFERIDO: BIOPSIA">REFERIDO: BIOPSIA</option>
-        <option value="REFERIDO: PERFIL 20">REFERIDO: PERFIL 20</option>
         <option value="REFERIDO: ECOGRAFÍA">REFERIDO: ECOGRAFÍA</option>
     </optgroup>
 
@@ -3419,6 +3418,7 @@ window.agregarFilaTest = (nombre) => {
 
 </body>
 </html>
+
 
 
 
