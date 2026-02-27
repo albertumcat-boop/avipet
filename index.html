@@ -1380,21 +1380,7 @@
     }
   };
 
-  // =========================================================
-  // [05] INSERTAR SERVICIO
-  // =========================================================
-  // 1. FUNCIÓN DE APOYO (Esencial para que funcione la búsqueda de servicios)
-function normalizarNombre(texto) {
-    if (!texto) return "";
-    return texto.toLowerCase()
-                .trim()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
-                .replace(/\s+/g, '')        // Quita espacios
-                .replace(/[:.\-\/]/g, '');  // Quita caracteres especiales
-}
-
-// 2. FUNCIÓN INSERTAR SERVICIO (Actualizada con Referidos y Helicobacter)
-window.insertarServicio = async (v) => {
+ window.insertarServicio = async (v) => {
     if (!v) return;
     const area = document.getElementById('hTratamiento');
 
@@ -1451,7 +1437,7 @@ window.insertarServicio = async (v) => {
         porcentajeServicio = 0;
       } else return;
     } else if (vLimpio.includes("referido")) {
-        // AJUSTE PARA REFERIDOS: Permite confirmar o cambiar el precio de venta
+        // AJUSTE PARA REFERIDOS
         const confirmarPrecio = confirm(`¿El precio de venta para ${nombreFinal} es $${precioFinal}?`);
         if (!confirmarPrecio) {
             const nuevoMonto = prompt(`Ingrese el precio de venta final para ${v}:`, precioFinal);
@@ -1570,11 +1556,9 @@ window.insertarServicio = async (v) => {
     });
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
-};
+  };
 
-// 3. FUNCIÓN AGREGAR MEDICAMENTO (Sin cambios, se mantiene íntegra)
 window.agregarMedicamento = (nombreMed) => {
-    // ... (Tu código original de medicamentos se mantiene aquí igual)
     if (!nombreMed) return;
     const cfg = CONFIG_MEDICAMENTOS[nombreMed];
     if (!cfg) return;
@@ -1617,6 +1601,7 @@ window.agregarMedicamento = (nombreMed) => {
 
     const cuerpo = document.getElementById('listaInsumosDinamica');
     document.getElementById('contenedorInsumos').classList.remove('hidden');
+
     const grupoID = "med-" + Date.now();
     const porcentajeServicioMedicamento = 40;
 
@@ -1647,14 +1632,16 @@ window.agregarMedicamento = (nombreMed) => {
 
     const inputVenta = document.getElementById('precioVenta');
     const montoActual = parseFloat(inputVenta.value) || 0;
-    inputVenta.value = (montoActual + precioCliente).toFixed(2);
+    const nuevoMonto = montoActual + precioCliente;
+    inputVenta.value = nuevoMonto.toFixed(2);
 
-    if (!window.insumosBaseMedicamentoAgregados) {
+    if (typeof insumosBaseMedicamentoAgregados !== 'undefined' && !insumosBaseMedicamentoAgregados) {
       const insumosMedicamento = [
         { nombre: "Jeringa para medicamento", costo: 0.50 },
         { nombre: "Algodón para medicamento", costo: 0.10 },
         { nombre: "Alcohol para medicamento", costo: 0.10 }
       ];
+
       insumosMedicamento.forEach(insumo => {
         const tr = document.createElement('tr');
         tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;
@@ -1665,11 +1652,12 @@ window.agregarMedicamento = (nombreMed) => {
           <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
         cuerpo.appendChild(tr);
       });
-      window.insumosBaseMedicamentoAgregados = true;
+      insumosBaseMedicamentoAgregados = true;
     }
+
     window.calcularTodo();
     document.getElementById('selectorMedicamentos').value = "";
-};
+  };
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -3375,6 +3363,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
