@@ -3233,58 +3233,76 @@ window.agregarMedicamento = (nombreMed) => {
   // =========================================================
   // [19] PUENTE A VACUNAS CON PERFILES DE DOCTOR
   // =========================================================
-  window.abrirHojaVacunasDesdeHistoria = () => {
+ window.abrirHojaVacunasDesdeHistoria = () => {
+    console.log("🛠 Preparando hoja de vacunas...");
+
     const dVal = (id) => document.getElementById(id)?.value.trim() || "";
-    const setV = (id, val) => {
-      const el = document.getElementById(id);
-      if (el) el.value = val || "";
+    
+    // Función mejorada: detecta si es un input (usa .value) o texto (usa .innerText)
+    const setContenido = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') {
+            el.value = val || "";
+        } else {
+            el.innerText = val || "";
+        }
     };
 
-    // 1. Fecha automática (Formato DD/MM/YYYY)
+    // 1. Fecha automática
     const f = new Date();
     const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`;
-    setV('hv_fecha', fechaStr);
+    setContenido('hv_fecha', fechaStr);
 
-    // 2. Trasvase de datos desde la Historia
-    setV('hv_propietario', dVal('hProp'));
-    setV('hv_cedula',      dVal('hCI'));
-    setV('hv_telefono',    dVal('hTlf'));
-    setV('hv_direccion',   dVal('hDir'));
-    setV('hv_especie',     dVal('hEspecie'));
-    setV('hv_raza',        dVal('hRaza'));
-    setV('hv_paciente',    dVal('hNombre'));
-    setV('hv_edad',        dVal('hEdad'));
-    setV('hv_sexo',        dVal('hSexo'));
-    setV('hv_peso',        dVal('hPeso') || dVal('hPesoKg') || "");
-    setV('hv_color',       dVal('hColor'));
+    // 2. Trasvase de datos (Inputs del Paciente)
+    setContenido('hv_propietario', dVal('hProp'));
+    setContenido('hv_cedula',      dVal('hCI'));
+    setContenido('hv_telefono',    dVal('hTlf'));
+    setContenido('hv_direccion',   dVal('hDir'));
+    setContenido('hv_especie',     dVal('hEspecie'));
+    setContenido('hv_raza',        dVal('hRaza'));
+    setContenido('hv_paciente',    dVal('hNombre'));
+    setContenido('hv_edad',        dVal('hEdad'));
+    setContenido('hv_sexo',        dVal('hSexo'));
+    setContenido('hv_color',       dVal('hColor'));
 
-    // 3. Configuración de Marca del Doctor
-    // Si no hay doctor activo, intentamos leer el selector de la historia
+    // 3. Configuración del Doctor (Darwin / Joan)
     const docActual = window.doctorActivoId || document.getElementById('selectDoctor')?.value;
+    
+    if (docActual && window.CONFIG_DOCTORES && window.CONFIG_DOCTORES[docActual]) {
+        const conf = window.CONFIG_DOCTORES[docActual];
+        
+        // Usamos setContenido que ya sabe si es texto o input
+        setContenido('hv_nombreDoctor', conf.nombre);
+        setContenido('hv_clinicaDoctor', conf.clinica);
 
-    if (docActual && window.CONFIG_DOCTORES[docActual]) {
-      const conf = window.CONFIG_DOCTORES[docActual];
-      const elLogo   = document.getElementById('hv_logoDoctor');
-      const elNombre = document.getElementById('hv_nombreDoctor');
-      const elClin   = document.getElementById('hv_clinicaDoctor');
-
-      if (elLogo) {
-        elLogo.src = conf.logo || "";
-        elLogo.alt = conf.nombre || "Logo";
-      }
-      if (elNombre) elNombre.textContent = conf.nombre || "";
-      if (elClin)   elClin.textContent   = conf.clinica || "";
+        const elLogo = document.getElementById('hv_logoDoctor');
+        if (elLogo && conf.logo) {
+            elLogo.src = conf.logo;
+            elLogo.classList.remove('hidden');
+        }
     }
 
-    // 4. Salto de pestaña ordenado
+    // 4. EL SALTO (Lo más importante)
+    // Primero intentamos usar tu sistema de pestañas
     if (typeof window.showTab === 'function') {
-      window.showTab('vacunas');
+        window.showTab('vacunas');
     } else {
-      document.getElementById('sectionHistoria')?.classList.add('hidden');
-      document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
+        // Si no, forzamos el cambio manualmente
+        const h = document.getElementById('sectionHistoria');
+        const v = document.getElementById('sectionHojaVacunas');
+        if (v) {
+            if (h) h.classList.add('hidden');
+            v.classList.remove('hidden');
+            // Aseguramos que el scroll suba al inicio de la hoja
+            window.scrollTo(0, 0);
+        } else {
+            alert("Error: No se encontró la sección 'sectionHojaVacunas'");
+        }
     }
-    console.log("✅ Hoja de Vacunas preparada para el Doctor:", docActual);
-  };
+    
+    console.log("✅ Hoja de Vacunas abierta para:", dVal('hNombre'));
+};
 
   // =========================================================
   // [20] CONFIGURACIÓN DE IDENTIDAD VISUAL
@@ -3412,6 +3430,7 @@ window.agregarFilaTest = (nombre) => {
 
 </body>
 </html>
+
 
 
 
