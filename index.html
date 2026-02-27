@@ -637,17 +637,18 @@
     </div>
 
     <div id="bloqueTests" class="hidden">
-      <div class="no-print mb-4 p-3 bg-slate-100 rounded-lg border border-slate-300">
-        <label class="block text-[10px] font-black text-slate-700 uppercase mb-1 italic">🔬 Añadir Test:</label>
-        <select id="selectorTestCertificado" class="w-full p-2 rounded border border-slate-800 font-bold text-xs uppercase" onchange="window.agregarFilaTest(this.value); this.value=''">
-          <option value="">-- SELECCIONE TEST --</option>
-          <option value="Moquillo Canino (CDV Ag)">Moquillo Canino (CDV Ag)</option>
-          <option value="Parvovirus Canino (CPV Ag)">Parvovirus Canino (CPV Ag)</option>
-          <option value="Descarte Hemoparásitos (4DX)">Hemoparásitos (4DX)</option>
-          <option value="Leucemia / Inmuno Felina">Leucemia / Inmuno Felina</option>
-          <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
-        </select>
-      </div>
+  <div class="no-print mb-4 p-3 bg-slate-100 rounded-lg border border-slate-300">
+    <label class="block text-[10px] font-black text-slate-700 uppercase mb-1 italic">🔬 Añadir Test:</label>
+    <select id="selectorTestCertificado" class="w-full p-2 rounded border border-slate-800 font-bold text-xs uppercase" onchange="window.agregarFilaTest(this.value); this.value=''">
+      <option value="">-- SELECCIONE TEST --</option>
+      <option value="Distemper Canino (CDV Ag)">Distemper Canino (CDV Ag)</option>
+      <option value="Parvovirus Canino (CPV Ag)">Parvovirus Canino (CPV Ag)</option>
+      <option value="Sida - Leucemia Felina (FIV/FeLV)">Sida - Leucemia Felina (FIV/FeLV)</option>
+      <option value="Helicobacter Pylori Ag">Helicobacter Pylori Ag</option>
+      <option value="Descarte Hemoparásitos (4DX)">Descarte Hemoparásitos (4DX)</option>
+      <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
+    </select>
+  </div>
 
       <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
         <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">Certificado de Diagnóstico Rápido</div>
@@ -665,7 +666,7 @@
         </table>
       </div>
       <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
-        <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía. Los resultados deben ser interpretados por el Médico Veterinario tratante.
+        <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
       </div>
     </div>
   </div>
@@ -951,14 +952,12 @@
     "DISPOSICION": { precio: 0, porc: 0 },
     "CREMACION CON CENIZAS": { precio: 0, porc: 0 }, 
     /* --- REFERIDOS --- */
-    "REFERIDO: EXAMEN DE HECES": { precio: 0, porc: 50 },
-    "REFERIDO: EXAMENES DE ORINA": { precio: 0, porc: 50 },
-    "REFERIDO: CULTIVOS": { precio: 0, porc: 50 },
-    "REFERIDO: DESCARTE HEMOPARASITO": { precio: 0, porc: 50 },
-    "REFERIDO: DISTEMPER": { precio: 0, porc: 50 },
-    "REFERIDO: PARVOVIRUS - CORONAVIRUS": { precio: 0, porc: 50 },
-    "REFERIDO: BIOPSIA": { precio: 0, porc: 40 },
-    "REFERIDO: PERFIL 20": { precio: 0, porc: 40 }
+    "REFERIDO: EXAMEN DE HECES": { precio: 14, porc: 50 },
+    "REFERIDO: EXAMENES DE ORINA": { precio: 16, porc: 50 },
+    "REFERIDO: CULTIVOS": { precio: 65, porc: 50 },
+    "REFERIDO: DESCARTE HEMOPARASITO": { precio: 30, porc: 50 },
+    "REFERIDO: DISTEMPER": { precio: 45, porc: 50 },
+    "REFERIDO: PARVOVIRUS - CORONAVIRUS": { precio: 45, porc: 50 },
 };
 
   const insumosFijosMedicos = [
@@ -1217,14 +1216,6 @@
       precioVenta: 35,
       insumos: [{ nombre: "Pago Laboratorio Externo", costo: 17.50 }]
     },
-    "REFERIDO: BIOPSIA": {
-      precioVenta: 60,
-      insumos: [{ nombre: "Pago Patólogo Externo", costo: 36.00 }]
-    },
-    "REFERIDO: PERFIL 20": {
-      precioVenta: 50,
-      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 30.00 }]
-    }
 };
 
   // =========================================================
@@ -1444,14 +1435,8 @@
         porcentajeServicio = 0;
       } else return;
     } else if (vLimpio.includes("referido")) {
-        // AJUSTE PARA REFERIDOS
-        const confirmarPrecio = confirm(`¿El precio de venta para ${nombreFinal} es $${precioFinal}?`);
-        if (!confirmarPrecio) {
-            const nuevoMonto = prompt(`Ingrese el precio de venta final para ${v}:`, precioFinal);
-            if (nuevoMonto && !isNaN(nuevoMonto)) {
-                precioFinal = parseFloat(nuevoMonto);
-            }
-        }
+        // AJUSTE PARA REFERIDOS: Ahora solo usa el precio cargado sin preguntar nada.
+        console.log(`📋 Referido detectado: ${nombreFinal} | Precio: $${precioFinal}`);
     } else {
       // Combos
       if (vLimpio.includes("vacunakc")) {
@@ -3434,6 +3419,7 @@ window.agregarFilaTest = (nombre) => {
 
 </body>
 </html>
+
 
 
 
