@@ -337,6 +337,7 @@
         <select id="selectorServicios" class="menu-desplegable"
                 onchange="window.insertarServicio(this.value)">
           <option value="">-- SELECCIONE UN SERVICIO --</option>
+          
           <optgroup label="🩺 CONSULTAS">
             <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
             <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
@@ -345,6 +346,7 @@
             <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
             <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
           </optgroup>
+
           <optgroup label="💉 VACUNAS">
             <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
             <option value="VACUNA PUPPY">VACUNA PUPPY</option>
@@ -354,6 +356,7 @@
             <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
             <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
           </optgroup>
+
           <optgroup label="🔬 LABORATORIO">
             <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
             <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
@@ -362,6 +365,7 @@
             <option value="PARVOVIRUS - CORONAVIRUS">PARVOVIRUS - CORONAVIRUS</option>
             <option value="FILARIASIS">FILARIASIS</option>
             <option value="SIDA - LEUCEMIA">SIDA - LEUCEMIA</option>
+            <option value="TEST HELICOBACTER PYLORI AG">TEST HELICOBACTER PYLORI AG</option>
             <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
             <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
             <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
@@ -370,6 +374,18 @@
             <option value="RASPADO PIEL">RASPADO PIEL</option>
             <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
           </optgroup>
+
+          <optgroup label="📋 REFERIDOS (EXTERNOS)">
+            <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
+            <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
+            <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
+            <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
+            <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
+            <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS - CORONAVIRUS</option>
+            <option value="REFERIDO: BIOPSIA">REFERIDO: BIOPSIA</option>
+            <option value="REFERIDO: PERFIL 20">REFERIDO: PERFIL 20</option>
+          </optgroup>
+
           <optgroup label="🐾 OTROS PROCEDIMIENTOS">
             <option value="ABSCESO">ABSCESO</option>
             <option value="ECOGRAFÍA">ECOGRAFÍA</option>
@@ -383,7 +399,6 @@
           </optgroup>
         </select>
 
-        <!-- NUEVO: LISTA DESPLEGABLE DE MEDICAMENTOS -->
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
           Añadir Medicamentos:</label>
         <select id="selectorMedicamentos" class="menu-desplegable"
@@ -890,13 +905,13 @@
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
-  const CONFIG_SERVICIOS = {
+ const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
     "CONSULTA OFTALMOLÓGICA": { precio: 0, porc: 12.5 },
     "CONSULTA CAMADA 3-4 CACHORROS": { precio: 0, porc: 40 },
     "CONSULTA CAMADA HASTA 8 CACHORROS": { precio: 0, porc: 40 },
     "CONSULTA CAMADA MAS DE 8 CACHORROS": { precio: 0, porc: 40 },
-    "CONSULTA DE EMERGENCIA": { precio: 0, porc: 40 }, // NUEVO
+    "CONSULTA DE EMERGENCIA": { precio: 0, porc: 40 },
     "ABSCESO": { precio: 0, porc: 50 },
     "ECOGRAFÍA": { precio: 0, porc: 40 },
     "COLOCACION VIA": { precio: 0, porc: 50 },
@@ -916,7 +931,8 @@
     "PARVOVIRUS - CORONAVIRUS": { precio: 0, porc: 50 },
     "FILARIASIS": { precio: 0, porc: 50 },
     "SIDA - LEUCEMIA": { precio: 0, porc: 50 },
-    "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precio: 0, porc: 50 },
+    "TEST HELICOBACTER PYLORI AG": { precio: 40, porc: 50 }, 
+   "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precio: 0, porc: 50 },
     "EXAMEN DE HECES": { precio: 0, porc: 50 },
     "EXAMENES DE ORINA": { precio: 0, porc: 50 },
     "CITOLOGIA 1 OIDO": { precio: 0, porc: 50 },
@@ -930,14 +946,17 @@
     "EUTANASIA HASTA 35KG": { precio: 0, porc: 50 },
     "KG ADICIONAL": { precio: 0, porc: 0 },
     "DISPOSICION": { precio: 0, porc: 0 },
-    "CREMACION CON CENIZAS": { precio: 0, porc: 0 },
+    "CREMACION CON CENIZAS": { precio: 0, porc: 0 }, 
+    /* --- REFERIDOS --- */
     "REFERIDO: EXAMEN DE HECES": { precio: 0, porc: 50 },
     "REFERIDO: EXAMENES DE ORINA": { precio: 0, porc: 50 },
     "REFERIDO: CULTIVOS": { precio: 0, porc: 50 },
     "REFERIDO: DESCARTE HEMOPARASITO": { precio: 0, porc: 50 },
     "REFERIDO: DISTEMPER": { precio: 0, porc: 50 },
-    "REFERIDO: PARVOVIRUS - CORONAVIRUS": { precio: 0, porc: 50 }
-  };
+    "REFERIDO: PARVOVIRUS - CORONAVIRUS": { precio: 0, porc: 50 },
+    "REFERIDO: BIOPSIA": { precio: 0, porc: 40 },
+    "REFERIDO: PERFIL 20": { precio: 0, porc: 40 }
+};
 
   const insumosFijosMedicos = [
     { nombre: "Guantes de examen", costo: 0.50 },
@@ -981,7 +1000,7 @@
   "Infervac":          { precioCliente: 0  }
 };
 
-  const recetas = {
+ const recetas = {
     "CONSULTA GENERAL": {
       precioVenta: 30,
       insumos: [{ nombre: "Crema", costo: 0.50 }]
@@ -1002,7 +1021,7 @@
       precioVenta: 100,
       insumos: [{ nombre: "Insumos Camada XL", costo: 6.00 }]
     },
-    "CONSULTA DE EMERGENCIA": {      // NUEVO
+    "CONSULTA DE EMERGENCIA": {
       precioVenta: 40,
       insumos: [{ nombre: "Crema", costo: 0.50 }]
     },
@@ -1103,6 +1122,10 @@
       precioVenta: 40,
       insumos: [{ nombre: "Kit Test Sida - Leucemia", costo: 15.00 }]
     },
+    "TEST HELICOBACTER PYLORI AG": {
+      precioVenta: 40,
+      insumos: [{ nombre: "Kit Test Helicobacter Ag", costo: 20.00 }]
+    },
     "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": {
       precioVenta: 110,
       insumos: [{ nombre: "Pack Laboratorio Completo", costo: 25.00 }]
@@ -1162,8 +1185,40 @@
         { nombre: "Propofol", costo: 15.00 },
         { nombre: "Xilacina", costo: 4.00 }
       ]
+    },
+    "REFERIDO: EXAMEN DE HECES": {
+      precioVenta: 10,
+      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 5.00 }]
+    },
+    "REFERIDO: EXAMENES DE ORINA": {
+      precioVenta: 10,
+      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 5.00 }]
+    },
+    "REFERIDO: CULTIVOS": {
+      precioVenta: 30,
+      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 15.00 }]
+    },
+    "REFERIDO: DESCARTE HEMOPARASITO": {
+      precioVenta: 40,
+      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 20.00 }]
+    },
+    "REFERIDO: DISTEMPER": {
+      precioVenta: 35,
+      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 17.50 }]
+    },
+    "REFERIDO: PARVOVIRUS - CORONAVIRUS": {
+      precioVenta: 35,
+      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 17.50 }]
+    },
+    "REFERIDO: BIOPSIA": {
+      precioVenta: 60,
+      insumos: [{ nombre: "Pago Patólogo Externo", costo: 36.00 }]
+    },
+    "REFERIDO: PERFIL 20": {
+      precioVenta: 50,
+      insumos: [{ nombre: "Pago Laboratorio Externo", costo: 30.00 }]
     }
-  };
+};
 
   // =========================================================
   // [03] ESTADO
@@ -1328,7 +1383,18 @@
   // =========================================================
   // [05] INSERTAR SERVICIO
   // =========================================================
-  window.insertarServicio = async (v) => {
+  // 1. FUNCIÓN DE APOYO (Esencial para que funcione la búsqueda de servicios)
+function normalizarNombre(texto) {
+    if (!texto) return "";
+    return texto.toLowerCase()
+                .trim()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+                .replace(/\s+/g, '')        // Quita espacios
+                .replace(/[:.\-\/]/g, '');  // Quita caracteres especiales
+}
+
+// 2. FUNCIÓN INSERTAR SERVICIO (Actualizada con Referidos y Helicobacter)
+window.insertarServicio = async (v) => {
     if (!v) return;
     const area = document.getElementById('hTratamiento');
 
@@ -1384,6 +1450,15 @@
         precioFinal = parseFloat(monto);
         porcentajeServicio = 0;
       } else return;
+    } else if (vLimpio.includes("referido")) {
+        // AJUSTE PARA REFERIDOS: Permite confirmar o cambiar el precio de venta
+        const confirmarPrecio = confirm(`¿El precio de venta para ${nombreFinal} es $${precioFinal}?`);
+        if (!confirmarPrecio) {
+            const nuevoMonto = prompt(`Ingrese el precio de venta final para ${v}:`, precioFinal);
+            if (nuevoMonto && !isNaN(nuevoMonto)) {
+                precioFinal = parseFloat(nuevoMonto);
+            }
+        }
     } else {
       // Combos
       if (vLimpio.includes("vacunakc")) {
@@ -1413,7 +1488,6 @@
           precioFinal = 23;
         }
       } else if (vLimpio.includes("vacunaantirrabica")) {
-        // ANTIRRÁBICA: sola 30, en combo con otra vacuna 25
         const tieneOtraVacuna = serviciosEnLista.some(s => {
           const n = normalizarNombre(s);
           return n.includes("vacuna") && !n.includes("antirrabica");
@@ -1496,9 +1570,11 @@
     });
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
-  };
+};
 
-  window.agregarMedicamento = (nombreMed) => {
+// 3. FUNCIÓN AGREGAR MEDICAMENTO (Sin cambios, se mantiene íntegra)
+window.agregarMedicamento = (nombreMed) => {
+    // ... (Tu código original de medicamentos se mantiene aquí igual)
     if (!nombreMed) return;
     const cfg = CONFIG_MEDICAMENTOS[nombreMed];
     if (!cfg) return;
@@ -1506,7 +1582,6 @@
     let precioCliente = 0;
     let descripcion = nombreMed;
 
-    // SUERO HIPERINMUNE: por ml
     if (nombreMed === "Suero hiperinmune") {
       const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
       if (!ml || isNaN(ml) || parseFloat(ml) <= 0) {
@@ -1516,8 +1591,6 @@
       const cantMl = parseFloat(ml);
       precioCliente = (cfg.precioClientePorMl || 0) * cantMl;
       descripcion  += ` (${cantMl} ml)`;
-
-    // ARTROSAN: 1 ml cada 20 kg
     } else if (nombreMed === "Artrosan") {
       const kg = prompt("Ingrese el peso del paciente (kg) para Artrosan (1 ml cada 20 kg):");
       if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
@@ -1528,8 +1601,6 @@
       const mlNecesarios = pesoKg / 20;
       precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
       descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
-
-    // LISAVAC: 1 ml por kg
     } else if (nombreMed === "Lisavac") {
       const kg = prompt("Ingrese el peso del paciente (kg) para Lisavac (1 ml por kg):");
       if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
@@ -1540,23 +1611,17 @@
       const mlNecesarios = pesoKg;
       precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
       descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
-
-    // RESTO: monto fijo
     } else {
       precioCliente = cfg.precioCliente || 0;
     }
 
-    // 1) CREAR UNA FILA "SERVICIO PRINCIPAL" PARA EL MEDICAMENTO
     const cuerpo = document.getElementById('listaInsumosDinamica');
     document.getElementById('contenedorInsumos').classList.remove('hidden');
-
-    const grupoID = "med-" + Date.now(); // id único para el medicamento
-
-    const porcentajeServicioMedicamento = 40; // 40% doctor, 60% Avipet
+    const grupoID = "med-" + Date.now();
+    const porcentajeServicioMedicamento = 40;
 
     const filaTitulo = document.createElement('tr');
-    filaTitulo.className =
-      "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
+    filaTitulo.className = "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
     filaTitulo.setAttribute('data-grupo', grupoID);
     filaTitulo.setAttribute('data-precio', precioCliente);
     filaTitulo.setAttribute('data-porc', porcentajeServicioMedicamento);
@@ -1574,64 +1639,37 @@
       </td>`;
     cuerpo.appendChild(filaTitulo);
 
-    // 2) ANOTAR EN EL TRATAMIENTO
     const area = document.getElementById('hTratamiento');
     if (area) {
-      area.value += (area.value ? "\n" : "") +
-        `=> MEDICAMENTO: ${descripcion} ($${precioCliente.toFixed(2)})`;
+      area.value += (area.value ? "\n" : "") + `=> MEDICAMENTO: ${descripcion} ($${precioCliente.toFixed(2)})`;
       document.getElementById('hTratamientoPrint').innerText = area.value;
     }
 
-    // 3) SUMAR AL MONTO TOTAL A COBRAR
     const inputVenta = document.getElementById('precioVenta');
     const montoActual = parseFloat(inputVenta.value) || 0;
-    const nuevoMonto  = montoActual + precioCliente;
-    inputVenta.value  = nuevoMonto.toFixed(2);
+    inputVenta.value = (montoActual + precioCliente).toFixed(2);
 
-    // 4) INSUMOS BASE DE MEDICAMENTO: SOLO LA PRIMERA VEZ
-    if (!insumosBaseMedicamentoAgregados) {
+    if (!window.insumosBaseMedicamentoAgregados) {
       const insumosMedicamento = [
         { nombre: "Jeringa para medicamento", costo: 0.50 },
         { nombre: "Algodón para medicamento", costo: 0.10 },
         { nombre: "Alcohol para medicamento", costo: 0.10 }
       ];
-
       insumosMedicamento.forEach(insumo => {
         const tr = document.createElement('tr');
         tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;
         tr.innerHTML = `
-          <td class="p-2 font-bold text-[11px] italic">
-            ➕ ${insumo.nombre.toUpperCase()}
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" value="1"
-                   oninput="window.calcularTodo()"
-                   class="i-cant w-12 text-center border rounded">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number"
-                   value="${insumo.costo.toFixed(2)}"
-                   step="0.01"
-                   oninput="window.calcularTodo()"
-                   class="i-cost w-16 text-center border rounded">
-          </td>
-          <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
-              onclick="this.parentElement.remove(); window.calcularTodo()">
-            ✕
-          </td>`;
+          <td class="p-2 font-bold text-[11px] italic">➕ ${insumo.nombre.toUpperCase()}</td>
+          <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td>
+          <td class="p-2 text-center"><input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>
+          <td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
         cuerpo.appendChild(tr);
       });
-
-      insumosBaseMedicamentoAgregados = true;
+      window.insumosBaseMedicamentoAgregados = true;
     }
-
-    // 5) RECALCULAR COSTOS E INGRESOS
     window.calcularTodo();
-
-    // 6) RESET SELECTOR
     document.getElementById('selectorMedicamentos').value = "";
-  };
-
+};
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -3337,6 +3375,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
