@@ -402,31 +402,6 @@
     </optgroup>
 </select>
 
-        <div class="p-3 bg-slate-100 rounded-lg border border-slate-300 mt-4 no-print">
-          <h4 class="text-[10px] font-black text-slate-700 mb-2 uppercase italic">🧪 Panel de Tests Rápidos (Múltiple)</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-white rounded border shadow-inner">
-            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
-              <input type="checkbox" name="testRapido" value="DISTEMPER" class="w-4 h-4"> <span>Distemper</span>
-            </label>
-            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
-              <input type="checkbox" name="testRapido" value="PARVOVIRUS - CORONAVIRUS" class="w-4 h-4"> <span>Parvo - Corona</span>
-            </label>
-            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
-              <input type="checkbox" name="testRapido" value="FILARIASIS" class="w-4 h-4"> <span>Filariasis</span>
-            </label>
-            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
-              <input type="checkbox" name="testRapido" value="SIDA - LEUCEMIA" class="w-4 h-4"> <span>Sida - Leucemia</span>
-            </label>
-            <label class="flex items-center space-x-2 text-[10px] font-bold text-gray-700 uppercase cursor-pointer">
-              <input type="checkbox" name="testRapido" value="TEST HELICOBACTER PYLORI AG" class="w-4 h-4"> <span>Helicobacter P.</span>
-            </label>
-          </div>
-          <button type="button" onclick="window.agregarTestsSeleccionados()" 
-                  class="w-full mt-2 bg-blue-600 text-white text-[10px] font-black py-2 rounded hover:bg-blue-700 uppercase shadow-sm">
-            ✅ Agregar Tests Seleccionados
-          </button>
-        </div>
-
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
           Añadir Medicamentos:</label>
         <select id="selectorMedicamentos" class="menu-desplegable"
@@ -539,13 +514,11 @@
             class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
       ➕ Enviar a Cola de Espera
     </button>
-  <section id="sectionHojaVacunas"
-         class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col"
-         style="height: 92vh;">
+<section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col" style="height: 92vh;">
   
-  <div class="no-print mb-4">
-    <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento:</label>
-    <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white">
+  <div class="no-print mb-4 p-2 bg-slate-50 border-b border-slate-200 rounded-t-lg">
+    <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento a Emitir:</label>
+    <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="w-full p-2 border border-slate-400 rounded font-bold text-xs bg-white mt-1">
       <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
       <option value="test_rapido">Certificado de Tests Rápidos</option>
     </select>
@@ -553,32 +526,24 @@
 
   <div class="flex-grow">
     <div class="border-b-2 border-slate-800 pb-2 mb-2 flex flex-col sm:flex-row items-center justify-between gap-2" style="min-height: 80px;">
-      
-     <div class="flex items-center justify-center sm:justify-start">
-  <div class="w-32 flex flex-col items-center sm:items-start">
-    <div class="w-full h-20">
-      <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
-    </div>
-    <p class="text-[9px] font-bold text-slate-700 mt-[-14px] leading-none uppercase">RIF: J-00068577-0</p>
-  </div>
-</div>
+      <div class="flex items-center justify-center sm:justify-start">
+        <div class="w-32 flex flex-col items-center sm:items-start">
+          <div class="w-full h-20">
+            <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
+          </div>
+          <p class="text-[9px] font-bold text-slate-700 mt-[-14px] leading-none uppercase">RIF: J-00068577-0</p>
+        </div>
+      </div>
 
-      <div class="flex flex-col items-center sm:items-end text-center sm:text-right">
-      <div class="flex-grow text-center">
+      <div class="flex flex-col items-center text-center">
         <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">
           Tarjeta de Vacunación y Desparasitación
         </h2>
-      </div>
-
-      <div class="w-32"></div>
-    </div>
-      <div class="w-32 no-print"></div>
-    </div>
-      <div class="flex-1 flex flex-col items-center text-center">
         <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
         <p id="hv_clinicaDoctor" class="text-[10px] text-slate-700 leading-tight font-medium"></p>
         <p id="tituloFormatoDinamico" class="text-[12px] font-black text-blue-800 uppercase mt-1">CONTROL DE VACUNAS</p>
       </div>
+
       <div class="text-right">
         <p class="text-[8px] font-bold text-slate-500 uppercase">Fecha Emisión</p>
         <input type="text" id="hv_fecha" class="w-24 text-right font-black text-xs text-slate-800 bg-transparent border-b border-slate-400" readonly>
@@ -586,31 +551,31 @@
     </div>
 
     <div class="grid grid-cols-2 gap-2 mb-2">
-        <div class="border border-slate-400 rounded p-1.5">
-          <div class="space-y-1">
-            <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">PACIENTE:</span><input id="hv_paciente" class="flex-1 font-black text-emerald-800 uppercase text-[10px]"></div>
-            <div class="grid grid-cols-2 gap-1">
-              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">ESPECIE:</span><input id="hv_especie" class="flex-1 text-[9px] uppercase"></div>
-              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">RAZA:</span><input id="hv_raza" class="flex-1 text-[9px] uppercase"></div>
-            </div>
-            <div class="grid grid-cols-3 gap-1">
-              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">EDAD:</span><input id="hv_edad" class="w-full text-[9px]"></div>
-              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">SEXO:</span><input id="hv_sexo" class="w-full text-[9px]"></div>
-              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">COLOR:</span><input id="hv_color" class="w-full text-[9px]"></div>
-            </div>
+      <div class="border border-slate-400 rounded p-1.5">
+        <div class="space-y-1">
+          <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">PACIENTE:</span><input id="hv_paciente" class="flex-1 font-black text-emerald-800 uppercase text-[10px]"></div>
+          <div class="grid grid-cols-2 gap-1">
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">ESPECIE:</span><input id="hv_especie" class="flex-1 text-[9px] uppercase"></div>
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">RAZA:</span><input id="hv_raza" class="flex-1 text-[9px] uppercase"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-1">
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">EDAD:</span><input id="hv_edad" class="w-full text-[9px]"></div>
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">SEXO:</span><input id="hv_sexo" class="w-full text-[9px]"></div>
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">COLOR:</span><input id="hv_color" class="w-full text-[9px]"></div>
           </div>
         </div>
+      </div>
 
-        <div class="border border-slate-400 rounded p-1.5">
-          <div class="space-y-1">
-            <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">DUEÑO:</span><input id="hv_propietario" class="flex-1 font-bold text-[10px] uppercase"></div>
-            <div class="grid grid-cols-2 gap-1">
-              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">CÉDULA:</span><input id="hv_cedula" class="flex-1 text-[9px]"></div>
-              <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">TLF:</span><input id="hv_telefono" class="flex-1 text-[9px]"></div>
-            </div>
-            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-16">DIRECCIÓN:</span><input id="hv_direccion" class="flex-1 text-[8px] uppercase"></div>
+      <div class="border border-slate-400 rounded p-1.5">
+        <div class="space-y-1">
+          <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">DUEÑO:</span><input id="hv_propietario" class="flex-1 font-bold text-[10px] uppercase"></div>
+          <div class="grid grid-cols-2 gap-1">
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">CÉDULA:</span><input id="hv_cedula" class="flex-1 text-[9px]"></div>
+            <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">TLF:</span><input id="hv_telefono" class="flex-1 text-[9px]"></div>
           </div>
+          <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-16">DIRECCIÓN:</span><input id="hv_direccion" class="flex-1 text-[8px] uppercase"></div>
         </div>
+      </div>
     </div>
 
     <div id="bloqueVacunas">
@@ -627,14 +592,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="h-8 border-b border-slate-300"><td class="border-r border-slate-200"><input class="w-full text-center"></td><td class="border-r border-slate-200"><input class="w-full px-1"></td><td class="border-r border-slate-200"><input class="w-full text-center"></td><td class="border-r border-slate-200"><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
             <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
             <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
             <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
@@ -654,53 +615,55 @@
           <tbody>
             <tr class="h-8 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
             <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-   <div class="no-print mb-4 p-4 bg-slate-100 rounded-xl border border-slate-300">
-  <label class="block text-[10px] font-black text-slate-700 uppercase mb-2">🧪 Añadir Test al Certificado:</label>
-  <select id="selectorTestCertificado" class="w-full p-2 rounded border-2 border-slate-800 font-bold text-xs uppercase"
-          onchange="window.agregarFilaTest(this.value); this.value=''">
-    <option value="">-- SELECCIONE UN TEST --</option>
-    <option value="Moquillo Canino (CDV Ag)">Moquillo Canino (CDV Ag)</option>
-    <option value="Parvovirus Canino (CPV Ag)">Parvovirus Canino (CPV Ag)</option>
-    <option value="Descarte Hemoparásitos (Ehr/Ana/Lyme)">Hemoparásitos (4DX)</option>
-    <option value="Leucemia / Inmuno Felina">Leucemia / Inmuno Felina</option>
-    <option value="Gusano del Corazón (CHW Ag)">Gusano del Corazón (CHW Ag)</option>
-    <option value="Helicobacter Pylori Ag">Helicobacter Pylori Ag</option>
-    <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
-  </select>
-</div>
+    <div id="bloqueSeccionTest" class="hidden">
+      <div class="no-print mb-4 p-4 bg-slate-100 rounded-xl border border-slate-300">
+        <label class="block text-[10px] font-black text-slate-700 uppercase mb-2 italic">🔬 Añadir Test al Certificado:</label>
+        <select id="selectorTestCertificado" class="w-full p-2 rounded border-2 border-slate-800 font-bold text-xs uppercase bg-white shadow-sm"
+                onchange="window.agregarFilaTest(this.value); this.value=''">
+          <option value="">-- SELECCIONE UN TEST --</option>
+          <option value="Moquillo Canino (CDV Ag)">Moquillo Canino (CDV Ag)</option>
+          <option value="Parvovirus Canino (CPV Ag)">Parvovirus Canino (CPV Ag)</option>
+          <option value="Descarte Hemoparásitos (Ehr/Ana/Lyme)">Hemoparásitos (4DX)</option>
+          <option value="Leucemia / Inmuno Felina">Leucemia / Inmuno Felina</option>
+          <option value="Gusano del Corazón (CHW Ag)">Gusano del Corazón (CHW Ag)</option>
+          <option value="Helicobacter Pylori Ag">Helicobacter Pylori Ag</option>
+          <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
+        </select>
+      </div>
 
-<div id="bloqueTests" class="hidden">
-  <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
-    <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">
-      Certificado de Diagnóstico Rápido
+      <div id="bloqueTestsPrint">
+        <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
+          <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">
+            Certificado de Diagnóstico Rápido
+          </div>
+          <table class="w-full text-[11px]">
+            <thead class="bg-slate-200 border-b-2 border-slate-800">
+              <tr>
+                <th class="p-3 text-left">Antígeno / Prueba Analizada</th>
+                <th class="p-3 text-center w-40">Resultado</th>
+                <th class="p-3 text-left">Observaciones</th>
+                <th class="no-print p-1 w-8"></th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaCertificado" class="divide-y divide-slate-400 italic font-medium">
+              </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
+          <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante.
+        </div>
+      </div>
     </div>
-    <table class="w-full text-[11px]">
-      <thead class="bg-slate-200 border-b-2 border-slate-800">
-        <tr>
-          <th class="p-3 text-left">Antígeno / Prueba Analizada</th>
-          <th class="p-3 text-center w-40">Resultado</th>
-          <th class="p-3 text-left">Observaciones</th>
-          <th class="no-print p-1 w-8"></th>
-        </tr>
-      </thead>
-      <tbody id="cuerpoTablaCertificado" class="divide-y divide-slate-400">
-        </tbody>
-    </table>
   </div>
-  
-  <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
-    <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
-  </div>
-</div>
 
- <footer class="mt-auto pt-2 footer-direccion"> <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
+  <footer class="mt-auto pt-2 footer-direccion"> 
+    <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
       <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
       Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California (frente Gimnasio Vertical El Dorado).<br>
       Caracas - Miranda. Teléfono: (0212) 271-0435
@@ -708,8 +671,8 @@
   </footer>
 
   <div class="no-print flex justify-between gap-4 mt-4">
-    <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-2 rounded-lg font-black text-[10px] uppercase text-slate-600 border border-slate-300">⬅ Volver</button>
-    <button type="button" onclick="window.print()" class="flex-1 bg-blue-700 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨 Imprimir Formato</button>
+    <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-2 rounded-lg font-black text-[10px] uppercase text-slate-600 border border-slate-300 hover:bg-slate-300">⬅ Volver</button>
+    <button type="button" onclick="window.print()" class="flex-1 bg-blue-700 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-blue-800">🖨 Imprimir Formato</button>
   </div>
 </section>
   <!-- ========== BUSCADOR ========== -->
@@ -3377,51 +3340,55 @@ window.volverAHistoriaDesdeVacunas = () => {
     }, 500);
   };
 
-  // LA NUEVA FUNCIÓN (El selector de formatos)
-  // Pégala justo aquí:
-  window.cambiarTipoFormato = (valor) => {
-    const titulo = document.getElementById('tituloFormatoDinamico');
+  // --- NUEVA FUNCIÓN PARA EL SELECTOR DE FORMATOS ---
+window.cambiarTipoFormato = (valor) => {
+    const tituloDoc = document.getElementById('tituloDocumentoDinámico');
+    const subtitulo = document.getElementById('tituloFormatoDinamico');
     const bloqueVacunas = document.getElementById('bloqueVacunas');
-    const bloqueTests = document.getElementById('bloqueTests');
+    const bloqueSeccionTest = document.getElementById('bloqueSeccionTest');
 
-    if (!titulo || !bloqueVacunas || !bloqueTests) return;
+    if (!bloqueVacunas || !bloqueSeccionTest) return;
 
     if (valor === 'vacunas') {
-      titulo.innerText = 'CONTROL DE VACUNAS';
-      bloqueVacunas.classList.remove('hidden');
-      bloqueTests.classList.add('hidden');
+        // Ajuste para Tarjeta de Vacunas
+        if(tituloDoc) tituloDoc.innerText = 'Tarjeta de Vacunación y Desparasitación';
+        if(subtitulo) subtitulo.innerText = 'CONTROL DE VACUNAS';
+        bloqueVacunas.classList.remove('hidden');
+        bloqueSeccionTest.classList.add('hidden');
     } else if (valor === 'test_rapido') {
-      titulo.innerText = 'CERTIFICADO DE TESTS RÁPIDOS';
-      bloqueVacunas.classList.add('hidden');
-      bloqueTests.classList.remove('hidden');
+        // Ajuste para Certificado de Tests
+        if(tituloDoc) tituloDoc.innerText = 'Certificado de Diagnóstico Rápido';
+        if(subtitulo) subtitulo.innerText = 'RESULTADOS DE LABORATORIO';
+        bloqueVacunas.classList.add('hidden');
+        bloqueSeccionTest.classList.remove('hidden');
     }
-  };
-  // --- FUNCIÓN DINÁMICA PARA EL CERTIFICADO DE TESTS ---
+};
+
+// --- FUNCIÓN DINÁMICA PARA EL CERTIFICADO DE TESTS ---
 window.agregarFilaTest = (nombre) => {
     if (!nombre) return;
     
-    // Mostramos el bloque si estaba oculto
-    const bloque = document.getElementById('bloqueTests');
-    if (bloque) bloque.classList.remove('hidden');
+    // Mostramos el contenedor de la tabla (el que tiene el aviso legal)
+    const bloqueTabla = document.getElementById('bloqueTestsPrint');
+    if (bloqueTabla) bloqueTabla.classList.remove('hidden');
     
     const tabla = document.getElementById('cuerpoTablaCertificado');
     if (!tabla) {
-        console.error("No se encontró el cuerpo de la tabla. Verifica el ID 'cuerpoTablaCertificado'.");
+        console.error("No se encontró el cuerpo de la tabla 'cuerpoTablaCertificado'");
         return;
     }
 
     const esOtro = (nombre === "OTRO");
-    
     const fila = document.createElement('tr');
-    fila.className = "h-14 border-b border-slate-400"; // Altura fija para mantener la estética de tu diseño original
+    fila.className = "h-14 border-b border-slate-400 bg-white";
     
     fila.innerHTML = `
         <td class="px-3 font-bold uppercase italic">
             ${esOtro ? 
-                `<input type="text" class="w-full border-b border-slate-300 outline-none bg-transparent" placeholder="ESCRIBA EL NOMBRE DEL TEST...">` : 
+                `<input type="text" class="w-full border-b border-blue-300 outline-none bg-transparent" placeholder="ESCRIBA EL NOMBRE DEL TEST...">` : 
                 nombre}
         </td>
-        <td class="px-2 text-center">
+        <td class="px-2 text-center border-l border-r border-slate-200">
             <select class="font-black text-[11px] border rounded p-1 uppercase outline-none bg-white cursor-pointer">
                 <option value="---">---</option>
                 <option value="NEGATIVO (-)">NEGATIVO (-)</option>
@@ -3445,6 +3412,7 @@ window.agregarFilaTest = (nombre) => {
 
 </body>
 </html>
+
 
 
 
