@@ -119,28 +119,28 @@
         font-weight:bold;
       }
 
-     @page {
+      @page {
         size: letter;
-        /* Margen de papel: 1cm arriba para asegurar que entre cualquier cabezal de impresora */
-        margin: 1cm 0.3cm 0.3cm 0.3cm; 
+        /* Margen superior de 1.2cm para asegurar que el logo baje y no se corte */
+        margin: 1.2cm 0.5cm 0.5cm 0.5cm; 
       }
 
-      /* HOJA DE VACUNAS: Bajamos el contenido internamente */
+      /* HOJA DE VACUNAS: Ajuste de altura y padding para proteger el logo */
       #sectionHojaVacunas {
         display: flex !important;
         flex-direction: column !important;
-        /* Bajamos el height al 95% para dar margen de error y que no salga la hoja en blanco */
-        height: 95% !important;   
+        /* Bajamos a 94% para compensar el margen superior y evitar hoja en blanco */
+        height: 94% !important;   
         width: 100% !important;
         margin: 0 !important;
-        /* Agregamos un padding superior interno de 10px para empujar el logo hacia abajo */
-        padding-top: 10px !important; 
+        /* Padding extra para empujar el logo hacia abajo dentro de la sección */
+        padding-top: 15px !important; 
         border: none !important;
         position: relative !important;
         overflow: hidden !important; 
       }
 
-      /* FILAS: Ajustamos a 44px para compensar el espacio que le dimos al logo arriba */
+      /* FILAS: Mantenemos un tamaño grande y cómodo */
       #sectionHojaVacunas table tbody tr {
         height: 44px !important; 
       }
@@ -148,10 +148,10 @@
       #sectionHojaVacunas table td {
         vertical-align: middle !important;
         padding: 0 8px !important;
-        font-size: 13px !important;
+        font-size: 12px !important; /* Ajuste ligero de fuente para optimizar espacio */
       }
 
-      /* EL FOOTER: Lo aseguramos al fondo */
+      /* EL FOOTER: Anclado al fondo */
       .footer-direccion {
         position: absolute !important;
         bottom: 0 !important;
@@ -160,6 +160,24 @@
         background: white !important;
         padding-bottom: 5px !important;
       }
+    }
+
+    /* AJUSTE PARA TELÉFONOS: Evita que el logo se monte en las letras */
+    @media screen and (max-width: 640px) {
+      #sectionHojaVacunas header, 
+      .print-area header,
+      div[class*="flex-row"] {
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 10px !important;
+      }
+      
+      #sectionHojaVacunas img, 
+      .print-area img {
+        margin: 0 auto !important;
+        display: block !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -193,13 +211,11 @@
   <!-- ========== HISTORIA CLÍNICA ========== -->
 <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
-  <div class="flex justify-between items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 100px;">
+  <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 100px;">
     
     <div class="flex items-center">
-      <div class="relative w-32 h-12"> 
-        <div class="absolute left-0 w-48 h-48 p-0 z-50" style="top: -55px !important;">
+      <div class="relative w-48 h-24"> 
           <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
-        </div>
       </div>
     </div>
     
@@ -3316,6 +3332,7 @@ window.volverAHistoriaDesdeVacunas = () => {
 
 </body>
 </html>
+
 
 
 
