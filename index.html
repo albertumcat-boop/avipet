@@ -786,7 +786,7 @@
 </section>
 
   <!-- ========== CONFIG PRECIOS ========== -->
-  <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
+ <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
       <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">
         🛠 Panel de Control Maestro
@@ -826,6 +826,46 @@
           🚀 Sincronizar Todo
         </button>
       </div>
+
+     <div class="mt-8 border-t-2 border-purple-200 pt-6">
+    <h3 class="font-black text-purple-900 uppercase text-xs mb-4 flex items-center gap-2">
+        ✂️ Configuración de Pagos Peluquería
+    </h3>
+    
+    <div class="bg-purple-50/50 p-6 rounded-xl border border-purple-100 shadow-inner">
+        <div class="space-y-4">
+            <h4 class="text-[9px] font-black text-purple-600 uppercase tracking-widest text-center">
+                💰 Tabla de Comisiones para Ayudantes
+            </h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
+                        Ayudante Principal ($)
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-indigo-400 font-bold text-xs">$</span>
+                        <input type="number" id="confPagoAyu1" value="2" 
+                               class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-indigo-700 outline-none focus:border-purple-400 transition-all">
+                    </div>
+                    <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto fijo por servicio estándar.</p>
+                </div>
+
+                <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
+                        Ayudante Extra (Agresividad/Dificultad) ($)
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-amber-400 font-bold text-xs">$</span>
+                        <input type="number" id="confPagoAyuExtra" value="3" 
+                               class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-amber-700 outline-none focus:border-purple-400 transition-all">
+                    </div>
+                    <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto adicional por manejo especial.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
       <div id="contenedorTabServicios"
            class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
@@ -3562,36 +3602,40 @@ window.agregarFilaTest = (nombre) => {
     
     tabla.appendChild(fila);
 };
-  // =========================================================
-// [PELUQUERÍA PRO] - VERSIÓN INTEGRAL AVIPET 2026
+// =========================================================
+// [PELUQUERÍA PRO] - VERSIÓN PURA (SIN INSUMOS)
 // =========================================================
 
 // Configuración de Ganancia (Ajustable)
 window.PORCENTAJE_PELUQUERA = 40; 
 
 window.guardarPeluqueriaPro = async () => {
-    // --- 1. CAPTURA DE DATOS (Mismo estándar que Clínica) ---
-    const dInput = (id) => document.getElementById(id)?.value.trim() || "";
+    // --- 1. CAPTURA DE DATOS ---
+    const dInput = (id) => document.getElementById(id);
+    const val = (id) => dInput(id)?.value.trim() || "";
     
-    const cedula = dInput('pCedula');      // Identificación Dueño
-    const duenio = dInput('pDuenio');      // Nombre Dueño
-    const mascota = dInput('pNombre');     // Nombre Mascota
-    const raza = dInput('pRaza');           // Raza
+    const cedula = val('pCedula');
+    const duenio = val('pDuenio');
+    const mascota = val('pNombre');
+    const raza = val('pRaza');
     
-    const base = parseFloat(document.getElementById('pTamano').value) || 0;
-    const ajuste = parseFloat(document.getElementById('pAjuste').value) || 0;
-    const tipoServicio = document.getElementById('pTipoServicio').value;
+    const base = parseFloat(dInput('pTamano').value) || 0;
+    const ajuste = parseFloat(dInput('pAjuste').value) || 0;
+    const tipoServicio = dInput('pTipoServicio').value;
     
     // --- 2. AYUDANTES (Principal Permanente + Extra Agresivo) ---
-    const ayuPrincipal = document.getElementById('pAyudante1').checked;
-    const ayuExtra = document.getElementById('pAyudanteExtra').checked;
+    const ayuPrincipal = dInput('pAyudante1').checked;
+    const ayuExtra = dInput('pAyudanteExtra').checked;
     
-    const condicion = dInput('pCondicion'); // Historial/Agresividad
-    const insumoExtra = document.getElementById('pInsumoExtra').value; // Desplegable Adicional
+    // Captura de montos dinámicos desde la pestaña de Ajustes
+    const montoAyu1 = parseFloat(document.getElementById('confPagoAyu1')?.value) || 2;
+    const montoAyuExtra = parseFloat(document.getElementById('confPagoAyuExtra')?.value) || 3;
+    
+    const condicion = val('pCondicion'); 
 
-    // Validación de seguridad antes de seguir
+    // Validación de seguridad
     if (!cedula || !mascota || (tipoServicio !== 'solo_unas' && base === 0)) {
-        alert("⚠️ ATENCIÓN: Cédula, Mascota y Tamaño son obligatorios para el registro.");
+        alert("⚠️ ATENCIÓN: Cédula, Mascota y Tamaño son obligatorios.");
         return;
     }
 
@@ -3602,16 +3646,14 @@ window.guardarPeluqueriaPro = async () => {
     const pin = prompt(`🔐 FIRMA DE AUTORIZACIÓN AVIPET\nServicio: ${tipoServicio.toUpperCase()}\nTotal a cobrar: $${precioFinal}\nIngrese su PIN:`);
     if (!pin) return;
 
-    // Validación con tu Master Key y pines de doctores
     const esValido = await window.validarDoctorConMaster("Peluqueria", pin); 
     if (!esValido) {
-        alert("❌ PIN INCORRECTO. Operación cancelada.");
+        alert("❌ PIN INCORRECTO.");
         return;
     }
 
     try {
         // --- 5. LÓGICA DE FIDELIDAD (ID ÚNICO: Cédula-Mascota) ---
-        // Esto evita que nombres repetidos de perros mezclen las cuentas
         const idFidelidad = `${cedula}-${mascota}`.toLowerCase().replace(/\s+/g, '');
         const fidelidadRef = doc(db, "fidelidad_peluqueria", idFidelidad);
         const fidelidadSnap = await getDoc(fidelidadRef);
@@ -3622,24 +3664,21 @@ window.guardarPeluqueriaPro = async () => {
         }
         const nuevaVisita = visitasActuales + 1;
 
-        // --- 6. CÁLCULOS DE PAGO INTERNO (Reglas de Albert) ---
-        // Ganancia base de la peluquera
+        // --- 6. CÁLCULOS DE PAGO INTERNO (Reglas de Albert con montos de Ajustes) ---
         let pagoPeluquera = (precioFinal * (window.PORCENTAJE_PELUQUERA / 100));
         let pagoAyudanteTotal = 0;
 
-        // Descuento Ayudante Principal (-$1 a ella / +$2 al pago final)
         if (ayuPrincipal) {
-            pagoPeluquera -= 1;
-            pagoAyudanteTotal += 2;
+            pagoPeluquera -= 1; // Ella aporta 1
+            pagoAyudanteTotal += montoAyu1; 
         }
         
-        // Descuento Ayudante Extra por agresividad (-$1 a ella / +$2 al pago final)
         if (ayuExtra) {
-            pagoPeluquera -= 1;
-            pagoAyudanteTotal += 2;
+            pagoPeluquera -= 1; // Ella aporta otro 1
+            pagoAyudanteTotal += montoAyuExtra; 
         }
 
-        // --- 7. ESTRUCTURA DE DATOS PARA HISTORIAL (Full Insumos) ---
+        // --- 7. ESTRUCTURA DE DATOS PARA HISTORIAL (SIN INSUMOS) ---
         const dataPelu = {
             cedulaCliente: cedula,
             nombreDuenio: duenio,
@@ -3650,25 +3689,15 @@ window.guardarPeluqueriaPro = async () => {
             pagoAyudante: pagoAyudanteTotal,
             ayudantePrincipal: ayuPrincipal,
             ayudanteExtra: ayuExtra,
-            // Insumos predeterminados que pediste
-            insumosRegulares: [
-                "Shampoo", "Colonia", "Lazos/Bandana", 
-                "Algodon", "Gaza", "Isopo", "Limpiador Oido"
-            ],
-            insumoEspecial: insumoExtra, 
             condicion: condicion,
             visitaNumero: nuevaVisita,
             fecha: serverTimestamp(),
-            // Fecha para el reporte diario
             fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
             tipo: "PELUQUERIA"
         };
 
         // --- 8. PERSISTENCIA EN FIREBASE ---
-        // Guardamos el servicio en el historial estético
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
-        
-        // Actualizamos la tarjeta de fidelidad (ID único)
         await setDoc(fidelidadRef, { 
             contador: (nuevaVisita >= 10 ? 0 : nuevaVisita), 
             ultimaVisita: serverTimestamp(),
@@ -3676,39 +3705,52 @@ window.guardarPeluqueriaPro = async () => {
             cedula: cedula
         }, { merge: true });
 
-        // --- 9. AVISOS DE FINALIZACIÓN ---
+        // --- 9. AVISOS Y LIMPIEZA DEL FRONT ---
         if (nuevaVisita >= 10) {
-            alert(`🎉 ¡PREMIO DE FIDELIDAD!\n${mascota} ha completado 10 visitas.\n¡ESTA SESIÓN ES GRATIS O TIENE REGALO!`);
+            alert(`🎉 ¡PREMIO DE FIDELIDAD! Visita #10.`);
         } else {
-            alert(`✅ REGISTRO EXITOSO\nVisita #${nuevaVisita} para ${mascota}.\nCobro: $${precioFinal}`);
+            alert(`✅ REGISTRO EXITOSO. Visita #${nuevaVisita}`);
         }
 
-        // Regresar a la pantalla principal
+        // RESET TOTAL DEL FORMULARIO (LIMPIEZA DE FRONT)
+        dInput('pCedula').value = "";
+        dInput('pDuenio').value = "";
+        dInput('pNombre').value = "";
+        dInput('pRaza').value = "";
+        dInput('pAjuste').value = "";
+        dInput('pCondicion').value = "";
+        dInput('pAyudanteExtra').checked = false;
+        dInput('pAyudante1').checked = true; // Permanente
+        
+        const cobroDisp = document.getElementById('pTotalCobro');
+        if (cobroDisp) cobroDisp.innerText = "$ 0.00";
+
         window.showTab('historia');
 
     } catch (e) {
         console.error("Error crítico en Peluquería:", e);
-        alert("❌ ERROR DE SISTEMA: " + e.message);
+        alert("❌ ERROR: " + e.message);
     }
 };
 
-// --- RECALCULAR EN VIVO (Para que la peluquera vea los montos) ---
+// --- RECALCULAR EN VIVO (Sin Insumos) ---
 window.recalcularTotalPelu = () => {
     const tipo = document.getElementById('pTipoServicio').value;
     const base = parseFloat(document.getElementById('pTamano').value) || 0;
     const ajuste = parseFloat(document.getElementById('pAjuste').value) || 0;
     const ayu1 = document.getElementById('pAyudante1').checked;
     const ayuExtra = document.getElementById('pAyudanteExtra').checked;
+    
+    const montoAyu1 = parseFloat(document.getElementById('confPagoAyu1')?.value) || 2;
+    const montoAyuExtra = parseFloat(document.getElementById('confPagoAyuExtra')?.value) || 3;
 
     let cobroCliente = (tipo === 'solo_unas') ? 5 : (base + ajuste);
-
     let pagoPeluquera = (cobroCliente * (window.PORCENTAJE_PELUQUERA / 100));
     let pagoAyudantesTotal = 0;
 
-    if (ayu1) { pagoPeluquera -= 1; pagoAyudantesTotal += 2; }
-    if (ayuExtra) { pagoPeluquera -= 1; pagoAyudantesTotal += 2; }
+    if (ayu1) { pagoPeluquera -= 1; pagoAyudantesTotal += montoAyu1; }
+    if (ayuExtra) { pagoPeluquera -= 1; pagoAyudantesTotal += montoAyuExtra; }
 
-    // Actualizar los elementos visuales en el HTML
     const totalCobroDisplay = document.getElementById('pTotalCobro');
     const pagoPeluDisplay = document.getElementById('pResPeluquera');
     const pagoAyuDisplay = document.getElementById('pResAyudantes');
@@ -3717,18 +3759,15 @@ window.recalcularTotalPelu = () => {
     if (pagoPeluDisplay) pagoPeluDisplay.innerText = `$ ${pagoPeluquera.toFixed(2)}`;
     if (pagoAyuDisplay) pagoAyuDisplay.innerText = `$ ${pagoAyudantesTotal.toFixed(2)}`;
 };
-  // =========================================================
-// [PELUQUERÍA] ESCÁNER INDEPENDIENTE (NO AFECTA A CLÍNICA)
+
+// =========================================================
+// [PELUQUERÍA] ESCÁNER INDEPENDIENTE (CONEXIÓN CON CLÍNICA)
 // =========================================================
 
 window.buscarClientePeluqueria = async (cedula) => {
-    // Si la cédula es muy corta, no pierdas tiempo escaneando
     if (!cedula || cedula.length < 5) return;
-
-    console.log(`🔍 Peluquería escaneando historial clínico para: ${cedula}...`);
     
     try {
-        // Buscamos en tu colección de historias (pacientes)
         const q = query(
             collection(db, "pacientes"), 
             where("cedula", "==", cedula),
@@ -3740,8 +3779,6 @@ window.buscarClientePeluqueria = async (cedula) => {
         if (!querySnapshot.empty) {
             const datos = querySnapshot.docs[0].data();
             
-            // Rellenamos SOLO los campos que pertenecen a la pestaña de Peluquería (IDs con prefijo 'p')
-            // Esto asegura que NO se borren los datos de la pestaña de Clínica si están abiertas
             const campoDuenio = document.getElementById('pDuenio');
             const campoNombre = document.getElementById('pNombre');
             const campoRaza = document.getElementById('pRaza');
@@ -3751,20 +3788,16 @@ window.buscarClientePeluqueria = async (cedula) => {
             if (campoNombre) campoNombre.value = datos.nombre || "";
             if (campoRaza) campoRaza.value = datos.raza || "";
             
-            // Si el doctor puso una alerta clínica, la peluquera debe saberla
             if (campoCondicion && datos.alertas) {
                 campoCondicion.value = `⚠️ ALERTA MÉDICA: ${datos.alertas}`;
             }
-
-            console.log("✅ Datos importados a Peluquería exitosamente.");
+            console.log("✅ Datos importados a Peluquería.");
         }
     } catch (e) {
-        console.error("Error en el escáner de peluquería:", e);
+        console.error("Error en el escáner:", e);
     }
 };
 
-// ACTIVADOR ESPECÍFICO PARA EL CAMPO DE PELUQUERÍA
-// Escuchamos solo cuando se escribe en 'pCedula'
 document.addEventListener('focusout', (e) => {
     if (e.target && e.target.id === 'pCedula') {
         window.buscarClientePeluqueria(e.target.value.trim());
@@ -3774,6 +3807,7 @@ document.addEventListener('focusout', (e) => {
 
 </body>
 </html>
+
 
 
 
