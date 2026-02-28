@@ -992,6 +992,10 @@
                         </div>
                     </div>
                     <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Raza</label>
+                        <input type="text" id="pRaza" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="Ej: Poodle, Schnauzer">
+                    </div>
+                    <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase">Dirección</label>
                         <input type="text" id="pDireccion" class="w-full border-b-2 border-slate-200 p-2 bg-white text-[10px] font-bold focus:border-blue-500 outline-none" placeholder="Ubicación del cliente">
                     </div>
@@ -3649,19 +3653,6 @@ window.agregarFilaTest = (nombre) => {
     
     tabla.appendChild(fila);
 };
-// =========================================================
-
-// [PELUQUERÍA PRO] - VERSIÓN PURA (SIN INSUMOS)
-
-// =========================================================
-
-
-
-// Configuración de Ganancia (Ajustable)
-
-window.PORCENTAJE_PELUQUERA = 40; 
-
-
 
 // =========================================================
 // [PELUQUERÍA PRO] - VERSIÓN PURA (SIN INSUMOS)
@@ -3875,10 +3866,97 @@ window.buscarClientePeluqueria = async (cedula) => {
 document.addEventListener('focusout', (e) => {
     if (e.target && e.target.id === 'pCedula') window.buscarClientePeluqueria(e.target.value.trim());
 });
+  // =========================================================
+// [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL
+// =========================================================
+
+window.generarCierrePeluqueria = async () => {
+    console.log("⚓ Generando liquidación de Peluquería Avipet...");
+    
+    const contenedor = document.getElementById('reportePeluqueriaResultados');
+    if (!contenedor) {
+        alert("❌ Error: No se encontró el contenedor 'reportePeluqueriaResultados'");
+        return;
+    }
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "servicios_estetica"));
+        
+        let totalRecaudado = 0;
+        let totalPeluquera = 0;
+        let totalAyudantes = 0;
+        let contador = 0;
+
+        let tablaHTML = `
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-200 text-slate-700 uppercase text-[10px] font-black">
+                            <th class="p-3 border">Fecha</th>
+                            <th class="p-3 border">Paciente</th>
+                            <th class="p-3 border">Total Cobrado</th>
+                            <th class="p-3 border">Peluquera</th>
+                            <th class="p-3 border">Ayudante(s)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            
+            // Usamos exactamente tus nombres de variables del dataPelu
+            const bruto = parseFloat(data.precioTotal) || 0;
+            const pagoP = parseFloat(data.pagoPeluquera) || 0;
+            const pagoA = parseFloat(data.pagoAyudante) || 0;
+
+            totalRecaudado += bruto;
+            totalPeluquera += pagoP;
+            totalAyudantes += pagoA;
+            contador++;
+
+            tablaHTML += `
+                <tr class="hover:bg-slate-50 border-b">
+                    <td class="p-3 border">${data.fechaSimple || '---'}</td>
+                    <td class="p-3 border font-bold">${data.paciente || 'Desconocido'}</td>
+                    <td class="p-3 border font-bold text-slate-900">$ ${bruto.toFixed(2)}</td>
+                    <td class="p-3 border text-blue-700 font-bold">$ ${pagoP.toFixed(2)}</td>
+                    <td class="p-3 border text-orange-700 font-bold">$ ${pagoA.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        tablaHTML += `</tbody></table></div>`;
+
+        // Inyectamos el resumen con el estilo de Avipet
+        contenedor.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg">
+                    <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Bruto Total</p>
+                    <p class="text-3xl font-black">$ ${totalRecaudado.toFixed(2)}</p>
+                </div>
+                <div class="bg-blue-600 text-white p-5 rounded-xl shadow-lg">
+                    <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Pago Peluquera</p>
+                    <p class="text-3xl font-black">$ ${totalPeluquera.toFixed(2)}</p>
+                </div>
+                <div class="bg-orange-500 text-white p-5 rounded-xl shadow-lg">
+                    <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Pago Ayudantes</p>
+                    <p class="text-3xl font-black">$ ${totalAyudantes.toFixed(2)}</p>
+                </div>
+            </div>
+            ${contador === 0 ? '<p class="p-10 text-center text-slate-400 font-bold">Sin registros en este periodo.</p>' : tablaHTML}
+        `;
+
+    } catch (e) {
+        console.error("❌ Error en Liquidación:", e);
+        alert("Error al conectar con Firebase: " + e.message);
+    }
+};
 </script>
 
 </body>
 </html>
+
 
 
 
