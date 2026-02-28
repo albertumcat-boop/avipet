@@ -956,11 +956,11 @@
 </section>
   <!-- ========== PELUQUERIA CANINA ========== -->
 <div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen">
-    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
         
-        <div class="bg-blue-900 p-4 text-white flex justify-between items-center">
+        <div class="bg-blue-900 p-4 text-white flex justify-between items-center border-b-4 border-blue-800">
             <div>
-                <h2 class="text-2xl font-black uppercase tracking-tighter italic">✨ Estética & Peluquería Avipet</h2>
+                <h2 class="text-2xl font-black uppercase tracking-tighter italic">Peluquería Avipet</h2>
                 <p class="text-xs opacity-80 italic uppercase font-bold tracking-widest">Control Maestro de Servicios y Ayudantes</p>
             </div>
             <div id="badgeFidelidad" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-sm hidden animate-bounce">
@@ -970,45 +970,41 @@
 
         <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div class="space-y-4 border-r pr-6 border-slate-100">
+            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
                 <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">📋 Datos del Cliente</h3>
-                
-               <div class="grid grid-cols-1 gap-3">
-    <div>
-        <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño</label>
-        <input type="text" id="pCedula" oninput="window.buscarPacientePelu()" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
-    </div>
-    
-    <div>
-        <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
-        <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="Nombre completo">
-    </div>
-    
-    <div class="grid grid-cols-2 gap-2">
-        <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase">Teléfono</label>
-            <input type="text" id="pTelefono" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="04XX-0000000">
-        </div>
-        <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase">Mascota</label>
-            <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-black text-blue-600 focus:border-blue-500 outline-none" placeholder="Nombre Mascota">
-        </div>
-    </div>
-    
-    <div>
-        <label class="block text-[10px] font-bold text-slate-500 uppercase">Dirección</label>
-        <input type="text" id="pDireccion" class="w-full border-b-2 border-slate-200 p-2 bg-white text-[10px] font-bold focus:border-blue-500 outline-none" placeholder="Ubicación del cliente">
-    </div>
-</div>
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño</label>
+                        <input type="text" id="pCedula" oninput="window.buscarPacientePelu()" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
+                        <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="Nombre completo">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Teléfono</label>
+                            <input type="text" id="pTelefono" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="04XX-0000000">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Mascota</label>
+                            <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-black text-blue-600 focus:border-blue-500 outline-none" placeholder="Nombre Mascota">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Dirección</label>
+                        <input type="text" id="pDireccion" class="w-full border-b-2 border-slate-200 p-2 bg-white text-[10px] font-bold focus:border-blue-500 outline-none" placeholder="Ubicación del cliente">
+                    </div>
+                </div>
 
-<div class="pt-4">
-    <h3 class="font-black text-slate-700 border-b border-slate-200 pb-2 uppercase text-[10px]">📝 Notas de Salud / Comportamiento</h3>
-    <textarea id="pCondicion" rows="3" class="w-full border border-slate-200 p-2 rounded bg-slate-50 text-xs mt-2 font-bold focus:border-blue-400 outline-none" placeholder="¿Es agresivo? ¿Tiene verrugas? ¿Soplos?"></textarea>
-</div>
+                <div class="pt-4">
+                    <h3 class="font-black text-slate-700 border-b border-slate-200 pb-2 uppercase text-[10px]">📝 Notas de Salud / Comportamiento</h3>
+                    <textarea id="pCondicion" rows="3" class="w-full border border-slate-200 p-2 rounded bg-slate-50 text-xs mt-2 font-bold focus:border-blue-400 outline-none" placeholder="¿Es agresivo? ¿Tiene verrugas? ¿Soplos?"></textarea>
+                </div>
+            </div>
 
-            <div class="space-y-4 border-r pr-6 border-slate-100">
+            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
                 <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">🛠️ Detalles del Servicio</h3>
-                
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Servicio a Realizar</label>
                     <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border p-2 rounded bg-white font-bold text-sm">
@@ -1030,7 +1026,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase">Ajuste +/-</label>
-                        <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border p-2 rounded text-sm font-bold" placeholder="0">
+                        <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border p-2 rounded text-sm font-bold" value="0">
                     </div>
                 </div>
 
@@ -1081,19 +1077,20 @@
                     </div>
                     
                     <div class="space-y-2 mt-4">
-    <div class="flex justify-between items-center border-b border-blue-800 pb-1">
-        <span class="text-[10px] font-bold uppercase opacity-70">Peluquera:</span>
-        <span id="pResPeluquera" class="text-lg font-black">$ 0.00</span>
-    </div>
-    <div class="flex justify-between items-center">
-        <span class="text-[10px] font-bold uppercase opacity-70">Ayudante Principal:</span>
-        <span id="pResAyudante1" class="text-sm font-black text-emerald-400">$ 0.00</span>
-    </div>
-    <div class="flex justify-between items-center bg-blue-900/30 p-1 rounded">
-        <span class="text-[10px] font-bold uppercase text-emerald-300">Ayudante Extra:</span>
-        <span id="pResAyudanteExtra" class="text-sm font-black text-emerald-300">$ 0.00</span>
-    </div>
-</div>
+                        <div class="flex justify-between items-center border-b border-blue-800 pb-1">
+                            <span class="text-[10px] font-bold uppercase opacity-70">Peluquera:</span>
+                            <span id="pResPeluquera" class="text-lg font-black">$ 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-bold uppercase opacity-70">Ayudante Principal:</span>
+                            <span id="pResAyudante1" class="text-sm font-black text-emerald-400">$ 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-blue-900/30 p-1 rounded">
+                            <span class="text-[10px] font-bold uppercase text-emerald-300">Ayudante Extra:</span>
+                            <span id="pResAyudanteExtra" class="text-sm font-black text-emerald-300">$ 0.00</span>
+                        </div>
+                        <span id="pResAyudantes" class="hidden">$ 0.00</span>
+                    </div>
                     
                     <p class="text-[8px] text-blue-300 mt-4 text-center font-bold uppercase tracking-tighter italic">
                         * Insumos básicos incluidos en el costo operativo.
@@ -3894,6 +3891,7 @@ document.addEventListener('focusout', (e) => {
 
 </body>
 </html>
+
 
 
 
