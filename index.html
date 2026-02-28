@@ -3834,63 +3834,76 @@ window.recalcularTotalPelu = () => {
 };
 
 // --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
-window.buscarClientePeluqueria = async (cedula) => {
-    if (!cedula || cedula.length < 5) return;
+window.buscarClientePeluqueria = async (cedulaInput) => {
+    const cedulaRaw = cedulaInput.trim();
+    if (!cedulaRaw || cedulaRaw.length < 5) return;
+    
+    console.log("🔍 Escaneando base de datos para:", cedulaRaw);
+
     try {
-        // Buscamos en la colección de pacientes por la cédula
-        const q = query(collection(db, "pacientes"), where("cedula", "==", cedula), limit(1));
-        const querySnapshot = await getDocs(q);
-        
+        // --- PRUEBA 1: Buscar como Texto ---
+        let q = query(collection(db, "pacientes"), where("cedula", "==", cedulaRaw), limit(1));
+        let querySnapshot = await getDocs(q);
+
+        // --- PRUEBA 2: Si falló, buscar como Número ---
+        if (querySnapshot.empty) {
+            const cedulaNum = parseInt(cedulaRaw);
+            if (!isNaN(cedulaNum)) {
+                console.log("⚠️ No hallado como texto, probando como número...");
+                q = query(collection(db, "pacientes"), where("cedula", "==", cedulaNum), limit(1));
+                querySnapshot = await getDocs(q);
+            }
+        }
+
         if (!querySnapshot.empty) {
             const datos = querySnapshot.docs[0].data();
+            console.log("✅ ¡ENCONTRADO!", datos);
             
-            // MAPEO EXACTO: ID del HTML vs Campo en Firebase
+            // Mapeo ultra-flexible (por si los nombres de campos varían)
             const mapeo = {
-                'pDuenio': datos.propietario || datos.nombreDueno || datos.nombreDuenio || "",
+                'pDuenio': datos.propietario || datos.nombreDueno || datos.nombreDuenio || datos.dueno || "",
                 'pNombre': datos.nombre || datos.nombreMascota || datos.paciente || "",
                 'pTelefono': datos.telefono || "",
                 'pDireccion': datos.direccion || "",
                 'pRaza': datos.raza || ""
             };
 
-            // Llenamos los campos uno a uno
+            // Inyectar datos en el HTML
             Object.keys(mapeo).forEach(id => {
                 const input = document.getElementById(id);
                 if (input) {
                     input.value = mapeo[id];
-                    // Le damos un pequeño efecto visual de que algo cambió
-                    input.classList.add('bg-blue-50');
-                    setTimeout(() => input.classList.remove('bg-blue-50'), 1000);
+                    // Efecto visual de "campo llenado"
+                    input.style.backgroundColor = "#dcfce7"; 
+                    setTimeout(() => input.style.backgroundColor = "transparent", 800);
                 }
             });
 
-            // Alertas de salud o condiciones
+            // Manejo de Alertas/Condiciones
             const campoCond = document.getElementById('pCondicion');
             if (campoCond) {
                 const alerta = datos.alertas || datos.condicion || datos.notas || "";
-                if (alerta) {
-                    campoCond.value = `⚠️ ANTECEDENTE: ${alerta}`;
-                }
+                campoCond.value = alerta ? `⚠️ ANTECEDENTE: ${alerta}` : "";
             }
 
-            // Recalculamos totales por si acaso
+            // Actualizar precios automáticamente
             if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
             
         } else {
-            console.log("No se encontró el cliente con cédula:", cedula);
+            console.warn("❌ LA CÉDULA NO EXISTE EN FIREBASE:", cedulaRaw);
+            alert("⚠️ Cliente no registrado. Por favor, verifique la cédula o cree una historia nueva.");
         }
     } catch (e) { 
-        console.error("❌ Error escáner:", e); 
+        console.error("❌ ERROR CRÍTICO EN FIREBASE:", e); 
     }
 };
 
-// ESCUCHADOR DE CÉDULA (Optimizado)
+// Asegúrate de que el escuchador use 'change' o 'blur'
 document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'pCedula') {
-        window.buscarClientePeluqueria(e.target.value.trim());
+        window.buscarClientePeluqueria(e.target.value);
     }
 });
-
 // =========================================================
 // [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - FINAL
 // =========================================================
@@ -4077,6 +4090,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
