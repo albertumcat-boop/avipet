@@ -933,60 +933,60 @@
   </div>
 </section>
   <!-- ========== PELUQUERIA CANINA ========== -->
- <div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen">
+<div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen">
     <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
         
-        <div class="bg-gradient-to-r from-purple-700 to-indigo-800 p-4 text-white flex justify-between items-center">
+        <div class="bg-blue-900 p-4 text-white flex justify-between items-center">
             <div>
-                <h2 class="text-2xl font-black uppercase tracking-tighter">✨ Estética & Peluquería Especializada</h2>
-                <p class="text-xs opacity-80 italic">Identificación por Cédula | Control de Insumos y Ayudantes</p>
+                <h2 class="text-2xl font-black uppercase tracking-tighter italic">✨ Estética & Peluquería Avipet</h2>
+                <p class="text-xs opacity-80 italic uppercase font-bold tracking-widest">Control Maestro de Servicios y Ayudantes</p>
             </div>
-            <div id="badgeFidelidad" class="bg-yellow-400 text-purple-900 px-4 py-1 rounded-full font-bold text-sm hidden animate-bounce">
+            <div id="badgeFidelidad" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-sm hidden animate-bounce">
                 🎁 ¡PRÓXIMA VISITA GRATIS!
             </div>
         </div>
 
         <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div class="space-y-4 border-r pr-6">
-                <h3 class="font-black text-indigo-900 border-b pb-2 uppercase text-sm">👤 Datos de Registro</h3>
+            <div class="space-y-4 border-r pr-6 border-slate-100">
+                <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">👤 Registro de Paciente</h3>
                 
                 <div class="grid grid-cols-1 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño (ID Único)</label>
-                        <input type="text" id="pCedula" class="w-full border-b-2 border-slate-200 focus:border-purple-500 outline-none p-2 bg-slate-50 font-bold" placeholder="V-00000000">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño</label>
+                        <input type="text" id="pCedula" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-slate-50 font-bold" placeholder="V-00000000">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
-                        <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 focus:border-purple-500 outline-none p-2 bg-slate-50" placeholder="Nombre completo">
+                        <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-slate-50" placeholder="Automático">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase">Mascota</label>
-                            <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 focus:border-purple-500 outline-none p-2 bg-slate-50 font-black text-indigo-600" placeholder="Ej: Zeus">
+                            <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-slate-50 font-black text-blue-600" placeholder="Nombre">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase">Raza</label>
-                            <input type="text" id="pRaza" class="w-full border-b-2 border-slate-200 focus:border-purple-500 outline-none p-2 bg-slate-50">
+                            <input type="text" id="pRaza" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-slate-50">
                         </div>
                     </div>
                 </div>
 
                 <div class="pt-4">
-                    <h3 class="font-black text-red-600 border-b pb-2 uppercase text-sm">⚠️ Condición Crítica</h3>
-                    <textarea id="pCondicion" rows="3" class="w-full border p-2 rounded bg-red-50 text-xs mt-2" placeholder="Agresividad, verrugas, soplos, alergias..."></textarea>
+                    <h3 class="font-black text-red-600 border-b pb-2 uppercase text-[10px]">⚠️ Notas de Salud / Agresividad</h3>
+                    <textarea id="pCondicion" rows="3" class="w-full border p-2 rounded bg-red-50 text-xs mt-2 font-bold" placeholder="¿Es agresivo? ¿Tiene verrugas? ¿Soplos?"></textarea>
                 </div>
             </div>
 
-            <div class="space-y-4 border-r pr-6">
-                <h3 class="font-black text-indigo-900 border-b pb-2 uppercase text-sm">🛠️ Configuración del Servicio</h3>
+            <div class="space-y-4 border-r pr-6 border-slate-100">
+                <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">🛠️ Detalles del Servicio</h3>
                 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Tipo de Trabajo</label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Servicio a Realizar</label>
                     <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border p-2 rounded bg-white font-bold text-sm">
                         <option value="completo">Baño y Corte Completo</option>
                         <option value="solo_banio">Solo Baño</option>
-                        <option value="solo_unas">Corte de Uñas Únicamente ($5)</option>
+                        <option value="solo_unas">Corte de Uñas ($5)</option>
                     </select>
                 </div>
 
@@ -1002,73 +1002,77 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase">Ajuste +/-</label>
-                        <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border p-2 rounded text-sm" placeholder="Ej: 5">
+                        <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border p-2 rounded text-sm font-bold" placeholder="0">
                     </div>
                 </div>
 
-                <div class="bg-slate-100 p-3 rounded-lg space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-700">AYUDANTE PRINCIPAL</span>
-                        <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-5 h-5 accent-indigo-600">
-                    </div>
-                    <div class="flex items-center justify-between p-2 bg-amber-100 rounded border border-amber-300">
-                        <span class="text-xs font-black text-amber-800 uppercase">⚠️ AYUDANTE EXTRA (Agresivo)</span>
-                        <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-5 h-5 accent-amber-600">
-                    </div>
-                    <p class="text-[9px] text-slate-500 italic text-center">* Ayudante Extra suma $2 adicionales al pago de auxiliares.</p>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <h3 class="font-black text-indigo-900 border-b pb-2 uppercase text-sm">🧪 Insumos Utilizados</h3>
-                
-                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
-                    <label class="flex items-center gap-2 text-[10px] text-slate-600 font-bold opacity-60"><input type="checkbox" checked disabled> SHAMPÚ</label>
-                    <label class="flex items-center gap-2 text-[10px] text-slate-600 font-bold opacity-60"><input type="checkbox" checked disabled> COLONIA</label>
-                    <label class="flex items-center gap-2 text-[10px] text-slate-600 font-bold opacity-60"><input type="checkbox" checked disabled> LAZOS/BANDANA</label>
-                    <label class="flex items-center gap-2 text-[10px] text-slate-600 font-bold opacity-60"><input type="checkbox" checked disabled> ALGODÓN/GAZA</label>
-                    <label class="flex items-center gap-2 text-[10px] text-slate-600 font-bold opacity-60"><input type="checkbox" checked disabled> ISOPOS</label>
-                    <label class="flex items-center gap-2 text-[10px] text-slate-600 font-bold opacity-60"><input type="checkbox" checked disabled> LIMP. OÍDOS</label>
-                </div>
-
-                <div class="mt-4 pt-4 border-t">
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Insumo Especial / Adicional</label>
-                    <select id="pInsumoExtra" class="w-full border p-2 rounded text-xs bg-indigo-50 font-bold">
-                        <option value="ninguno">Ninguno</option>
-                        <option value="hemorragia">Polvo para Hemorragia</option>
-                        <option value="medicado">Shampú Medicado</option>
-                        <option value="desparasitante">Baño Desparasitante (Pipeta)</option>
-                    </select>
-                </div>
-
-                <div class="mt-6 bg-indigo-900 p-4 rounded-xl text-white shadow-inner">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold uppercase opacity-70">Total Cliente</span>
-                        <span id="pTotalCobro" class="text-2xl font-black">$ 0.00</span>
-                    </div>
-                    <div class="border-t border-indigo-700 pt-2 space-y-1">
-                        <div class="flex justify-between text-[10px] font-bold">
-                            <span>Peluquera:</span>
-                            <span id="pResPeluquera">$ 0.00</span>
+                <div class="bg-blue-50 p-4 rounded-xl space-y-4 border border-blue-100">
+                    <h4 class="text-[10px] font-black text-blue-800 uppercase text-center tracking-widest">👥 Comisiones Ayudantes</h4>
+                    
+                    <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-blue-200">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
+                            <span class="text-[9px] font-black text-slate-600 uppercase">Principal</span>
+                        </label>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold text-slate-400">$</span>
+                            <input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-blue-700 text-xs outline-none">
                         </div>
-                        <div class="flex justify-between text-[10px] font-bold">
-                            <span>Ayudantes:</span>
-                            <span id="pResAyudantes">$ 0.00</span>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-amber-200">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-500">
+                            <span class="text-[9px] font-black text-amber-800 uppercase">Extra (Agresivo)</span>
+                        </label>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold text-slate-400">$</span>
+                            <input type="number" id="pMontoAyuExtra" value="3" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-amber-700 text-xs outline-none">
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="p-6 bg-slate-100 flex justify-end gap-3 border-t">
-            <button onclick="window.showTab('historia')" class="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 transition-all uppercase text-xs">Cancelar</button>
-            <button onclick="window.guardarPeluqueriaPro()" class="px-12 py-3 bg-indigo-700 text-white rounded-xl font-black shadow-xl hover:scale-105 transition-all uppercase text-sm tracking-widest">
-                Finalizar y Registrar
-            </button>
+            <div class="space-y-4 flex flex-col justify-between">
+                <div>
+                    <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">💰 Resumen de Cobro</h3>
+                    <p class="text-[9px] text-slate-400 mt-2 uppercase font-bold italic">Cálculos automáticos basados en tarifa y comisiones.</p>
+                </div>
+
+                <div class="bg-blue-900 p-6 rounded-2xl text-white shadow-2xl">
+                    <div class="flex justify-between items-center mb-4 border-b border-blue-800 pb-4">
+                        <span class="text-[11px] font-bold uppercase opacity-70 tracking-widest">Total Cliente</span>
+                        <span id="pTotalCobro" class="text-3xl font-black italic">$ 0.00</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-xs font-bold bg-blue-800/50 p-2 rounded-lg">
+                            <span class="opacity-80 uppercase text-[9px]">Pago Peluquera:</span>
+                            <span id="pResPeluquera" class="text-yellow-400 font-black tracking-wider">$ 0.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold bg-blue-800/50 p-2 rounded-lg">
+                            <span class="opacity-80 uppercase text-[9px]">Pago Ayudantes:</span>
+                            <span id="pResAyudantes" class="text-emerald-400 font-black tracking-wider">$ 0.00</span>
+                        </div>
+                    </div>
+                    
+                    <p class="text-[8px] text-blue-300 mt-4 text-center font-bold uppercase tracking-tighter italic">
+                        * Insumos básicos incluidos en el costo operativo.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <button onclick="window.guardarPeluqueriaPro()" class="w-full py-4 bg-blue-900 hover:bg-black text-white rounded-xl font-black shadow-xl hover:scale-[1.02] transition-all uppercase text-sm tracking-[4px] italic border-2 border-blue-800">
+                        🚀 Registrar Servicio
+                    </button>
+                    <button onclick="window.showTab('historia')" class="w-full py-2 font-black text-slate-400 hover:text-red-500 transition-all uppercase text-[10px] tracking-widest">
+                        ❌ Cancelar Registro
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
 <script type="module">
   import { db } from './firebase-config.js';
  import {
@@ -3735,22 +3739,38 @@ window.guardarPeluqueriaPro = async () => {
 
 // --- RECALCULAR EN VIVO (Sin Insumos) ---
 window.recalcularTotalPelu = () => {
-    const tipo = document.getElementById('pTipoServicio').value;
-    const base = parseFloat(document.getElementById('pTamano').value) || 0;
-    const ajuste = parseFloat(document.getElementById('pAjuste').value) || 0;
-    const ayu1 = document.getElementById('pAyudante1').checked;
-    const ayuExtra = document.getElementById('pAyudanteExtra').checked;
+    // 1. Captura de valores de servicio
+    const tipo = document.getElementById('pTipoServicio')?.value || 'completo';
+    const base = parseFloat(document.getElementById('pTamano')?.value) || 0;
+    const ajuste = parseFloat(document.getElementById('pAjuste')?.value) || 0;
     
-    const montoAyu1 = parseFloat(document.getElementById('confPagoAyu1')?.value) || 2;
-    const montoAyuExtra = parseFloat(document.getElementById('confPagoAyuExtra')?.value) || 3;
+    // 2. Captura de Ayudantes (Checkboxes)
+    const ayu1Activo = document.getElementById('pAyudante1')?.checked;
+    const ayuExtraActivo = document.getElementById('pAyudanteExtra')?.checked;
+    
+    // 3. Captura de MONTOS DIRECTOS del Formulario (Lo nuevo que agregamos)
+    const montoAyu1 = parseFloat(document.getElementById('pMontoAyu1')?.value) || 0;
+    const montoAyuExtra = parseFloat(document.getElementById('pMontoAyuExtra')?.value) || 0;
 
+    // 4. Lógica de Cobro al Cliente
     let cobroCliente = (tipo === 'solo_unas') ? 5 : (base + ajuste);
+    
+    // 5. Lógica de Pago Interno (40% para la peluquera)
     let pagoPeluquera = (cobroCliente * (window.PORCENTAJE_PELUQUERA / 100));
     let pagoAyudantesTotal = 0;
 
-    if (ayu1) { pagoPeluquera -= 1; pagoAyudantesTotal += montoAyu1; }
-    if (ayuExtra) { pagoPeluquera -= 1; pagoAyudantesTotal += montoAyuExtra; }
+    // Regla Albert: Si hay ayudantes, se le descuenta $1 a la peluquera por cada uno
+    if (ayu1Activo) { 
+        pagoPeluquera -= 1; 
+        pagoAyudantesTotal += montoAyu1; 
+    }
+    
+    if (ayuExtraActivo) { 
+        pagoPeluquera -= 1; 
+        pagoAyudantesTotal += montoAyuExtra; 
+    }
 
+    // 6. Actualización de Pantalla (Displays)
     const totalCobroDisplay = document.getElementById('pTotalCobro');
     const pagoPeluDisplay = document.getElementById('pResPeluquera');
     const pagoAyuDisplay = document.getElementById('pResAyudantes');
@@ -3759,7 +3779,6 @@ window.recalcularTotalPelu = () => {
     if (pagoPeluDisplay) pagoPeluDisplay.innerText = `$ ${pagoPeluquera.toFixed(2)}`;
     if (pagoAyuDisplay) pagoAyuDisplay.innerText = `$ ${pagoAyudantesTotal.toFixed(2)}`;
 };
-
 // =========================================================
 // [PELUQUERÍA] ESCÁNER INDEPENDIENTE (CONEXIÓN CON CLÍNICA)
 // =========================================================
@@ -3807,6 +3826,7 @@ document.addEventListener('focusout', (e) => {
 
 </body>
 </html>
+
 
 
 
