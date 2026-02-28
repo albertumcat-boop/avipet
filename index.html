@@ -808,7 +808,7 @@
 </section>
 
   <!-- ========== CONFIG PRECIOS ========== -->
- <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
+<section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
       <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">
         🛠 Panel de Control Maestro
@@ -849,45 +849,45 @@
         </button>
       </div>
 
-     <div class="mt-8 border-t-2 border-purple-200 pt-6">
-    <h3 class="font-black text-purple-900 uppercase text-xs mb-4 flex items-center gap-2">
-        ✂️ Configuración de Pagos Peluquería
-    </h3>
-    
-    <div class="bg-purple-50/50 p-6 rounded-xl border border-purple-100 shadow-inner">
-        <div class="space-y-4">
-            <h4 class="text-[9px] font-black text-purple-600 uppercase tracking-widest text-center">
-                💰 Tabla de Comisiones para Ayudantes
-            </h4>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
-                        Ayudante Principal ($)
-                    </label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2 text-indigo-400 font-bold text-xs">$</span>
-                        <input type="number" id="confPagoAyu1" value="2" 
-                               class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-indigo-700 outline-none focus:border-purple-400 transition-all">
-                    </div>
-                    <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto fijo por servicio estándar.</p>
-                </div>
+      <div class="mt-8 border-t-2 border-purple-200 pt-6 mb-8">
+          <h3 class="font-black text-purple-900 uppercase text-xs mb-4 flex items-center gap-2">
+              ✂️ Configuración de Pagos Peluquería
+          </h3>
+          
+          <div class="bg-purple-50/50 p-6 rounded-xl border border-purple-100 shadow-inner">
+              <div class="space-y-4">
+                  <h4 class="text-[9px] font-black text-purple-600 uppercase tracking-widest text-center">
+                      💰 Tabla de Comisiones para Ayudantes
+                  </h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+                          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
+                              Ayudante Principal ($)
+                          </label>
+                          <div class="relative">
+                              <span class="absolute left-3 top-2 text-indigo-400 font-bold text-xs">$</span>
+                              <input type="number" id="confPagoAyu1" value="2" 
+                                     class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-indigo-700 outline-none focus:border-purple-400 transition-all">
+                          </div>
+                          <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto fijo por servicio estándar.</p>
+                      </div>
 
-                <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
-                        Ayudante Extra (Agresividad/Dificultad) ($)
-                    </label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2 text-amber-400 font-bold text-xs">$</span>
-                        <input type="number" id="confPagoAyuExtra" value="3" 
-                               class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-amber-700 outline-none focus:border-purple-400 transition-all">
-                    </div>
-                    <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto adicional por manejo especial.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                      <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+                          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
+                              Ayudante Extra (Agresividad/Dificultad) ($)
+                          </label>
+                          <div class="relative">
+                              <span class="absolute left-3 top-2 text-amber-400 font-bold text-xs">$</span>
+                              <input type="number" id="confPagoAyuExtra" value="3" 
+                                     class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-amber-700 outline-none focus:border-purple-400 transition-all">
+                          </div>
+                          <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto adicional por manejo especial.</p>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
 
       <div id="contenedorTabServicios"
            class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
@@ -917,6 +917,7 @@
           <tbody id="tablaMaestraInsumos" class="bg-white divide-y"></tbody>
         </table>
       </div>
+      
     </div>
   </section>
 
@@ -1036,7 +1037,6 @@
 
                 <div class="bg-blue-50 p-4 rounded-xl space-y-3 border border-blue-100">
                     <h4 class="text-[10px] font-black text-blue-800 uppercase text-center tracking-widest mb-1">👥 Comisiones de Trabajo</h4>
-                    
                     <div class="flex items-center justify-between bg-amber-100 p-2 rounded-lg border border-amber-300">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-600">
@@ -1109,11 +1109,6 @@
                         ❌ Cancelar Registro
                     </button>
                 </div>
-
-                <div id="reportePeluqueriaResultados" class="mt-4 p-2 bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 text-center">
-                    <p class="text-[10px] text-slate-500 font-bold uppercase italic">Área de Liquidación Lista</p>
-                </div>
-
             </div>
         </div>
     </div>
@@ -3872,19 +3867,29 @@ document.addEventListener('focusout', (e) => {
     if (e.target && e.target.id === 'pCedula') window.buscarClientePeluqueria(e.target.value.trim());
 });
   // =========================================================
-// [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL
+// [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - AJUSTADO
 // =========================================================
 
 window.generarCierrePeluqueria = async () => {
     console.log("⚓ Generando liquidación de Peluquería Avipet...");
     
+    // El contenedor ahora se busca en la pestaña de Finanzas
     const contenedor = document.getElementById('reportePeluqueriaResultados');
     if (!contenedor) {
-        alert("❌ Error: No se encontró el contenedor 'reportePeluqueriaResultados'");
+        alert("❌ Error: No se encontró el contenedor 'reportePeluqueriaResultados' en Finanzas.");
         return;
     }
 
+    // Efecto visual de carga (Contraste Radical)
+    contenedor.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-10">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-900 mb-4"></div>
+            <p class="text-[10px] font-black uppercase text-blue-900 italic tracking-widest">Extrayendo datos de la bitácora...</p>
+        </div>
+    `;
+
     try {
+        // Apuntamos a tu colección real de servicios
         const querySnapshot = await getDocs(collection(db, "servicios_estetica"));
         
         let totalRecaudado = 0;
@@ -3893,24 +3898,24 @@ window.generarCierrePeluqueria = async () => {
         let contador = 0;
 
         let tablaHTML = `
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left border-collapse">
+            <div class="overflow-x-auto mt-6">
+                <table class="w-full text-left border-collapse rounded-lg overflow-hidden shadow-sm">
                     <thead>
-                        <tr class="bg-slate-200 text-slate-700 uppercase text-[10px] font-black">
-                            <th class="p-3 border">Fecha</th>
-                            <th class="p-3 border">Paciente</th>
-                            <th class="p-3 border">Total Cobrado</th>
-                            <th class="p-3 border">Peluquera</th>
-                            <th class="p-3 border">Ayudante(s)</th>
+                        <tr class="bg-blue-900 text-white uppercase text-[9px] font-black tracking-tighter">
+                            <th class="p-3">Fecha</th>
+                            <th class="p-3">Mascota / Dueño</th>
+                            <th class="p-3 text-center">Total Cobrado</th>
+                            <th class="p-3 text-center">Peluquera</th>
+                            <th class="p-3 text-center">Ayudante(s)</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="text-[11px] font-bold text-slate-700 bg-white">
         `;
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             
-            // Usamos exactamente tus nombres de variables del dataPelu
+            // Mapeo exacto de tus variables de guardado
             const bruto = parseFloat(data.precioTotal) || 0;
             const pagoP = parseFloat(data.pagoPeluquera) || 0;
             const pagoA = parseFloat(data.pagoAyudante) || 0;
@@ -3921,46 +3926,53 @@ window.generarCierrePeluqueria = async () => {
             contador++;
 
             tablaHTML += `
-                <tr class="hover:bg-slate-50 border-b">
-                    <td class="p-3 border">${data.fechaSimple || '---'}</td>
-                    <td class="p-3 border font-bold">${data.paciente || 'Desconocido'}</td>
-                    <td class="p-3 border font-bold text-slate-900">$ ${bruto.toFixed(2)}</td>
-                    <td class="p-3 border text-blue-700 font-bold">$ ${pagoP.toFixed(2)}</td>
-                    <td class="p-3 border text-orange-700 font-bold">$ ${pagoA.toFixed(2)}</td>
+                <tr class="border-b border-slate-100 hover:bg-blue-50 transition-colors">
+                    <td class="p-3 opacity-70">${data.fechaSimple || '---'}</td>
+                    <td class="p-3 uppercase">
+                        <span class="text-blue-600 block">${data.paciente || '---'}</span>
+                        <span class="text-[8px] text-slate-400 font-medium">${data.duenio || 'Sin Dueño'}</span>
+                    </td>
+                    <td class="p-3 text-center text-slate-900">$ ${bruto.toFixed(2)}</td>
+                    <td class="p-3 text-center text-blue-800">$ ${pagoP.toFixed(2)}</td>
+                    <td class="p-3 text-center text-emerald-600">$ ${pagoA.toFixed(2)}</td>
                 </tr>
             `;
         });
 
         tablaHTML += `</tbody></table></div>`;
 
-        // Inyectamos el resumen con el estilo de Avipet
+        // Renderizado del Resumen Maestro
         contenedor.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg">
-                    <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Bruto Total</p>
-                    <p class="text-3xl font-black">$ ${totalRecaudado.toFixed(2)}</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-900 border-b-4 border-slate-700 p-5 rounded-xl shadow-lg">
+                    <p class="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1">💰 Recaudación Bruta</p>
+                    <p class="text-3xl font-black text-white italic">$ ${totalRecaudado.toFixed(2)}</p>
                 </div>
-                <div class="bg-blue-600 text-white p-5 rounded-xl shadow-lg">
-                    <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Pago Peluquera</p>
-                    <p class="text-3xl font-black">$ ${totalPeluquera.toFixed(2)}</p>
+                <div class="bg-blue-700 border-b-4 border-blue-900 p-5 rounded-xl shadow-lg">
+                    <p class="text-[9px] text-blue-200 uppercase font-black tracking-widest mb-1">✂️ Total Peluquera</p>
+                    <p class="text-3xl font-black text-white italic">$ ${totalPeluquera.toFixed(2)}</p>
                 </div>
-                <div class="bg-orange-500 text-white p-5 rounded-xl shadow-lg">
-                    <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Pago Ayudantes</p>
-                    <p class="text-3xl font-black">$ ${totalAyudantes.toFixed(2)}</p>
+                <div class="bg-emerald-600 border-b-4 border-emerald-800 p-5 rounded-xl shadow-lg">
+                    <p class="text-[9px] text-emerald-100 uppercase font-black tracking-widest mb-1">👥 Pago Ayudantes</p>
+                    <p class="text-3xl font-black text-white italic">$ ${totalAyudantes.toFixed(2)}</p>
                 </div>
             </div>
-            ${contador === 0 ? '<p class="p-10 text-center text-slate-400 font-bold">Sin registros en este periodo.</p>' : tablaHTML}
+            
+            ${contador === 0 
+                ? '<div class="mt-6 p-10 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-black uppercase italic text-xs">Sin registros de peluquería en la bitácora</div>' 
+                : tablaHTML}
         `;
 
     } catch (e) {
         console.error("❌ Error en Liquidación:", e);
-        alert("Error al conectar con Firebase: " + e.message);
+        alert("Error de conexión al taller (Firebase): " + e.message);
     }
 };
 </script>
 
 </body>
 </html>
+
 
 
 
