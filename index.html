@@ -746,27 +746,9 @@
       </div>
     </div>
 
-    <div id="contenedorAnalisis"
-         class="hidden mt-6 pt-6 border-t-2 border-slate-100 animate-fadeIn">
-      <h3 class="text-center font-black text-indigo-900 uppercase text-sm mb-4 tracking-widest">
-        📊 Análisis Estratégico Mensual
-      </h3>
-      <div id="gridAnalisis" class="grid grid-cols-2 gap-3 mb-4"></div>
-      <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 mb-6">
-        <p class="text-[10px] font-bold uppercase text-indigo-600 mb-2">Desempeño de Equipo</p>
-        <div id="analisisDoctores" class="space-y-2"></div>
-      </div>
-    </div>
-
-    <button onclick="window.generarAnalisisCompleto()"
-            class="w-full mb-4 bg-indigo-600 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-all uppercase text-xs">
-      📈 Generar Análisis Inteligente
-    </button>
-
     <div class="flex flex-col gap-2">
-      
       <div class="mb-2 p-3 bg-purple-50 rounded-xl border border-purple-200">
-        <p class="text-[9px] font-black text-purple-800 uppercase text-center mb-2 italic">✂️ Balance Estética (Hoy)</p>
+        <p class="text-[9px] font-black text-purple-800 uppercase text-center mb-2 italic">✂️ Balance Peluquería (Hoy)</p>
         <div class="grid grid-cols-3 gap-2">
           <div class="text-center">
             <p class="text-[7px] font-bold text-slate-400 uppercase">Bruto</p>
@@ -783,17 +765,20 @@
         </div>
       </div>
 
-     <button onclick="window.generarCierrePeluqueria()"
+      <button onclick="window.generarCierrePeluqueria()"
         class="w-full bg-purple-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-purple-700 active:scale-95 transition-all uppercase text-xs flex items-center justify-center border-b-4 border-purple-800">
-  <span>LIQUIDACIÓN SEMANAL PELUQUERIA</span>
-</button>
+        <span>LIQUIDACIÓN SEMANAL PELUQUERÍA</span>
+      </button>
+
+      <div id="reportePeluqueriaResultados" class="mt-4 hidden animate-fadeIn">
+          </div>
 
       <button onclick="window.cargarReporte()"
-              class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
-        🔄 Actualizar Balance
+              class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs mt-4">
+        🔄 Actualizar Balance General
       </button>
       
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-2 mt-2">
         <button onclick="window.descargarReporte()"
                 class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
           📥 Descargar TXT
@@ -806,7 +791,6 @@
     </div>
   </div>
 </section>
-
   <!-- ========== CONFIG PRECIOS ========== -->
 <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
@@ -3870,26 +3854,32 @@ document.addEventListener('focusout', (e) => {
 // [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - AJUSTADO
 // =========================================================
 
+// =========================================================
+// [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - FINAL
+// =========================================================
+
 window.generarCierrePeluqueria = async () => {
     console.log("⚓ Generando liquidación de Peluquería Avipet...");
     
-    // El contenedor ahora se busca en la pestaña de Finanzas
     const contenedor = document.getElementById('reportePeluqueriaResultados');
     if (!contenedor) {
-        alert("❌ Error: No se encontró el contenedor 'reportePeluqueriaResultados' en Finanzas.");
+        alert("❌ Error: No se encontró el contenedor 'reportePeluqueriaResultados' en Reportes.");
         return;
     }
 
-    // Efecto visual de carga (Contraste Radical)
+    // ASEGURAR VISIBILIDAD: Quitamos el hidden para que Darwin y Joan vean la magia
+    contenedor.classList.remove('hidden');
+
+    // Efecto visual de carga
     contenedor.innerHTML = `
-        <div class="flex flex-col items-center justify-center p-10">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-900 mb-4"></div>
-            <p class="text-[10px] font-black uppercase text-blue-900 italic tracking-widest">Extrayendo datos de la bitácora...</p>
+        <div class="flex flex-col items-center justify-center p-10 bg-white rounded-xl border border-slate-100 mt-4 shadow-inner">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-purple-600 mb-4"></div>
+            <p class="text-[10px] font-black uppercase text-purple-900 italic tracking-widest">Consultando Bitácora de Peluquería...</p>
         </div>
     `;
 
     try {
-        // Apuntamos a tu colección real de servicios
+        // Consultamos la colección de estética (Peluquería)
         const querySnapshot = await getDocs(collection(db, "servicios_estetica"));
         
         let totalRecaudado = 0;
@@ -3901,7 +3891,7 @@ window.generarCierrePeluqueria = async () => {
             <div class="overflow-x-auto mt-6">
                 <table class="w-full text-left border-collapse rounded-lg overflow-hidden shadow-sm">
                     <thead>
-                        <tr class="bg-blue-900 text-white uppercase text-[9px] font-black tracking-tighter">
+                        <tr class="bg-purple-900 text-white uppercase text-[9px] font-black tracking-tighter italic">
                             <th class="p-3">Fecha</th>
                             <th class="p-3">Mascota / Dueño</th>
                             <th class="p-3 text-center">Total Cobrado</th>
@@ -3915,7 +3905,6 @@ window.generarCierrePeluqueria = async () => {
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             
-            // Mapeo exacto de tus variables de guardado
             const bruto = parseFloat(data.precioTotal) || 0;
             const pagoP = parseFloat(data.pagoPeluquera) || 0;
             const pagoA = parseFloat(data.pagoAyudante) || 0;
@@ -3926,52 +3915,57 @@ window.generarCierrePeluqueria = async () => {
             contador++;
 
             tablaHTML += `
-                <tr class="border-b border-slate-100 hover:bg-blue-50 transition-colors">
+                <tr class="border-b border-slate-100 hover:bg-purple-50 transition-colors">
                     <td class="p-3 opacity-70">${data.fechaSimple || '---'}</td>
                     <td class="p-3 uppercase">
-                        <span class="text-blue-600 block">${data.paciente || '---'}</span>
+                        <span class="text-purple-600 block">${data.paciente || '---'}</span>
                         <span class="text-[8px] text-slate-400 font-medium">${data.duenio || 'Sin Dueño'}</span>
                     </td>
-                    <td class="p-3 text-center text-slate-900">$ ${bruto.toFixed(2)}</td>
-                    <td class="p-3 text-center text-blue-800">$ ${pagoP.toFixed(2)}</td>
-                    <td class="p-3 text-center text-emerald-600">$ ${pagoA.toFixed(2)}</td>
+                    <td class="p-3 text-center text-slate-900 font-mono">$ ${bruto.toFixed(2)}</td>
+                    <td class="p-3 text-center text-blue-700 font-mono font-black">$ ${pagoP.toFixed(2)}</td>
+                    <td class="p-3 text-center text-emerald-600 font-mono font-black">$ ${pagoA.toFixed(2)}</td>
                 </tr>
             `;
         });
 
         tablaHTML += `</tbody></table></div>`;
 
-        // Renderizado del Resumen Maestro
+        // Renderizado Final del Reporte
         contenedor.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-900 border-b-4 border-slate-700 p-5 rounded-xl shadow-lg">
-                    <p class="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1">💰 Recaudación Bruta</p>
-                    <p class="text-3xl font-black text-white italic">$ ${totalRecaudado.toFixed(2)}</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                <div class="bg-slate-900 border-b-4 border-slate-600 p-4 rounded-xl shadow-md">
+                    <p class="text-[8px] text-slate-400 uppercase font-black mb-1">Bruto Peluquería</p>
+                    <p class="text-2xl font-black text-white italic">$ ${totalRecaudado.toFixed(2)}</p>
                 </div>
-                <div class="bg-blue-700 border-b-4 border-blue-900 p-5 rounded-xl shadow-lg">
-                    <p class="text-[9px] text-blue-200 uppercase font-black tracking-widest mb-1">✂️ Total Peluquera</p>
-                    <p class="text-3xl font-black text-white italic">$ ${totalPeluquera.toFixed(2)}</p>
+                <div class="bg-blue-600 border-b-4 border-blue-800 p-4 rounded-xl shadow-md">
+                    <p class="text-[8px] text-blue-100 uppercase font-black mb-1">Darwin/Joan (Peluquera)</p>
+                    <p class="text-2xl font-black text-white italic">$ ${totalPeluquera.toFixed(2)}</p>
                 </div>
-                <div class="bg-emerald-600 border-b-4 border-emerald-800 p-5 rounded-xl shadow-lg">
-                    <p class="text-[9px] text-emerald-100 uppercase font-black tracking-widest mb-1">👥 Pago Ayudantes</p>
-                    <p class="text-3xl font-black text-white italic">$ ${totalAyudantes.toFixed(2)}</p>
+                <div class="bg-emerald-500 border-b-4 border-emerald-700 p-4 rounded-xl shadow-md">
+                    <p class="text-[8px] text-emerald-100 uppercase font-black mb-1">Pago Ayudantes</p>
+                    <p class="text-2xl font-black text-white italic">$ ${totalAyudantes.toFixed(2)}</p>
                 </div>
             </div>
             
             ${contador === 0 
-                ? '<div class="mt-6 p-10 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-black uppercase italic text-xs">Sin registros de peluquería en la bitácora</div>' 
+                ? '<div class="mt-6 p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-black uppercase italic text-xs">Sin registros de peluquería en la bitácora</div>' 
                 : tablaHTML}
+            
+            <button onclick="this.parentElement.classList.add('hidden')" class="w-full mt-4 text-[9px] font-black text-slate-400 uppercase hover:text-red-500 transition-all italic">
+                ✖ Cerrar Reporte de Liquidación
+            </button>
         `;
 
     } catch (e) {
         console.error("❌ Error en Liquidación:", e);
-        alert("Error de conexión al taller (Firebase): " + e.message);
+        alert("Error de conexión (Firebase): " + e.message);
     }
 };
 </script>
 
 </body>
 </html>
+
 
 
 
