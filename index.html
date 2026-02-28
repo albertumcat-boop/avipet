@@ -699,82 +699,87 @@
     </div>
   </section>
 
-  <!-- ========== REPORTE / CAJA ========== -->
-  <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
-    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
-      <h2 class="font-black text-center mb-2 uppercase text-slate-700 text-2xl tracking-tighter">
-        Gestión de Caja Diaria
-      </h2>
+ <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
+  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
+    <h2 class="font-black text-center mb-2 uppercase text-slate-700 text-2xl tracking-tighter">
+      Gestión de Caja Diaria
+    </h2>
 
-      <div class="text-center mb-4">
-        <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-bold uppercase border border-slate-200">
-          Pacientes: <span id="totalPacientes" class="text-slate-800">0</span>
-        </span>
+    <div class="text-center mb-4">
+      <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-bold uppercase border border-slate-200">
+        Pacientes: <span id="totalPacientes" class="text-slate-800">0</span>
+      </span>
+    </div>
+
+    <div id="listaReporte"
+         class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+        <p class="text-[10px] font-bold uppercase text-slate-400">Bruto Total</p>
+        <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
       </div>
-
-      <div id="listaReporte"
-           class="divide-y mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-2 rounded-lg border border-slate-100"></div>
-
-      <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-          <p class="text-[10px] font-bold uppercase text-slate-400">Bruto Total</p>
-          <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
+      <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400">
+        <p class="text-[10px] font-bold uppercase text-amber-600">Costos Operativos</p>
+        <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono">$0.00</p>
+      </div>
+      <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-400 col-span-2 space-y-2">
+        <div class="flex justify-between items-center border-b border-blue-100 pb-1">
+          <span class="text-[11px] font-black uppercase text-blue-800">Dr. Darwin Sandoval:</span>
+          <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
         </div>
-        <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400">
-          <p class="text-[10px] font-bold uppercase text-amber-600">Costos Operativos</p>
-          <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono">$0.00</p>
-        </div>
-        <div class="p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-400 col-span-2 space-y-2">
-          <div class="flex justify-between items-center border-b border-blue-100 pb-1">
-            <span class="text-[11px] font-black uppercase text-blue-800">Dr. Darwin Sandoval:</span>
-            <span id="repDocSandoval" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
-          </div>
-          <div class="flex justify-between items-center pt-1">
-            <span class="text-[11px] font-black uppercase text-blue-800">Dra. Joan Silva:</span>
-            <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
-          </div>
-        </div>
-        <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-sm">
-          <p class="text-[10px] font-bold uppercase text-emerald-600">Utilidad Neta (Avipet)</p>
-          <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
+        <div class="flex justify-between items-center pt-1">
+          <span class="text-[11px] font-black uppercase text-blue-800">Dra. Joan Silva:</span>
+          <span id="repDocSilva" class="text-lg font-black text-blue-600 font-mono">$0.00</span>
         </div>
       </div>
-
-      <!-- Bloque análisis inteligente -->
-      <div id="contenedorAnalisis"
-           class="hidden mt-6 pt-6 border-t-2 border-slate-100 animate-fadeIn">
-        <h3 class="text-center font-black text-indigo-900 uppercase text-sm mb-4 tracking-widest">
-          📊 Análisis Estratégico Mensual
-        </h3>
-        <div id="gridAnalisis" class="grid grid-cols-2 gap-3 mb-4"></div>
-        <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 mb-6">
-          <p class="text-[10px] font-bold uppercase text-indigo-600 mb-2">Desempeño de Equipo</p>
-          <div id="analisisDoctores" class="space-y-2"></div>
-        </div>
-      </div>
-
-      <button onclick="window.generarAnalisisCompleto()"
-              class="w-full mb-4 bg-indigo-600 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-all uppercase text-xs">
-        📈 Generar Análisis Inteligente
-      </button>
-      <div class="flex flex-col gap-2">
-        <button onclick="window.cargarReporte()"
-                class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
-          🔄 Actualizar Balance
-        </button>
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="window.descargarReporte()"
-                  class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
-            📥 Descargar TXT
-          </button>
-          <button onclick="window.guardarResumenDelDia()"
-                  class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
-            💾 Guardar en Nube
-          </button>
-        </div>
+      <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500 col-span-2 shadow-sm">
+        <p class="text-[10px] font-bold uppercase text-emerald-600">Utilidad Neta (Avipet)</p>
+        <p id="repNeto" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
       </div>
     </div>
-  </section>
+
+    <div id="contenedorAnalisis"
+         class="hidden mt-6 pt-6 border-t-2 border-slate-100 animate-fadeIn">
+      <h3 class="text-center font-black text-indigo-900 uppercase text-sm mb-4 tracking-widest">
+        📊 Análisis Estratégico Mensual
+      </h3>
+      <div id="gridAnalisis" class="grid grid-cols-2 gap-3 mb-4"></div>
+      <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 mb-6">
+        <p class="text-[10px] font-bold uppercase text-indigo-600 mb-2">Desempeño de Equipo</p>
+        <div id="analisisDoctores" class="space-y-2"></div>
+      </div>
+    </div>
+
+    <button onclick="window.generarAnalisisCompleto()"
+            class="w-full mb-4 bg-indigo-600 text-white py-3 rounded-xl font-black shadow-lg active:scale-95 transition-all uppercase text-xs">
+      📈 Generar Análisis Inteligente
+    </button>
+
+    <div class="flex flex-col gap-2">
+      <button onclick="window.generarCierrePeluqueria()"
+              class="w-full bg-purple-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-purple-700 active:scale-95 transition-all uppercase text-xs flex items-center justify-center gap-2 border-b-4 border-purple-800">
+        <span>✂️ Liquidación Semanal Peluquería</span>
+      </button>
+
+      <button onclick="window.cargarReporte()"
+              class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
+        🔄 Actualizar Balance
+      </button>
+      
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="window.descargarReporte()"
+                class="bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-[10px] hover:bg-slate-200 transition-colors uppercase">
+          📥 Descargar TXT
+        </button>
+        <button onclick="window.guardarResumenDelDia()"
+                class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 transition-colors uppercase">
+          💾 Guardar en Nube
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
   <!-- ========== CONFIG PRECIOS ========== -->
   <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
@@ -883,14 +888,104 @@
     </button>
   </div>
 </section>
+  <!-- ========== PELUQUERIA CANINA ========== -->
+  <div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+        
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 text-white flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-black uppercase tracking-tighter">✨ Estética & Peluquería</h2>
+                <p class="text-xs opacity-80 italic">Control de Servicios y Fidelidad Avipet</p>
+            </div>
+            <div id="badgeFidelidad" class="bg-yellow-400 text-purple-900 px-3 py-1 rounded-full font-bold text-xs hidden animate-bounce">
+                ¡VISITA #10: REGALO! 🎁
+            </div>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="space-y-4">
+                <h3 class="font-bold text-slate-700 border-b pb-2">🐾 Datos del Paciente</h3>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase">Nombre de la Mascota</label>
+                    <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 focus:border-purple-500 outline-none p-2 bg-slate-50" placeholder="Ej: Bruno">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase">Tamaño / Precio Base</label>
+                        <select id="pTamano" onchange="window.actualizarPrecioBasePelu()" class="w-full border p-2 rounded bg-white font-bold cursor-pointer">
+                            <option value="0">Seleccionar...</option>
+                            <option value="30">Pequeño ($30)</option>
+                            <option value="40">Mediano ($40)</option>
+                            <option value="50">Grande ($50)</option>
+                            <option value="60">Extra G. ($60)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase">Ajuste (+/-)</label>
+                        <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border p-2 rounded" placeholder="Ej: 5 o -5">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-red-500 uppercase italic">Condición Especial / Conducta</label>
+                    <textarea id="pCondicion" rows="2" class="w-full border p-2 rounded bg-red-50 text-sm focus:ring-1 focus:ring-red-400 outline-none" placeholder="Ej: Agresivo, Piel sensible, Nudos extremos..."></textarea>
+                </div>
+            </div>
+
+            <div class="space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h3 class="font-bold text-slate-700 border-b pb-2 text-center text-sm">🧰 Gestión de Insumos</h3>
+                
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-semibold text-slate-600">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="insumo-p w-4 h-4" value="champu"> Champú</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="insumo-p w-4 h-4" value="lazos"> Lazos/Pañoleta</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="insumo-p w-4 h-4" value="perfume"> Perfume</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="insumo-p w-4 h-4" value="algodon"> Algodón/Gasa</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="insumo-p w-4 h-4" value="oidos"> Limp. Oídos</label>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-300">
+                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border-2 border-indigo-200 shadow-sm">
+                        <div>
+                            <span class="block font-black text-indigo-800 uppercase text-xs">¿Usó Ayudante?</span>
+                            <span class="text-[10px] text-slate-400 italic font-medium">(Peluquera -$1 | Ayudante +$2)</span>
+                        </div>
+                        <input type="checkbox" id="pUsoAyudante" onchange="window.recalcularTotalPelu()" class="w-6 h-6 accent-indigo-600 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-100 p-6 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-slate-200">
+            <div class="text-center md:text-left">
+                <span class="block text-xs font-bold text-slate-400 uppercase">Total a Cobrar</span>
+                <span id="pTotalMostrar" class="text-4xl font-black text-slate-800">$ 0.00</span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="window.showTab('historia')" class="px-6 py-3 bg-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-400 transition-all">
+                    CANCELAR
+                </button>
+                <button onclick="window.guardarPeluqueriaPro()" class="px-10 py-3 bg-indigo-600 text-white rounded-xl font-black shadow-lg shadow-indigo-200 hover:scale-105 transition-all">
+                    GUARDAR SERVICIO
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+  <button onclick="window.showTab('peluqueria')" class="...">
+  ✨ Peluquería
+</button>
 
 <script type="module">
   import { db } from './firebase-config.js';
-  import {
+ import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, orderBy,
+    doc, getDoc, setDoc, updateDoc, orderBy, limit, // <--- Añadí 'limit' por si acaso
     enableIndexedDbPersistence, deleteDoc
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // <--- RUTA DE EMERGENCIA
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
   enableIndexedDbPersistence(db).catch((err) => {
       if (err.code == 'failed-precondition') {
@@ -2560,7 +2655,7 @@ window.agregarMedicamento = (nombreMed) => {
   };
 
  // =========================================================
-  // [17-18] SEGURIDAD Y NAVEGACIÓN (VERSIÓN FINAL)
+  // [17-18] SEGURIDAD Y NAVEGACIÓN (VERSIÓN FINAL CON PELUQUERÍA)
   // =========================================================
   
   // 1. Inicialización de Globales
@@ -2615,7 +2710,8 @@ window.agregarMedicamento = (nombreMed) => {
     // A. Ocultar todas las secciones
     const secciones = [
       'sectionHistoria', 'sectionBuscador', 'sectionReporte', 
-      'sectionEspera', 'sectionHojaVacunas', 'sectionConfigPrecios'
+      'sectionEspera', 'sectionHojaVacunas', 'sectionConfigPrecios',
+      'sectionPeluqueria' // <--- Pieza añadida aquí
     ];
     
     secciones.forEach(id => {
@@ -2630,7 +2726,8 @@ window.agregarMedicamento = (nombreMed) => {
       'reporte': 'sectionReporte',
       'espera': 'sectionEspera',
       'vacunas': 'sectionHojaVacunas',
-      'config_precios': 'sectionConfigPrecios'
+      'config_precios': 'sectionConfigPrecios',
+      'peluqueria': 'sectionPeluqueria' // <--- Pieza añadida aquí
     };
 
     const activaId = mapaSecciones[t];
@@ -2643,7 +2740,8 @@ window.agregarMedicamento = (nombreMed) => {
       'historia': 'tabH',
       'buscador': 'tabB',
       'reporte': 'tabR',
-      'espera': 'tabE'
+      'espera': 'tabE',
+      'peluqueria': 'tabP' // <--- Para que el botón de peluquería también se ilumine
     };
 
     Object.keys(botones).forEach(key => {
@@ -3414,10 +3512,283 @@ window.agregarFilaTest = (nombre) => {
     
     tabla.appendChild(fila);
 };
+  // =========================================================
+// [PELUQUERÍA] GUARDADO, PAGOS Y FIDELIDAD
+// =========================================================
+
+window.guardarPeluqueriaPro = async () => {
+    const dInput = (id) => document.getElementById(id)?.value.trim() || "";
+    
+    const mascota = dInput('pNombre');
+    const base = parseFloat(document.getElementById('pTamano').value) || 0;
+    const ajuste = parseFloat(document.getElementById('pAjuste').value) || 0;
+    const precioFinal = base + ajuste;
+    const usoAyudante = document.getElementById('pUsoAyudante').checked;
+    const condicion = dInput('pCondicion');
+
+    if (!mascota || base === 0) {
+        alert("⚠️ Por favor, ingrese el nombre de la mascota y seleccione un tamaño.");
+        return;
+    }
+
+    // 1. PIN DE AUTORIZACIÓN (Peluquera o Admin)
+    const pin = prompt(`🔐 Firma de Peluquería\nIngrese su PIN para autorizar el cobro de $${precioFinal}:`);
+    if (!pin) return;
+
+    // Usamos tu validación maestra (AVIPET2026 o los pines de tus doctores/peluquera)
+    const esValido = await window.validarDoctorConMaster("Peluqueria", pin); 
+    if (!esValido) {
+        alert("❌ PIN incorrecto.");
+        return;
+    }
+
+    try {
+        // 2. LÓGICA DE FIDELIDAD (Búsqueda por nombre)
+        // Buscamos si existe un registro previo para sumar la visita
+        const fidelidadRef = doc(db, "fidelidad_peluqueria", mascota.toLowerCase());
+        const fidelidadSnap = await getDoc(fidelidadRef);
+        
+        let visitasActuales = 0;
+        if (fidelidadSnap.exists()) {
+            visitasActuales = fidelidadSnap.data().contador || 0;
+        }
+        
+        const nuevaVisita = visitasActuales + 1;
+
+        // 3. REGLA DEL NETO Y AYUDANTE (Cálculos de Albert)
+        const porcPeluquera = 40; // Ajusta este % según tu acuerdo
+        let pagoPeluquera = (precioFinal * (porcPeluquera / 100));
+        let pagoAyudante = 0;
+
+        if (usoAyudante) {
+            pagoPeluquera -= 1; // Se le descuenta 1 a ella
+            pagoAyudante = 2;   // Ayudante recibe 1x2 = 2
+        }
+
+        // 4. ESTRUCTURA DE DATOS
+        const dataPelu = {
+            paciente: mascota,
+            precioTotal: precioFinal,
+            pagoPeluquera: pagoPeluquera,
+            pagoAyudante: pagoAyudante,
+            usoAyudante: usoAyudante,
+            condicion: condicion,
+            visitaNumero: nuevaVisita,
+            fecha: serverTimestamp(),
+            fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+            tipo: "PELUQUERIA"
+        };
+
+        // 5. GUARDAR EN FIREBASE
+        await addDoc(collection(db, "servicios_estetica"), dataPelu);
+        
+        // Actualizar contador de fidelidad
+        await setDoc(fidelidadRef, { contador: nuevaVisita, ultimaVisita: serverTimestamp() }, { merge: true });
+
+        // 6. AVISO DE PREMIO
+        if (nuevaVisita >= 10) {
+            alert(`🎉 ¡EXCELENTE! ${mascota} ha llegado a su visita #10.\n¡LE CORRESPONDE PREMIO!`);
+            await setDoc(fidelidadRef, { contador: 0 }, { merge: true }); // Reinicia ciclo
+        } else {
+            alert(`✅ Guardado con éxito. Visita #${nuevaVisita} para ${mascota}.`);
+        }
+
+        window.showTab('historia'); // Regresar al inicio
+
+    } catch (e) {
+        console.error("Error en Peluquería:", e);
+        alert("❌ Error: " + e.message);
+    }
+};
+window.generarCierrePeluqueria = async () => {
+    console.log("🚀 Calculando liquidación semanal y preparando respaldo...");
+    
+    const hoy = new Date();
+    const diaSemana = hoy.getDay(); 
+    const diff = hoy.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
+    const lunesPasado = new Date(new Date().setDate(diff));
+    lunesPasado.setHours(0,0,0,0);
+
+    const fechaFila = hoy.toLocaleDateString().replace(/\//g, '-');
+
+    try {
+        const q = query(
+            collection(db, "servicios_estetica"),
+            where("fecha", ">=", lunesPasado)
+        );
+
+        const querySnapshot = await getDocs(q);
+        
+        let totalVentaBruta = 0;
+        let acumuladoPeluquera = 0;
+        let acumuladoAyudante = 0;
+        let conteoPerros = 0;
+        let perrosConAyudante = 0;
+        let detalleTexto = `DETALLE DE SERVICIOS SEMANALES - AVIPET\n`;
+        detalleTexto += `Rango: desde ${lunesPasado.toLocaleDateString()} hasta hoy\n`;
+        detalleTexto += `-------------------------------------------\n\n`;
+
+        querySnapshot.forEach((doc) => {
+            const d = doc.data();
+            const precioFinal = d.precioTotal || 0;
+            totalVentaBruta += precioFinal;
+            acumuladoPeluquera += d.pagoPeluquera || 0;
+            acumuladoAyudante += d.pagoAyudante || 0;
+            conteoPerros++;
+            
+            // Añadimos cada perro al detalle del archivo
+            detalleTexto += `🐕 ${d.paciente.padEnd(12)} | Total: $${precioFinal.toString().padEnd(5)} | Ayudante: ${d.usoAyudante ? 'SÍ' : 'NO'}\n`;
+            
+            if (d.usoAyudante) perrosConAyudante++;
+        });
+
+        const resumenFinal = `
+-------------------------------------------
+RESUMEN DE LIQUIDACIÓN:
+🐕 Perros Atendidos: ${conteoPerros}
+🤝 Con Ayudante: ${perrosConAyudante}
+💰 Venta Total Bruta: $${totalVentaBruta.toFixed(2)}
+-------------------------------------------
+👩‍🎨 PAGO PELUQUERA: $${acumuladoPeluquera.toFixed(2)}
+👦 PAGO AYUDANTE: $${acumuladoAyudante.toFixed(2)}
+-------------------------------------------
+Generado el: ${hoy.toLocaleString()}
+`;
+
+        detalleTexto += resumenFinal;
+
+        // 1. Mostrar el Alert (Aviso inmediato)
+        alert(resumenFinal);
+
+        // 2. Generar el archivo .txt (El respaldo)
+        const blob = new Blob([detalleTexto], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Liquidacion_Pelu_Avipet_${fechaFila}.txt`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        console.log("⚓ Respaldo descargado exitosamente.");
+
+    } catch (e) {
+        console.error("Error al generar cierre:", e);
+        alert("❌ Error al calcular: " + e.message);
+    }
+};
+  window.guardarPeluqueriaPro = async () => {
+    // 1. Captura de datos (con limpieza de espacios)
+    const mascota = document.getElementById('pNombre').value.trim();
+    const precioBase = parseFloat(document.getElementById('pTamano').value) || 0;
+    const ajuste = parseFloat(document.getElementById('pAjuste').value) || 0;
+    const usoAyudante = document.getElementById('pUsoAyudante').checked;
+    const condicion = document.getElementById('pCondicion').value.trim();
+
+    if (!mascota || precioBase === 0) {
+        alert("⚠️ Falta el nombre de la mascota o el tamaño.");
+        return;
+    }
+
+    const precioFinal = precioBase + ajuste;
+
+    try {
+        // 2. Lógica de Fidelidad: Consultamos la "tarjeta" del perro
+        const fidelidadRef = doc(db, "fidelidad_peluqueria", mascota.toLowerCase());
+        const fidelidadSnap = await getDoc(fidelidadRef);
+        
+        let visitasActuales = 0;
+        if (fidelidadSnap.exists()) {
+            visitasActuales = fidelidadSnap.data().contador || 0;
+        }
+        
+        const nuevaVisita = visitasActuales + 1;
+
+        // 3. Cálculos de Pago (Tu regla: Peluquera -$1 / Ayudante +$2)
+        // Asumiendo comisión estándar del 40% (ajustar si es diferente)
+        let pagoPeluquera = (precioFinal * 0.40); 
+        let pagoAyudante = 0;
+
+        if (usoAyudante) {
+            pagoPeluquera -= 1; // Se le quita 1 a ella
+            pagoAyudante = 2;   // Se le dan 2 al ayudante
+        }
+
+        // 4. Guardar el registro del servicio
+        await addDoc(collection(db, "servicios_estetica"), {
+            paciente: mascota,
+            precioTotal: precioFinal,
+            pagoPeluquera: pagoPeluquera,
+            pagoAyudante: pagoAyudante,
+            usoAyudante: usoAyudante,
+            condicion: condicion,
+            visitaNumero: nuevaVisita,
+            fecha: serverTimestamp()
+        });
+
+        // 5. Actualizar la tarjeta de fidelidad
+        let mensajeFidelidad = `✅ Servicio guardado. Visita #${nuevaVisita} para ${mascota}.`;
+        
+        if (nuevaVisita >= 10) {
+            // ¡Llegó a la 10! Avisamos y reseteamos el contador
+            alert(`🎁 ¡ATENCIÓN ALBERT! ${mascota} ha completado 10 visitas. ¡TOCA REGALO!`);
+            await setDoc(fidelidadRef, { contador: 0, ultimaVisita: serverTimestamp() });
+        } else {
+            await setDoc(fidelidadRef, { contador: nuevaVisita, ultimaVisita: serverTimestamp() });
+        }
+
+        alert(mensajeFidelidad);
+        
+        // Limpiar formulario y volver a la historia clínica
+        window.showTab('historia');
+
+    } catch (e) {
+        console.error("Error al guardar peluquería:", e);
+        alert("❌ Error: " + e.message);
+    }
+};
+  // 1. Actualiza el valor base según el tamaño seleccionado
+window.actualizarPrecioBasePelu = () => {
+    const selector = document.getElementById('pTamano');
+    const precioBase = parseFloat(selector.value) || 0;
+    
+    // Si eligió un tamaño, reseteamos el ajuste para empezar de cero
+    document.getElementById('pAjuste').value = "";
+    
+    window.recalcularTotalPelu();
+};
+
+// 2. Calcula el total final considerando el Ajuste (+/-)
+window.recalcularTotalPelu = () => {
+    const precioBase = parseFloat(document.getElementById('pTamano').value) || 0;
+    const ajuste = parseFloat(document.getElementById('pAjuste').value) || 0;
+    const usoAyudante = document.getElementById('pUsoAyudante').checked;
+    
+    let totalFinal = precioBase + ajuste;
+
+    // Mostramos el total en el HTML (el ID 'pTotalMostrar' que pusimos en el div)
+    const display = document.getElementById('pTotalMostrar');
+    if (display) {
+        display.innerText = `$ ${totalFinal.toFixed(2)}`;
+        
+        // Efecto visual: si hay un total, lo ponemos en verde Avipet
+        if (totalFinal > 0) {
+            display.classList.add('text-indigo-600');
+            display.classList.remove('text-slate-800');
+        } else {
+            display.classList.add('text-slate-800');
+            display.classList.remove('text-indigo-600');
+        }
+    }
+
+    // Nota interna: La lógica de -$1 a peluquera y +$2 a ayudante 
+    // se aplica internamente al GUARDAR, para no confundir al cliente con el cobro.
+    console.log(`🔍 Cálculo en vivo: Base ${precioBase} + Ajuste ${ajuste} = ${totalFinal}`);
+};
 </script>
 
 </body>
 </html>
+
 
 
 
