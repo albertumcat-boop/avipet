@@ -6,6 +6,7 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
   <script src="https://cdn.tailwindcss.com"></script>
+   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
  <style>
     body {
       background-color: #f1f5f9;
@@ -180,7 +181,8 @@
         display: block !important;
       }
     }
-  </style>
+ </style>
+
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
 
@@ -1019,8 +1021,9 @@
                     </div>
                 </div>
 
-                <div class="bg-blue-50 p-4 rounded-xl space-y-3 border border-blue-100">
+                <div class="bg-blue-50 p-4 rounded-xl space-y-3 border border-blue-100 shadow-inner">
                     <h4 class="text-[10px] font-black text-blue-800 uppercase text-center tracking-widest mb-1">👥 Comisiones de Trabajo</h4>
+                    
                     <div class="flex items-center justify-between bg-amber-100 p-2 rounded-lg border border-amber-300">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-600">
@@ -1053,12 +1056,7 @@
             </div>
 
             <div class="space-y-4 flex flex-col justify-between">
-                <div>
-                    <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">💰 Resumen de Cobro</h3>
-                    <p class="text-[9px] text-slate-400 mt-2 uppercase font-bold italic">Cálculos automáticos basados en tarifa y comisiones.</p>
-                </div>
-
-                <div class="bg-blue-900 p-6 rounded-2xl text-white shadow-2xl">
+                <div class="bg-blue-900 p-6 rounded-2xl text-white shadow-2xl relative overflow-hidden">
                     <div class="flex justify-between items-center mb-4 border-b border-blue-800 pb-4">
                         <span class="text-[11px] font-bold uppercase opacity-70 tracking-widest">Total Cliente</span>
                         <span id="pTotalCobro" class="text-3xl font-black italic">$ 0.00</span>
@@ -1079,10 +1077,6 @@
                         </div>
                         <span id="pResAyudantes" class="hidden">$ 0.00</span>
                     </div>
-                    
-                    <p class="text-[8px] text-blue-300 mt-4 text-center font-bold uppercase tracking-tighter italic">
-                        * Insumos básicos incluidos en el costo operativo.
-                    </p>
                 </div>
 
                 <div class="space-y-2">
@@ -1095,6 +1089,25 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-slate-100 p-6 border-t-4 border-blue-900">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-lg font-black text-blue-900 uppercase italic">🐕 Bitácora de Hoy</h3>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase">Pacientes en mesa hoy</p>
+                </div>
+                <button onclick="window.cargarBitacoraPeluqueria()" class="text-[10px] bg-white border border-slate-300 text-blue-600 px-4 py-2 rounded-lg font-black uppercase hover:bg-blue-50 transition shadow-sm">
+                    🔄 Refrescar Lista
+                </button>
+            </div>
+            
+            <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="col-span-full py-10 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white/50">
+                    <p class="text-slate-400 text-[10px] font-black uppercase italic tracking-widest">Sin registros en la jornada actual</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 <script type="module">
@@ -3961,10 +3974,86 @@ window.generarCierrePeluqueria = async () => {
         alert("Error de conexión (Firebase): " + e.message);
     }
 };
+  window.exportarExcelPeluqueria = async () => {
+    console.log("⚓ Generando reporte Excel de Peluquería...");
+    try {
+        const querySnapshot = await getDocs(collection(db, "servicios_estetica"));
+        const datos = [];
+        
+        querySnapshot.forEach((doc) => {
+            const d = doc.data();
+            datos.push({
+                Fecha: d.fechaSimple || '---',
+                Paciente: d.paciente || '---',
+                Dueño: d.duenio || '---',
+                Servicio: d.servicio || '---',
+                Total_Cobrado: d.precioTotal || 0,
+                Pago_Peluquera: d.pagoPeluquera || 0,
+                Pago_Ayudantes: d.pagoAyudante || 0,
+                Metodo_Pago: d.metodoPago || '---'
+            });
+        });
+
+        if (datos.length === 0) return alert("No hay datos para exportar");
+
+        const hoja = XLSX.utils.json_to_sheet(datos);
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, "Peluqueria_Avipet");
+        
+        // Descarga el archivo con la fecha de hoy
+        const fechaHoy = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(libro, `Reporte_Peluqueria_${fechaHoy}.xlsx`);
+        
+    } catch (e) {
+        console.error("Error exportando Excel:", e);
+    }
+};
+  window.cargarBitacoraPeluqueria = async () => {
+    const contenedor = document.getElementById('bitacoraPeluqueriaHoy');
+    const hoy = new Date().toLocaleDateString('es-ES'); // O el formato que uses en fechaSimple
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "servicios_estetica"));
+        let html = "";
+        let registrosHoy = 0;
+
+        querySnapshot.forEach((doc) => {
+            const d = doc.data();
+            // Filtramos para ver solo los de hoy
+            if (d.fechaSimple === hoy) {
+                registrosHoy++;
+                html += `
+                    <div class="bg-white border-2 border-slate-200 p-4 rounded-2xl shadow-sm flex items-center gap-4 hover:border-blue-400 transition-all">
+                        <div class="bg-blue-900 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg">
+                            🐕
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[10px] font-black text-blue-900 uppercase leading-none">${d.paciente}</p>
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">${d.servicio}</p>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-[10px] font-black text-emerald-600 font-mono">$${d.precioTotal}</span>
+                                <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded-md font-bold text-slate-500 uppercase">${d.metodoPago}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        contenedor.innerHTML = registrosHoy > 0 ? html : '<p class="text-center col-span-full py-10 text-slate-300 font-black uppercase text-[10px]">Aún no hay perros atendidos hoy</p>';
+
+    } catch (e) {
+        console.error("Error cargando bitácora:", e);
+    }
+};
+
+// Llamamos a la función al cargar la pestaña
+// Puedes meter esto en tu lógica de navegación
 </script>
 
 </body>
 </html>
+
 
 
 
