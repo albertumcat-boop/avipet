@@ -186,23 +186,27 @@
 
 <main id="adminSection" class="max-w-5xl mx-auto p-2 md:p-4">
 
- <nav class="flex justify-around border-b-2 border-gray-200 mb-4 no-print bg-white sticky top-0 z-40 py-1">
+<nav class="flex justify-around border-b-2 border-gray-200 mb-4 no-print bg-white sticky top-0 z-40 py-1">
   <button onclick="showTab('historia')" id="tabH"
           class="tab-active py-2 text-[11px] px-2 uppercase font-bold">
     Historia Clínica
   </button>
-   <button onclick="showTab('espera')" id="tabE"
+  
+  <button onclick="showTab('espera')" id="tabE"
           class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
     Sala de Espera
   </button>
+  
   <button onclick="showTab('buscador')" id="tabB"
           class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
     Buscador
   </button>
-<button onclick="window.generarCierrePeluqueria()"
-        class="w-full bg-purple-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-purple-700 active:scale-95 transition-all uppercase text-xs flex items-center justify-center gap-2 border-b-4 border-purple-800">
-  <span class="text-white">Peluquería</span></span>
-</button>
+
+  <button onclick="showTab('peluqueria')" id="tabP"
+          class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
+    Peluqueria
+  </button>
+
   <button onclick="showTab('reporte')" id="tabR"
           class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
     Finanzas / Caja
@@ -780,10 +784,10 @@
         </div>
       </div>
 
-      <button onclick="window.generarCierrePeluqueria()"
-              class="w-full bg-purple-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-purple-700 active:scale-95 transition-all uppercase text-xs flex items-center justify-center gap-2 border-b-4 border-purple-800">
-        <span>✂️ Liquidación Semanal Peluquería</span>
-      </button>
+     <button onclick="window.generarCierrePeluqueria()"
+        class="w-full bg-purple-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-purple-700 active:scale-95 transition-all uppercase text-xs flex items-center justify-center border-b-4 border-purple-800">
+  <span>LIQUIDACIÓN SEMANAL PELUQUERIA</span>
+</button>
 
       <button onclick="window.cargarReporte()"
               class="w-full bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-xs">
@@ -3878,6 +3882,7 @@ document.addEventListener('focusout', (e) => {
 
 </body>
 </html>
+
 
 
 
