@@ -3838,28 +3838,32 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
     const cedulaRaw = cedulaInput.trim();
     if (!cedulaRaw || cedulaRaw.length < 5) return;
     
-    console.log("🔍 Escaneando base de datos para:", cedulaRaw);
+    console.log("🔍 BUSCANDO:", cedulaRaw);
 
     try {
-        // --- PRUEBA 1: Buscar como Texto ---
+        // --- ESTO ES PARA VER EL ERROR REAL ---
+        // Vamos a traer un solo registro cualquiera para ver cómo se llaman los campos
+        const testQ = query(collection(db, "pacientes"), limit(1));
+        const testSnap = await getDocs(testQ);
+        if(!testSnap.empty) {
+            console.log("🛠️ ESTRUCTURA REAL EN FIREBASE:", testSnap.docs[0].data());
+        }
+
+        // --- BÚSQUEDA NORMAL ---
         let q = query(collection(db, "pacientes"), where("cedula", "==", cedulaRaw), limit(1));
         let querySnapshot = await getDocs(q);
 
-        // --- PRUEBA 2: Si falló, buscar como Número ---
         if (querySnapshot.empty) {
+            // Intento como número
             const cedulaNum = parseInt(cedulaRaw);
-            if (!isNaN(cedulaNum)) {
-                console.log("⚠️ No hallado como texto, probando como número...");
-                q = query(collection(db, "pacientes"), where("cedula", "==", cedulaNum), limit(1));
-                querySnapshot = await getDocs(q);
-            }
+            q = query(collection(db, "pacientes"), where("cedula", "==", cedulaNum), limit(1));
+            querySnapshot = await getDocs(q);
         }
 
         if (!querySnapshot.empty) {
             const datos = querySnapshot.docs[0].data();
             console.log("✅ ¡ENCONTRADO!", datos);
             
-            // Mapeo ultra-flexible (por si los nombres de campos varían)
             const mapeo = {
                 'pDuenio': datos.propietario || datos.nombreDueno || datos.nombreDuenio || datos.dueno || "",
                 'pNombre': datos.nombre || datos.nombreMascota || datos.paciente || "",
@@ -3868,42 +3872,18 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
                 'pRaza': datos.raza || ""
             };
 
-            // Inyectar datos en el HTML
             Object.keys(mapeo).forEach(id => {
-                const input = document.getElementById(id);
-                if (input) {
-                    input.value = mapeo[id];
-                    // Efecto visual de "campo llenado"
-                    input.style.backgroundColor = "#dcfce7"; 
-                    setTimeout(() => input.style.backgroundColor = "transparent", 800);
-                }
+                const el = document.getElementById(id);
+                if (el) el.value = mapeo[id];
             });
-
-            // Manejo de Alertas/Condiciones
-            const campoCond = document.getElementById('pCondicion');
-            if (campoCond) {
-                const alerta = datos.alertas || datos.condicion || datos.notas || "";
-                campoCond.value = alerta ? `⚠️ ANTECEDENTE: ${alerta}` : "";
-            }
-
-            // Actualizar precios automáticamente
-            if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
             
+            if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
         } else {
-            console.warn("❌ LA CÉDULA NO EXISTE EN FIREBASE:", cedulaRaw);
-            alert("⚠️ Cliente no registrado. Por favor, verifique la cédula o cree una historia nueva.");
+            console.warn("❌ SIGUE SIN APARECER. Revisa la consola para ver la 'ESTRUCTURA REAL'.");
+            alert("⚠️ Cliente no registrado.");
         }
-    } catch (e) { 
-        console.error("❌ ERROR CRÍTICO EN FIREBASE:", e); 
-    }
+    } catch (e) { console.error("❌ ERROR:", e); }
 };
-
-// Asegúrate de que el escuchador use 'change' o 'blur'
-document.addEventListener('change', (e) => {
-    if (e.target && e.target.id === 'pCedula') {
-        window.buscarClientePeluqueria(e.target.value);
-    }
-});
 // =========================================================
 // [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - FINAL
 // =========================================================
@@ -4090,6 +4070,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
