@@ -3650,37 +3650,37 @@ window.agregarFilaTest = (nombre) => {
     tabla.appendChild(fila);
 };
 // =========================================================
-// [PELUQUERÍA PRO] - VERSIÓN PURA (SIN INSUMOS)
+// [PELUQUERÍA PRO] - VERSIÓN INTEGRAL AVIPET
 // =========================================================
 
-// Configuración de Ganancia (Ajustable)
 window.PORCENTAJE_PELUQUERA = 40; 
 
 window.guardarPeluqueriaPro = async () => {
-    // --- 1. CAPTURA DE DATOS ---
+    // --- 1. CAPTURA DE DATOS (Con protección ante elementos faltantes) ---
     const dInput = (id) => document.getElementById(id);
     const val = (id) => dInput(id)?.value.trim() || "";
     
     const cedula = val('pCedula');
     const duenio = val('pDuenio');
     const mascota = val('pNombre');
-    const raza = val('pRaza');
+    const direccion = val('pDireccion'); // Recuperado
+    const condicion = val('pCondicion'); 
     
-    const base = parseFloat(dInput('pTamano').value) || 0;
-    const ajuste = parseFloat(dInput('pAjuste').value) || 0;
-    const tipoServicio = dInput('pTipoServicio').value;
+    // Captura de valores numéricos desde el HTML
+    const base = parseFloat(dInput('pTamano')?.value) || 0;
+    const ajuste = parseFloat(dInput('pAjuste')?.value) || 0;
+    const tipoServicio = dInput('pTipoServicio')?.value || "completo";
     
-    // --- 2. AYUDANTES (Principal Permanente + Extra Agresivo) ---
-    const ayuPrincipal = dInput('pAyudante1').checked;
-    const ayuExtra = dInput('pAyudanteExtra').checked;
+    // --- 2. AYUDANTES (Captura de estados y montos) ---
+    const ayuPrincipal = dInput('pAyudante1')?.checked || false;
+    const ayuExtra = dInput('pAyudanteExtra')?.checked || false;
+    const extraSolo = dInput('pExtraSolo')?.checked || false;
     
-    // Captura de montos dinámicos desde la pestaña de Ajustes
+    // Montos dinámicos (Buscamos en Ajustes o usamos el default de 2 y 3)
     const montoAyu1 = parseFloat(document.getElementById('confPagoAyu1')?.value) || 2;
     const montoAyuExtra = parseFloat(document.getElementById('confPagoAyuExtra')?.value) || 3;
-    
-    const condicion = val('pCondicion'); 
 
-    // Validación de seguridad
+    // Validación de seguridad de datos obligatorios
     if (!cedula || !mascota || (tipoServicio !== 'solo_unas' && base === 0)) {
         alert("⚠️ ATENCIÓN: Cédula, Mascota y Tamaño son obligatorios.");
         return;
@@ -3711,31 +3711,46 @@ window.guardarPeluqueriaPro = async () => {
         }
         const nuevaVisita = visitasActuales + 1;
 
-        // --- 6. CÁLCULOS DE PAGO INTERNO (Reglas de Albert con montos de Ajustes) ---
-        let pagoPeluquera = (precioFinal * (window.PORCENTAJE_PELUQUERA / 100));
-        let pagoAyudanteTotal = 0;
+        // --- 6. CÁLCULOS DE PAGO INTERNO (REGLAS ALBERT) ---
+        let pagoPeluquera = 0;
+        let pagoAyu1Final = 0;
+        let pagoAyuExtraFinal = 0;
 
-        if (ayuPrincipal) {
-            pagoPeluquera -= 1; // Ella aporta 1
-            pagoAyudanteTotal += montoAyu1; 
-        }
-        
-        if (ayuExtra) {
-            pagoPeluquera -= 1; // Ella aporta otro 1
-            pagoAyudanteTotal += montoAyuExtra; 
+        if (extraSolo) {
+            pagoPeluquera = 0;
+            pagoAyuExtraFinal = (precioFinal * 0.40);
+        } else {
+            if (ayuExtra) {
+                const parteIgual = precioFinal / 3;
+                pagoPeluquera = parteIgual;
+                pagoAyuExtraFinal = parteIgual;
+                if (ayuPrincipal) {
+                    pagoPeluquera -= 1;
+                    pagoAyu1Final = montoAyu1;
+                }
+            } else {
+                pagoPeluquera = (precioFinal * (window.PORCENTAJE_PELUQUERA / 100));
+                if (ayuPrincipal) {
+                    pagoPeluquera -= 1;
+                    pagoAyu1Final = montoAyu1;
+                }
+            }
         }
 
-        // --- 7. ESTRUCTURA DE DATOS PARA HISTORIAL (SIN INSUMOS) ---
+        // --- 7. ESTRUCTURA DE DATOS PARA FIREBASE ---
         const dataPelu = {
             cedulaCliente: cedula,
             nombreDuenio: duenio,
             paciente: mascota,
-            raza: raza,
+            direccion: direccion,
             precioTotal: precioFinal,
             pagoPeluquera: pagoPeluquera,
-            pagoAyudante: pagoAyudanteTotal,
-            ayudantePrincipal: ayuPrincipal,
-            ayudanteExtra: ayuExtra,
+            pagoAyudantePrincipal: pagoAyu1Final,
+            pagoAyudanteExtra: pagoAyuExtraFinal,
+            pagoAyudanteTotal: (pagoAyu1Final + pagoAyuExtraFinal),
+            ayudantePrincipalActivo: ayuPrincipal,
+            ayudanteExtraActivo: ayuExtra,
+            extraHizoTodo: extraSolo,
             condicion: condicion,
             visitaNumero: nuevaVisita,
             fecha: serverTimestamp(),
@@ -3759,19 +3774,17 @@ window.guardarPeluqueriaPro = async () => {
             alert(`✅ REGISTRO EXITOSO. Visita #${nuevaVisita}`);
         }
 
-        // RESET TOTAL DEL FORMULARIO (LIMPIEZA DE FRONT)
-        dInput('pCedula').value = "";
-        dInput('pDuenio').value = "";
-        dInput('pNombre').value = "";
-        dInput('pRaza').value = "";
-        dInput('pAjuste').value = "";
-        dInput('pCondicion').value = "";
-        dInput('pAyudanteExtra').checked = false;
-        dInput('pAyudante1').checked = true; // Permanente
+        // RESET MANUAL DE CAMPOS (Para asegurar limpieza total)
+        ['pCedula', 'pDuenio', 'pNombre', 'pAjuste', 'pCondicion', 'pDireccion'].forEach(id => {
+            const el = dInput(id);
+            if(el) el.value = "";
+        });
         
-        const cobroDisp = document.getElementById('pTotalCobro');
-        if (cobroDisp) cobroDisp.innerText = "$ 0.00";
+        if(dInput('pExtraSolo')) dInput('pExtraSolo').checked = false;
+        if(dInput('pAyudanteExtra')) dInput('pAyudanteExtra').checked = false;
+        if(dInput('pAyudante1')) dInput('pAyudante1').checked = true;
 
+        window.recalcularTotalPelu(); // Vuelve los números a cero
         window.showTab('historia');
 
     } catch (e) {
@@ -3779,142 +3792,11 @@ window.guardarPeluqueriaPro = async () => {
         alert("❌ ERROR: " + e.message);
     }
 };
-
-// --- RECALCULAR EN VIVO (Sin Insumos) ---
-window.recalcularTotalPelu = () => {
-    const tipo = document.getElementById('pTipoServicio')?.value || 'completo';
-    const base = parseFloat(document.getElementById('pTamano')?.value) || 0;
-    const ajuste = parseFloat(document.getElementById('pAjuste')?.value) || 0;
-    
-    // Captura de estados
-    const extraSolo = document.getElementById('pExtraSolo')?.checked;
-    const ayu1Activo = document.getElementById('pAyudante1')?.checked;
-    const ayuExtraActivo = document.getElementById('pAyudanteExtra')?.checked;
-    const montoAyu1 = parseFloat(document.getElementById('pMontoAyu1')?.value) || 0;
-
-    let cobroCliente = (tipo === 'solo_unas') ? 5 : (base + ajuste);
-    let pagoPeluquera = 0;
-    let pagoAyu1 = 0;
-    let pagoAyuExtra = 0;
-
-    if (extraSolo) {
-        // --- ESCENARIO 1: EL RELEVO (SOLO AYUDANTE EXTRA) ---
-        pagoPeluquera = 0;
-        pagoAyu1 = 0;
-        pagoAyuExtra = (cobroCliente * 0.40); // Se lleva el 40% completo
-        
-        if(document.getElementById('pAyudante1')) document.getElementById('pAyudante1').disabled = true;
-        if(document.getElementById('pAyudanteExtra')) document.getElementById('pAyudanteExtra').disabled = true;
-    } else {
-        if(document.getElementById('pAyudante1')) document.getElementById('pAyudante1').disabled = false;
-        if(document.getElementById('pAyudanteExtra')) document.getElementById('pAyudanteExtra').disabled = false;
-
-        if (ayuExtraActivo) {
-            // --- ESCENARIO 2: CONTRASTE RADICAL (DIVISIÓN ENTRE 3) ---
-            const parteIgual = cobroCliente / 3;
-            pagoPeluquera = parteIgual;
-            pagoAyuExtra = parteIgual; // Su parte por el apoyo agresivo
-
-            if (ayu1Activo) {
-                pagoPeluquera -= 1; // El principal le resta $1 a la peluquera
-                pagoAyu1 = montoAyu1; 
-            }
-        } else {
-            // --- ESCENARIO 3: NORMAL ---
-            pagoPeluquera = (cobroCliente * 0.40);
-            if (ayu1Activo) {
-                pagoPeluquera -= 1;
-                pagoAyu1 = montoAyu1;
-            }
-        }
-    }
-
-    // --- ACTUALIZACIÓN DE PANTALLA (PRECISIÓN AVIPET) ---
-    document.getElementById('pTotalCobro').innerText = `$ ${cobroCliente.toFixed(2)}`;
-    document.getElementById('pResPeluquera').innerText = `$ ${pagoPeluquera.toFixed(2)}`;
-    
-    // Mostramos cada ayudante en su sitio
-    if(document.getElementById('pResAyudante1')) 
-        document.getElementById('pResAyudante1').innerText = `$ ${pagoAyu1.toFixed(2)}`;
-    
-    if(document.getElementById('pResAyudanteExtra')) 
-        document.getElementById('pResAyudanteExtra').innerText = `$ ${pagoAyuExtra.toFixed(2)}`;
-
-    // Esta suma es la que se enviará al reporte de FINANZAS
-    const sumaAyudantes = pagoAyu1 + pagoAyuExtra;
-    document.getElementById('pResAyudantes').innerText = `$ ${sumaAyudantes.toFixed(2)}`;
-};
-// =========================================================
-// [PELUQUERÍA] ESCÁNER INDEPENDIENTE (CONEXIÓN CON CLÍNICA)
-// =========================================================
-
-window.buscarClientePeluqueria = async (cedula) => {
-    if (!cedula || cedula.length < 5) return;
-    
-    console.log("⚓ Buscando paciente con cédula:", cedula);
-
-    try {
-        const q = query(
-            collection(db, "pacientes"), 
-            where("cedula", "==", cedula),
-            limit(1) 
-        );
-
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-            const datos = querySnapshot.docs[0].data();
-            
-            // 1. Mapeo de datos: Firebase -> IDs del HTML
-            // Ajustado a los campos reales que pusimos en el HTML de Peluquería
-            const camposA允lenar = {
-                'pDuenio': datos.propietario || datos.nombreDueno || "",
-                'pNombre': datos.nombre || datos.nombreMascota || "",
-                'pTelefono': datos.telefono || "",
-                'pDireccion': datos.direccion || ""
-            };
-
-            // 2. Llenado con validación (Evita el error de 'null')
-            Object.keys(camposA允lenar).forEach(id => {
-                const input = document.getElementById(id);
-                if (input) {
-                    input.value = camposA允lenar[id];
-                }
-            });
-
-            // 3. Manejo de Notas de Salud (Condición)
-            const campoCondicion = document.getElementById('pCondicion');
-            if (campoCondicion) {
-                const alertas = datos.alertas || datos.condicion || "";
-                if (alertas) {
-                    campoCondicion.value = `⚠️ ALERTA MÉDICA: ${alertas}`;
-                }
-            }
-
-            console.log("✅ Datos de Avipet importados correctamente.");
-            
-            // 4. Recalcular automáticamente si hay datos nuevos
-            if (typeof window.recalcularTotalPelu === 'function') {
-                window.recalcularTotalPelu();
-            }
-        } else {
-            console.log("ℹ️ No se encontró paciente. Albert, puedes registrarlo manualmente.");
-        }
-    } catch (e) {
-        console.error("❌ Error en el escáner de peluquería:", e);
-    }
-};
-
-// Listener para disparar la búsqueda al salir del campo cédula
-document.addEventListener('focusout', (e) => {
-    if (e.target && e.target.id === 'pCedula') {
-        window.buscarClientePeluqueria(e.target.value.trim());
-    }
-});
 </script>
 
 </body>
 </html>
+
 
 
 
