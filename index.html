@@ -3833,39 +3833,63 @@ window.recalcularTotalPelu = () => {
     if(document.getElementById('pResAyudantes')) document.getElementById('pResAyudantes').innerText = `$ ${sumaAyudantes.toFixed(2)}`;
 };
 
-// --- ESCÁNER INDEPENDIENTE ---
+// --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
 window.buscarClientePeluqueria = async (cedula) => {
     if (!cedula || cedula.length < 5) return;
     try {
+        // Buscamos en la colección de pacientes por la cédula
         const q = query(collection(db, "pacientes"), where("cedula", "==", cedula), limit(1));
         const querySnapshot = await getDocs(q);
+        
         if (!querySnapshot.empty) {
             const datos = querySnapshot.docs[0].data();
+            
+            // MAPEO EXACTO: ID del HTML vs Campo en Firebase
             const mapeo = {
-                'pDuenio': datos.propietario || datos.nombreDueno || "",
-                'pNombre': datos.nombre || datos.nombreMascota || "",
+                'pDuenio': datos.propietario || datos.nombreDueno || datos.nombreDuenio || "",
+                'pNombre': datos.nombre || datos.nombreMascota || datos.paciente || "",
                 'pTelefono': datos.telefono || "",
-                'pDireccion': datos.direccion || ""
+                'pDireccion': datos.direccion || "",
+                'pRaza': datos.raza || ""
             };
+
+            // Llenamos los campos uno a uno
             Object.keys(mapeo).forEach(id => {
                 const input = document.getElementById(id);
-                if (input) input.value = mapeo[id];
+                if (input) {
+                    input.value = mapeo[id];
+                    // Le damos un pequeño efecto visual de que algo cambió
+                    input.classList.add('bg-blue-50');
+                    setTimeout(() => input.classList.remove('bg-blue-50'), 1000);
+                }
             });
+
+            // Alertas de salud o condiciones
             const campoCond = document.getElementById('pCondicion');
-            if (campoCond && (datos.alertas || datos.condicion)) {
-                campoCond.value = `⚠️ ALERTA: ${datos.alertas || datos.condicion}`;
+            if (campoCond) {
+                const alerta = datos.alertas || datos.condicion || datos.notas || "";
+                if (alerta) {
+                    campoCond.value = `⚠️ ANTECEDENTE: ${alerta}`;
+                }
             }
+
+            // Recalculamos totales por si acaso
             if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
+            
+        } else {
+            console.log("No se encontró el cliente con cédula:", cedula);
         }
-    } catch (e) { console.error("❌ Error escáner:", e); }
+    } catch (e) { 
+        console.error("❌ Error escáner:", e); 
+    }
 };
 
-document.addEventListener('focusout', (e) => {
-    if (e.target && e.target.id === 'pCedula') window.buscarClientePeluqueria(e.target.value.trim());
+// ESCUCHADOR DE CÉDULA (Optimizado)
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'pCedula') {
+        window.buscarClientePeluqueria(e.target.value.trim());
+    }
 });
-  // =========================================================
-// [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - AJUSTADO
-// =========================================================
 
 // =========================================================
 // [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - FINAL
@@ -4053,6 +4077,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
