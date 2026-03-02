@@ -4131,101 +4131,88 @@ window.generarCierrePeluqueria = async () => {
 // --- 1. FUNCIÓN PARA DESCARGAR LA TARJETA COMO IMAGEN ---
 window.descargarTarjetaPelu = function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
-    const nombreMascota = document.getElementById('pNombre').value || "Mascota";
+    const nombre = (document.getElementById('pNombre').value || "Mascota").replace(/\s+/g, '_');
 
-    if (!tarjeta) return;
-
-    // 1. Quitamos el 'hidden' momentáneamente para que html2canvas pueda "verla"
+    // 1. Forzamos visibilidad momentánea (Imprescindible para la captura)
     const estabaOculta = tarjeta.classList.contains('hidden');
-    if (estabaOculta) {
-        tarjeta.classList.remove('hidden');
-    }
+    if (estabaOculta) tarjeta.classList.remove('hidden');
 
-    // 2. Usamos html2canvas para soldar la imagen
     html2canvas(tarjeta, {
+        scale: 3, // Calidad máxima para el scanner de recepción
+        useCORS: true,
         backgroundColor: "#ffffff",
-        scale: 2, // Doble resolución para que no se vea borroso
-        logging: false,
-        useCORS: true // Por si el logo viene de una URL externa
+        logging: false
     }).then(canvas => {
-        // 3. Volvemos a ocultar si estaba oculta
-        if (estabaOculta) {
-            tarjeta.classList.add('hidden');
-        }
+        // 2. Restauramos estado original
+        if (estabaOculta) tarjeta.classList.add('hidden');
 
-        // 4. Creamos el link de descarga
-        const link = document.createElement('a');
-        link.download = `VIP_Avipet_${nombreMascota}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-        
+        // 3. Conversión a Blob: El lenguaje que Android y iPhone entienden sin errores
+        canvas.toBlob(function(blob) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `AVIPET_VIP_${nombre}.png`;
+            
+            // Requisito para navegadores móviles: el link debe estar en el cuerpo
+            document.body.appendChild(a);
+            a.click();
+            
+            // Limpiamos el material sobrante
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 300);
+        }, 'image/png');
+
         Swal.fire({
             icon: 'success',
-            title: '¡TARJETA LISTA!',
-            text: 'La imagen se ha guardado en tus descargas.',
+            title: '¡IMAGEN LISTA!',
+            text: 'Guardada en tu galería o descargas.',
             timer: 2000,
             showConfirmButton: false
         });
     }).catch(err => {
-        console.error("Error al soldar la imagen:", err);
+        console.error("Fallo en la soldadura de imagen:", err);
         if (estabaOculta) tarjeta.classList.add('hidden');
     });
 };
-
 // --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE ---
 window.mostrarQRTarjeta = function() {
-    // 1. Extraemos los datos de la ficha que ya tienes en el HTML
     const cedula = document.getElementById('pCedula').value;
     const nombreMascota = document.getElementById('pNombre').value || "CLIENTE VIP";
     const visitas = document.getElementById('contadorVisitas').innerText;
     
-    // Validación de seguridad
     if(!cedula) {
-        Swal.fire({
-            icon: 'error',
-            title: 'FALTA IDENTIFICACIÓN',
-            text: 'Soldadura incompleta: Ingresa la cédula para generar el código.',
-            confirmButtonColor: '#1d4ed8'
-        });
+        Swal.fire({ icon: 'error', title: 'FALTA CÉDULA', confirmButtonColor: '#1d4ed8' });
         return;
     }
 
-    // 2. Definimos qué información va a "leer" el scanner
-    const dataQR = `AVIPET|${cedula}|${nombreMascota}|${visitas}`;
+    // Cambiamos el formato para que el iPhone no crea que es un teléfono
+    // Agregamos "CLIENTE:" antes del número
+    const dataQR = `AVIPET VIP\nCLIENTE: ${cedula}\nMASCOTA: ${nombreMascota}\nRECORD: ${visitas}`;
 
-    // 3. Abrimos la ventana y LUEGO generamos el QR
     Swal.fire({
-        title: `<span class="text-blue-700 font-black italic">TARJETA DIGITAL AVIPET</span>`,
+        title: `<span class="text-blue-700 font-black italic">TARJETA DIGITAL</span>`,
         html: `
             <div class="flex flex-col items-center">
-                <p class="text-[10px] font-bold text-slate-500 uppercase mb-4">Escanea para verificar record de visitas</p>
-                
-                <div id="contenedor_qr_real" class="bg-white p-3 border-4 border-blue-600 rounded-2xl shadow-lg"></div>
-                
-                <p class="mt-4 text-sm font-black text-slate-800 uppercase tracking-widest">${nombreMascota}</p>
-                <p class="text-[9px] font-bold text-blue-600 uppercase italic">ID: ${cedula}</p>
+                <div id="contenedor_qr_real" class="bg-white p-3 border-4 border-blue-600 rounded-2xl"></div>
+                <p class="mt-4 text-sm font-black text-slate-800 uppercase">${nombreMascota}</p>
+                <p class="text-[10px] font-bold text-blue-600">ID: ${cedula}</p>
             </div>
         `,
         showConfirmButton: true,
-        confirmButtonText: 'ENTENDIDO',
+        confirmButtonText: 'LISTO',
         confirmButtonColor: '#1d4ed8',
-        
-        // ESTA ES LA CLAVE: didOpen se ejecuta cuando el HTML de arriba ya existe en pantalla
         didOpen: () => {
             const el = document.getElementById("contenedor_qr_real");
-            if (el) {
-                // Limpiamos contenido previo
-                el.innerHTML = "";
-                // Generamos el nuevo QR
-                new QRCode(el, {
-                    text: dataQR,
-                    width: 160,
-                    height: 160,
-                    colorDark : "#1d4ed8",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-            }
+            new QRCode(el, {
+                text: dataQR,
+                width: 180,
+                height: 180,
+                colorDark : "#1d4ed8",
+                correctLevel : QRCode.CorrectLevel.H
+            });
         }
     });
 };
@@ -4274,6 +4261,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
