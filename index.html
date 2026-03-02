@@ -942,189 +942,170 @@
   </div>
 </section>
   <!-- ========== PELUQUERIA CANINA ========== -->
-<div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen">
-    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+<div id="sectionPeluqueria" class="hidden p-4 bg-white min-h-screen animate-fadeIn">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         
-        <div class="bg-blue-900 p-4 text-white flex justify-between items-center border-b-4 border-blue-800">
-            <div>
-                <h2 class="text-2xl font-black uppercase tracking-tighter italic">Peluquería Avipet</h2>
-                <p class="text-xs opacity-80 italic uppercase font-bold tracking-widest">Control Maestro de Servicios y Ayudantes</p>
+        <div class="p-4 flex justify-between items-start border-b-2 border-blue-600 mb-2">
+            <div class="flex items-center gap-3">
+                <div class="w-32 flex flex-col items-center sm:items-start"> 
+                    <img src="avipet.png" alt="Logo Avipet" class="w-full h-16 object-contain">
+                    <p class="text-[9px] font-bold text-slate-500 mt-[-8px] uppercase tracking-wider">RIF: J-00068577-0</p>
+                </div>
+                <div class="border-l-2 border-slate-200 pl-4">
+                    <h2 class="text-xl font-black text-slate-800 uppercase italic leading-none">Estética Canina</h2>
+                    <p class="text-[10px] font-bold text-blue-600 uppercase mt-1 tracking-widest">Control de Servicios</p>
+                </div>
             </div>
-            <div id="badgeFidelidad" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-sm hidden animate-bounce border-2 border-blue-900">
-                🎁 ¡PRÓXIMA VISITA GRATIS!
+            <div id="badgeFidelidad" class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-black text-[10px] hidden animate-bounce border border-emerald-200 uppercase tracking-tighter">
+                🎁 ¡Próxima Visita Gratis!
             </div>
         </div>
 
-        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
-                <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">📋 Datos del Cliente</h3>
+            <div class="space-y-6">
+                <div class="flex items-center gap-2">
+                    <div class="h-4 w-1 bg-blue-600 rounded-full"></div>
+                    <h3 class="font-black text-slate-700 uppercase text-[11px] italic">Datos del Cliente</h3>
+                </div>
                 
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño</label>
-                        <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
+                <div class="space-y-4">
+                    <div class="border-b border-slate-200 pb-1">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase">Cédula del Dueño</label>
+                        <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" 
+                               class="w-full outline-none py-1 bg-transparent font-black text-blue-700 uppercase text-sm" placeholder="V-00000000">
                     </div>
 
-                    <div id="tarjetaFidelidad" class="p-3 bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl shadow-lg hidden">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-white font-black text-[9px] uppercase tracking-widest">Pases Avipet</h3>
-                            <span id="contadorVisitas" class="bg-yellow-400 text-blue-900 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">0/10 Visitas</span>
+                    <div id="tarjetaFidelidad" class="p-4 bg-slate-900 rounded-2xl shadow-inner hidden relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/10 rounded-full"></div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-white font-black text-[9px] uppercase tracking-widest italic">Club Avipet</h3>
+                            <span id="contadorVisitas" class="text-blue-400 text-[10px] font-mono font-black">0/10</span>
                         </div>
-                        <div class="grid grid-cols-5 gap-1.5" id="contenedorSellos"></div>
-                        <p id="proximaGratis" class="text-[8px] text-yellow-300 mt-2 italic text-center font-bold hidden animate-pulse uppercase tracking-tighter">
-                            ✨ ¡Este baño es cortesía de la casa! ✨
+                        <div class="grid grid-cols-5 gap-2" id="contenedorSellos"></div>
+                        <p id="proximaGratis" class="text-[9px] text-emerald-400 mt-3 italic text-center font-bold hidden animate-pulse uppercase">
+                            ✨ Baño de cortesía activado ✨
                         </p>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-3 pt-1">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
-                            <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
+                    <div class="space-y-3">
+                        <div class="border-b border-slate-200 pb-1">
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Nombre del Dueño</label>
+                            <input type="text" id="pDuenio" class="w-full py-1 bg-transparent text-xs font-bold text-slate-700 uppercase outline-none">
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Teléfono</label>
-                                <input type="text" id="pTelefono" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="border-b border-slate-200 pb-1">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase">Teléfono</label>
+                                <input type="text" id="pTelefono" class="w-full py-1 bg-transparent text-xs font-bold text-slate-700 outline-none">
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Mascota</label>
-                                <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-black text-blue-600 focus:border-blue-500 outline-none">
+                            <div class="border-b border-slate-200 pb-1">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase">Mascota</label>
+                                <input type="text" id="pNombre" class="w-full py-1 bg-transparent text-xs font-black text-blue-600 uppercase outline-none">
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Raza</label>
-                                <input type="text" id="pRaza" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Dirección</label>
-                                <input type="text" id="pDireccion" class="w-full border-b-2 border-slate-200 p-2 bg-white text-[10px] font-bold focus:border-blue-500 outline-none">
-                            </div>
+                        <div class="border-b border-slate-200 pb-1">
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Dirección / Referencia</label>
+                            <input type="text" id="pDireccion" class="w-full py-1 bg-transparent text-[10px] font-bold text-slate-500 uppercase outline-none">
                         </div>
                     </div>
                 </div>
-
-                <div class="pt-2">
-                    <h3 class="font-black text-slate-700 border-b border-slate-200 pb-1 uppercase text-[10px]">📝 Notas Especiales</h3>
-                    <textarea id="pCondicion" rows="2" class="w-full border border-slate-200 p-2 rounded bg-slate-50 text-xs mt-2 font-bold focus:border-blue-400 outline-none"></textarea>
-                </div>
             </div>
 
-            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
-                <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">🛠️ Detalles del Servicio</h3>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Servicio a Realizar</label>
-                    <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border p-2 rounded bg-white font-bold text-sm">
-                        <option value="completo">Baño y Corte Completo</option>
-                        <option value="solo_banio">Solo Baño</option>
-                        <option value="solo_unas">Corte de Uñas ($5)</option>
-                    </select>
+            <div class="space-y-6 lg:border-x lg:px-8 border-slate-100">
+                <div class="flex items-center gap-2">
+                    <div class="h-4 w-1 bg-blue-600 rounded-full"></div>
+                    <h3 class="font-black text-slate-700 uppercase text-[11px] italic">Detalles del Trabajo</h3>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="space-y-4">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Tamaño (Base)</label>
-                        <select id="pTamano" onchange="window.recalcularTotalPelu()" class="w-full border p-2 rounded bg-white text-sm font-bold">
-                            <option value="30">Pequeño ($30)</option>
-                            <option value="40">Mediano ($40)</option>
-                            <option value="50">Grande ($50)</option>
-                            <option value="60">Extra G. ($60)</option>
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Servicio</label>
+                        <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 font-bold text-xs outline-none focus:border-blue-500">
+                            <option value="completo">Baño y Corte Completo</option>
+                            <option value="solo_banio">Solo Baño</option>
+                            <option value="solo_unas">Corte de Uñas ($5)</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Ajuste +/-</label>
-                        <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border p-2 rounded text-sm font-bold" value="0">
-                    </div>
-                </div>
 
-                <div class="bg-blue-50 p-4 rounded-xl space-y-3 border border-blue-100 shadow-inner">
-                    <h4 class="text-[10px] font-black text-blue-800 uppercase text-center tracking-widest mb-1">👥 Comisiones de Trabajo</h4>
-                    
-                    <div class="flex items-center justify-between bg-amber-100 p-2 rounded-lg border border-amber-300">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-600">
-                            <span class="text-[9px] font-black text-amber-900 uppercase italic leading-tight">¿Ayudante Extra hizo TODO solo?</span>
-                        </label>
-                    </div>
-
-                    <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-blue-200">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
-                            <span class="text-[9px] font-black text-slate-600 uppercase">Principal</span>
-                        </label>
-                        <div class="flex items-center gap-1">
-                            <span class="text-[10px] font-bold text-slate-400">$</span>
-                            <input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-blue-700 text-xs outline-none bg-transparent">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tamaño</label>
+                            <select id="pTamano" onchange="window.recalcularTotalPelu()" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 text-xs font-bold outline-none">
+                                <option value="30">Pequeño ($30)</option>
+                                <option value="40">Mediano ($40)</option>
+                                <option value="50">Grande ($50)</option>
+                                <option value="60">Extra G. ($60)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Ajuste +/-</label>
+                            <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border border-slate-200 p-2 rounded-lg text-xs font-black text-blue-600 outline-none" value="0">
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-amber-200">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-500">
-                            <span class="text-[9px] font-black text-amber-800 uppercase">Extra (Agresivo)</span>
+                    <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 space-y-3">
+                        <h4 class="text-[9px] font-black text-blue-800 uppercase text-center tracking-widest mb-2 italic">Asignación de Ayudantes</h4>
+                        
+                        <label class="flex items-center justify-between bg-white p-2 rounded-xl border border-blue-100 cursor-pointer hover:border-blue-400 transition-all shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
+                                <span class="text-[10px] font-black text-slate-600 uppercase">Principal</span>
+                            </div>
+                            <input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()" class="w-8 text-right font-black text-blue-700 text-xs bg-transparent outline-none">
                         </label>
-                        <div class="flex items-center gap-1">
-                            <span class="text-[10px] font-bold text-slate-400">$</span>
-                            <input type="number" id="pMontoAyuExtra" value="3" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-amber-700 text-xs outline-none bg-transparent">
-                        </div>
+
+                        <label class="flex items-center justify-between bg-white p-2 rounded-xl border border-amber-100 cursor-pointer hover:border-amber-400 transition-all shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-500">
+                                <span class="text-[10px] font-black text-amber-700 uppercase italic">Extra (Agresivo)</span>
+                            </div>
+                            <input type="number" id="pMontoAyuExtra" value="3" oninput="window.recalcularTotalPelu()" class="w-8 text-right font-black text-amber-700 text-xs bg-transparent outline-none">
+                        </label>
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-4 flex flex-col justify-between">
-                <div class="bg-blue-900 p-6 rounded-2xl text-white shadow-2xl relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-4 border-b border-blue-800 pb-4">
-                        <span class="text-[11px] font-bold uppercase opacity-70 tracking-widest">Total Cliente</span>
-                        <span id="pTotalCobro" class="text-3xl font-black italic">$ 0.00</span>
-                    </div>
+            <div class="space-y-6 flex flex-col">
+                <div class="bg-blue-600 p-6 rounded-3xl text-white shadow-lg shadow-blue-100 text-center relative overflow-hidden">
+                    <p class="text-[10px] font-bold uppercase opacity-80 tracking-widest mb-1">Monto Total a Cobrar</p>
+                    <div id="pTotalCobro" class="text-5xl font-black italic tracking-tighter">$ 0.00</div>
                     
-                    <div class="space-y-2 mt-4">
-                        <div class="flex justify-between items-center border-b border-blue-800 pb-1">
-                            <span class="text-[10px] font-bold uppercase opacity-70">Peluquera:</span>
-                            <span id="pResPeluquera" class="text-lg font-black">$ 0.00</span>
+                    <div class="mt-6 pt-4 border-t border-white/20 space-y-2">
+                        <div class="flex justify-between text-[10px]">
+                            <span class="font-bold opacity-80 uppercase">Peluquera:</span>
+                            <span id="pResPeluquera" class="font-black">$ 0.00</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-bold uppercase opacity-70">Ayudante Principal:</span>
-                            <span id="pResAyudante1" class="text-sm font-black text-emerald-400">$ 0.00</span>
+                        <div class="flex justify-between text-[10px]">
+                            <span class="font-bold opacity-80 uppercase text-emerald-300">Total Ayudantes:</span>
+                            <span id="pResAyudantesDisplay" class="font-black text-emerald-300">$ 0.00</span>
                         </div>
-                        <div class="flex justify-between items-center bg-blue-900/30 p-1 rounded">
-                            <span class="text-[10px] font-bold uppercase text-emerald-300">Ayudante Extra:</span>
-                            <span id="pResAyudanteExtra" class="text-sm font-black text-emerald-300">$ 0.00</span>
-                        </div>
-                        <span id="pResAyudantes" class="hidden">$ 0.00</span>
+                        <span id="pResAyudante1" class="hidden">0</span>
+                        <span id="pResAyudanteExtra" class="hidden">0</span>
+                        <span id="pResAyudantes" class="hidden">0</span>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <button onclick="window.guardarPeluqueriaPro()" class="w-full py-4 bg-blue-900 hover:bg-black text-white rounded-xl font-black shadow-xl hover:scale-[1.02] transition-all uppercase text-sm tracking-[4px] italic border-2 border-blue-800">
-                        🚀 Registrar Servicio
+                <div class="space-y-3 pt-4">
+                    <button onclick="window.guardarPeluqueriaPro()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-md transition-all uppercase text-xs tracking-widest border-b-4 border-emerald-800">
+                        ✅ Registrar Servicio
                     </button>
-                    <button onclick="window.showTab('historia')" class="w-full py-2 font-black text-slate-400 hover:text-red-500 transition-all uppercase text-[10px] tracking-widest">
-                        ❌ Cancelar Registro
+                    <button onclick="window.showTab('historia')" class="w-full py-2 font-black text-slate-400 hover:text-slate-600 transition-all uppercase text-[9px] tracking-widest">
+                        ⬅ Regresar a Historia
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-100 p-6 border-t-4 border-blue-900">
+        <div class="bg-slate-50 p-6 border-t border-slate-200">
             <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h3 class="text-lg font-black text-blue-900 uppercase italic">🐕 Bitácora de Hoy</h3>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase">Pacientes en mesa hoy</p>
-                </div>
-                <button onclick="window.cargarBitacoraPeluqueria()" class="text-[10px] bg-white border border-slate-300 text-blue-600 px-4 py-2 rounded-lg font-black uppercase hover:bg-blue-50 transition shadow-sm">
-                    🔄 Refrescar Lista
+                <h3 class="text-sm font-black text-slate-700 uppercase italic">🐕 Jornada de Peluquería (Hoy)</h3>
+                <button onclick="window.cargarBitacoraPeluqueria()" class="text-[9px] bg-white border border-slate-300 text-slate-500 px-4 py-2 rounded-lg font-black uppercase hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                    Refrescar Bitácora
                 </button>
             </div>
-            
-            <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="col-span-full py-10 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white/50">
-                    <p class="text-slate-400 text-[10px] font-black uppercase italic tracking-widest">Sin registros en la jornada actual</p>
+            <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 </div>
-            </div>
         </div>
-
     </div>
 </div>
 <script type="module">
@@ -3684,6 +3665,8 @@ window.guardarPeluqueriaPro = async () => {
     const duenio = val('pDuenio');
     const mascota = val('pNombre'); 
     const raza = val('pRaza');
+    const telefono = val('pTelefono');
+    const direccion = val('pDireccion');
     
     const base = parseFloat(dInput('pTamano')?.value) || 0;
     const ajuste = parseFloat(dInput('pAjuste')?.value) || 0;
@@ -3692,7 +3675,6 @@ window.guardarPeluqueriaPro = async () => {
     // --- 2. AYUDANTES ---
     const ayuPrincipal = dInput('pAyudante1')?.checked || false;
     const ayuExtra = dInput('pAyudanteExtra')?.checked || false;
-    
     const montoAyu1 = parseFloat(document.getElementById('confPagoAyu1')?.value) || 2;
     const montoAyuExtra = parseFloat(document.getElementById('confPagoAyuExtra')?.value) || 3;
     
@@ -3717,7 +3699,7 @@ window.guardarPeluqueriaPro = async () => {
     }
 
     try {
-        // --- 5. LÓGICA DE FIDELIDAD ---
+        // --- 5. LÓGICA DE FIDELIDAD (ID: Cédula-Mascota para el historial) ---
         const idFidelidad = `${cedula}-${mascota}`.toLowerCase().replace(/\s+/g, '');
         const fidelidadRef = doc(db, "fidelidad_peluqueria", idFidelidad);
         const fidelidadSnap = await getDoc(fidelidadRef);
@@ -3736,13 +3718,12 @@ window.guardarPeluqueriaPro = async () => {
             pagoPeluquera -= 1;
             pagoAyudanteTotal += montoAyu1; 
         }
-        
         if (ayuExtra) {
             pagoPeluquera -= 1;
             pagoAyudanteTotal += montoAyuExtra; 
         }
 
-        // --- 7. ESTRUCTURA DE DATOS PARA HISTORIAL ---
+        // --- 7. ESTRUCTURA PARA HISTORIAL ---
         const dataPelu = {
             cedulaCliente: cedula,
             nombreDuenio: duenio,
@@ -3758,48 +3739,52 @@ window.guardarPeluqueriaPro = async () => {
             tipo: "PELUQUERIA"
         };
 
-        // --- 8. PERSISTENCIA Y REINICIO DE CICLO ---
+        // --- 8. PERSISTENCIA Y REGISTRO DE IDENTIDAD (Doble Propósito) ---
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
         
-        // Lógica de Válvula: Si llegamos a 10, reiniciamos el contador a 0
         const esPremio = nuevaVisita >= 10;
         const contadorAGuardar = esPremio ? 0 : nuevaVisita;
 
-        // Si es premio, limpiamos los registros viejos para que la tarjeta se vea VACÍA
+        // Limpieza de historial si es premio
         if (esPremio) {
             const qViejos = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", cedula));
             const snapViejos = await getDocs(qViejos);
             const batch = writeBatch(db);
             snapViejos.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
-            console.log("♻️ Ciclo completado: Historial de fidelidad reseteado.");
         }
 
+        // GUARDADO DE IDENTIDAD: Esto permite que el buscador lo encuentre siempre
         await setDoc(fidelidadRef, { 
             contador: contadorAGuardar, 
             ultimaVisita: serverTimestamp(),
             paciente: mascota,
-            cedula: cedula
+            propietario: duenio, // Guardamos esto para el buscador
+            cedula: cedula,
+            raza: raza,
+            telefono: telefono,
+            direccion: direccion
         }, { merge: true });
 
         // --- 9. AVISOS Y LIMPIEZA ---
         if (esPremio) {
-            alert(`🎉 ¡FELICIDADES! Se ha entregado el servicio #10 GRATIS. La tarjeta se ha reiniciado.`);
+            alert(`🎉 ¡PREMIO ENTREGADO! Servicio #10 GRATIS. Tarjeta reiniciada.`);
         } else {
             alert(`✅ REGISTRO EXITOSO. Visita #${nuevaVisita} acumulada.`);
         }
 
-        const fields = ['pCedula', 'pDuenio', 'pNombre', 'pRaza', 'pAjuste', 'pCondicion'];
+        const fields = ['pCedula', 'pDuenio', 'pNombre', 'pRaza', 'pAjuste', 'pCondicion', 'pTelefono', 'pDireccion'];
         fields.forEach(f => { if(dInput(f)) dInput(f).value = ""; });
+        
         if(dInput('pAyudanteExtra')) dInput('pAyudanteExtra').checked = false;
         if(dInput('pAyudante1')) dInput('pAyudante1').checked = true; 
-        if (document.getElementById('pTotalCobro')) document.getElementById('pTotalCobro').innerText = "$ 0.00";
-        if (document.getElementById('tarjetaFidelidad')) document.getElementById('tarjetaFidelidad').classList.add('hidden');
+        if (dInput('pTotalCobro')) dInput('pTotalCobro').innerText = "$ 0.00";
+        if (dInput('tarjetaFidelidad')) dInput('tarjetaFidelidad').classList.add('hidden');
 
         window.showTab('historia');
 
     } catch (e) {
-        console.error("Error crítico en Peluquería:", e);
+        console.error("Error crítico:", e);
         alert("❌ ERROR: " + e.message);
     }
 };
@@ -3863,36 +3848,53 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
     if (!valor || valor.length < 5) return;
 
     try {
+        // --- PASO 1: BUSCAR EN VETERINARIA ('consultas') ---
         const qPac = query(collection(db, "consultas"), where("cedula", "==", valor), limit(1));
         const snapPac = await getDocs(qPac);
 
-        if (!snapPac.empty) {
-            const datos = snapPac.docs[0].data();
-            
-            // Llenado de campos
-            if(document.getElementById('pDuenio')) document.getElementById('pDuenio').value = datos.propietario || "";
-            if(document.getElementById('pNombre')) document.getElementById('pNombre').value = datos.paciente || "";
-            if(document.getElementById('pRaza'))   document.getElementById('pRaza').value = datos.raza || "";
-            if(document.getElementById('pTelefono')) document.getElementById('pTelefono').value = datos.telefono || "";
-            if(document.getElementById('pDireccion')) document.getElementById('pDireccion').value = datos.direccion || "";
-            if(document.getElementById('pCondicion')) document.getElementById('pCondicion').value = datos.condicion || "";
+        let datosEncontrados = null;
 
-            // Buscamos servicios para la tarjeta
-            const qFid = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", valor));
-            const snapFid = await getDocs(qFid);
+        if (!snapPac.empty) {
+            datosEncontrados = snapPac.docs[0].data();
+            console.log("✅ Datos obtenidos de Veterinaria");
+        } else {
+            // --- PASO 2: SI NO EXISTE, BUSCAR EN EL DIRECTORIO DE PELUQUERÍA ---
+            const fidRef = doc(db, "fidelidad_peluqueria", valor.toLowerCase()); 
+            const fidSnap = await getDoc(fidRef);
+            
+            if (fidSnap.exists()) {
+                datosEncontrados = fidSnap.data();
+                console.log("✅ Datos obtenidos de Directorio Peluquería");
+            }
+        }
+
+        // --- PASO 3: LLENADO DE CAMPOS ---
+        if (datosEncontrados) {
+            // Mapeamos los campos (considerando que en peluquería guardamos 'propietario')
+            if(document.getElementById('pDuenio')) document.getElementById('pDuenio').value = datosEncontrados.propietario || datosEncontrados.nombreDuenio || "";
+            if(document.getElementById('pNombre')) document.getElementById('pNombre').value = datosEncontrados.paciente || "";
+            if(document.getElementById('pRaza'))   document.getElementById('pRaza').value = datosEncontrados.raza || "";
+            if(document.getElementById('pTelefono')) document.getElementById('pTelefono').value = datosEncontrados.telefono || "";
+            if(document.getElementById('pDireccion')) document.getElementById('pDireccion').value = datosEncontrados.direccion || "";
+            if(document.getElementById('pCondicion')) document.getElementById('pCondicion').value = datosEncontrados.condicion || "";
+
+            // --- PASO 4: BUSCAR VISITAS PARA LA TARJETA ---
+            const qServ = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", valor));
+            const snapServ = await getDocs(qServ);
             
             const visitas = [];
-            snapFid.forEach(doc => {
+            snapServ.forEach(doc => {
                 visitas.push(doc.data().fechaSimple || "S/F");
             });
 
             actualizarInterfazTarjeta(visitas);
         } else {
-            alert("⚠️ Cliente no encontrado.");
-            if(document.getElementById('tarjetaFidelidad')) document.getElementById('tarjetaFidelidad').classList.add('hidden');
+            // Es un cliente nuevo total: Albert llena a mano y el sistema lo guardará al finalizar
+            console.log("🆕 Cliente nuevo. Ingrese datos manualmente.");
+            actualizarInterfazTarjeta([]);
         }
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error en búsqueda:", error);
     }
 };
 
@@ -3908,26 +3910,23 @@ function actualizarInterfazTarjeta(visitas) {
     tarjeta.classList.remove('hidden');
     contenedor.innerHTML = ''; 
     
-    // Si llegamos a 10, mostramos 10, pero el sistema de guardado se encargará de resetear
     const totalVisitas = visitas.length;
-    contador.innerText = `${totalVisitas}/10 Visitas`;
+    if(contador) contador.innerText = `${totalVisitas}/10 Visitas`;
 
     for (let i = 1; i <= 10; i++) {
         const sello = document.createElement('div');
-        // Reducimos h-10 a h-8 para ganar espacio
-        sello.className = `h-8 rounded-lg border flex flex-col items-center justify-center transition-all duration-300`;
+        sello.className = `h-8 rounded-lg border flex flex-col items-center justify-center transition-all duration-300 shadow-sm`;
         
         if (i <= totalVisitas) {
-            sello.classList.add('bg-white', 'border-yellow-400', 'shadow-sm');
+            sello.classList.add('bg-white', 'border-yellow-400');
             sello.innerHTML = `<span class="text-xs">🐾</span>`;
         } else {
-            sello.classList.add('bg-blue-800/50', 'border-blue-600', 'opacity-30');
+            sello.classList.add('bg-blue-900/40', 'border-blue-700/30', 'opacity-30');
             sello.innerHTML = `<span class="text-white text-[8px] font-bold">${i}</span>`;
         }
         contenedor.appendChild(sello);
     }
 
-    // Si tiene 9, la que vas a registrar ahora es la 10 (Gratis)
     if (totalVisitas >= 9) { 
         avisoGratis?.classList.remove('hidden');
         badgeGratis?.classList.remove('hidden');
@@ -4123,6 +4122,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
