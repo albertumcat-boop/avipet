@@ -4086,71 +4086,66 @@ window.generarCierrePeluqueria = async () => {
     }
 };
 
-// Llamamos a la función al cargar la pestaña
-// Puedes meter esto en tu lógica de navegación
-  // 1. Descargar la tarjeta como PNG (Captura el div actual)
-// --- 1. FUNCIÓN PARA DESCARGAR LA TARJETA COMO IMAGEN ---
-// --- 1. FUNCIÓN DE DESCARGA AJUSTADA (COMPATIBILIDAD TOTAL) ---
+
 window.descargarTarjetaPelu = function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
     const nombreMascota = document.getElementById('pNombre').value || "Mascota";
-    
-    // Forzamos visibilidad para la captura
+
+    if (!tarjeta) return;
+
+    // 1. Mostrar un aviso visual de que se está "horneando" la imagen
+    Swal.fire({
+        title: 'Generando Tarjeta...',
+        text: 'Preparando el archivo para Groot',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    // 2. Forzar visibilidad (indispensable para la captura)
+    const estabaOculta = tarjeta.classList.contains('hidden');
     tarjeta.classList.remove('hidden');
 
-    // Damos tiempo al motor para renderizar
+    // 3. Esperar un momento a que el navegador "dibuje" el QR y los sellos
     setTimeout(() => {
         html2canvas(tarjeta, {
-            scale: 3, 
+            scale: 3, // Calidad máxima para el scanner
             useCORS: true,
-            backgroundColor: "#ffffff",
-            logging: false
+            backgroundColor: "#ffffff"
         }).then(canvas => {
-            // Volvemos a ocultar
-            tarjeta.classList.add('hidden');
+            // 4. Regresar a la normalidad
+            if (estabaOculta) tarjeta.classList.add('hidden');
 
-            // Lógica especial para iPhone: Si falla el clic automático, abre en pestaña nueva
-            if (navigator.userAgent.match(/(iPad|iPhone|iPod)/g)) {
-                const imgData = canvas.toDataURL("image/png");
-                const nuevaVentana = window.open();
-                nuevaVentana.document.write(`<img src="${imgData}" style="width:100%;" />`);
-                nuevaVentana.document.title = "Mantén presionado para guardar";
+            // 5. Descarga mediante BLOB (El método más seguro para móviles)
+            canvas.toBlob(function(blob) {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `AVIPET_VIP_${nombreMascota}.png`;
+                document.body.appendChild(a);
+                a.click();
                 
-                Swal.fire({
-                    icon: 'info',
-                    title: 'PASO PARA IPHONE',
-                    text: 'Se abrió la imagen en una pestaña nueva. Mantenla presionada para "Guardar en Fotos".',
-                    confirmButtonColor: '#1d4ed8'
-                });
-            } else {
-                // Lógica estándar para Android y PC mediante Blob
-                canvas.toBlob(function(blob) {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = `VIP_Avipet_${nombreMascota}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        window.URL.revokeObjectURL(url);
-                    }, 300);
-                }, 'image/png');
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 200);
+            }, 'image/png');
 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'TARJETA GUARDADA',
-                    text: 'Revisa tu carpeta de descargas.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
+            Swal.close();
+            Swal.fire({
+                icon: 'success',
+                title: '¡DESCARGADA!',
+                text: 'La tarjeta ya está en tu galería.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }).catch(err => {
+            console.error("Error capturando tarjeta:", err);
+            if (estabaOculta) tarjeta.classList.add('hidden');
+            Swal.close();
         });
-    }, 400); 
+    }, 400); // 400ms es el tiempo perfecto de "fraguado"
 };
-
 // --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE (ANTI-LLAMADAS) ---
 window.mostrarQRTarjeta = function() {
     const cedula = document.getElementById('pCedula').value;
@@ -4231,6 +4226,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
