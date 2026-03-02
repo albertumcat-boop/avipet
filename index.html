@@ -4090,50 +4090,68 @@ window.generarCierrePeluqueria = async () => {
 // Puedes meter esto en tu lógica de navegación
   // 1. Descargar la tarjeta como PNG (Captura el div actual)
 // --- 1. FUNCIÓN PARA DESCARGAR LA TARJETA COMO IMAGEN ---
+// --- 1. FUNCIÓN DE DESCARGA AJUSTADA (COMPATIBILIDAD TOTAL) ---
 window.descargarTarjetaPelu = function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
     const nombreMascota = document.getElementById('pNombre').value || "Mascota";
     
-    // 1. Forzamos visibilidad para la captura
+    // Forzamos visibilidad para la captura
     tarjeta.classList.remove('hidden');
 
-    // 2. Damos 300ms para que el motor del navegador renderice todo bien
+    // Damos tiempo al motor para renderizar
     setTimeout(() => {
         html2canvas(tarjeta, {
-            scale: 3, // Alta definición para que el scanner no falle
+            scale: 3, 
             useCORS: true,
-            backgroundColor: "#ffffff"
+            backgroundColor: "#ffffff",
+            logging: false
         }).then(canvas => {
-            // 3. Volvemos a ocultar en la interfaz
+            // Volvemos a ocultar
             tarjeta.classList.add('hidden');
 
-            // 4. Descarga mediante Blob (Máxima compatibilidad Android/iOS)
-            canvas.toBlob(function(blob) {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `VIP_Avipet_${nombreMascota}.png`;
-                document.body.appendChild(a);
-                a.click();
+            // Lógica especial para iPhone: Si falla el clic automático, abre en pestaña nueva
+            if (navigator.userAgent.match(/(iPad|iPhone|iPod)/g)) {
+                const imgData = canvas.toDataURL("image/png");
+                const nuevaVentana = window.open();
+                nuevaVentana.document.write(`<img src="${imgData}" style="width:100%;" />`);
+                nuevaVentana.document.title = "Mantén presionado para guardar";
                 
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 200);
-            }, 'image/png');
+                Swal.fire({
+                    icon: 'info',
+                    title: 'PASO PARA IPHONE',
+                    text: 'Se abrió la imagen en una pestaña nueva. Mantenla presionada para "Guardar en Fotos".',
+                    confirmButtonColor: '#1d4ed8'
+                });
+            } else {
+                // Lógica estándar para Android y PC mediante Blob
+                canvas.toBlob(function(blob) {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `VIP_Avipet_${nombreMascota}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 300);
+                }, 'image/png');
 
-            Swal.fire({
-                icon: 'success',
-                title: 'TARJETA GUARDADA',
-                text: 'Ya puedes enviarla por WhatsApp',
-                timer: 2000,
-                showConfirmButton: false
-            });
+                Swal.fire({
+                    icon: 'success',
+                    title: 'TARJETA GUARDADA',
+                    text: 'Revisa tu carpeta de descargas.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
         });
-    }, 300); 
+    }, 400); 
 };
-// --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE ---
+
+// --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE (ANTI-LLAMADAS) ---
 window.mostrarQRTarjeta = function() {
     const cedula = document.getElementById('pCedula').value;
     const nombreMascota = document.getElementById('pNombre').value || "CLIENTE VIP";
@@ -4144,15 +4162,14 @@ window.mostrarQRTarjeta = function() {
         return;
     }
 
-    // Cambiamos el formato para que el iPhone no crea que es un teléfono
-    // Agregamos "CLIENTE:" antes del número
-    const dataQR = `AVIPET VIP\nCLIENTE: ${cedula}\nMASCOTA: ${nombreMascota}\nRECORD: ${visitas}`;
+    // Formato con prefijos para que el iPhone no lo reconozca como teléfono
+    const dataQR = `AVIPET_VIP\nID: ${cedula}\nPET: ${nombreMascota}\nVISITS: ${visitas}`;
 
     Swal.fire({
         title: `<span class="text-blue-700 font-black italic">TARJETA DIGITAL</span>`,
         html: `
             <div class="flex flex-col items-center">
-                <div id="contenedor_qr_real" class="bg-white p-3 border-4 border-blue-600 rounded-2xl"></div>
+                <div id="contenedor_qr_real" class="bg-white p-3 border-4 border-blue-600 rounded-2xl shadow-lg"></div>
                 <p class="mt-4 text-sm font-black text-slate-800 uppercase">${nombreMascota}</p>
                 <p class="text-[10px] font-bold text-blue-600">ID: ${cedula}</p>
             </div>
@@ -4173,28 +4190,26 @@ window.mostrarQRTarjeta = function() {
     });
 };
 
+// --- 3. FUNCIÓN RENDERIZAR SELLOS ---
 window.renderizarSellos = function(numVisitas) {
     const contenedor = document.getElementById('contenedorSellos');
     const contadorText = document.getElementById('contadorVisitas');
     const badgeFidelidad = document.getElementById('badgeFidelidad');
     
-    contenedor.innerHTML = '';
+    if (!contenedor || !contadorText) return;
     
-    // Ajustamos el texto para que se vea profesional
+    contenedor.innerHTML = '';
     contadorText.innerText = `${numVisitas} / 10 VISITAS`;
 
-    // Ciclo para crear los 10 espacios de huellitas
     for (let i = 1; i <= 10; i++) {
         const sello = document.createElement('div');
         sello.className = "h-10 w-10 flex items-center justify-center relative";
         
-        // El SVG de la huellita (diseño limpio)
         sello.innerHTML = `
             <div class="relative w-full h-full flex items-center justify-center">
                 <svg class="w-7 h-7 text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                
                 <svg class="absolute w-7 h-7 text-blue-600 fill-blue-600 transition-all duration-500 ${i <= numVisitas ? 'opacity-100 scale-110 drop-shadow-md' : 'opacity-0 scale-50'}" viewBox="0 0 24 24">
                     <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
                 </svg>
@@ -4203,13 +4218,12 @@ window.renderizarSellos = function(numVisitas) {
         contenedor.appendChild(sello);
     }
 
-    // Lógica de premios
     const mensajeGratis = document.getElementById('proximaGratis');
     if (numVisitas >= 10) {
-        mensajeGratis.classList.remove('hidden');
+        if(mensajeGratis) mensajeGratis.classList.remove('hidden');
         if(badgeFidelidad) badgeFidelidad.classList.remove('hidden');
     } else {
-        mensajeGratis.classList.add('hidden');
+        if(mensajeGratis) mensajeGratis.classList.add('hidden');
         if(badgeFidelidad) badgeFidelidad.classList.add('hidden');
     }
 };
@@ -4217,6 +4231,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
