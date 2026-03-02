@@ -2,12 +2,18 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
-   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
- <style>
+  
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
     body {
       background-color: #f1f5f9;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -976,37 +982,45 @@
                                class="w-full outline-none py-1 bg-transparent font-black text-blue-700 uppercase text-sm" placeholder="V-00000000">
                     </div>
 
-                  <div id="tarjetaFidelidad" class="relative p-5 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl shadow-2xl border-2 border-white/30 hidden overflow-hidden transition-all">
-    
-    <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-    <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl"></div>
+                    <div id="tarjetaFidelidad" class="relative p-5 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl shadow-2xl border-2 border-white/30 hidden overflow-hidden transition-all duration-300 hover:scale-[1.01]">
+                        
+                        <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                        <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl"></div>
 
-    <div class="relative z-10">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <h3 class="text-white font-black text-[12px] uppercase tracking-widest italic leading-none">Club VIP Avipet</h3>
-                <p class="text-blue-100 text-[8px] font-bold uppercase tracking-tighter opacity-70 mt-1">Beneficios Exclusivos de Peluquería</p>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-white font-black text-[12px] uppercase tracking-widest italic leading-none">AI Sustainable Brand VIP</h3>
+                                    <p class="text-blue-100 text-[8px] font-bold uppercase tracking-tighter opacity-80 mt-1">Cuidamos lo que amas, con precisión.</p>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span id="contadorVisitas" class="bg-white text-blue-700 text-[10px] font-black px-3 py-1 rounded-full shadow-lg border border-blue-200">
+                                        0 / 10 VISITAS
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="contenedorSellos" class="grid grid-cols-5 gap-2 bg-white/10 p-3 rounded-2xl border border-white/10 backdrop-blur-sm min-h-[80px]">
+                                </div>
+
+                            <div id="proximaGratis" class="mt-3 hidden bg-yellow-400 text-blue-900 text-center py-1.5 rounded-xl font-black text-[10px] uppercase shadow-lg border-2 border-white animate-bounce">
+                                ✨ ¡SERVICIO CORTESÍA DE LA CASA! ✨
+                            </div>
+
+                            <div class="mt-5 flex gap-2 pt-4 border-t border-white/20">
+                                <button onclick="window.descargarTarjetaPelu()" class="flex-1 bg-white/20 hover:bg-white/30 text-white text-[9px] font-black py-2.5 rounded-xl border border-white/20 transition-all flex items-center justify-center gap-2 uppercase tracking-tighter">
+                                    📥 Descargar para Mostrar
+                                </button>
+                                <button onclick="window.mostrarQRTarjeta()" class="flex-1 bg-white text-blue-700 text-[9px] font-black py-2.5 rounded-xl shadow-md hover:bg-blue-50 transition-all flex items-center justify-center gap-2 uppercase tracking-tighter">
+                                    📱 Escanear mi QR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
             </div>
-            <span id="contadorVisitas" class="bg-white/90 backdrop-blur-md text-blue-700 text-[10px] font-black px-3 py-1 rounded-full shadow-lg">
-                0 / 10 VISITAS
-            </span>
-        </div>
 
-        <div id="contenedorSellos" class="grid grid-cols-5 gap-2 bg-white/10 p-3 rounded-2xl border border-white/10 backdrop-blur-sm">
             </div>
-
-        <div id="proximaGratis" class="mt-3 hidden bg-yellow-400 text-blue-900 text-center py-1.5 rounded-xl font-black text-[10px] uppercase shadow-lg border-2 border-white animate-bounce">
-            ✨ ¡ESTA VISITA ES UN REGALO DE LA CASA! ✨
-        </div>
-
-        <div class="mt-5 flex gap-2 pt-4 border-t border-white/20">
-            <button onclick="window.descargarTarjetaPelu()" class="flex-1 bg-white/20 hover:bg-white/30 text-white text-[9px] font-black py-2.5 rounded-xl border border-white/20 transition-all flex items-center justify-center gap-2 uppercase tracking-tighter">
-                📥 Guardar Imagen
-            </button>
-            <button onclick="window.mostrarQRTarjeta()" class="flex-1 bg-white text-blue-700 text-[9px] font-black py-2.5 rounded-xl shadow-md hover:bg-blue-50 transition-all flex items-center justify-center gap-2 uppercase tracking-tighter">
-                📱 Escanear QR
-            </button>
-        </div>
     </div>
 </div>
                     <div class="space-y-3">
@@ -4140,52 +4154,113 @@ window.generarCierrePeluqueria = async () => {
 // Llamamos a la función al cargar la pestaña
 // Puedes meter esto en tu lógica de navegación
   // 1. Descargar la tarjeta como PNG (Captura el div actual)
+// --- 1. FUNCIÓN PARA DESCARGAR LA TARJETA COMO IMAGEN ---
 window.descargarTarjetaPelu = function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
-    const nombreMascota = document.getElementById('pNombre').value || 'Mascota';
+    const nombreMascota = document.getElementById('pNombre')?.value || 'Mascota';
     
+    // Si la tarjeta está oculta, html2canvas no la verá bien. 
+    // Aseguramos que sea visible para la "foto" sin que el usuario note el parpadeo.
+    tarjeta.classList.remove('hidden');
+
     html2canvas(tarjeta, {
-        backgroundColor: null,
-        scale: 3, // Alta resolución para que el cliente la guarde bien
-        borderRadius: 24
+        backgroundColor: null, // Mantiene el degradado y transparencia
+        scale: 3,              // Calidad Premium (Contraste Radical)
+        logging: false,
+        useCORS: true          // Para cargar el logo correctamente en la imagen
     }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `Tarjeta_Fidelidad_Avipet_${nombreMascota}.png`;
+        link.download = `Tarjeta_VIP_Avipet_${nombreMascota}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
+        
+        // No ocultamos la tarjeta aquí para no romper la visual del usuario
+        console.log("Tarjeta descargada con éxito.");
+    }).catch(err => {
+        console.error("Error al generar la imagen:", err);
     });
 };
 
-// 2. Mostrar QR para que el cliente escanee su "ID de Fidelidad"
+// --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE ---
 window.mostrarQRTarjeta = function() {
     const cedula = document.getElementById('pCedula').value;
+    
     if(!cedula) {
-        alert("⚠️ Por favor, ingresa la cédula del cliente primero.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'IDENTIFICACIÓN REQUERIDA',
+            text: 'Por favor, ingresa la cédula del cliente primero para generar su código único.',
+            confirmButtonColor: '#2563eb'
+        });
         return;
     }
 
-    // Aquí generamos un QR con la cédula o un link personalizado
+    // URL Profesional de Fidelidad Avipet
+    const urlFidelidad = `https://fidelidad.avipet.app/check?id=${cedula}`;
+    
     Swal.fire({
-        title: 'TU TARJETA DIGITAL',
-        text: 'Escanea para consultar tus puntos',
-        html: '<div id="qrcode" class="flex justify-center p-4"></div>',
-        confirmButtonText: 'CERRAR',
-        confirmButtonColor: '#2563eb',
+        title: 'TU TARJETA DIGITAL VIP',
+        text: 'Escanea para consultar tus beneficios acumulados',
+        html: '<div id="qrcode" class="flex justify-center p-4 bg-white rounded-xl shadow-inner"></div>',
+        confirmButtonText: 'ENTENDIDO',
+        confirmButtonColor: '#2563eb', // Azul Identidad Avipet
         didOpen: () => {
+            // Generación del código QR con precisión
             new QRCode(document.getElementById("qrcode"), {
-                text: "VIP-AVIPET-" + cedula,
-                width: 180,
-                height: 180,
-                colorDark : "#1e40af",
-                colorLight : "#ffffff"
+                text: urlFidelidad,
+                width: 200,
+                height: 200,
+                colorDark : "#1d4ed8", // Azul vibrante
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H // Máxima resistencia a errores
             });
         }
     });
+};
+window.renderizarSellos = function(numVisitas) {
+    const contenedor = document.getElementById('contenedorSellos');
+    const contadorText = document.getElementById('contadorVisitas');
+    
+    // 1. Limpiamos el contenedor para empezar de cero
+    contenedor.innerHTML = '';
+    
+    // 2. Actualizamos el número de visitas en el texto
+    contadorText.innerText = `${numVisitas} / 10 VISITAS`;
+
+    // 3. Creamos los 10 espacios (ciclo for)
+    for (let i = 1; i <= 10; i++) {
+        const sello = document.createElement('div');
+        sello.className = "h-10 w-10 flex items-center justify-center relative";
+        
+        // AQUÍ ES DONDE PEGAS EL CÓDIGO QUE ME PASASTE
+        sello.innerHTML = `
+            <div class="relative w-full h-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-yellow-400/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                
+                <svg class="absolute w-6 h-6 text-yellow-400 fill-yellow-400 transition-all duration-300 ${i <= numVisitas ? 'opacity-100 scale-110' : 'opacity-0 scale-50'}" viewBox="0 0 24 24">
+                    <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
+                </svg>
+            </div>
+        `;
+        
+        contenedor.appendChild(sello);
+    }
+
+    // 4. Si llega a 10, mostramos el mensaje de regalo
+    const mensajeGratis = document.getElementById('proximaGratis');
+    if (numVisitas >= 10) {
+        mensajeGratis.classList.remove('hidden');
+    } else {
+        mensajeGratis.classList.add('hidden');
+    }
 };
 </script>
 
 </body>
 </html>
+
 
 
 
