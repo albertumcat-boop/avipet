@@ -962,7 +962,7 @@
                 <div class="grid grid-cols-1 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño</label>
-                        <input type="text" id="pCedula" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
+                       <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
@@ -3835,35 +3835,32 @@ window.recalcularTotalPelu = () => {
 
 // --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
 window.buscarClientePeluqueria = async (cedulaInput) => {
-    const cedulaRaw = cedulaInput.trim();
-    if (!cedulaRaw || cedulaRaw.length < 5) return;
-    
-    console.log("🔍 BUSCANDO:", cedulaRaw);
+    // 1. Limpieza de datos (quitamos puntos y espacios)
+    const valor = cedulaInput.replace(/\./g, '').trim();
+    if (!valor || valor.length < 5) return;
+
+    console.log("⚓ Avipet Radar: Escaneando cédula ->", valor);
 
     try {
-        // --- ESTO ES PARA VER EL ERROR REAL ---
-        // Vamos a traer un solo registro cualquiera para ver cómo se llaman los campos
-        const testQ = query(collection(db, "pacientes"), limit(1));
-        const testSnap = await getDocs(testQ);
-        if(!testSnap.empty) {
-            console.log("🛠️ ESTRUCTURA REAL EN FIREBASE:", testSnap.docs[0].data());
+        // 2. Intento 1: Buscar como Texto
+        let q = query(collection(db, "pacientes"), where("cedula", "==", valor), limit(1));
+        let snap = await getDocs(q);
+
+        // 3. Intento 2: Si no hay nada, buscar como Número
+        if (snap.empty) {
+            const num = parseInt(valor);
+            if (!isNaN(num)) {
+                console.log("⚠️ No hallado como texto, probando como número...");
+                q = query(collection(db, "pacientes"), where("cedula", "==", num), limit(1));
+                snap = await getDocs(q);
+            }
         }
 
-        // --- BÚSQUEDA NORMAL ---
-        let q = query(collection(db, "pacientes"), where("cedula", "==", cedulaRaw), limit(1));
-        let querySnapshot = await getDocs(q);
+        if (!snap.empty) {
+            const datos = snap.docs[0].data();
+            console.log("✅ ¡ALTA DETECTADA!", datos);
 
-        if (querySnapshot.empty) {
-            // Intento como número
-            const cedulaNum = parseInt(cedulaRaw);
-            q = query(collection(db, "pacientes"), where("cedula", "==", cedulaNum), limit(1));
-            querySnapshot = await getDocs(q);
-        }
-
-        if (!querySnapshot.empty) {
-            const datos = querySnapshot.docs[0].data();
-            console.log("✅ ¡ENCONTRADO!", datos);
-            
+            // 4. Inyección de datos a los inputs del formulario
             const mapeo = {
                 'pDuenio': datos.propietario || datos.nombreDueno || datos.nombreDuenio || datos.dueno || "",
                 'pNombre': datos.nombre || datos.nombreMascota || datos.paciente || "",
@@ -3874,15 +3871,30 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
 
             Object.keys(mapeo).forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.value = mapeo[id];
+                if (el) {
+                    el.value = mapeo[id];
+                    // Efecto visual azul de "Carga Exitosa"
+                    el.style.backgroundColor = "#f0f9ff";
+                    setTimeout(() => el.style.backgroundColor = "transparent", 1000);
+                }
             });
-            
+
+            // Notas de salud
+            const campoCond = document.getElementById('pCondicion');
+            if (campoCond) {
+                const alerta = datos.alertas || datos.condicion || datos.notas || "";
+                campoCond.value = alerta ? `⚠️ ANTECEDENTE: ${alerta}` : "";
+            }
+
             if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
+            
         } else {
-            console.warn("❌ SIGUE SIN APARECER. Revisa la consola para ver la 'ESTRUCTURA REAL'.");
-            alert("⚠️ Cliente no registrado.");
+            console.warn("❌ Cédula " + valor + " no existe en la colección 'pacientes'.");
+            alert("⚠️ Cliente no encontrado. Verifique la cédula o regístrelo en Historias.");
         }
-    } catch (e) { console.error("❌ ERROR:", e); }
+    } catch (error) {
+        console.error("🚀 Error en la maniobra de búsqueda:", error);
+    }
 };
 // =========================================================
 // [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - FINAL
@@ -4070,6 +4082,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
