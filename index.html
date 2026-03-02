@@ -3835,58 +3835,45 @@ window.recalcularTotalPelu = () => {
 
 // --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
 window.buscarClientePeluqueria = async (cedulaInput) => {
-    // 1. Limpiamos la entrada (quitamos puntos y espacios)
     const valor = cedulaInput.replace(/\./g, '').trim();
     if (!valor || valor.length < 5) return;
 
-    console.log("⚓ Avipet Radar: Escaneando 'cedulaCliente' ->", valor);
+    console.log("⚓ DIAGNÓSTICO AVIPET INICIADO...");
+    console.log("🔎 Buscando cédula:", valor);
 
     try {
-        // --- BUSQUEDA EN COLECCIÓN PACIENTES ---
-        // Usamos el nombre exacto de tu campo: 'cedulaCliente'
-        const q = query(collection(db, "pacientes"), where("cedulaCliente", "==", valor), limit(1));
+        // 1. Verificar conexión: ¿A qué colección tenemos acceso?
+        const pacientesRef = collection(db, "pacientes");
+        const testSnap = await getDocs(query(pacientesRef, limit(1)));
+        
+        if (testSnap.empty) {
+            console.error("❌ ERROR CRÍTICO: La colección 'pacientes' está VACÍA o no existe en este proyecto.");
+            alert("⚠️ Error de Conexión: La base de datos de Historias no responde.");
+            return;
+        } else {
+            console.log("📡 Conexión con 'pacientes' OK. Datos de muestra:", testSnap.docs[0].data());
+        }
+
+        // 2. Búsqueda Real
+        const q = query(pacientesRef, where("cedulaCliente", "==", valor), limit(1));
         const snap = await getDocs(q);
 
         if (!snap.empty) {
             const datos = snap.docs[0].data();
-            console.log("✅ ¡REGISTRO ENCONTRADO!", datos);
+            console.log("✅ ¡ENCONTRADO!", datos);
 
-            // 2. MAPEO DE DATOS (Nombres exactos de tu Firebase)
-            const mapeo = {
-                'pDuenio': datos.nombreDuenio || datos.propietario || "",
-                'pNombre': datos.paciente || datos.nombre || "",
-                'pTelefono': datos.telefono || "",
-                'pDireccion': datos.direccion || "",
-                'pRaza': datos.raza || ""
-            };
-
-            // 3. INYECCIÓN EN EL FORMULARIO
-            Object.keys(mapeo).forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.value = mapeo[id];
-                    // Efecto visual de "Carga Exitosa"
-                    el.style.backgroundColor = "#f0f9ff";
-                    setTimeout(() => el.style.backgroundColor = "transparent", 1000);
-                }
-            });
-
-            // 4. ANTECEDENTES / CONDICIÓN
-            const campoCond = document.getElementById('pCondicion');
-            if (campoCond) {
-                const infoCond = datos.condicion || datos.alertas || "";
-                campoCond.value = infoCond ? `⚠️ ANTECEDENTE: ${infoCond}` : "";
-            }
-
-            // Recalcular precios si la función existe
-            if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
+            document.getElementById('pDuenio').value = datos.nombreDuenio || "";
+            document.getElementById('pNombre').value = datos.paciente || "";
+            document.getElementById('pRaza').value = datos.raza || "";
+            if(document.getElementById('pCondicion')) document.getElementById('pCondicion').value = datos.condicion || "";
             
+            if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
         } else {
-            console.warn("❌ No se encontró 'cedulaCliente' con valor:", valor);
-            alert("⚠️ Cliente no encontrado en Historias. Verifique que la cédula sea exacta.");
+            console.warn("❌ La cédula " + valor + " NO existe en esta colección específica.");
+            alert("⚠️ Cliente no encontrado. Albert, abre la consola (F12) y dime qué dice en 'Datos de muestra'.");
         }
     } catch (error) {
-        console.error("🚀 Error en maniobra de búsqueda:", error);
+        console.error("🚀 FALLO DE MOTOR (Firebase):", error);
     }
 };
 // =========================================================
@@ -4075,6 +4062,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
