@@ -949,193 +949,171 @@
 </section>
   <!-- ========== PELUQUERIA CANINA ========== -->
 <div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen animate-fadeIn">
-    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-area">
         
-        <div class="bg-blue-900 p-4 text-white flex justify-between items-center border-b-4 border-blue-800">
-            <div class="flex items-center gap-4">
-                <img src="avipet.png" alt="Logo" class="h-12 w-auto object-contain bg-white p-1 rounded">
-                <div>
-                    <h2 class="text-2xl font-black uppercase tracking-tighter italic leading-none">Peluquería Avipet</h2>
-                    <p class="text-[10px] opacity-80 italic uppercase font-bold tracking-widest mt-1">Control Maestro de Servicios • AI Sustainable Brand</p>
+        <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 p-4 mb-2">
+            <div class="flex items-center">
+                <div class="relative w-48 flex flex-col items-center sm:items-start"> 
+                    <img src="avipet.png" alt="Logo Avipet" class="w-full h-20 object-contain">
+                    <p class="text-[10px] font-bold text-slate-700 mt-[-12px] uppercase tracking-wider">RIF: J-00068577-0</p>
                 </div>
             </div>
-            <div id="badgeFidelidad" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-black text-xs hidden animate-bounce shadow-lg">
-                🎁 ¡PRÓXIMA VISITA GRATIS!
+            <div class="text-right">
+                <h2 class="text-xl font-black text-slate-800 uppercase italic leading-none">Estética Canina</h2>
+                <p class="text-[10px] font-bold text-blue-600 uppercase mt-1 tracking-widest">Control de Fidelidad VIP</p>
+                <div id="badgeFidelidad" class="hidden mt-2 bg-yellow-400 text-blue-900 px-3 py-1 rounded-full font-black text-[10px] animate-bounce shadow-sm">
+                    🎁 ¡PRÓXIMA VISITA GRATIS!
+                </div>
             </div>
         </div>
 
-        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
-                <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">📋 Datos del Cliente</h3>
-                
-                <div class="grid grid-cols-1 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño</label>
-                        <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
+            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-200">
+                <div class="border border-slate-400 text-[11px] rounded-lg overflow-hidden">
+                    <div class="bg-slate-800 text-white px-3 py-1 font-black text-[9px] uppercase italic tracking-widest">Ficha del Cliente Peluquería</div>
+                    <div class="p-3 space-y-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 uppercase">Cédula del Dueño</label>
+                            <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="border-b border-slate-300 w-full font-bold text-blue-700 outline-none focus:border-blue-500 uppercase" placeholder="V-00000000">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 uppercase">Nombre del Dueño</label>
+                            <input type="text" id="pDuenio" class="border-b border-slate-300 w-full uppercase outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 uppercase">Teléfono</label>
+                                <input type="text" id="pTelefono" class="border-b border-slate-300 w-full outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 uppercase">Mascota</label>
+                                <input type="text" id="pNombre" class="border-b border-slate-300 w-full font-black text-blue-600 uppercase outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 uppercase">Raza</label>
+                            <input type="text" id="pRaza" class="border-b border-slate-300 w-full uppercase outline-none">
+                        </div>
                     </div>
+                </div>
 
-                    <div id="tarjetaFidelidad" class="relative p-5 bg-gradient-to-br from-blue-700 to-blue-900 rounded-3xl shadow-xl border-2 border-white/20 hidden overflow-hidden transition-all duration-300">
-                        <div class="absolute -right-8 -top-8 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                        <div class="relative z-10">
-                            <div class="flex justify-between items-start mb-3">
+                <div id="tarjetaFidelidad" class="hidden border-2 border-blue-600 rounded-2xl p-4 bg-white shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 rounded-bl-xl font-black text-[9px] uppercase tracking-tighter">Tarjeta VIP</div>
+                    <div class="flex justify-between items-center mb-3">
+                        <img src="avipet.png" class="h-8 opacity-50">
+                        <span id="contadorVisitas" class="text-xl font-black text-blue-700 italic">0 / 10</span>
+                    </div>
+                    <div id="contenedorSellos" class="grid grid-cols-5 gap-2 border border-slate-200 p-2 rounded-xl bg-slate-50 min-h-[60px]">
+                        </div>
+                    <div id="proximaGratis" class="mt-2 hidden bg-emerald-500 text-white text-center py-1 rounded font-black text-[9px] uppercase animate-pulse">
+                        ✨ ¡Siguiente Servicio Gratis! ✨
+                    </div>
+                    <div class="mt-4 flex gap-2 no-print">
+                        <button type="button" onclick="window.descargarTarjetaPelu()" class="flex-1 bg-slate-800 text-white text-[9px] font-black py-2 rounded-lg hover:bg-black transition-all uppercase">📥 Guardar Imagen</button>
+                        <button type="button" onclick="window.mostrarQRTarjeta()" class="flex-1 border-2 border-blue-600 text-blue-700 text-[9px] font-black py-2 rounded-lg hover:bg-blue-50 transition-all uppercase">📱 Ver QR</button>
+                    </div>
+                    <div id="qrcode" class="hidden"></div>
+                </div>
+            </div>
+
+            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-200">
+                <div class="border border-slate-400 rounded-lg overflow-hidden">
+                    <div class="bg-slate-100 p-3">
+                        <h3 class="font-black text-blue-900 uppercase text-[10px] italic mb-3">🛠️ Configuración del Servicio</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase">Servicio</label>
+                                <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 bg-transparent font-bold text-xs outline-none py-1">
+                                    <option value="completo">Baño y Corte Completo</option>
+                                    <option value="solo_banio">Solo Baño</option>
+                                    <option value="solo_unas">Corte de Uñas ($5)</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <h3 class="text-white font-black text-[11px] uppercase tracking-widest italic leading-none">Club VIP Avipet</h3>
-                                    <p class="text-blue-200 text-[7px] font-bold uppercase mt-1">Precisión en cada corte</p>
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase">Tamaño (Base)</label>
+                                    <select id="pTamano" onchange="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 bg-transparent font-bold text-xs outline-none py-1">
+                                        <option value="30">Pequeño ($30)</option>
+                                        <option value="40">Mediano ($40)</option>
+                                        <option value="50">Grande ($50)</option>
+                                        <option value="60">Extra G. ($60)</option>
+                                    </select>
                                 </div>
-                                <span id="contadorVisitas" class="bg-white text-blue-900 text-[9px] font-black px-2 py-1 rounded-full shadow-md">
-                                    0 / 10
-                                </span>
-                            </div>
-                            <div id="contenedorSellos" class="grid grid-cols-5 gap-1.5 bg-black/20 p-3 rounded-2xl border border-white/5 backdrop-blur-sm">
+                                <div>
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase">Ajuste +/- ($)</label>
+                                    <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 bg-transparent font-bold text-xs outline-none py-1" value="0">
                                 </div>
-                            <div id="proximaGratis" class="mt-2 hidden bg-yellow-400 text-blue-900 text-center py-1 rounded-lg font-black text-[9px] uppercase animate-pulse">
-                                ✨ ¡SERVICIO CORTESÍA ACTIVADO! ✨
-                            </div>
-                            <div class="mt-4 flex gap-2">
-                                <button type="button" onclick="window.descargarTarjetaPelu()" class="flex-1 bg-white/10 hover:bg-white/20 text-white text-[8px] font-bold py-2 rounded-lg border border-white/10 transition-all uppercase">
-                                    📥 Guardar
-                                </button>
-                                <button type="button" onclick="window.mostrarQRTarjeta()" class="flex-1 bg-white text-blue-900 text-[8px] font-bold py-2 rounded-lg shadow-md uppercase">
-                                    📱 Mi QR
-                                </button>
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
-                        <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Teléfono</label>
-                            <input type="text" id="pTelefono" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Mascota</label>
-                            <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-black text-blue-600 focus:border-blue-500 outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Raza</label>
-                        <input type="text" id="pRaza" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
-                    </div>
                 </div>
 
-                <div class="pt-4">
-                    <h3 class="font-black text-slate-700 border-b border-slate-200 pb-2 uppercase text-[10px]">📝 Notas de Salud</h3>
-                    <textarea id="pCondicion" rows="2" class="w-full border border-slate-200 p-2 rounded bg-slate-50 text-xs mt-2 font-bold focus:border-blue-400 outline-none"></textarea>
-                </div>
-            </div>
-
-            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
-                <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">🛠️ Detalles del Servicio</h3>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Servicio a Realizar</label>
-                    <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border p-2 rounded bg-white font-bold text-sm">
-                        <option value="completo">Baño y Corte Completo</option>
-                        <option value="solo_banio">Solo Baño</option>
-                        <option value="solo_unas">Corte de Uñas ($5)</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Tamaño (Base)</label>
-                        <select id="pTamano" onchange="window.recalcularTotalPelu()" class="w-full border p-2 rounded bg-white text-sm font-bold">
-                            <option value="30">Pequeño ($30)</option>
-                            <option value="40">Mediano ($40)</option>
-                            <option value="50">Grande ($50)</option>
-                            <option value="60">Extra G. ($60)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Ajuste +/-</label>
-                        <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border p-2 rounded text-sm font-bold" value="0">
-                    </div>
-                </div>
-
-                <div class="bg-blue-50 p-4 rounded-xl space-y-3 border border-blue-100 shadow-inner">
-                    <h4 class="text-[10px] font-black text-blue-800 uppercase text-center tracking-widest mb-1">👥 Comisiones</h4>
-                    <div class="flex items-center justify-between bg-amber-100 p-2 rounded-lg border border-amber-300">
+                <div class="border border-slate-400 rounded-lg overflow-hidden bg-white">
+                    <table class="w-full text-[10px]">
+                        <thead class="bg-slate-800 text-white uppercase italic">
+                            <tr><th colspan="3" class="p-1 tracking-widest text-[9px]">Personal Asignado</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="p-2">
+                                <td class="p-2 flex items-center gap-2">
+                                    <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-3 h-3">
+                                    <span class="font-bold">Principal</span>
+                                </td>
+                                <td class="p-2 text-right font-black text-blue-600">$<input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()" class="w-8 bg-transparent text-right outline-none"></td>
+                            </tr>
+                            <tr class="p-2 bg-amber-50">
+                                <td class="p-2 flex items-center gap-2">
+                                    <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-3 h-3">
+                                    <span class="font-bold">Apoyo Extra</span>
+                                </td>
+                                <td class="p-2 text-right font-black text-amber-700">$<input type="number" id="pMontoAyuExtra" value="3" oninput="window.recalcularTotalPelu()" class="w-8 bg-transparent text-right outline-none"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="p-2 bg-slate-50 border-t border-slate-200">
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-600">
-                            <span class="text-[9px] font-black text-amber-900 uppercase italic">¿Ayudante hizo TODO solo?</span>
+                            <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-3 h-3 accent-blue-600">
+                            <span class="text-[9px] font-black text-slate-600 uppercase italic">¿El ayudante realizó todo el trabajo?</span>
                         </label>
-                    </div>
-                    <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-blue-200">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
-                            <span class="text-[9px] font-black text-slate-600 uppercase">Principal</span>
-                        </label>
-                        <div class="flex items-center gap-1">
-                            <span class="text-[10px] font-bold text-slate-400">$</span>
-                            <input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-blue-700 text-xs outline-none bg-transparent">
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-amber-200">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-500">
-                            <span class="text-[9px] font-black text-amber-800 uppercase">Extra (Agresivo)</span>
-                        </label>
-                        <div class="flex items-center gap-1">
-                            <span class="text-[10px] font-bold text-slate-400">$</span>
-                            <input type="number" id="pMontoAyuExtra" value="3" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-amber-700 text-xs outline-none bg-transparent">
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-4 flex flex-col justify-between">
-                <div class="bg-blue-900 p-6 rounded-2xl text-white shadow-2xl relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-4 border-b border-blue-800 pb-4">
-                        <span class="text-[11px] font-bold uppercase opacity-70 tracking-widest">Total Cliente</span>
-                        <span id="pTotalCobro" class="text-3xl font-black italic">$ 0.00</span>
-                    </div>
-                    <div class="space-y-2 mt-4">
-                        <div class="flex justify-between items-center border-b border-blue-800 pb-1">
-                            <span class="text-[10px] font-bold uppercase opacity-70">Peluquera:</span>
-                            <span id="pResPeluquera" class="text-lg font-black">$ 0.00</span>
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
+                    <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">Total a Cobrar Peluquería</label>
+                    <span id="pTotalCobro" class="text-5xl font-black text-blue-700 italic leading-none">$ 0.00</span>
+                    <div class="mt-4 pt-4 border-t border-blue-200 space-y-1">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+                            <span>Peluquera:</span><span id="pResPeluquera" class="text-slate-800 font-black">$ 0.00</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-bold uppercase opacity-70">Ayudante 1:</span>
-                            <span id="pResAyudante1" class="text-sm font-black text-emerald-400">$ 0.00</span>
+                        <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+                            <span>Ayudantes:</span><span id="pResAyudante1" class="text-emerald-600 font-black">$ 0.00</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-bold uppercase text-emerald-300">Ayudante Extra:</span>
-                            <span id="pResAyudanteExtra" class="text-sm font-black text-emerald-300">$ 0.00</span>
-                        </div>
-                        <span id="pResAyudantes" class="hidden">$ 0.00</span>
+                        <span id="pResAyudanteExtra" class="hidden"></span>
+                        <span id="pResAyudantes" class="hidden"></span>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <button onclick="window.guardarPeluqueriaPro()" class="w-full py-4 bg-blue-900 hover:bg-black text-white rounded-xl font-black shadow-xl hover:scale-[1.02] transition-all uppercase text-sm tracking-[4px] italic border-2 border-blue-800">
-                        🚀 Registrar Servicio
+                <div class="grid grid-cols-1 gap-2">
+                    <button onclick="window.guardarPeluqueriaPro()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black shadow-md transition-all uppercase text-xs tracking-widest italic">
+                        🚀 Registrar y Sumar Visita
                     </button>
-                    <button onclick="window.showTab('historia')" class="w-full py-2 font-black text-slate-400 hover:text-red-500 transition-all uppercase text-[10px] tracking-widest">
-                        ❌ Cancelar
+                    <button onclick="window.showTab('historia')" class="w-full py-2 font-bold text-slate-400 hover:text-red-500 transition-all uppercase text-[10px]">
+                        Cancelar Registro
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-100 p-6 border-t-4 border-blue-900">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h3 class="text-lg font-black text-blue-900 uppercase italic">🐕 Bitácora de Hoy</h3>
+        <div class="bg-slate-50 p-4 border-t border-slate-200">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase italic mb-3 tracking-widest flex items-center gap-2">
+                <div class="h-2 w-2 bg-blue-600 rounded-full"></div> Bitácora de Peluquería Hoy
+            </h3>
+            <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 </div>
-                <button onclick="window.cargarBitacoraPeluqueria()" class="text-[10px] bg-white border border-slate-300 text-blue-600 px-4 py-2 rounded-lg font-black uppercase hover:bg-blue-50 transition shadow-sm">
-                    🔄 Refrescar
-                </button>
-            </div>
-            <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="col-span-full py-10 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white/50">
-                    <p class="text-slate-400 text-[10px] font-black uppercase italic tracking-widest">Sin registros hoy</p>
-                </div>
-            </div>
         </div>
-
     </div>
 </div>
 <script type="module">
@@ -4179,82 +4157,90 @@ window.descargarTarjetaPelu = function() {
 // --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE ---
 window.mostrarQRTarjeta = function() {
     const cedula = document.getElementById('pCedula').value;
+    const nombre = document.getElementById('pNombre').value || "CLIENTE VIP";
+    const visitas = document.getElementById('contadorVisitas').innerText;
     
     if(!cedula) {
         Swal.fire({
             icon: 'warning',
             title: 'IDENTIFICACIÓN REQUERIDA',
-            text: 'Por favor, ingresa la cédula del cliente primero para generar su código único.',
-            confirmButtonColor: '#2563eb'
+            text: 'Ingresa la cédula para generar el código de fidelidad.',
+            confirmButtonColor: '#1d4ed8'
         });
         return;
     }
 
-    // URL Profesional de Fidelidad Avipet
-    const urlFidelidad = `https://fidelidad.avipet.app/check?id=${cedula}`;
+    // Cambiamos la URL por un texto con los datos reales del cliente
+    // Esto hace que cualquier lector de QR muestre la info de inmediato
+    const contenidoQR = `AVIPET VIP\n-----------\nCLIENTE: ${nombre}\nCÉDULA: ${cedula}\nESTADO: ${visitas}\n-----------`;
     
     Swal.fire({
-        title: 'TU TARJETA DIGITAL VIP',
-        text: 'Escanea para consultar tus beneficios acumulados',
-        html: '<div id="qrcode" class="flex justify-center p-4 bg-white rounded-xl shadow-inner"></div>',
-        confirmButtonText: 'ENTENDIDO',
-        confirmButtonColor: '#2563eb', // Azul Identidad Avipet
+        title: `<span class="text-blue-700 font-black italic">TARJETA DIGITAL VIP</span>`,
+        html: `
+            <div class="text-[10px] font-bold text-slate-500 uppercase mb-2">Escanea para verificar record</div>
+            <div id="qrcode" class="flex justify-center p-4 bg-white rounded-xl border-2 border-slate-100 shadow-inner"></div>
+            <p class="mt-2 text-[11px] font-black text-blue-800 uppercase">${nombre}</p>
+        `,
+        confirmButtonText: 'CERRAR',
+        confirmButtonColor: '#1d4ed8',
         didOpen: () => {
-            // Generación del código QR con precisión
             new QRCode(document.getElementById("qrcode"), {
-                text: urlFidelidad,
-                width: 200,
-                height: 200,
-                colorDark : "#1d4ed8", // Azul vibrante
+                text: contenidoQR,
+                width: 180,
+                height: 180,
+                colorDark : "#1d4ed8",
                 colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H // Máxima resistencia a errores
+                correctLevel : QRCode.CorrectLevel.H
             });
         }
     });
 };
+
 window.renderizarSellos = function(numVisitas) {
     const contenedor = document.getElementById('contenedorSellos');
     const contadorText = document.getElementById('contadorVisitas');
+    const badgeFidelidad = document.getElementById('badgeFidelidad');
     
-    // 1. Limpiamos el contenedor para empezar de cero
     contenedor.innerHTML = '';
     
-    // 2. Actualizamos el número de visitas en el texto
+    // Ajustamos el texto para que se vea profesional
     contadorText.innerText = `${numVisitas} / 10 VISITAS`;
 
-    // 3. Creamos los 10 espacios (ciclo for)
+    // Ciclo para crear los 10 espacios de huellitas
     for (let i = 1; i <= 10; i++) {
         const sello = document.createElement('div');
         sello.className = "h-10 w-10 flex items-center justify-center relative";
         
-        // AQUÍ ES DONDE PEGAS EL CÓDIGO QUE ME PASASTE
+        // El SVG de la huellita (diseño limpio)
         sello.innerHTML = `
             <div class="relative w-full h-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-yellow-400/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg class="w-7 h-7 text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 
-                <svg class="absolute w-6 h-6 text-yellow-400 fill-yellow-400 transition-all duration-300 ${i <= numVisitas ? 'opacity-100 scale-110' : 'opacity-0 scale-50'}" viewBox="0 0 24 24">
+                <svg class="absolute w-7 h-7 text-blue-600 fill-blue-600 transition-all duration-500 ${i <= numVisitas ? 'opacity-100 scale-110 drop-shadow-md' : 'opacity-0 scale-50'}" viewBox="0 0 24 24">
                     <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
                 </svg>
             </div>
         `;
-        
         contenedor.appendChild(sello);
     }
 
-    // 4. Si llega a 10, mostramos el mensaje de regalo
+    // Lógica de premios
     const mensajeGratis = document.getElementById('proximaGratis');
     if (numVisitas >= 10) {
         mensajeGratis.classList.remove('hidden');
+        if(badgeFidelidad) badgeFidelidad.classList.remove('hidden');
     } else {
         mensajeGratis.classList.add('hidden');
+        if(badgeFidelidad) badgeFidelidad.classList.add('hidden');
     }
 };
 </script>
 
 </body>
 </html>
+
 
 
 
