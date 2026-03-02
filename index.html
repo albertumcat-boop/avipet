@@ -4157,46 +4157,58 @@ window.descargarTarjetaPelu = function() {
 
 // --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE ---
 window.mostrarQRTarjeta = function() {
+    // 1. Extraemos los datos de la ficha que ya tienes en el HTML
     const cedula = document.getElementById('pCedula').value;
-    const nombre = document.getElementById('pNombre').value || "CLIENTE VIP";
+    const nombreMascota = document.getElementById('pNombre').value || "CLIENTE VIP";
     const visitas = document.getElementById('contadorVisitas').innerText;
     
+    // Validación de seguridad
     if(!cedula) {
         Swal.fire({
-            icon: 'warning',
-            title: 'IDENTIFICACIÓN REQUERIDA',
-            text: 'Ingresa la cédula para generar el código.',
+            icon: 'error',
+            title: 'FALTA IDENTIFICACIÓN',
+            text: 'Soldadura incompleta: Ingresa la cédula para generar el código.',
             confirmButtonColor: '#1d4ed8'
         });
         return;
     }
 
-    const contenidoQR = `AVIPET VIP\nCLIENTE: ${nombre}\nCÉDULA: ${cedula}\nRECORD: ${visitas}`;
-    
+    // 2. Definimos qué información va a "leer" el scanner
+    const dataQR = `AVIPET|${cedula}|${nombreMascota}|${visitas}`;
+
+    // 3. Abrimos la ventana y LUEGO generamos el QR
     Swal.fire({
-        title: `<span class="text-blue-700 font-black italic">TARJETA DIGITAL VIP</span>`,
+        title: `<span class="text-blue-700 font-black italic">TARJETA DIGITAL AVIPET</span>`,
         html: `
-            <div class="text-[10px] font-bold text-slate-500 uppercase mb-2">Escanea para verificar record</div>
-            <div id="qrcode_display" class="flex justify-center p-4 bg-white rounded-xl border-2 border-slate-100 shadow-inner" style="min-height: 200px; min-width: 200px;"></div>
-            <p class="mt-2 text-[11px] font-black text-blue-800 uppercase">${nombre}</p>
+            <div class="flex flex-col items-center">
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-4">Escanea para verificar record de visitas</p>
+                
+                <div id="contenedor_qr_real" class="bg-white p-3 border-4 border-blue-600 rounded-2xl shadow-lg"></div>
+                
+                <p class="mt-4 text-sm font-black text-slate-800 uppercase tracking-widest">${nombreMascota}</p>
+                <p class="text-[9px] font-bold text-blue-600 uppercase italic">ID: ${cedula}</p>
+            </div>
         `,
-        confirmButtonText: 'CERRAR',
+        showConfirmButton: true,
+        confirmButtonText: 'ENTENDIDO',
         confirmButtonColor: '#1d4ed8',
+        
+        // ESTA ES LA CLAVE: didOpen se ejecuta cuando el HTML de arriba ya existe en pantalla
         didOpen: () => {
-            // Usamos un pequeño delay para asegurar que el DOM del modal ya existe
-            setTimeout(() => {
-                const el = document.getElementById("qrcode_display");
-                if (el) {
-                    new QRCode(el, {
-                        text: contenidoQR,
-                        width: 180,
-                        height: 180,
-                        colorDark : "#1d4ed8",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.H
-                    });
-                }
-            }, 100);
+            const el = document.getElementById("contenedor_qr_real");
+            if (el) {
+                // Limpiamos contenido previo
+                el.innerHTML = "";
+                // Generamos el nuevo QR
+                new QRCode(el, {
+                    text: dataQR,
+                    width: 160,
+                    height: 160,
+                    colorDark : "#1d4ed8",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
         }
     });
 };
@@ -4245,6 +4257,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
