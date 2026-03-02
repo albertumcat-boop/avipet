@@ -3835,62 +3835,52 @@ window.recalcularTotalPelu = () => {
 
 // --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
 window.buscarClientePeluqueria = async (cedulaInput) => {
-    // 1. Limpieza de datos (quitamos puntos y espacios)
+    // 1. Limpieza de entrada (por si ponen puntos)
     const valor = cedulaInput.replace(/\./g, '').trim();
     if (!valor || valor.length < 5) return;
 
-    console.log("⚓ Avipet Radar: Escaneando cédula ->", valor);
+    console.log("⚓ Avipet Radar: Escaneando campo 'cedulaCliente' ->", valor);
 
     try {
-        // 2. Intento 1: Buscar como Texto
-        let q = query(collection(db, "pacientes"), where("cedula", "==", valor), limit(1));
-        let snap = await getDocs(q);
-
-        // 3. Intento 2: Si no hay nada, buscar como Número
-        if (snap.empty) {
-            const num = parseInt(valor);
-            if (!isNaN(num)) {
-                console.log("⚠️ No hallado como texto, probando como número...");
-                q = query(collection(db, "pacientes"), where("cedula", "==", num), limit(1));
-                snap = await getDocs(q);
-            }
-        }
+        // 2. BUSQUEDA EXACTA: Usamos 'cedulaCliente' que es como está en tu Firebase
+        // Lo buscamos como String (texto) porque así lo tienes guardado ("21103679")
+        const q = query(collection(db, "pacientes"), where("cedulaCliente", "==", valor), limit(1));
+        const snap = await getDocs(q);
 
         if (!snap.empty) {
             const datos = snap.docs[0].data();
-            console.log("✅ ¡ALTA DETECTADA!", datos);
+            console.log("✅ ¡ENCONTRADO!", datos);
 
-            // 4. Inyección de datos a los inputs del formulario
+            // 3. MAPEO EXACTO con los nombres de tu consola de Firebase
             const mapeo = {
-                'pDuenio': datos.propietario || datos.nombreDueno || datos.nombreDuenio || datos.dueno || "",
-                'pNombre': datos.nombre || datos.nombreMascota || datos.paciente || "",
-                'pTelefono': datos.telefono || "",
+                'pDuenio': datos.nombreDuenio || "",
+                'pNombre': datos.paciente || "",
+                'pTelefono': datos.telefono || "", // Si tienes este campo más adelante
                 'pDireccion': datos.direccion || "",
                 'pRaza': datos.raza || ""
             };
 
+            // 4. Inyección en el HTML
             Object.keys(mapeo).forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.value = mapeo[id];
-                    // Efecto visual azul de "Carga Exitosa"
-                    el.style.backgroundColor = "#f0f9ff";
+                    el.style.backgroundColor = "#f0f9ff"; // Efecto visual de carga
                     setTimeout(() => el.style.backgroundColor = "transparent", 1000);
                 }
             });
 
-            // Notas de salud
+            // Condición o Alertas
             const campoCond = document.getElementById('pCondicion');
-            if (campoCond) {
-                const alerta = datos.alertas || datos.condicion || datos.notas || "";
-                campoCond.value = alerta ? `⚠️ ANTECEDENTE: ${alerta}` : "";
+            if (campoCond && datos.condicion) {
+                campoCond.value = `⚠️ ANTECEDENTE: ${datos.condicion}`;
             }
 
             if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
             
         } else {
-            console.warn("❌ Cédula " + valor + " no existe en la colección 'pacientes'.");
-            alert("⚠️ Cliente no encontrado. Verifique la cédula o regístrelo en Historias.");
+            console.warn("❌ No se encontró ningún documento con cedulaCliente:", valor);
+            alert("⚠️ Cliente no encontrado. Verifique que la cédula en Historias sea exacta.");
         }
     } catch (error) {
         console.error("🚀 Error en la maniobra de búsqueda:", error);
@@ -4082,6 +4072,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
