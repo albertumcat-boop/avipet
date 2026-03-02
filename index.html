@@ -3666,7 +3666,6 @@ window.agregarFilaTest = (nombre) => {
 window.PORCENTAJE_PELUQUERA = 40; 
 
 window.guardarPeluqueriaPro = async () => {
-    // --- 1. CAPTURA DE DATOS ---
     const dInput = (id) => document.getElementById(id);
     const val = (id) => dInput(id)?.value.trim() || "";
     
@@ -3676,124 +3675,86 @@ window.guardarPeluqueriaPro = async () => {
     const raza = val('pRaza');
     const telefono = val('pTelefono');
     const direccion = val('pDireccion');
-    
     const base = parseFloat(dInput('pTamano')?.value) || 0;
     const ajuste = parseFloat(dInput('pAjuste')?.value) || 0;
     const tipoServicio = dInput('pTipoServicio')?.value || "completo";
     
-    // --- 2. AYUDANTES ---
-    const ayuPrincipal = dInput('pAyudante1')?.checked || false;
-    const ayuExtra = dInput('pAyudanteExtra')?.checked || false;
-    const montoAyu1 = parseFloat(document.getElementById('confPagoAyu1')?.value) || 2;
-    const montoAyuExtra = parseFloat(document.getElementById('confPagoAyuExtra')?.value) || 3;
-    
-    const condicion = val('pCondicion'); 
-
-    if (!cedula || !mascota || (tipoServicio !== 'solo_unas' && base === 0)) {
-        alert("⚠️ ATENCIÓN: Cédula, Mascota y Tamaño son obligatorios.");
+    if (!cedula || !mascota) {
+        Swal.fire("⚠️ ATENCIÓN", "Cédula y Mascota son obligatorios.", "warning");
         return;
     }
 
-    // --- 3. CÁLCULO DE PRECIO FINAL ---
     let precioFinal = (tipoServicio === 'solo_unas') ? 5 : (base + ajuste);
 
-    // --- 4. SEGURIDAD Y FIRMA ---
-    const pin = prompt(`🔐 FIRMA DE AUTORIZACIÓN AVIPET\nServicio: ${tipoServicio.toUpperCase()}\nTotal a cobrar: $${precioFinal}\nIngrese su PIN:`);
+    // --- SEGURIDAD ---
+    const pin = prompt(`🔐 FIRMA AVIPET\nTotal: $${precioFinal}\nPIN:`);
     if (!pin) return;
 
     const esValido = await window.validarDoctorConMaster("Peluqueria", pin); 
-    if (!esValido) {
-        alert("❌ PIN INCORRECTO.");
-        return;
-    }
+    if (!esValido) { alert("❌ PIN INCORRECTO"); return; }
 
     try {
-        // --- 5. LÓGICA DE FIDELIDAD (ID: Cédula-Mascota para el historial) ---
+        // --- LÓGICA DE CONTADOR ---
         const idFidelidad = `${cedula}-${mascota}`.toLowerCase().replace(/\s+/g, '');
         const fidelidadRef = doc(db, "fidelidad_peluqueria", idFidelidad);
         const fidelidadSnap = await getDoc(fidelidadRef);
         
-        let visitasActuales = 0;
+        let visitasPrevias = 0;
         if (fidelidadSnap.exists()) {
-            visitasActuales = fidelidadSnap.data().contador || 0;
-        }
-        const nuevaVisita = visitasActuales + 1;
-
-        // --- 6. CÁLCULOS DE PAGO INTERNO ---
-        let pagoPeluquera = (precioFinal * (window.PORCENTAJE_PELUQUERA / 100));
-        let pagoAyudanteTotal = 0;
-
-        if (ayuPrincipal) {
-            pagoPeluquera -= 1;
-            pagoAyudanteTotal += montoAyu1; 
-        }
-        if (ayuExtra) {
-            pagoPeluquera -= 1;
-            pagoAyudanteTotal += montoAyuExtra; 
+            visitasPrevias = fidelidadSnap.data().contador || 0;
         }
 
-        // --- 7. ESTRUCTURA PARA HISTORIAL ---
+        // Si ya tenía 10, esta es la visita 1 (reinicio). Si no, sumamos.
+        const nuevaVisita = (visitasPrevias >= 10) ? 1 : visitasPrevias + 1;
+        const esPremio = nuevaVisita === 10;
+
+        const fechaActual = new Date();
+        const fechaSimple = `${fechaActual.getDate()}/${fechaActual.getMonth() + 1}/${fechaActual.getFullYear()}`;
+
+        // --- REGISTRO DEL SERVICIO ---
         const dataPelu = {
             cedulaCliente: cedula,
-            nombreDuenio: duenio,
             paciente: mascota,
-            raza: raza,
             precioTotal: precioFinal,
-            pagoPeluquera: pagoPeluquera,
-            pagoAyudante: pagoAyudanteTotal,
-            condicion: condicion,
             visitaNumero: nuevaVisita,
             fecha: serverTimestamp(),
-            fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+            fechaSimple: fechaSimple,
             tipo: "PELUQUERIA"
         };
 
-        // --- 8. PERSISTENCIA Y REGISTRO DE IDENTIDAD (Doble Propósito) ---
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
-        
-        const esPremio = nuevaVisita >= 10;
-        const contadorAGuardar = esPremio ? 0 : nuevaVisita;
 
-        // Limpieza de historial si es premio
-        if (esPremio) {
-            const qViejos = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", cedula));
-            const snapViejos = await getDocs(qViejos);
-            const batch = writeBatch(db);
-            snapViejos.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-        }
-
-        // GUARDADO DE IDENTIDAD: Esto permite que el buscador lo encuentre siempre
+        // --- ACTUALIZAR CONTADOR (Sin borrar historial) ---
         await setDoc(fidelidadRef, { 
-            contador: contadorAGuardar, 
+            contador: nuevaVisita, 
             ultimaVisita: serverTimestamp(),
             paciente: mascota,
-            propietario: duenio, // Guardamos esto para el buscador
-            cedula: cedula,
-            raza: raza,
-            telefono: telefono,
-            direccion: direccion
+            propietario: duenio,
+            cedula: cedula
         }, { merge: true });
 
-        // --- 9. AVISOS Y LIMPIEZA ---
-        if (esPremio) {
-            alert(`🎉 ¡PREMIO ENTREGADO! Servicio #10 GRATIS. Tarjeta reiniciada.`);
-        } else {
-            alert(`✅ REGISTRO EXITOSO. Visita #${nuevaVisita} acumulada.`);
+        // --- ACTUALIZAR INTERFAZ ANTES DE LIMPIAR ---
+        if (dInput('contadorVisitas')) {
+            dInput('contadorVisitas').innerText = `${nuevaVisita} / 10 Visitas`;
         }
 
+        // Mostrar aviso de éxito
+        await Swal.fire({
+            icon: esPremio ? 'success' : 'info',
+            title: esPremio ? '🎉 ¡VISITA #10 GRATIS!' : '✅ REGISTRO EXITOSO',
+            text: `Mascota: ${mascota} - Visita: ${nuevaVisita}/10`,
+            timer: 3000
+        });
+
+        // --- LIMPIEZA Y CIERRE ---
         const fields = ['pCedula', 'pDuenio', 'pNombre', 'pRaza', 'pAjuste', 'pCondicion', 'pTelefono', 'pDireccion'];
         fields.forEach(f => { if(dInput(f)) dInput(f).value = ""; });
         
-        if(dInput('pAyudanteExtra')) dInput('pAyudanteExtra').checked = false;
-        if(dInput('pAyudante1')) dInput('pAyudante1').checked = true; 
         if (dInput('pTotalCobro')) dInput('pTotalCobro').innerText = "$ 0.00";
-        if (dInput('tarjetaFidelidad')) dInput('tarjetaFidelidad').classList.add('hidden');
-
         window.showTab('historia');
 
     } catch (e) {
-        console.error("Error crítico:", e);
+        console.error("Error:", e);
         alert("❌ ERROR: " + e.message);
     }
 };
@@ -4131,51 +4092,46 @@ window.generarCierrePeluqueria = async () => {
 // --- 1. FUNCIÓN PARA DESCARGAR LA TARJETA COMO IMAGEN ---
 window.descargarTarjetaPelu = function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
-    const nombre = (document.getElementById('pNombre').value || "Mascota").replace(/\s+/g, '_');
+    const nombreMascota = document.getElementById('pNombre').value || "Mascota";
+    
+    // 1. Forzamos visibilidad para la captura
+    tarjeta.classList.remove('hidden');
 
-    // 1. Forzamos visibilidad momentánea (Imprescindible para la captura)
-    const estabaOculta = tarjeta.classList.contains('hidden');
-    if (estabaOculta) tarjeta.classList.remove('hidden');
+    // 2. Damos 300ms para que el motor del navegador renderice todo bien
+    setTimeout(() => {
+        html2canvas(tarjeta, {
+            scale: 3, // Alta definición para que el scanner no falle
+            useCORS: true,
+            backgroundColor: "#ffffff"
+        }).then(canvas => {
+            // 3. Volvemos a ocultar en la interfaz
+            tarjeta.classList.add('hidden');
 
-    html2canvas(tarjeta, {
-        scale: 3, // Calidad máxima para el scanner de recepción
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false
-    }).then(canvas => {
-        // 2. Restauramos estado original
-        if (estabaOculta) tarjeta.classList.add('hidden');
+            // 4. Descarga mediante Blob (Máxima compatibilidad Android/iOS)
+            canvas.toBlob(function(blob) {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `VIP_Avipet_${nombreMascota}.png`;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 200);
+            }, 'image/png');
 
-        // 3. Conversión a Blob: El lenguaje que Android y iPhone entienden sin errores
-        canvas.toBlob(function(blob) {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `AVIPET_VIP_${nombre}.png`;
-            
-            // Requisito para navegadores móviles: el link debe estar en el cuerpo
-            document.body.appendChild(a);
-            a.click();
-            
-            // Limpiamos el material sobrante
-            setTimeout(() => {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 300);
-        }, 'image/png');
-
-        Swal.fire({
-            icon: 'success',
-            title: '¡IMAGEN LISTA!',
-            text: 'Guardada en tu galería o descargas.',
-            timer: 2000,
-            showConfirmButton: false
+            Swal.fire({
+                icon: 'success',
+                title: 'TARJETA GUARDADA',
+                text: 'Ya puedes enviarla por WhatsApp',
+                timer: 2000,
+                showConfirmButton: false
+            });
         });
-    }).catch(err => {
-        console.error("Fallo en la soldadura de imagen:", err);
-        if (estabaOculta) tarjeta.classList.add('hidden');
-    });
+    }, 300); 
 };
 // --- 2. FUNCIÓN PARA MOSTRAR EL QR AL CLIENTE ---
 window.mostrarQRTarjeta = function() {
@@ -4261,6 +4217,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
