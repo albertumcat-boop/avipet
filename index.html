@@ -4131,27 +4131,44 @@ window.generarCierrePeluqueria = async () => {
 // --- 1. FUNCIÓN PARA DESCARGAR LA TARJETA COMO IMAGEN ---
 window.descargarTarjetaPelu = function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
-    const nombreMascota = document.getElementById('pNombre')?.value || 'Mascota';
-    
-    // Si la tarjeta está oculta, html2canvas no la verá bien. 
-    // Aseguramos que sea visible para la "foto" sin que el usuario note el parpadeo.
-    tarjeta.classList.remove('hidden');
+    const nombreMascota = document.getElementById('pNombre').value || "Mascota";
 
+    if (!tarjeta) return;
+
+    // 1. Quitamos el 'hidden' momentáneamente para que html2canvas pueda "verla"
+    const estabaOculta = tarjeta.classList.contains('hidden');
+    if (estabaOculta) {
+        tarjeta.classList.remove('hidden');
+    }
+
+    // 2. Usamos html2canvas para soldar la imagen
     html2canvas(tarjeta, {
-        backgroundColor: null, // Mantiene el degradado y transparencia
-        scale: 3,              // Calidad Premium (Contraste Radical)
+        backgroundColor: "#ffffff",
+        scale: 2, // Doble resolución para que no se vea borroso
         logging: false,
-        useCORS: true          // Para cargar el logo correctamente en la imagen
+        useCORS: true // Por si el logo viene de una URL externa
     }).then(canvas => {
+        // 3. Volvemos a ocultar si estaba oculta
+        if (estabaOculta) {
+            tarjeta.classList.add('hidden');
+        }
+
+        // 4. Creamos el link de descarga
         const link = document.createElement('a');
-        link.download = `Tarjeta_VIP_Avipet_${nombreMascota}.png`;
+        link.download = `VIP_Avipet_${nombreMascota}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
         
-        // No ocultamos la tarjeta aquí para no romper la visual del usuario
-        console.log("Tarjeta descargada con éxito.");
+        Swal.fire({
+            icon: 'success',
+            title: '¡TARJETA LISTA!',
+            text: 'La imagen se ha guardado en tus descargas.',
+            timer: 2000,
+            showConfirmButton: false
+        });
     }).catch(err => {
-        console.error("Error al generar la imagen:", err);
+        console.error("Error al soldar la imagen:", err);
+        if (estabaOculta) tarjeta.classList.add('hidden');
     });
 };
 
@@ -4257,6 +4274,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
