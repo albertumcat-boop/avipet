@@ -3835,55 +3835,58 @@ window.recalcularTotalPelu = () => {
 
 // --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
 window.buscarClientePeluqueria = async (cedulaInput) => {
-    // 1. Limpieza de entrada (por si ponen puntos)
+    // 1. Limpiamos la entrada (quitamos puntos y espacios)
     const valor = cedulaInput.replace(/\./g, '').trim();
     if (!valor || valor.length < 5) return;
 
-    console.log("⚓ Avipet Radar: Escaneando campo 'cedulaCliente' ->", valor);
+    console.log("⚓ Avipet Radar: Escaneando 'cedulaCliente' ->", valor);
 
     try {
-        // 2. BUSQUEDA EXACTA: Usamos 'cedulaCliente' que es como está en tu Firebase
-        // Lo buscamos como String (texto) porque así lo tienes guardado ("21103679")
+        // --- BUSQUEDA EN COLECCIÓN PACIENTES ---
+        // Usamos el nombre exacto de tu campo: 'cedulaCliente'
         const q = query(collection(db, "pacientes"), where("cedulaCliente", "==", valor), limit(1));
         const snap = await getDocs(q);
 
         if (!snap.empty) {
             const datos = snap.docs[0].data();
-            console.log("✅ ¡ENCONTRADO!", datos);
+            console.log("✅ ¡REGISTRO ENCONTRADO!", datos);
 
-            // 3. MAPEO EXACTO con los nombres de tu consola de Firebase
+            // 2. MAPEO DE DATOS (Nombres exactos de tu Firebase)
             const mapeo = {
-                'pDuenio': datos.nombreDuenio || "",
-                'pNombre': datos.paciente || "",
-                'pTelefono': datos.telefono || "", // Si tienes este campo más adelante
+                'pDuenio': datos.nombreDuenio || datos.propietario || "",
+                'pNombre': datos.paciente || datos.nombre || "",
+                'pTelefono': datos.telefono || "",
                 'pDireccion': datos.direccion || "",
                 'pRaza': datos.raza || ""
             };
 
-            // 4. Inyección en el HTML
+            // 3. INYECCIÓN EN EL FORMULARIO
             Object.keys(mapeo).forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.value = mapeo[id];
-                    el.style.backgroundColor = "#f0f9ff"; // Efecto visual de carga
+                    // Efecto visual de "Carga Exitosa"
+                    el.style.backgroundColor = "#f0f9ff";
                     setTimeout(() => el.style.backgroundColor = "transparent", 1000);
                 }
             });
 
-            // Condición o Alertas
+            // 4. ANTECEDENTES / CONDICIÓN
             const campoCond = document.getElementById('pCondicion');
-            if (campoCond && datos.condicion) {
-                campoCond.value = `⚠️ ANTECEDENTE: ${datos.condicion}`;
+            if (campoCond) {
+                const infoCond = datos.condicion || datos.alertas || "";
+                campoCond.value = infoCond ? `⚠️ ANTECEDENTE: ${infoCond}` : "";
             }
 
+            // Recalcular precios si la función existe
             if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
             
         } else {
-            console.warn("❌ No se encontró ningún documento con cedulaCliente:", valor);
-            alert("⚠️ Cliente no encontrado. Verifique que la cédula en Historias sea exacta.");
+            console.warn("❌ No se encontró 'cedulaCliente' con valor:", valor);
+            alert("⚠️ Cliente no encontrado en Historias. Verifique que la cédula sea exacta.");
         }
     } catch (error) {
-        console.error("🚀 Error en la maniobra de búsqueda:", error);
+        console.error("🚀 Error en maniobra de búsqueda:", error);
     }
 };
 // =========================================================
@@ -4072,6 +4075,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
