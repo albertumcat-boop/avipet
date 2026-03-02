@@ -950,7 +950,7 @@
                 <h2 class="text-2xl font-black uppercase tracking-tighter italic">Peluquería Avipet</h2>
                 <p class="text-xs opacity-80 italic uppercase font-bold tracking-widest">Control Maestro de Servicios y Ayudantes</p>
             </div>
-            <div id="badgeFidelidad" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-sm hidden animate-bounce">
+            <div id="badgeFidelidad" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-sm hidden animate-bounce border-2 border-blue-900">
                 🎁 ¡PRÓXIMA VISITA GRATIS!
             </div>
         </div>
@@ -959,51 +959,55 @@
             
             <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
                 <h3 class="font-black text-blue-900 border-b pb-2 uppercase text-sm italic">📋 Datos del Cliente</h3>
-                <div class="grid grid-cols-1 gap-3">
+                
+                <div class="space-y-3">
                     <div>
-                      <div id="tarjetaFidelidad" class="mt-4 p-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl shadow-lg hidden">
-    <div class="flex justify-between items-center mb-3">
-        <h3 class="text-white font-black text-xs uppercase tracking-widest">Tarjeta de Fidelidad Avipet</h3>
-        <span id="contadorVisitas" class="bg-white text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full">0/10 Visitas</span>
-    </div>
-    
-    <div class="grid grid-cols-5 gap-2" id="contenedorSellos">
-        </div>
-    
-    <p id="proximaGratis" class="text-[9px] text-blue-100 mt-3 italic text-center hidden">
-        ✨ ¡Felicidades! Esta mascota tiene su próximo baño de cortesía.
-    </p>
-</div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase">Cédula del Dueño</label>
-                       <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
+                        <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="w-full border-b-2 border-slate-200 focus:border-blue-500 outline-none p-2 bg-white font-bold" placeholder="V-00000000">
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
-                        <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="Nombre completo">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Teléfono</label>
-                            <input type="text" id="pTelefono" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="04XX-0000000">
+
+                    <div id="tarjetaFidelidad" class="p-3 bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl shadow-lg hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-white font-black text-[9px] uppercase tracking-widest">Pases Avipet</h3>
+                            <span id="contadorVisitas" class="bg-yellow-400 text-blue-900 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">0/10 Visitas</span>
                         </div>
+                        <div class="grid grid-cols-5 gap-1.5" id="contenedorSellos"></div>
+                        <p id="proximaGratis" class="text-[8px] text-yellow-300 mt-2 italic text-center font-bold hidden animate-pulse uppercase tracking-tighter">
+                            ✨ ¡Este baño es cortesía de la casa! ✨
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3 pt-1">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Mascota</label>
-                            <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-black text-blue-600 focus:border-blue-500 outline-none" placeholder="Nombre Mascota">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Nombre del Dueño</label>
+                            <input type="text" id="pDuenio" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Raza</label>
-                        <input type="text" id="pRaza" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none" placeholder="Ej: Poodle, Schnauzer">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Dirección</label>
-                        <input type="text" id="pDireccion" class="w-full border-b-2 border-slate-200 p-2 bg-white text-[10px] font-bold focus:border-blue-500 outline-none" placeholder="Ubicación del cliente">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Teléfono</label>
+                                <input type="text" id="pTelefono" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Mascota</label>
+                                <input type="text" id="pNombre" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-black text-blue-600 focus:border-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Raza</label>
+                                <input type="text" id="pRaza" class="w-full border-b-2 border-slate-200 p-2 bg-white text-xs font-bold focus:border-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Dirección</label>
+                                <input type="text" id="pDireccion" class="w-full border-b-2 border-slate-200 p-2 bg-white text-[10px] font-bold focus:border-blue-500 outline-none">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="pt-4">
-                    <h3 class="font-black text-slate-700 border-b border-slate-200 pb-2 uppercase text-[10px]">📝 Notas de Salud / Comportamiento</h3>
-                    <textarea id="pCondicion" rows="3" class="w-full border border-slate-200 p-2 rounded bg-slate-50 text-xs mt-2 font-bold focus:border-blue-400 outline-none" placeholder="¿Es agresivo? ¿Tiene verrugas? ¿Soplos?"></textarea>
+                <div class="pt-2">
+                    <h3 class="font-black text-slate-700 border-b border-slate-200 pb-1 uppercase text-[10px]">📝 Notas Especiales</h3>
+                    <textarea id="pCondicion" rows="2" class="w-full border border-slate-200 p-2 rounded bg-slate-50 text-xs mt-2 font-bold focus:border-blue-400 outline-none"></textarea>
                 </div>
             </div>
 
@@ -1123,7 +1127,6 @@
 
     </div>
 </div>
-  
 <script type="module">
   import { db } from './firebase-config.js';
  import {
@@ -3682,31 +3685,28 @@ window.guardarPeluqueriaPro = async () => {
     const mascota = val('pNombre'); 
     const raza = val('pRaza');
     
-    // Ajuste con protección ? para evitar error null
     const base = parseFloat(dInput('pTamano')?.value) || 0;
     const ajuste = parseFloat(dInput('pAjuste')?.value) || 0;
     const tipoServicio = dInput('pTipoServicio')?.value || "completo";
     
-    // --- 2. AYUDANTES (Principal Permanente + Extra Agresivo) ---
+    // --- 2. AYUDANTES ---
     const ayuPrincipal = dInput('pAyudante1')?.checked || false;
     const ayuExtra = dInput('pAyudanteExtra')?.checked || false;
     
-    // Captura de montos dinámicos desde la pestaña de Ajustes
     const montoAyu1 = parseFloat(document.getElementById('confPagoAyu1')?.value) || 2;
     const montoAyuExtra = parseFloat(document.getElementById('confPagoAyuExtra')?.value) || 3;
     
     const condicion = val('pCondicion'); 
 
-    // Validación de seguridad
     if (!cedula || !mascota || (tipoServicio !== 'solo_unas' && base === 0)) {
         alert("⚠️ ATENCIÓN: Cédula, Mascota y Tamaño son obligatorios.");
         return;
     }
 
-    // --- 3. CÁLCULO DE PRECIO FINAL AL CLIENTE ---
+    // --- 3. CÁLCULO DE PRECIO FINAL ---
     let precioFinal = (tipoServicio === 'solo_unas') ? 5 : (base + ajuste);
 
-    // --- 4. SEGURIDAD Y FIRMA (PIN DE AUTORIZACIÓN) ---
+    // --- 4. SEGURIDAD Y FIRMA ---
     const pin = prompt(`🔐 FIRMA DE AUTORIZACIÓN AVIPET\nServicio: ${tipoServicio.toUpperCase()}\nTotal a cobrar: $${precioFinal}\nIngrese su PIN:`);
     if (!pin) return;
 
@@ -3717,7 +3717,7 @@ window.guardarPeluqueriaPro = async () => {
     }
 
     try {
-        // --- 5. LÓGICA DE FIDELIDAD (ID ÚNICO: Cédula-Mascota) ---
+        // --- 5. LÓGICA DE FIDELIDAD ---
         const idFidelidad = `${cedula}-${mascota}`.toLowerCase().replace(/\s+/g, '');
         const fidelidadRef = doc(db, "fidelidad_peluqueria", idFidelidad);
         const fidelidadSnap = await getDoc(fidelidadRef);
@@ -3728,21 +3728,21 @@ window.guardarPeluqueriaPro = async () => {
         }
         const nuevaVisita = visitasActuales + 1;
 
-        // --- 6. CÁLCULOS DE PAGO INTERNO (Reglas de Albert con montos de Ajustes) ---
+        // --- 6. CÁLCULOS DE PAGO INTERNO ---
         let pagoPeluquera = (precioFinal * (window.PORCENTAJE_PELUQUERA / 100));
         let pagoAyudanteTotal = 0;
 
         if (ayuPrincipal) {
-            pagoPeluquera -= 1; // Ella aporta 1
+            pagoPeluquera -= 1;
             pagoAyudanteTotal += montoAyu1; 
         }
         
         if (ayuExtra) {
-            pagoPeluquera -= 1; // Ella aporta otro 1
-            pAyudanteTotal += montoAyuExtra; 
+            pagoPeluquera -= 1;
+            pagoAyudanteTotal += montoAyuExtra; 
         }
 
-        // --- 7. ESTRUCTURA DE DATOS PARA HISTORIAL (SIN INSUMOS) ---
+        // --- 7. ESTRUCTURA DE DATOS PARA HISTORIAL ---
         const dataPelu = {
             cedulaCliente: cedula,
             nombreDuenio: duenio,
@@ -3751,8 +3751,6 @@ window.guardarPeluqueriaPro = async () => {
             precioTotal: precioFinal,
             pagoPeluquera: pagoPeluquera,
             pagoAyudante: pagoAyudanteTotal,
-            ayudantePrincipal: ayuPrincipal,
-            ayudanteExtra: ayuExtra,
             condicion: condicion,
             visitaNumero: nuevaVisita,
             fecha: serverTimestamp(),
@@ -3760,31 +3758,43 @@ window.guardarPeluqueriaPro = async () => {
             tipo: "PELUQUERIA"
         };
 
-        // --- 8. PERSISTENCIA EN FIREBASE ---
+        // --- 8. PERSISTENCIA Y REINICIO DE CICLO ---
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
+        
+        // Lógica de Válvula: Si llegamos a 10, reiniciamos el contador a 0
+        const esPremio = nuevaVisita >= 10;
+        const contadorAGuardar = esPremio ? 0 : nuevaVisita;
+
+        // Si es premio, limpiamos los registros viejos para que la tarjeta se vea VACÍA
+        if (esPremio) {
+            const qViejos = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", cedula));
+            const snapViejos = await getDocs(qViejos);
+            const batch = writeBatch(db);
+            snapViejos.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            console.log("♻️ Ciclo completado: Historial de fidelidad reseteado.");
+        }
+
         await setDoc(fidelidadRef, { 
-            contador: (nuevaVisita >= 10 ? 0 : nuevaVisita), 
+            contador: contadorAGuardar, 
             ultimaVisita: serverTimestamp(),
             paciente: mascota,
             cedula: cedula
         }, { merge: true });
 
-        // --- 9. AVISOS Y LIMPIEZA DEL FRONT ---
-        if (nuevaVisita >= 10) {
-            alert(`🎉 ¡PREMIO DE FIDELIDAD! Visita #10.`);
+        // --- 9. AVISOS Y LIMPIEZA ---
+        if (esPremio) {
+            alert(`🎉 ¡FELICIDADES! Se ha entregado el servicio #10 GRATIS. La tarjeta se ha reiniciado.`);
         } else {
-            alert(`✅ REGISTRO EXITOSO. Visita #${nuevaVisita}`);
+            alert(`✅ REGISTRO EXITOSO. Visita #${nuevaVisita} acumulada.`);
         }
 
-        // RESET TOTAL DEL FORMULARIO CON PROTECCIÓN
         const fields = ['pCedula', 'pDuenio', 'pNombre', 'pRaza', 'pAjuste', 'pCondicion'];
         fields.forEach(f => { if(dInput(f)) dInput(f).value = ""; });
-
         if(dInput('pAyudanteExtra')) dInput('pAyudanteExtra').checked = false;
         if(dInput('pAyudante1')) dInput('pAyudante1').checked = true; 
-        
-        const cobroDisp = document.getElementById('pTotalCobro');
-        if (cobroDisp) cobroDisp.innerText = "$ 0.00";
+        if (document.getElementById('pTotalCobro')) document.getElementById('pTotalCobro').innerText = "$ 0.00";
+        if (document.getElementById('tarjetaFidelidad')) document.getElementById('tarjetaFidelidad').classList.add('hidden');
 
         window.showTab('historia');
 
@@ -3849,59 +3859,43 @@ window.recalcularTotalPelu = () => {
 
 // --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
 window.buscarClientePeluqueria = async (cedulaInput) => {
-    // 1. Limpieza de la cédula
     const valor = cedulaInput.replace(/\./g, '').trim();
     if (!valor || valor.length < 5) return;
 
-    console.log("⚓ Avipet: Escaneando datos en 'consultas' y fidelidad para:", valor);
-
     try {
-        // --- PARTE A: DATOS BÁSICOS (Colección REAL: 'consultas') ---
         const qPac = query(collection(db, "consultas"), where("cedula", "==", valor), limit(1));
         const snapPac = await getDocs(qPac);
 
         if (!snapPac.empty) {
             const datos = snapPac.docs[0].data();
             
-            // Llenado de campos con los nombres reales de tu Firebase
+            // Llenado de campos
             if(document.getElementById('pDuenio')) document.getElementById('pDuenio').value = datos.propietario || "";
             if(document.getElementById('pNombre')) document.getElementById('pNombre').value = datos.paciente || "";
             if(document.getElementById('pRaza'))   document.getElementById('pRaza').value = datos.raza || "";
             if(document.getElementById('pTelefono')) document.getElementById('pTelefono').value = datos.telefono || "";
             if(document.getElementById('pDireccion')) document.getElementById('pDireccion').value = datos.direccion || "";
+            if(document.getElementById('pCondicion')) document.getElementById('pCondicion').value = datos.condicion || "";
 
-            const campoCond = document.getElementById('pCondicion');
-            if (campoCond) {
-                // En tus consultas el campo se llama 'tratamiento' o 'alerta', 
-                // pero si usas 'condicion' en peluquería, lo mantenemos.
-                campoCond.value = datos.condicion || "";
-            }
-
-            // --- PARTE B: CONTEO DE FIDELIDAD (Colección 'servicios_estetica') ---
-            // Aquí usamos 'cedulaCliente' porque así lo guarda tu función guardarPeluqueriaPro
+            // Buscamos servicios para la tarjeta
             const qFid = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", valor));
             const snapFid = await getDocs(qFid);
             
             const visitas = [];
             snapFid.forEach(doc => {
-                const d = doc.data();
-                visitas.push(d.fechaSimple || "S/F");
+                visitas.push(doc.data().fechaSimple || "S/F");
             });
 
             actualizarInterfazTarjeta(visitas);
-            console.log("✅ Sistema sincronizado para: " + datos.paciente);
-
         } else {
-            console.warn("❌ Cédula " + valor + " no encontrada en consultas.");
-            alert("⚠️ Esta cédula no tiene historia médica en 'consultas'.");
+            alert("⚠️ Cliente no encontrado.");
             if(document.getElementById('tarjetaFidelidad')) document.getElementById('tarjetaFidelidad').classList.add('hidden');
         }
     } catch (error) {
-        console.error("🚀 ERROR CRÍTICO:", error);
+        console.error("Error:", error);
     }
 };
 
-// --- FUNCIÓN PARA DIBUJAR LOS 10 ESPACIOS (Mantenemos tu lógica visual) ---
 function actualizarInterfazTarjeta(visitas) {
     const contenedor = document.getElementById('contenedorSellos');
     const tarjeta = document.getElementById('tarjetaFidelidad');
@@ -3914,19 +3908,18 @@ function actualizarInterfazTarjeta(visitas) {
     tarjeta.classList.remove('hidden');
     contenedor.innerHTML = ''; 
     
+    // Si llegamos a 10, mostramos 10, pero el sistema de guardado se encargará de resetear
     const totalVisitas = visitas.length;
     contador.innerText = `${totalVisitas}/10 Visitas`;
 
     for (let i = 1; i <= 10; i++) {
         const sello = document.createElement('div');
-        sello.className = `h-10 rounded-lg border flex flex-col items-center justify-center transition-all duration-300`;
+        // Reducimos h-10 a h-8 para ganar espacio
+        sello.className = `h-8 rounded-lg border flex flex-col items-center justify-center transition-all duration-300`;
         
         if (i <= totalVisitas) {
             sello.classList.add('bg-white', 'border-yellow-400', 'shadow-sm');
-            sello.innerHTML = `
-                <span class="text-xs">🐾</span>
-                <span class="text-[6px] font-black text-blue-900 leading-none">${visitas[i-1]}</span>
-            `;
+            sello.innerHTML = `<span class="text-xs">🐾</span>`;
         } else {
             sello.classList.add('bg-blue-800/50', 'border-blue-600', 'opacity-30');
             sello.innerHTML = `<span class="text-white text-[8px] font-bold">${i}</span>`;
@@ -3934,13 +3927,14 @@ function actualizarInterfazTarjeta(visitas) {
         contenedor.appendChild(sello);
     }
 
-    // Lógica de premio: si tiene 9, la que vas a registrar ahora es la 10.
+    // Si tiene 9, la que vas a registrar ahora es la 10 (Gratis)
     if (totalVisitas >= 9) { 
-        if(avisoGratis) avisoGratis.classList.remove('hidden');
-        if(badgeGratis) badgeGratis.classList.remove('hidden');
+        avisoGratis?.classList.remove('hidden');
+        badgeGratis?.classList.remove('hidden');
+        if(document.getElementById('pTotalCobro')) document.getElementById('pTotalCobro').innerText = "$ 0.00";
     } else {
-        if(avisoGratis) avisoGratis.classList.add('hidden');
-        if(badgeGratis) badgeGratis.classList.add('hidden');
+        avisoGratis?.classList.add('hidden');
+        badgeGratis?.classList.add('hidden');
     }
 }
 // =========================================================
@@ -4129,6 +4123,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
