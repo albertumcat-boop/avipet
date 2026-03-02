@@ -3853,59 +3853,55 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
     const valor = cedulaInput.replace(/\./g, '').trim();
     if (!valor || valor.length < 5) return;
 
-    console.log("⚓ Avipet: Escaneando datos y fidelidad para:", valor);
+    console.log("⚓ Avipet: Escaneando datos en 'consultas' y fidelidad para:", valor);
 
     try {
-        // --- PARTE A: DATOS BÁSICOS (Colección 'pacientes') ---
-        const qPac = query(collection(db, "pacientes"), where("cedulaCliente", "==", valor), limit(1));
+        // --- PARTE A: DATOS BÁSICOS (Colección REAL: 'consultas') ---
+        const qPac = query(collection(db, "consultas"), where("cedula", "==", valor), limit(1));
         const snapPac = await getDocs(qPac);
 
         if (!snapPac.empty) {
             const datos = snapPac.docs[0].data();
             
-            // Llenado de campos
-            if(document.getElementById('pDuenio')) document.getElementById('pDuenio').value = datos.nombreDuenio || "";
+            // Llenado de campos con los nombres reales de tu Firebase
+            if(document.getElementById('pDuenio')) document.getElementById('pDuenio').value = datos.propietario || "";
             if(document.getElementById('pNombre')) document.getElementById('pNombre').value = datos.paciente || "";
             if(document.getElementById('pRaza'))   document.getElementById('pRaza').value = datos.raza || "";
             if(document.getElementById('pTelefono')) document.getElementById('pTelefono').value = datos.telefono || "";
             if(document.getElementById('pDireccion')) document.getElementById('pDireccion').value = datos.direccion || "";
 
             const campoCond = document.getElementById('pCondicion');
-            if (campoCond && datos.condicion) {
-                campoCond.value = datos.condicion;
-                campoCond.classList.add('bg-yellow-50'); 
+            if (campoCond) {
+                // En tus consultas el campo se llama 'tratamiento' o 'alerta', 
+                // pero si usas 'condicion' en peluquería, lo mantenemos.
+                campoCond.value = datos.condicion || "";
             }
 
             // --- PARTE B: CONTEO DE FIDELIDAD (Colección 'servicios_estetica') ---
-            // Buscamos todos los servicios previos de este cliente
+            // Aquí usamos 'cedulaCliente' porque así lo guarda tu función guardarPeluqueriaPro
             const qFid = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", valor));
             const snapFid = await getDocs(qFid);
             
             const visitas = [];
             snapFid.forEach(doc => {
                 const d = doc.data();
-                // Extraemos la fecha (usamos fechaSimple o la que tengas en el registro)
                 visitas.push(d.fechaSimple || "S/F");
             });
 
-            // Llamamos a la función que dibuja los sellos
             actualizarInterfazTarjeta(visitas);
-
-            console.log("✅ Datos y Tarjeta sincronizados.");
+            console.log("✅ Sistema sincronizado para: " + datos.paciente);
 
         } else {
-            console.warn("❌ Cliente no encontrado en historias.");
-            alert("⚠️ La cédula " + valor + " no tiene historia médica registrada.");
-            // Ocultamos la tarjeta si no hay cliente
-            document.getElementById('tarjetaFidelidad').classList.add('hidden');
+            console.warn("❌ Cédula " + valor + " no encontrada en consultas.");
+            alert("⚠️ Esta cédula no tiene historia médica en 'consultas'.");
+            if(document.getElementById('tarjetaFidelidad')) document.getElementById('tarjetaFidelidad').classList.add('hidden');
         }
     } catch (error) {
-        console.error("🚀 ERROR EN EL SISTEMA:", error);
-        alert("Fallo de conexión. Revisa la consola.");
+        console.error("🚀 ERROR CRÍTICO:", error);
     }
 };
 
-// --- FUNCIÓN PARA DIBUJAR LOS 10 ESPACIOS ---
+// --- FUNCIÓN PARA DIBUJAR LOS 10 ESPACIOS (Mantenemos tu lógica visual) ---
 function actualizarInterfazTarjeta(visitas) {
     const contenedor = document.getElementById('contenedorSellos');
     const tarjeta = document.getElementById('tarjetaFidelidad');
@@ -3921,28 +3917,24 @@ function actualizarInterfazTarjeta(visitas) {
     const totalVisitas = visitas.length;
     contador.innerText = `${totalVisitas}/10 Visitas`;
 
-    // Generar los 10 cuadros
     for (let i = 1; i <= 10; i++) {
         const sello = document.createElement('div');
         sello.className = `h-10 rounded-lg border flex flex-col items-center justify-center transition-all duration-300`;
         
         if (i <= totalVisitas) {
-            // Huellita para visitas pasadas
             sello.classList.add('bg-white', 'border-yellow-400', 'shadow-sm');
             sello.innerHTML = `
                 <span class="text-xs">🐾</span>
                 <span class="text-[6px] font-black text-blue-900 leading-none">${visitas[i-1]}</span>
             `;
         } else {
-            // Cuadros vacíos para el futuro
             sello.classList.add('bg-blue-800/50', 'border-blue-600', 'opacity-30');
             sello.innerHTML = `<span class="text-white text-[8px] font-bold">${i}</span>`;
         }
         contenedor.appendChild(sello);
     }
 
-    // Si llega a la visita 9, la 10 es la de hoy/próxima (ajusta según tu promo)
-    // Aquí marcamos aviso si ya completó 9 o 10
+    // Lógica de premio: si tiene 9, la que vas a registrar ahora es la 10.
     if (totalVisitas >= 9) { 
         if(avisoGratis) avisoGratis.classList.remove('hidden');
         if(badgeGratis) badgeGratis.classList.remove('hidden');
@@ -4137,6 +4129,7 @@ window.generarCierrePeluqueria = async () => {
 
 </body>
 </html>
+
 
 
 
