@@ -457,6 +457,27 @@
            class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
     </div>
 
+    <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
+        <label class="block text-[10px] font-black text-slate-500 uppercase mb-2 italic tracking-widest">
+            📁 Adjuntar Examen o Documento (Imagen)
+        </label>
+        
+        <div class="flex items-center gap-4">
+            <input type="file" id="inputFotoHistoria" accept="image/*" class="hidden" onchange="window.previsualizarFotoHistoria(event)">
+            
+            <button type="button" onclick="document.getElementById('inputFotoHistoria').click()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-black transition-all flex items-center gap-2">
+                <span>📷</span> Seleccionar Archivo
+            </button>
+
+            <div id="previewHistoriaContainer" class="hidden relative w-16 h-16 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm">
+                <img id="imgHistoriaPreview" src="" class="w-full h-full object-cover">
+                <button type="button" onclick="window.quitarFotoHistoria()" class="absolute top-0 right-0 bg-red-600 text-white text-[8px] px-1 font-bold italic">X</button>
+            </div>
+        </div>
+        
+        <textarea id="notaAdjuntoHistoria" placeholder="Breve nota sobre este documento (Ej: Valores de hematología)" class="w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white" rows="1"></textarea>
+    </div>
+
     <div id="contenedorInsumos"
          class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
       <table class="w-full text-[11px] text-left">
@@ -651,18 +672,33 @@
     </div>
 
     <div id="bloqueTests" class="hidden">
-  <div class="no-print mb-4 p-3 bg-slate-100 rounded-lg border border-slate-300">
-    <label class="block text-[10px] font-black text-slate-700 uppercase mb-1 italic">🔬 Añadir Test:</label>
-    <select id="selectorTestCertificado" class="w-full p-2 rounded border border-slate-800 font-bold text-xs uppercase" onchange="window.agregarFilaTest(this.value); this.value=''">
-      <option value="">-- SELECCIONE TEST --</option>
-      <option value="Distemper Canino (CDV Ag)">Distemper Canino (CDV Ag)</option>
-      <option value="Parvovirus Canino (CPV Ag)">Parvovirus Canino (CPV Ag)</option>
-      <option value="Sida - Leucemia Felina (FIV/FeLV)">Sida - Leucemia Felina (FIV/FeLV)</option>
-      <option value="Helicobacter Pylori Ag">Helicobacter Pylori Ag</option>
-      <option value="Descarte Hemoparásitos (4DX)">Descarte Hemoparásitos (4DX)</option>
-      <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
-    </select>
-  </div>
+      <div class="no-print mb-4 p-3 bg-blue-50 rounded-xl border-2 border-dashed border-blue-300 flex items-center gap-4">
+        <div class="flex-1">
+          <label class="block text-[9px] font-black text-blue-700 uppercase mb-1">📸 Evidencia de Cassette / Test:</label>
+          <div class="flex gap-2">
+            <button type="button" onclick="document.getElementById('inputFotoTest').click()" class="bg-blue-600 text-white px-3 py-1.5 rounded font-black text-[9px] uppercase shadow-sm">Seleccionar Foto</button>
+            <input type="file" id="inputFotoTest" accept="image/*" class="hidden" onchange="window.previsualizarFotoTest(event)">
+            <input type="text" id="notaFotoTest" placeholder="Nota de la foto..." class="flex-1 p-1.5 text-[10px] border border-blue-200 rounded">
+          </div>
+        </div>
+        <div id="previewTestContainer" class="hidden relative w-12 h-12 border-2 border-blue-500 rounded overflow-hidden">
+          <img id="imgTestPreview" src="" class="w-full h-full object-cover">
+          <button type="button" onclick="window.quitarFotoTest()" class="absolute top-0 right-0 bg-red-600 text-white text-[8px] px-1 font-bold">X</button>
+        </div>
+      </div>
+
+      <div class="no-print mb-4 p-3 bg-slate-100 rounded-lg border border-slate-300">
+        <label class="block text-[10px] font-black text-slate-700 uppercase mb-1 italic">🔬 Añadir Test:</label>
+        <select id="selectorTestCertificado" class="w-full p-2 rounded border border-slate-800 font-bold text-xs uppercase" onchange="window.agregarFilaTest(this.value); this.value=''">
+          <option value="">-- SELECCIONE TEST --</option>
+          <option value="Distemper Canino (CDV Ag)">Distemper Canino (CDV Ag)</option>
+          <option value="Parvovirus Canino (CPV Ag)">Parvovirus Canino (CPV Ag)</option>
+          <option value="Sida - Leucemia Felina (FIV/FeLV)">Sida - Leucemia Felina (FIV/FeLV)</option>
+          <option value="Helicobacter Pylori Ag">Helicobacter Pylori Ag</option>
+          <option value="Descarte Hemoparásitos (4DX)">Descarte Hemoparásitos (4DX)</option>
+          <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
+        </select>
+      </div>
 
       <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
         <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">Certificado de Diagnóstico Rápido</div>
@@ -1112,12 +1148,20 @@
     <div id="qrcode" class="hidden"></div>
 </div>
 <script type="module">
-  import { db } from './firebase-config.js';
- import {
+  // 1. IMPORTACIONES AJUSTADAS (Añadido 'storage' y las librerías de carga de archivos)
+  import { db, storage } from './firebase-config.js';
+  import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, orderBy, limit, // <--- Añadí 'limit' por si acaso
+    doc, getDoc, setDoc, updateDoc, orderBy, limit,
     enableIndexedDbPersistence, deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  import { 
+    ref, 
+    uploadBytes, 
+    getDownloadURL 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
   // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
   enableIndexedDbPersistence(db).catch((err) => {
       if (err.code == 'failed-precondition') {
@@ -1135,7 +1179,7 @@
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
- const CONFIG_SERVICIOS = {
+  const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
     "CONSULTA OFTALMOLÓGICA": { precio: 0, porc: 12.5 },
     "CONSULTA CAMADA 3-4 CACHORROS": { precio: 0, porc: 40 },
@@ -1162,7 +1206,7 @@
     "FILARIASIS": { precio: 0, porc: 50 },
     "SIDA - LEUCEMIA": { precio: 0, porc: 50 },
     "TEST HELICOBACTER PYLORI AG": { precio: 40, porc: 50 }, 
-   "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precio: 0, porc: 50 },
+    "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precio: 0, porc: 50 },
     "EXAMEN DE HECES": { precio: 0, porc: 50 },
     "EXAMENES DE ORINA": { precio: 0, porc: 50 },
     "CITOLOGIA 1 OIDO": { precio: 0, porc: 50 },
@@ -1184,7 +1228,7 @@
     "REFERIDO: DESCARTE HEMOPARASITO": { precio: 30, porc: 50 },
     "REFERIDO: DISTEMPER": { precio: 45, porc: 50 },
     "REFERIDO: PARVOVIRUS - CORONAVIRUS": { precio: 45, porc: 50 },
-};
+  };
 
   const insumosFijosMedicos = [
     { nombre: "Guantes de examen", costo: 0.50 },
@@ -1226,9 +1270,9 @@
   "Lisavac":           { precioCliente: 5  }, // 5 $ por 1 ml (1 ml x kg)
   "Soroglobulin":      { precioCliente: 25 },
   "Infervac":          { precioCliente: 0  }
-};
+  };
 
- const recetas = {
+  const recetas = {
     "CONSULTA GENERAL": {
       precioVenta: 30,
       insumos: [{ nombre: "Crema", costo: 0.50 }]
@@ -1442,8 +1486,7 @@
       precioVenta: 35,
       insumos: [{ nombre: "Pago Laboratorio Externo", costo: 17.50 }]
     },
-};
-
+  };
   // =========================================================
   // [03] ESTADO
   // =========================================================
@@ -1876,6 +1919,84 @@ window.agregarMedicamento = (nombreMed) => {
     window.calcularTodo();
     document.getElementById('selectorMedicamentos').value = "";
   };
+  // ========= [03] FUNCIONES DE IMAGEN (HISTORIA CLÍNICA) =========
+
+/**
+ * Mostrar la foto en el recuadro apenas se selecciona
+ */
+window.previsualizarFotoHistoria = (event) => {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('previewHistoriaContainer');
+    const imgPreview = document.getElementById('imgHistoriaPreview');
+
+    if (file) {
+        // Validación: solo permitir imágenes para evitar errores en Storage
+        if (!file.type.startsWith('image/')) {
+            alert("⚠️ Por favor, selecciona un archivo de imagen válido.");
+            event.target.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (imgPreview) imgPreview.src = e.target.result;
+            if (previewContainer) previewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+/**
+ * Limpiar la selección y ocultar el contenedor
+ */
+window.quitarFotoHistoria = () => {
+    const input = document.getElementById('inputFotoHistoria');
+    const previewContainer = document.getElementById('previewHistoriaContainer');
+    const imgPreview = document.getElementById('imgHistoriaPreview');
+
+    if (input) input.value = ""; 
+    if (imgPreview) imgPreview.src = "";
+    if (previewContainer) previewContainer.classList.add('hidden');
+};
+  // ========= [04] FUNCIONES DE FOTO PARA TEST RÁPIDO =========
+
+/**
+ * Muestra la miniatura del cassette del test seleccionado
+ */
+window.previsualizarFotoTest = (event) => {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('previewTestContainer');
+    const imgPreview = document.getElementById('imgTestPreview');
+
+    if (file) {
+        // Validación de tipo de archivo
+        if (!file.type.startsWith('image/')) {
+            alert("⚠️ Por favor, selecciona una imagen del test.");
+            event.target.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (imgPreview) imgPreview.src = e.target.result;
+            if (previewContainer) previewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+/**
+ * Limpia la foto del test y oculta la vista previa
+ */
+window.quitarFotoTest = () => {
+    const input = document.getElementById('inputFotoTest');
+    const previewContainer = document.getElementById('previewTestContainer');
+    const imgPreview = document.getElementById('imgTestPreview');
+
+    if (input) input.value = "";
+    if (imgPreview) imgPreview.src = "";
+    if (previewContainer) previewContainer.classList.add('hidden');
+};
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -2669,7 +2790,7 @@ window.agregarMedicamento = (nombreMed) => {
   // =========================================================
   // [16] GUARDAR CONSULTA EN FIREBASE (OPTIMIZADO OFFLINE)
   // =========================================================
-  window.guardarFirebase = async (imp) => {
+window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
     const nombreDoctor = selectorDoc ? selectorDoc.value : "";
 
@@ -2696,6 +2817,41 @@ window.agregarMedicamento = (nombreMed) => {
     }
 
     try {
+      // --- AJUSTE: SUBIDA DE IMAGEN A STORAGE (HISTORIA) ---
+      const fotoFile = document.getElementById('inputFotoHistoria')?.files[0];
+      let urlFotoFinal = "";
+
+      if (fotoFile) {
+          const storageRef = ref(storage, `examenes/${Date.now()}_${fotoFile.name}`);
+          const snapshot = await uploadBytes(storageRef, fotoFile);
+          urlFotoFinal = await getDownloadURL(snapshot.ref);
+      }
+
+      // --- NUEVO: SUBIDA DE IMAGEN A STORAGE (TEST RÁPIDO) ---
+      const fotoTestFile = document.getElementById('inputFotoTest')?.files[0];
+      let urlFotoTestFinal = "";
+
+      if (fotoTestFile) {
+          const storageRefTest = ref(storage, `tests_rapidos/${Date.now()}_${fotoTestFile.name}`);
+          const snapshotTest = await uploadBytes(storageRefTest, fotoTestFile);
+          urlFotoTestFinal = await getDownloadURL(snapshotTest.ref);
+      }
+
+      // --- NUEVO: RECOLECCIÓN DE DATOS DE LA TABLA DE TESTS ---
+      const filasTests = document.querySelectorAll('#cuerpoTablaCertificado tr');
+      const listaTestsRapidos = [];
+      filasTests.forEach(fila => {
+          const nombreT = fila.cells[0].querySelector('input') ? 
+                          fila.cells[0].querySelector('input').value : 
+                          fila.cells[0].innerText.trim();
+          const resultadoT = fila.cells[1].querySelector('select').value;
+          const notaT = fila.cells[2].querySelector('input').value;
+
+          if (nombreT && resultadoT !== "---") {
+              listaTestsRapidos.push({ nombre: nombreT, resultado: resultadoT, nota: notaT });
+          }
+      });
+
       // 2. OBTENER CONFIGURACIÓN (REVISA CACHÉ SI NO HAY INTERNET)
       const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
       let porcGlobal = null;
@@ -2737,7 +2893,6 @@ window.agregarMedicamento = (nombreMed) => {
         });
 
         totalGastos += gastosEsteServicio;
-        // La ganancia del doctor se calcula sobre el neto (Precio - Costo Insumo)
         pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
       });
 
@@ -2765,14 +2920,20 @@ window.agregarMedicamento = (nombreMed) => {
         raza: dInput('hRaza'),
         edad: dInput('hEdad'),
         sexo: dInput('hSexo'),
-        peso: dInput('hPeso')
+        peso: dInput('hPeso'),
+        // CAMPOS DE IMAGEN HISTORIA
+        urlExamen: urlFotoFinal,
+        notaExamen: dInput('notaAdjuntoHistoria'),
+        // NUEVOS CAMPOS DE TESTS RÁPIDOS
+        urlFotoTest: urlFotoTestFinal,
+        notaFotoTest: dInput('notaFotoTest'),
+        testsRealizados: listaTestsRapidos
       };
 
       // 5. GUARDADO (EL DISPARO FINAL)
-      // addDoc enviará esto a la cola de sincronización si estás offline
       await addDoc(collection(db, "consultas"), dataConsulta);
 
-      // Exportación automática (opcional, requiere internet o configuración local)
+      // Exportación automática
       if (typeof window.exportarHistorialAExcel === 'function') {
         window.exportarHistorialAExcel();
       }
@@ -2781,18 +2942,17 @@ window.agregarMedicamento = (nombreMed) => {
       if (imp) {
         const tArea = document.getElementById('hTratamientoPrint');
         if (tArea) tArea.innerText = dInput('hTratamiento');
-        alert("✅ Consulta guardada (en cola local si no hay internet).");
+        alert("✅ Consulta y Tests guardados con éxito.");
         setTimeout(() => window.print(), 600);
       } else {
-        alert("✅ Consulta guardada exitosamente.");
+        alert("✅ Consulta y Tests guardados exitosamente.");
       }
 
     } catch (e) {
       console.error("Error al guardar:", e);
       alert("❌ Error crítico: " + e.message);
     }
-  };
-
+};
  // =========================================================
   // [17-18] SEGURIDAD Y NAVEGACIÓN (VERSIÓN FINAL CON PELUQUERÍA)
   // =========================================================
@@ -3629,21 +3789,24 @@ window.agregarFilaTest = (nombre) => {
         <td class="px-3 font-bold uppercase italic text-slate-800">
             ${esOtro ? 
                 `<input type="text" class="w-full border-b border-blue-300 outline-none bg-transparent" placeholder="ESCRIBA EL NOMBRE DEL TEST...">` : 
-                nombre}
+                `<span>${nombre}</span>`}
         </td>
         <td class="px-2 text-center border-l border-r border-slate-200">
-            <select class="font-black text-[11px] border rounded p-1 uppercase outline-none bg-white cursor-pointer" onchange="this.style.color = (this.value.includes('POSITIVO')) ? 'red' : 'black'">
-                <option value="---">---</option>
-                <option value="NEGATIVO (-)">NEGATIVO (-)</option>
-                <option value="POSITIVO (+)">POSITIVO (+)</option>
-                <option value="INVALIDO">INVÁLIDO</option>
+            <select 
+                class="font-black text-[11px] border rounded p-1 uppercase outline-none bg-white cursor-pointer transition-colors" 
+                onchange="this.style.color = (this.value.includes('POSITIVO')) ? '#dc2626' : (this.value.includes('NEGATIVO') ? '#16a34a' : 'black')"
+            >
+                <option value="---" style="color: black;">---</option>
+                <option value="NEGATIVO (-)" style="color: #16a34a;">NEGATIVO (-)</option>
+                <option value="POSITIVO (+)" style="color: #dc2626;">POSITIVO (+)</option>
+                <option value="INVALIDO" style="color: #4b5563;">INVÁLIDO</option>
             </select>
         </td>
         <td class="px-2 border-l border-slate-300">
-            <input type="text" class="w-full outline-none text-[10px] bg-transparent" placeholder="Añadir nota...">
+            <input type="text" class="w-full outline-none text-[10px] bg-transparent italic" placeholder="Añadir nota médica...">
         </td>
         <td class="no-print px-2 text-center">
-            <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold hover:scale-110 transition-transform">
+            <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold hover:scale-125 transition-transform">
                 ✕
             </button>
         </td>
@@ -3651,7 +3814,6 @@ window.agregarFilaTest = (nombre) => {
     
     tabla.appendChild(fila);
 };
-
 // =========================================================
 // [PELUQUERÍA PRO] - VERSIÓN PURA (SIN INSUMOS)
 // =========================================================
@@ -4312,6 +4474,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
