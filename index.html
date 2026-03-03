@@ -1010,6 +1010,7 @@
                         </div>
                     </div>
                     <div id="contenedorSellos" class="grid grid-cols-5 gap-2 border border-slate-200 p-2 rounded-xl bg-slate-50 min-h-[60px]"></div>
+                    <p class="text-[8px] font-bold text-blue-500 mt-1 uppercase text-center italic">Última: <span id="fechaUltimaVisita">--/--/----</span></p>
                     <div id="proximaGratis" class="mt-2 hidden bg-emerald-500 text-white text-center py-1 rounded font-black text-[9px] uppercase animate-pulse italic">
                         ✨ ¡PRÓXIMO SERVICIO GRATIS! ✨
                     </div>
@@ -1023,7 +1024,7 @@
             <div class="space-y-4 lg:border-r lg:pr-6 border-slate-200">
                 <div class="border border-slate-400 rounded-lg overflow-hidden">
                     <div class="bg-slate-100 p-3">
-                        <h3 class="font-black text-blue-900 uppercase text-[10px] italic mb-3">🛠️ Configuración del Servicio</h3>
+                        <h3 class="font-black text-blue-900 uppercase text-[10px] italic mb-3">🛠️ Configuración</h3>
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-[9px] font-bold text-slate-400 uppercase">Servicio</label>
@@ -1052,34 +1053,12 @@
                     </div>
                 </div>
 
-                <div class="border border-slate-400 rounded-lg overflow-hidden bg-white">
-                    <table class="w-full text-[10px]">
-                        <thead class="bg-slate-800 text-white uppercase italic">
-                            <tr><th colspan="2" class="p-1 tracking-widest text-[9px]">Personal Asignado</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200">
-                            <tr>
-                                <td class="p-2 flex items-center gap-2">
-                                    <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-3 h-3">
-                                    <span class="font-bold">Principal</span>
-                                </td>
-                                <td class="p-2 text-right font-black text-blue-600">$<input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()" class="w-8 bg-transparent text-right outline-none"></td>
-                            </tr>
-                            <tr class="bg-amber-50">
-                                <td class="p-2 flex items-center gap-2">
-                                    <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-3 h-3">
-                                    <span class="font-bold">Apoyo Extra</span>
-                                </td>
-                                <td class="p-2 text-right font-black text-amber-700">$<input type="number" id="pMontoAyuExtra" value="3" oninput="window.recalcularTotalPelu()" class="w-8 bg-transparent text-right outline-none"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="p-2 bg-slate-50 border-t border-slate-200">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-3 h-3 accent-blue-600">
-                            <span class="text-[9px] font-black text-slate-600 uppercase italic">¿El ayudante realizó todo?</span>
-                        </label>
-                    </div>
+                <div class="bg-blue-50 p-3 rounded-lg border-2 border-blue-200 shadow-sm">
+                    <label class="block text-[10px] font-black text-blue-700 uppercase mb-1 italic">💰 Método de Pago</label>
+                    <select id="pMetodoPago" class="w-full p-2 bg-white border border-blue-200 rounded-lg outline-none font-bold text-xs">
+                        <option value="USD">Dólares ($)</option>
+                        <option value="BS">Bolívares (Bs)</option>
+                    </select>
                 </div>
             </div>
 
@@ -1087,14 +1066,6 @@
                 <div class="bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
                     <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">Total a Cobrar</label>
                     <span id="pTotalCobro" class="text-5xl font-black text-blue-700 italic leading-none">$ 0.00</span>
-                    <div class="mt-4 pt-4 border-t border-blue-200 space-y-1">
-                        <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
-                            <span>Peluquera:</span><span id="pResPeluquera" class="text-slate-800 font-black">$ 0.00</span>
-                        </div>
-                        <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
-                            <span>Ayudantes:</span><span id="pResAyudante1" class="text-emerald-600 font-black">$ 0.00</span>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 gap-2">
@@ -1108,11 +1079,34 @@
             </div>
         </div>
 
-        <div class="bg-slate-50 p-4 border-t border-slate-200">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase italic mb-3 flex items-center gap-2 tracking-widest">
-                <div class="h-2 w-2 bg-blue-600 rounded-full"></div> Bitácora de Peluquería Hoy
-            </h3>
-            <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        <div class="bg-slate-100 p-6 border-t-2 border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-black text-blue-800 italic uppercase flex items-center gap-2">
+                    <span class="bg-blue-600 w-2 h-6 rounded-full"></span> 📋 Bitácora de Peluquería Hoy
+                </h3>
+                <button onclick="window.cargarBitacoraHoy()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all shadow-md">
+                    🔄 REFRESCAR BALANCE
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-white uppercase text-[10px] italic">
+                            <th class="p-3">Mascota / Dueño</th>
+                            <th class="p-3">Cobro</th>
+                            <th class="p-3">Ayudante</th>
+                            <th class="p-3">Peluquera</th>
+                            <th class="p-3">Moneda</th>
+                            <th class="p-3">Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBitacoraCuerpo" class="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div id="resumenBalancePelu"></div>
         </div>
     </div>
     <div id="qrcode" class="hidden"></div>
@@ -3679,6 +3673,9 @@ window.guardarPeluqueriaPro = async () => {
     const ajuste = parseFloat(dInput('pAjuste')?.value) || 0;
     const tipoServicio = dInput('pTipoServicio')?.value || "completo";
     
+    // --- MÉTODO DE PAGO ---
+    const metodoPago = dInput('pMetodoPago')?.value || "USD";
+
     if (!cedula || !mascota) {
         Swal.fire("⚠️ ATENCIÓN", "Cédula y Mascota son obligatorios.", "warning");
         return;
@@ -3686,15 +3683,15 @@ window.guardarPeluqueriaPro = async () => {
 
     let precioFinal = (tipoServicio === 'solo_unas') ? 5 : (base + ajuste);
 
-    // --- SEGURIDAD ---
-    const pin = prompt(`🔐 FIRMA AVIPET\nTotal: $${precioFinal}\nPIN:`);
+    // --- SEGURIDAD PIN MASTER ---
+    const pin = prompt(`🔐 FIRMA AVIPET\nTotal: ${metodoPago === 'BS' ? 'Bs' : '$'}${precioFinal}\nPIN:`);
     if (!pin) return;
 
     const esValido = await window.validarDoctorConMaster("Peluqueria", pin); 
     if (!esValido) { alert("❌ PIN INCORRECTO"); return; }
 
     try {
-        // --- LÓGICA DE CONTADOR REFORZADA ---
+        // --- LÓGICA DE FIDELIDAD ---
         const idFidelidad = `${cedula}-${mascota}`.toLowerCase().replace(/\s+/g, '');
         const fidelidadRef = doc(db, "fidelidad_peluqueria", idFidelidad);
         const fidelidadSnap = await getDoc(fidelidadRef);
@@ -3704,62 +3701,73 @@ window.guardarPeluqueriaPro = async () => {
             visitasPrevias = fidelidadSnap.data().contador || 0;
         }
 
-        // REINICIO AUTOMÁTICO: Si ya completó 10, la siguiente es la 1.
         let nuevaVisita = visitasPrevias + 1;
         if (nuevaVisita > 10) {
             nuevaVisita = 1;
         }
 
         const esPremio = nuevaVisita === 10;
-
         const fechaActual = new Date();
         const fechaSimple = `${fechaActual.getDate()}/${fechaActual.getMonth() + 1}/${fechaActual.getFullYear()}`;
+        const horaActual = fechaActual.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         // --- REGISTRO DEL SERVICIO ---
         const dataPelu = {
             cedulaCliente: cedula,
+            duenio: duenio,
             paciente: mascota,
             precioTotal: precioFinal,
+            metodoPago: metodoPago,
             visitaNumero: nuevaVisita,
             fecha: serverTimestamp(),
             fechaSimple: fechaSimple,
-            tipo: "PELUQUERIA"
+            hora: horaActual,
+            tipo: "PELUQUERIA",
+            servicio: tipoServicio
         };
 
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
 
-        // --- ACTUALIZAR CONTADOR (Sin borrar historial) ---
+        // --- ACTUALIZAR CONTADOR DE FIDELIDAD ---
         await setDoc(fidelidadRef, { 
             contador: nuevaVisita, 
             ultimaVisita: serverTimestamp(),
+            ultimaFechaSimple: fechaSimple,
             paciente: mascota,
             propietario: duenio,
             cedula: cedula
         }, { merge: true });
 
-        // --- ACTUALIZAR INTERFAZ ANTES DE LIMPIAR ---
+        // --- ACTUALIZAR INTERFAZ TARJETA ---
         if (dInput('contadorVisitas')) {
             dInput('contadorVisitas').innerText = `${nuevaVisita} / 10 Visitas`;
         }
+
+        if (dInput('fechaUltimaVisita')) {
+            dInput('fechaUltimaVisita').innerText = fechaSimple;
+        }
         
-        // Actualizar sellos visuales si la función existe
-        if (typeof window.actualizarSellos === 'function') {
-            window.actualizarSellos(nuevaVisita);
+        if (typeof window.renderizarSellos === 'function') {
+            window.renderizarSellos(nuevaVisita);
         }
 
-        // Mostrar aviso de éxito
+        // --- AVISO DE ÉXITO ---
         await Swal.fire({
             icon: esPremio ? 'success' : 'info',
             title: esPremio ? '🎉 ¡VISITA #10 GRATIS!' : '✅ REGISTRO EXITOSO',
-            text: `Mascota: ${mascota} - Visita: ${nuevaVisita}/10`,
+            text: `Mascota: ${mascota} - Pago: ${metodoPago} - Visita: ${nuevaVisita}/10`,
             timer: 3000
         });
+
+        // --- REFRESCAR BITÁCORA AUTOMÁTICAMENTE ---
+        await window.cargarBitacoraHoy();
 
         // --- LIMPIEZA Y CIERRE ---
         const fields = ['pCedula', 'pDuenio', 'pNombre', 'pRaza', 'pAjuste', 'pCondicion', 'pTelefono', 'pDireccion'];
         fields.forEach(f => { if(dInput(f)) dInput(f).value = ""; });
         
         if (dInput('pTotalCobro')) dInput('pTotalCobro').innerText = "$ 0.00";
+        
         window.showTab('historia');
 
     } catch (e) {
@@ -3767,7 +3775,112 @@ window.guardarPeluqueriaPro = async () => {
         alert("❌ ERROR: " + e.message);
     }
 };
+  window.cargarBitacoraHoy = async () => {
+    const cuerpo = document.getElementById('tablaBitacoraCuerpo');
+    const resumenDiv = document.getElementById('resumenBalancePelu');
+    if (!cuerpo) return;
 
+    // Indicador de carga estilo "Contraste Radical"
+    cuerpo.innerHTML = `<tr><td colspan="6" class="text-center p-10 font-bold text-blue-500 italic animate-pulse">⚙️ CALCULANDO BALANCE AVIPET...</td></tr>`;
+
+    try {
+        // Obtenemos la fecha de hoy en el formato que guardas: D/M/YYYY
+        const hoyObj = new Date();
+        const hoySimple = `${hoyObj.getDate()}/${hoyObj.getMonth() + 1}/${hoyObj.getFullYear()}`;
+
+        // Consulta filtrada por el string de fecha para evitar errores de zona horaria
+        const q = query(
+            collection(db, "servicios_estetica"),
+            where("fechaSimple", "==", hoySimple)
+        );
+
+        const querySnapshot = await getDocs(q);
+        cuerpo.innerHTML = "";
+
+        // ACUMULADORES DE CAJA
+        let totalDolares = 0;
+        let totalBolivares = 0;
+        let ayudanteDolares = 0;
+        let ayudanteBolivares = 0;
+
+        if (querySnapshot.empty) {
+            cuerpo.innerHTML = `<tr><td colspan="6" class="text-center p-10 text-slate-400 font-black uppercase italic">No hay movimientos registrados hoy</td></tr>`;
+            if (resumenDiv) resumenDiv.innerHTML = "";
+            return;
+        }
+
+        // Convertimos a array para ordenar por hora (descendente)
+        const registros = [];
+        querySnapshot.forEach(doc => registros.push(doc.data()));
+        registros.sort((a, b) => b.hora.localeCompare(a.hora));
+
+        registros.forEach((d) => {
+            const monto = parseFloat(d.precioTotal) || 0;
+            const moneda = (d.metodoPago || 'USD').toUpperCase();
+            
+            // REGLA 1+1: Descuento fijo para el ayudante
+            const comisionAyudante = 1; 
+            const netoPeluquera = monto - comisionAyudante;
+
+            // Clasificación por moneda
+            if (moneda === 'BS') {
+                totalBolivares += monto;
+                ayudanteBolivares += comisionAyudante;
+            } else {
+                totalDolares += monto;
+                ayudanteDolares += comisionAyudante;
+            }
+
+            const fila = document.createElement('tr');
+            fila.className = "border-b border-blue-50 hover:bg-blue-50/50 transition-colors";
+            
+            fila.innerHTML = `
+                <td class="p-3">
+                    <div class="font-black text-blue-700 leading-tight">${d.paciente.toUpperCase()}</div>
+                    <div class="text-[9px] text-slate-400 uppercase font-bold">${d.duenio || 'Cliente'}</div>
+                </td>
+                <td class="p-3 font-bold text-slate-900">${moneda === 'BS' ? 'Bs' : '$'} ${monto.toFixed(2)}</td>
+                <td class="p-3 text-red-500 font-black">- 1.00</td>
+                <td class="p-3 text-green-700 font-black">${netoPeluquera.toFixed(2)}</td>
+                <td class="p-3">
+                    <span class="px-2 py-0.5 ${moneda === 'BS' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'} rounded text-[9px] font-black italic">
+                        ${moneda}
+                    </span>
+                </td>
+                <td class="p-3 text-[10px] font-bold text-slate-400">${d.hora || ''}</td>
+            `;
+            cuerpo.appendChild(fila);
+        });
+
+        // --- RENDERIZAR RESUMEN DE TOTALES (CIERRE DE CAJA) ---
+        if (resumenDiv) {
+            resumenDiv.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 no-print">
+                    <div class="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-200 shadow-sm">
+                        <h4 class="text-emerald-800 font-black text-[10px] uppercase mb-2 italic tracking-widest text-center">Caja Dólares ($)</h4>
+                        <div class="flex justify-between text-xs font-bold text-slate-600"><span>Ingreso Bruto:</span> <span>$${totalDolares.toFixed(2)}</span></div>
+                        <div class="flex justify-between text-xs font-bold text-red-500 mb-1"><span>Pago Ayudantes:</span> <span>-$${ayudanteDolares.toFixed(2)}</span></div>
+                        <div class="border-t border-emerald-300 pt-2 flex justify-between font-black text-emerald-900 text-lg italic">
+                            <span>NETO PELUQUERÍA:</span> <span>$${(totalDolares - ayudanteDolares).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="bg-orange-50 p-4 rounded-2xl border-2 border-orange-200 shadow-sm">
+                        <h4 class="text-orange-800 font-black text-[10px] uppercase mb-2 italic tracking-widest text-center">Caja Bolívares (Bs)</h4>
+                        <div class="flex justify-between text-xs font-bold text-slate-600"><span>Ingreso Bruto:</span> <span>Bs ${totalBolivares.toFixed(2)}</span></div>
+                        <div class="flex justify-between text-xs font-bold text-red-500 mb-1"><span>Pago Ayudantes:</span> <span>-Bs ${ayudanteBolivares.toFixed(2)}</span></div>
+                        <div class="border-t border-orange-300 pt-2 flex justify-between font-black text-orange-900 text-lg italic">
+                            <span>NETO PELUQUERÍA:</span> <span>Bs ${(totalBolivares - ayudanteBolivares).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+    } catch (e) {
+        console.error("Error Balance Peluquería:", e);
+        cuerpo.innerHTML = `<tr><td colspan="6" class="text-center p-10 text-red-500 font-black italic uppercase">❌ Error al conectar con Firebase</td></tr>`;
+    }
+};
 // --- RECALCULAR EN VIVO (Sin Insumos) ---
 window.recalcularTotalPelu = () => {
     const tipo = document.getElementById('pTipoServicio')?.value || 'completo';
@@ -4056,45 +4169,6 @@ window.generarCierrePeluqueria = async () => {
         console.error("Error exportando Excel:", e);
     }
 };
-  window.cargarBitacoraPeluqueria = async () => {
-    const contenedor = document.getElementById('bitacoraPeluqueriaHoy');
-    const hoy = new Date().toLocaleDateString('es-ES'); // O el formato que uses en fechaSimple
-
-    try {
-        const querySnapshot = await getDocs(collection(db, "servicios_estetica"));
-        let html = "";
-        let registrosHoy = 0;
-
-        querySnapshot.forEach((doc) => {
-            const d = doc.data();
-            // Filtramos para ver solo los de hoy
-            if (d.fechaSimple === hoy) {
-                registrosHoy++;
-                html += `
-                    <div class="bg-white border-2 border-slate-200 p-4 rounded-2xl shadow-sm flex items-center gap-4 hover:border-blue-400 transition-all">
-                        <div class="bg-blue-900 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg">
-                            🐕
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-[10px] font-black text-blue-900 uppercase leading-none">${d.paciente}</p>
-                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">${d.servicio}</p>
-                            <div class="flex justify-between mt-2">
-                                <span class="text-[10px] font-black text-emerald-600 font-mono">$${d.precioTotal}</span>
-                                <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded-md font-bold text-slate-500 uppercase">${d.metodoPago}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-
-        contenedor.innerHTML = registrosHoy > 0 ? html : '<p class="text-center col-span-full py-10 text-slate-300 font-black uppercase text-[10px]">Aún no hay perros atendidos hoy</p>';
-
-    } catch (e) {
-        console.error("Error cargando bitácora:", e);
-    }
-};
-
 
 window.descargarTarjetaPelu = function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
@@ -4190,16 +4264,23 @@ window.mostrarQRTarjeta = function() {
     });
 };
 
-// --- 3. FUNCIÓN RENDERIZAR SELLOS ---
+// --- 3. FUNCIÓN RENDERIZAR SELLOS (REPARADA) ---
 window.renderizarSellos = function(numVisitas) {
     const contenedor = document.getElementById('contenedorSellos');
     const contadorText = document.getElementById('contadorVisitas');
     const badgeFidelidad = document.getElementById('badgeFidelidad');
+    const mensajeGratis = document.getElementById('proximaGratis');
     
     if (!contenedor || !contadorText) return;
     
+    // LÓGICA DE REINICIO VISUAL: 
+    // Usamos el residuo (%) para que si es 11, muestre 1. Si es 20, muestre 10.
+    let visitasVisuales = numVisitas % 10;
+    if (visitasVisuales === 0 && numVisitas > 0) visitasVisuales = 10;
+    
     contenedor.innerHTML = '';
-    contadorText.innerText = `${numVisitas} / 10 VISITAS`;
+    // El texto también debe mostrar el ciclo actual (1 al 10)
+    contadorText.innerText = `${visitasVisuales} / 10 VISITAS`;
 
     for (let i = 1; i <= 10; i++) {
         const sello = document.createElement('div');
@@ -4210,7 +4291,7 @@ window.renderizarSellos = function(numVisitas) {
                 <svg class="w-7 h-7 text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <svg class="absolute w-7 h-7 text-blue-600 fill-blue-600 transition-all duration-500 ${i <= numVisitas ? 'opacity-100 scale-110 drop-shadow-md' : 'opacity-0 scale-50'}" viewBox="0 0 24 24">
+                <svg class="absolute w-7 h-7 text-blue-600 fill-blue-600 transition-all duration-500 ${i <= visitasVisuales ? 'opacity-100 scale-110 drop-shadow-md' : 'opacity-0 scale-50'}" viewBox="0 0 24 24">
                     <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
                 </svg>
             </div>
@@ -4218,8 +4299,8 @@ window.renderizarSellos = function(numVisitas) {
         contenedor.appendChild(sello);
     }
 
-    const mensajeGratis = document.getElementById('proximaGratis');
-    if (numVisitas >= 10) {
+    // El mensaje de "Próxima Gratis" solo sale cuando llega a la 10
+    if (visitasVisuales === 10) {
         if(mensajeGratis) mensajeGratis.classList.remove('hidden');
         if(badgeFidelidad) badgeFidelidad.classList.remove('hidden');
     } else {
@@ -4231,6 +4312,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
