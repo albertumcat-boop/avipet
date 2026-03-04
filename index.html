@@ -2487,95 +2487,103 @@ window.quitarFotoTest = () => {
     const netoDiv = document.getElementById('repNeto');
     if (!listaDiv) return;
 
-    listaDiv.innerHTML =
-      "<p class='text-center animate-pulse py-4 font-bold text-slate-400'>🔄 SINCRONIZANDO CAJA...</p>";
+    listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400 text-[10px] uppercase'>🔄 SINCRONIZANDO CAJA GLOBAL...</p>";
 
     try {
-      const querySnapshot = await getDocs(collection(db, "consultas"));
-      listaDiv.innerHTML = "";
+        const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
+        
+        // 1. CARGAR CONSULTAS MÉDICAS
+        const qMed = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
+        const snapMed = await getDocs(qMed);
+        
+        listaDiv.innerHTML = "";
+        let brutoMed = 0, gastosMed = 0, netoAvipetMed = 0, contadorMed = 0;
+        let sandovalTotal = 0, silvaTotal = 0;
 
-      let bruto = 0, gastos = 0, netoAvipet = 0, contador = 0;
-      let sandovalTotal = 0, silvaTotal = 0;
+        snapMed.forEach(docSnap => {
+            const d = docSnap.data();
+            const pVenta = parseFloat(d.montoVenta) || 0;
+            const pGasto = parseFloat(d.montoInsumos) || 0;
+            const pagoRealDoc = parseFloat(d.pagoDoctor) || 0;
 
-      const hoy =
-        `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
+            brutoMed += pVenta;
+            gastosMed += pGasto;
+            
+            let colorBorde = d.doctor?.includes("Darwin") ? "border-l-blue-500" : "border-l-emerald-500";
+            if (d.doctor?.includes("Darwin")) sandovalTotal += pagoRealDoc;
+            else if (d.doctor?.includes("Joan")) silvaTotal += pagoRealDoc;
 
-      querySnapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        if (d.fechaSimple === hoy) {
-          const pVenta = parseFloat(d.montoVenta) || 0;
-          const pGasto = parseFloat(d.montoInsumos) || 0;
-          const pagoRealDoc = parseFloat(d.pagoDoctor) || 0;
+            netoAvipetMed += (pVenta - pGasto - pagoRealDoc);
+            contadorMed++;
 
-          bruto += pVenta;
-          gastos += pGasto;
+            listaDiv.innerHTML += `
+                <div class="py-2 border-b flex justify-between items-center bg-white px-3 mb-1 rounded-lg shadow-sm border-l-4 ${colorBorde}">
+                    <div>
+                        <p class="font-black text-[10px] uppercase text-slate-700">${d.paciente}</p>
+                        <p class="text-[8px] font-bold text-slate-400 uppercase">🩺 ${d.doctor}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-[10px] text-slate-800">$${pVenta.toFixed(2)}</p>
+                    </div>
+                </div>`;
+        });
 
-          let colorBorde = "border-l-slate-400";
-          if (d.doctor && d.doctor.includes("Darwin Sandoval")) {
-            sandovalTotal += pagoRealDoc;
-            colorBorde = "border-l-blue-500";
-          } else if (d.doctor && d.doctor.includes("Joan Silva")) {
-            silvaTotal += pagoRealDoc;
-            colorBorde = "border-l-emerald-500";
-          }
+        // 2. CARGAR PELUQUERÍA (AQUÍ ESTÁ LA SOLUCIÓN)
+        const qPelu = query(collection(db, "servicios_estetica"), where("fechaSimple", "==", hoy));
+        const snapPelu = await getDocs(qPelu);
+        
+        let brutoPelu = 0;
+        let pagoPeluqueras = 0;
+        let pagoAyuPrincipal = 0;
+        let pagoAyuExtra = 0;
+        let netoAvipetPelu = 0;
 
-          netoAvipet += (pVenta - pGasto - pagoRealDoc);
-          contador++;
+        snapPelu.forEach(docSnap => {
+            const d = docSnap.data();
+            brutoPelu += parseFloat(d.precioTotal || 0);
+            pagoPeluqueras += parseFloat(d.pagoPeluquera || 0);
+            pagoAyuPrincipal += parseFloat(d.pagoAyudante1 || 0);
+            pagoAyuExtra += parseFloat(d.pagoAyudanteExtra || 0);
+            netoAvipetPelu += parseFloat(d.ingresoAvipet || 0);
 
-          listaDiv.innerHTML += `
-            <div class="py-3 border-b flex justify-between items-center bg-white px-3 mb-2 rounded-xl shadow-sm border-l-4 ${colorBorde}">
-              <div>
-                <p class="font-black text-[11px] uppercase text-slate-700">
-                  ${d.paciente}
-                </p>
-                <p class="text-[9px] font-bold text-slate-400 uppercase">
-                  🩺 ${d.doctor}
-                </p>
-              </div>
-              <div class="text-right">
-                <p class="font-black text-[12px] text-slate-800">
-                  $${pVenta.toFixed(2)}
-                </p>
-                <p class="text-[8px] font-bold text-blue-600">
-                  Comisión: $${pagoRealDoc.toFixed(2)}
-                </p>
-              </div>
-            </div>`;
+            // También lo agregamos a la lista visual
+            listaDiv.innerHTML += `
+                <div class="py-2 border-b flex justify-between items-center bg-slate-50 px-3 mb-1 rounded-lg border-l-4 border-l-indigo-500">
+                    <div>
+                        <p class="font-black text-[10px] uppercase text-slate-700">${d.paciente}</p>
+                        <p class="text-[8px] font-bold text-indigo-400 uppercase">✂️ PELUQUERÍA</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-[10px] text-slate-800">$${parseFloat(d.precioTotal).toFixed(2)}</p>
+                    </div>
+                </div>`;
+        });
+
+        // 3. ACTUALIZAR INTERFAZ GLOBAL
+        document.getElementById('totalPacientes').innerText = contadorMed + snapPelu.size;
+        document.getElementById('repBruto').innerText = `$${(brutoMed + brutoPelu).toFixed(2)}`;
+        document.getElementById('repGastos').innerText = `$${gastosMed.toFixed(2)}`;
+        document.getElementById('repDocSandoval').innerText = `$${sandovalTotal.toFixed(2)}`;
+        document.getElementById('repDocSilva').innerText = `$${silvaTotal.toFixed(2)}`;
+
+        // Pintar Balance de Peluquería (Separado por fin)
+        document.getElementById('fPeluTotal').innerText = `$${brutoPelu.toFixed(2)}`;
+        document.getElementById('fPeluPagos').innerText = `$${pagoPeluqueras.toFixed(2)}`;
+        document.getElementById('fPeluAyudantes').innerText = `$${pagoAyuPrincipal.toFixed(2)}`;
+        document.getElementById('fPeluAyudantesExtra').innerText = `$${pagoAyuExtra.toFixed(2)}`;
+
+        // Utilidad Neta Total (Médica + Peluquería)
+        const utilidadFinal = netoAvipetMed + netoAvipetPelu;
+        if (netoDiv) {
+            netoDiv.innerText = `$${utilidadFinal.toFixed(2)}`;
+            netoDiv.className = utilidadFinal > 0 ? "text-3xl font-black text-emerald-700 font-mono" : "text-3xl font-black text-orange-600 font-mono";
         }
-      });
-
-      document.getElementById('totalPacientes').innerText = contador;
-      document.getElementById('repBruto').innerText = `$${bruto.toFixed(2)}`;
-      document.getElementById('repGastos').innerText = `$${gastos.toFixed(2)}`;
-      document.getElementById('repDocSandoval').innerText = `$${sandovalTotal.toFixed(2)}`;
-      document.getElementById('repDocSilva').innerText = `$${silvaTotal.toFixed(2)}`;
-
-      if (netoDiv) {
-        netoDiv.innerText = `$${netoAvipet.toFixed(2)}`;
-        netoDiv.className =
-          netoAvipet > 0
-            ? "text-3xl font-black text-emerald-700 font-mono"
-            : "text-3xl font-black text-orange-600 font-mono";
-      }
-
-      if (contador === 0) {
-        listaDiv.innerHTML =
-          "<p class='text-center py-4 text-slate-400 font-bold uppercase text-[10px]'>No hay consultas registradas hoy</p>";
-      }
-
-      // --- ⚓ SOLDA AQUÍ: SINCRONIZACIÓN DE PELUQUERÍA ---
-      // Esto solo mueve los números de la pantalla de pelu al reporte de caja
-      document.getElementById('fPeluTotal').innerText = document.getElementById('pTotalCobro')?.innerText || "$0.00";
-      document.getElementById('fPeluPagos').innerText = document.getElementById('pResPeluquera')?.innerText || "$0.00";
-      document.getElementById('fPeluAyudantes').innerText = document.getElementById('pResAyudantes')?.innerText || "$0.00";
 
     } catch (e) {
-      console.error("Error al cargar reporte:", e);
-      listaDiv.innerHTML =
-        "<p class='text-center text-red-500 font-bold'>Error de conexión</p>";
+        console.error("Error al cargar reporte:", e);
+        listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold text-[10px]'>❌ ERROR DE CONEXIÓN</p>";
     }
 };
-
   // =========================================================
   // [12] PANEL DE CONTROL: SERVICIOS E INSUMOS
   // =========================================================
@@ -4555,6 +4563,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
