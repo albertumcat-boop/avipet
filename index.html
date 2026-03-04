@@ -1148,14 +1148,18 @@
     <div id="qrcode" class="hidden"></div>
 </div>
 <script type="module">
-  // 1. IMPORTACIONES AJUSTADAS (Añadido 'storage' y las librerías de carga de archivos)
+  // 1. IMPORTACIONES AJUSTADAS
+  // Importamos db y storage desde tu archivo de configuración local
   import { db, storage } from './firebase-config.js';
+
+  // Importamos las funciones de Base de Datos (Firestore) desde la nube
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
     doc, getDoc, setDoc, updateDoc, orderBy, limit,
     enableIndexedDbPersistence, deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+  // Importamos las funciones de Archivos (Storage) desde la nube
   import { 
     ref, 
     uploadBytes, 
@@ -1163,6 +1167,7 @@
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
+  // (Esto permite que Avipet siga funcionando aunque el barco pierda señal)
   enableIndexedDbPersistence(db).catch((err) => {
       if (err.code == 'failed-precondition') {
           console.warn("Persistencia falló: Múltiples pestañas abiertas.");
@@ -1178,6 +1183,8 @@
       .replace(/\s+/g, '')
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
+
+  // AQUÍ CONTINÚA EL RESTO DE TU CÓDIGO (showTab, etc.)
 
   const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
@@ -4474,6 +4481,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
