@@ -3855,8 +3855,6 @@ window.guardarPeluqueriaPro = async () => {
     const base = parseFloat(dInput('pTamano')?.value) || 0;
     const ajuste = parseFloat(dInput('pAjuste')?.value) || 0;
     const tipoServicio = dInput('pTipoServicio')?.value || "completo";
-    
-    // --- MÉTODO DE PAGO ---
     const metodoPago = dInput('pMetodoPago')?.value || "USD";
 
     if (!cedula || !mascota) {
@@ -3865,6 +3863,36 @@ window.guardarPeluqueriaPro = async () => {
     }
 
     let precioFinal = (tipoServicio === 'solo_unas') ? 5 : (base + ajuste);
+
+    // --- LÓGICA DE PAGOS INTERNA (AVIPET 60% / PELUQUERA 40%) ---
+    const tieneAyudante1 = document.getElementById('pAyudante1')?.checked;
+    const tieneAyudanteExtra = document.getElementById('pAyudanteExtra')?.checked;
+
+    const parteAvipet = precioFinal * 0.60;
+    const partePeluqueraBruta = precioFinal * 0.40;
+
+    let pagoPeluqueraFinal = 0;
+    let pagoAyudante1 = 0;
+    let pagoAyudanteExtra = 0;
+
+    if (tieneAyudanteExtra) {
+        // REGLA DE 3: Total / 3 (Peluquera, Ayudante Extra y Avipet). Principal fuera.
+        const divisionTres = precioFinal / 3;
+        pagoPeluqueraFinal = divisionTres;
+        pagoAyudanteExtra = divisionTres;
+        pagoAyudante1 = 0;
+    } else if (tieneAyudante1) {
+        // REGLA 1x2: Se descuenta 1 a peluquera, se duplica (2) para la Ayudante Principal
+        const unidadDescuento = 1; 
+        pagoAyudante1 = unidadDescuento * 2;
+        pagoPeluqueraFinal = partePeluqueraBruta - unidadDescuento;
+        pagoAyudanteExtra = 0;
+    } else {
+        // Solo Peluquera (40%)
+        pagoPeluqueraFinal = partePeluqueraBruta;
+        pagoAyudante1 = 0;
+        pagoAyudanteExtra = 0;
+    }
 
     // --- SEGURIDAD PIN MASTER ---
     const pin = prompt(`🔐 FIRMA AVIPET\nTotal: ${metodoPago === 'BS' ? 'Bs' : '$'}${precioFinal}\nPIN:`);
@@ -3885,35 +3913,33 @@ window.guardarPeluqueriaPro = async () => {
         }
 
         let nuevaVisita = visitasPrevias + 1;
-        if (nuevaVisita > 10) {
-            nuevaVisita = 1;
-        }
+        if (nuevaVisita > 10) nuevaVisita = 1;
 
         const esPremio = nuevaVisita === 10;
         const fechaActual = new Date();
         const fechaSimple = `${fechaActual.getDate()}/${fechaActual.getMonth() + 1}/${fechaActual.getFullYear()}`;
         const horaActual = fechaActual.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-       // --- REGISTRO DEL SERVICIO (REFORZADO PARA BITÁCORA Y AYUDANTES) ---
-const dataPelu = {
-    cedulaCliente: cedula,
-    duenio: duenio,
-    paciente: mascota,
-    precioTotal: precioFinal,
-    metodoPago: metodoPago,
-    visitaNumero: nuevaVisita,
-    fecha: serverTimestamp(),
-    fechaSimple: fechaSimple,
-    hora: horaActual,
-    tipo: "PELUQUERIA",
-    servicio: tipoServicio,
-    // --- NUEVOS CAMPOS PARA QUE LA BITÁCORA NO DE ERROR ---
-    pagoPeluquera: parseFloat(document.getElementById('pResPeluquera')?.innerText.replace('$ ', '')) || 0,
-    pagoAyudante: (parseFloat(document.getElementById('pResAyudante1')?.innerText.replace('$ ', '')) || 0) + 
-                  (parseFloat(document.getElementById('pResAyudanteExtra')?.innerText.replace('$ ', '')) || 0),
-    ayudante1: document.getElementById('pAyudante1')?.checked ? "SÍ" : "NO",
-    ayudanteExtra: document.getElementById('pAyudanteExtra')?.checked ? "SÍ" : "NO"
-};
+        // --- REGISTRO DEL SERVICIO (BITÁCORA LIMPIA + NÓMINA OCULTA) ---
+        const dataPelu = {
+            ordenLlegada: nuevaVisita, // Enumeración por orden de llegada
+            cedulaCliente: cedula,
+            duenio: duenio,
+            paciente: mascota,
+            precioTotal: precioFinal,
+            metodoPago: metodoPago,
+            visitaNumero: nuevaVisita,
+            fecha: serverTimestamp(),
+            fechaSimple: fechaSimple,
+            hora: horaActual,
+            tipo: "PELUQUERIA",
+            servicio: tipoServicio,
+            // Datos de nómina (no se muestran en la bitácora)
+            pagoPeluquera: pagoPeluqueraFinal,
+            pagoAyudante1: pagoAyudante1,
+            pagoAyudanteExtra: pagoAyudanteExtra,
+            ingresoAvipet: esPremio ? 0 : (tieneAyudanteExtra ? (precioFinal/3) : parteAvipet)
+        };
 
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
 
@@ -3928,16 +3954,8 @@ const dataPelu = {
         }, { merge: true });
 
         // --- ACTUALIZAR INTERFAZ TARJETA ---
-        if (dInput('contadorVisitas')) {
-            dInput('contadorVisitas').innerText = `${nuevaVisita} / 10 Visitas`;
-        }
-
-        if (dInput('fechaUltimaVisita')) {
-            dInput('fechaUltimaVisita').innerText = fechaSimple;
-        }
-        
-        if (typeof window.renderizarSellos === 'function') {
-            window.renderizarSellos(nuevaVisita);
+        if (typeof window.buscarClientePeluqueria === 'function') {
+            await window.buscarClientePeluqueria(cedula); // Esto refresca la tarjeta con las fechas
         }
 
         // --- AVISO DE ÉXITO ---
@@ -3949,13 +3967,15 @@ const dataPelu = {
         });
 
         // --- REFRESCAR BITÁCORA AUTOMÁTICAMENTE ---
-        await window.cargarBitacoraHoy();
+        if (window.cargarBitacoraHoy) await window.cargarBitacoraHoy();
 
         // --- LIMPIEZA Y CIERRE ---
         const fields = ['pCedula', 'pDuenio', 'pNombre', 'pRaza', 'pAjuste', 'pCondicion', 'pTelefono', 'pDireccion'];
         fields.forEach(f => { if(dInput(f)) dInput(f).value = ""; });
         
         if (dInput('pTotalCobro')) dInput('pTotalCobro').innerText = "$ 0.00";
+        if (dInput('pAyudante1')) dInput('pAyudante1').checked = false;
+        if (dInput('pAyudanteExtra')) dInput('pAyudanteExtra').checked = false;
         
         window.showTab('historia');
 
@@ -3966,109 +3986,96 @@ const dataPelu = {
 };
   window.cargarBitacoraHoy = async () => {
     const cuerpo = document.getElementById('tablaBitacoraCuerpo');
+    // El resumen de balance lo ocultamos por completo para cumplir tu regla de privacidad
     const resumenDiv = document.getElementById('resumenBalancePelu');
+    if (resumenDiv) resumenDiv.innerHTML = ""; 
+    
     if (!cuerpo) return;
 
-    // Indicador de carga estilo "Contraste Radical"
-    cuerpo.innerHTML = `<tr><td colspan="6" class="text-center p-10 font-bold text-blue-500 italic animate-pulse">⚙️ CALCULANDO BALANCE AVIPET...</td></tr>`;
+    // Indicador de carga profesional
+    cuerpo.innerHTML = `<tr><td colspan="5" class="text-center p-10 font-bold text-blue-500 animate-pulse uppercase tracking-widest text-xs italic">⚙️ Sincronizando Bitácora Avipet...</td></tr>`;
 
     try {
-        // Obtenemos la fecha de hoy en el formato que guardas: D/M/YYYY
         const hoyObj = new Date();
         const hoySimple = `${hoyObj.getDate()}/${hoyObj.getMonth() + 1}/${hoyObj.getFullYear()}`;
 
-        // Consulta filtrada por el string de fecha para evitar errores de zona horaria
+        // Consultamos los servicios de hoy
         const q = query(
             collection(db, "servicios_estetica"),
             where("fechaSimple", "==", hoySimple)
         );
 
         const querySnapshot = await getDocs(q);
-        cuerpo.innerHTML = "";
-
-        // ACUMULADORES DE CAJA
-        let totalDolares = 0;
-        let totalBolivares = 0;
-        let ayudanteDolares = 0;
-        let ayudanteBolivares = 0;
-
+        
         if (querySnapshot.empty) {
-            cuerpo.innerHTML = `<tr><td colspan="6" class="text-center p-10 text-slate-400 font-black uppercase italic">No hay movimientos registrados hoy</td></tr>`;
-            if (resumenDiv) resumenDiv.innerHTML = "";
+            cuerpo.innerHTML = `<tr><td colspan="5" class="text-center p-10 text-slate-400 font-black uppercase italic text-xs">No hay servicios registrados hoy</td></tr>`;
             return;
         }
 
-        // Convertimos a array para ordenar por hora (descendente)
+        // 1. Extraemos los datos
         const registros = [];
         querySnapshot.forEach(doc => registros.push(doc.data()));
-        registros.sort((a, b) => b.hora.localeCompare(a.hora));
 
-        registros.forEach((d) => {
-            const monto = parseFloat(d.precioTotal) || 0;
+        // 2. Ordenamos por llegada (la hora más antigua primero para que el 1 sea el primero que llegó)
+        registros.sort((a, b) => a.hora.localeCompare(b.hora));
+
+        // 3. Limpiamos y mandamos a renderizar a la tabla limpia
+        cuerpo.innerHTML = "";
+        
+        registros.forEach((d, index) => {
             const moneda = (d.metodoPago || 'USD').toUpperCase();
-            
-            // REGLA 1+1: Descuento fijo para el ayudante
-            const comisionAyudante = 1; 
-            const netoPeluquera = monto - comisionAyudante;
-
-            // Clasificación por moneda
-            if (moneda === 'BS') {
-                totalBolivares += monto;
-                ayudanteBolivares += comisionAyudante;
-            } else {
-                totalDolares += monto;
-                ayudanteDolares += comisionAyudante;
-            }
-
             const fila = document.createElement('tr');
             fila.className = "border-b border-blue-50 hover:bg-blue-50/50 transition-colors";
             
             fila.innerHTML = `
+                <td class="p-3 text-center font-black text-blue-600">#${index + 1}</td>
                 <td class="p-3">
-                    <div class="font-black text-blue-700 leading-tight">${d.paciente.toUpperCase()}</div>
+                    <div class="font-black text-blue-900 leading-tight uppercase text-xs">${d.paciente}</div>
                     <div class="text-[9px] text-slate-400 uppercase font-bold">${d.duenio || 'Cliente'}</div>
                 </td>
-                <td class="p-3 font-bold text-slate-900">${moneda === 'BS' ? 'Bs' : '$'} ${monto.toFixed(2)}</td>
-                <td class="p-3 text-red-500 font-black">- 1.00</td>
-                <td class="p-3 text-green-700 font-black">${netoPeluquera.toFixed(2)}</td>
-                <td class="p-3">
-                    <span class="px-2 py-0.5 ${moneda === 'BS' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'} rounded text-[9px] font-black italic">
-                        ${moneda}
-                    </span>
+                <td class="p-3 text-[10px] font-bold text-slate-600 uppercase text-center">${d.servicio || 'General'}</td>
+                <td class="p-3 text-center font-black text-blue-900 text-xs">
+                    ${moneda === 'BS' ? 'Bs' : '$'} ${parseFloat(d.precioTotal).toFixed(2)}
                 </td>
-                <td class="p-3 text-[10px] font-bold text-slate-400">${d.hora || ''}</td>
+                <td class="p-3 text-[10px] font-bold text-slate-400 text-center">${d.hora || ''}</td>
             `;
             cuerpo.appendChild(fila);
         });
 
-        // --- RENDERIZAR RESUMEN DE TOTALES (CIERRE DE CAJA) ---
-        if (resumenDiv) {
-            resumenDiv.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 no-print">
-                    <div class="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-200 shadow-sm">
-                        <h4 class="text-emerald-800 font-black text-[10px] uppercase mb-2 italic tracking-widest text-center">Caja Dólares ($)</h4>
-                        <div class="flex justify-between text-xs font-bold text-slate-600"><span>Ingreso Bruto:</span> <span>$${totalDolares.toFixed(2)}</span></div>
-                        <div class="flex justify-between text-xs font-bold text-red-500 mb-1"><span>Pago Ayudantes:</span> <span>-$${ayudanteDolares.toFixed(2)}</span></div>
-                        <div class="border-t border-emerald-300 pt-2 flex justify-between font-black text-emerald-900 text-lg italic">
-                            <span>NETO PELUQUERÍA:</span> <span>$${(totalDolares - ayudanteDolares).toFixed(2)}</span>
-                        </div>
-                    </div>
-                    <div class="bg-orange-50 p-4 rounded-2xl border-2 border-orange-200 shadow-sm">
-                        <h4 class="text-orange-800 font-black text-[10px] uppercase mb-2 italic tracking-widest text-center">Caja Bolívares (Bs)</h4>
-                        <div class="flex justify-between text-xs font-bold text-slate-600"><span>Ingreso Bruto:</span> <span>Bs ${totalBolivares.toFixed(2)}</span></div>
-                        <div class="flex justify-between text-xs font-bold text-red-500 mb-1"><span>Pago Ayudantes:</span> <span>-Bs ${ayudanteBolivares.toFixed(2)}</span></div>
-                        <div class="border-t border-orange-300 pt-2 flex justify-between font-black text-orange-900 text-lg italic">
-                            <span>NETO PELUQUERÍA:</span> <span>Bs ${(totalBolivares - ayudanteBolivares).toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
     } catch (e) {
-        console.error("Error Balance Peluquería:", e);
-        cuerpo.innerHTML = `<tr><td colspan="6" class="text-center p-10 text-red-500 font-black italic uppercase">❌ Error al conectar con Firebase</td></tr>`;
+        console.error("Error Bitácora:", e);
+        cuerpo.innerHTML = `<tr><td colspan="5" class="text-center p-10 text-red-500 font-black italic uppercase text-xs">❌ Error de conexión</td></tr>`;
     }
+};
+  // --- RENDERIZADO DE TABLA PÚBLICO ---
+window.actualizarTablaBitacora = (listaServicios) => {
+    const tabla = document.getElementById('cuerpoBitacoraPelu');
+    if(!tabla) {
+        console.error("❌ No se encontró el elemento 'cuerpoBitacoraPelu'");
+        return;
+    }
+    
+    tabla.innerHTML = "";
+    
+    // El 'index' nos da el orden de llegada (0, 1, 2...)
+    listaServicios.forEach((serv, index) => {
+        const fila = document.createElement('tr');
+        fila.className = "border-b border-blue-100 hover:bg-blue-50 transition-colors";
+        
+        fila.innerHTML = `
+            <td class="p-3 text-center font-bold text-blue-600">${index + 1}</td>
+            <td class="p-3">
+                <div class="font-bold text-blue-900">${serv.paciente}</div>
+                <div class="text-[10px] text-gray-500 uppercase">${serv.duenio || 'Sin dueño'}</div>
+            </td>
+            <td class="p-3 text-xs text-center text-gray-600">${serv.servicio || 'General'}</td>
+            <td class="p-3 text-center font-black text-blue-900">
+                ${serv.metodoPago === 'BS' ? 'Bs' : '$'} ${serv.precioTotal}
+            </td>
+            <td class="p-3 text-[10px] text-center text-gray-400">${serv.hora || '--:--'}</td>
+        `;
+        tabla.appendChild(fila);
+    });
 };
 // --- RECALCULAR EN VIVO (Sin Insumos) ---
 window.recalcularTotalPelu = () => {
@@ -4519,6 +4526,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
