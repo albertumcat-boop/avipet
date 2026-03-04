@@ -1,25 +1,23 @@
-// [firebase-config.js] - VERSIÓN ESTABLE VÍA CDN (SOLUCIONA EL ERROR 404)
+// [firebase-config.js] - CONFIGURACIÓN REAL AVICOLAPET
 // ==========================================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage }   from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// RECUERDA: Pon aquí tus claves reales que ya tenías funcionando
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_DOMINIO",
-  projectId: "TU_PROYECTO_ID",
-  storageBucket: "TU_BUCKET",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  // Busca el apiKey en tu panel de Firebase (es la clave larga que empieza por AIza)
+  apiKey: "TU_API_KEY_AQUÍ", 
+  authDomain: "avicolapet.firebaseapp.com",
+  projectId: "avicolapet",
+  storageBucket: "avicolapet.appspot.com",
+  messagingSenderId: "909478828234",
+  appId: "TU_APP_ID_AQUÍ" // Empieza por 1:909478828234...
 };
 
 // Encendemos el motor
 const app = initializeApp(firebaseConfig);
 
-// Exportamos con los nombres exactos que espera tu script principal
+// Exportamos las herramientas para "soldar" datos
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-
-
