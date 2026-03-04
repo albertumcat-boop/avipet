@@ -2222,7 +2222,7 @@ window.quitarFotoTest = () => {
   // =========================================================
   // [09] BUSCADOR
   // =========================================================
-  window.buscarPorCedula = async () => {
+ window.buscarPorCedula = async () => {
     const input = document.getElementById('searchCI');
     const contenedor = document.getElementById('resultadosBusqueda');
 
@@ -2233,9 +2233,9 @@ window.quitarFotoTest = () => {
     const ci = input.value.trim();
     contenedor.innerHTML =
       `<div class="text-center py-8">
-         <div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-         <p>Buscando...</p>
-       </div>`;
+          <div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2 mx-auto"></div>
+          <p>Buscando...</p>
+        </div>`;
 
     try {
       const q = query(
@@ -2256,14 +2256,14 @@ window.quitarFotoTest = () => {
         const d = docSnap.data();
         const div = document.createElement('div');
         div.className =
-          "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden";
+          "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm";
 
         const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
+        // --- LÓGICA DE INSUMOS ---
         const insHtml = d.listaDetalladaInsumos
           ? d.listaDetalladaInsumos.map(ins => {
-              const precioIns = parseFloat(ins.precio ?? ins.costo ?? 0)
-                .toFixed(2);
+              const precioIns = parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2);
               return `
                 <div class="flex justify-between text-[11px] border-b border-dotted">
                   <span>${ins.nombre} x${ins.cant}</span>
@@ -2272,9 +2272,34 @@ window.quitarFotoTest = () => {
             }).join('')
           : "";
 
+        // --- 📸 NUEVA LÓGICA PARA FOTOS (HISTORIA Y TEST) ---
+        let fotosHtml = "";
+        if (d.urlExamen || d.urlFotoTest) {
+            fotosHtml = `<p class="text-[10px] font-bold text-purple-600 border-b mb-2 mt-4 uppercase">Anexos Visuales:</p>
+                         <div class="flex gap-2 overflow-x-auto pb-2">`;
+            
+            if (d.urlExamen) {
+                fotosHtml += `
+                    <div class="flex-shrink-0">
+                        <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Historia/Examen</p>
+                        <img src="${d.urlExamen}" class="w-32 h-32 object-cover rounded-lg border border-slate-300 shadow-sm cursor-pointer hover:opacity-80" 
+                             onclick="window.open('${d.urlExamen}', '_blank')">
+                    </div>`;
+            }
+            if (d.urlFotoTest) {
+                fotosHtml += `
+                    <div class="flex-shrink-0">
+                        <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Foto del Test</p>
+                        <img src="${d.urlFotoTest}" class="w-32 h-32 object-cover rounded-lg border border-slate-300 shadow-sm cursor-pointer hover:opacity-80" 
+                             onclick="window.open('${d.urlFotoTest}', '_blank')">
+                    </div>`;
+            }
+            fotosHtml += `</div>`;
+        }
+
         div.innerHTML = `
           <details class="group">
-            <summary class="flex justify-between p-4 cursor-pointer">
+            <summary class="flex justify-between p-4 cursor-pointer hover:bg-slate-50">
               <div>
                 <span class="text-[10px] text-slate-400 font-bold">
                   ${d.fechaSimple || 'S/F'}
@@ -2285,23 +2310,17 @@ window.quitarFotoTest = () => {
               <div class="text-blue-500 text-xl group-open:rotate-180 transition-transform">▾</div>
             </summary>
             <div class="p-4 bg-slate-50 border-t border-slate-200">
-              <p class="text-[10px] font-bold text-blue-600 border-b mb-1">
-                TRATAMIENTO:
-              </p>
-              <p class="text-sm text-slate-700 whitespace-pre-wrap mb-4">
-                ${d.tratamiento}
-              </p>
-              <p class="text-[10px] font-bold text-emerald-600 border-b mb-1">
-                INSUMOS:
-              </p>
-              <div class="space-y-1">
-                ${insHtml}
-              </div>
+              <p class="text-[10px] font-bold text-blue-600 border-b mb-1">TRATAMIENTO:</p>
+              <p class="text-sm text-slate-700 whitespace-pre-wrap mb-4">${d.tratamiento}</p>
+              
+              <p class="text-[10px] font-bold text-emerald-600 border-b mb-1">INSUMOS:</p>
+              <div class="space-y-1">${insHtml}</div>
+
+              ${fotosHtml}
+
               <div class="mt-4 pt-3 border-t-2 flex justify-between">
-                <span class="text-[10px] font-bold">TOTAL:</span>
-                <span class="text-xl font-black">
-                  $${(d.montoVenta || 0).toFixed(2)}
-                </span>
+                <span class="text-[10px] font-bold">TOTAL VENTA:</span>
+                <span class="text-xl font-black">$${(d.montoVenta || 0).toFixed(2)}</span>
               </div>
             </div>
           </details>`;
@@ -2309,8 +2328,9 @@ window.quitarFotoTest = () => {
       });
     } catch (e) {
       console.error("Error en búsqueda:", e);
+      alert("Error al buscar: " + e.message);
     }
-  };
+};
 
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA (MODO OFFLINE RESISTENTE)
@@ -3874,20 +3894,26 @@ window.guardarPeluqueriaPro = async () => {
         const fechaSimple = `${fechaActual.getDate()}/${fechaActual.getMonth() + 1}/${fechaActual.getFullYear()}`;
         const horaActual = fechaActual.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        // --- REGISTRO DEL SERVICIO ---
-        const dataPelu = {
-            cedulaCliente: cedula,
-            duenio: duenio,
-            paciente: mascota,
-            precioTotal: precioFinal,
-            metodoPago: metodoPago,
-            visitaNumero: nuevaVisita,
-            fecha: serverTimestamp(),
-            fechaSimple: fechaSimple,
-            hora: horaActual,
-            tipo: "PELUQUERIA",
-            servicio: tipoServicio
-        };
+       // --- REGISTRO DEL SERVICIO (REFORZADO PARA BITÁCORA Y AYUDANTES) ---
+const dataPelu = {
+    cedulaCliente: cedula,
+    duenio: duenio,
+    paciente: mascota,
+    precioTotal: precioFinal,
+    metodoPago: metodoPago,
+    visitaNumero: nuevaVisita,
+    fecha: serverTimestamp(),
+    fechaSimple: fechaSimple,
+    hora: horaActual,
+    tipo: "PELUQUERIA",
+    servicio: tipoServicio,
+    // --- NUEVOS CAMPOS PARA QUE LA BITÁCORA NO DE ERROR ---
+    pagoPeluquera: parseFloat(document.getElementById('pResPeluquera')?.innerText.replace('$ ', '')) || 0,
+    pagoAyudante: (parseFloat(document.getElementById('pResAyudante1')?.innerText.replace('$ ', '')) || 0) + 
+                  (parseFloat(document.getElementById('pResAyudanteExtra')?.innerText.replace('$ ', '')) || 0),
+    ayudante1: document.getElementById('pAyudante1')?.checked ? "SÍ" : "NO",
+    ayudanteExtra: document.getElementById('pAyudanteExtra')?.checked ? "SÍ" : "NO"
+};
 
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
 
@@ -4097,44 +4123,38 @@ window.recalcularTotalPelu = () => {
     if(document.getElementById('pResAyudantes')) document.getElementById('pResAyudantes').innerText = `$ ${sumaAyudantes.toFixed(2)}`;
 };
 
-// --- ESCÁNER INDEPENDIENTE (CORREGIDO) ---
 window.buscarClientePeluqueria = async (cedulaInput) => {
     const valor = cedulaInput.replace(/\./g, '').trim();
     if (!valor || valor.length < 5) return;
 
     try {
-        // --- PASO 1: BUSCAR EN VETERINARIA ('consultas') ---
+        // 1. BÚSQUEDA DE DATOS (VETERINARIA O PELUQUERÍA)
         const qPac = query(collection(db, "consultas"), where("cedula", "==", valor), limit(1));
         const snapPac = await getDocs(qPac);
-
         let datosEncontrados = null;
 
         if (!snapPac.empty) {
             datosEncontrados = snapPac.docs[0].data();
-            console.log("✅ Datos obtenidos de Veterinaria");
         } else {
-            // --- PASO 2: SI NO EXISTE, BUSCAR EN EL DIRECTORIO DE PELUQUERÍA ---
             const fidRef = doc(db, "fidelidad_peluqueria", valor.toLowerCase()); 
             const fidSnap = await getDoc(fidRef);
-            
-            if (fidSnap.exists()) {
-                datosEncontrados = fidSnap.data();
-                console.log("✅ Datos obtenidos de Directorio Peluquería");
-            }
+            if (fidSnap.exists()) datosEncontrados = fidSnap.data();
         }
 
-        // --- PASO 3: LLENADO DE CAMPOS ---
         if (datosEncontrados) {
-            // Mapeamos los campos (considerando que en peluquería guardamos 'propietario')
-            if(document.getElementById('pDuenio')) document.getElementById('pDuenio').value = datosEncontrados.propietario || datosEncontrados.nombreDuenio || "";
-            if(document.getElementById('pNombre')) document.getElementById('pNombre').value = datosEncontrados.paciente || "";
-            if(document.getElementById('pRaza'))   document.getElementById('pRaza').value = datosEncontrados.raza || "";
-            if(document.getElementById('pTelefono')) document.getElementById('pTelefono').value = datosEncontrados.telefono || "";
-            if(document.getElementById('pDireccion')) document.getElementById('pDireccion').value = datosEncontrados.direccion || "";
-            if(document.getElementById('pCondicion')) document.getElementById('pCondicion').value = datosEncontrados.condicion || "";
+            // Llenado de formulario
+            document.getElementById('pDuenio').value = datosEncontrados.propietario || datosEncontrados.nombreDuenio || "";
+            document.getElementById('pNombre').value = datosEncontrados.paciente || "";
+            document.getElementById('pRaza').value = datosEncontrados.raza || "";
+            document.getElementById('pTelefono').value = datosEncontrados.telefono || "";
+            document.getElementById('pDireccion').value = datosEncontrados.direccion || "";
 
-            // --- PASO 4: BUSCAR VISITAS PARA LA TARJETA ---
-            const qServ = query(collection(db, "servicios_estetica"), where("cedulaCliente", "==", valor));
+            // 2. BUSCAR HISTORIAL DE VISITAS (Para sellar la tarjeta)
+            const qServ = query(
+                collection(db, "servicios_estetica"), 
+                where("cedulaCliente", "==", valor),
+                orderBy("fecha", "asc") 
+            );
             const snapServ = await getDocs(qServ);
             
             const visitas = [];
@@ -4144,9 +4164,7 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
 
             actualizarInterfazTarjeta(visitas);
         } else {
-            // Es un cliente nuevo total: Albert llena a mano y el sistema lo guardará al finalizar
-            console.log("🆕 Cliente nuevo. Ingrese datos manualmente.");
-            actualizarInterfazTarjeta([]);
+            actualizarInterfazTarjeta([]); // Cliente nuevo, tarjeta vacía
         }
     } catch (error) {
         console.error("Error en búsqueda:", error);
@@ -4158,37 +4176,63 @@ function actualizarInterfazTarjeta(visitas) {
     const tarjeta = document.getElementById('tarjetaFidelidad');
     const contador = document.getElementById('contadorVisitas');
     const avisoGratis = document.getElementById('proximaGratis');
-    const badgeGratis = document.getElementById('badgeFidelidad'); 
+    const badgeGratis = document.getElementById('badgeFidelidad');
+    
+    // Controles de precio
+    const inputTamano = document.getElementById('pTamano');
+    const inputAjuste = document.getElementById('pAjuste');
+    const displayTotal = document.getElementById('pTotalCobro');
     
     if(!tarjeta || !contenedor) return;
 
     tarjeta.classList.remove('hidden');
     contenedor.innerHTML = ''; 
     
-    const totalVisitas = visitas.length;
-    if(contador) contador.innerText = `${totalVisitas}/10 Visitas`;
+    // LÓGICA DE CICLOS (Reset cada 10)
+    const totalHistorico = visitas.length;
+    let visualCount = totalHistorico % 10;
+    // Si es múltiplo de 10 y mayor a 0, significa que completó la tarjeta (es la 10)
+    if (visualCount === 0 && totalHistorico > 0) visualCount = 10;
+
+    if(contador) contador.innerText = `${visualCount}/10 Visitas`;
+
+    // Extraer solo las fechas que corresponden al ciclo actual de 10
+    const inicioCiclo = Math.floor((totalHistorico - 1) / 10) * 10;
+    const fechasCicloActual = totalHistorico > 0 ? visitas.slice(inicioCiclo) : [];
 
     for (let i = 1; i <= 10; i++) {
+        const fechaSello = fechasCicloActual[i - 1]; 
         const sello = document.createElement('div');
-        sello.className = `h-8 rounded-lg border flex flex-col items-center justify-center transition-all duration-300 shadow-sm`;
         
-        if (i <= totalVisitas) {
-            sello.classList.add('bg-white', 'border-yellow-400');
-            sello.innerHTML = `<span class="text-xs">🐾</span>`;
+        // Estilo 'Contraste Radical': Blanco/Azul para activos, Opaco para vacíos
+        sello.className = `h-10 rounded-xl border flex flex-col items-center justify-center transition-all shadow-sm 
+                           ${fechaSello ? 'bg-white border-blue-600 ring-2 ring-blue-100' : 'bg-blue-950/20 border-blue-900/10 opacity-30'}`;
+        
+        if (fechaSello) {
+            sello.innerHTML = `
+                <span class="text-[10px]">🐾</span>
+                <span class="text-[7px] font-black text-blue-700 leading-none mt-1">${fechaSello}</span>
+            `;
         } else {
-            sello.classList.add('bg-blue-900/40', 'border-blue-700/30', 'opacity-30');
-            sello.innerHTML = `<span class="text-white text-[8px] font-bold">${i}</span>`;
+            sello.innerHTML = `<span class="text-blue-900/50 text-[10px] font-bold">${i}</span>`;
         }
         contenedor.appendChild(sello);
     }
 
-    if (totalVisitas >= 9) { 
+    // --- BLOQUEO DE SEGURIDAD PREMIO ---
+    if (visualCount === 10) {
         avisoGratis?.classList.remove('hidden');
         badgeGratis?.classList.remove('hidden');
-        if(document.getElementById('pTotalCobro')) document.getElementById('pTotalCobro').innerText = "$ 0.00";
+        
+        if(displayTotal) displayTotal.innerText = "$ 0.00";
+        if(inputTamano) inputTamano.disabled = true; 
+        if(inputAjuste) { inputAjuste.value = 0; inputAjuste.disabled = true; }
     } else {
         avisoGratis?.classList.add('hidden');
         badgeGratis?.classList.add('hidden');
+        
+        if(inputTamano) inputTamano.disabled = false;
+        if(inputAjuste) inputAjuste.disabled = false;
     }
 }
 // =========================================================
@@ -4475,6 +4519,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
