@@ -1,11 +1,11 @@
-// [firebase-config.js] - VERSIÓN BLINDADA PARA USO OFFLINE
+// [firebase-config.js] - VERSIÓN ESTABLE VÍA CDN (SOLUCIONA EL ERROR 404)
 // ==========================================================================
 
-// 1. Cambiamos las rutas externas por las locales que descargaste
-import { initializeApp } from "./firebase-app.js";
-import { getFirestore } from "./firebase-firestore.js";
-import { getStorage }   from "./firebase-storage.js";   // <-- AÑADIR ESTA LÍNEA
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage }   from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+// RECUERDA: Pon aquí tus claves reales que ya tenías funcionando
 const firebaseConfig = {
   apiKey: "TU_API_KEY",
   authDomain: "TU_DOMINIO",
@@ -15,10 +15,11 @@ const firebaseConfig = {
   appId: "TU_APP_ID"
 };
 
-// 2. Encendemos el motor de Firebase
+// Encendemos el motor
 const app = initializeApp(firebaseConfig);
 
-// 3. Exportamos la base de datos para que el resto del sistema la use
+// Exportamos con los nombres exactos que espera tu script principal
 export const db = getFirestore(app);
-export const storage = getStorage(app);   // <-- AÑADIR ESTA LÍNEA
+export const storage = getStorage(app);
+
 
