@@ -734,117 +734,124 @@
   </div>
 </section>
   <!-- ========== BUSCADOR ========== -->
- <section id="sectionBuscador" class="hidden p-4 animate-fadeIn">
-  <div class="max-w-2xl mx-auto space-y-4">
-    <div class="flex items-center gap-3 mb-2">
-      <div class="w-2 h-8 bg-blue-600 rounded-full"></div>
-      <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tighter">Central de Búsqueda</h2>
+<section id="sectionBuscador" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-slate-800 p-4 border-b-4 border-blue-600">
+            <h2 class="text-white font-black uppercase text-center italic tracking-widest flex items-center justify-center gap-2">
+                <span class="text-blue-400">🔎</span> Central de Inteligencia / Clientes
+            </h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="flex gap-2 mb-6">
+                <div class="relative flex-1">
+                    <label class="absolute -top-2 left-3 bg-white px-2 text-[9px] font-black text-slate-400 uppercase">Documento de Identidad</label>
+                    <input type="text" id="searchCI"
+                           placeholder="V-00000000"
+                           class="w-full p-4 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-600 font-bold text-slate-700 uppercase transition-all">
+                </div>
+                <button onclick="window.buscarPorCedula()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-xl font-black italic tracking-tighter shadow-lg transition-all border-b-4 border-blue-800 active:border-b-0 active:translate-y-1">
+                    BUSCAR
+                </button>
+            </div>
+            
+            <div id="resultadosBusqueda" class="space-y-4">
+                </div>
+        </div>
     </div>
-
-    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-      <div class="flex gap-2 mb-6">
-        <input type="text" id="searchCI"
-               placeholder="Cédula del propietario..."
-               class="w-full p-3 border-b-2 border-slate-300 font-bold text-sm uppercase outline-none focus:border-blue-600 transition-all text-slate-700 placeholder:text-slate-300">
-        <button onclick="window.buscarPorCedula()"
-                class="bg-blue-600 text-white px-8 rounded-lg font-black hover:bg-blue-700 active:scale-95 transition-all shadow-md uppercase text-xs">
-          BUSCAR
-        </button>
-      </div>
-      <div id="resultadosBusqueda" class="space-y-4"></div>
-    </div>
-  </div>
 </section>
  <!-- ========== REPORTE ========== -->
- <section id="sectionReporte" class="hidden p-4 animate-fadeIn">
-  <div class="max-w-2xl mx-auto space-y-4">
-    <div class="flex items-center gap-3 mb-2">
-      <div class="w-2 h-8 bg-emerald-600 rounded-full"></div>
-      <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tighter">Gestión de Caja Diaria</h2>
-    </div>
-
-    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-      <div class="text-center mb-4 border-b border-slate-100 pb-4">
-        <span class="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-black uppercase border border-slate-200">
-          Pacientes Registrados Hoy: <span id="totalPacientes" class="text-blue-700">0</span>
-        </span>
-      </div>
-
-      <div class="border border-slate-400 rounded-lg overflow-hidden mb-6">
-        <div class="bg-slate-100 px-3 py-1 border-b border-slate-400 text-[9px] font-black text-slate-600 uppercase italic">Registro de Actividad</div>
-        <div id="listaReporte"
-             class="divide-y divide-slate-200 text-[10px] max-h-40 overflow-y-auto bg-white p-2 font-medium"></div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="p-4 bg-slate-50 rounded-xl border border-slate-300">
-          <p class="text-[9px] font-bold uppercase text-slate-400">Ingreso Bruto Total</p>
-          <p id="repBruto" class="text-2xl font-black text-slate-700 font-mono">$0.00</p>
-        </div>
-        <div class="p-4 bg-white rounded-xl border border-slate-300">
-          <p class="text-[9px] font-bold uppercase text-red-400">Costos Operativos</p>
-          <p id="repGastos" class="text-2xl font-black text-red-600 font-mono">$0.00</p>
-        </div>
+<section id="sectionReporte" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
         
-        <div class="p-4 bg-blue-50/50 rounded-xl border-2 border-blue-100 col-span-2 space-y-2">
-          <div class="flex justify-between items-center border-b border-blue-200 pb-1">
-            <span class="text-[10px] font-black uppercase text-blue-800 italic">Dr. Darwin Sandoval:</span>
-            <span id="repDocSandoval" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
-          </div>
-          <div class="flex justify-between items-center pt-1">
-            <span class="text-[10px] font-black uppercase text-blue-800 italic">Dra. Joan Silva:</span>
-            <span id="repDocSilva" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
-          </div>
+        <div class="bg-slate-800 p-5 border-b-4 border-blue-600 text-center">
+            <h2 class="font-black uppercase text-white text-2xl tracking-tighter italic">
+                Gestión de Caja Diaria
+            </h2>
+            <div class="mt-2">
+                <span class="bg-blue-600/20 text-blue-400 px-4 py-1 rounded-full text-[10px] font-black uppercase border border-blue-500/30">
+                    Flujo de Pacientes: <span id="totalPacientes" class="text-white">0</span>
+                </span>
+            </div>
         </div>
 
-        <div class="p-5 bg-emerald-50 rounded-xl border-2 border-emerald-500 col-span-2 text-center shadow-inner">
-          <p class="text-[10px] font-bold uppercase text-emerald-600 tracking-[0.2em] mb-1">Utilidad Neta Avipet</p>
-          <p id="repNeto" class="text-4xl font-black text-emerald-700 font-mono">$0.00</p>
-        </div>
-      </div>
+        <div class="p-6">
+            <div id="listaReporte"
+                 class="divide-y divide-slate-200 mb-6 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-3 rounded-lg border border-slate-300 font-bold text-slate-600 italic">
+            </div>
 
-      <div class="border border-slate-800 rounded-xl overflow-hidden mb-4">
-        <div class="bg-slate-800 text-white px-3 py-1 font-black text-[9px] text-center uppercase tracking-widest italic">✂️ Balance de Peluquería</div>
-        <div class="grid grid-cols-3 divide-x divide-slate-200 bg-white">
-          <div class="p-3 text-center">
-            <p class="text-[8px] font-bold text-slate-400 uppercase">Peluquera</p>
-            <p id="fPeluPagos" class="text-sm font-black text-slate-800 font-mono">$0.00</p>
-          </div>
-          <div class="p-3 text-center">
-            <p class="text-[8px] font-bold text-slate-400 uppercase">Ayudantes</p>
-            <p id="fPeluAyudantes" class="text-sm font-black text-blue-600 font-mono">$0.00</p>
-          </div>
-          <div class="p-3 text-center">
-            <p class="text-[8px] font-bold text-slate-400 uppercase">Neto Local</p>
-            <p id="fPeluTotal" class="text-sm font-black text-emerald-600 font-mono">$0.00</p>
-          </div>
-        </div>
-      </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="p-4 bg-white rounded-xl border-2 border-slate-100 shadow-sm">
+                    <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Bruto Total</p>
+                    <p id="repBruto" class="text-2xl font-black text-slate-800 font-mono italic">$0.00</p>
+                </div>
+                <div class="p-4 bg-amber-50 rounded-xl border-l-4 border-amber-500">
+                    <p class="text-[9px] font-black uppercase text-amber-600 tracking-widest">Costos Operativos</p>
+                    <p id="repGastos" class="text-2xl font-black text-amber-700 font-mono italic">$0.00</p>
+                </div>
+                
+                <div class="p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600 col-span-2 space-y-3">
+                    <div class="flex justify-between items-center border-b border-blue-100 pb-2">
+                        <span class="text-[10px] font-black uppercase text-blue-900 italic">Dr. Darwin Sandoval:</span>
+                        <span id="repDocSandoval" class="text-xl font-black text-blue-700 font-mono">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase text-blue-900 italic">Dra. Joan Silva:</span>
+                        <span id="repDocSilva" class="text-xl font-black text-blue-700 font-mono">$0.00</span>
+                    </div>
+                </div>
 
-      <div class="grid grid-cols-1 gap-2">
-        <button onclick="window.generarCierrePeluqueria()"
-          class="bg-purple-600 text-white py-4 rounded-xl font-black shadow-md hover:bg-purple-700 active:scale-95 transition-all uppercase text-xs italic border-b-4 border-purple-800">
-          Liquidación Semanal Peluquería
-        </button>
+                <div class="p-5 bg-emerald-600 rounded-2xl col-span-2 shadow-xl border-b-4 border-emerald-800">
+                    <p class="text-[10px] font-black uppercase text-emerald-100 tracking-[0.2em]">Utilidad Neta (Avipet)</p>
+                    <p id="repNeto" class="text-4xl font-black text-white font-mono italic">$0.00</p>
+                </div>
+            </div>
 
-        <button onclick="window.cargarReporte()"
-                class="bg-slate-700 text-white py-3 rounded-xl font-black shadow-md active:scale-95 transition-all uppercase text-[10px] mt-2 border-b-4 border-slate-900">
-          🔄 Recalcular Balance
-        </button>
-        
-        <div class="grid grid-cols-2 gap-2 mt-2">
-          <button onclick="window.descargarReporte()"
-                  class="bg-white text-slate-600 py-3 rounded-xl font-black text-[10px] uppercase border border-slate-300 hover:bg-slate-50 shadow-sm">
-            📥 Descargar Informe
-          </button>
-          <button onclick="window.guardarResumenDelDia()"
-                  class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] shadow-md hover:bg-emerald-700 uppercase border-b-4 border-emerald-800">
-            💾 Respaldar en Nube
-          </button>
+            <div class="flex flex-col gap-3">
+                <div class="p-4 bg-slate-900 rounded-2xl border-2 border-slate-800 shadow-lg">
+                    <p class="text-[10px] font-black text-blue-400 uppercase text-center mb-3 italic tracking-widest">✂️ Balance Estética Canina (Hoy)</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="text-center border-r border-slate-700">
+                            <p class="text-[8px] font-bold text-slate-500 uppercase">Ingreso</p>
+                            <p id="fPeluTotal" class="text-sm font-black text-white italic">$0.00</p>
+                        </div>
+                        <div class="text-center border-r border-slate-700">
+                            <p class="text-[8px] font-bold text-slate-500 uppercase">Peluquera</p>
+                            <p id="fPeluPagos" class="text-sm font-black text-amber-500 italic">$0.00</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[8px] font-bold text-slate-500 uppercase">Ayudantes</p>
+                            <p id="fPeluAyudantes" class="text-sm font-black text-emerald-400 italic">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="window.generarCierrePeluqueria()"
+                    class="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl font-black shadow-lg transition-all uppercase text-[11px] tracking-widest italic border-b-4 border-blue-900 active:border-b-0 active:translate-y-1">
+                    <span>LIQUIDACIÓN SEMANAL PELUQUERÍA</span>
+                </button>
+
+                <div id="reportePeluqueriaResultados" class="mt-2 hidden animate-fadeIn"></div>
+
+                <button onclick="window.cargarReporte()"
+                        class="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-black shadow-sm hover:bg-slate-300 transition-all uppercase text-[10px] mt-2 border border-slate-300">
+                    🔄 Sincronizar Balance General
+                </button>
+                
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="window.descargarReporte()"
+                            class="bg-white text-slate-600 py-3 rounded-xl font-black text-[9px] border-2 border-slate-200 hover:bg-slate-50 transition-colors uppercase tracking-tighter">
+                        📥 Exportar TXT
+                    </button>
+                    <button onclick="window.guardarResumenDelDia()"
+                            class="bg-emerald-600 text-white py-3 rounded-xl font-black text-[9px] shadow-lg hover:bg-emerald-700 border-b-4 border-emerald-800 transition-all uppercase tracking-tighter active:border-b-0 active:translate-y-1">
+                        💾 Backup en Nube
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </section>
   <!-- ========== CONFIG PRECIOS ========== -->
 <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
@@ -996,7 +1003,7 @@
 </section>
   <!-- ========== PELUQUERIA CANINA ========== -->
 <div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen animate-fadeIn">
-    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-area">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden print-area">
         
         <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 p-4 mb-2">
             <div class="flex items-center">
@@ -1007,161 +1014,177 @@
             </div>
             <div class="text-right">
                 <h2 class="text-xl font-black text-slate-800 uppercase italic leading-none">Estética Canina</h2>
-                <p class="text-[10px] font-bold text-blue-600 uppercase mt-1 tracking-widest">Control de Fidelidad VIP</p>
+                <p class="text-[10px] font-bold text-blue-600 uppercase mt-1 tracking-widest italic">Control Maestro de Servicios</p>
                 <div id="badgeFidelidad" class="hidden mt-2 bg-yellow-400 text-blue-900 px-3 py-1 rounded-full font-black text-[10px] animate-bounce shadow-sm">
                     🎁 ¡PRÓXIMA VISITA GRATIS!
                 </div>
             </div>
         </div>
 
-        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-200">
-                <div class="border border-slate-400 text-[11px] rounded-lg overflow-hidden">
-                    <div class="bg-slate-800 text-white px-3 py-1 font-black text-[9px] uppercase italic tracking-widest text-center">Datos del Paciente</div>
-                    <div class="p-3 space-y-3">
+            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-1 h-4 bg-blue-600"></div>
+                    <h3 class="font-black text-slate-800 uppercase text-xs italic">📋 Ficha del Paciente</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-3 border border-slate-300 p-3 rounded-lg shadow-sm">
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase">Cédula del Dueño</label>
+                        <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="w-full border-b border-slate-300 focus:border-blue-600 outline-none p-1 font-bold text-blue-700 uppercase" placeholder="V-00000000">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase">Nombre del Propietario</label>
+                        <input type="text" id="pDuenio" class="w-full border-b border-slate-300 p-1 text-xs font-bold uppercase outline-none focus:border-blue-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="text-[9px] font-bold text-slate-400 uppercase">Cédula del Dueño</label>
-                            <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)" class="border-b border-slate-300 w-full font-bold text-blue-700 outline-none focus:border-blue-600 uppercase" placeholder="V-00000000">
-                        </div>
-                        <div>
-                            <label class="text-[9px] font-bold text-slate-400 uppercase">Nombre del Dueño</label>
-                            <input type="text" id="pDuenio" class="border-b border-slate-300 w-full uppercase outline-none font-bold text-slate-700">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[9px] font-bold text-slate-400 uppercase">Teléfono</label>
-                                <input type="text" id="pTelefono" class="border-b border-slate-300 w-full outline-none font-bold text-slate-700">
-                            </div>
-                            <div>
-                                <label class="text-[9px] font-bold text-slate-400 uppercase">Nombre Mascota</label>
-                                <input type="text" id="pNombre" class="border-b border-slate-300 w-full font-black text-blue-600 uppercase outline-none">
-                            </div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Teléfono</label>
+                            <input type="text" id="pTelefono" class="w-full border-b border-slate-300 p-1 text-xs font-bold outline-none">
                         </div>
                         <div>
-                            <label class="text-[9px] font-bold text-slate-400 uppercase">Raza del Paciente</label>
-                            <input type="text" id="pRaza" class="border-b border-slate-300 w-full uppercase outline-none font-bold text-slate-700">
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Mascota</label>
+                            <input type="text" id="pNombre" class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none">
                         </div>
-                        <input type="hidden" id="pDireccion">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Raza</label>
+                            <input type="text" id="pRaza" class="w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Dirección</label>
+                            <input type="text" id="pDireccion" class="w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none">
+                        </div>
                     </div>
                 </div>
 
-                <div id="tarjetaFidelidad" class="hidden border-2 border-blue-600 rounded-2xl p-4 bg-white shadow-lg relative overflow-hidden animate-slideInTop">
-                    <div class="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 rounded-bl-xl font-black text-[9px] uppercase italic">Tarjeta VIP</div>
-                    <div class="flex justify-between items-center mb-3">
-                        <img src="avipet.png" alt="Logo" class="h-8 object-contain">
-                        <span id="contadorVisitas" class="text-sm font-black text-blue-700 italic">0 / 10 Visitas</span>
+                <div class="pt-2">
+                    <h3 class="font-black text-slate-700 uppercase text-[10px] mb-1 italic">📝 Notas de Salud / Comportamiento</h3>
+                    <textarea id="pCondicion" rows="3" class="w-full border border-slate-300 p-2 rounded bg-slate-50 text-[11px] font-bold focus:border-blue-600 outline-none leading-tight" placeholder="¿Es agresivo? ¿Verrugas? ¿Soplos?"></textarea>
+                </div>
+            </div>
+
+            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-1 h-4 bg-blue-600"></div>
+                    <h3 class="font-black text-slate-800 uppercase text-xs italic">🛠️ Detalles del Servicio</h3>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase">Tipo de Trabajo</label>
+                        <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 p-1 font-black text-xs uppercase bg-transparent outline-none">
+                            <option value="completo">Baño y Corte Completo</option>
+                            <option value="solo_banio">Solo Baño</option>
+                            <option value="solo_unas">Corte de Uñas ($5)</option>
+                        </select>
                     </div>
-                    <div id="contenedorSellos" class="grid grid-cols-5 gap-2 border border-slate-200 p-2 rounded-xl bg-slate-50 min-h-[80px]"></div>
-                    <div id="proximaGratis" class="mt-3 hidden bg-emerald-500 text-white text-center py-1.5 rounded-lg font-black text-[9px] uppercase animate-pulse">
-                        ✨ ¡ESTE SERVICIO ES GRATIS! ✨
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Tamaño (Base)</label>
+                            <select id="pTamano" onchange="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 p-1 text-xs font-black bg-transparent outline-none">
+                                <option value="30">Pequeño ($30)</option>
+                                <option value="40">Mediano ($40)</option>
+                                <option value="50">Grande ($50)</option>
+                                <option value="60">Extra G. ($60)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase">Ajuste +/-</label>
+                            <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-700 outline-none" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-2xl space-y-3 border-2 border-blue-100 shadow-inner mt-4">
+                    <h4 class="text-[10px] font-black text-blue-900 uppercase text-center tracking-widest mb-1 italic">👥 Comisiones de Apoyo</h4>
+                    
+                    <div class="flex items-center justify-between bg-amber-100 p-2 rounded-lg border border-amber-300">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-600">
+                            <span class="text-[9px] font-black text-amber-900 uppercase italic">¿Ayudante Extra hizo TODO solo?</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-blue-200">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
+                            <span class="text-[9px] font-black text-slate-700 uppercase">Principal</span>
+                        </label>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold text-slate-400">$</span>
+                            <input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-blue-700 text-xs outline-none bg-transparent">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-amber-200">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-amber-500">
+                            <span class="text-[9px] font-black text-amber-800 uppercase">Extra (Agresivo)</span>
+                        </label>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold text-slate-400">$</span>
+                            <input type="number" id="pMontoAyuExtra" value="3" oninput="window.recalcularTotalPelu()" class="w-10 text-center font-black text-amber-700 text-xs outline-none bg-transparent">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-4 lg:border-r lg:pr-6 border-slate-200">
-                <div class="border border-slate-400 rounded-lg overflow-hidden shadow-sm">
-                    <div class="bg-slate-100 p-3">
-                        <h3 class="font-black text-blue-900 uppercase text-[10px] italic mb-3">🛠️ Especificaciones de Trabajo</h3>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase">Servicio a Realizar</label>
-                                <select id="pTipoServicio" onchange="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 bg-transparent font-bold text-xs outline-none py-1 text-slate-700">
-                                    <option value="completo">Baño y Corte Completo</option>
-                                    <option value="solo_banio">Solo Baño</option>
-                                    <option value="solo_unas">Corte de Uñas ($5)</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase">Categoría Tamaño</label>
-                                    <select id="pTamano" onchange="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 bg-transparent font-bold text-xs outline-none py-1 text-slate-700">
-                                        <option value="30">Pequeño ($30)</option>
-                                        <option value="40">Mediano ($40)</option>
-                                        <option value="50">Grande ($50)</option>
-                                        <option value="60">Extra G. ($60)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase">Cargo Adicional ($)</label>
-                                    <input type="number" id="pAjuste" oninput="window.recalcularTotalPelu()" class="w-full border-b border-slate-300 bg-transparent font-bold text-xs outline-none py-1 text-slate-700" value="0">
-                                </div>
-                            </div>
+            <div class="space-y-4 flex flex-col justify-between">
+                <div class="bg-blue-600 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden border-b-4 border-blue-800">
+                    <div class="flex justify-between items-center mb-4 border-b border-blue-500/50 pb-4">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-blue-100">Total Cliente</span>
+                        <span id="pTotalCobro" class="text-4xl font-black italic tracking-tighter">$ 0.00</span>
+                    </div>
+                    
+                    <div class="space-y-2 mt-4">
+                        <div class="flex justify-between items-center border-b border-blue-500/30 pb-1">
+                            <span class="text-[9px] font-bold uppercase text-blue-200 italic">Peluquera:</span>
+                            <span id="pResPeluquera" class="text-lg font-black text-white">$ 0.00</span>
                         </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold uppercase text-blue-200 italic">Ayu. Principal:</span>
+                            <span id="pResAyudante1" class="text-sm font-black text-emerald-300">$ 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold uppercase text-blue-200 italic">Ayu. Extra:</span>
+                            <span id="pResAyudanteExtra" class="text-sm font-black text-emerald-300">$ 0.00</span>
+                        </div>
+                        <span id="pResAyudantes" class="hidden">$ 0.00</span>
                     </div>
                 </div>
 
-                <div class="bg-slate-900 p-4 rounded-2xl border-2 border-slate-800 shadow-xl space-y-3">
-                    <label class="block text-[10px] font-black text-blue-400 uppercase tracking-widest italic">👥 Nómina de Apoyo</label>
-                    <label class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700 cursor-pointer hover:bg-slate-700 transition-all">
-                        <div class="flex items-center gap-3">
-                            <input type="checkbox" id="pAyudante1" onchange="window.recalcularTotalPelu()" class="w-5 h-5 rounded border-slate-600 text-blue-500 focus:ring-blue-500 bg-slate-900">
-                            <span class="text-[10px] font-bold text-slate-200 uppercase">Ayudante Principal</span>
-                        </div>
-                        <span class="text-[9px] font-black text-blue-400 bg-blue-400/10 px-2 py-1 rounded">+$2</span>
-                    </label>
-                    <label class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700 cursor-pointer hover:bg-slate-700 transition-all">
-                        <div class="flex items-center gap-3">
-                            <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-5 h-5 rounded border-slate-600 text-red-500 focus:ring-red-500 bg-slate-900">
-                            <span class="text-[10px] font-bold text-slate-200 uppercase">Ayudante Extra</span>
-                        </div>
-                        <span class="text-[9px] font-black text-red-400 bg-red-400/10 px-2 py-1 rounded">+$3</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div class="bg-blue-600 p-6 rounded-3xl text-center shadow-2xl shadow-blue-200 border-b-4 border-blue-800">
-                    <label class="text-[10px] text-blue-100 font-bold uppercase block mb-1 tracking-widest">Total de la Orden</label>
-                    <span id="pTotalCobro" class="text-5xl font-black text-white italic leading-none">$ 0.00</span>
-                </div>
-
-                <div class="grid grid-cols-1 gap-2">
-                    <button onclick="window.guardarPeluqueriaPro()" class="w-full py-5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black shadow-lg transition-all uppercase text-xs tracking-[0.2em] italic border-b-4 border-slate-700 active:border-b-0 active:translate-y-1">
-                        🚀 Registrar y Guardar
+                <div class="space-y-2">
+                    <button onclick="window.guardarPeluqueriaPro()" class="w-full py-5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black shadow-lg hover:scale-[1.01] transition-all uppercase text-xs tracking-[4px] italic border-b-4 border-slate-700 active:border-b-0 active:translate-y-1">
+                        🚀 Registrar Servicio
                     </button>
-                    <button onclick="window.showTab('historia')" class="w-full py-2 font-bold text-slate-400 hover:text-red-500 transition-all uppercase text-[10px]">
-                        Cancelar Procedimiento
+                    <button onclick="window.showTab('historia')" class="w-full py-2 font-bold text-slate-400 hover:text-red-500 transition-all uppercase text-[9px] tracking-[2px]">
+                        ❌ Cancelar Registro
                     </button>
-                </div>
-
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
-                    <label class="block text-[10px] font-black text-blue-700 uppercase mb-2">💰 Método de Pago</label>
-                    <select id="pMetodoPago" class="w-full p-2 bg-white border border-blue-200 rounded-lg outline-none font-bold text-xs text-slate-700">
-                        <option value="USD">Dólares ($)</option>
-                        <option value="BS">Bolívares (Bs)</option>
-                    </select>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-100 p-6 border-t-2 border-slate-200">
+        <div class="bg-slate-100 p-6 border-t border-slate-200">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-black text-slate-800 italic uppercase flex items-center gap-2">
-                    <span class="bg-blue-600 w-2 h-6 rounded-full"></span> Bitácora de Salida
-                </h3>
-                <button onclick="window.cargarBitacoraHoy()" class="bg-white border-2 border-slate-300 hover:border-blue-600 text-slate-600 hover:text-blue-600 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-sm">
+                <div>
+                    <h3 class="text-sm font-black text-slate-800 uppercase italic flex items-center gap-2">
+                        <span class="w-1 h-5 bg-blue-600 rounded-full"></span> Bitácora de Salida (Hoy)
+                    </h3>
+                </div>
+                <button onclick="window.cargarBitacoraPeluqueria()" class="text-[9px] bg-white border border-slate-300 text-slate-600 px-4 py-2 rounded-xl font-black uppercase hover:border-blue-600 hover:text-blue-600 transition shadow-sm">
                     🔄 Actualizar Listado
                 </button>
             </div>
             
-            <div class="overflow-x-auto bg-white rounded-2xl shadow-sm border border-slate-400">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-800 text-white uppercase text-[10px] italic">
-                            <th class="p-4 text-center border-r border-slate-700">#</th>
-                            <th class="p-4 border-r border-slate-700">Paciente / Propietario</th>
-                            <th class="p-4 text-center border-r border-slate-700">Procedimiento</th>
-                            <th class="p-4 text-center border-r border-slate-700">Monto</th>
-                            <th class="p-4 text-center italic tracking-widest">Hora Reg.</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaBitacoraCuerpo" class="text-[11px] font-bold text-slate-700 divide-y divide-slate-100">
-                        </tbody>
-                </table>
+            <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="col-span-full py-8 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white/50">
+                    <p class="text-slate-400 text-[9px] font-black uppercase italic tracking-widest">Esperando registros de la jornada...</p>
+                </div>
             </div>
-
-            <div id="resumenBalancePelu" class="mt-4"></div>
         </div>
     </div>
 </div>
@@ -4483,6 +4506,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
