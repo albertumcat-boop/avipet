@@ -2806,51 +2806,51 @@ window.guardarFirebase = async (imp) => {
       return;
     }
 
-    // 1. SOLICITUD DE FIRMA (PIN)
-    const pinIngresado = prompt(
-      `🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN o Llave Maestra para autorizar:`
-    );
+    const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN para autorizar:`);
     if (!pinIngresado) return;
 
-    // Validación conectada a tu función maestra
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
-
     if (esValido) {
       window.doctorVerificado = nombreDoctor;
-      console.log("✅ Firma validada correctamente.");
+      console.log("✅ Firma validada.");
     } else {
-      alert("❌ PIN incorrecto. No se puede guardar la consulta sin firma válida.");
+      alert("❌ PIN incorrecto.");
       return;
     }
 
     try {
-      // --- AJUSTE: SUBIDA DE IMAGEN A STORAGE (HISTORIA) ---
+      // --- FUNCIÓN INTERNA PARA CONVERTIR IMAGEN A TEXTO (BASE64) ---
+      const convertirABase64 = (archivo) => {
+          return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.readAsDataURL(archivo);
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = error => reject(error);
+          });
+      };
+
+      // --- PROCESAR FOTO DE HISTORIA ---
       const fotoFile = document.getElementById('inputFotoHistoria')?.files[0];
       let urlFotoFinal = "";
-
       if (fotoFile) {
-          const storageRef = ref(storage, `examenes/${Date.now()}_${fotoFile.name}`);
-          const snapshot = await uploadBytes(storageRef, fotoFile);
-          urlFotoFinal = await getDownloadURL(snapshot.ref);
+          console.log("📸 Convirtiendo foto historia...");
+          urlFotoFinal = await convertirABase64(fotoFile);
       }
 
-      // --- NUEVO: SUBIDA DE IMAGEN A STORAGE (TEST RÁPIDO) ---
+      // --- PROCESAR FOTO DE TEST RÁPIDO ---
       const fotoTestFile = document.getElementById('inputFotoTest')?.files[0];
       let urlFotoTestFinal = "";
-
       if (fotoTestFile) {
-          const storageRefTest = ref(storage, `tests_rapidos/${Date.now()}_${fotoTestFile.name}`);
-          const snapshotTest = await uploadBytes(storageRefTest, fotoTestFile);
-          urlFotoTestFinal = await getDownloadURL(snapshotTest.ref);
+          console.log("📸 Convirtiendo foto test...");
+          urlFotoTestFinal = await convertirABase64(fotoTestFile);
       }
 
-      // --- NUEVO: RECOLECCIÓN DE DATOS DE LA TABLA DE TESTS ---
+      // --- RECOLECCIÓN DE TESTS ---
       const filasTests = document.querySelectorAll('#cuerpoTablaCertificado tr');
       const listaTestsRapidos = [];
       filasTests.forEach(fila => {
-          const nombreT = fila.cells[0].querySelector('input') ? 
-                          fila.cells[0].querySelector('input').value : 
-                          fila.cells[0].innerText.trim();
+          const inputNombre = fila.cells[0].querySelector('input');
+          const nombreT = inputNombre ? inputNombre.value : fila.cells[0].innerText.trim();
           const resultadoT = fila.cells[1].querySelector('select').value;
           const notaT = fila.cells[2].querySelector('input').value;
 
@@ -2859,7 +2859,7 @@ window.guardarFirebase = async (imp) => {
           }
       });
 
-      // 2. OBTENER CONFIGURACIÓN (REVISA CACHÉ SI NO HAY INTERNET)
+      // --- CÁLCULOS ECONÓMICOS ---
       const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
       let porcGlobal = null;
       if (configSnap.exists()) {
@@ -2867,19 +2867,13 @@ window.guardarFirebase = async (imp) => {
         porcGlobal = (cData.porcentajeDoc ?? cData.porcDoc) > 0 ? (cData.porcentajeDoc ?? cData.porcDoc) : null;
       }
 
-      // 3. RECOLECCIÓN DE DATOS Y CÁLCULOS
-      const dInput = (id) => {
-        const el = document.getElementById(id);
-        return el ? el.value.trim() : "";
-      };
-
+      const dInput = (id) => document.getElementById(id)?.value.trim() || "";
       const montoVentaTotal = parseFloat(document.getElementById('precioVenta').value) || 0;
       const detalleInsumos = [];
       let totalGastos = 0;
       let pagoDoctorTotal = 0;
 
       const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
-
       serviciosPrincipales.forEach(fila => {
         const grupoID = fila.getAttribute('data-grupo');
         const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
@@ -2887,23 +2881,19 @@ window.guardarFirebase = async (imp) => {
         const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
 
         let gastosEsteServicio = 0;
-
-        // Sumar insumos asociados a este servicio
         document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
           const nombre = insumoFila.cells[0].innerText.replace(/[➕🔹]/g, '').trim();
           const cant = parseFloat(insumoFila.querySelector('.i-cant')?.value) || 0;
           const costoUnidad = parseFloat(insumoFila.querySelector('.i-cost')?.value) || 0;
           const subtotalInsumo = cant * costoUnidad;
-
           gastosEsteServicio += subtotalInsumo;
           detalleInsumos.push({ nombre, cant, costo: costoUnidad });
         });
-
         totalGastos += gastosEsteServicio;
         pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
       });
 
-      // 4. ESTRUCTURA FINAL DEL REGISTRO (DATA)
+      // --- ESTRUCTURA DE DATOS FINAL ---
       const dataConsulta = {
         cedula: dInput('hCI'),
         propietario: dInput('hProp'),
@@ -2912,52 +2902,36 @@ window.guardarFirebase = async (imp) => {
         tratamiento: dInput('hTratamiento'),
         montoVenta: montoVentaTotal,
         montoInsumos: totalGastos,
-        costoInsumosTotal: totalGastos,
         pagoDoctor: pagoDoctorTotal,
         pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
         listaDetalladaInsumos: detalleInsumos,
         fecha: serverTimestamp(),
         fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
-        alerta: !!document.getElementById('hAlerta')?.checked,
-        color: dInput('hColor'),
-        telefono: dInput('hTlf'),
-        correo: dInput('hMail'),
-        direccion: dInput('hDir'),
+        urlExamen: urlFotoFinal, // AQUÍ VA EL TEXTO DE LA FOTO
+        urlFotoTest: urlFotoTestFinal, // AQUÍ VA EL TEXTO DEL TEST
+        testsRealizados: listaTestsRapidos,
         especie: dInput('hEspecie'),
         raza: dInput('hRaza'),
-        edad: dInput('hEdad'),
-        sexo: dInput('hSexo'),
-        peso: dInput('hPeso'),
-        // CAMPOS DE IMAGEN HISTORIA
-        urlExamen: urlFotoFinal,
-        notaExamen: dInput('notaAdjuntoHistoria'),
-        // NUEVOS CAMPOS DE TESTS RÁPIDOS
-        urlFotoTest: urlFotoTestFinal,
-        notaFotoTest: dInput('notaFotoTest'),
-        testsRealizados: listaTestsRapidos
+        peso: dInput('hPeso')
       };
 
-      // 5. GUARDADO (EL DISPARO FINAL)
+      // --- GUARDADO DIRECTO A FIRESTORE ---
       await addDoc(collection(db, "consultas"), dataConsulta);
+      console.log("✅ Guardado en Firestore exitoso (Modo Venezuela Activo)");
 
-      // Exportación automática
-      if (typeof window.exportarHistorialAExcel === 'function') {
-        window.exportarHistorialAExcel();
-      }
+      if (typeof window.exportarHistorialAExcel === 'function') window.exportarHistorialAExcel();
 
-      // 6. ACCIÓN FINAL (IMPRIMIR O AVISAR)
       if (imp) {
-        const tArea = document.getElementById('hTratamientoPrint');
-        if (tArea) tArea.innerText = dInput('hTratamiento');
-        alert("✅ Consulta y Tests guardados con éxito.");
+        document.getElementById('hTratamientoPrint').innerText = dInput('hTratamiento');
+        alert("✅ Guardado con éxito. Preparando impresión...");
         setTimeout(() => window.print(), 600);
       } else {
-        alert("✅ Consulta y Tests guardados exitosamente.");
+        alert("✅ Guardado exitosamente en la nube.");
       }
 
     } catch (e) {
       console.error("Error al guardar:", e);
-      alert("❌ Error crítico: " + e.message);
+      alert("❌ Error: " + e.message);
     }
 };
  // =========================================================
@@ -4481,6 +4455,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
