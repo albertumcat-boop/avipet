@@ -1050,10 +1050,6 @@
                     <div id="proximaGratis" class="mt-2 hidden bg-emerald-500 text-white text-center py-1 rounded font-black text-[9px] uppercase animate-pulse italic">
                         ✨ ¡PRÓXIMO SERVICIO GRATIS! ✨
                     </div>
-                    <div class="mt-4 flex gap-2 no-print">
-                        <button type="button" onclick="window.descargarTarjetaPelu()" class="flex-1 bg-slate-800 text-white text-[9px] font-black py-2 rounded-lg hover:bg-black transition-all uppercase">📥 Guardar Imagen</button>
-                        <button type="button" onclick="window.mostrarQRTarjeta()" class="flex-1 border-2 border-blue-600 text-blue-700 text-[9px] font-black py-2 rounded-lg hover:bg-blue-50 transition-all uppercase">📱 Ver QR</button>
-                    </div>
                 </div>
             </div>
 
@@ -1089,6 +1085,18 @@
                     </div>
                 </div>
 
+                <div class="bg-slate-800 p-3 rounded-lg border-2 border-slate-700 shadow-sm space-y-2">
+                    <label class="block text-[10px] font-black text-slate-300 uppercase mb-1 italic">👥 Asignación de Ayudantes</label>
+                    <div class="flex items-center gap-3 bg-slate-700/50 p-2 rounded border border-slate-600">
+                        <input type="checkbox" id="pAyudante1" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <label for="pAyudante1" class="text-[10px] font-bold text-white uppercase cursor-pointer">Ayudante Principal (1x2)</label>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-700/50 p-2 rounded border border-slate-600">
+                        <input type="checkbox" id="pAyudanteExtra" class="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500">
+                        <label for="pAyudanteExtra" class="text-[10px] font-bold text-red-400 uppercase cursor-pointer">Ayudante Extra (Regla 1/3)</label>
+                    </div>
+                </div>
+
                 <div class="bg-blue-50 p-3 rounded-lg border-2 border-blue-200 shadow-sm">
                     <label class="block text-[10px] font-black text-blue-700 uppercase mb-1 italic">💰 Método de Pago</label>
                     <select id="pMetodoPago" class="w-full p-2 bg-white border border-blue-200 rounded-lg outline-none font-bold text-xs">
@@ -1118,10 +1126,10 @@
         <div class="bg-slate-100 p-6 border-t-2 border-slate-200">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-black text-blue-800 italic uppercase flex items-center gap-2">
-                    <span class="bg-blue-600 w-2 h-6 rounded-full"></span> 📋 Bitácora de Peluquería Hoy
+                    <span class="bg-blue-600 w-2 h-6 rounded-full"></span> 📋 Bitácora de Trabajo
                 </h3>
                 <button onclick="window.cargarBitacoraHoy()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition-all shadow-md">
-                    🔄 REFRESCAR BALANCE
+                    🔄 REFRESCAR LISTA
                 </button>
             </div>
             
@@ -1129,12 +1137,11 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-800 text-white uppercase text-[10px] italic">
+                            <th class="p-3 text-center">#</th>
                             <th class="p-3">Mascota / Dueño</th>
-                            <th class="p-3">Cobro</th>
-                            <th class="p-3">Ayudante</th>
-                            <th class="p-3">Peluquera</th>
-                            <th class="p-3">Moneda</th>
-                            <th class="p-3">Hora</th>
+                            <th class="p-3 text-center">Servicio</th>
+                            <th class="p-3 text-center">Cobro</th>
+                            <th class="p-3 text-center">Hora</th>
                         </tr>
                     </thead>
                     <tbody id="tablaBitacoraCuerpo" class="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
@@ -1142,7 +1149,7 @@
                 </table>
             </div>
             
-            <div id="resumenBalancePelu"></div>
+            <div id="resumenBalancePelu" class="hidden"></div>
         </div>
     </div>
     <div id="qrcode" class="hidden"></div>
@@ -4526,6 +4533,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
