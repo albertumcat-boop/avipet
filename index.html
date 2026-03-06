@@ -1233,28 +1233,22 @@
 </div>
                 
 <script type="module">
-  // 1. IMPORTACIONES CON TODAS LAS LLAVES NECESARIAS
+  // 1. IMPORTACIONES CORREGIDAS
   import { db, storage } from './firebase-config.js';
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc // <--- AGREGADO deleteDoc
+    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc,
+    orderBy // <--- ¡AÑADIDO PARA QUE EL BUSCADOR FUNCIONE!
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-  // Nota: Si ya no vas a usar Storage para las fotos, podrías quitar los imports de storage,
-  // pero dejarlos no hace daño por si guardas otros archivos luego.
-  import { 
-    ref, uploadBytes, getDownloadURL 
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   // 2. CONFIGURACIÓN DE PERSISTENCIA (MODO OFFLINE)
   import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   
   enableIndexedDbPersistence(db).catch((err) => {
       if (err.code == 'failed-precondition') console.warn("Persistencia falló: múltiples pestañas abiertas.");
-      else if (err.code == 'unimplemented') console.warn("El navegador no soporta persistencia.");
   });
 
-  // 3. DETECTOR MÓVIL (QUEDA IGUAL)
+  // 3. DETECTOR MÓVIL
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
@@ -1265,7 +1259,6 @@
           }
       }, 100);
   }
-
 // =========================================================
 // [16] FUNCIÓN MAESTRA DE GUARDADO (ALTA VELOCIDAD)
 // =========================================================
@@ -4865,6 +4858,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
