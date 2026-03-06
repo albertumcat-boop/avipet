@@ -1334,53 +1334,43 @@ window.guardarFirebase = async (imp) => {
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
     if (!esValido) return alert("❌ PIN incorrecto.");
 
+    // Bloqueamos botón
     const btnGuardar = document.activeElement;
     const textoOriginal = btnGuardar ? btnGuardar.innerText : "Guardar";
     if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
         btnGuardar.disabled = true;
-        btnGuardar.innerText = "⏳ OPTIMIZANDO...";
+        btnGuardar.innerText = "⏳ PROCESANDO...";
     }
 
     try {
-        const comprimirImagen = (archivo) => {
+        // --- FUNCIÓN DE LECTURA SIMPLE (SIN COMPRESIÓN) ---
+        const leerImagen = (archivo) => {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(archivo);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_W = 800;
-                        let w = img.width;
-                        let h = img.height;
-                        if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; }
-                        canvas.width = w; canvas.height = h;
-                        const ctx = canvas.getContext('2d');
-                        ctx.fillStyle = "#FFFFFF";
-                        ctx.fillRect(0, 0, w, h);
-                        ctx.drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6));
-                    };
-                };
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => resolve("");
             });
         };
 
         const fileHistoria = document.getElementById('inputFotoHistoria')?.files[0];
         const fileTest = document.getElementById('inputFotoTest')?.files[0];
         
+        // Obtenemos URLs previas (si existen por QR)
         let urlFotoFinal = document.getElementById('pUrlExamen')?.value || "";
         let urlFotoTestFinal = "";
 
+        // Si hay archivos nuevos en los inputs, reemplazan lo anterior
         if (fileHistoria) {
-            btnGuardar.innerText = "📸 Ajustando Historia...";
-            urlFotoFinal = await comprimirImagen(fileHistoria);
+            btnGuardar.innerText = "📸 Cargando Historia...";
+            urlFotoFinal = await leerImagen(fileHistoria);
         }
         if (fileTest) {
-            btnGuardar.innerText = "🧪 Ajustando Test...";
-            urlFotoTestFinal = await comprimirImagen(fileTest);
+            btnGuardar.innerText = "🧪 Cargando Test...";
+            urlFotoTestFinal = await leerImagen(fileTest);
         }
 
+        // --- RECOLECCIÓN DE TESTS ---
         const listaTests = [];
         document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila => {
             const nombre = fila.cells[0].querySelector('input')?.value || fila.cells[0].innerText.trim();
@@ -1391,12 +1381,12 @@ window.guardarFirebase = async (imp) => {
             }
         });
 
+        // --- CÁLCULOS ECONÓMICOS ---
+        const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
         const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
         let porcGlobal = configSnap.exists() ? (configSnap.data().porcentajeDoc || null) : null;
 
-        const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
         const montoVentaTotal = parseFloat(document.getElementById('precioVenta')?.value) || 0;
-        
         let totalGastos = 0;
         let pagoDoctorTotal = 0;
         const detalleInsumos = [];
@@ -1420,18 +1410,18 @@ window.guardarFirebase = async (imp) => {
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
-        // --- ESTRUCTURA FINAL SINCRONIZADA CON TU HTML ---
+        // --- ESTRUCTURA FINAL (SINCRONIZADA CON PRUEBA INDEX.TXT) ---
         const data = {
-            cedula: dInput('hCedula'),      // CORREGIDO: En el TXT es hCedula
-            propietario: dInput('hPropietario'), // CORREGIDO: En el TXT es hPropietario
+            cedula: dInput('hCI'),          // ID real en tu TXT
+            propietario: dInput('hProp'),    // ID real en tu TXT
             paciente: dInput('hNombre'),
             especie: dInput('hEspecie'),
             raza: dInput('hRaza'),
             sexo: dInput('hSexo'),
             edad: dInput('hEdad'),
             doctor: nombreDoctor,
-            urlExamen: urlFotoFinal,
-            urlFotoTest: urlFotoTestFinal,
+            urlExamen: urlFotoFinal,        // Foto historia
+            urlFotoTest: urlFotoTestFinal,  // Foto test
             testsRealizados: listaTests,
             montoVenta: montoVentaTotal,
             montoInsumos: totalGastos,
@@ -1446,7 +1436,7 @@ window.guardarFirebase = async (imp) => {
         btnGuardar.innerText = "💾 REGISTRANDO...";
         await addDoc(collection(db, "consultas"), data);
         
-        alert("✅ ¡Consulta guardada y optimizada con éxito!");
+        alert("✅ ¡Consulta guardada con éxito!");
         if (imp) window.print();
 
     } catch (e) {
@@ -2324,26 +2314,26 @@ window.agregarMedicamento = (nombreMed) => {
     window.calcularTodo();
     document.getElementById('selectorMedicamentos').value = "";
   };
- // --- 1. PREVISUALIZACIÓN HISTORIA (Sincronizado con PRUEBA INDEX.txt) ---
+ 
+// --- 1. PREVISUALIZACIÓN HISTORIA (Corregido para PRUEBA INDEX) ---
 window.previsualizarFotoHistoria = (event) => {
     const file = event.target.files[0];
-    const imgPreview = document.getElementById('imgHistoriaPreview'); // ID en línea 554
-    const previewCont = document.getElementById('previewHistoriaContainer'); // ID en línea 554
-    const imgPrint = document.getElementById('imgHistoriaPrint'); // ID CORRECTO en línea 551
+    const imgPreview = document.getElementById('imgHistoriaPreview');
+    const previewCont = document.getElementById('previewHistoriaContainer');
+    const imgPrint = document.getElementById('imgHistoriaPrint');
 
     if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
             const dataUrl = e.target.result;
-            // 📸 Miniatura en pantalla
             if (imgPreview) imgPreview.src = dataUrl;
             if (previewCont) previewCont.classList.remove('hidden');
             
-            // 🖨️ Foto para el papel (Sección de impresión)
             if (imgPrint) {
                 imgPrint.src = dataUrl;
-                // Mostramos el contenedor del anexo en la impresión
-                document.getElementById('printExamenCont')?.classList.remove('hidden');
+                // CAMBIO CLAVE: De 'printExamenCont' a 'printHistoriaCont'
+                const contImpresion = document.getElementById('printHistoriaCont');
+                if (contImpresion) contImpresion.classList.remove('hidden');
             }
         };
         reader.readAsDataURL(file);
@@ -2357,12 +2347,12 @@ window.quitarFotoHistoria = () => {
     if (imgPrint) imgPrint.src = "";
     document.getElementById('printExamenCont')?.classList.add('hidden');
 };
-  // --- 2. PREVISUALIZACIÓN TEST (Sincronizado con PRUEBA INDEX.txt) ---
+  // --- 2. PREVISUALIZACIÓN TEST (Corregido para PRUEBA INDEX) ---
 window.previsualizarFotoTest = (event) => {
     const file = event.target.files[0];
-    const imgPreview = document.getElementById('imgTestPreview'); 
+    const imgPreview = document.getElementById('imgTestPreview');
     const previewCont = document.getElementById('previewTestContainer');
-    const imgPrint = document.getElementById('imgTestPrint'); // ID CORRECTO en línea 551
+    const imgPrint = document.getElementById('imgTestPrint');
 
     if (file) {
         const reader = new FileReader();
@@ -2370,11 +2360,12 @@ window.previsualizarFotoTest = (event) => {
             const dataUrl = e.target.result;
             if (imgPreview) imgPreview.src = dataUrl;
             if (previewCont) previewCont.classList.remove('hidden');
-            
+
             if (imgPrint) {
                 imgPrint.src = dataUrl;
-                // Mostramos el contenedor del anexo en la impresión
-                document.getElementById('printTestCont')?.classList.remove('hidden');
+                // CAMBIO CLAVE: De 'printTestCont' a 'printTestCont' (Verificar que coincida con el HTML)
+                const contTest = document.getElementById('printTestCont');
+                if (contTest) contTest.classList.remove('hidden');
             }
         };
         reader.readAsDataURL(file);
@@ -4968,6 +4959,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
