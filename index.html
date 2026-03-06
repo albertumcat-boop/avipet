@@ -1232,111 +1232,104 @@
     </div>
 </div>
 <script type="module">
-  // 1. IMPORTACIONES AJUSTADAS
+  // 1. IMPORTACIONES
   import { db, storage } from './firebase-config.js';
-
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
     doc, getDoc, setDoc, updateDoc, orderBy, limit,
     enableIndexedDbPersistence, deleteDoc, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
   import { 
-    ref, 
-    uploadBytes, 
-    getDownloadURL 
+    ref, uploadBytes, getDownloadURL 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-  // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
+  // 2. MODO OFFLINE
   enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code == 'failed-precondition') {
-          console.warn("Persistencia falló: Múltiples pestañas abiertas.");
-      } else if (err.code == 'unimplemented') {
-          console.warn("Persistencia no soportada por este navegador.");
-      }
+      if (err.code == 'failed-precondition') console.warn("Persistencia falló.");
   });
 
-  // [NUEVO] INTERCEPTOR PARA MODO MÓVIL
+  // 3. DETECTOR MÓVIL (Intercepción inmediata)
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
-      setTimeout(() => { 
-          if (window.mostrarInterfazSoloCamara) window.mostrarInterfazSoloCamara(ciMascota); 
-      }, 500);
+      // Usamos un intervalo corto para asegurar que el DOM esté listo
+      const checkInterfaz = setInterval(() => {
+          if (window.mostrarInterfazSoloCamara) {
+              window.mostrarInterfazSoloCamara(ciMascota);
+              clearInterval(checkInterfaz);
+          }
+      }, 100);
   }
 
-  // ========= [02] UTILIDADES Y CATÁLOGOS =========
+  // ========= UTILIDADES =========
   const normalizarNombre = (n) => {
     if (!n) return "";
-    return n.toLowerCase()
-      .replace(/\s+/g, '')
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return n.toLowerCase().replace(/\s+/g, '').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
   // ==========================================
-  // [NUEVO] LÓGICA DE SINCRONIZACIÓN QR (PC)
+  // LÓGICA PC: GENERAR QR (EXPUESTA AL WINDOW)
   // ==========================================
   window.generarEnlaceMovil = () => {
-      const cedula = document.getElementById('hCI').value;
-      if (!cedula) return alert("⚠️ Albert, escribe la Cédula del propietario primero.");
+      const cedulaInput = document.getElementById('hCI');
+      if (!cedulaInput || !cedulaInput.value) {
+          return alert("⚠️ Albert, escribe la Cédula del propietario primero.");
+      }
+      const cedula = cedulaInput.value;
 
       const qrDiv = document.getElementById("qrcode");
+      if (!qrDiv) return console.error("No existe el div 'qrcode'");
+      
       qrDiv.innerHTML = ""; 
       document.getElementById("qrContainer").classList.remove("hidden");
 
-      // Construye la URL dinámica
       const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}`;
 
-      new QRCode(qrDiv, {
-          text: urlVinculo,
-          width: 128,
-          height: 128
-      });
+      // Verificar si la librería QRCode existe
+      if (typeof QRCode !== "undefined") {
+          new QRCode(qrDiv, { text: urlVinculo, width: 128, height: 128 });
+      } else {
+          alert("Error: Librería QR no cargada.");
+      }
 
-      // La PC se pone en modo "Escucha" esperando la foto
+      // Escucha activa (Radar)
       const docRef = doc(db, "transferencias_fotos", cedula);
       const unsub = onSnapshot(docRef, (docSnap) => {
           if (docSnap.exists()) {
               const data = docSnap.data();
-              
-              // Cargar preview en la PC
-              document.getElementById('imgHistoriaPreview').src = data.url;
-              document.getElementById('previewHistoriaContainer').classList.remove('hidden');
-              
-              // Guardar la URL en el campo que se enviará a Firebase
-              if(document.getElementById('pUrlExamen')) {
-                  document.getElementById('pUrlExamen').value = data.url;
-              }
+              const previewImg = document.getElementById('imgHistoriaPreview');
+              const previewCont = document.getElementById('previewHistoriaContainer');
+              const urlHidden = document.getElementById('pUrlExamen');
+
+              if (previewImg) previewImg.src = data.url;
+              if (previewCont) previewCont.classList.remove('hidden');
+              if (urlHidden) urlHidden.value = data.url;
 
               document.getElementById("qrContainer").classList.add("hidden");
-              alert("🚀 ¡Foto recibida del teléfono con éxito!");
+              alert("🚀 ¡Foto recibida con éxito!");
               
-              deleteDoc(docRef); // Limpiar puente
-              unsub(); // Apagar radar
+              deleteDoc(docRef); 
+              unsub(); 
           }
       });
   };
 
   // ==========================================
-  // [NUEVO] INTERFAZ MÓVIL (TELÉFONO)
+  // INTERFAZ MÓVIL (EXPUESTA AL WINDOW)
   // ==========================================
   window.mostrarInterfazSoloCamara = (ci) => {
       document.body.innerHTML = `
           <div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans">
               <div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center">
-                  <img src="avipet.png" alt="Logo" class="h-16 mx-auto mb-4 object-contain">
                   <h1 class="text-xl font-black uppercase text-blue-400 italic">Escáner Móvil</h1>
                   <p class="text-slate-400 text-xs mb-6 uppercase">Paciente CI: <b>${ci}</b></p>
-                  
                   <input type="file" id="mobileFile" accept="image/*" capture="environment" class="hidden" 
                          onchange="window.procesarSubidaMovil(this, '${ci}')">
-
                   <button onclick="document.getElementById('mobileFile').click()" 
-                          class="w-full bg-blue-600 py-6 rounded-2xl font-black text-lg shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all">
-                      <span class="text-3xl">📷</span> TOMAR FOTO
+                          class="w-full bg-blue-600 py-6 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all">
+                      📷 TOMAR FOTO
                   </button>
-
-                  <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300">Listo para capturar...</div>
+                  <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300">Listo...</div>
               </div>
           </div>`;
   };
@@ -1345,26 +1338,19 @@
       const status = document.getElementById('statusMovil');
       const file = input.files[0];
       if (!file) return;
-
-      status.innerText = "⏳ Subiendo a la nube...";
-
+      status.innerText = "⏳ Subiendo...";
       try {
           const storageRef = ref(storage, `transferencias/${ci}_${Date.now()}.jpg`);
           const snapshot = await uploadBytes(storageRef, file);
           const urlFinal = await getDownloadURL(snapshot.ref);
-
-          await setDoc(doc(db, "transferencias_fotos", ci), {
-              url: urlFinal,
-              fecha: serverTimestamp()
-          });
-
-          status.innerHTML = "✅ ¡ENVIADO! Revisa tu computadora.";
+          await setDoc(doc(db, "transferencias_fotos", ci), { url: urlFinal, fecha: serverTimestamp() });
+          status.innerHTML = "✅ ENVIADO.";
       } catch (e) {
           status.innerText = "❌ Error: " + e.message;
       }
   };
 
-  // AQUÍ CONTINÚA EL RESTO DE TU CÓDIGO (showTab, guardarFirebase, etc.)
+  // AQUÍ SIGUE EL RESTO (showTab, guardarFirebase, etc.)
 
   const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
@@ -4883,6 +4869,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
