@@ -107,6 +107,32 @@
         /* Forzamos que el navegador las renderice antes de disparar la impresión */
         image-rendering: auto !important;
     }
+  /* --- AJUSTE DINÁMICO PARA LAS FOTOS RECIBIDAS POR QR --- */
+    #printExamenCont, #printTestCont {
+        display: block !important; /* Se asegura de que se vean en papel */
+        page-break-inside: avoid;   /* Evita que la foto se corte entre dos páginas */
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .foto-anexo {
+        max-width: 100% !important;
+        max-height: 400px !important; /* Evita que una foto gigante gaste toda la hoja */
+        object-fit: contain;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin: 0 auto;
+    }
+
+    /* Título de los anexos en la impresión */
+    .titulo-anexo {
+        font-size: 10px;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+    }
 
     /* Regla maestra para tus fotos comprimidas (Base64) */
     img[src^="data:image"] {
@@ -257,11 +283,11 @@
   <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height: 100px;">
     
     <div class="flex items-center">
-  <div class="relative w-48 flex flex-col items-center sm:items-start"> 
-      <img src="avipet.png" alt="Logo Avipet" class="w-full h-24 object-contain">
-     <p class="text-[10px] font-bold text-slate-700 mt-[-14px] uppercase tracking-wider">RIF: J-00068577-0</p>
-  </div>
-</div>
+      <div class="relative w-48 flex flex-col items-center sm:items-start"> 
+          <img src="avipet.png" alt="Logo Avipet" class="w-full h-24 object-contain">
+          <p class="text-[10px] font-bold text-slate-700 mt-[-14px] uppercase tracking-wider">RIF: J-00068577-0</p>
+      </div>
+    </div>
     
     <div class="flex flex-col items-end text-right z-10">
       
@@ -299,7 +325,6 @@
 
   </div>
 
-    <!-- Ficha Mascota / Propietario -->
     <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
       <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
         <div class="header-box italic">Ficha Técnica de Mascota</div>
@@ -320,7 +345,6 @@
             <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
             <input id="hPeso" class="border-b w-full">
           </div>
-          <!-- AJUSTADO: 3 columnas EDAD / SEXO / COLOR -->
           <div class="grid grid-cols-3 gap-1">
             <div>
               <label class="text-[9px] font-bold text-slate-400">EDAD</label>
@@ -371,7 +395,6 @@
       </div>
     </div>
 
-    <!-- Servicios -->
     <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
       <div class="bg-slate-100 p-3 no-print">
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
@@ -475,45 +498,58 @@
           <option value="Infervac">Infervac</option>
         </select>
       </div>
-      <textarea id="hTratamiento"
-          class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none border border-slate-200"
-                placeholder="Escriba aquí el diagnóstico..."
-                oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
-      <div id="hTratamientoPrint"
-           class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
-    </div>
+     <textarea id="hTratamiento"
+    class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none border border-slate-200"
+    placeholder="Escriba aquí el diagnóstico..."
+    oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
 
-   <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
+<div id="hTratamientoPrint"
+    class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
+
+<div id="printExamenCont" class="hidden print:block mt-4 text-center">
+    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Anexo: Examen / Documento</p>
+    <img id="imgHistoriaPrint" src="" class="max-w-full h-auto max-h-[400px] mx-auto rounded-lg border border-slate-300 foto-anexo">
+</div>
+
+<div id="printTestCont" class="hidden print:block mt-4 text-center">
+    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Anexo: Resultado Test Rápido</p>
+    <img id="imgTestPrint" src="" class="max-w-full h-auto max-h-[400px] mx-auto rounded-lg border border-slate-300 foto-anexo">
+</div>
+
+<div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
     <label class="block text-[10px] font-black text-slate-500 uppercase mb-2 italic tracking-widest">
         📁 Adjuntar Examen o Documento (PC o Teléfono)
     </label>
     
     <div class="flex flex-wrap items-center gap-4">
         <input type="file" id="inputFotoHistoria" accept="image/*" class="hidden" onchange="window.previsualizarFotoHistoria(event)">
+        
         <button type="button" onclick="document.getElementById('inputFotoHistoria').click()" 
                 class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-black transition-all flex items-center gap-2">
             <span>💻</span> PC / Archivo
         </button>
 
-        <button type="button" onclick="window.generarEnlaceMovil()" 
+        <button type="button" onclick="window.generarEnlaceMovil('historia')" 
                 class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-blue-700 transition-all flex items-center gap-2">
             <span>📱</span> Usar Teléfono (QR)
         </button>
 
-        <div id="qrContainer" class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center animate-pulse">
+        <div id="qrContainer" class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center">
             <div id="qrcode"></div>
-            <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">Escanea para vincular</p>
+            <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">Escanea con la cámara</p>
         </div>
 
-        <div id="previewHistoriaContainer" class="hidden relative w-16 h-16 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm">
+        <div id="previewHistoriaContainer" class="hidden relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white">
             <img id="imgHistoriaPreview" src="" class="w-full h-full object-cover">
-            <input type="hidden" id="pUrlExamen"> <button type="button" onclick="window.quitarFotoHistoria()" 
-                    class="absolute top-0 right-0 bg-red-600 text-white text-[8px] px-1 font-bold italic">X</button>
+            <input type="hidden" id="pUrlExamen"> 
+            <button type="button" onclick="window.quitarFotoHistoria()" 
+                    class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold">✕</button>
         </div>
     </div>
+</div>
     
     <textarea id="notaAdjuntoHistoria" placeholder="Breve nota sobre este documento (Ej: Valores de hematología)" 
-              class="w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white" rows="1"></textarea>
+              class="no-print w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white" rows="1"></textarea>
 </div>
 
     <div id="contenedorInsumos"
@@ -557,7 +593,7 @@
     </div>
     <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
 
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-2 gap-3 no-print">
       <button type="button"
               onclick="guardarFirebase(false)"
               class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">
@@ -572,7 +608,7 @@
 
     <button type="button"
             onclick="window.imprimirRecetaLimpia()"
-            class="w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
+            class="no-print w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
       📄 Receta Sin Costos
     </button>
 
@@ -582,7 +618,7 @@
       💉 Hoja de Vacunas del Paciente
     </button>
 
-   <button type="button"
+    <button type="button"
             onclick="window.enviarAColaEspera()"
             class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3 no-print">
       ➕ Enviar a Cola de Espera
@@ -770,6 +806,7 @@
     <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-2 rounded-lg font-black text-[10px] uppercase text-slate-600 border border-slate-300">⬅ Volver</button>
     <button type="button" onclick="window.print()" class="flex-1 bg-blue-700 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨 Imprimir</button>
   </div>
+
 </section>
   <!-- ========== BUSCADOR ========== -->
 <section id="sectionBuscador" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
@@ -1233,28 +1270,28 @@
 </div>
                 
 <script type="module">
-  // 1. IMPORTACIONES CORREGIDAS
+  // 1. IMPORTACIONES CORREGIDAS Y COMPLETAS
   import { db, storage } from './firebase-config.js';
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc,
-    orderBy // <--- ¡AÑADIDO PARA QUE EL BUSCADOR FUNCIONE!
+    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, orderBy
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   // 2. CONFIGURACIÓN DE PERSISTENCIA (MODO OFFLINE)
   import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  
   enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code == 'failed-precondition') console.warn("Persistencia falló: múltiples pestañas abiertas.");
+      if (err.code == 'failed-precondition') console.warn("Persistencia falló (múltiples pestañas).");
   });
 
-  // 3. DETECTOR MÓVIL
+  // 3. DETECTOR MÓVIL (SISTEMA DE ARRANQUE)
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
+      const tipoFoto = params.get('tipo') || 'historia'; // Detecta si es test o historia
+      
       const checkInterfaz = setInterval(() => {
           if (window.mostrarInterfazSoloCamara) {
-              window.mostrarInterfazSoloCamara(ciMascota);
+              window.mostrarInterfazSoloCamara(ciMascota, tipoFoto);
               clearInterval(checkInterfaz);
           }
       }, 100);
@@ -1404,116 +1441,127 @@ window.guardarFirebase = async (imp) => {
   // ==========================================
   // LÓGICA PC: GENERAR QR (EXPUESTA AL WINDOW)
   // ==========================================
-  window.generarEnlaceMovil = () => {
-      const cedulaInput = document.getElementById('hCI');
-      if (!cedulaInput || !cedulaInput.value) {
-          return alert("⚠️ Albert, escribe la Cédula del propietario primero.");
-      }
-      const cedula = cedulaInput.value;
+ window.generarEnlaceMovil = (tipo = 'historia') => {
+    const cedulaInput = document.getElementById('hCI');
+    if (!cedulaInput || !cedulaInput.value) {
+        return alert("⚠️ Albert, escribe la Cédula del propietario primero.");
+    }
+    const cedula = cedulaInput.value;
 
-      const qrDiv = document.getElementById("qrcode");
-      if (!qrDiv) return console.error("No existe el div 'qrcode'");
-      
-      qrDiv.innerHTML = ""; 
-      document.getElementById("qrContainer").classList.remove("hidden");
+    const qrDiv = document.getElementById("qrcode");
+    if (!qrDiv) return console.error("No existe el div 'qrcode'");
+    
+    qrDiv.innerHTML = ""; 
+    document.getElementById("qrContainer").classList.remove("hidden");
 
-      const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}`;
+    // El enlace ahora lleva el parámetro 'tipo' (historia o test)
+    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;
 
-      // Verificar si la librería QRCode existe
-      if (typeof QRCode !== "undefined") {
-          new QRCode(qrDiv, { text: urlVinculo, width: 128, height: 128 });
-      } else {
-          alert("Error: Librería QR no cargada.");
-      }
+    if (typeof QRCode !== "undefined") {
+        new QRCode(qrDiv, { text: urlVinculo, width: 150, height: 150 });
+    } else {
+        alert("Error: Librería QR no cargada.");
+    }
 
-      // Escucha activa (Radar)
-      const docRef = doc(db, "transferencias_fotos", cedula);
-      const unsub = onSnapshot(docRef, (docSnap) => {
-          if (docSnap.exists()) {
-              const data = docSnap.data();
-              const previewImg = document.getElementById('imgHistoriaPreview');
-              const previewCont = document.getElementById('previewHistoriaContainer');
-              const urlHidden = document.getElementById('pUrlExamen');
+    // --- ESCUCHA ACTIVA (RADAR) ---
+    const docRef = doc(db, "transferencias_fotos", cedula);
+    const unsub = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // 1. Identificamos qué llegó y dónde ponerlo
+            const esTest = (data.tipo === 'test');
+            
+            const previewImg  = document.getElementById(esTest ? 'imgTestPreview' : 'imgHistoriaPreview');
+            const previewCont = document.getElementById(esTest ? 'previewTestContainer' : 'previewHistoriaContainer');
+            const urlHidden   = document.getElementById(esTest ? 'pUrlTest' : 'pUrlExamen');
 
-              if (previewImg) previewImg.src = data.url;
-              if (previewCont) previewCont.classList.remove('hidden');
-              if (urlHidden) urlHidden.value = data.url;
+            // 2. Reflejamos la miniatura en pantalla inmediatamente
+            if (previewImg)  previewImg.src = data.url;
+            if (previewCont) previewCont.classList.remove('hidden');
+            if (urlHidden)   urlHidden.value = data.url;
 
-              document.getElementById("qrContainer").classList.add("hidden");
-              alert("🚀 ¡Foto recibida con éxito!");
-              
-              deleteDoc(docRef); 
-              unsub(); 
-          }
-      });
-  };
-
+            // 3. Cerramos el QR y limpiamos
+            document.getElementById("qrContainer").classList.add("hidden");
+            
+            const mensaje = esTest ? "🧪 Test Rápido recibido" : "📸 Historia Clínica recibida";
+            alert(`🚀 ¡${mensaje} con éxito!`);
+            
+            deleteDoc(docRef); 
+            unsub(); 
+        }
+    });
+};
   // ==========================================
   // INTERFAZ MÓVIL (EXPUESTA AL WINDOW)
   // ==========================================
-  window.mostrarInterfazSoloCamara = (ci) => {
+ window.mostrarInterfazSoloCamara = (ci, tipo) => {
+      // El título cambia según lo que hayas escaneado en la PC
+      const titulo = tipo === 'test' ? "🧪 ESCÁNER DE TEST" : "📸 ESCÁNER DE HISTORIA";
+      const colorBtn = tipo === 'test' ? "bg-emerald-600" : "bg-blue-600";
+
       document.body.innerHTML = `
           <div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans">
               <div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center">
-                  <h1 class="text-xl font-black uppercase text-blue-400 italic">Escáner Móvil</h1>
-                  <p class="text-slate-400 text-xs mb-6 uppercase">Paciente CI: <b>${ci}</b></p>
+                  <h1 class="text-xl font-black uppercase italic ${tipo === 'test' ? 'text-emerald-400' : 'text-blue-400'}">${titulo}</h1>
+                  <p class="text-slate-400 text-[10px] mb-6 uppercase tracking-widest">Paciente CI: <b>${ci}</b></p>
+                  
                   <input type="file" id="mobileFile" accept="image/*" capture="environment" class="hidden" 
-                         onchange="window.procesarSubidaMovil(this, '${ci}')">
+                         onchange="window.procesarSubidaMovil(this, '${ci}', '${tipo}')">
+                  
                   <button onclick="document.getElementById('mobileFile').click()" 
-                          class="w-full bg-blue-600 py-6 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all">
+                          class="w-full ${colorBtn} py-6 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all">
                       📷 TOMAR FOTO
                   </button>
-                  <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300">Listo...</div>
+                  
+                  <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic animate-pulse">Listo para capturar...</div>
               </div>
           </div>`;
   };
+window.generarEnlaceMovil = (tipo = 'historia') => {
+    const cedula = document.getElementById('hCI')?.value;
+    if (!cedula) return alert("⚠️ Albert, escribe la CI primero.");
 
-window.procesarSubidaMovil = async (input, ci) => {
-    const status = document.getElementById('statusMovil');
-    const file = input.files[0];
-    if (!file) return;
+    const qrDiv = document.getElementById("qrcode");
+    qrDiv.innerHTML = "";
+    document.getElementById("qrContainer").classList.remove("hidden");
 
-    status.innerHTML = "⏳ <b class='text-yellow-400'>PREPARANDO MOTOR...</b>";
+    // El link lleva el ADN de la foto (historia o test)
+    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;
+    new QRCode(qrDiv, { text: urlVinculo, width: 140, height: 140 });
 
-    // --- COMPRESIÓN PARA QUE PASE POR EL RADAR ---
-    const optimizarImagen = (archivo) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(archivo);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_W = 800; // Resolución suficiente para medicina
-                    let w = img.width;
-                    let h = img.height;
-                    if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    // 0.5 de calidad hace que la foto pese 150kb aprox.
-                    resolve(canvas.toDataURL('image/jpeg', 0.5));
-                };
-            };
-        });
-    };
+    const docRef = doc(db, "transferencias_fotos", cedula);
+    const unsub = onSnapshot(docRef, async (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // Detectamos qué llegó
+            const esTest = (data.tipo === 'test');
+            
+            // 1. Inyectar en la interfaz de usuario (Vista Previa)
+            const previewImg = document.getElementById(esTest ? 'imgTestPreview' : 'imgHistoriaPreview');
+            const previewCont = document.getElementById(esTest ? 'previewTestContainer' : 'previewHistoriaContainer');
+            const urlHidden = document.getElementById(esTest ? 'pUrlTest' : 'pUrlExamen');
 
-    try {
-        const fotoComprimida = await optimizarImagen(file);
-        status.innerHTML = "🚀 <b class='text-blue-400'>ENVIANDO A PC...</b>";
+            if (previewImg) previewImg.src = data.url;
+            if (previewCont) previewCont.classList.remove('hidden');
+            if (urlHidden) urlHidden.value = data.url;
 
-        // Aquí es donde la PC lo detecta
-        await setDoc(doc(db, "transferencias_fotos", ci), {
-            url: fotoComprimida,
-            fecha: serverTimestamp()
-        });
+            // 2. Inyectar en la zona de IMPRESIÓN (La que sale en el papel)
+            const imgPrint = document.getElementById(esTest ? 'imgTestPrint' : 'imgHistoriaPrint');
+            if (imgPrint) {
+                imgPrint.src = data.url;
+                imgPrint.parentElement.classList.remove('hidden'); 
+            }
 
-        status.innerHTML = "<b class='text-green-400'>✅ ¡LISTO! MIRA LA PC</b>";
-    } catch (e) {
-        console.error(e);
-        status.innerHTML = "❌ <b class='text-red-400'>FALLÓ:</b> " + e.message;
-    }
+            // 3. Limpiar radar
+            document.getElementById("qrContainer").classList.add("hidden");
+            alert(`✅ ${esTest ? 'TEST' : 'HISTORIA'} recibida y lista para imprimir.`);
+            
+            await deleteDoc(docRef);
+            unsub();
+        }
+    });
 };
   const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
@@ -3784,14 +3832,33 @@ window.imprimirDocumento = () => {
     console.log("⚓ Iniciando secuencia de impresión Avipet...");
 
     // 1. Forzar limpieza de campos dinámicos
-    // Pasamos el contenido de los textarea de tratamiento a un div de impresión si fuera necesario
     const hTrat = document.getElementById('hTratamiento');
     const hTratPrint = document.getElementById('hTratamientoPrint');
     if (hTrat && hTratPrint) {
         hTratPrint.innerText = hTrat.value;
     }
 
-    // 2. Asegurar que los logos de los doctores estén visibles
+    // [NUEVO] 1.5. Inyectar Fotos del Teléfono en la zona de impresión
+    const urlHistoria = document.getElementById('pUrlExamen')?.value;
+    const urlTest = document.getElementById('pUrlTest')?.value;
+
+    if (urlHistoria) {
+        const imgH = document.getElementById('imgHistoriaPrint');
+        if (imgH) {
+            imgH.src = urlHistoria;
+            imgH.closest('.print-only')?.classList.remove('hidden'); // Muestra el contenedor si estaba oculto
+        }
+    }
+
+    if (urlTest) {
+        const imgT = document.getElementById('imgTestPrint');
+        if (imgT) {
+            imgT.src = urlTest;
+            imgT.closest('.print-only')?.classList.remove('hidden');
+        }
+    }
+
+    // 2. Asegurar que logos y fotos estén visibles
     const logos = document.querySelectorAll('img[src^="data:image"], .print-area img');
     logos.forEach(img => {
         img.style.display = 'block';
@@ -3799,47 +3866,85 @@ window.imprimirDocumento = () => {
         img.style.opacity = '1';
     });
 
-    // 3. Pequeño retraso de "secado de tinta" (300ms)
-    // Esto da tiempo al navegador para aplicar las reglas de @media print
+    // 3. Pequeño retraso de "secado de tinta" (aumentado a 500ms para que las fotos carguen)
     setTimeout(() => {
         window.print();
-        console.log("✅ Impresión enviada al sistema.");
-    }, 300);
+        console.log("✅ Impresión enviada con anexos fotográficos.");
+    }, 500);
 };
   // =========================================================
   // [NUEVO] RECETA SIN COSTOS (IMPRESIÓN SIMPLE)
   // =========================================================
-  window.imprimirRecetaLimpia = () => {
+ window.imprimirRecetaLimpia = () => {
     const texto = document.getElementById('hTratamiento')?.value || "";
     const paciente = document.getElementById('hNombre')?.value || "";
     const propietario = document.getElementById('hProp')?.value || "";
+    
+    // Capturamos las fotos (si es que se tomaron)
+    const urlExamen = document.getElementById('pUrlExamen')?.value || "";
+    const urlTest = document.getElementById('pUrlTest')?.value || "";
 
     const ventana = window.open("", "_blank", "width=800,height=600");
     if (!ventana) return;
+
+    // Preparamos el bloque de imágenes para el HTML
+    let bloqueFotos = "";
+    if (urlExamen) {
+        bloqueFotos += `<div style="margin-top:20px; text-align:center;">
+            <p style="font-size:10px; font-weight:bold; color:#3b82f6;">ANEXO: EXAMEN CLÍNICO</p>
+            <img src="${urlExamen}" style="max-width:350px; border-radius:10px; border:1px solid #ddd;">
+        </div>`;
+    }
+    if (urlTest) {
+        bloqueFotos += `<div style="margin-top:20px; text-align:center;">
+            <p style="font-size:10px; font-weight:bold; color:#10b981;">ANEXO: RESULTADO TEST RÁPIDO</p>
+            <img src="${urlTest}" style="max-width:350px; border-radius:10px; border:1px solid #ddd;">
+        </div>`;
+    }
 
     ventana.document.write(`
       <html>
       <head>
         <title>Receta - AVIPET</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { font-size: 18px; margin-bottom: 5px; }
-          h2 { font-size: 14px; margin-bottom: 10px; }
-          pre { white-space: pre-wrap; font-size: 12px; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; }
+          .header { border-bottom: 3px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; }
+          h1 { font-size: 24px; margin: 0; color: #1e3a8a; }
+          h2 { font-size: 14px; margin: 5px 0; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+          .content { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; min-height: 200px; }
+          pre { white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin: 0; }
+          .footer { margin-top: 30px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #eee; pt: 10px; }
         </style>
       </head>
       <body>
-        <h1>AVIPET - Receta sin costos</h1>
-        <h2>Paciente: ${paciente} | Propietario: ${propietario}</h2>
-        <hr/>
-        <pre>${texto}</pre>
+        <div class="header">
+            <h1>AVIPET - Centro Veterinario</h1>
+            <h2>Paciente: <b>${paciente}</b> | Propietario: ${propietario}</h2>
+        </div>
+        
+        <div class="content">
+          <pre>${texto}</pre>
+        </div>
+
+        ${bloqueFotos}
+
+        <div class="footer">
+            Este documento es una receta digital generada por el sistema de gestión de Avipet.
+        </div>
       </body>
       </html>
     `);
+    
     ventana.document.close();
-    ventana.focus();
-    ventana.print();
-  };
+    
+    // Esperamos a que las fotos carguen antes de imprimir
+    ventana.onload = () => {
+        setTimeout(() => {
+            ventana.focus();
+            ventana.print();
+        }, 300);
+    };
+};
 
   // =========================================================
   // [19] INICIALIZACIÓN BÁSICA
@@ -4858,6 +4963,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
