@@ -773,11 +773,6 @@
                 <img src="avipet.png" alt="Logo" class="h-10 object-contain">
                 <h2 class="text-lg font-black text-slate-800 uppercase italic leading-none">Caja Diaria</h2>
             </div>
-            <div class="text-right">
-                <span class="text-[10px] font-bold text-slate-500 uppercase italic">Pacientes Hoy</span>
-                <p id="totalPacientes" class="text-xl font-black text-blue-600 leading-none">0</p>
-            </div>
-        </div>
 
         <div class="p-6">
             <div class="mb-6">
@@ -930,21 +925,18 @@
                           <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto fijo por servicio estándar.</p>
                       </div>
 
-                      <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
-                          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
-                              Ayudante Extra (Agresividad/Dificultad) ($)
-                          </label>
-                          <div class="relative">
-                              <span class="absolute left-3 top-2 text-amber-400 font-bold text-xs">$</span>
-                              <input type="number" id="confPagoAyuExtra" value="3" 
-                                     class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-amber-700 outline-none focus:border-purple-400 transition-all">
-                          </div>
-                          <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto adicional por manejo especial.</p>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>
+                      <<div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
+        Ayudante Extra ($)
+    </label>
+    <div class="relative">
+        <span class="absolute left-3 top-2 text-amber-400 font-bold text-xs">$</span>
+        <input type="number" id="confPagoAyuExtra" value="0" 
+               class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-amber-700 outline-none focus:border-purple-400 transition-all"
+               oninput="window.recalcularTotalPelu()">
+    </div>
+    <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto que se aplicará si se activa la Regla del Tridente.</p>
+</div>
 
       <div id="contenedorTabServicios"
            class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
@@ -2560,11 +2552,17 @@ window.quitarFotoTest = () => {
         });
 
         // 3. ACTUALIZAR INTERFAZ GLOBAL
-        document.getElementById('totalPacientes').innerText = contadorMed + snapPelu.size;
-        document.getElementById('repBruto').innerText = `$${(brutoMed + brutoPelu).toFixed(2)}`;
-        document.getElementById('repGastos').innerText = `$${gastosMed.toFixed(2)}`;
-        document.getElementById('repDocSandoval').innerText = `$${sandovalTotal.toFixed(2)}`;
-        document.getElementById('repDocSilva').innerText = `$${silvaTotal.toFixed(2)}`;
+// Línea de totalPacientes eliminada con éxito ⚓
+
+const setVal = (id, valor) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = valor;
+};
+
+setVal('repBruto', `$${(brutoMed + brutoPelu).toFixed(2)}`);
+setVal('repGastos', `$${gastosMed.toFixed(2)}`);
+setVal('repDocSandoval', `$${sandovalTotal.toFixed(2)}`);
+setVal('repDocSilva', `$${silvaTotal.toFixed(2)}`);
 
         // Pintar Balance de Peluquería (Separado por fin)
         document.getElementById('fPeluTotal').innerText = `$${brutoPelu.toFixed(2)}`;
@@ -4292,20 +4290,27 @@ window.generarCierrePeluqueria = async () => {
         return;
     }
 
-    // ASEGURAR VISIBILIDAD: Quitamos el hidden para que Darwin y Joan vean la magia
     contenedor.classList.remove('hidden');
 
-    // Efecto visual de carga
     contenedor.innerHTML = `
         <div class="flex flex-col items-center justify-center p-10 bg-white rounded-xl border border-slate-100 mt-4 shadow-inner">
             <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-purple-600 mb-4"></div>
-            <p class="text-[10px] font-black uppercase text-purple-900 italic tracking-widest">Consultando Bitácora de Peluquería...</p>
+            <p class="text-[10px] font-black uppercase text-purple-900 italic tracking-widest">Calculando Ciclo Semanal Avipet...</p>
         </div>
     `;
 
     try {
-        // Consultamos la colección de estética (Peluquería)
-        const querySnapshot = await getDocs(collection(db, "servicios_estetica"));
+        // --- FILTRO ESTRATÉGICO: ÚLTIMOS 7 DÍAS ---
+        const hace7Dias = new Date();
+        hace7Dias.setDate(hace7Dias.getDate() - 7);
+
+        const qSemanal = query(
+            collection(db, "servicios_estetica"),
+            where("fecha", ">=", hace7Dias),
+            orderBy("fecha", "desc")
+        );
+
+        const querySnapshot = await getDocs(qSemanal);
         
         let totalRecaudado = 0;
         let totalPeluquera = 0;
@@ -4332,11 +4337,15 @@ window.generarCierrePeluqueria = async () => {
             
             const bruto = parseFloat(data.precioTotal) || 0;
             const pagoP = parseFloat(data.pagoPeluquera) || 0;
-            const pagoA = parseFloat(data.pagoAyudante) || 0;
+            
+            // Unificamos el pago de ambos ayudantes para la liquidación
+            const pagoA1 = parseFloat(data.pagoAyudante1) || 0;
+            const pagoAExtra = parseFloat(data.pagoAyudanteExtra) || 0;
+            const sumaAyudantesFila = pagoA1 + pagoAExtra;
 
             totalRecaudado += bruto;
             totalPeluquera += pagoP;
-            totalAyudantes += pagoA;
+            totalAyudantes += sumaAyudantesFila;
             contador++;
 
             tablaHTML += `
@@ -4348,32 +4357,31 @@ window.generarCierrePeluqueria = async () => {
                     </td>
                     <td class="p-3 text-center text-slate-900 font-mono">$ ${bruto.toFixed(2)}</td>
                     <td class="p-3 text-center text-blue-700 font-mono font-black">$ ${pagoP.toFixed(2)}</td>
-                    <td class="p-3 text-center text-emerald-600 font-mono font-black">$ ${pagoA.toFixed(2)}</td>
+                    <td class="p-3 text-center text-emerald-600 font-mono font-black">$ ${sumaAyudantesFila.toFixed(2)}</td>
                 </tr>
             `;
         });
 
         tablaHTML += `</tbody></table></div>`;
 
-        // Renderizado Final del Reporte
         contenedor.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                 <div class="bg-slate-900 border-b-4 border-slate-600 p-4 rounded-xl shadow-md">
-                    <p class="text-[8px] text-slate-400 uppercase font-black mb-1">Bruto Peluquería</p>
+                    <p class="text-[8px] text-slate-400 uppercase font-black mb-1">Bruto Semana (7d)</p>
                     <p class="text-2xl font-black text-white italic">$ ${totalRecaudado.toFixed(2)}</p>
                 </div>
                 <div class="bg-blue-600 border-b-4 border-blue-800 p-4 rounded-xl shadow-md">
-                    <p class="text-[8px] text-blue-100 uppercase font-black mb-1">Darwin/Joan (Peluquera)</p>
+                    <p class="text-[8px] text-blue-100 uppercase font-black mb-1">Pago Darwin/Joan</p>
                     <p class="text-2xl font-black text-white italic">$ ${totalPeluquera.toFixed(2)}</p>
                 </div>
                 <div class="bg-emerald-500 border-b-4 border-emerald-700 p-4 rounded-xl shadow-md">
-                    <p class="text-[8px] text-emerald-100 uppercase font-black mb-1">Pago Ayudantes</p>
+                    <p class="text-[8px] text-emerald-100 uppercase font-black mb-1">Total Ayudantes</p>
                     <p class="text-2xl font-black text-white italic">$ ${totalAyudantes.toFixed(2)}</p>
                 </div>
             </div>
             
             ${contador === 0 
-                ? '<div class="mt-6 p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-black uppercase italic text-xs">Sin registros de peluquería en la bitácora</div>' 
+                ? '<div class="mt-6 p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-black uppercase italic text-xs">Sin servicios en los últimos 7 días</div>' 
                 : tablaHTML}
             
             <button onclick="this.parentElement.classList.add('hidden')" class="w-full mt-4 text-[9px] font-black text-slate-400 uppercase hover:text-red-500 transition-all italic">
@@ -4563,6 +4571,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
