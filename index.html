@@ -1270,29 +1270,41 @@
 // =========================================================
 // [16] GUARDAR CONSULTA EN FIREBASE (OPTIMIZADO CON MÓVIL)
 // =========================================================
+// =========================================================
+// FUNCIÓN MAESTRA: GUARDAR EN FIREBASE (VERSIÓN COMPLETA)
+// =========================================================
 window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
     const nombreDoctor = selectorDoc ? selectorDoc.value : "";
 
     if (!nombreDoctor) {
-      alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
-      return;
+        alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
+        return;
     }
 
     const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN para autorizar:`);
     if (!pinIngresado) return;
 
+    // Validación de seguridad
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
     if (esValido) {
-      window.doctorVerificado = nombreDoctor;
-      console.log("✅ Firma validada.");
+        window.doctorVerificado = nombreDoctor;
+        console.log("✅ Firma validada.");
     } else {
-      alert("❌ PIN incorrecto.");
-      return;
+        alert("❌ PIN incorrecto.");
+        return;
+    }
+
+    // Feedback visual: deshabilitar botón mientras sube
+    const btnGuardar = document.activeElement;
+    const textoOriginal = btnGuardar ? btnGuardar.innerText : "Guardar";
+    if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
+        btnGuardar.disabled = true;
+        btnGuardar.innerText = "⏳ Subiendo Consulta...";
     }
 
     try {
-        // --- FUNCIÓN CALIBRADA: CONVERTIR, COMPRIMIR Y HABILITAR IMPRESIÓN ---
+        // --- FUNCIÓN DE COMPRESIÓN DE IMAGEN ---
         const convertirABase64 = (archivo) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1301,20 +1313,17 @@ window.guardarFirebase = async (imp) => {
                     const img = new Image();
                     img.crossOrigin = "anonymous"; 
                     img.src = event.target.result;
-                    
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const MAX_WIDTH = 800; 
                         let width = img.width;
                         let height = img.height;
-
                         if (width > MAX_WIDTH) {
                             height *= MAX_WIDTH / width;
                             width = MAX_WIDTH;
                         }
                         canvas.width = width;
                         canvas.height = height;
-
                         const ctx = canvas.getContext('2d');
                         ctx.fillStyle = "#FFFFFF";
                         ctx.fillRect(0, 0, width, height);
@@ -1326,25 +1335,14 @@ window.guardarFirebase = async (imp) => {
             });
         };
 
-        // --- PROCESAR FOTO (PC O MÓVIL) ---
+        // --- PROCESAR FOTOS (PC O MÓVIL) ---
         const fotoFile = document.getElementById('inputFotoHistoria')?.files[0];
-        // ⚓ AJUSTE: Si no hay archivo físico (PC), busca la URL del QR (Móvil)
         const urlFotoMovil = document.getElementById('pUrlExamen')?.value || "";
         let urlFotoFinal = urlFotoMovil; 
 
         if (fotoFile) {
             console.log("📸 Comprimiendo foto desde PC...");
             urlFotoFinal = await convertirABase64(fotoFile);
-            
-            const imgDoc = document.getElementById('pFotoMascota'); 
-            if(imgDoc) {
-                imgDoc.crossOrigin = "anonymous";
-                imgDoc.src = urlFotoFinal;
-            }
-        } else if (urlFotoMovil) {
-            console.log("📱 Usando foto vinculada desde Teléfono...");
-            const imgDoc = document.getElementById('pFotoMascota'); 
-            if(imgDoc) imgDoc.src = urlFotoMovil;
         }
 
         const fotoTestFile = document.getElementById('inputFotoTest')?.files[0];
@@ -1352,12 +1350,6 @@ window.guardarFirebase = async (imp) => {
         if (fotoTestFile) {
             console.log("📸 Comprimiendo foto test...");
             urlFotoTestFinal = await convertirABase64(fotoTestFile);
-            
-            const imgTest = document.getElementById('pFotoTest'); 
-            if(imgTest) {
-                imgTest.crossOrigin = "anonymous";
-                imgTest.src = urlFotoTestFinal;
-            }
         }
 
         // --- RECOLECCIÓN DE TESTS ---
@@ -1366,10 +1358,10 @@ window.guardarFirebase = async (imp) => {
         filasTests.forEach(fila => {
             const inputNombre = fila.cells[0].querySelector('input');
             const nombreT = inputNombre ? inputNombre.value : fila.cells[0].innerText.trim();
-            const resultadoT = fila.cells[1].querySelector('select').value;
-            const notaT = fila.cells[2].querySelector('input').value;
+            const resultadoT = fila.cells[1].querySelector('select')?.value;
+            const notaT = fila.cells[2].querySelector('input')?.value || "";
 
-            if (nombreT && resultadoT !== "---") {
+            if (nombreT && resultadoT && resultadoT !== "---") {
                 listaTestsRapidos.push({ nombre: nombreT, resultado: resultadoT, nota: notaT });
             }
         });
@@ -1383,7 +1375,7 @@ window.guardarFirebase = async (imp) => {
         }
 
         const dInput = (id) => document.getElementById(id)?.value.trim() || "";
-        const montoVentaTotal = parseFloat(document.getElementById('precioVenta').value) || 0;
+        const montoVentaTotal = parseFloat(document.getElementById('precioVenta')?.value) || 0;
         const detalleInsumos = [];
         let totalGastos = 0;
         let pagoDoctorTotal = 0;
@@ -1436,7 +1428,7 @@ window.guardarFirebase = async (imp) => {
             fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
         };
 
-        // Guardado en Firebase
+        // --- GUARDADO FINAL ---
         await addDoc(collection(db, "consultas"), dataConsulta);
         console.log("✅ Guardado exitoso en Firebase.");
 
@@ -1445,7 +1437,8 @@ window.guardarFirebase = async (imp) => {
         }
 
         if (imp) {
-            document.getElementById('hTratamientoPrint').innerText = dInput('hTratamiento');
+            const pTrat = document.getElementById('hTratamientoPrint');
+            if(pTrat) pTrat.innerText = dInput('hTratamiento');
             alert("✅ Guardado con éxito. Preparando impresión...");
             setTimeout(() => window.print(), 600);
         } else {
@@ -1454,7 +1447,13 @@ window.guardarFirebase = async (imp) => {
 
     } catch (e) {
         console.error("Error al guardar:", e);
-        alert("❌ Error: " + e.message);
+        alert("❌ Error al guardar: " + e.message);
+    } finally {
+        // Restaurar botón
+        if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
+            btnGuardar.disabled = false;
+            btnGuardar.innerText = textoOriginal;
+        }
     }
 };
   // ==========================================
@@ -4884,6 +4883,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
