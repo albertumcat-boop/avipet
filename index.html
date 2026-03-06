@@ -2821,65 +2821,65 @@ window.buscarPorCedula = async () => {
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA (MODO OFFLINE RESISTENTE)
   // =========================================================
-  window.autocompletarPorCedula = async (ci) => {
-    if (!ci) return;
+ window.autocompletarPorCedula = async (ci) => {
+    if (!ci || ci.length < 3) return;
+
     try {
-      // La búsqueda se hace primero en la caché local gracias a la persistencia
-      const q = query(collection(db, "consultas"), where("cedula", "==", ci.trim()));
-      const snap = await getDocs(q);
-      
-      if (!snap.empty) {
-        const registros = [];
-        snap.forEach(docSnap => registros.push(docSnap.data()));
+        console.log("🔍 Iniciando Radar en CI:", ci);
         
-        // Ordenamos por fecha para traer la visita más reciente
-        registros.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
-        const d = registros[0];
+        // Buscamos en la colección "consultas"
+        const q = query(
+            collection(db, "consultas"), 
+            where("cedula", "==", ci.trim()),
+            orderBy("fecha", "desc"),
+            limit(1)
+        );
+        
+        const snap = await getDocs(q);
+        
+        if (!snap.empty) {
+            const d = snap.docs[0].data();
+            console.log("✅ Registro encontrado:", d);
 
-        console.log("Registro usado para autocompletar:", d);
+            // --- LLENADO DE CAMPOS (IDs Sincronizados con tu HTML) ---
+            const setV = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = val || "";
+                    // Efecto visual de carga exitosa
+                    el.classList.add('bg-blue-50');
+                    setTimeout(() => el.classList.remove('bg-blue-50'), 1000);
+                }
+            };
 
-        // --- PROPIETARIO Y ALERTAS ---
-        const inputProp = document.getElementById('hProp');
-        if (inputProp) {
-          inputProp.value = d.propietario || "";
-          
-          if (d.alerta === true) {
-            inputProp.style.color = "#b91c1c"; // Rojo intenso
-            inputProp.style.fontWeight = "bold";
-            const chk = document.getElementById('hAlerta');
-            if (chk) chk.checked = true;
-            alert("⚠️ NOTA: Este cliente tiene una restricción administrativa.");
-          } else {
-            inputProp.style.color = "";
-            inputProp.style.fontWeight = "";
-            const chk = document.getElementById('hAlerta');
-            if (chk) chk.checked = false;
-          }
+            setV('hProp', d.propietario);
+            setV('hNombre', d.paciente);
+            setV('hEspecie', d.especie);
+            setV('hRaza', d.raza);
+            setV('hEdad', d.edad);
+            setV('hSexo', d.sexo);
+            setV('hPeso', d.peso);
+            setV('hColor', d.color);
+            setV('hTlf', d.telefono);
+            setV('hMail', d.correo || d.email);
+            setV('hDir', d.direccion);
+
+            // Manejo de Alerta Administrativa
+            if (d.alerta === true) {
+                const inputProp = document.getElementById('hProp');
+                if (inputProp) {
+                    inputProp.style.color = "#b91c1c";
+                    inputProp.style.fontWeight = "bold";
+                }
+                alert("⚠️ ATENCIÓN: Este cliente tiene una RESTRICCIÓN ADMINISTRATIVA.");
+            }
+        } else {
+            console.log("ℹ️ Paciente nuevo, sin registros previos.");
         }
-
-        // --- LLENADO DE CAMPOS SEGURO (Usa el operador ?. para no romper el código) ---
-        const setV = (id, val) => {
-          const el = document.getElementById(id);
-          if (el) el.value = val || "";
-        };
-
-        setV('hMail', d.correo || d.email);
-        setV('hTlf', d.telefono);
-        setV('hDir', d.direccion);
-        setV('hNombre', d.paciente);
-        setV('hRaza', d.raza);
-        setV('hEspecie', d.especie);
-        setV('hEdad', d.edad);
-        setV('hSexo', d.sexo);
-        setV('hPeso', d.peso);
-        setV('hColor', d.color);
-
-        console.log("✅ Ficha de mascota autocompletada.");
-      }
     } catch (e) {
-      console.error("Error al autocompletar:", e);
+        console.error("❌ Error al autocompletar:", e);
     }
-  };
+};
   // =========================================================
   // [23] RECEPCIÓN: ENVIAR A COLA DE ESPERA
   // =========================================================
@@ -4959,6 +4959,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
