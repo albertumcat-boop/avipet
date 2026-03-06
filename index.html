@@ -1212,6 +1212,13 @@
         </div>
     </div>
 </div>
+                <div id="modalFoto" class="hidden fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm no-print">
+    <button onclick="window.cerrarModalFoto()" 
+            class="absolute top-5 right-5 text-white text-6xl font-light hover:text-blue-400">&times;</button>
+    <div class="relative max-w-5xl w-full h-full flex items-center justify-center" onclick="window.cerrarModalFoto()">
+        <img id="imgGrande" src="" class="max-w-full max-h-full rounded-lg shadow-2xl border-2 border-white/10 object-contain" onclick="event.stopPropagation()">
+    </div>
+</div>
 <script type="module">
   // 1. IMPORTACIONES AJUSTADAS
   // Importamos db y storage desde tu archivo de configuración local
@@ -2086,6 +2093,30 @@ window.quitarFotoTest = () => {
     if (imgPreview) imgPreview.src = "";
     if (previewContainer) previewContainer.classList.add('hidden');
 };
+  // Función para abrir el visor de imágenes
+window.verFotoGrande = (src) => {
+    const modal = document.getElementById('modalFoto');
+    const img = document.getElementById('imgGrande');
+    
+    if (modal && img) {
+        img.src = src; // Inyecta el Base64 o URL
+        modal.classList.remove('hidden'); // Muestra el modal
+        
+        // Bloquea el scroll del body para que sea más profesional
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+// Función para cerrar el modal y devolver el scroll
+window.cerrarModalFoto = () => {
+    document.getElementById('modalFoto').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+};
+
+// Opcional: Cerrar con la tecla Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") cerrarModalFoto();
+});
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -2301,8 +2332,8 @@ window.quitarFotoTest = () => {
     );
   };
 
-  // =========================================================
-// [09] BUSCADOR (CORREGIDO)
+// =========================================================
+// [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
 // =========================================================
 window.buscarPorCedula = async () => {
     const input = document.getElementById('searchCI');
@@ -2344,14 +2375,14 @@ window.buscarPorCedula = async () => {
 
             const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
-            // --- LÓGICA DE INSUMOS (CORREGIDA) ---
+            // --- LÓGICA DE INSUMOS ---
             const insHtml = d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `
                 <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
                     <span class="text-slate-600">${ins.nombre} (x${ins.cant})</span>
                     <b class="text-slate-800">$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b>
                 </div>`).join('') : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
-            // --- 📸 VISUALIZACIÓN DE FOTOS ---
+            // --- 📸 VISUALIZACIÓN DE FOTOS (ACTUALIZADO AL MODAL) ---
             let fotosHtml = "";
             if (d.urlExamen || d.urlFotoTest) {
                 fotosHtml = `
@@ -2364,7 +2395,7 @@ window.buscarPorCedula = async () => {
                             <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Eco / Rx / Historia</p>
                             <img src="${d.urlExamen}" 
                                  class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
-                                 onclick="window.open('${d.urlExamen}', '_blank')"
+                                 onclick="window.verFotoGrande('${d.urlExamen}')"
                                  onerror="this.src='https://placehold.co/128x128?text=Error+Imagen'">
                         </div>`;
                 }
@@ -2374,7 +2405,7 @@ window.buscarPorCedula = async () => {
                             <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Resultado Test</p>
                             <img src="${d.urlFotoTest}" 
                                  class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
-                                 onclick="window.open('${d.urlFotoTest}', '_blank')"
+                                 onclick="window.verFotoGrande('${d.urlFotoTest}')"
                                  onerror="this.src='https://placehold.co/128x128?text=Error+Imagen'">
                         </div>`;
                 }
@@ -4705,10 +4736,12 @@ window.renderizarSellos = function(numVisitas) {
         if (el) el.classList.toggle('hidden', !esPremio);
     });
 };
+
 </script>
 
 </body>
 </html>
+
 
 
 
