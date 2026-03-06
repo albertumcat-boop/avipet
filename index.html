@@ -1281,18 +1281,34 @@ window.guardarFirebase = async (imp) => {
     const textoOriginal = btnGuardar ? btnGuardar.innerText : "Guardar";
     if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
         btnGuardar.disabled = true;
-        btnGuardar.innerText = "🚀 SUBIENDO DATOS...";
+        btnGuardar.innerText = "⏳ OPTIMIZANDO...";
     }
 
     try {
-        // --- FUNCIÓN DE SUBIDA AL ALMACÉN (STORAGE) ---
-        const subirOriginal = async (archivo, carpeta) => {
-            if (!archivo) return "";
-            const ruta = `consultas/${Date.now()}_${archivo.name}`;
-            const storageRef = ref(storage, ruta);
-            console.log(`📡 Subiendo ${archivo.name} a ${carpeta}...`);
-            const snapshot = await uploadBytes(storageRef, archivo);
-            return await getDownloadURL(snapshot.ref);
+        // --- MOTOR DE COMPRESIÓN (Ajuste Radical) ---
+        const comprimirImagen = (archivo) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(archivo);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_W = 800; // Calidad profesional, peso pluma
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; }
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = "#FFFFFF";
+                        ctx.fillRect(0, 0, w, h);
+                        ctx.drawImage(img, 0, 0, w, h);
+                        // Comprimimos al 60% para que vuele por la red
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    };
+                };
+            });
         };
 
         // Procesar fotos de los inputs
@@ -1303,12 +1319,12 @@ window.guardarFirebase = async (imp) => {
         let urlFotoTestFinal = "";
 
         if (fileHistoria) {
-            btnGuardar.innerText = "📸 Subiendo Historia...";
-            urlFotoFinal = await subirOriginal(fileHistoria, "historias");
+            btnGuardar.innerText = "📸 Ajustando Historia...";
+            urlFotoFinal = await comprimirImagen(fileHistoria);
         }
         if (fileTest) {
-            btnGuardar.innerText = "🧪 Subiendo Test...";
-            urlFotoTestFinal = await subirOriginal(fileTest, "tests");
+            btnGuardar.innerText = "🧪 Ajustando Test...";
+            urlFotoTestFinal = await comprimirImagen(fileTest);
         }
 
         // --- RECOLECCIÓN DE TESTS ---
@@ -1371,15 +1387,15 @@ window.guardarFirebase = async (imp) => {
         };
 
         // --- GUARDADO FINAL ---
-        btnGuardar.innerText = "💾 Registrando...";
+        btnGuardar.innerText = "💾 REGISTRANDO...";
         await addDoc(collection(db, "consultas"), data);
         
-        alert("✅ ¡Todo soldado y guardado con éxito!");
+        alert("✅ ¡Consulta guardada y optimizada con éxito!");
         if (imp) window.print();
 
     } catch (e) {
         console.error("Error en el sistema:", e);
-        alert("❌ Hubo un fallo: " + e.message);
+        alert("❌ Error: " + e.message);
     } finally {
         if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
             btnGuardar.disabled = false;
@@ -4814,6 +4830,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
