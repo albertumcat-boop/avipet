@@ -1233,23 +1233,28 @@
 </div>
                 
 <script type="module">
-  // 1. IMPORTACIONES DESDE TU CONFIGURACIÓN ACTUALIZADA
+  // 1. IMPORTACIONES CON TODAS LAS LLAVES NECESARIAS
   import { db, storage } from './firebase-config.js';
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, onSnapshot
+    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc // <--- AGREGADO deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // Nota: Si ya no vas a usar Storage para las fotos, podrías quitar los imports de storage,
+  // pero dejarlos no hace daño por si guardas otros archivos luego.
   import { 
     ref, uploadBytes, getDownloadURL 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   // 2. CONFIGURACIÓN DE PERSISTENCIA (MODO OFFLINE)
   import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  
   enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code == 'failed-precondition') console.warn("La persistencia falló (múltiples pestañas).");
+      if (err.code == 'failed-precondition') console.warn("Persistencia falló: múltiples pestañas abiertas.");
+      else if (err.code == 'unimplemented') console.warn("El navegador no soporta persistencia.");
   });
 
-  // 3. DETECTOR MÓVIL (PARA VINCULAR FOTOS POR QR)
+  // 3. DETECTOR MÓVIL (QUEDA IGUAL)
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
@@ -1470,24 +1475,53 @@ window.guardarFirebase = async (imp) => {
           </div>`;
   };
 
-  window.procesarSubidaMovil = async (input, ci) => {
-      const status = document.getElementById('statusMovil');
-      const file = input.files[0];
-      if (!file) return;
-      status.innerText = "⏳ Subiendo...";
-      try {
-          const storageRef = ref(storage, `transferencias/${ci}_${Date.now()}.jpg`);
-          const snapshot = await uploadBytes(storageRef, file);
-          const urlFinal = await getDownloadURL(snapshot.ref);
-          await setDoc(doc(db, "transferencias_fotos", ci), { url: urlFinal, fecha: serverTimestamp() });
-          status.innerHTML = "✅ ENVIADO.";
-      } catch (e) {
-          status.innerText = "❌ Error: " + e.message;
-      }
-  };
+window.procesarSubidaMovil = async (input, ci) => {
+    const status = document.getElementById('statusMovil');
+    const file = input.files[0];
+    if (!file) return;
 
-  // AQUÍ SIGUE EL RESTO (showTab, guardarFirebase, etc.)
+    status.innerHTML = "⏳ <b class='text-yellow-400'>PREPARANDO MOTOR...</b>";
 
+    // --- COMPRESIÓN PARA QUE PASE POR EL RADAR ---
+    const optimizarImagen = (archivo) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(archivo);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_W = 800; // Resolución suficiente para medicina
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    // 0.5 de calidad hace que la foto pese 150kb aprox.
+                    resolve(canvas.toDataURL('image/jpeg', 0.5));
+                };
+            };
+        });
+    };
+
+    try {
+        const fotoComprimida = await optimizarImagen(file);
+        status.innerHTML = "🚀 <b class='text-blue-400'>ENVIANDO A PC...</b>";
+
+        // Aquí es donde la PC lo detecta
+        await setDoc(doc(db, "transferencias_fotos", ci), {
+            url: fotoComprimida,
+            fecha: serverTimestamp()
+        });
+
+        status.innerHTML = "<b class='text-green-400'>✅ ¡LISTO! MIRA LA PC</b>";
+    } catch (e) {
+        console.error(e);
+        status.innerHTML = "❌ <b class='text-red-400'>FALLÓ:</b> " + e.message;
+    }
+};
   const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
     "CONSULTA OFTALMOLÓGICA": { precio: 0, porc: 12.5 },
@@ -4830,6 +4864,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
