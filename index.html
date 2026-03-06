@@ -1307,17 +1307,17 @@
   });
 
   // 3. DETECTOR MÓVIL
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('mode') === 'mobile') {
-      const ciMascota = params.get('ci');
-      const tipoFoto = params.get('tipo') || 'historia';
-      const checkInterfaz = setInterval(() => {
-          if (window.mostrarInterfazSoloCamara) {
-              window.mostrarInterfazSoloCamara(ciMascota, tipoFoto);
-              clearInterval(checkInterfaz);
-          }
-      }, 100);
-  }
+ const params = new URLSearchParams(window.location.search);
+if (params.get('mode') === 'mobile') {
+  const ciMascota = params.get('ci');
+  const tipoFoto = params.get('tipo') || 'historia'; 
+  const checkInterfaz = setInterval(() => {
+    if (window.mostrarInterfazSoloCamara) {
+      window.mostrarInterfazSoloCamara(ciMascota, tipoFoto);
+      clearInterval(checkInterfaz);
+    }
+  }, 100);
+}
 // =========================================================
 // [16] FUNCIÓN MAESTRA DE GUARDADO (ALTA VELOCIDAD)
 // =========================================================
@@ -1333,7 +1333,6 @@ window.guardarFirebase = async (imp) => {
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
     if (!esValido) return alert("❌ PIN incorrecto.");
 
-    // Bloqueamos botón
     const btnGuardar = document.activeElement;
     const textoOriginal = btnGuardar ? btnGuardar.innerText : "Guardar";
     if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
@@ -1342,7 +1341,6 @@ window.guardarFirebase = async (imp) => {
     }
 
     try {
-        // --- FUNCIÓN DE LECTURA SIMPLE (SIN COMPRESIÓN) ---
         const leerImagen = (archivo) => {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -1355,21 +1353,23 @@ window.guardarFirebase = async (imp) => {
         const fileHistoria = document.getElementById('inputFotoHistoria')?.files[0];
         const fileTest = document.getElementById('inputFotoTest')?.files[0];
         
-        // Obtenemos URLs previas (si existen por QR)
-        let urlFotoFinal = document.getElementById('pUrlExamen')?.value || "";
-        let urlFotoTestFinal = "";
-
-        // Si hay archivos nuevos en los inputs, reemplazan lo anterior
+        // 1. Prioridad de imágenes: Primero el input manual, si no, lo que llegó por QR
+        let urlFotoFinal = "";
         if (fileHistoria) {
             btnGuardar.innerText = "📸 Cargando Historia...";
             urlFotoFinal = await leerImagen(fileHistoria);
+        } else {
+            urlFotoFinal = document.getElementById('pUrlExamen')?.value || "";
         }
+
+        let urlFotoTestFinal = "";
         if (fileTest) {
             btnGuardar.innerText = "🧪 Cargando Test...";
             urlFotoTestFinal = await leerImagen(fileTest);
+        } else {
+            urlFotoTestFinal = document.getElementById('pUrlTest')?.value || "";
         }
 
-        // --- RECOLECCIÓN DE TESTS ---
         const listaTests = [];
         document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila => {
             const nombre = fila.cells[0].querySelector('input')?.value || fila.cells[0].innerText.trim();
@@ -1380,7 +1380,6 @@ window.guardarFirebase = async (imp) => {
             }
         });
 
-        // --- CÁLCULOS ECONÓMICOS ---
         const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
         const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
         let porcGlobal = configSnap.exists() ? (configSnap.data().porcentajeDoc || null) : null;
@@ -1409,27 +1408,35 @@ window.guardarFirebase = async (imp) => {
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
-        // --- ESTRUCTURA FINAL (SINCRONIZADA CON PRUEBA INDEX.TXT) ---
+        // --- ESTRUCTURA FINAL CORREGIDA (PARA EL AUTORRELLENO) ---
         const data = {
-            cedula: dInput('hCI'),          // ID real en tu TXT
-            propietario: dInput('hProp'),    // ID real en tu TXT
-            paciente: dInput('hNombre'),
-            especie: dInput('hEspecie'),
-            raza: dInput('hRaza'),
-            sexo: dInput('hSexo'),
-            edad: dInput('hEdad'),
-            doctor: nombreDoctor,
-            urlExamen: urlFotoFinal,        // Foto historia
-            urlFotoTest: urlFotoTestFinal,  // Foto test
+            cedula:      dInput('hCI'),
+            propietario: dInput('hProp'),
+            paciente:    dInput('hNombre'),
+            especie:     dInput('hEspecie'),
+            raza:        dInput('hRaza'),
+            sexo:        dInput('hSexo'),
+            edad:        dInput('hEdad'),
+            
+            // CAMPOS NUEVOS PARA QUE EL RADAR FUNCIONE:
+            peso:        dInput('hPeso'),
+            color:       dInput('hColor'),
+            telefono:    dInput('hTlf'),
+            correo:      dInput('hMail'),
+            direccion:   dInput('hDir'),
+            
+            doctor:      nombreDoctor,
+            urlExamen:   urlFotoFinal,
+            urlFotoTest: urlFotoTestFinal,
             testsRealizados: listaTests,
-            montoVenta: montoVentaTotal,
+            montoVenta:   montoVentaTotal,
             montoInsumos: totalGastos,
-            pagoDoctor: pagoDoctorTotal,
-            pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+            pagoDoctor:   pagoDoctorTotal,
+            pagoAvipet:   (montoVentaTotal - totalGastos - pagoDoctorTotal),
             listaDetalladaInsumos: detalleInsumos,
-            tratamiento: dInput('hTratamiento'),
-            fecha: serverTimestamp(),
-            fechaSimple: new Date().toLocaleDateString()
+            tratamiento:  dInput('hTratamiento'),
+            fecha:        serverTimestamp(),
+            fechaSimple:  new Date().toLocaleDateString()
         };
 
         btnGuardar.innerText = "💾 REGISTRANDO...";
@@ -1451,127 +1458,107 @@ window.guardarFirebase = async (imp) => {
   // ==========================================
   // LÓGICA PC: GENERAR QR (EXPUESTA AL WINDOW)
   // ==========================================
- window.generarEnlaceMovil = (tipo = 'historia') => {
-    const cedulaInput = document.getElementById('hCI');
-    if (!cedulaInput || !cedulaInput.value) {
-        return alert("⚠️ Albert, escribe la Cédula del propietario primero.");
-    }
-    const cedula = cedulaInput.value;
+window.generarEnlaceMovil = (tipo = 'historia') => {
+  const cedula = document.getElementById('hCI')?.value.trim();
+  if (!cedula) return alert("⚠️ Escribe la Cédula primero.");
 
-    const qrDiv = document.getElementById("qrcode");
-    if (!qrDiv) return console.error("No existe el div 'qrcode'");
+  const qrDivID = tipo === 'test' ? "qrcodeTest" : "qrcode";
+  const containerID = tipo === 'test' ? "qrContainerTest" : "qrContainer";
+  
+  const qrDiv = document.getElementById(qrDivID);
+  qrDiv.innerHTML = "";
+
+  const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;
+  new QRCode(qrDiv, { text: urlVinculo, width: 128, height: 128 });
+  document.getElementById(containerID)?.classList.remove('hidden');
+
+  // ESCUCHA EN TIEMPO REAL
+  const docRef = doc(db, "transferencias_fotos", `${cedula}_${tipo}`);
+  const unsub = onSnapshot(docRef, async (docSnap) => {
+    if (!docSnap.exists()) return;
+    const data = docSnap.data();
+
+    // Rellenamos previsualización y campos ocultos
+    const sufijo = (tipo === 'test') ? 'Test' : 'Historia';
+    const previewImg = document.getElementById(tipo === 'test' ? 'imgTestPreview' : 'imgHistoriaPreview');
+    const inputOculto = document.getElementById(tipo === 'test' ? 'pUrlTest' : 'pUrlExamen');
+
+    if (previewImg) previewImg.src = data.url;
+    if (inputOculto) inputOculto.value = data.url;
     
-    qrDiv.innerHTML = ""; 
-    document.getElementById("qrContainer").classList.remove("hidden");
+    // Mostrar el contenedor de la foto
+    document.getElementById(tipo === 'test' ? 'previewTestContainer' : 'previewHistoriaContainer')?.classList.remove('hidden');
 
-    // El enlace ahora lleva el parámetro 'tipo' (historia o test)
-    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;
-
-    if (typeof QRCode !== "undefined") {
-        new QRCode(qrDiv, { text: urlVinculo, width: 150, height: 150 });
-    } else {
-        alert("Error: Librería QR no cargada.");
-    }
-
-    // --- ESCUCHA ACTIVA (RADAR) ---
-    const docRef = doc(db, "transferencias_fotos", cedula);
-    const unsub = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            
-            // 1. Identificamos qué llegó y dónde ponerlo
-            const esTest = (data.tipo === 'test');
-            
-            const previewImg  = document.getElementById(esTest ? 'imgTestPreview' : 'imgHistoriaPreview');
-            const previewCont = document.getElementById(esTest ? 'previewTestContainer' : 'previewHistoriaContainer');
-            const urlHidden   = document.getElementById(esTest ? 'pUrlTest' : 'pUrlExamen');
-
-            // 2. Reflejamos la miniatura en pantalla inmediatamente
-            if (previewImg)  previewImg.src = data.url;
-            if (previewCont) previewCont.classList.remove('hidden');
-            if (urlHidden)   urlHidden.value = data.url;
-
-            // 3. Cerramos el QR y limpiamos
-            document.getElementById("qrContainer").classList.add("hidden");
-            
-            const mensaje = esTest ? "🧪 Test Rápido recibido" : "📸 Historia Clínica recibida";
-            alert(`🚀 ¡${mensaje} con éxito!`);
-            
-            deleteDoc(docRef); 
-            unsub(); 
-        }
-    });
+    // Limpieza
+    document.getElementById(containerID)?.classList.add('hidden');
+    alert(`✅ ${tipo.toUpperCase()} recibida.`);
+    await deleteDoc(docRef);
+    unsub();
+  });
 };
   // ==========================================
   // INTERFAZ MÓVIL (EXPUESTA AL WINDOW)
   // ==========================================
- window.mostrarInterfazSoloCamara = (ci, tipo) => {
-      // El título cambia según lo que hayas escaneado en la PC
-      const titulo = tipo === 'test' ? "🧪 ESCÁNER DE TEST" : "📸 ESCÁNER DE HISTORIA";
-      const colorBtn = tipo === 'test' ? "bg-emerald-600" : "bg-blue-600";
+window.mostrarInterfazSoloCamara = (ci, tipo) => {
+  const titulo = tipo === 'test' ? '🧪 ESCÁNER DE TEST' : '📸 ESCÁNER DE HISTORIA';
+  const colorBtn = tipo === 'test' ? 'bg-emerald-600' : 'bg-blue-600';
 
-      document.body.innerHTML = `
-          <div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans">
-              <div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center">
-                  <h1 class="text-xl font-black uppercase italic ${tipo === 'test' ? 'text-emerald-400' : 'text-blue-400'}">${titulo}</h1>
-                  <p class="text-slate-400 text-[10px] mb-6 uppercase tracking-widest">Paciente CI: <b>${ci}</b></p>
-                  
-                  <input type="file" id="mobileFile" accept="image/*" capture="environment" class="hidden" 
-                         onchange="window.procesarSubidaMovil(this, '${ci}', '${tipo}')">
-                  
-                  <button onclick="document.getElementById('mobileFile').click()" 
-                          class="w-full ${colorBtn} py-6 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all">
-                      📷 TOMAR FOTO
-                  </button>
-                  
-                  <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic animate-pulse">Listo para capturar...</div>
-              </div>
-          </div>`;
-  };
-window.generarEnlaceMovil = (tipo = 'historia') => {
-    const cedula = document.getElementById('hCI')?.value;
-    if (!cedula) return alert("⚠️ Albert, escribe la CI primero.");
+  document.body.innerHTML = `
+    <div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans">
+      <div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center">
+        <h1 class="text-xl font-black uppercase italic ${tipo === 'test' ? 'text-emerald-400' : 'text-blue-400'}">
+          ${titulo}
+        </h1>
+        <p class="text-slate-400 text-[10px] mb-6 uppercase tracking-widest">Paciente CI: <b>${ci}</b></p>
+        <input type="file" id="mobileFile" accept="image/*" capture="environment" class="hidden"
+               onchange="window.procesarSubidaMovil(this, '${ci}', '${tipo}')">
+        <button onclick="document.getElementById('mobileFile').click()"
+                class="w-full ${colorBtn} py-6 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all">
+          📷 TOMAR FOTO
+        </button>
+        <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo para capturar...</div>
+      </div>
+    </div>`;
+};
+// --- ESTA ES LA PIEZA QUE TE FALTA (LA QUE ENVÍA LA FOTO AL PC) ---
+window.procesarSubidaMovil = async (input, ci, tipo) => {
+  const status = document.getElementById('statusMovil');
+  const file = input.files[0];
+  if (!file) return;
 
-    const qrDiv = document.getElementById("qrcode");
-    qrDiv.innerHTML = "";
-    document.getElementById("qrContainer").classList.remove("hidden");
+  if (status) status.innerText = "⏳ Procesando foto...";
 
-    // El link lleva el ADN de la foto (historia o test)
-    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;
-    new QRCode(qrDiv, { text: urlVinculo, width: 140, height: 140 });
-
-    const docRef = doc(db, "transferencias_fotos", cedula);
-    const unsub = onSnapshot(docRef, async (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            
-            // Detectamos qué llegó
-            const esTest = (data.tipo === 'test');
-            
-            // 1. Inyectar en la interfaz de usuario (Vista Previa)
-            const previewImg = document.getElementById(esTest ? 'imgTestPreview' : 'imgHistoriaPreview');
-            const previewCont = document.getElementById(esTest ? 'previewTestContainer' : 'previewHistoriaContainer');
-            const urlHidden = document.getElementById(esTest ? 'pUrlTest' : 'pUrlExamen');
-
-            if (previewImg) previewImg.src = data.url;
-            if (previewCont) previewCont.classList.remove('hidden');
-            if (urlHidden) urlHidden.value = data.url;
-
-            // 2. Inyectar en la zona de IMPRESIÓN (La que sale en el papel)
-            const imgPrint = document.getElementById(esTest ? 'imgTestPrint' : 'imgHistoriaPrint');
-            if (imgPrint) {
-                imgPrint.src = data.url;
-                imgPrint.parentElement.classList.remove('hidden'); 
-            }
-
-            // 3. Limpiar radar
-            document.getElementById("qrContainer").classList.add("hidden");
-            alert(`✅ ${esTest ? 'TEST' : 'HISTORIA'} recibida y lista para imprimir.`);
-            
-            await deleteDoc(docRef);
-            unsub();
-        }
+  // Función interna para convertir la foto a texto (base64)
+  const leerComoBase64 = (archivo) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(archivo);
     });
+  };
+
+  try {
+    const base64 = await leerComoBase64(file);
+
+    // Guardamos en Firestore para que la PC lo reciba al instante
+    // El ID del documento es: cedula_tipo (ej: 21103679_historia)
+    await setDoc(doc(db, "transferencias_fotos", `${ci}_${tipo}`), {
+      url: base64,
+      tipo: tipo,
+      fecha: serverTimestamp()
+    });
+
+    if (status) {
+        status.innerHTML = "<b class='text-emerald-400'>✅ ENVIADO EXITOSAMENTE</b>";
+    }
+    
+    console.log("🚀 Foto enviada a la PC via Firestore");
+
+  } catch (e) {
+    console.error("Error al subir desde móvil:", e);
+    if (status) status.innerText = "❌ Error: " + e.message;
+  }
 };
   const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
@@ -4959,6 +4946,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
