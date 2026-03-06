@@ -1249,11 +1249,10 @@
       if (err.code == 'failed-precondition') console.warn("Persistencia falló.");
   });
 
-  // 3. DETECTOR MÓVIL (Intercepción inmediata)
+  // 3. DETECTOR MÓVIL
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
-      // Usamos un intervalo corto para asegurar que el DOM esté listo
       const checkInterfaz = setInterval(() => {
           if (window.mostrarInterfazSoloCamara) {
               window.mostrarInterfazSoloCamara(ciMascota);
@@ -1262,94 +1261,58 @@
       }, 100);
   }
 
-  // ========= UTILIDADES =========
-  const normalizarNombre = (n) => {
-    if (!n) return "";
-    return n.toLowerCase().replace(/\s+/g, '').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  };
 // =========================================================
-// [16] GUARDAR CONSULTA EN FIREBASE (OPTIMIZADO CON MÓVIL)
-// =========================================================
-// =========================================================
-// FUNCIÓN MAESTRA: GUARDAR EN FIREBASE (VERSIÓN COMPLETA)
+// [16] GUARDAR CONSULTA (SIN COMPRESIÓN - ALTA VELOCIDAD)
 // =========================================================
 window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
     const nombreDoctor = selectorDoc ? selectorDoc.value : "";
 
     if (!nombreDoctor) {
-        alert("⚠️ Por favor, seleccione un doctor para firmar la consulta.");
+        alert("⚠️ Por favor, seleccione un doctor.");
         return;
     }
 
-    const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN para autorizar:`);
+    const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nPIN:`);
     if (!pinIngresado) return;
 
-    // Validación de seguridad
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
-    if (esValido) {
-        window.doctorVerificado = nombreDoctor;
-        console.log("✅ Firma validada.");
-    } else {
+    if (!esValido) {
         alert("❌ PIN incorrecto.");
         return;
     }
 
-    // Feedback visual: deshabilitar botón mientras sube
     const btnGuardar = document.activeElement;
     const textoOriginal = btnGuardar ? btnGuardar.innerText : "Guardar";
     if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
         btnGuardar.disabled = true;
-        btnGuardar.innerText = "⏳ Subiendo Consulta...";
+        btnGuardar.innerText = "⏳ Subiendo archivos pesados...";
     }
 
     try {
-        // --- FUNCIÓN DE COMPRESIÓN DE IMAGEN ---
-        const convertirABase64 = (archivo) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(archivo);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.crossOrigin = "anonymous"; 
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800; 
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.fillStyle = "#FFFFFF";
-                        ctx.fillRect(0, 0, width, height);
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6));
-                    };
-                };
-                reader.onerror = error => reject(error);
-            });
+        // --- FUNCIÓN DE SUBIDA A STORAGE (Mantiene calidad original) ---
+        const subirArchivo = async (archivo, ruta) => {
+            if (!archivo) return "";
+            const storageRef = ref(storage, `consultas/${Date.now()}_${ruta}`);
+            const snapshot = await uploadBytes(storageRef, archivo);
+            return await getDownloadURL(snapshot.ref);
         };
 
         // --- PROCESAR FOTOS (PC O MÓVIL) ---
         const fotoFile = document.getElementById('inputFotoHistoria')?.files[0];
-        const urlFotoMovil = document.getElementById('pUrlExamen')?.value || "";
-        let urlFotoFinal = urlFotoMovil; 
-
+        const fotoTestFile = document.getElementById('inputFotoTest')?.files[0];
+        
+        // Si vienen del QR, ya son URLs, si no, se suben al Storage ahora
+        let urlFotoFinal = document.getElementById('pUrlExamen')?.value || "";
         if (fotoFile) {
-            console.log("📸 Comprimiendo foto desde PC...");
-            urlFotoFinal = await convertirABase64(fotoFile);
+            btnGuardar.innerText = "📸 Subiendo Foto Historia...";
+            urlFotoFinal = await subirArchivo(fotoFile, "historia.jpg");
         }
 
-        const fotoTestFile = document.getElementById('inputFotoTest')?.files[0];
         let urlFotoTestFinal = "";
         if (fotoTestFile) {
-            console.log("📸 Comprimiendo foto test...");
-            urlFotoTestFinal = await convertirABase64(fotoTestFile);
+            btnGuardar.innerText = "🧪 Subiendo Foto Test...";
+            urlFotoTestFinal = await subirArchivo(fotoTestFile, "test.jpg");
         }
 
         // --- RECOLECCIÓN DE TESTS ---
@@ -1360,7 +1323,6 @@ window.guardarFirebase = async (imp) => {
             const nombreT = inputNombre ? inputNombre.value : fila.cells[0].innerText.trim();
             const resultadoT = fila.cells[1].querySelector('select')?.value;
             const notaT = fila.cells[2].querySelector('input')?.value || "";
-
             if (nombreT && resultadoT && resultadoT !== "---") {
                 listaTestsRapidos.push({ nombre: nombreT, resultado: resultadoT, nota: notaT });
             }
@@ -1368,33 +1330,26 @@ window.guardarFirebase = async (imp) => {
 
         // --- CÁLCULOS ECONÓMICOS ---
         const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-        let porcGlobal = null;
-        if (configSnap.exists()) {
-            const cData = configSnap.data();
-            porcGlobal = (cData.porcentajeDoc ?? cData.porcDoc) > 0 ? (cData.porcentajeDoc ?? cData.porcDoc) : null;
-        }
+        let porcGlobal = (configSnap.exists()) ? (configSnap.data().porcentajeDoc || null) : null;
 
         const dInput = (id) => document.getElementById(id)?.value.trim() || "";
         const montoVentaTotal = parseFloat(document.getElementById('precioVenta')?.value) || 0;
-        const detalleInsumos = [];
         let totalGastos = 0;
         let pagoDoctorTotal = 0;
+        const detalleInsumos = [];
 
-        const serviciosPrincipales = document.querySelectorAll('.servicio-principal');
-        serviciosPrincipales.forEach(fila => {
+        document.querySelectorAll('.servicio-principal').forEach(fila => {
             const grupoID = fila.getAttribute('data-grupo');
             const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
-            const porcServicio = parseFloat(fila.getAttribute('data-porc')) || 0;
-            const pEfect = (porcGlobal !== null) ? porcGlobal : porcServicio;
+            const pEfect = porcGlobal || parseFloat(fila.getAttribute('data-porc')) || 0;
 
             let gastosEsteServicio = 0;
             document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
                 const nombre = insumoFila.cells[0].innerText.replace(/[➕🔹]/g, '').trim();
                 const cant = parseFloat(insumoFila.querySelector('.i-cant')?.value) || 0;
-                const costoUnidad = parseFloat(insumoFila.querySelector('.i-cost')?.value) || 0;
-                const subtotalInsumo = cant * costoUnidad;
-                gastosEsteServicio += subtotalInsumo;
-                detalleInsumos.push({ nombre, cant, costo: costoUnidad });
+                const costo = parseFloat(insumoFila.querySelector('.i-cost')?.value) || 0;
+                gastosEsteServicio += (cant * costo);
+                detalleInsumos.push({ nombre, cant, costo });
             });
             totalGastos += gastosEsteServicio;
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
@@ -1404,58 +1359,34 @@ window.guardarFirebase = async (imp) => {
         const dataConsulta = {
             cedula: dInput('hCI'),
             propietario: dInput('hProp'),
-            telefono: dInput('hTlf'),
-            correo: dInput('hMail'),
-            direccion: dInput('hDir'),
             paciente: dInput('hNombre'),
-            especie: dInput('hEspecie'),
-            raza: dInput('hRaza'),
-            edad: dInput('hEdad'),
-            sexo: dInput('hSexo'),
-            color: dInput('hColor'),
-            peso: dInput('hPeso'),
             doctor: window.doctorVerificado,
-            tratamiento: dInput('hTratamiento'),
-            testsRealizados: listaTestsRapidos,
             urlExamen: urlFotoFinal, 
             urlFotoTest: urlFotoTestFinal, 
             montoVenta: montoVentaTotal,
             montoInsumos: totalGastos,
             pagoDoctor: pagoDoctorTotal,
-            pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
-            listaDetalladaInsumos: detalleInsumos,
             fecha: serverTimestamp(),
-            fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
+            fechaSimple: new Date().toLocaleDateString()
         };
 
-        // --- GUARDADO FINAL ---
+        btnGuardar.innerText = "💾 Finalizando...";
         await addDoc(collection(db, "consultas"), dataConsulta);
-        console.log("✅ Guardado exitoso en Firebase.");
-
-        if (typeof window.exportarHistorialAExcel === 'function') {
-            window.exportarHistorialAExcel();
-        }
-
-        if (imp) {
-            const pTrat = document.getElementById('hTratamientoPrint');
-            if(pTrat) pTrat.innerText = dInput('hTratamiento');
-            alert("✅ Guardado con éxito. Preparando impresión...");
-            setTimeout(() => window.print(), 600);
-        } else {
-            alert("✅ Guardado exitosamente en la nube.");
-        }
+        
+        alert("✅ Guardado con éxito en la nube.");
+        if (imp) window.print();
 
     } catch (e) {
-        console.error("Error al guardar:", e);
-        alert("❌ Error al guardar: " + e.message);
+        console.error("Error:", e);
+        alert("❌ Error: " + e.message);
     } finally {
-        // Restaurar botón
         if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
             btnGuardar.disabled = false;
             btnGuardar.innerText = textoOriginal;
         }
     }
 };
+
   // ==========================================
   // LÓGICA PC: GENERAR QR (EXPUESTA AL WINDOW)
   // ==========================================
@@ -4883,6 +4814,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
