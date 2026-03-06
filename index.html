@@ -483,26 +483,38 @@
            class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
     </div>
 
-    <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
-        <label class="block text-[10px] font-black text-slate-500 uppercase mb-2 italic tracking-widest">
-            📁 Adjuntar Examen o Documento (Imagen)
-        </label>
-        
-        <div class="flex items-center gap-4">
-            <input type="file" id="inputFotoHistoria" accept="image/*" class="hidden" onchange="window.previsualizarFotoHistoria(event)">
-            
-            <button type="button" onclick="document.getElementById('inputFotoHistoria').click()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-black transition-all flex items-center gap-2">
-                <span>📷</span> Seleccionar Archivo
-            </button>
+   <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
+    <label class="block text-[10px] font-black text-slate-500 uppercase mb-2 italic tracking-widest">
+        📁 Adjuntar Examen o Documento (PC o Teléfono)
+    </label>
+    
+    <div class="flex flex-wrap items-center gap-4">
+        <input type="file" id="inputFotoHistoria" accept="image/*" class="hidden" onchange="window.previsualizarFotoHistoria(event)">
+        <button type="button" onclick="document.getElementById('inputFotoHistoria').click()" 
+                class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-black transition-all flex items-center gap-2">
+            <span>💻</span> PC / Archivo
+        </button>
 
-            <div id="previewHistoriaContainer" class="hidden relative w-16 h-16 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm">
-                <img id="imgHistoriaPreview" src="" class="w-full h-full object-cover">
-                <button type="button" onclick="window.quitarFotoHistoria()" class="absolute top-0 right-0 bg-red-600 text-white text-[8px] px-1 font-bold italic">X</button>
-            </div>
+        <button type="button" onclick="window.generarEnlaceMovil()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-blue-700 transition-all flex items-center gap-2">
+            <span>📱</span> Usar Teléfono (QR)
+        </button>
+
+        <div id="qrContainer" class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center animate-pulse">
+            <div id="qrcode"></div>
+            <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">Escanea para vincular</p>
         </div>
-        
-        <textarea id="notaAdjuntoHistoria" placeholder="Breve nota sobre este documento (Ej: Valores de hematología)" class="w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white" rows="1"></textarea>
+
+        <div id="previewHistoriaContainer" class="hidden relative w-16 h-16 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm">
+            <img id="imgHistoriaPreview" src="" class="w-full h-full object-cover">
+            <input type="hidden" id="pUrlExamen"> <button type="button" onclick="window.quitarFotoHistoria()" 
+                    class="absolute top-0 right-0 bg-red-600 text-white text-[8px] px-1 font-bold italic">X</button>
+        </div>
     </div>
+    
+    <textarea id="notaAdjuntoHistoria" placeholder="Breve nota sobre este documento (Ej: Valores de hematología)" 
+              class="w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white" rows="1"></textarea>
+</div>
 
     <div id="contenedorInsumos"
          class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
@@ -1221,17 +1233,14 @@
 </div>
 <script type="module">
   // 1. IMPORTACIONES AJUSTADAS
-  // Importamos db y storage desde tu archivo de configuración local
   import { db, storage } from './firebase-config.js';
 
-  // Importamos las funciones de Base de Datos (Firestore) desde la nube
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
     doc, getDoc, setDoc, updateDoc, orderBy, limit,
-    enableIndexedDbPersistence, deleteDoc
+    enableIndexedDbPersistence, deleteDoc, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // Importamos las funciones de Archivos (Storage) desde la nube
   import { 
     ref, 
     uploadBytes, 
@@ -1239,7 +1248,6 @@
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   // 2. ACTIVACIÓN INMEDIATA DEL MODO OFFLINE
-  // (Esto permite que Avipet siga funcionando aunque el barco pierda señal)
   enableIndexedDbPersistence(db).catch((err) => {
       if (err.code == 'failed-precondition') {
           console.warn("Persistencia falló: Múltiples pestañas abiertas.");
@@ -1247,6 +1255,15 @@
           console.warn("Persistencia no soportada por este navegador.");
       }
   });
+
+  // [NUEVO] INTERCEPTOR PARA MODO MÓVIL
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('mode') === 'mobile') {
+      const ciMascota = params.get('ci');
+      setTimeout(() => { 
+          if (window.mostrarInterfazSoloCamara) window.mostrarInterfazSoloCamara(ciMascota); 
+      }, 500);
+  }
 
   // ========= [02] UTILIDADES Y CATÁLOGOS =========
   const normalizarNombre = (n) => {
@@ -1256,7 +1273,98 @@
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
-  // AQUÍ CONTINÚA EL RESTO DE TU CÓDIGO (showTab, etc.)
+  // ==========================================
+  // [NUEVO] LÓGICA DE SINCRONIZACIÓN QR (PC)
+  // ==========================================
+  window.generarEnlaceMovil = () => {
+      const cedula = document.getElementById('hCI').value;
+      if (!cedula) return alert("⚠️ Albert, escribe la Cédula del propietario primero.");
+
+      const qrDiv = document.getElementById("qrcode");
+      qrDiv.innerHTML = ""; 
+      document.getElementById("qrContainer").classList.remove("hidden");
+
+      // Construye la URL dinámica
+      const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}`;
+
+      new QRCode(qrDiv, {
+          text: urlVinculo,
+          width: 128,
+          height: 128
+      });
+
+      // La PC se pone en modo "Escucha" esperando la foto
+      const docRef = doc(db, "transferencias_fotos", cedula);
+      const unsub = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+              const data = docSnap.data();
+              
+              // Cargar preview en la PC
+              document.getElementById('imgHistoriaPreview').src = data.url;
+              document.getElementById('previewHistoriaContainer').classList.remove('hidden');
+              
+              // Guardar la URL en el campo que se enviará a Firebase
+              if(document.getElementById('pUrlExamen')) {
+                  document.getElementById('pUrlExamen').value = data.url;
+              }
+
+              document.getElementById("qrContainer").classList.add("hidden");
+              alert("🚀 ¡Foto recibida del teléfono con éxito!");
+              
+              deleteDoc(docRef); // Limpiar puente
+              unsub(); // Apagar radar
+          }
+      });
+  };
+
+  // ==========================================
+  // [NUEVO] INTERFAZ MÓVIL (TELÉFONO)
+  // ==========================================
+  window.mostrarInterfazSoloCamara = (ci) => {
+      document.body.innerHTML = `
+          <div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans">
+              <div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center">
+                  <img src="avipet.png" alt="Logo" class="h-16 mx-auto mb-4 object-contain">
+                  <h1 class="text-xl font-black uppercase text-blue-400 italic">Escáner Móvil</h1>
+                  <p class="text-slate-400 text-xs mb-6 uppercase">Paciente CI: <b>${ci}</b></p>
+                  
+                  <input type="file" id="mobileFile" accept="image/*" capture="environment" class="hidden" 
+                         onchange="window.procesarSubidaMovil(this, '${ci}')">
+
+                  <button onclick="document.getElementById('mobileFile').click()" 
+                          class="w-full bg-blue-600 py-6 rounded-2xl font-black text-lg shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all">
+                      <span class="text-3xl">📷</span> TOMAR FOTO
+                  </button>
+
+                  <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300">Listo para capturar...</div>
+              </div>
+          </div>`;
+  };
+
+  window.procesarSubidaMovil = async (input, ci) => {
+      const status = document.getElementById('statusMovil');
+      const file = input.files[0];
+      if (!file) return;
+
+      status.innerText = "⏳ Subiendo a la nube...";
+
+      try {
+          const storageRef = ref(storage, `transferencias/${ci}_${Date.now()}.jpg`);
+          const snapshot = await uploadBytes(storageRef, file);
+          const urlFinal = await getDownloadURL(snapshot.ref);
+
+          await setDoc(doc(db, "transferencias_fotos", ci), {
+              url: urlFinal,
+              fecha: serverTimestamp()
+          });
+
+          status.innerHTML = "✅ ¡ENVIADO! Revisa tu computadora.";
+      } catch (e) {
+          status.innerText = "❌ Error: " + e.message;
+      }
+  };
+
+  // AQUÍ CONTINÚA EL RESTO DE TU CÓDIGO (showTab, guardarFirebase, etc.)
 
   const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
@@ -2117,6 +2225,50 @@ window.cerrarModalFoto = () => {
 document.addEventListener('keydown', (e) => {
     if (e.key === "Escape") cerrarModalFoto();
 });
+  // Función para que la PC espere la foto del teléfono
+window.activarModoMovil = (cedula) => {
+    const docRef = doc(db, "fotos_temporales", cedula);
+    
+    // Se queda escuchando cambios en tiempo real
+    onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // ¡BOOM! La URL de la foto aparece en la PC sin recargar
+            document.getElementById('pUrlExamen').value = data.url; 
+            alert("✅ Foto recibida desde el teléfono!");
+        }
+    });
+};
+  import { doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+window.generarEnlaceMovil = () => {
+    const cedula = document.getElementById('pCedula').value;
+    if(!cedula) return alert("Primero escribe la Cédula");
+
+    // 1. Limpiar el QR anterior
+    document.getElementById("qrcode").innerHTML = "";
+
+    // 2. Crear la URL (Apunta a tu misma web pero con parámetros)
+    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}`;
+
+    // 3. Dibujar el QR
+    new QRCode(document.getElementById("qrcode"), {
+        text: urlVinculo,
+        width: 128,
+        height: 128
+    });
+
+    // 4. Activar el "Radar": La PC escucha si el teléfono sube algo a esta Cédula
+    const docRef = doc(db, "transferencias_fotos", cedula);
+    onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // ¡Magia! La URL llega a la PC y se pone en el campo de la historia
+            document.getElementById('pUrlExamen').value = data.url;
+            alert("✅ ¡Foto recibida del teléfono!");
+        }
+    });
+};
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -2953,9 +3105,9 @@ setVal('repDocSilva', `$${silvaTotal.toFixed(2)}`);
     }
   };
 
-  // =========================================================
-  // [16] GUARDAR CONSULTA EN FIREBASE (OPTIMIZADO OFFLINE)
-  // =========================================================
+// =========================================================
+// [16] GUARDAR CONSULTA EN FIREBASE (OPTIMIZADO CON MÓVIL)
+// =========================================================
 window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
     const nombreDoctor = selectorDoc ? selectorDoc.value : "";
@@ -2985,7 +3137,6 @@ window.guardarFirebase = async (imp) => {
                 reader.readAsDataURL(archivo);
                 reader.onload = (event) => {
                     const img = new Image();
-                    // ⚓ Crucial para que la impresora no bloquee la imagen
                     img.crossOrigin = "anonymous"; 
                     img.src = event.target.result;
                     
@@ -3003,13 +3154,9 @@ window.guardarFirebase = async (imp) => {
                         canvas.height = height;
 
                         const ctx = canvas.getContext('2d');
-                        // Limpiamos el fondo a blanco (por si es un PNG con transparencia)
                         ctx.fillStyle = "#FFFFFF";
                         ctx.fillRect(0, 0, width, height);
-                        
                         ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // Salida en JPEG al 60% para máxima ligereza y compatibilidad de impresión
                         resolve(canvas.toDataURL('image/jpeg', 0.6));
                     };
                 };
@@ -3017,19 +3164,25 @@ window.guardarFirebase = async (imp) => {
             });
         };
 
-        // --- PROCESAR Y ASIGNAR A LA VISTA DE IMPRESIÓN ---
+        // --- PROCESAR FOTO (PC O MÓVIL) ---
         const fotoFile = document.getElementById('inputFotoHistoria')?.files[0];
-        let urlFotoFinal = "";
+        // ⚓ AJUSTE: Si no hay archivo físico (PC), busca la URL del QR (Móvil)
+        const urlFotoMovil = document.getElementById('pUrlExamen')?.value || "";
+        let urlFotoFinal = urlFotoMovil; 
+
         if (fotoFile) {
-            console.log("📸 Comprimiendo foto historia...");
+            console.log("📸 Comprimiendo foto desde PC...");
             urlFotoFinal = await convertirABase64(fotoFile);
             
-            // ⚓ Refuerzo para la etiqueta <img> que se va a imprimir
             const imgDoc = document.getElementById('pFotoMascota'); 
             if(imgDoc) {
                 imgDoc.crossOrigin = "anonymous";
                 imgDoc.src = urlFotoFinal;
             }
+        } else if (urlFotoMovil) {
+            console.log("📱 Usando foto vinculada desde Teléfono...");
+            const imgDoc = document.getElementById('pFotoMascota'); 
+            if(imgDoc) imgDoc.src = urlFotoMovil;
         }
 
         const fotoTestFile = document.getElementById('inputFotoTest')?.files[0];
@@ -3093,16 +3246,13 @@ window.guardarFirebase = async (imp) => {
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
-        // --- ESTRUCTURA DE DATOS FINAL (AJUSTADA PARA EXCEL) ---
+        // --- ESTRUCTURA DE DATOS FINAL ---
         const dataConsulta = {
-            // Datos básicos
             cedula: dInput('hCI'),
             propietario: dInput('hProp'),
             telefono: dInput('hTlf'),
             correo: dInput('hMail'),
             direccion: dInput('hDir'),
-            
-            // Datos Mascota
             paciente: dInput('hNombre'),
             especie: dInput('hEspecie'),
             raza: dInput('hRaza'),
@@ -3110,22 +3260,16 @@ window.guardarFirebase = async (imp) => {
             sexo: dInput('hSexo'),
             color: dInput('hColor'),
             peso: dInput('hPeso'),
-
-            // Médicos y Firma
             doctor: window.doctorVerificado,
             tratamiento: dInput('hTratamiento'),
             testsRealizados: listaTestsRapidos,
             urlExamen: urlFotoFinal, 
             urlFotoTest: urlFotoTestFinal, 
-            
-            // Financieros
             montoVenta: montoVentaTotal,
             montoInsumos: totalGastos,
             pagoDoctor: pagoDoctorTotal,
             pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
             listaDetalladaInsumos: detalleInsumos,
-            
-            // Metadatos
             fecha: serverTimestamp(),
             fechaSimple: `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`
         };
@@ -3134,12 +3278,10 @@ window.guardarFirebase = async (imp) => {
         await addDoc(collection(db, "consultas"), dataConsulta);
         console.log("✅ Guardado exitoso en Firebase.");
 
-        // Exportación automática si existe la función
         if (typeof window.exportarHistorialAExcel === 'function') {
             window.exportarHistorialAExcel();
         }
 
-        // Lógica de Impresión / Alerta Final
         if (imp) {
             document.getElementById('hTratamientoPrint').innerText = dInput('hTratamiento');
             alert("✅ Guardado con éxito. Preparando impresión...");
@@ -4741,6 +4883,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
