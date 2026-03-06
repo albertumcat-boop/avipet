@@ -1297,7 +1297,7 @@
   import { db, storage } from './firebase-config.js';
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, orderBy
+    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, orderBy, limit
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   // 2. CONFIGURACIÓN DE PERSISTENCIA (MODO OFFLINE)
@@ -1306,12 +1306,11 @@
       if (err.code == 'failed-precondition') console.warn("Persistencia falló (múltiples pestañas).");
   });
 
-  // 3. DETECTOR MÓVIL (SISTEMA DE ARRANQUE)
+  // 3. DETECTOR MÓVIL
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
-      const tipoFoto = params.get('tipo') || 'historia'; // Detecta si es test o historia
-      
+      const tipoFoto = params.get('tipo') || 'historia';
       const checkInterfaz = setInterval(() => {
           if (window.mostrarInterfazSoloCamara) {
               window.mostrarInterfazSoloCamara(ciMascota, tipoFoto);
@@ -2821,13 +2820,14 @@ window.buscarPorCedula = async () => {
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA (MODO OFFLINE RESISTENTE)
   // =========================================================
- window.autocompletarPorCedula = async (ci) => {
+// 2. FUNCIÓN DE AUTORRELLENO (SIN COMPRIMIR)
+window.autocompletarPorCedula = async (ci) => {
     if (!ci || ci.length < 3) return;
 
     try {
         console.log("🔍 Iniciando Radar en CI:", ci);
         
-        // Buscamos en la colección "consultas"
+        // Buscamos en la colección "consultas" el registro más reciente
         const q = query(
             collection(db, "consultas"), 
             where("cedula", "==", ci.trim()),
@@ -4959,6 +4959,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
