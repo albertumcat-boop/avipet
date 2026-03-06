@@ -1307,17 +1307,34 @@
       console.warn("Persistencia falló (múltiples pestañas).");
   });
 
-  // 3. DETECTOR MÓVIL
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('mode') === 'mobile') {
-    const ciMascota = params.get('ci');
-    const tipoFoto = params.get('tipo') || 'historia';
-    const checkInterfaz = setInterval(() => {
-      if (window.mostrarInterfazSoloCamara) {
-        window.mostrarInterfazSoloCamara(ciMascota, tipoFoto);
-        clearInterval(checkInterfaz);
-      }
-    }, 100);
+ // 3. DETECTOR MÓVIL MEJORADO (Evita cruces de fotos)
+  const ejecutarDetectorMovil = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'mobile') {
+      const ciMascota = params.get('ci');
+      const tipoFoto = params.get('tipo') || 'historia';
+
+      console.log(`📱 Modo Móvil Detectado: CI=${ciMascota}, Tipo=${tipoFoto}`);
+
+      const checkInterfaz = setInterval(() => {
+        if (window.mostrarInterfazSoloCamara) {
+          window.mostrarInterfazSoloCamara(ciMascota, tipoFoto);
+          clearInterval(checkInterfaz);
+        }
+      }, 100);
+    }
+  };
+
+  // Ejecutar al cargar
+  ejecutarDetectorMovil();
+
+  // Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
+  window.addEventListener('popstate', ejecutarDetectorMovil);
+  // Algunos navegadores móviles requieren este para detectar cambios de parámetros
+  if ('navigation' in window) {
+      window.navigation.addEventListener('navigate', (event) => {
+          setTimeout(ejecutarDetectorMovil, 100);
+      });
   }
 
   // 4. COMPRESOR DE IMÁGENES (Base64 -> Base64 comprimido)
@@ -1537,23 +1554,34 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
   // INTERFAZ MÓVIL (EXPUESTA AL WINDOW)
   // ==========================================
 window.mostrarInterfazSoloCamara = (ci, tipo) => {
+  console.log("🛠️ Modo activado:", tipo, "para CI:", ci);
+  
   const titulo = tipo === 'test' ? '🧪 ESCÁNER DE TEST' : '📸 ESCÁNER DE HISTORIA';
   const colorBtn = tipo === 'test' ? 'bg-emerald-600' : 'bg-blue-600';
+  const colorTexto = tipo === 'test' ? 'text-emerald-400' : 'text-blue-400';
 
+  // Limpiamos y redibujamos con los datos EXACTOS del QR actual
   document.body.innerHTML = `
     <div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans">
       <div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center">
-        <h1 class="text-xl font-black uppercase italic ${tipo === 'test' ? 'text-emerald-400' : 'text-blue-400'}">
+        <h1 class="text-xl font-black uppercase italic ${colorTexto}">
           ${titulo}
         </h1>
-        <p class="text-slate-400 text-[10px] mb-6 uppercase tracking-widest">Paciente CI: <b>${ci}</b></p>
+        <p class="text-slate-400 text-[10px] mb-6 uppercase tracking-widest">
+          Paciente CI: <b>${ci}</b>
+        </p>
+        
         <input type="file" id="mobileFile" accept="image/*" capture="environment" class="hidden"
                onchange="window.procesarSubidaMovil(this, '${ci}', '${tipo}')">
+               
         <button onclick="document.getElementById('mobileFile').click()"
                 class="w-full ${colorBtn} py-6 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all">
           📷 TOMAR FOTO
         </button>
-        <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo para capturar...</div>
+        
+        <div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">
+          Listo para capturar ${tipo.toUpperCase()}...
+        </div>
       </div>
     </div>`;
 };
@@ -4995,6 +5023,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
