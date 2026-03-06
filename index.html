@@ -271,6 +271,11 @@
           class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
     Finanzas / Caja
   </button>
+
+  <button onclick="showTab('inventario')" id="tabInv"
+        class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
+  Inventario
+</button>
   
   <button onclick="showTab('config_precios')"
           class="px-4 py-2 font-black text-[10px] uppercase bg-slate-100 rounded-lg shadow-sm border border-slate-200">
@@ -1291,7 +1296,225 @@
         <img id="imgGrande" src="" class="max-w-full max-h-full rounded-lg shadow-2xl border-2 border-white/10 object-contain" onclick="event.stopPropagation()">
     </div>
 </div>
-                
+
+                <section id="sectionInventario" class="hidden p-4 bg-slate-50 min-h-screen animate-fadeIn">
+  <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
+    
+    <!-- Encabezado -->
+    <div class="flex justify-between items-center border-b-2 border-blue-600 p-4">
+      <div class="flex items-center gap-3">
+        <img src="avipet.png" alt="Logo" class="h-10 object-contain">
+        <h2 class="text-lg font-black text-slate-800 uppercase italic leading-none">
+          Inventario Clínico
+        </h2>
+      </div>
+      <div class="text-right text-[10px] font-bold uppercase text-slate-400">
+        Control de Alimentos y Medicinas
+      </div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <!-- Columna izquierda: buscador + lista -->
+      <div class="md:col-span-1 border-r border-slate-200 pr-3 space-y-3">
+        <!-- Filtros -->
+        <div class="flex gap-2 items-end">
+          <div class="flex-1">
+            <label class="text-[9px] font-bold text-slate-400 uppercase mb-1 block">
+              Buscar producto
+            </label>
+            <input id="inv_buscar" type="text"
+                   placeholder="Nombre o código..."
+                   oninput="window.filtrarInventario()"
+                   class="w-full border-b border-slate-300 p-1 text-[12px] outline-none focus:border-blue-600">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase mb-1 block">
+              Tipo
+            </label>
+            <select id="inv_filtro_categoria"
+                    onchange="window.filtrarInventario()"
+                    class="border border-slate-300 rounded px-2 py-1 text-[11px]">
+              <option value="todos">Todos</option>
+              <option value="alimento">Alimento</option>
+              <option value="medicina">Medicina</option>
+              <option value="otro">Otros</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Lista -->
+        <div id="inv_lista"
+             class="mt-3 max-h-[60vh] overflow-y-auto text-[11px] space-y-1">
+          <!-- Aquí se renderizan los productos -->
+        </div>
+
+        <button type="button"
+                onclick="window.nuevoProductoInventario()"
+                class="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-black text-[10px] uppercase">
+          ➕ Nuevo producto
+        </button>
+      </div>
+
+      <!-- Columna derecha: ficha producto + ajustes -->
+      <div class="md:col-span-2 pl-3 space-y-4">
+
+        <!-- Ficha producto -->
+        <div class="border border-slate-200 rounded-xl p-3 bg-slate-50" id="inv_ficha_wrapper">
+          <p class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest italic">
+            Ficha de producto
+          </p>
+
+          <div id="inv_sin_seleccion" class="text-[11px] text-slate-400 italic">
+            Seleccione un producto de la lista o cree uno nuevo.
+          </div>
+
+          <div id="inv_ficha" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+            <div>
+              <label class="text-[9px] font-bold text-slate-400 uppercase">Nombre</label>
+              <input id="inv_nombre" class="border-b border-slate-300 w-full p-1 outline-none font-bold text-slate-800">
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-400 uppercase">Categoría</label>
+              <select id="inv_categoria" class="border-b border-slate-300 w-full p-1 outline-none">
+                <option value="alimento">Alimento</option>
+                <option value="medicina">Medicina</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-400 uppercase">Código interno</label>
+              <input id="inv_codigo" class="border-b border-slate-300 w-full p-1 outline-none text-[11px]">
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-400 uppercase">Presentación</label>
+              <input id="inv_presentacion" class="border-b border-slate-300 w-full p-1 outline-none text-[11px]" placeholder="Ej: Saco 20kg, Caja 24un, etc.">
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-[9px] font-bold text-slate-400 uppercase">Stock actual</label>
+                <input id="inv_stockActual" type="number"
+                       class="border-b border-slate-300 w-full p-1 outline-none font-black text-blue-700">
+              </div>
+              <div>
+                <label class="text-[9px] font-bold text-slate-400 uppercase">Stock mínimo</label>
+                <input id="inv_stockMinimo" type="number"
+                       class="border-b border-slate-300 w-full p-1 outline-none font-bold text-orange-600">
+              </div>
+              <div>
+                <label class="text-[9px] font-bold text-slate-400 uppercase">Estado</label>
+                <div id="inv_badge_estado" class="mt-1 text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-slate-200 text-slate-700">
+                  Normal
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[9px] font-bold text-slate-400 uppercase">Precio compra ($)</label>
+                <input id="inv_precioCompra" type="number" step="0.01"
+                       class="border-b border-slate-300 w-full p-1 outline-none text-[11px]">
+              </div>
+              <div>
+                <label class="text-[9px] font-bold text-slate-400 uppercase">Precio venta ($)</label>
+                <input id="inv_precioVenta" type="number" step="0.01"
+                       class="border-b border-slate-300 w-full p-1 outline-none text-[11px] font-black text-emerald-700">
+              </div>
+            </div>
+
+            <div>
+              <label class="text-[9px] font-bold text-slate-400 uppercase">Fecha de vencimiento</label>
+              <input id="inv_vencimiento" type="date"
+                     class="border-b border-slate-300 w-full p-1 outline-none text-[11px]">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="text-[9px] font-bold text-slate-400 uppercase">Notas</label>
+              <textarea id="inv_notas" rows="2"
+                        class="border border-slate-300 rounded-lg w-full p-2 outline-none text-[11px] bg-white"
+                        placeholder="Observaciones, lote, proveedor, etc."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div id="inv_botones" class="hidden flex flex-wrap gap-2">
+          <button type="button"
+                  onclick="window.guardarProductoInventario()"
+                  class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase">
+            💾 Guardar datos
+          </button>
+          <button type="button"
+                  onclick="window.mostrarAjusteRapido()"
+                  class="bg-amber-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase">
+            ⬆⬇ Ajuste rápido
+          </button>
+          <button type="button"
+                  onclick="window.verMovimientosProducto()"
+                  class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-[10px] font-black uppercase">
+            📜 Ver movimientos
+          </button>
+        </div>
+
+        <!-- Panel de ajuste rápido -->
+        <div id="inv_panel_ajuste"
+             class="hidden mt-3 border border-amber-200 bg-amber-50 rounded-xl p-3 text-[11px]">
+          <div class="flex justify-between items-center mb-2">
+            <p class="text-[10px] font-black uppercase text-amber-700">
+              Ajuste rápido de stock
+            </p>
+            <button type="button"
+                    onclick="document.getElementById('inv_panel_ajuste').classList.add('hidden')"
+                    class="text-[11px] text-amber-700 font-bold">
+              ✕
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div>
+              <label class="text-[9px] font-bold text-slate-500 uppercase">
+                Cantidad (+ / -)
+              </label>
+              <input id="inv_ajuste_cant" type="number"
+                     class="border-b border-slate-300 w-full p-1 outline-none">
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-500 uppercase">
+                Tipo
+              </label>
+              <select id="inv_ajuste_tipo"
+                      class="border-b border-slate-300 w-full p-1 outline-none">
+                <option value="ingreso">Ingreso de mercancía</option>
+                <option value="salida">Corrección / Salida</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-500 uppercase">
+                Motivo
+              </label>
+              <input id="inv_ajuste_motivo"
+                     class="border-b border-slate-300 w-full p-1 outline-none"
+                     placeholder="Compra nueva, daño, vencido, etc.">
+            </div>
+          </div>
+          <button type="button"
+                  onclick="window.aplicarAjusteRapido()"
+                  class="mt-3 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase w-full md:w-auto">
+            ✅ Aplicar ajuste
+          </button>
+        </div>
+
+        <!-- Movimientos -->
+        <div id="inv_movimientos"
+             class="hidden mt-3 border border-slate-200 rounded-xl p-3 bg-slate-50 text-[10px] max-h-48 overflow-y-auto">
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</section>
 <script type="module">
   // 1. IMPORTACIONES CORREGIDAS Y COMPLETAS
   import { db, storage } from './firebase-config.js';
@@ -3430,70 +3653,84 @@ setVal('repDocSilva', `$${silvaTotal.toFixed(2)}`);
   };
 
   // 4. Ejecución del Cambio (DOM Manipulation)
-  window.ejecutarCambioDeTab = async (t) => {
-    // A. Ocultar todas las secciones
-    const secciones = [
-      'sectionHistoria', 'sectionBuscador', 'sectionReporte', 
-      'sectionEspera', 'sectionHojaVacunas', 'sectionConfigPrecios',
-      'sectionPeluqueria' // <--- Pieza añadida aquí
-    ];
-    
-    secciones.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('hidden');
-    });
+ window.ejecutarCambioDeTab = async (t) => {
+  // A. Ocultar todas las secciones
+  const secciones = [
+    'sectionHistoria',
+    'sectionBuscador',
+    'sectionReporte',
+    'sectionEspera',
+    'sectionHojaVacunas',
+    'sectionConfigPrecios',
+    'sectionPeluqueria',
+    'sectionInventario' // <-- NUEVO
+  ];
 
-    // B. Mostrar sección activa
-    const mapaSecciones = {
-      'historia': 'sectionHistoria',
-      'buscador': 'sectionBuscador',
-      'reporte': 'sectionReporte',
-      'espera': 'sectionEspera',
-      'vacunas': 'sectionHojaVacunas',
-      'config_precios': 'sectionConfigPrecios',
-      'peluqueria': 'sectionPeluqueria' // <--- Pieza añadida aquí
-    };
+  secciones.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
 
-    const activaId = mapaSecciones[t];
-    if (activaId && document.getElementById(activaId)) {
-      document.getElementById(activaId).classList.remove('hidden');
-    }
-
-    // C. Actualizar estado visual de los botones del menú
-    const botones = {
-      'historia': 'tabH',
-      'buscador': 'tabB',
-      'reporte': 'tabR',
-      'espera': 'tabE',
-      'peluqueria': 'tabP' // <--- Para que el botón de peluquería también se ilumine
-    };
-
-    Object.keys(botones).forEach(key => {
-      const btn = document.getElementById(botones[key]);
-      if (btn) {
-        const isActive = (t === key);
-        btn.classList.toggle('tab-active', isActive);
-        btn.classList.toggle('text-blue-600', isActive);
-        btn.classList.toggle('text-gray-500', !isActive);
-      }
-    });
-
-    // D. Carga de datos bajo demanda
-    if (t === 'reporte' && typeof window.cargarReporte === 'function') window.cargarReporte();
-    if (t === 'espera' && typeof window.cargarListaEspera === 'function') window.cargarListaEspera();
-    if (t === 'config_precios' && typeof window.cambiarSubTabConfig === 'function') {
-        window.cambiarSubTabConfig('servicios');
-    }
-    
-    console.log(`⚓ Navegación exitosa a: ${t}`);
+  // B. Mostrar sección activa
+  const mapaSecciones = {
+    'historia': 'sectionHistoria',
+    'buscador': 'sectionBuscador',
+    'reporte': 'sectionReporte',
+    'espera': 'sectionEspera',
+    'vacunas': 'sectionHojaVacunas',
+    'config_precios': 'sectionConfigPrecios',
+    'peluqueria': 'sectionPeluqueria',
+    'inventario': 'sectionInventario' // <-- NUEVO
   };
 
-  window.cerrarModalLogin = () => {
-    const modal = document.getElementById('modalLogin');
-    if (modal) modal.classList.add('hidden');
-    const inp = document.getElementById('inputPass');
-    if (inp) inp.value = "";
+  const activaId = mapaSecciones[t];
+  if (activaId && document.getElementById(activaId)) {
+    document.getElementById(activaId).classList.remove('hidden');
+  }
+
+  // C. Actualizar estado visual de los botones del menú
+  const botones = {
+    'historia': 'tabH',
+    'buscador': 'tabB',
+    'reporte': 'tabR',
+    'espera': 'tabE',
+    'peluqueria': 'tabP',
+    'inventario': 'tabInv' // <-- NUEVO
   };
+
+  Object.keys(botones).forEach(key => {
+    const btn = document.getElementById(botones[key]);
+    if (btn) {
+      const isActive = (t === key);
+      btn.classList.toggle('tab-active', isActive);
+      btn.classList.toggle('text-blue-600', isActive);
+      btn.classList.toggle('text-gray-500', !isActive);
+    }
+  });
+
+  // D. Carga de datos bajo demanda
+  if (t === 'reporte' && typeof window.cargarReporte === 'function') {
+    window.cargarReporte();
+  }
+  if (t === 'espera' && typeof window.cargarListaEspera === 'function') {
+    window.cargarListaEspera();
+  }
+  if (t === 'config_precios' && typeof window.cambiarSubTabConfig === 'function') {
+    window.cambiarSubTabConfig('servicios');
+  }
+  if (t === 'inventario' && typeof window.cargarInventario === 'function') {
+    window.cargarInventario(); // <-- NUEVO: carga inventario al entrar
+  }
+
+  console.log(`⚓ Navegación exitosa a: ${t}`);
+};
+
+window.cerrarModalLogin = () => {
+  const modal = document.getElementById('modalLogin');
+  if (modal) modal.classList.add('hidden');
+  const inp = document.getElementById('inputPass');
+  if (inp) inp.value = "";
+};
   // =========================================================
   // [24] DOCTOR: VER Y ABRIR COLA DE ESPERA
   // =========================================================
@@ -5018,11 +5255,367 @@ window.renderizarSellos = function(numVisitas) {
         if (el) el.classList.toggle('hidden', !esPremio);
     });
 };
+// ========================
+// INVENTARIO AVIPET
+// ========================
+window.inventarioCache = [];   // lista local en memoria
+window.inventarioSelId = null; // id del producto seleccionado
 
+// Cargar inventario completo al entrar a la pestaña
+window.cargarInventario = async () => {
+  const listaDiv = document.getElementById('inv_lista');
+  if (!listaDiv) return;
+  listaDiv.innerHTML =
+    '<p class="text-center text-[10px] text-slate-400 mt-4">Cargando inventario...</p>';
+  try {
+    const snap = await getDocs(collection(db, "inventario"));
+    const arr = [];
+    snap.forEach(docSnap => {
+      arr.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    window.inventarioCache = arr;
+    window.renderListaInventario(arr);
+  } catch (e) {
+    console.error("Error cargando inventario:", e);
+    listaDiv.innerHTML =
+      '<p class="text-center text-[10px] text-red-500 mt-4 text-[10px]">Error al cargar inventario.</p>';
+  }
+};
+
+// Renderizar lista con stock bajo / vencimiento
+window.renderListaInventario = (items) => {
+  const listaDiv = document.getElementById('inv_lista');
+  if (!listaDiv) return;
+  if (!items || items.length === 0) {
+    listaDiv.innerHTML =
+      '<p class="text-center text-[10px] text-slate-400 mt-4 italic">Sin productos registrados.</p>';
+    return;
+  }
+  listaDiv.innerHTML = "";
+  const hoy = new Date();
+  items
+    .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
+    .forEach(p => {
+      const stock = Number(p.stockActual || 0);
+      const min = Number(p.stockMinimo || 0);
+      const stockBajo = stock < min && min > 0;
+
+      // vencimiento
+      let badgeVenc = "";
+      if (p.fechaVencimiento) {
+        const [yyyy, mm, dd] = p.fechaVencimiento.split("-"); // formato input type="date"
+        if (yyyy && mm && dd) {
+          const fv = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+          const diff = fv - hoy;
+          const dias = diff / (1000 * 60 * 60 * 24);
+          if (dias < 0) {
+            badgeVenc = `<span class="ml-2 text-[9px] font-black text-red-600 uppercase">Vencido</span>`;
+          } else if (dias <= 30) {
+            badgeVenc = `<span class="ml-2 text-[9px] font-black text-amber-600 uppercase">Vence pronto</span>`;
+          }
+        }
+      }
+
+      const cat = p.categoria || "otro";
+      const colorCat =
+        cat === "alimento" ? "bg-emerald-100 text-emerald-700" :
+        cat === "medicina" ? "bg-purple-100 text-purple-700" :
+                             "bg-slate-100 text-slate-600";
+
+      const div = document.createElement("div");
+      div.className =
+        "border border-slate-200 rounded-lg p-2 mb-1 cursor-pointer hover:border-blue-400 transition-colors";
+      div.onclick = () => window.seleccionarProductoInventario(p.id);
+
+      div.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="font-bold text-[11px] text-slate-800 uppercase">${p.nombre || "SIN NOMBRE"}</p>
+            <p class="text-[9px] text-slate-400">
+              Cod: ${p.codigoInterno || "-"} · ${p.presentacion || ""}
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-[11px] font-black ${stockBajo ? "text-red-600" : "text-slate-800"}">
+              Stock: ${stock}
+            </p>
+            <p class="text-[9px] text-slate-400">
+              Min: ${min || 0}
+            </p>
+          </div>
+        </div>
+        <div class="mt-1 flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${colorCat}">
+            ${cat}
+          </span>
+          <span class="text-[9px] text-slate-500">
+            $${Number(p.precioVenta || 0).toFixed(2)}
+          </span>
+        </div>
+        <div class="mt-1 text-[9px] text-slate-500">
+          ${p.fechaVencimiento ? "Vence: " + p.fechaVencimiento : ""}
+          ${badgeVenc}
+        </div>
+      `;
+      listaDiv.appendChild(div);
+    });
+};
+
+// Filtro por texto + categoría
+window.filtrarInventario = () => {
+  const txt = (document.getElementById('inv_buscar')?.value || "").toLowerCase();
+  const cat = document.getElementById('inv_filtro_categoria')?.value || "todos";
+  const base = window.inventarioCache || [];
+  const filtrados = base.filter(p => {
+    let okCat = cat === "todos" ? true : (p.categoria === cat);
+    let okTxt =
+      !txt ||
+      (p.nombre || "").toLowerCase().includes(txt) ||
+      (p.codigoInterno || "").toLowerCase().includes(txt);
+    return okCat && okTxt;
+  });
+  window.renderListaInventario(filtrados);
+};
+
+// Crear producto nuevo
+window.nuevoProductoInventario = () => {
+  window.inventarioSelId = null;
+  document.getElementById('inv_sin_seleccion').classList.add('hidden');
+  document.getElementById('inv_ficha').classList.remove('hidden');
+  document.getElementById('inv_botones').classList.remove('hidden');
+
+  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setV('inv_nombre', "");
+  setV('inv_categoria', "alimento");
+  setV('inv_codigo', "");
+  setV('inv_presentacion', "");
+  setV('inv_stockActual', "0");
+  setV('inv_stockMinimo', "0");
+  setV('inv_precioCompra', "0");
+  setV('inv_precioVenta', "0");
+  setV('inv_vencimiento', "");
+  setV('inv_notas', "");
+  window.actualizarEstadoInventarioVisual();
+  document.getElementById('inv_movimientos').classList.add('hidden');
+};
+
+// Seleccionar producto de la lista
+window.seleccionarProductoInventario = (id) => {
+  const prod = (window.inventarioCache || []).find(p => p.id === id);
+  if (!prod) return;
+  window.inventarioSelId = id;
+
+  document.getElementById('inv_sin_seleccion').classList.add('hidden');
+  document.getElementById('inv_ficha').classList.remove('hidden');
+  document.getElementById('inv_botones').classList.remove('hidden');
+
+  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
+  setV('inv_nombre', prod.nombre);
+  setV('inv_categoria', prod.categoria || "otro");
+  setV('inv_codigo', prod.codigoInterno);
+  setV('inv_presentacion', prod.presentacion);
+  setV('inv_stockActual', prod.stockActual ?? 0);
+  setV('inv_stockMinimo', prod.stockMinimo ?? 0);
+  setV('inv_precioCompra', prod.precioCompra ?? 0);
+  setV('inv_precioVenta', prod.precioVenta ?? 0);
+  setV('inv_vencimiento', prod.fechaVencimiento || "");
+  setV('inv_notas', prod.notas || "");
+
+  window.actualizarEstadoInventarioVisual();
+  document.getElementById('inv_movimientos').classList.add('hidden');
+};
+
+// Actualizar badge de estado (stock bajo / vencido)
+window.actualizarEstadoInventarioVisual = () => {
+  const badge = document.getElementById('inv_badge_estado');
+  if (!badge) return;
+  const stock = Number(document.getElementById('inv_stockActual')?.value || 0);
+  const min = Number(document.getElementById('inv_stockMinimo')?.value || 0);
+  const fv = document.getElementById('inv_vencimiento')?.value || "";
+
+  const hoy = new Date();
+  let estado = "Normal";
+  let clase =
+    "mt-1 text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-emerald-100 text-emerald-700";
+
+  // Vencimiento
+  if (fv) {
+    const [yyyy, mm, dd] = fv.split("-");
+    if (yyyy && mm && dd) {
+      const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      const diff = d - hoy;
+      const dias = diff / (1000 * 60 * 60 * 24);
+      if (dias < 0) {
+        estado = "Vencido";
+        clase =
+          "mt-1 text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-red-100 text-red-700";
+      } else if (dias <= 30) {
+        estado = "Vence pronto";
+        clase =
+          "mt-1 text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-amber-100 text-amber-700";
+      }
+    }
+  }
+
+  // Stock bajo manda
+  if (stock < min && min > 0) {
+    estado = "Stock bajo";
+    clase =
+      "mt-1 text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-red-100 text-red-700";
+  }
+
+  badge.className = clase;
+  badge.innerText = estado;
+};
+
+// Guardar (nuevo o editar)
+window.guardarProductoInventario = async () => {
+  const getV = id => document.getElementById(id)?.value || "";
+  const data = {
+    nombre: getV('inv_nombre').trim(),
+    categoria: getV('inv_categoria') || "otro",
+    codigoInterno: getV('inv_codigo').trim(),
+    presentacion: getV('inv_presentacion').trim(),
+    stockActual: Number(getV('inv_stockActual') || 0),
+    stockMinimo: Number(getV('inv_stockMinimo') || 0),
+    precioCompra: Number(getV('inv_precioCompra') || 0),
+    precioVenta: Number(getV('inv_precioVenta') || 0),
+    fechaVencimiento: getV('inv_vencimiento'),
+    notas: getV('inv_notas').trim(),
+    actualizadoEn: serverTimestamp()
+  };
+
+  if (!data.nombre) {
+    alert("Ingrese al menos el nombre del producto.");
+    return;
+  }
+  try {
+    if (window.inventarioSelId) {
+      await updateDoc(doc(db, "inventario", window.inventarioSelId), data);
+    } else {
+      const ref = await addDoc(collection(db, "inventario"), data);
+      window.inventarioSelId = ref.id;
+    }
+    alert("✅ Inventario actualizado.");
+    await window.cargarInventario();
+  } catch (e) {
+    console.error("Error guardando inventario:", e);
+    alert("❌ Error al guardar: " + e.message);
+  }
+};
+
+// Mostrar panel de ajuste rápido
+window.mostrarAjusteRapido = () => {
+  if (!window.inventarioSelId) {
+    alert("Seleccione un producto primero.");
+    return;
+  }
+  document.getElementById('inv_panel_ajuste').classList.remove('hidden');
+  document.getElementById('inv_ajuste_cant').value = "";
+  document.getElementById('inv_ajuste_motivo').value = "";
+};
+
+// Aplicar ajuste rápido y registrar movimiento
+window.aplicarAjusteRapido = async () => {
+  if (!window.inventarioSelId) return;
+  const cantStr = document.getElementById('inv_ajuste_cant')?.value || "";
+  const tipo = document.getElementById('inv_ajuste_tipo')?.value || "ingreso";
+  const motivo = document.getElementById('inv_ajuste_motivo')?.value || "";
+  const cant = Number(cantStr);
+  if (!cant || cant === 0 || isNaN(cant)) {
+    alert("Cantidad no válida.");
+    return;
+  }
+  const prod = (window.inventarioCache || []).find(p => p.id === window.inventarioSelId);
+  if (!prod) return;
+  let nuevoStock = Number(prod.stockActual || 0);
+  if (tipo === "ingreso") nuevoStock += cant;
+  else nuevoStock -= cant;
+
+  if (nuevoStock < 0) {
+    if (!confirm("El stock quedará negativo. ¿Continuar?")) return;
+  }
+  try {
+    await updateDoc(doc(db, "inventario", window.inventarioSelId), {
+      stockActual: nuevoStock,
+      actualizadoEn: serverTimestamp()
+    });
+
+    // registrar movimiento
+    await addDoc(collection(db, "movimientos_inventario"), {
+      productoId: window.inventarioSelId,
+      nombreProducto: prod.nombre || "",
+      tipo,
+      cantidad: cant,
+      stockAnterior: prod.stockActual || 0,
+      stockNuevo: nuevoStock,
+      motivo,
+      fecha: serverTimestamp()
+    });
+
+    alert("✅ Ajuste aplicado.");
+    document.getElementById('inv_panel_ajuste').classList.add('hidden');
+    await window.cargarInventario();
+    // recargar ficha
+    window.seleccionarProductoInventario(window.inventarioSelId);
+  } catch (e) {
+    console.error("Error ajuste inventario:", e);
+    alert("❌ Error al ajustar: " + e.message);
+  }
+};
+
+// Ver historial de movimientos del producto seleccionado
+window.verMovimientosProducto = async () => {
+  if (!window.inventarioSelId) {
+    alert("Seleccione un producto primero.");
+    return;
+  }
+  const cont = document.getElementById('inv_movimientos');
+  if (!cont) return;
+  cont.classList.remove('hidden');
+  cont.innerHTML =
+    '<p class="text-center text-[10px] text-slate-400">Cargando movimientos...</p>';
+  try {
+    const q = query(
+      collection(db, "movimientos_inventario"),
+      where("productoId", "==", window.inventarioSelId),
+      orderBy("fecha", "desc")
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      cont.innerHTML =
+        '<p class="text-center text-[10px] text-slate-400 italic">Sin movimientos registrados para este producto.</p>';
+      return;
+    }
+    let html = '<p class="text-[9px] font-black text-slate-500 uppercase mb-2">Movimientos recientes</p>';
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      const tipoTxt = d.tipo === "ingreso" ? "INGRESO" : "SALIDA";
+      const color = d.tipo === "ingreso" ? "text-emerald-700" : "text-red-600";
+      html += `
+        <div class="border-b border-slate-100 py-1 flex justify-between items-center">
+          <div>
+            <p class="text-[10px] font-bold ${color}">${tipoTxt} ${d.cantidad}</p>
+            <p class="text-[9px] text-slate-400">${d.motivo || ""}</p>
+          </div>
+          <div class="text-right text-[9px] text-slate-500">
+            ${d.stockAnterior} → <span class="font-black">${d.stockNuevo}</span>
+          </div>
+        </div>
+      `;
+    });
+    cont.innerHTML = html;
+  } catch (e) {
+    console.error("Error cargando movimientos:", e);
+    cont.innerHTML =
+      '<p class="text-center text-[10px] text-red-500">Error al cargar movimientos.</p>';
+  }
+};
 </script>
 
 </body>
 </html>
+
 
 
 
