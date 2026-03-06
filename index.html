@@ -2067,7 +2067,16 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
       window.doctorActivoId = null;
     }
   };
-
+// =========================================================
+// FUNCIÓN AUXILIAR: NORMALIZAR NOMBRES DE SERVICIOS
+// =========================================================
+const normalizarNombre = (texto = "") => {
+  return String(texto)
+    .toLowerCase()
+    .normalize("NFD")               // separa acentos
+    .replace(/[\u0300-\u036f]/g, "")// quita acentos
+    .replace(/[^a-z0-9]/g, "");     // quita espacios y símbolos
+};
  window.insertarServicio = async (v) => {
     if (!v) return;
     const area = document.getElementById('hTratamiento');
@@ -4986,6 +4995,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
