@@ -1233,23 +1233,23 @@
 </div>
                 
 <script type="module">
-  // 1. IMPORTACIONES
+  // 1. IMPORTACIONES DESDE TU CONFIGURACIÓN ACTUALIZADA
   import { db, storage } from './firebase-config.js';
   import {
     collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, orderBy, limit,
-    enableIndexedDbPersistence, deleteDoc, onSnapshot
+    doc, getDoc, setDoc, updateDoc, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { 
     ref, uploadBytes, getDownloadURL 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-  // 2. MODO OFFLINE
+  // 2. CONFIGURACIÓN DE PERSISTENCIA (MODO OFFLINE)
+  import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code == 'failed-precondition') console.warn("Persistencia falló.");
+      if (err.code == 'failed-precondition') console.warn("La persistencia falló (múltiples pestañas).");
   });
 
-  // 3. DETECTOR MÓVIL
+  // 3. DETECTOR MÓVIL (PARA VINCULAR FOTOS POR QR)
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
@@ -1262,75 +1262,69 @@
   }
 
 // =========================================================
-// [16] GUARDAR CONSULTA (SIN COMPRESIÓN - ALTA VELOCIDAD)
+// [16] FUNCIÓN MAESTRA DE GUARDADO (ALTA VELOCIDAD)
 // =========================================================
 window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
     const nombreDoctor = selectorDoc ? selectorDoc.value : "";
 
-    if (!nombreDoctor) {
-        alert("⚠️ Por favor, seleccione un doctor.");
-        return;
-    }
+    if (!nombreDoctor) return alert("⚠️ Seleccione un doctor para firmar.");
 
-    const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nPIN:`);
+    const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);
     if (!pinIngresado) return;
 
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
-    if (!esValido) {
-        alert("❌ PIN incorrecto.");
-        return;
-    }
+    if (!esValido) return alert("❌ PIN incorrecto.");
 
+    // Bloqueamos botón para evitar doble clic
     const btnGuardar = document.activeElement;
     const textoOriginal = btnGuardar ? btnGuardar.innerText : "Guardar";
     if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
         btnGuardar.disabled = true;
-        btnGuardar.innerText = "⏳ Subiendo archivos pesados...";
+        btnGuardar.innerText = "🚀 SUBIENDO DATOS...";
     }
 
     try {
-        // --- FUNCIÓN DE SUBIDA A STORAGE (Mantiene calidad original) ---
-        const subirArchivo = async (archivo, ruta) => {
+        // --- FUNCIÓN DE SUBIDA AL ALMACÉN (STORAGE) ---
+        const subirOriginal = async (archivo, carpeta) => {
             if (!archivo) return "";
-            const storageRef = ref(storage, `consultas/${Date.now()}_${ruta}`);
+            const ruta = `consultas/${Date.now()}_${archivo.name}`;
+            const storageRef = ref(storage, ruta);
+            console.log(`📡 Subiendo ${archivo.name} a ${carpeta}...`);
             const snapshot = await uploadBytes(storageRef, archivo);
             return await getDownloadURL(snapshot.ref);
         };
 
-        // --- PROCESAR FOTOS (PC O MÓVIL) ---
-        const fotoFile = document.getElementById('inputFotoHistoria')?.files[0];
-        const fotoTestFile = document.getElementById('inputFotoTest')?.files[0];
+        // Procesar fotos de los inputs
+        const fileHistoria = document.getElementById('inputFotoHistoria')?.files[0];
+        const fileTest = document.getElementById('inputFotoTest')?.files[0];
         
-        // Si vienen del QR, ya son URLs, si no, se suben al Storage ahora
         let urlFotoFinal = document.getElementById('pUrlExamen')?.value || "";
-        if (fotoFile) {
-            btnGuardar.innerText = "📸 Subiendo Foto Historia...";
-            urlFotoFinal = await subirArchivo(fotoFile, "historia.jpg");
-        }
-
         let urlFotoTestFinal = "";
-        if (fotoTestFile) {
-            btnGuardar.innerText = "🧪 Subiendo Foto Test...";
-            urlFotoTestFinal = await subirArchivo(fotoTestFile, "test.jpg");
+
+        if (fileHistoria) {
+            btnGuardar.innerText = "📸 Subiendo Historia...";
+            urlFotoFinal = await subirOriginal(fileHistoria, "historias");
+        }
+        if (fileTest) {
+            btnGuardar.innerText = "🧪 Subiendo Test...";
+            urlFotoTestFinal = await subirOriginal(fileTest, "tests");
         }
 
         // --- RECOLECCIÓN DE TESTS ---
-        const filasTests = document.querySelectorAll('#cuerpoTablaCertificado tr');
-        const listaTestsRapidos = [];
-        filasTests.forEach(fila => {
-            const inputNombre = fila.cells[0].querySelector('input');
-            const nombreT = inputNombre ? inputNombre.value : fila.cells[0].innerText.trim();
-            const resultadoT = fila.cells[1].querySelector('select')?.value;
-            const notaT = fila.cells[2].querySelector('input')?.value || "";
-            if (nombreT && resultadoT && resultadoT !== "---") {
-                listaTestsRapidos.push({ nombre: nombreT, resultado: resultadoT, nota: notaT });
+        const listaTests = [];
+        document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila => {
+            const nombre = fila.cells[0].querySelector('input')?.value || fila.cells[0].innerText.trim();
+            const resultado = fila.cells[1].querySelector('select')?.value;
+            const nota = fila.cells[2].querySelector('input')?.value || "";
+            if (nombre && resultado && resultado !== "---") {
+                listaTests.push({ nombre, resultado, nota });
             }
         });
 
         // --- CÁLCULOS ECONÓMICOS ---
         const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-        let porcGlobal = (configSnap.exists()) ? (configSnap.data().porcentajeDoc || null) : null;
+        let porcGlobal = configSnap.exists() ? (configSnap.data().porcentajeDoc || null) : null;
 
         const dInput = (id) => document.getElementById(id)?.value.trim() || "";
         const montoVentaTotal = parseFloat(document.getElementById('precioVenta')?.value) || 0;
@@ -1345,40 +1339,47 @@ window.guardarFirebase = async (imp) => {
 
             let gastosEsteServicio = 0;
             document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
-                const nombre = insumoFila.cells[0].innerText.replace(/[➕🔹]/g, '').trim();
                 const cant = parseFloat(insumoFila.querySelector('.i-cant')?.value) || 0;
                 const costo = parseFloat(insumoFila.querySelector('.i-cost')?.value) || 0;
                 gastosEsteServicio += (cant * costo);
-                detalleInsumos.push({ nombre, cant, costo });
+                detalleInsumos.push({ 
+                    nombre: insumoFila.cells[0].innerText.replace(/[➕🔹]/g, '').trim(),
+                    cant, costo 
+                });
             });
             totalGastos += gastosEsteServicio;
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
-        // --- ESTRUCTURA DE DATOS FINAL ---
-        const dataConsulta = {
+        // --- ESTRUCTURA FINAL ---
+        const data = {
             cedula: dInput('hCI'),
             propietario: dInput('hProp'),
             paciente: dInput('hNombre'),
-            doctor: window.doctorVerificado,
-            urlExamen: urlFotoFinal, 
-            urlFotoTest: urlFotoTestFinal, 
+            doctor: nombreDoctor,
+            urlExamen: urlFotoFinal,
+            urlFotoTest: urlFotoTestFinal,
+            testsRealizados: listaTests,
             montoVenta: montoVentaTotal,
             montoInsumos: totalGastos,
             pagoDoctor: pagoDoctorTotal,
+            pagoAvipet: (montoVentaTotal - totalGastos - pagoDoctorTotal),
+            listaDetalladaInsumos: detalleInsumos,
+            tratamiento: dInput('hTratamiento'),
             fecha: serverTimestamp(),
             fechaSimple: new Date().toLocaleDateString()
         };
 
-        btnGuardar.innerText = "💾 Finalizando...";
-        await addDoc(collection(db, "consultas"), dataConsulta);
+        // --- GUARDADO FINAL ---
+        btnGuardar.innerText = "💾 Registrando...";
+        await addDoc(collection(db, "consultas"), data);
         
-        alert("✅ Guardado con éxito en la nube.");
+        alert("✅ ¡Todo soldado y guardado con éxito!");
         if (imp) window.print();
 
     } catch (e) {
-        console.error("Error:", e);
-        alert("❌ Error: " + e.message);
+        console.error("Error en el sistema:", e);
+        alert("❌ Hubo un fallo: " + e.message);
     } finally {
         if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
             btnGuardar.disabled = false;
@@ -1386,7 +1387,6 @@ window.guardarFirebase = async (imp) => {
         }
     }
 };
-
   // ==========================================
   // LÓGICA PC: GENERAR QR (EXPUESTA AL WINDOW)
   // ==========================================
@@ -4814,6 +4814,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
