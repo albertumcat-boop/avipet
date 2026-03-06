@@ -1425,11 +1425,15 @@ window.guardarFirebase = async (imp) => {
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
-        // --- ESTRUCTURA FINAL ---
+        // --- ESTRUCTURA FINAL (DATOS COMPLETOS PARA AUTORELLENO) ---
         const data = {
             cedula: dInput('hCI'),
             propietario: dInput('hProp'),
             paciente: dInput('hNombre'),
+            especie: dInput('hEspecie'), // Se agregó para el autorelleno
+            raza: dInput('hRaza'),       // Se agregó para el autorelleno
+            sexo: dInput('hSexo'),       // Se agregó para el autorelleno
+            edad: dInput('hEdad'),       // Se agregó para el autorelleno
             doctor: nombreDoctor,
             urlExamen: urlFotoFinal,
             urlFotoTest: urlFotoTestFinal,
@@ -2326,37 +2330,22 @@ window.agregarMedicamento = (nombreMed) => {
     window.calcularTodo();
     document.getElementById('selectorMedicamentos').value = "";
   };
-  // ========= [03] FUNCIONES DE IMAGEN (HISTORIA CLÍNICA) =========
-
-/**
- * Mostrar la foto en el recuadro apenas se selecciona
- */
+ // --- 1. PREVISUALIZACIÓN HISTORIA ---
 window.previsualizarFotoHistoria = (event) => {
     const file = event.target.files[0];
     const previewContainer = document.getElementById('previewHistoriaContainer');
     const imgPreview = document.getElementById('imgHistoriaPreview');
-    const imgImpresion = document.getElementById('pFotoMascota'); // <--- EL ID DE TU HOJA DE IMPRESIÓN
+    const imgImpresion = document.getElementById('imgExamenPrint'); // ID corregido para impresión
 
     if (file) {
-        if (!file.type.startsWith('image/')) {
-            alert("⚠️ Por favor, selecciona un archivo de imagen válido.");
-            event.target.value = "";
-            return;
-        }
-
         const reader = new FileReader();
         reader.onload = (e) => {
             const dataUrl = e.target.result;
-            // Mostramos en la miniatura de la pantalla
             if (imgPreview) imgPreview.src = dataUrl;
             if (previewContainer) previewContainer.classList.remove('hidden');
-            
-            // ⚓ SOLDADURA PARA IMPRESIÓN:
-            // Pasamos la foto a la hoja que se va a imprimir
             if (imgImpresion) {
                 imgImpresion.src = dataUrl;
-                imgImpresion.style.display = "block"; 
-                imgImpresion.crossOrigin = "anonymous";
+                imgImpresion.closest('div').classList.remove('hidden'); // Mostramos contenedor de impresión
             }
         };
         reader.readAsDataURL(file);
@@ -2375,35 +2364,22 @@ window.quitarFotoHistoria = () => {
     if (imgPreview) imgPreview.src = "";
     if (previewContainer) previewContainer.classList.add('hidden');
 };
-  // ========= [04] FUNCIONES DE FOTO PARA TEST RÁPIDO =========
-
-/**
- * Muestra la miniatura del cassette del test seleccionado
- */
+  // --- 2. PREVISUALIZACIÓN TEST ---
 window.previsualizarFotoTest = (event) => {
     const file = event.target.files[0];
     const previewContainer = document.getElementById('previewTestContainer');
     const imgPreview = document.getElementById('imgTestPreview');
-    const imgTestImpresion = document.getElementById('pFotoTest'); // <--- EL ID EN TU HOJA DE TEST
+    const imgTestImpresion = document.getElementById('imgTestPrint'); // ID corregido para impresión
 
     if (file) {
-        if (!file.type.startsWith('image/')) {
-            alert("⚠️ Por favor, selecciona una imagen del test.");
-            event.target.value = "";
-            return;
-        }
-
         const reader = new FileReader();
         reader.onload = (e) => {
             const dataUrl = e.target.result;
             if (imgPreview) imgPreview.src = dataUrl;
             if (previewContainer) previewContainer.classList.remove('hidden');
-
-            // ⚓ SOLDADURA PARA IMPRESIÓN:
             if (imgTestImpresion) {
                 imgTestImpresion.src = dataUrl;
-                imgTestImpresion.style.display = "block";
-                imgTestImpresion.crossOrigin = "anonymous";
+                imgTestImpresion.closest('div').classList.remove('hidden'); // Mostramos contenedor de impresión
             }
         };
         reader.readAsDataURL(file);
@@ -2467,40 +2443,51 @@ window.activarModoMovil = (cedula) => {
     });
 };
 
-window.generarEnlaceMovil = () => {
-    // CORRECCIÓN: En tu historia clínica el ID es 'hCI', no 'pCedula'
+// --- 3. GENERAR QR (HISTORIA O TEST) ---
+window.generarEnlaceMovil = (tipo = 'historia') => {
     const inputCI = document.getElementById('hCI');
     const cedula = inputCI ? inputCI.value.trim() : "";
     
     if(!cedula) return alert("⚠️ Escribe la Cédula en la historia clínica primero.");
 
-    // 1. Limpiar el QR anterior
-    const qrDiv = document.getElementById("qrcode");
+    // Ajustamos según sea historia o test
+    const qrDivID = tipo === 'test' ? "qrcodeTest" : "qrcode";
+    const containerID = tipo === 'test' ? "qrContainerTest" : "qrContainer";
+    
+    const qrDiv = document.getElementById(qrDivID);
     if (qrDiv) qrDiv.innerHTML = "";
 
-    // 2. Crear la URL
-    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}`;
+    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&type=${tipo}`;
 
-    // 3. Dibujar el QR
-    new QRCode(document.getElementById("qrcode"), {
+    new QRCode(document.getElementById(qrDivID), {
         text: urlVinculo,
         width: 128,
         height: 128
     });
 
-    // Mostrar el contenedor si está oculto
-    document.getElementById('qrContainer')?.classList.remove('hidden');
+    document.getElementById(containerID)?.classList.remove('hidden');
 
-    // 4. Activar el "Radar"
-    const docRef = doc(db, "transferencias_fotos", cedula);
+    // Radar de Firebase (Escuchando la llegada de la foto)
+    const docRef = doc(db, "transferencias_fotos", `${cedula}_${tipo}`);
     onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-            const inputUrl = document.getElementById('pUrlExamen');
-            if (inputUrl) {
-                inputUrl.value = data.url;
-                alert("✅ ¡Foto recibida del teléfono!");
+            if (tipo === 'test') {
+                // Si es test, la ponemos en la previsualización de test
+                const imgTest = document.getElementById('imgTestPreview');
+                if(imgTest) imgTest.src = data.url;
+                document.getElementById('previewTestContainer')?.classList.remove('hidden');
+                const imgPrint = document.getElementById('imgTestPrint');
+                if(imgPrint) imgPrint.src = data.url;
+            } else {
+                // Si es historia, al input oculto y previsualización normal
+                const inputUrl = document.getElementById('pUrlExamen');
+                if (inputUrl) inputUrl.value = data.url;
+                const imgHist = document.getElementById('imgHistoriaPreview');
+                if(imgHist) imgHist.src = data.url;
+                document.getElementById('previewHistoriaContainer')?.classList.remove('hidden');
             }
+            alert(`✅ ¡Foto de ${tipo.toUpperCase()} recibida!`);
         }
     });
 };
@@ -4986,6 +4973,7 @@ window.renderizarSellos = function(numVisitas) {
 
 </body>
 </html>
+
 
 
 
