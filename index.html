@@ -4485,15 +4485,19 @@ window.guardarPeluqueriaPro = async () => {
     const pin = prompt(`🔐 FIRMA EMPLEADO\nTotal: ${metodoPago === 'BS' ? 'Bs' : '$'}${precioFinal.toFixed(2)}\nPIN de empleado o clave maestra:`);
     if (!pin) return;
 
+    // Normalizamos el PIN a string por seguridad
+    const pinLimpio = String(pin).trim();
+
     // 1) Intentar identificar empleado por PIN
-    const empleadoInfo = await window.validarEmpleadoConPin(pin);
+    const empleadoInfo = await window.validarEmpleadoConPin(pinLimpio);
 
     // 2) Si no hay empleado, permitir uso de MASTER_KEY_SISTEMA como emergencia
     if (!empleadoInfo) {
-        // MASTER_KEY_SISTEMA ya la tienes definida en tu código
-        if (pin !== window.MASTER_KEY_SISTEMA) {
+        if (pinLimpio !== window.MASTER_KEY_SISTEMA) {
             alert("❌ PIN de empleado o clave maestra incorrecto.");
             return;
+        } else {
+            console.warn("⚠️ Registro con MASTER_KEY_SISTEMA (sin empleado asociado).");
         }
     }
 
@@ -4538,7 +4542,7 @@ window.guardarPeluqueriaPro = async () => {
             pagoAyudanteExtra: pagoAyudanteExtra,
             ingresoAvipet: esPremio ? 0 : ingresoAvipetFinal,
             estatusPago: "pendiente",               // siempre entra como NO PAGADO
-            empleadoRegistro: nombreEmpleadoRegistro // <<--- NUEVO: quién hizo el registro
+            empleadoRegistro: nombreEmpleadoRegistro // <<<--- quién hizo el registro
         };
 
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
@@ -4578,7 +4582,7 @@ window.guardarPeluqueriaPro = async () => {
         alert("❌ ERROR: " + e.message);
     }
 };
- window.cargarBitacoraHoy = async () => {
+window.cargarBitacoraHoy = async () => {
     // 1. Apuntamos al contenedor del nuevo diseño (el grid de tarjetas)
     const cuerpo = document.getElementById('bitacoraPeluqueriaHoy');
     
@@ -4587,7 +4591,6 @@ window.guardarPeluqueriaPro = async () => {
     if (resumenDiv) resumenDiv.innerHTML = ""; 
     
     if (!cuerpo) return;
-
     // Indicador de carga estilo clínico Avipet
     cuerpo.innerHTML = `
         <div class="col-span-full py-12 text-center border-2 border-dashed border-blue-200 rounded-2xl bg-blue-50/30">
@@ -4595,17 +4598,14 @@ window.guardarPeluqueriaPro = async () => {
                 ⚙️ Sincronizando Bitácora Avipet...
             </p>
         </div>`;
-
     try {
         const hoyObj = new Date();
         const hoySimple = `${hoyObj.getDate()}/${hoyObj.getMonth() + 1}/${hoyObj.getFullYear()}`;
-
         // Consultamos los servicios de hoy
         const q = query(
             collection(db, "servicios_estetica"),
             where("fechaSimple", "==", hoySimple)
         );
-
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) {
@@ -4617,16 +4617,13 @@ window.guardarPeluqueriaPro = async () => {
                 </div>`;
             return;
         }
-
         // 1. Extraemos los datos (incluyendo el ID del documento)
         const registros = [];
         querySnapshot.forEach(docSnap => {
             registros.push({ id: docSnap.id, ...docSnap.data() });
         });
-
         // 2. Ordenamos por llegada
         registros.sort((a, b) => (a.hora || "").localeCompare(b.hora || ""));
-
         // 3. Renderizamos en formato de tarjetas clínicas
         cuerpo.innerHTML = "";
         
@@ -4640,6 +4637,9 @@ window.guardarPeluqueriaPro = async () => {
             const estatus = d.estatusPago || 'pendiente';
             const esPagado = (estatus === 'pagado');
 
+            // NUEVO: leemos quién registró el servicio
+            const empleado = d.empleadoRegistro || "N/D";
+            
             tarjeta.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
                     <span class="text-blue-600 font-black text-xs italic">#${index + 1}</span>
@@ -4650,43 +4650,41 @@ window.guardarPeluqueriaPro = async () => {
                     <p class="text-[9px] text-blue-600 font-bold uppercase mt-1 italic">${d.servicio || 'General'}</p>
                 </div>
                 <div class="text-[8px] text-slate-400 font-black uppercase">
-    Dueño: <span class="text-slate-600">${d.duenio || 'Cliente'}</span><br>
-    Empleado: <span class="text-slate-600">${d.empleadoRegistro || 'N/D'}</span><br>
-    <span class="text-[8px] text-slate-400">Pago:</span>
-    ${
-      esPagado
-        ? '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase">PAGADO</span>'
-        : '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[8px] font-black uppercase animate-pulse">PENDIENTE</span>'
-    }
-    <br>
-    <span class="text-[8px] text-slate-400">Moneda:</span>
-    <span class="ml-1 text-[8px] font-black ${
-      moneda === 'BS'
-        ? 'text-amber-600'
-        : 'text-slate-700'
-    }">
-      ${moneda === 'BS' ? 'Bolívares (Bs)' : 'Dólares ($)'}
-    </span>
-</div>
-                    <div class="text-right">
-                        <p class="text-sm font-black text-slate-800 font-mono">
-                            ${moneda === 'BS' ? 'Bs' : '$'} ${parseFloat(d.precioTotal || 0).toFixed(2)}
-                        </p>
-                        <button type="button"
-                                onclick="window.togglePagoPeluqueria('${d.id}', '${estatus}')"
-                                class="${
-                                  esPagado
-                                    ? 'mt-1 text-[9px] px-2 py-1 rounded-lg bg-emerald-600 text-white font-black uppercase'
-                                    : 'mt-1 text-[9px] px-2 py-1 rounded-lg bg-red-600 text-white font-black uppercase'
-                                }">
-                            ${esPagado ? '✔ Marcar PENDIENTE' : '💰 Marcar PAGADO'}
-                        </button>
-                    </div>
+                    Dueño: <span class="text-slate-600">${d.duenio || 'Cliente'}</span><br>
+                    Empleado: <span class="text-slate-600">${empleado}</span><br>
+                    <span class="text-[8px] text-slate-400">Pago:</span>
+                    ${
+                      esPagado
+                        ? '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase">PAGADO</span>'
+                        : '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[8px] font-black uppercase animate-pulse">PENDIENTE</span>'
+                    }
+                    <br>
+                    <span class="text-[8px] text-slate-400">Moneda:</span>
+                    <span class="ml-1 text-[8px] font-black ${
+                      moneda === 'BS'
+                        ? 'text-amber-600'
+                        : 'text-slate-700'
+                    }">
+                      ${moneda === 'BS' ? 'Bolívares (Bs)' : 'Dólares ($)'}
+                    </span>
+                </div>
+                <div class="text-right mt-2">
+                    <p class="text-sm font-black text-slate-800 font-mono">
+                        ${moneda === 'BS' ? 'Bs' : '$'} ${parseFloat(d.precioTotal || 0).toFixed(2)}
+                    </p>
+                    <button type="button"
+                            onclick="window.togglePagoPeluqueria('${d.id}', '${estatus}')"
+                            class="${
+                              esPagado
+                                ? 'mt-1 text-[9px] px-2 py-1 rounded-lg bg-emerald-600 text-white font-black uppercase'
+                                : 'mt-1 text-[9px] px-2 py-1 rounded-lg bg-red-600 text-white font-black uppercase'
+                            }">
+                        ${esPagado ? '✔ Marcar PENDIENTE' : '💰 Marcar PAGADO'}
+                    </button>
                 </div>
             `;
             cuerpo.appendChild(tarjeta);
         });
-
     } catch (e) {
         console.error("Error Bitácora:", e);
         cuerpo.innerHTML = `
@@ -4933,7 +4931,7 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
             llenar('pTelefono', datosEncontrados.telefono);
             llenar('pDireccion', datosEncontrados.direccion); // Ya no romperá el código
 
-            // 2. BUSCAR HISTORIAL
+            // 2. BUSCAR HISTORIAL EN PELUQUERÍA
             const qServ = query(
                 collection(db, "servicios_estetica"), 
                 where("cedulaCliente", "==", valor),
@@ -4941,14 +4939,26 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
             );
             const snapServ = await getDocs(qServ);
             
-            const visitas = [];
+            // Contamos cuántos servicios de peluquería tiene este cliente
+            let totalVisitas = 0;
             snapServ.forEach(doc => {
-                visitas.push(doc.data().fechaSimple || "S/F");
+                totalVisitas++;
             });
 
-            actualizarInterfazTarjeta(visitas);
+            // Usamos la función oficial de sellos (si existe)
+            if (typeof window.renderizarSellos === "function") {
+                window.renderizarSellos(totalVisitas);
+            } else {
+                console.warn("renderizarSellos no está definida en window.");
+            }
+
         } else {
-            actualizarInterfazTarjeta([]); 
+            // Cliente sin historial: 0 visitas en la tarjeta
+            if (typeof window.renderizarSellos === "function") {
+                window.renderizarSellos(0);
+            } else {
+                console.warn("renderizarSellos no está definida en window.");
+            }
         }
     } catch (error) {
         console.error("❌ Error en búsqueda:", error);
@@ -5675,14 +5685,18 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
   try {
     if (!pinIngresado) return null;
 
+    // Normalizamos a string por seguridad
+    const pinLimpio = String(pinIngresado).trim();
+
     // Buscamos en la colección "empleados" quién tiene ese PIN
     const q = query(
       collection(db, "empleados"),
-      where("pin", "==", pinIngresado)
+      where("pin", "==", pinLimpio)
     );
     const snap = await getDocs(q);
 
     if (snap.empty) {
+      console.warn("PIN de empleado no encontrado en 'empleados':", pinLimpio);
       return null; // PIN no corresponde a ningún empleado
     }
 
@@ -5704,6 +5718,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
