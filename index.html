@@ -4715,36 +4715,83 @@ window.actualizarTablaBitacora = (listaServicios) => {
   // Cambiar estatus de pago de un servicio de peluquería
 window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
   try {
-    const nuevoEstatus = (estatusActual === 'pagado') ? 'pendiente' : 'pagado';
+    const estabaPagado = (estatusActual === 'pagado');
+    const nuevoEstatus = estabaPagado ? 'pendiente' : 'pagado';
 
-    // Confirmación amigable
-    if (window.Swal) {
-      const res = await Swal.fire({
-        title: nuevoEstatus === 'pagado' ? 'Marcar como PAGADO' : 'Marcar como PENDIENTE',
-        text: nuevoEstatus === 'pagado'
-          ? '¿Confirmas que este cliente ya canceló el servicio?'
-          : '¿Seguro que deseas volver a marcarlo como pendiente?',
-        icon: nuevoEstatus === 'pagado' ? 'success' : 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, continuar',
-        cancelButtonText: 'Cancelar'
-      });
-      if (!res.isConfirmed) return;
+    let nuevoMetodo = null; // solo lo cambiaremos si pasa de pendiente -> pagado
+
+    if (!estabaPagado) {
+      // PASO PENDIENTE -> PAGADO: PREGUNTAR MONEDA
+      if (window.Swal) {
+        const res = await Swal.fire({
+          title: 'Marcar como PAGADO',
+          html: `
+            <p class="text-[11px] text-slate-600 mb-3">
+              Seleccione la moneda en la que el cliente está pagando este servicio:
+            </p>
+            <div class="flex flex-col gap-2 text-left">
+              <label class="flex items-center gap-2 text-[11px]">
+                <input type="radio" name="monedaPago" value="USD" checked>
+                <span class="font-bold text-slate-700">$ Dólares (USD)</span>
+              </label>
+              <label class="flex items-center gap-2 text-[11px]">
+                <input type="radio" name="monedaPago" value="BS">
+                <span class="font-bold text-slate-700">Bs Bolívares (VES)</span>
+              </label>
+            </div>
+          `,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar pago',
+          cancelButtonText: 'Cancelar'
+        });
+        if (!res.isConfirmed) return;
+        const radios = document.getElementsByName('monedaPago');
+        for (let r of radios) {
+          if (r.checked) {
+            nuevoMetodo = r.value;
+            break;
+          }
+        }
+        if (!nuevoMetodo) nuevoMetodo = 'USD';
+      } else {
+        // Versión sin SweetAlert
+        const seleccion = prompt("Marcar como PAGADO.\nEscriba USD o BS según la moneda:", "USD");
+        if (!seleccion) return;
+        const selUpper = seleccion.trim().toUpperCase();
+        nuevoMetodo = (selUpper === 'BS' ? 'BS' : 'USD');
+      }
     } else {
-      const ok = confirm(
-        nuevoEstatus === 'pagado'
-          ? '¿Confirmas que este cliente ya pagó?'
-          : '¿Seguro que quieres marcarlo como PENDIENTE otra vez?'
-      );
-      if (!ok) return;
+      // PASO PAGADO -> PENDIENTE: solo cambiamos estatus, no tocamos moneda
+      if (window.Swal) {
+        const res = await Swal.fire({
+          title: 'Marcar como PENDIENTE',
+          text: '¿Seguro que deseas volver a marcar este servicio como pendiente?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, continuar',
+          cancelButtonText: 'Cancelar'
+        });
+        if (!res.isConfirmed) return;
+      } else {
+        const ok = confirm('¿Seguro que quieres marcarlo como PENDIENTE otra vez?');
+        if (!ok) return;
+      }
     }
 
-    await updateDoc(doc(db, "servicios_estetica", idServicio), {
+    // Actualizar en Firestore
+    const actualizaciones = {
       estatusPago: nuevoEstatus,
       actualizadoEn: serverTimestamp()
-    });
+    };
+    if (!estabaPagado && nuevoMetodo) {
+      // solo en caso de pasar a PAGADO se actualiza la moneda
+      actualizaciones.metodoPago = nuevoMetodo;
+    }
 
-    // Recargar bitácora de hoy para refrescar colores y botón
+    await updateDoc(doc(db, "servicios_estetica", idServicio), actualizaciones);
+
+    // Recargar bitácora de hoy para refrescar colores, moneda y botón
     if (typeof window.cargarBitacoraHoy === 'function') {
       await window.cargarBitacoraHoy();
     }
@@ -4752,13 +4799,13 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
     if (window.Swal) {
       await Swal.fire({
         icon: 'success',
-        title: nuevoEstatus === 'pagado' ? 'Pago confirmado' : 'Marcado como pendiente',
+        title: !estabaPagado ? 'Pago confirmado' : 'Marcado como pendiente',
         timer: 1400,
         showConfirmButton: false
       });
     } else {
       alert(
-        nuevoEstatus === 'pagado'
+        !estabaPagado
           ? '✅ Servicio marcado como PAGADO.'
           : '⚠ Servicio marcado como PENDIENTE.'
       );
@@ -5543,6 +5590,7 @@ window.verMovimientosProducto = async () => {
 
 </body>
 </html>
+
 
 
 
