@@ -4481,12 +4481,24 @@ window.guardarPeluqueriaPro = async () => {
         pagoAyudanteExtra = 0;
     }
 
-    // --- SEGURIDAD PIN MASTER ---
-    const pin = prompt(`🔐 FIRMA AVIPET\nTotal: ${metodoPago === 'BS' ? 'Bs' : '$'}${precioFinal.toFixed(2)}\nPIN:`);
+    // --- SEGURIDAD: PIN DE EMPLEADO / MASTER ---
+    const pin = prompt(`🔐 FIRMA EMPLEADO\nTotal: ${metodoPago === 'BS' ? 'Bs' : '$'}${precioFinal.toFixed(2)}\nPIN de empleado o clave maestra:`);
     if (!pin) return;
 
-    const esValido = await window.validarDoctorConMaster("Peluqueria", pin); 
-    if (!esValido) { alert("❌ PIN INCORRECTO"); return; }
+    // 1) Intentar identificar empleado por PIN
+    const empleadoInfo = await window.validarEmpleadoConPin(pin);
+
+    // 2) Si no hay empleado, permitir uso de MASTER_KEY_SISTEMA como emergencia
+    if (!empleadoInfo) {
+        // MASTER_KEY_SISTEMA ya la tienes definida en tu código
+        if (pin !== window.MASTER_KEY_SISTEMA) {
+            alert("❌ PIN de empleado o clave maestra incorrecto.");
+            return;
+        }
+    }
+
+    // Nombre a guardar (si hay empleado, su nombre; si no, "ADMIN_MASTER")
+    const nombreEmpleadoRegistro = empleadoInfo ? empleadoInfo.nombre : "ADMIN_MASTER";
 
     try {
         // --- LÓGICA DE FIDELIDAD ---
@@ -4525,7 +4537,8 @@ window.guardarPeluqueriaPro = async () => {
             pagoAyudante1: pagoAyudante1,
             pagoAyudanteExtra: pagoAyudanteExtra,
             ingresoAvipet: esPremio ? 0 : ingresoAvipetFinal,
-            estatusPago: "pendiente" // <<< AJUSTE NUEVO: siempre entra como NO PAGADO
+            estatusPago: "pendiente",               // siempre entra como NO PAGADO
+            empleadoRegistro: nombreEmpleadoRegistro // <<--- NUEVO: quién hizo el registro
         };
 
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
@@ -4636,25 +4649,25 @@ window.guardarPeluqueriaPro = async () => {
                     <p class="font-black text-slate-800 uppercase text-xs leading-none tracking-tighter">${d.paciente}</p>
                     <p class="text-[9px] text-blue-600 font-bold uppercase mt-1 italic">${d.servicio || 'General'}</p>
                 </div>
-                <div class="flex justify-between items-end border-t border-slate-50 pt-2">
-                    <div class="text-[8px] text-slate-400 font-black uppercase">
-                        Dueño: <span class="text-slate-600">${d.duenio || 'Cliente'}</span><br>
-                        <span class="text-[8px] text-slate-400">Pago:</span>
-                        ${
-                          esPagado
-                            ? '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase">PAGADO</span>'
-                            : '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[8px] font-black uppercase animate-pulse">PENDIENTE</span>'
-                        }
-                        <br>
-                        <span class="text-[8px] text-slate-400">Moneda:</span>
-                        <span class="ml-1 text-[8px] font-black ${
-                          moneda === 'BS'
-                            ? 'text-amber-600'
-                            : 'text-slate-700'
-                        }">
-                          ${moneda === 'BS' ? 'Bolívares (Bs)' : 'Dólares ($)'}
-                        </span>
-                    </div>
+                <div class="text-[8px] text-slate-400 font-black uppercase">
+    Dueño: <span class="text-slate-600">${d.duenio || 'Cliente'}</span><br>
+    Empleado: <span class="text-slate-600">${d.empleadoRegistro || 'N/D'}</span><br>
+    <span class="text-[8px] text-slate-400">Pago:</span>
+    ${
+      esPagado
+        ? '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase">PAGADO</span>'
+        : '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[8px] font-black uppercase animate-pulse">PENDIENTE</span>'
+    }
+    <br>
+    <span class="text-[8px] text-slate-400">Moneda:</span>
+    <span class="ml-1 text-[8px] font-black ${
+      moneda === 'BS'
+        ? 'text-amber-600'
+        : 'text-slate-700'
+    }">
+      ${moneda === 'BS' ? 'Bolívares (Bs)' : 'Dólares ($)'}
+    </span>
+</div>
                     <div class="text-right">
                         <p class="text-sm font-black text-slate-800 font-mono">
                             ${moneda === 'BS' ? 'Bs' : '$'} ${parseFloat(d.precioTotal || 0).toFixed(2)}
@@ -5586,10 +5599,112 @@ window.verMovimientosProducto = async () => {
       '<p class="text-center text-[10px] text-red-500">Error al cargar movimientos.</p>';
   }
 };
+  // =======================================
+// VALIDACIÓN EMPLEADOS PELUQUERÍA (POR PIN)
+// =======================================
+window.validarEmpleadoPeluqueria = async (pinIngresado) => {
+  if (!pinIngresado) return null;
+
+  try {
+    // Colección "empleados_peluqueria" con docs tipo:
+    // id = nombre o código, campos { pin: '1234', nombre: 'Juan', rol: 'recepcion' }
+    const q = query(
+      collection(db, "empleados_peluqueria"),
+      where("pin", "==", pinIngresado.trim())
+    );
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      // respaldo local si no hay red o aún no creaste la colección
+      const backup = {
+        "1111": { id: "EMP_ALFA", nombre: "Empleado Alfa" },
+        "2222": { id: "EMP_BRAVO", nombre: "Empleado Bravo" }
+      };
+      return backup[pinIngresado.trim()] || null;
+    }
+
+    // Si hay coincidencia, tomamos el primer documento
+    const docSnap = snap.docs[0];
+    const d = docSnap.data();
+    return {
+      id: docSnap.id,
+      nombre: d.nombre || docSnap.id
+    };
+  } catch (e) {
+    console.error("Error validando empleado peluquería:", e);
+    // fallback local
+    const backup = {
+      "1111": { id: "EMP_ALFA", nombre: "Empleado Alfa" },
+      "2222": { id: "EMP_BRAVO", nombre: "Empleado Bravo" }
+    };
+    return backup[pinIngresado.trim()] || null;
+  }
+};
+  // Buscar qué empleado de peluquería corresponde a un PIN dado
+window.obtenerEmpleadoPorPin = async (pinIngresado) => {
+  try {
+    if (!pinIngresado) return null;
+
+    // Colección: empleados_peluqueria
+    // Cada doc debería tener al menos: { nombre: 'Juan', pin: '1234' }
+    const qEmp = query(
+      collection(db, "empleados_peluqueria"),
+      where("pin", "==", pinIngresado)
+    );
+    const snap = await getDocs(qEmp);
+    if (snap.empty) {
+      return null;
+    }
+    // Si hay más de uno con mismo pin, usamos el primero
+    const docSnap = snap.docs[0];
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      nombre: data.nombre || docSnap.id
+    };
+  } catch (e) {
+    console.error("Error buscando empleado por PIN:", e);
+    return null;
+  }
+};
+  // =======================
+// VALIDACIÓN DE EMPLEADOS
+// =======================
+// Colección: "empleados" con documentos { nombreEmpleado, pin }
+window.validarEmpleadoConPin = async (pinIngresado) => {
+  try {
+    if (!pinIngresado) return null;
+
+    // Buscamos en la colección "empleados" quién tiene ese PIN
+    const q = query(
+      collection(db, "empleados"),
+      where("pin", "==", pinIngresado)
+    );
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      return null; // PIN no corresponde a ningún empleado
+    }
+
+    // Tomamos el primer match
+    const docSnap = snap.docs[0];
+    const data = docSnap.data();
+
+    return {
+      id: docSnap.id,
+      nombre: data.nombreEmpleado || docSnap.id,
+      rol: data.rol || "EMPLEADO",
+    };
+  } catch (e) {
+    console.error("Error validando empleado por PIN:", e);
+    return null;
+  }
+};
 </script>
 
 </body>
 </html>
+
 
 
 
