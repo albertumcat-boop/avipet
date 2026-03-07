@@ -5714,10 +5714,28 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
     return null;
   }
 };
+  // =======================
+// DEBUG: LISTAR EMPLEADOS
+// =======================
+window.debugListarEmpleados = async () => {
+  try {
+    console.log("DEBUG: Iniciando lectura de colección 'empleados'...");
+    
+    const snap = await getDocs(collection(db, "empleados"));
+    console.log("DEBUG: Total docs en 'empleados':", snap.size);
+    
+    snap.forEach(docSnap => {
+      console.log("DEBUG empleado:", docSnap.id, docSnap.data());
+    });
+  } catch (e) {
+    console.error("DEBUG error getDocs empleados:", e);
+  }
+};
 </script>
 
 </body>
 </html>
+
 
 
 
