@@ -4684,7 +4684,8 @@ window.guardarPeluqueriaPro = async () => {
             pagoPeluquera: pagoPeluqueraFinal,
             pagoAyudante1: pagoAyudante1,
             pagoAyudanteExtra: pagoAyudanteExtra,
-            ingresoAvipet: esPremio ? 0 : ingresoAvipetFinal
+            ingresoAvipet: esPremio ? 0 : ingresoAvipetFinal,
+            estatusPago: "pendiente" // <<< AJUSTE NUEVO: siempre entra como NO PAGADO
         };
 
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
@@ -4764,9 +4765,11 @@ window.guardarPeluqueriaPro = async () => {
             return;
         }
 
-        // 1. Extraemos los datos
+        // 1. Extraemos los datos (incluyendo el ID del documento)
         const registros = [];
-        querySnapshot.forEach(doc => registros.push(doc.data()));
+        querySnapshot.forEach(docSnap => {
+            registros.push({ id: docSnap.id, ...docSnap.data() });
+        });
 
         // 2. Ordenamos por llegada
         registros.sort((a, b) => (a.hora || "").localeCompare(b.hora || ""));
@@ -4781,6 +4784,9 @@ window.guardarPeluqueriaPro = async () => {
             // Diseño de tarjeta unificado con Historia Clínica
             tarjeta.className = "bg-white border border-slate-200 p-4 rounded-xl shadow-sm hover:border-blue-400 transition-all";
             
+            const estatus = d.estatusPago || 'pendiente';
+            const esPagado = (estatus === 'pagado');
+
             tarjeta.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
                     <span class="text-blue-600 font-black text-xs italic">#${index + 1}</span>
@@ -4792,10 +4798,27 @@ window.guardarPeluqueriaPro = async () => {
                 </div>
                 <div class="flex justify-between items-end border-t border-slate-50 pt-2">
                     <div class="text-[8px] text-slate-400 font-black uppercase">
-                        Dueño: <span class="text-slate-600">${d.duenio || 'Cliente'}</span>
+                        Dueño: <span class="text-slate-600">${d.duenio || 'Cliente'}</span><br>
+                        <span class="text-[8px] text-slate-400">Pago:</span>
+                        ${
+                          esPagado
+                            ? '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase">PAGADO</span>'
+                            : '<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[8px] font-black uppercase animate-pulse">PENDIENTE</span>'
+                        }
                     </div>
-                    <div class="text-sm font-black text-slate-800 font-mono">
-                        ${moneda === 'BS' ? 'Bs' : '$'} ${parseFloat(d.precioTotal || 0).toFixed(2)}
+                    <div class="text-right">
+                        <p class="text-sm font-black text-slate-800 font-mono">
+                            ${moneda === 'BS' ? 'Bs' : '$'} ${parseFloat(d.precioTotal || 0).toFixed(2)}
+                        </p>
+                        <button type="button"
+                                onclick="window.togglePagoPeluqueria('${d.id}', '${estatus}')"
+                                class="${
+                                  esPagado
+                                    ? 'mt-1 text-[9px] px-2 py-1 rounded-lg bg-emerald-600 text-white font-black uppercase'
+                                    : 'mt-1 text-[9px] px-2 py-1 rounded-lg bg-red-600 text-white font-black uppercase'
+                                }">
+                            ${esPagado ? '✔ Marcar PENDIENTE' : '💰 Marcar PAGADO'}
+                        </button>
                     </div>
                 </div>
             `;
@@ -4839,6 +4862,62 @@ window.actualizarTablaBitacora = (listaServicios) => {
         `;
         tabla.appendChild(fila);
     });
+};
+  // Cambiar estatus de pago de un servicio de peluquería
+window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
+  try {
+    const nuevoEstatus = (estatusActual === 'pagado') ? 'pendiente' : 'pagado';
+
+    // Confirmación amigable
+    if (window.Swal) {
+      const res = await Swal.fire({
+        title: nuevoEstatus === 'pagado' ? 'Marcar como PAGADO' : 'Marcar como PENDIENTE',
+        text: nuevoEstatus === 'pagado'
+          ? '¿Confirmas que este cliente ya canceló el servicio?'
+          : '¿Seguro que deseas volver a marcarlo como pendiente?',
+        icon: nuevoEstatus === 'pagado' ? 'success' : 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar'
+      });
+      if (!res.isConfirmed) return;
+    } else {
+      const ok = confirm(
+        nuevoEstatus === 'pagado'
+          ? '¿Confirmas que este cliente ya pagó?'
+          : '¿Seguro que quieres marcarlo como PENDIENTE otra vez?'
+      );
+      if (!ok) return;
+    }
+
+    await updateDoc(doc(db, "servicios_estetica", idServicio), {
+      estatusPago: nuevoEstatus,
+      actualizadoEn: serverTimestamp()
+    });
+
+    // Recargar bitácora de hoy para refrescar colores y botón
+    if (typeof window.cargarBitacoraHoy === 'function') {
+      await window.cargarBitacoraHoy();
+    }
+
+    if (window.Swal) {
+      await Swal.fire({
+        icon: 'success',
+        title: nuevoEstatus === 'pagado' ? 'Pago confirmado' : 'Marcado como pendiente',
+        timer: 1400,
+        showConfirmButton: false
+      });
+    } else {
+      alert(
+        nuevoEstatus === 'pagado'
+          ? '✅ Servicio marcado como PAGADO.'
+          : '⚠ Servicio marcado como PENDIENTE.'
+      );
+    }
+  } catch (e) {
+    console.error("Error cambiando estatus de pago:", e);
+    alert("❌ No se pudo actualizar el estado de pago: " + e.message);
+  }
 };
 // --- RECALCULAR EN VIVO (Sin Insumos) ---
 window.recalcularTotalPelu = () => {
@@ -5615,6 +5694,7 @@ window.verMovimientosProducto = async () => {
 
 </body>
 </html>
+
 
 
 
