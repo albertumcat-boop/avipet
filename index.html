@@ -247,40 +247,40 @@
 <main id="adminSection" class="max-w-5xl mx-auto p-2 md:p-4">
 
 <nav class="flex justify-around border-b-2 border-gray-200 mb-4 no-print bg-white sticky top-0 z-40 py-1">
-  <button onclick="showTab('historia')" id="tabH"
-          class="tab-active py-2 text-[11px] px-2 uppercase font-bold text-blue-600">
-    Historia Clínica
-  </button>
-  
-  <button onclick="showTab('espera')" id="tabE"
-          class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
-    Sala de Espera
-  </button>
-  
-  <button onclick="showTab('buscador')" id="tabB"
-          class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
-    Buscador
-  </button>
+ <button onclick="window.showTab('historia')" id="tabH"
+        class="tab-active py-2 text-[11px] px-2 uppercase font-bold text-blue-600">
+  Historia Clínica
+</button>
 
-  <button onclick="showTab('peluqueria')" id="tabP"
-          class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
-    Peluqueria
-  </button>
+<button onclick="window.showTab('espera')" id="tabE"
+        class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
+  Sala de Espera
+</button>
 
-  <button onclick="showTab('reporte')" id="tabR"
-          class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
-    Finanzas / Caja
-  </button>
+<button.onclick="window.showTab('buscador')" id="tabB"
+        class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
+  Buscador
+</button>
 
-  <button onclick="showTab('inventario')" id="tabInv"
+<button onclick="window.showTab('peluqueria')" id="tabP"
+        class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
+  Peluqueria
+</button>
+
+<button onclick="window.showTab('reporte')" id="tabR"
+        class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
+  Finanzas / Caja
+</button>
+
+<button onclick="window.showTab('inventario')" id="tabInv"
         class="py-2 text-gray-500 text-[11px] px-2 uppercase font-bold">
   Inventario
 </button>
-  
-  <button onclick="showTab('config_precios')"
-          class="px-4 py-2 font-black text-[10px] uppercase bg-slate-100 rounded-lg shadow-sm border border-slate-200">
-    ⚙️ Ajustes de Precios
-  </button>
+
+<button onclick="window.showTab('config_precios')"
+        class="px-4 py-2 font-black text-[10px] uppercase bg-slate-100 rounded-lg shadow-sm border border-slate-200">
+  ⚙️ Ajustes de Precios
+</button>
 </nav>
   <!-- ========== HISTORIA CLÍNICA ========== -->
 <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
@@ -6447,6 +6447,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
