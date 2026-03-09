@@ -1666,22 +1666,17 @@
 window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
     const nombreDoctor = selectorDoc ? selectorDoc.value : "";
-
     if (!nombreDoctor) return alert("⚠️ Seleccione un doctor para firmar.");
-
     const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);
     if (!pinIngresado) return;
-
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
     if (!esValido) return alert("❌ PIN incorrecto.");
-
     const btnGuardar = document.activeElement;
     const textoOriginal = btnGuardar ? btnGuardar.innerText : "Guardar";
     if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
         btnGuardar.disabled = true;
         btnGuardar.innerText = "⏳ PROCESANDO...";
     }
-
     try {
         // --- FUNCIÓN DE LECTURA SIMPLE (BASE64) ---
         const leerImagen = (archivo) => {
@@ -1692,7 +1687,6 @@ window.guardarFirebase = async (imp) => {
                 reader.onerror = () => resolve("");
             });
         };
-
         const fileHistoria = document.getElementById('inputFotoHistoria')?.files[0];
         const fileTest     = document.getElementById('inputFotoTest')?.files[0];
 
@@ -1763,7 +1757,6 @@ window.guardarFirebase = async (imp) => {
                 const bloqueVacunas = document.querySelector('#bloqueVacunas');
                 if (bloqueVacunas) {
                     const tablas = bloqueVacunas.querySelectorAll('table');
-
                     // 1) Tabla Control de Vacunación (primera tabla)
                     if (tablas[0]) {
                         const filasVac = tablas[0].querySelectorAll('tbody tr');
@@ -1783,7 +1776,6 @@ window.guardarFirebase = async (imp) => {
                             }
                         });
                     }
-
                     // 2) Tabla Desparasitaciones (segunda tabla)
                     if (tablas[1]) {
                         const filasDesp = tablas[1].querySelectorAll('tbody tr');
@@ -1812,6 +1804,24 @@ window.guardarFirebase = async (imp) => {
 
         const datosVacunas = leerTablaVacunas();
 
+        // --- LEER TODAS LAS FOTOS DE LAS GALERÍAS DE PREVIEW (PC + QR) ---
+        const leerTodasLasFotosDeGaleria = (galeriaId) => {
+            const galeria = document.getElementById(galeriaId);
+            if (!galeria) return [];
+            const urls = [];
+            galeria.querySelectorAll('img').forEach(img => {
+                if (img.src) urls.push(img.src);
+            });
+            return urls;
+        };
+
+        const fotosHistoria = leerTodasLasFotosDeGaleria('previewHistoriaGallery');
+        const fotosTest     = leerTodasLasFotosDeGaleria('previewTestGallery');
+
+        // Última de cada lista para compatibilidad con urlExamen / urlFotoTest
+        const ultimaHistoria = fotosHistoria.length > 0 ? fotosHistoria[fotosHistoria.length - 1] : urlFotoFinal;
+        const ultimaTest     = fotosTest.length > 0     ? fotosTest[fotosTest.length - 1]         : urlFotoTestFinal;
+
         // --- ESTRUCTURA FINAL CORREGIDA (PARA EL AUTORRELLENO) ---
         const data = {
             cedula:      dInput('hCI'),
@@ -1831,11 +1841,18 @@ window.guardarFirebase = async (imp) => {
             alerta:      document.getElementById('hAlerta')?.checked || false,  // opcional
 
             doctor:      nombreDoctor,
-            urlExamen:   urlFotoFinal,
-            urlFotoTest: urlFotoTestFinal,
+
+            // Compatibilidad (última foto)
+            urlExamen:   ultimaHistoria || "",
+            urlFotoTest: ultimaTest     || "",
+
+            // TODAS LAS FOTOS (PC + QR)
+            fotosHistoria: fotosHistoria,
+            fotosTest:     fotosTest,
+
             testsRealizados: listaTests,
 
-            // NUEVOS CAMPOS: LO HACIDO EN HOJA DE VACUNAS
+            // HOJA DE VACUNAS
             vacunasAplicadas:           datosVacunas.vacunas,
             desparasitacionesAplicadas: datosVacunas.desparasitaciones,
 
@@ -1852,10 +1869,8 @@ window.guardarFirebase = async (imp) => {
 
         btnGuardar.innerText = "💾 REGISTRANDO...";
         await addDoc(collection(db, "consultas"), data);
-
         alert("✅ ¡Consulta guardada con éxito!");
         if (imp) window.imprimirDocumento();
-
     } catch (e) {
         console.error("Error en el sistema:", e);
         alert("❌ Error: " + e.message);
@@ -3210,7 +3225,7 @@ window.buscarPorCedula = async () => {
 
     contenedor.innerHTML = `
         <div class="text-center py-8">
-            <div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2 mx-auto rounded-full"></div>
+            <div class="animate-spin h-8 w-8 border-b-2 border-blue-600.mb-2 mx-auto rounded-full"></div>
             <p class="text-slate-500 italic">Consultando bitácora...</p>
         </div>`;
 
@@ -3311,7 +3326,7 @@ window.buscarPorCedula = async () => {
                     <p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">
                         Anexos Visuales:
                     </p>
-                    <div class="flex gap-3 overflow-x-auto.pb-2 scrollbar-hide">`;
+                    <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
 
                 // Historia
                 listaHistoria.forEach((src, idx) => {
@@ -3321,7 +3336,7 @@ window.buscarPorCedula = async () => {
                                 Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}
                             </p>
                             <img src="${src}" 
-                                 class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
+                                 class="w-32 h-32 object-cover rounded-lg border.border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
                                  onclick="window.verFotoGrande('${src}')">
                         </div>`;
                 });
@@ -3334,7 +3349,7 @@ window.buscarPorCedula = async () => {
                                 Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
                             </p>
                             <img src="${src}" 
-                                 class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm.cursor-pointer hover:scale-105 transition-transform" 
+                                 class="w-32 h-32 object-cover rounded-lg border.border-slate-200 shadow-sm cursor-pointer hover:scale-105.transition-transform" 
                                  onclick="window.verFotoGrande('${src}')">
                         </div>`;
                 });
@@ -3355,21 +3370,21 @@ window.buscarPorCedula = async () => {
                                 <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
                             </div>
                         </div>
-                        <div class="text-blue-500 flex items-center group-open:rotate-180 transition-transform font-bold">▼</div>
+                        <div class="text-blue-500 flex items-center.group-open:rotate-180 transition-transform font-bold">▼</div>
                     </summary>
                     <div class="p-4 bg-slate-50 border-t border-slate-100">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <p class="text-[10px] font-bold text-blue-600 border-b.mb-1 uppercase">Diagnóstico / Tratamiento:</p>
+                                <p class="text-[10px] font-bold text-blue-600.border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
                                 <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">Insumos:</p>
+                                <p class="text-[10px] font-bold text-emerald-600.border-b mb-1 uppercase">Insumos:</p>
                                 <div class="space-y-1">${insHtml}</div>
                             </div>
                         </div>
                         ${fotosHtml}
-                        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                        <div class="mt-4 pt-3 border-t.border-slate-200 flex justify-between items-center">
                             <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Consulta</span>
                             <span class="text-xl font-black text-blue-900">$${(d.montoVenta || 0).toFixed(2)}</span>
                         </div>
@@ -6260,6 +6275,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
