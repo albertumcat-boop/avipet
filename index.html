@@ -1913,7 +1913,7 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
   // ================================
   const ahora = new Date();
   const inicioSesion = ahora; // guardamos Date completo
-  // Lo guardamos en window según tipo, por si abres historia y test en paralelo
+
   if (tipo === 'historia') window._ultimaSesionQRHistoria = inicioSesion;
   if (tipo === 'test')     window._ultimaSesionQRTest     = inicioSesion;
 
@@ -1922,7 +1922,6 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
   // ================================
   const fotosRef = collection(db, "transferencias_fotos");
 
-  // IMPORTANTE: para no pedir índice, dejamos SOLO los where:
   const q = query(
     fotosRef,
     where("ci", "==", cedula),
@@ -1939,9 +1938,9 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
   }
 
   const unsub = onSnapshot(q, (snap) => {
-    const galeriaId   = tipo === 'test' ? 'previewTestGallery'      : 'previewHistoriaGallery';
-    const contId      = tipo === 'test' ? 'previewTestContainer'    : 'previewHistoriaContainer';
-    const hiddenId    = tipo === 'test' ? 'pUrlTest'                : 'pUrlExamen';
+    const galeriaId   = tipo === 'test' ? 'previewTestGallery'   : 'previewHistoriaGallery';
+    const contId      = tipo === 'test' ? 'previewTestContainer' : 'previewHistoriaContainer';
+    const hiddenId    = tipo === 'test' ? 'pUrlTest'             : 'pUrlExamen';
 
     const galeria = document.getElementById(galeriaId);
     const cont    = document.getElementById(contId);
@@ -1960,19 +1959,14 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
       const d = docSnap.data();
       if (!d.url) return;
 
-      // ================================
       // 3) FILTRO POR SESIÓN ACTUAL
-      // ================================
-      // d.fecha es un Timestamp de Firestore (si existe)
       if (d.fecha && d.fecha.toDate) {
         const fechaDoc = d.fecha.toDate();
 
-        // Elegimos el timestamp de inicio según tipo
         let inicio = null;
         if (tipo === 'historia') inicio = window._ultimaSesionQRHistoria || inicioSesion;
         if (tipo === 'test')     inicio = window._ultimaSesionQRTest     || inicioSesion;
 
-        // Si por alguna razón no hay inicio, tomamos la actual
         if (!inicio) inicio = inicioSesion;
 
         // Si la foto es ANTERIOR a que generamos este QR, la ignoramos
@@ -1980,7 +1974,6 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
           return;
         }
       }
-      // Si no tiene campo fecha (casos viejos), la dejamos pasar (no ponemos return aquí)
 
       // Evitar duplicados: si ya estaba esa URL (PC o QR previo), no la agregamos
       if (urlsExistentes.has(d.url)) return;
@@ -1988,9 +1981,7 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
       urlsExistentes.add(d.url);
       ultimaUrlNueva = d.url;
 
-      // ================================
-      // 4) CONSTRUIR MINIATURAS SOLO DE ESTA SESIÓN (sumadas a las anteriores)
-      // ================================
+      // 4) CONSTRUIR MINIATURAS
       const wrapper = document.createElement('div');
       wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
       wrapper.innerHTML = `
@@ -2005,22 +1996,21 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
     });
 
     // 5) ACTUALIZAR HIDDEN Y MOSTRAR/OCULTAR
-   if (urlsExistentes.size > 0) {
-  const arrUrls = Array.from(urlsExistentes);
-  const ultima = ultimaUrlNueva || arrUrls[arrUrls.length - 1];
-  if (hidden) hidden.value = ultima;  // guardamos la última para compatibilidad
+    if (urlsExistentes.size > 0) {
+      const arrUrls = Array.from(urlsExistentes);
+      const ultima = ultimaUrlNueva || arrUrls[arrUrls.length - 1];
+      if (hidden) hidden.value = ultima;  // guardamos la última para compatibilidad
 
-  // Mostramos las fotos recibidas…
-  cont.classList.remove('hidden');
+      cont.classList.remove('hidden');
+      // ya no ocultamos el QR automáticamente
+      // document.getElementById(containerID)?.classList.add('hidden');
+    } else {
+      cont.classList.add('hidden');
+    }
 
-  // ...PERO YA NO OCULTAMOS EL QR AUTOMÁTICAMENTE
-  // document.getElementById(containerID)?.classList.add('hidden');
-} else {
-  cont.classList.add('hidden');
-}
-
-  if (tipo === 'historia') window._unsubHist = unsub;
-  if (tipo === 'test')     window._unsubTest = unsub;
+    if (tipo === 'historia') window._unsubHist = unsub;
+    if (tipo === 'test')     window._unsubTest = unsub;
+  });
 };
   // ==========================================
   // INTERFAZ MÓVIL (EXPUESTA AL WINDOW)
@@ -3232,6 +3222,9 @@ window.activarModoMovil = (cedula) => {
 // =========================================================
 // [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
 // =========================================================
+// =========================================================
+// [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
+// =========================================================
 window.buscarPorCedula = async () => {
   const inputCI    = document.getElementById('searchCI');
   const selectPac  = document.getElementById('searchPaciente');
@@ -3240,6 +3233,7 @@ window.buscarPorCedula = async () => {
 
   const modo = selectMode ? selectMode.value : 'ci';
 
+  // En modo CI, la cédula es obligatoria
   if (modo === 'ci') {
     if (!inputCI || !inputCI.value.trim()) {
       alert("⚠️ Ingrese una cédula, Albert.");
@@ -3281,6 +3275,7 @@ window.buscarPorCedula = async () => {
       return;
     }
 
+    // Si modo = CI, llenamos la lista de pacientes
     if (modo === 'ci' && selectPac) {
       const setPacientes = new Set();
       snap.forEach(docSnap => {
@@ -3298,11 +3293,13 @@ window.buscarPorCedula = async () => {
       if (seleccionadoAntes) selectPac.value = seleccionadoAntes;
     }
 
+    // Pasamos a array para poder ordenar por fecha
     const registros = [];
     snap.forEach(docSnap => {
       registros.push(docSnap.data());
     });
 
+    // Ordenar por fecha (más reciente primero)
     registros.sort((a, b) => {
       if (a.fecha && a.fecha.toDate && b.fecha && b.fecha.toDate) {
         return b.fecha.toDate() - a.fecha.toDate();
@@ -3319,13 +3316,15 @@ window.buscarPorCedula = async () => {
     contenedor.innerHTML = "";
 
     registros.forEach(d => {
+      // Filtro por paciente si está seleccionado
       if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
 
       const div = document.createElement('div');
-      div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300.transition-colors";
+      div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
 
       const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
+      // INSUMOS
       const insHtml = d.listaDetalladaInsumos
         ? d.listaDetalladaInsumos.map(ins => `
             <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
@@ -3334,6 +3333,7 @@ window.buscarPorCedula = async () => {
             </div>`).join('')
         : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
+      // FOTOS
       let fotosHtml = "";
 
       const listaHistoria = Array.isArray(d.fotosHistoria)
@@ -3350,6 +3350,7 @@ window.buscarPorCedula = async () => {
           </p>
           <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
 
+        // Historia
         listaHistoria.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
@@ -3362,14 +3363,15 @@ window.buscarPorCedula = async () => {
             </div>`;
         });
 
+        // Test
         listaTest.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
-              <p class="text-[8px] text-slate-400 font-bold.uppercase mb-1">
+              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
                 Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
               </p>
               <img src="${src}"
-                   class="w-32 h-32 object-cover rounded-lg.border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                   class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm.cursor-pointer hover:scale-105 transition-transform"
                    onclick="window.verFotoGrande('${src}')">
             </div>`;
         });
@@ -3377,11 +3379,12 @@ window.buscarPorCedula = async () => {
         fotosHtml += `</div>`;
       }
 
+      // TARJETA COMPLETA DEL RESULTADO
       div.innerHTML = `
         <details class="group">
           <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
             <div class="flex gap-4 items-center">
-              <div class="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
+              <div class="bg-blue-100 text-blue-700 p-2.rounded-lg text-center min-w-[50px]">
                 <span class="block text-[8px] font-bold uppercase">Fecha</span>
                 <span class="text-xs font-black">${d.fechaSimple || 'S/F'}</span>
               </div>
@@ -3390,29 +3393,29 @@ window.buscarPorCedula = async () => {
                 <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
               </div>
             </div>
-            <div class="text-blue-500 flex items-center group-open:rotate-180 transition-transform font-bold">▼</div>
+            <div class="text-blue-500 flex.items-center group-open:rotate-180 transition-transform font-bold">▼</div>
           </summary>
           <div class="p-4 bg-slate-50 border-t border-slate-100">
-            <div class="grid grid-cols-1.md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">
                   Diagnóstico / Tratamiento:
                 </p>
-                <p class="text-xs text-slate-700 whitespace-pre-wrap.leading-relaxed">
+                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
                   ${d.tratamiento || ""}
                 </p>
               </div>
               <div>
-                <p class="text-[10px] font-bold text-emerald-600.border-b mb-1 uppercase">
+                <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">
                   Insumos:
                 </p>
                 <div class="space-y-1">${insHtml}</div>
               </div>
             </div>
             ${fotosHtml}
-            <div class="mt-4 pt-3 border-t border-slate-200.flex justify-between items-center gap-2">
+            <div class="mt-4 pt-3 border-t border-slate-200 flex.justify-between items-center gap-2">
               <div class="flex flex-col gap-1">
-                <span class="text-[10px] font-black text-slate-400.uppercase tracking-widest">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Total Consulta
                 </span>
                 <span class="text-xl font-black text-blue-900">
@@ -3420,7 +3423,7 @@ window.buscarPorCedula = async () => {
                 </span>
               </div>
               <button type="button"
-                      class="bg-blue-600 text-white px-4.py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700"
+                      class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase.shadow hover:bg-blue-700"
                       onclick="window.imprimirConsultaDesdeElemento(this)">
                 🖨 Imprimir
               </button>
@@ -3430,6 +3433,7 @@ window.buscarPorCedula = async () => {
 
       contenedor.appendChild(div);
 
+      // Guardamos la consulta en la propiedad del botón para poder imprimir luego
       const btnImpr = div.querySelector('button[onclick^="window.imprimirConsultaDesdeElemento"]');
       if (btnImpr) {
         btnImpr._consulta = d;
@@ -6327,6 +6331,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
