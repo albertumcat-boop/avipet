@@ -3266,10 +3266,10 @@ window.buscarPorCedula = async () => {
             q = query(
                 consultasRef,
                 where("cedula", "==", ci)
-                // , orderBy("fecha", "desc")  // si activas esto, crea índice en Firestore
+                // , orderBy("fecha", "desc")
             );
         } else {
-            // TODO el historial, sin filtrar por CI
+            // TODO el historial
             q = query(consultasRef);
         }
 
@@ -3324,22 +3324,22 @@ window.buscarPorCedula = async () => {
         contenedor.innerHTML = "";
 
         registros.forEach(d => {
-            // En modo CI + filtro de paciente
+            // Filtro por paciente si está seleccionado
             if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
 
             const div = document.createElement('div');
-            div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
+            div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300.transition-colors";
 
             const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
-            // --- INSUMOS ---
+            // INSUMOS
             const insHtml = d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `
                 <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
                     <span class="text-slate-600">${ins.nombre} (x${ins.cant})</span>
                     <b class="text-slate-800">$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b>
                 </div>`).join('') : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
-            // --- FOTOS MULTIFOTO ---
+            // FOTOS
             let fotosHtml = "";
 
             const listaHistoria = Array.isArray(d.fotosHistoria)
@@ -3363,8 +3363,8 @@ window.buscarPorCedula = async () => {
                             <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
                                 Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}
                             </p>
-                            <img src="${src}" 
-                                 class="w-32 h-32 object-cover rounded-lg border.border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
+                            <img src="${src}"
+                                 class="w-32 h-32 object-cover rounded-lg border.border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
                                  onclick="window.verFotoGrande('${src}')">
                         </div>`;
                 });
@@ -3376,8 +3376,8 @@ window.buscarPorCedula = async () => {
                             <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
                                 Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
                             </p>
-                            <img src="${src}" 
-                                 class="w-32 h-32 object-cover rounded-lg border.border-slate-200 shadow-sm cursor-pointer hover:scale-105.transition-transform" 
+                            <img src="${src}"
+                                 class="w-32 h-32 object-cover rounded-lg border.border-slate-200 shadow-sm.cursor-pointer hover:scale-105 transition-transform"
                                  onclick="window.verFotoGrande('${src}')">
                         </div>`;
                 });
@@ -3385,35 +3385,55 @@ window.buscarPorCedula = async () => {
                 fotosHtml += `</div>`;
             }
 
+            // TARJETA COMPLETA DEL RESULTADO
             div.innerHTML = `
-  <details class="group">
-    <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
-      ... (lo que ya tienes)
-    </summary>
-    <div class="p-4 bg-slate-50 border-t border-slate-100">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        ... (bloques de tratamiento e insumos)
-      </div>
-      ${fotosHtml}
-      <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
-        <div class="flex flex-col gap-1">
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Total Consulta
-          </span>
-          <span class="text-xl font-black text-blue-900">
-            $${(d.montoVenta || 0).toFixed(2)}
-          </span>
-        </div>
-        <!-- BOTÓN NUEVO -->
-        <button type="button"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700"
-                onclick='window.imprimirConsultaBuscador(${JSON.stringify(d)})'>
-          🖨 Imprimir
-        </button>
-      </div>
-    </div>
-  </details>`;
+              <details class="group">
+                <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors.list-none">
+                  <div class="flex gap-4 items-center">
+                    <div class="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
+                      <span class="block text-[8px] font-bold uppercase">Fecha</span>
+                      <span class="text-xs font-black">${d.fechaSimple || 'S/F'}</span>
+                    </div>
+                    <div>
+                      <h3 class="font-black text-slate-800 uppercase italic.leading-tight">${d.paciente}</h3>
+                      <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
+                    </div>
+                  </div>
+                  <div class="text-blue-500 flex items-center.group-open:rotate-180 transition-transform font-bold">▼</div>
+                </summary>
+                <div class="p-4 bg-slate-50 border-t border-slate-100">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
+                      <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">Insumos:</p>
+                      <div class="space-y-1">${insHtml}</div>
+                    </div>
+                  </div>
+                  ${fotosHtml}
+                  <div class="mt-4 pt-3 border-t border-slate-200 flex.justify-between items-center gap-2">
+                    <div class="flex flex-col gap-1">
+                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Consulta</span>
+                      <span class="text-xl font-black text-blue-900">$${(d.montoVenta || 0).toFixed(2)}</span>
+                    </div>
+                    <button type="button"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase.shadow hover:bg-blue-700"
+                            onclick="window.imprimirConsultaDesdeElemento(this)">
+                      🖨 Imprimir
+                    </button>
+                  </div>
+                </div>
+              </details>`;
+
             contenedor.appendChild(div);
+
+            // guardamos la consulta en la propiedad del botón
+            const btnImpr = div.querySelector('button[onclick^="window.imprimirConsultaDesdeElemento"]');
+            if (btnImpr) {
+              btnImpr._consulta = d;
+            }
         });
 
     } catch (e) {
@@ -6447,6 +6467,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
