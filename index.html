@@ -3232,9 +3232,6 @@ window.activarModoMovil = (cedula) => {
 // =========================================================
 // [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
 // =========================================================
-// =========================================================
-// [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
-// =========================================================
 window.buscarPorCedula = async () => {
   const inputCI    = document.getElementById('searchCI');
   const selectPac  = document.getElementById('searchPaciente');
@@ -3315,7 +3312,7 @@ window.buscarPorCedula = async () => {
         return b.fecha.toDate() - a.fecha.toDate();
       }
       const fsA = a.fechaSimple || "";
-      const.fsB = b.fechaSimple || "";
+      const fsB = b.fechaSimple || "";
       const [dA, mA, yA] = fsA.split('/').map(Number);
       const [dB, mB, yB] = fsB.split('/').map(Number);
       const da = new Date(yA || 0, (mA || 1) - 1, dA || 1);
@@ -3330,7 +3327,7 @@ window.buscarPorCedula = async () => {
       if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
 
       const div = document.createElement('div');
-      div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
+      div.className = "mb-4 border-2 border-slate-200 bg.white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
 
       const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
@@ -3381,7 +3378,7 @@ window.buscarPorCedula = async () => {
                 Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
               </p>
               <img src="${src}"
-                   class="w-32 h-32 object-cover rounded-lg border.border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                   class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
                    onclick="window.verFotoGrande('${src}')">
             </div>`;
         });
@@ -3392,14 +3389,14 @@ window.buscarPorCedula = async () => {
       // TARJETA COMPLETA DEL RESULTADO
       div.innerHTML = `
         <details class="group">
-          <summary class="flex justify-between p-4.cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
+          <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
             <div class="flex gap-4 items-center">
               <div class="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
                 <span class="block text-[8px] font-bold uppercase">Fecha</span>
                 <span class="text-xs font-black">${d.fechaSimple || 'S/F'}</span>
               </div>
               <div>
-                <h3 class="font-black text-slate-800 uppercase italic.leading-tight">${d.paciente}</h3>
+                <h3 class="font-black text-slate-800 uppercase italic leading-tight">${d.paciente}</h3>
                 <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
               </div>
             </div>
@@ -3459,6 +3456,7 @@ window.buscarPorCedula = async () => {
     }
   }
 };
+  
 window.imprimirConsultaDesdeElemento = (btn) => {
   const consulta = btn && btn._consulta;
   if (!consulta) {
@@ -6498,6 +6496,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
