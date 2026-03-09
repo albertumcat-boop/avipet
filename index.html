@@ -3240,7 +3240,6 @@ window.buscarPorCedula = async () => {
 
   const modo = selectMode ? selectMode.value : 'ci';
 
-  // En modo CI, la cédula es obligatoria
   if (modo === 'ci') {
     if (!inputCI || !inputCI.value.trim()) {
       alert("⚠️ Ingrese una cédula, Albert.");
@@ -3282,7 +3281,6 @@ window.buscarPorCedula = async () => {
       return;
     }
 
-    // Si modo = CI, llenamos la lista de pacientes
     if (modo === 'ci' && selectPac) {
       const setPacientes = new Set();
       snap.forEach(docSnap => {
@@ -3300,13 +3298,11 @@ window.buscarPorCedula = async () => {
       if (seleccionadoAntes) selectPac.value = seleccionadoAntes;
     }
 
-    // Pasamos a array para poder ordenar por fecha
     const registros = [];
     snap.forEach(docSnap => {
       registros.push(docSnap.data());
     });
 
-    // Ordenar por fecha (más reciente primero)
     registros.sort((a, b) => {
       if (a.fecha && a.fecha.toDate && b.fecha && b.fecha.toDate) {
         return b.fecha.toDate() - a.fecha.toDate();
@@ -3323,15 +3319,13 @@ window.buscarPorCedula = async () => {
     contenedor.innerHTML = "";
 
     registros.forEach(d => {
-      // Filtro por paciente si está seleccionado
       if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
 
       const div = document.createElement('div');
-      div.className = "mb-4 border-2 border-slate-200 bg.white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
+      div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300.transition-colors";
 
       const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
-      // INSUMOS
       const insHtml = d.listaDetalladaInsumos
         ? d.listaDetalladaInsumos.map(ins => `
             <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
@@ -3340,7 +3334,6 @@ window.buscarPorCedula = async () => {
             </div>`).join('')
         : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
-      // FOTOS
       let fotosHtml = "";
 
       const listaHistoria = Array.isArray(d.fotosHistoria)
@@ -3357,7 +3350,6 @@ window.buscarPorCedula = async () => {
           </p>
           <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
 
-        // Historia
         listaHistoria.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
@@ -3370,15 +3362,14 @@ window.buscarPorCedula = async () => {
             </div>`;
         });
 
-        // Test
         listaTest.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
-              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
+              <p class="text-[8px] text-slate-400 font-bold.uppercase mb-1">
                 Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
               </p>
               <img src="${src}"
-                   class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                   class="w-32 h-32 object-cover rounded-lg.border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
                    onclick="window.verFotoGrande('${src}')">
             </div>`;
         });
@@ -3386,7 +3377,6 @@ window.buscarPorCedula = async () => {
         fotosHtml += `</div>`;
       }
 
-      // TARJETA COMPLETA DEL RESULTADO
       div.innerHTML = `
         <details class="group">
           <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
@@ -3400,29 +3390,29 @@ window.buscarPorCedula = async () => {
                 <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
               </div>
             </div>
-            <div class="text-blue-500 flex.items-center group-open:rotate-180 transition-transform font-bold">▼</div>
+            <div class="text-blue-500 flex items-center group-open:rotate-180 transition-transform font-bold">▼</div>
           </summary>
           <div class="p-4 bg-slate-50 border-t border-slate-100">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1.md:grid-cols-2 gap-4">
               <div>
                 <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">
                   Diagnóstico / Tratamiento:
                 </p>
-                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                <p class="text-xs text-slate-700 whitespace-pre-wrap.leading-relaxed">
                   ${d.tratamiento || ""}
                 </p>
               </div>
               <div>
-                <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">
+                <p class="text-[10px] font-bold text-emerald-600.border-b mb-1 uppercase">
                   Insumos:
                 </p>
                 <div class="space-y-1">${insHtml}</div>
               </div>
             </div>
             ${fotosHtml}
-            <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
+            <div class="mt-4 pt-3 border-t border-slate-200.flex justify-between items-center gap-2">
               <div class="flex flex-col gap-1">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span class="text-[10px] font-black text-slate-400.uppercase tracking-widest">
                   Total Consulta
                 </span>
                 <span class="text-xl font-black text-blue-900">
@@ -3430,7 +3420,7 @@ window.buscarPorCedula = async () => {
                 </span>
               </div>
               <button type="button"
-                      class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700"
+                      class="bg-blue-600 text-white px-4.py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700"
                       onclick="window.imprimirConsultaDesdeElemento(this)">
                 🖨 Imprimir
               </button>
@@ -3440,7 +3430,6 @@ window.buscarPorCedula = async () => {
 
       contenedor.appendChild(div);
 
-      // Guardamos la consulta en la propiedad del botón para poder imprimir luego
       const btnImpr = div.querySelector('button[onclick^="window.imprimirConsultaDesdeElemento"]');
       if (btnImpr) {
         btnImpr._consulta = d;
@@ -3456,7 +3445,7 @@ window.buscarPorCedula = async () => {
     }
   }
 };
-  
+
 window.imprimirConsultaDesdeElemento = (btn) => {
   const consulta = btn && btn._consulta;
   if (!consulta) {
@@ -3464,164 +3453,6 @@ window.imprimirConsultaDesdeElemento = (btn) => {
     return;
   }
   window.imprimirConsultaBuscador(consulta);
-};
-  } catch (e) {
-    console.error("❌ Fallo en la consulta:", e);
-    if (e.message && e.message.includes("index")) {
-      alert("⚠️ ERROR DE ÍNDICE: si vuelves a activar orderBy, tendrás que crear el índice en Firestore (mira la consola F12 para el enlace).");
-    } else {
-      alert("Error en búsqueda: " + e.message);
-    }
-  }
-};
-  window.imprimirConsultaBuscador = (consulta) => {
-  // Abre una ventana nueva
-  const win = window.open("", "_blank", "width=900,height=700");
-  if (!win) return;
-
-  const {
-    paciente,
-    propietario,
-    cedula,
-    especie,
-    raza,
-    edad,
-    sexo,
-    peso,
-    color,
-    telefono,
-    direccion,
-    doctor,
-    fechaSimple,
-    tratamiento = "",
-    listaDetalladaInsumos = [],
-    fotosHistoria = [],
-    fotosTest = []
-  } = consulta;
-
-  // Construir HTML de fotos
-  let bloqueFotos = "";
-  if (Array.isArray(fotosHistoria) && fotosHistoria.length) {
-    bloqueFotos += `
-      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
-        Anexos: Exámenes / Documentos
-      </h3>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        ${fotosHistoria.map(src => `
-          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
-            <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
-          </div>
-        `).join("")}
-      </div>`;
-  }
-  if (Array.isArray(fotosTest) && fotosTest.length) {
-    bloqueFotos += `
-      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
-        Anexos: Resultados Test Rápido
-      </h3>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        ${fotosTest.map(src => `
-          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
-            <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
-          </div>
-        `).join("")}
-      </div>`;
-  }
-
-  // Construir HTML de insumos
-  let bloqueInsumos = "";
-  if (Array.isArray(listaDetalladaInsumos) && listaDetalladaInsumos.length) {
-    bloqueInsumos = `
-      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:10px;">
-        <thead>
-          <tr style="background:#e5e7eb;">
-            <th style="text-align:left;padding:4px;border:1px solid #cbd5e1;">Insumo</th>
-            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Cant.</th>
-            <th style="text-align.center;padding:4px;border:1px solid #cbd5e1;">Costo aprox.</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${listaDetalladaInsumos.map(i => `
-            <tr>
-              <td style="padding:4px;border:1px solid #e5e7eb;">${i.nombre || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${i.cant || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">
-                $${(i.costo || i.precio || 0).toFixed(2)}
-              </td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>`;
-  }
-
-  win.document.write(`
-    <html>
-      <head>
-        <title>Historia Clínica - ${paciente || ""}</title>
-        <style>
-          @page { size: letter; margin: 1.2cm 0.8cm 0.8cm 0.8cm; }
-          body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            color:#0f172a;
-            font-size:12px;
-            padding:16px;
-          }
-          h1 { font-size:18px;margin:0;color:#1d4ed8; }
-          h2 { font-size:13px;margin:2px 0 0;color:#64748b; }
-          pre {
-            white-space:pre-wrap;
-            font-size:12px;
-            line-height:1.6;
-            margin:0;
-          }
-          .bloque {
-            border:1px solid #e2e8f0;
-            border-radius:10px;
-            padding:12px;
-            margin-top:10px;
-            background:#f9fafb;
-          }
-        </style>
-      </head>
-      <body>
-        <div style="border-bottom:2px solid #3b82f6;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;">
-          <div>
-            <h1>AVIPET - Historia Clínica</h1>
-            <h2>Paciente: <b>${(paciente || "").toUpperCase()}</b></h2>
-            <h2>Propietario: ${propietario || ""} · CI: ${cedula || ""}</h2>
-          </div>
-          <div style="text-align:right;font-size:10px;color:#6b7280;">
-            <div>${fechaSimple || ""}</div>
-            <div>${doctor ? "Dr(a). " + doctor : ""}</div>
-          </div>
-        </div>
-
-        <div class="bloque">
-          <b>Ficha del Paciente</b><br>
-          Especie: ${especie || ""} · Raza: ${raza || ""} · Edad: ${edad || ""} · Sexo: ${sexo || ""} · Peso: ${peso || ""} · Color: ${color || ""}<br>
-          Teléfono: ${telefono || ""} · Dirección: ${direccion || ""}
-        </div>
-
-        <div class="bloque">
-          <b>Diagnóstico / Tratamiento</b>
-          <pre>${tratamiento}</pre>
-        </div>
-
-        ${bloqueInsumos ? `<div class="bloque"><b>Insumos utilizados</b>${bloqueInsumos}</div>` : ""}
-
-        ${bloqueFotos ? `<div class="bloque"><b>Anexos</b>${bloqueFotos}</div>` : ""}
-
-      </body>
-    </html>
-  `);
-
-  win.document.close();
-  win.onload = () => {
-    setTimeout(() => {
-      win.focus();
-      win.print();
-    }, 400);
-  };
 };
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA (MODO OFFLINE RESISTENTE)
@@ -6496,6 +6327,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
