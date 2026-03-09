@@ -1801,13 +1801,28 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
   new QRCode(qrDiv, { text: urlVinculo, width: 128, height: 128 });
   document.getElementById(containerID)?.classList.remove('hidden');
 
-  // ---- MULTIFOTO: escuchar todos los docs de esta CI + tipo ----
+  // ================================
+  // 1) MARCAR INICIO DE SESIÓN QR
+  // ================================
+  const ahora = new Date();
+  const inicioSesion = ahora; // guardamos Date completo
+  // Lo guardamos en window según tipo, por si abres historia y test en paralelo
+  if (tipo === 'historia') window._ultimaSesionQRHistoria = inicioSesion;
+  if (tipo === 'test')     window._ultimaSesionQRTest     = inicioSesion;
+
+  // ================================
+  // 2) LISTENER MULTIFOTO
+  // ================================
   const fotosRef = collection(db, "transferencias_fotos");
- const q = query(
-  fotosRef,
-  where("ci", "==", cedula),
-  where("tipo", "==", tipo)
-);
+
+  // IMPORTANTE: para no pedir índice, dejamos SOLO los where:
+  const q = query(
+    fotosRef,
+    where("ci", "==", cedula),
+    where("tipo", "==", tipo)
+    // sin orderBy("fecha") para evitar índice obligatorio
+  );
+
   // Si ya había un listener anterior, lo apagamos
   if (tipo === 'historia' && window._unsubHist) {
     window._unsubHist();
@@ -1824,7 +1839,6 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
     const galeria = document.getElementById(galeriaId);
     const cont    = document.getElementById(contId);
     const hidden  = document.getElementById(hiddenId);
-
     if (!galeria || !cont) return;
 
     galeria.innerHTML = "";
@@ -1833,11 +1847,37 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
     snap.forEach(docSnap => {
       const d = docSnap.data();
       if (!d.url) return;
-      ultimaUrl = d.url;
 
+      // ================================
+      // 3) FILTRO POR SESIÓN ACTUAL
+      // ================================
+      // d.fecha es un Timestamp de Firestore (si existe)
+      if (d.fecha && d.fecha.toDate) {
+        const fechaDoc = d.fecha.toDate();
+
+        // Elegimos el timestamp de inicio según tipo
+        let inicio = null;
+        if (tipo === 'historia') inicio = window._ultimaSesionQRHistoria || inicioSesion;
+        if (tipo === 'test')     inicio = window._ultimaSesionQRTest     || inicioSesion;
+
+        // Si por alguna razón no hay inicio, tomamos la actual
+        if (!inicio) inicio = inicioSesion;
+
+        // Si la foto es ANTERIOR a que generamos este QR, la ignoramos
+        if (fechaDoc < inicio) {
+          return;
+        }
+      }
+      // Si no tiene campo fecha (casos viejos), puedes elegir:
+      // - return;  // ignorar
+      // - o dejarlos pasar: (no pongas return aquí)
+
+      // ================================
+      // 4) CONSTRUIR MINIATURAS SOLO DE ESTA SESIÓN
+      // ================================
+      ultimaUrl = d.url;
       const wrapper = document.createElement('div');
       wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
-
       wrapper.innerHTML = `
         <img src="${d.url}" class="w-full h-full object-cover">
         <button type="button"
@@ -1846,7 +1886,6 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
           ✕
         </button>
       `;
-
       galeria.appendChild(wrapper);
     });
 
@@ -1855,7 +1894,7 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
       cont.classList.remove('hidden');
       document.getElementById(containerID)?.classList.add('hidden');
     } else {
-      // Si no hay fotos, ocultamos contenedor
+      // Si no hay fotos en esta sesión, ocultamos contenedor
       cont.classList.add('hidden');
     }
   });
@@ -6052,6 +6091,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
