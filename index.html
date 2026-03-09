@@ -865,9 +865,23 @@
         </div>
         
         <div class="p-6">
+            <!-- NUEVO: MODO DE BÚSQUEDA -->
+            <div class="mb-3">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+                    Modo de búsqueda
+                </label>
+                <select id="searchMode"
+                        class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
+                    <option value="ci">Por CÉDULA</option>
+                    <option value="todo">TODO el historial (por fecha)</option>
+                </select>
+            </div>
+
             <div class="flex gap-2">
                 <div class="flex-1">
-                    <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Cédula del Propietario</label>
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+                        Cédula del Propietario
+                    </label>
                     <input type="text" id="searchCI"
                            placeholder="V-00000000"
                            class="w-full border-b border-slate-300 p-2 outline-none focus:border-blue-600 font-bold text-slate-700 uppercase transition-all bg-transparent">
@@ -877,9 +891,21 @@
                     Consultar
                 </button>
             </div>
-            
+
+            <!-- OPCIONAL: FILTRO POR PACIENTE CUANDO SE USA CÉDULA -->
+            <div class="mt-3">
+              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+                Paciente (si tiene varios):
+              </label>
+              <select id="searchPaciente"
+                      onchange="window.buscarPorCedula()"
+                      class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
+                <option value="">-- TODOS --</option>
+              </select>
+            </div>
+
             <div id="resultadosBusqueda" class="mt-8 space-y-4">
-                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -1727,6 +1753,65 @@ window.guardarFirebase = async (imp) => {
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
+        // ===== LEER TABLA HOJA DE VACUNAS / DESPARASITACIONES =====
+        const leerTablaVacunas = () => {
+            const resultado = {
+                vacunas: [],
+                desparasitaciones: []
+            };
+            try {
+                const bloqueVacunas = document.querySelector('#bloqueVacunas');
+                if (bloqueVacunas) {
+                    const tablas = bloqueVacunas.querySelectorAll('table');
+
+                    // 1) Tabla Control de Vacunación (primera tabla)
+                    if (tablas[0]) {
+                        const filasVac = tablas[0].querySelectorAll('tbody tr');
+                        filasVac.forEach(tr => {
+                            const celdas = tr.querySelectorAll('td');
+                            if (celdas.length >= 5) {
+                                const fecha   = celdas[0].querySelector('input')?.value.trim() || "";
+                                const vacuna  = celdas[1].querySelector('input')?.value.trim() || "";
+                                const peso    = celdas[2].querySelector('input')?.value.trim() || "";
+                                const proxima = celdas[3].querySelector('input')?.value.trim() || "";
+                                const firma   = celdas[4].querySelector('input')?.value.trim() || "";
+                                if (fecha || vacuna) {
+                                    resultado.vacunas.push({
+                                        fecha, vacuna, peso, proxima, firma
+                                    });
+                                }
+                            }
+                        });
+                    }
+
+                    // 2) Tabla Desparasitaciones (segunda tabla)
+                    if (tablas[1]) {
+                        const filasDesp = tablas[1].querySelectorAll('tbody tr');
+                        filasDesp.forEach(tr => {
+                            const celdas = tr.querySelectorAll('td');
+                            if (celdas.length >= 5) {
+                                const fecha   = celdas[0].querySelector('input')?.value.trim() || "";
+                                const producto= celdas[1].querySelector('input')?.value.trim() || "";
+                                const peso    = celdas[2].querySelector('input')?.value.trim() || "";
+                                const proxima = celdas[3].querySelector('input')?.value.trim() || "";
+                                const firma   = celdas[4].querySelector('input')?.value.trim() || "";
+                                if (fecha || producto) {
+                                    resultado.desparasitaciones.push({
+                                        fecha, producto, peso, proxima, firma
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn("No se pudo leer hoja de vacunas:", e);
+            }
+            return resultado;
+        };
+
+        const datosVacunas = leerTablaVacunas();
+
         // --- ESTRUCTURA FINAL CORREGIDA (PARA EL AUTORRELLENO) ---
         const data = {
             cedula:      dInput('hCI'),
@@ -1750,6 +1835,10 @@ window.guardarFirebase = async (imp) => {
             urlFotoTest: urlFotoTestFinal,
             testsRealizados: listaTests,
 
+            // NUEVOS CAMPOS: LO HACIDO EN HOJA DE VACUNAS
+            vacunasAplicadas:           datosVacunas.vacunas,
+            desparasitacionesAplicadas: datosVacunas.desparasitaciones,
+
             montoVenta:   montoVentaTotal,
             montoInsumos: totalGastos,
             pagoDoctor:   pagoDoctorTotal,
@@ -1765,9 +1854,7 @@ window.guardarFirebase = async (imp) => {
         await addDoc(collection(db, "consultas"), data);
 
         alert("✅ ¡Consulta guardada con éxito!");
-        // ⬇⬇⬇ ÚNICO CAMBIO AQUÍ ⬇⬇⬇
         if (imp) window.imprimirDocumento();
-        // ⬆⬆⬆ EN LUGAR DE window.print() ⬆⬆⬆
 
     } catch (e) {
         console.error("Error en el sistema:", e);
@@ -1836,8 +1923,13 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
     const hidden  = document.getElementById(hiddenId);
     if (!galeria || !cont) return;
 
-    galeria.innerHTML = "";
-    let ultimaUrl = "";
+    // 2.0 LEER LO QUE YA ESTÁ EN GALERÍA (PC + QR anteriores)
+    const urlsExistentes = new Set();
+    galeria.querySelectorAll('img').forEach(img => {
+      if (img.src) urlsExistentes.add(img.src);
+    });
+
+    let ultimaUrlNueva = "";
 
     snap.forEach(docSnap => {
       const d = docSnap.data();
@@ -1863,14 +1955,17 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
           return;
         }
       }
-      // Si no tiene campo fecha (casos viejos), puedes elegir:
-      // - return;  // ignorar
-      // - o dejarlos pasar: (no pongas return aquí)
+      // Si no tiene campo fecha (casos viejos), la dejamos pasar (no ponemos return aquí)
+
+      // Evitar duplicados: si ya estaba esa URL (PC o QR previo), no la agregamos
+      if (urlsExistentes.has(d.url)) return;
+
+      urlsExistentes.add(d.url);
+      ultimaUrlNueva = d.url;
 
       // ================================
-      // 4) CONSTRUIR MINIATURAS SOLO DE ESTA SESIÓN
+      // 4) CONSTRUIR MINIATURAS SOLO DE ESTA SESIÓN (sumadas a las anteriores)
       // ================================
-      ultimaUrl = d.url;
       const wrapper = document.createElement('div');
       wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
       wrapper.innerHTML = `
@@ -1884,8 +1979,12 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
       galeria.appendChild(wrapper);
     });
 
-    if (ultimaUrl) {
-      if (hidden) hidden.value = ultimaUrl;  // guardamos la última para compatibilidad
+    // 5) ACTUALIZAR HIDDEN Y MOSTRAR/OCULTAR
+    if (urlsExistentes.size > 0) {
+      const arrUrls = Array.from(urlsExistentes);
+      const ultima = ultimaUrlNueva || arrUrls[arrUrls.length - 1];
+
+      if (hidden) hidden.value = ultima;  // guardamos la última para compatibilidad
       cont.classList.remove('hidden');
       document.getElementById(containerID)?.classList.add('hidden');
     } else {
@@ -3091,15 +3190,24 @@ window.activarModoMovil = (cedula) => {
 // [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
 // =========================================================
 window.buscarPorCedula = async () => {
-    const input = document.getElementById('searchCI');
+    const inputCI    = document.getElementById('searchCI');
+    const selectPac  = document.getElementById('searchPaciente');
+    const selectMode = document.getElementById('searchMode');
     const contenedor = document.getElementById('resultadosBusqueda');
 
-    if (!input || !input.value.trim()) {
-        alert("⚠️ Ingrese una cédula, Albert.");
-        return;
+    const modo = selectMode ? selectMode.value : 'ci';
+
+    // En modo CI, la cédula es obligatoria
+    if (modo === 'ci') {
+        if (!inputCI || !inputCI.value.trim()) {
+            alert("⚠️ Ingrese una cédula, Albert.");
+            return;
+        }
     }
 
-    const ci = input.value.trim();
+    const ci = (inputCI?.value || '').trim();
+    const pacienteFiltro = selectPac?.value || "";
+
     contenedor.innerHTML = `
         <div class="text-center py-8">
             <div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2 mx-auto rounded-full"></div>
@@ -3108,41 +3216,89 @@ window.buscarPorCedula = async () => {
 
     try {
         const consultasRef = collection(db, "consultas");
+        let q;
 
-        // Buscamos por CI (sin orderBy para evitar índice obligatorio)
-        const q = query(
-            consultasRef,
-            where("cedula", "==", ci)
-            // , orderBy("fecha", "desc")
-        );
+        if (modo === 'ci') {
+            // Sólo las consultas de esa CI
+            q = query(
+                consultasRef,
+                where("cedula", "==", ci)
+                // , orderBy("fecha", "desc")  // si activas esto, crea índice en Firestore
+            );
+        } else {
+            // TODO el historial, sin filtrar por CI
+            q = query(consultasRef);
+        }
 
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            contenedor.innerHTML = `<p class="p-6 text-center text-slate-500">No hay registros para la CI: ${ci}</p>`;
+            contenedor.innerHTML = `<p class="p-6 text-center text-slate-500">No hay registros para el criterio seleccionado.</p>`;
+            if (selectPac) {
+                selectPac.innerHTML = '<option value="">-- TODOS --</option>';
+            }
             return;
         }
 
+        // Si modo = CI, llenamos la lista de pacientes
+        if (modo === 'ci' && selectPac) {
+            const setPacientes = new Set();
+            snap.forEach(docSnap => {
+                const d = docSnap.data();
+                if (d.paciente) setPacientes.add(d.paciente);
+            });
+            const seleccionadoAntes = pacienteFiltro;
+            selectPac.innerHTML = '<option value="">-- TODOS --</option>';
+            Array.from(setPacientes).forEach(nombre => {
+                const opt = document.createElement("option");
+                opt.value = nombre;
+                opt.textContent = nombre;
+                selectPac.appendChild(opt);
+            });
+            if (seleccionadoAntes) selectPac.value = seleccionadoAntes;
+        }
+
+        // Pasamos a array para poder ordenar por fecha
+        const registros = [];
+        snap.forEach(docSnap => {
+            registros.push(docSnap.data());
+        });
+
+        // Ordenar por fecha (más reciente primero)
+        registros.sort((a, b) => {
+            if (a.fecha && a.fecha.toDate && b.fecha && b.fecha.toDate) {
+                return b.fecha.toDate() - a.fecha.toDate();
+            }
+            const fsA = a.fechaSimple || "";
+            const fsB = b.fechaSimple || "";
+            const [dA, mA, yA] = fsA.split('/').map(Number);
+            const [dB, mB, yB] = fsB.split('/').map(Number);
+            const da = new Date(yA || 0, (mA || 1) - 1, dA || 1);
+            const db = new Date(yB || 0, (mB || 1) - 1, dB || 1);
+            return db - da;
+        });
+
         contenedor.innerHTML = "";
 
-        snap.forEach(docSnap => {
-            const d = docSnap.data();
+        registros.forEach(d => {
+            // En modo CI + filtro de paciente
+            if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
+
             const div = document.createElement('div');
             div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
 
             const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
 
-            // --- LÓGICA DE INSUMOS ---
+            // --- INSUMOS ---
             const insHtml = d.listaDetalladaInsumos ? d.listaDetalladaInsumos.map(ins => `
                 <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
                     <span class="text-slate-600">${ins.nombre} (x${ins.cant})</span>
                     <b class="text-slate-800">$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b>
                 </div>`).join('') : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
-            // --- 📸 FOTOS MULTIFOTO: HISTORIA + TEST ---
+            // --- FOTOS MULTIFOTO ---
             let fotosHtml = "";
 
-            // Si hay arrays nuevos, los usamos; si no, caemos a las URLs antiguas
             const listaHistoria = Array.isArray(d.fotosHistoria)
                 ? d.fotosHistoria
                 : (d.urlExamen ? [d.urlExamen] : []);
@@ -3155,9 +3311,9 @@ window.buscarPorCedula = async () => {
                     <p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">
                         Anexos Visuales:
                     </p>
-                    <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
+                    <div class="flex gap-3 overflow-x-auto.pb-2 scrollbar-hide">`;
 
-                // HISTORIA
+                // Historia
                 listaHistoria.forEach((src, idx) => {
                     fotosHtml += `
                         <div class="flex-shrink-0">
@@ -3170,7 +3326,7 @@ window.buscarPorCedula = async () => {
                         </div>`;
                 });
 
-                // TEST
+                // Test
                 listaTest.forEach((src, idx) => {
                     fotosHtml += `
                         <div class="flex-shrink-0">
@@ -3178,7 +3334,7 @@ window.buscarPorCedula = async () => {
                                 Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
                             </p>
                             <img src="${src}" 
-                                 class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
+                                 class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm.cursor-pointer hover:scale-105 transition-transform" 
                                  onclick="window.verFotoGrande('${src}')">
                         </div>`;
                 });
@@ -3204,7 +3360,7 @@ window.buscarPorCedula = async () => {
                     <div class="p-4 bg-slate-50 border-t border-slate-100">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
+                                <p class="text-[10px] font-bold text-blue-600 border-b.mb-1 uppercase">Diagnóstico / Tratamiento:</p>
                                 <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
                             </div>
                             <div>
@@ -3225,7 +3381,7 @@ window.buscarPorCedula = async () => {
     } catch (e) {
         console.error("❌ Fallo en la consulta:", e);
         if (e.message && e.message.includes("index")) {
-            alert("⚠️ ERROR DE ÍNDICE: Firestore necesita un índice para ordenar por fecha. Si usas orderBy, mira la consola (F12) y haz clic en el enlace de Google para activarlo.");
+            alert("⚠️ ERROR DE ÍNDICE: si vuelves a activar orderBy, tendrás que crear el índice en Firestore (mira la consola F12 para el enlace).");
         } else {
             alert("Error en búsqueda: " + e.message);
         }
@@ -6104,6 +6260,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
