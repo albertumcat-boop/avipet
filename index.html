@@ -3222,9 +3222,6 @@ window.activarModoMovil = (cedula) => {
 // =========================================================
 // [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
 // =========================================================
-// =========================================================
-// [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
-// =========================================================
 window.buscarPorCedula = async () => {
   const inputCI    = document.getElementById('searchCI');
   const selectPac  = document.getElementById('searchPaciente');
@@ -3450,6 +3447,20 @@ window.buscarPorCedula = async () => {
   }
 };
 
+Tienes bien el imprimirConsultaDesdeElemento, pero te falta definir window.imprimirConsultaBuscador en tu <script type="module">. Por eso sale:
+
+window.imprimirConsultaBuscador is not a function
+
+Te dejo una versión completa de imprimirConsultaBuscador ya preparada para:
+
+Imprimir ficha del paciente.
+Imprimir tratamiento.
+Imprimir insumos.
+Imprimir tests rápidos (testsRealizados) con resultado POS/NEG/INVÁLIDO.
+Imprimir fotos de historia y de test (usando fotosHistoria/fotosTest o urlExamen/urlFotoTest de respaldo).
+Paso 1: Pega esta función en tu script
+En tu <script type="module">, justo debajo de:
+
 window.imprimirConsultaDesdeElemento = (btn) => {
   const consulta = btn && btn._consulta;
   if (!consulta) {
@@ -3457,6 +3468,205 @@ window.imprimirConsultaDesdeElemento = (btn) => {
     return;
   }
   window.imprimirConsultaBuscador(consulta);
+};
+pega esto tal cual:
+
+window.imprimirConsultaBuscador = (consulta) => {
+  // Abre una ventana nueva
+  const win = window.open("", "_blank", "width=900,height=700");
+  if (!win) return;
+
+  const {
+    paciente,
+    propietario,
+    cedula,
+    especie,
+    raza,
+    edad,
+    sexo,
+    peso,
+    color,
+    telefono,
+    direccion,
+    doctor,
+    fechaSimple,
+    tratamiento = "",
+    listaDetalladaInsumos = [],
+    fotosHistoria = [],
+    fotosTest = [],
+    testsRealizados = []   // <-- tests rápidos guardados en Firestore
+  } = consulta;
+
+  // -------------------------
+  // BLOQUE FOTOS (Historia + Test)
+  // -------------------------
+  let bloqueFotos = "";
+
+  const listaFotosHistoria = Array.isArray(fotosHistoria) && fotosHistoria.length
+    ? fotosHistoria
+    : (consulta.urlExamen ? [consulta.urlExamen] : []);
+
+  const listaFotosTest = Array.isArray(fotosTest) && fotosTest.length
+    ? fotosTest
+    : (consulta.urlFotoTest ? [consulta.urlFotoTest] : []);
+
+  if (listaFotosHistoria.length) {
+    bloqueFotos += `
+      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
+        Anexos: Exámenes / Documentos
+      </h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${listaFotosHistoria.map(src => `
+          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
+            <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
+          </div>
+        `).join("")}
+      </div>`;
+  }
+
+  if (listaFotosTest.length) {
+    bloqueFotos += `
+      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
+        Anexos: Resultados Test Rápido
+      </h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${listaFotosTest.map(src => `
+          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
+            <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
+          </div>
+        `).join("")}
+      </div>`;
+  }
+
+  // -------------------------
+  // BLOQUE INSUMOS
+  // -------------------------
+  let bloqueInsumos = "";
+  if (Array.isArray(listaDetalladaInsumos) && listaDetalladaInsumos.length) {
+    bloqueInsumos = `
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:10px;">
+        <thead>
+          <tr style="background:#e5e7eb;">
+            <th style="text-align:left;padding:4px;border:1px solid #cbd5e1;">Insumo</th>
+            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Cant.</th>
+            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Costo aprox.</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${listaDetalladaInsumos.map(i => `
+            <tr>
+              <td style="padding:4px;border:1px solid #e5e7eb;">${i.nombre || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${i.cant || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">
+                $${(i.costo || i.precio || 0).toFixed(2)}
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  // -------------------------
+  // BLOQUE TESTS RÁPIDOS
+  // -------------------------
+  let bloqueTests = "";
+  if (Array.isArray(testsRealizados) && testsRealizados.length) {
+    bloqueTests = `
+      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
+        Tests Rápidos Realizados
+      </h3>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:5px;">
+        <thead>
+          <tr style="background:#e5e7eb;">
+            <th style="text-align:left;padding:4px;border:1px solid #cbd5e1;">Test</th>
+            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Resultado</th>
+            <th style="text-align:left;padding:4px;border:1px solid #cbd5e1;">Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${testsRealizados.map(t => `
+            <tr>
+              <td style="padding:4px;border:1px solid #e5e7eb;">${t.nombre || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${t.resultado || ""}</td>
+              <td style="padding:4px;border:1px solid #e5e7eb;">${t.nota || ""}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  // -------------------------
+  // HTML COMPLETO DE LA VENTANA
+  // -------------------------
+  win.document.write(`
+    <html>
+      <head>
+        <title>Historia Clínica - ${paciente || ""}</title>
+        <style>
+          @page { size: letter; margin: 1.2cm 0.8cm 0.8cm 0.8cm; }
+          body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color:#0f172a;
+            font-size:12px;
+            padding:16px;
+          }
+          h1 { font-size:18px;margin:0;color:#1d4ed8; }
+          h2 { font-size:13px;margin:2px 0 0;color:#64748b; }
+          pre {
+            white-space:pre-wrap;
+            font-size:12px;
+            line-height:1.6;
+            margin:0;
+          }
+          .bloque {
+            border:1px solid #e2e8f0;
+            border-radius:10px;
+            padding:12px;
+            margin-top:10px;
+            background:#f9fafb;
+          }
+        </style>
+      </head>
+      <body>
+        <div style="border-bottom:2px solid #3b82f6;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;">
+          <div>
+            <h1>AVIPET - Historia Clínica</h1>
+            <h2>Paciente: <b>${(paciente || "").toUpperCase()}</b></h2>
+            <h2>Propietario: ${propietario || ""} · CI: ${cedula || ""}</h2>
+          </div>
+          <div style="text-align:right;font-size:10px;color:#6b7280;">
+            <div>${fechaSimple || ""}</div>
+            <div>${doctor ? "Dr(a). " + doctor : ""}</div>
+          </div>
+        </div>
+
+        <div class="bloque">
+          <b>Ficha del Paciente</b><br>
+          Especie: ${especie || ""} · Raza: ${raza || ""} · Edad: ${edad || ""} · Sexo: ${sexo || ""} · Peso: ${peso || ""} · Color: ${color || ""}<br>
+          Teléfono: ${telefono || ""} · Dirección: ${direccion || ""}
+        </div>
+
+        <div class="bloque">
+          <b>Diagnóstico / Tratamiento</b>
+          <pre>${tratamiento}</pre>
+        </div>
+
+        ${bloqueInsumos ? `<div class="bloque"><b>Insumos utilizados</b>${bloqueInsumos}</div>` : ""}
+
+        ${bloqueTests ? `<div class="bloque"><b>Tests rápidos</b>${bloqueTests}</div>` : ""}
+
+        ${bloqueFotos ? `<div class="bloque"><b>Anexos</b>${bloqueFotos}</div>` : ""}
+      </body>
+    </html>
+  `);
+
+  win.document.close();
+  win.onload = () => {
+    setTimeout(() => {
+      win.focus();
+      win.print();
+    }, 400);
+  };
 };
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA (MODO OFFLINE RESISTENTE)
@@ -6331,6 +6541,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
