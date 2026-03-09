@@ -511,14 +511,27 @@
 <div id="hTratamientoPrint"
     class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
 
+<!-- GALERÍA MÚLTIPLE PARA IMPRESIÓN - HISTORIA -->
 <div id="printExamenCont" class="hidden print:block mt-4 text-center">
-    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Anexo: Examen / Documento</p>
-    <img id="imgHistoriaPrint" src="" class="max-w-full h-auto max-h-[400px] mx-auto rounded-lg border border-slate-300 foto-anexo">
+  <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">
+    Anexos: Exámenes / Documentos
+  </p>
+  <div id="printHistoriaGallery"
+       class="flex flex-wrap gap-3 justify-center">
+    <!-- Aquí se clonarán las imágenes de previewHistoriaGallery al imprimir -->
+  </div>
 </div>
 
+
+<!-- GALERÍA MÚLTIPLE PARA IMPRESIÓN - TEST -->
 <div id="printTestCont" class="hidden print:block mt-4 text-center">
-    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Anexo: Resultado Test Rápido</p>
-    <img id="imgTestPrint" src="" class="max-w-full h-auto max-h-[400px] mx-auto rounded-lg border border-slate-300 foto-anexo">
+  <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">
+    Anexos: Resultados Test Rápido
+  </p>
+  <div id="printTestGallery"
+       class="flex flex-wrap gap-3 justify-center">
+    <!-- Aquí se clonarán las imágenes de previewTestGallery al imprimir -->
+  </div>
 </div>
 
 <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
@@ -539,19 +552,22 @@
             <span>📱</span> Usar Teléfono (QR)
         </button>
 
-        <div id="qrContainer" class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center">
-            <div id="qrcode"></div>
-            <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">Escanea con la cámara</p>
-        </div>
-
-        <div id="previewHistoriaContainer" class="hidden relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white">
-            <img id="imgHistoriaPreview" src="" class="w-full h-full object-cover">
-            <input type="hidden" id="pUrlExamen"> 
-            <button type="button" onclick="window.quitarFotoHistoria()" 
-                    class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold">✕</button>
-        </div>
-    </div>
+      <div id="qrContainer"
+     class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center">
+  <div id="qrcode"></div>
+  <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">
+    Escanea con la cámara
+  </p>
 </div>
+
+<!-- PREVIEW MULTIPLE DE HISTORIA -->
+<div id="previewHistoriaContainer"
+     class="hidden relative w-full border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white p-2 mt-2">
+  <div id="previewHistoriaGallery" class="flex gap-2 overflow-x-auto">
+    <!-- aquí se van agregando varias <div> con <img> -->
+  </div>
+</div>
+<input type="hidden" id="pUrlExamen">
     
     <textarea id="notaAdjuntoHistoria" placeholder="Breve nota sobre este documento (Ej: Valores de hematología)" 
               class="no-print w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white" rows="1"></textarea>
@@ -769,17 +785,22 @@
         <span>📱</span> Usar Teléfono (QR)
       </button>
 
-      <div id="qrContainerTest" class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center">
-        <div id="qrcodeTest"></div>
-        <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">Escanea con la cámara</p>
-      </div>
+    <div id="qrContainerTest"
+     class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center">
+  <div id="qrcodeTest"></div>
+  <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">
+    Escanea con la cámara
+  </p>
+</div>
 
-      <div id="previewTestContainer" class="hidden relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white">
-        <img id="imgTestPreview" src="" class="w-full h-full object-cover">
-        <button type="button" onclick="window.quitarFotoTest()" 
-                class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold">✕</button>
-      </div>
-    </div>
+<!-- PREVIEW MÚLTIPLE DE TEST -->
+<div id="previewTestContainer"
+     class="hidden relative w-full border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white p-2 mt-2">
+  <div id="previewTestGallery" class="flex gap-2 overflow-x-auto">
+    <!-- varias imágenes de test -->
+  </div>
+</div>
+<input type="hidden" id="pUrlTest">
     
     <input type="text" id="notaFotoTest" placeholder="Nota sobre este test (Ej: Positivo tenue)" 
            class="w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white">
@@ -1768,39 +1789,69 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
   const cedula = document.getElementById('hCI')?.value.trim();
   if (!cedula) return alert("⚠️ Escribe la Cédula primero.");
 
-  const qrDivID = tipo === 'test' ? "qrcodeTest" : "qrcode";
+  const qrDivID     = tipo === 'test' ? "qrcodeTest"      : "qrcode";
   const containerID = tipo === 'test' ? "qrContainerTest" : "qrContainer";
-  
-  const qrDiv = document.getElementById(qrDivID);
-  qrDiv.innerHTML = "";
 
-  const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;
+  const qrDiv = document.getElementById(qrDivID);
+  if (qrDiv) qrDiv.innerHTML = "";
+
+  const urlVinculo =
+    `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;
+
   new QRCode(qrDiv, { text: urlVinculo, width: 128, height: 128 });
   document.getElementById(containerID)?.classList.remove('hidden');
 
-  // ESCUCHA EN TIEMPO REAL
-  const docRef = doc(db, "transferencias_fotos", `${cedula}_${tipo}`);
-  const unsub = onSnapshot(docRef, async (docSnap) => {
-    if (!docSnap.exists()) return;
-    const data = docSnap.data();
+  // ==== ESCUCHA EN TIEMPO REAL (multi-foto) ====
+  const fotosRef = collection(db, "transferencias_fotos");
+  const q = query(
+    fotosRef,
+    where("ci", "==", cedula),
+    where("tipo", "==", tipo),
+    orderBy("fecha", "asc")
+  );
 
-    // Rellenamos previsualización y campos ocultos
-    const sufijo = (tipo === 'test') ? 'Test' : 'Historia';
-    const previewImg = document.getElementById(tipo === 'test' ? 'imgTestPreview' : 'imgHistoriaPreview');
-    const inputOculto = document.getElementById(tipo === 'test' ? 'pUrlTest' : 'pUrlExamen');
+  // Por si abres varias veces el QR, conviene guardar el unsub en window
+  if (tipo === 'test' && window._unsubTest)   window._unsubTest();
+  if (tipo === 'historia' && window._unsubHist) window._unsubHist();
 
-    if (previewImg) previewImg.src = data.url;
-    if (inputOculto) inputOculto.value = data.url;
-    
-    // Mostrar el contenedor de la foto
-    document.getElementById(tipo === 'test' ? 'previewTestContainer' : 'previewHistoriaContainer')?.classList.remove('hidden');
+  const unsub = onSnapshot(q, (snap) => {
+    const galleryId   = tipo === 'test' ? 'previewTestGallery'     : 'previewHistoriaGallery';
+    const containerId = tipo === 'test' ? 'previewTestContainer'   : 'previewHistoriaContainer';
+    const hiddenInput = tipo === 'test' ? 'pUrlTest'               : 'pUrlExamen';
 
-    // Limpieza
-    document.getElementById(containerID)?.classList.add('hidden');
-    alert(`✅ ${tipo.toUpperCase()} recibida.`);
-    await deleteDoc(docRef);
-    unsub();
+    const gal = document.getElementById(galleryId);
+    const cont = document.getElementById(containerId);
+    const inputOculto = document.getElementById(hiddenInput);
+    if (!gal || !cont) return;
+
+    // Limpiamos y volvemos a dibujar TODAS las fotos
+    gal.innerHTML = "";
+    let ultimaUrl = "";
+
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      if (!d.url) return;
+      ultimaUrl = d.url;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "relative w-20 h-20 border border-slate-300 rounded-lg overflow-hidden";
+
+      wrapper.innerHTML = `
+        <img src="${d.url}" class="w-full h-full object-cover">
+      `;
+
+      gal.appendChild(wrapper);
+    });
+
+    if (ultimaUrl) {
+      if (inputOculto) inputOculto.value = ultimaUrl;  // guarda la última por compatibilidad
+      cont.classList.remove('hidden');
+      document.getElementById(containerID)?.classList.add('hidden');
+    }
   });
+
+  if (tipo === 'test')   window._unsubTest = unsub;
+  if (tipo === 'historia') window._unsubHist = unsub;
 };
   // ==========================================
   // INTERFAZ MÓVIL (EXPUESTA AL WINDOW)
@@ -1842,10 +1893,8 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
   const status = document.getElementById('statusMovil');
   const file = input.files[0];
   if (!file) return;
-
   if (status) status.innerText = "⏳ Procesando foto...";
 
-  // Función interna para convertir la foto a texto (base64)
   const leerComoBase64 = (archivo) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1856,25 +1905,21 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
   };
 
   try {
-    // 1) Leemos la imagen del teléfono
     const base64Original   = await leerComoBase64(file);
-    // 2) La comprimimos para que quepa en Firestore
     const base64Comprimida = await comprimirImagen(base64Original);
 
-    // 3) Guardamos en Firestore para que la PC lo reciba al instante
-    //    El ID del documento es: cedula_tipo (ej: 21103679_historia)
-    await setDoc(doc(db, "transferencias_fotos", `${ci}_${tipo}`), {
+    // AHORA: doc nuevo cada vez
+    await addDoc(collection(db, "transferencias_fotos"), {
+      ci:   ci,
+      tipo: tipo,          // 'historia' o 'test'
       url:  base64Comprimida,
-      tipo: tipo,
       fecha: serverTimestamp()
     });
 
     if (status) {
       status.innerHTML = "<b class='text-emerald-400'>✅ ENVIADO EXITOSAMENTE</b>";
     }
-
-    console.log("🚀 Foto enviada a la PC via Firestore");
-
+    console.log("🚀 Foto enviada a la PC via Firestore (multi-foto)");
   } catch (e) {
     console.error("Error al subir desde móvil:", e);
     if (status) status.innerText = "❌ Error: " + e.message;
@@ -4138,55 +4183,93 @@ window.cerrarModalLogin = () => {
       alert("❌ Error al generar reporte: " + e.message);
     }
   };
-  // =========================================================
-// [21] MOTOR DE IMPRESIÓN (La Tinta Digital)
-// =========================================================
+ 
 // =========================================================
 // [21] MOTOR DE IMPRESIÓN UNIVERSAL AVIPET
 // =========================================================
 window.imprimirDocumento = () => {
-    console.log("⚓ Iniciando secuencia de impresión Avipet...");
+  console.log("⚓ Iniciando secuencia de impresión Avipet...");
 
-    // 1. Forzar limpieza de campos dinámicos
-    const hTrat = document.getElementById('hTratamiento');
-    const hTratPrint = document.getElementById('hTratamientoPrint');
-    if (hTrat && hTratPrint) {
-        hTratPrint.innerText = hTrat.value;
+  // 1. Sincronizar texto de tratamiento
+  const hTrat = document.getElementById('hTratamiento');
+  const hTratPrint = document.getElementById('hTratamientoPrint');
+  if (hTrat && hTratPrint) {
+    hTratPrint.innerText = hTrat.value;
+  }
+
+  // 2. Copiar todas las imágenes de HISTORIA (galería preview -> galería print)
+  try {
+    const galPrevHist = document.getElementById('previewHistoriaGallery');
+    const galPrintHist = document.getElementById('printHistoriaGallery');
+    const contPrintHist = document.getElementById('printExamenCont');
+
+    if (galPrevHist && galPrintHist && contPrintHist) {
+      galPrintHist.innerHTML = ""; // limpiamos anterior
+
+      const imgsPrev = galPrevHist.querySelectorAll('img');
+      imgsPrev.forEach(img => {
+        const wrapper = document.createElement('div');
+        wrapper.className = "max-w-[45%] md:max-w-[30%] border border-slate-300 rounded-lg overflow-hidden";
+        wrapper.innerHTML = `
+          <img src="${img.src}"
+               class="w-full h-auto max-h-[300px] object-contain foto-anexo">
+        `;
+        galPrintHist.appendChild(wrapper);
+      });
+
+      if (imgsPrev.length > 0) {
+        contPrintHist.classList.remove('hidden');
+      } else {
+        contPrintHist.classList.add('hidden');
+      }
     }
+  } catch (e) {
+    console.warn("No se pudo preparar galería de Historia para impresión:", e);
+  }
 
-    // [NUEVO] 1.5. Inyectar Fotos del Teléfono en la zona de impresión
-    const urlHistoria = document.getElementById('pUrlExamen')?.value;
-    const urlTest = document.getElementById('pUrlTest')?.value;
+  // 3. Copiar todas las imágenes de TEST (galería preview -> galería print)
+  try {
+    const galPrevTest = document.getElementById('previewTestGallery');
+    const galPrintTest = document.getElementById('printTestGallery');
+    const contPrintTest = document.getElementById('printTestCont');
 
-    if (urlHistoria) {
-        const imgH = document.getElementById('imgHistoriaPrint');
-        if (imgH) {
-            imgH.src = urlHistoria;
-            imgH.closest('.print-only')?.classList.remove('hidden'); // Muestra el contenedor si estaba oculto
-        }
+    if (galPrevTest && galPrintTest && contPrintTest) {
+      galPrintTest.innerHTML = "";
+
+      const imgsPrevTest = galPrevTest.querySelectorAll('img');
+      imgsPrevTest.forEach(img => {
+        const wrapper = document.createElement('div');
+        wrapper.className = "max-w-[45%] md:max-w-[30%] border border-slate-300 rounded-lg overflow-hidden";
+        wrapper.innerHTML = `
+          <img src="${img.src}"
+               class="w-full h-auto max-h-[300px] object-contain foto-anexo">
+        `;
+        galPrintTest.appendChild(wrapper);
+      });
+
+      if (imgsPrevTest.length > 0) {
+        contPrintTest.classList.remove('hidden');
+      } else {
+        contPrintTest.classList.add('hidden');
+      }
     }
+  } catch (e) {
+    console.warn("No se pudo preparar galería de Test para impresión:", e);
+  }
 
-    if (urlTest) {
-        const imgT = document.getElementById('imgTestPrint');
-        if (imgT) {
-            imgT.src = urlTest;
-            imgT.closest('.print-only')?.classList.remove('hidden');
-        }
-    }
+  // 4. Asegurar logos / imágenes visibles
+  const logos = document.querySelectorAll('img[src^="data:image"], .print-area img');
+  logos.forEach(img => {
+    img.style.display   = 'block';
+    img.style.visibility= 'visible';
+    img.style.opacity   = '1';
+  });
 
-    // 2. Asegurar que logos y fotos estén visibles
-    const logos = document.querySelectorAll('img[src^="data:image"], .print-area img');
-    logos.forEach(img => {
-        img.style.display = 'block';
-        img.style.visibility = 'visible';
-        img.style.opacity = '1';
-    });
-
-    // 3. Pequeño retraso de "secado de tinta" (aumentado a 500ms para que las fotos carguen)
-    setTimeout(() => {
-        window.print();
-        console.log("✅ Impresión enviada con anexos fotográficos.");
-    }, 500);
+  // 5. Disparar impresión con un pequeño delay
+  setTimeout(() => {
+    window.print();
+    console.log("✅ Impresión enviada con anexos múltiples.");
+  }, 500);
 };
   // =========================================================
   // [NUEVO] RECETA SIN COSTOS (IMPRESIÓN SIMPLE)
@@ -5920,6 +6003,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
