@@ -835,11 +835,6 @@
     </table>
   </div>
 
-  <div id="printTestCont" class="hidden print:block mt-4 text-center">
-    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Anexo: Resultado Test Rápido</p>
-    <img id="imgTestPrint" src="" class="max-w-full h-auto max-h-[400px] mx-auto rounded-lg border border-slate-300">
-  </div>
-
   <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
     <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
   </div>
@@ -3103,7 +3098,7 @@ window.buscarPorCedula = async () => {
         alert("⚠️ Ingrese una cédula, Albert.");
         return;
     }
-    
+
     const ci = input.value.trim();
     contenedor.innerHTML = `
         <div class="text-center py-8">
@@ -3113,13 +3108,12 @@ window.buscarPorCedula = async () => {
 
     try {
         const consultasRef = collection(db, "consultas");
-        
-        // Calibración del Radar: Buscamos por CI
-        // Nota: Si te da error de 'index', haz clic en el link azul que saldrá en la consola (F12)
+
+        // Buscamos por CI (sin orderBy para evitar índice obligatorio)
         const q = query(
             consultasRef,
-            where("cedula", "==", ci),
-            orderBy("fecha", "desc")
+            where("cedula", "==", ci)
+            // , orderBy("fecha", "desc")
         );
 
         const snap = await getDocs(q);
@@ -3145,31 +3139,50 @@ window.buscarPorCedula = async () => {
                     <b class="text-slate-800">$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b>
                 </div>`).join('') : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
-            // --- 📸 FOTOS CON BASE64 O URL ---
+            // --- 📸 FOTOS MULTIFOTO: HISTORIA + TEST ---
             let fotosHtml = "";
-            if (d.urlExamen || d.urlFotoTest) {
+
+            // Si hay arrays nuevos, los usamos; si no, caemos a las URLs antiguas
+            const listaHistoria = Array.isArray(d.fotosHistoria)
+                ? d.fotosHistoria
+                : (d.urlExamen ? [d.urlExamen] : []);
+            const listaTest = Array.isArray(d.fotosTest)
+                ? d.fotosTest
+                : (d.urlFotoTest ? [d.urlFotoTest] : []);
+
+            if (listaHistoria.length > 0 || listaTest.length > 0) {
                 fotosHtml = `
-                    <p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">Anexos Visuales:</p>
+                    <p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">
+                        Anexos Visuales:
+                    </p>
                     <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
-                
-                if (d.urlExamen) {
+
+                // HISTORIA
+                listaHistoria.forEach((src, idx) => {
                     fotosHtml += `
                         <div class="flex-shrink-0">
-                            <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Historia / Eco</p>
-                            <img src="${d.urlExamen}" 
+                            <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
+                                Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}
+                            </p>
+                            <img src="${src}" 
                                  class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
-                                 onclick="window.verFotoGrande('${d.urlExamen}')">
+                                 onclick="window.verFotoGrande('${src}')">
                         </div>`;
-                }
-                if (d.urlFotoTest) {
+                });
+
+                // TEST
+                listaTest.forEach((src, idx) => {
                     fotosHtml += `
                         <div class="flex-shrink-0">
-                            <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Test</p>
-                            <img src="${d.urlFotoTest}" 
+                            <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
+                                Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
+                            </p>
+                            <img src="${src}" 
                                  class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" 
-                                 onclick="window.verFotoGrande('${d.urlFotoTest}')">
+                                 onclick="window.verFotoGrande('${src}')">
                         </div>`;
-                }
+                });
+
                 fotosHtml += `</div>`;
             }
 
@@ -3192,7 +3205,7 @@ window.buscarPorCedula = async () => {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
-                                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento}</p>
+                                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">Insumos:</p>
@@ -3211,8 +3224,8 @@ window.buscarPorCedula = async () => {
 
     } catch (e) {
         console.error("❌ Fallo en la consulta:", e);
-        if (e.message.includes("index")) {
-            alert("⚠️ ERROR DE ÍNDICE: Firestore necesita un índice para ordenar por fecha. Mira la consola (F12) y haz clic en el enlace de Google para activarlo.");
+        if (e.message && e.message.includes("index")) {
+            alert("⚠️ ERROR DE ÍNDICE: Firestore necesita un índice para ordenar por fecha. Si usas orderBy, mira la consola (F12) y haz clic en el enlace de Google para activarlo.");
         } else {
             alert("Error en búsqueda: " + e.message);
         }
@@ -6091,6 +6104,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
