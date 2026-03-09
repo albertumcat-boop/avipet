@@ -2698,11 +2698,8 @@ window.previsualizarFotoHistoria = (event) => {
   const reader = new FileReader();
   reader.onload = (e) => {
     const dataUrl = e.target.result;
-
-    // Crear tarjeta de imagen
     const wrapper = document.createElement('div');
     wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
-
     wrapper.innerHTML = `
       <img src="${dataUrl}" class="w-full h-full object-cover">
       <button type="button"
@@ -2711,16 +2708,13 @@ window.previsualizarFotoHistoria = (event) => {
         ✕
       </button>
     `;
-
     galeria.appendChild(wrapper);
 
-    // Mostrar contenedor y actualizar hidden (última imagen)
     if (cont) cont.classList.remove('hidden');
     if (inputOculto) inputOculto.value = dataUrl;
   };
   reader.readAsDataURL(file);
 };
-
 // Sincroniza pUrlExamen con la última imagen de la galería (por compatibilidad)
 window.sincronizarHiddenHistoria = () => {
   const galeria = document.getElementById('previewHistoriaGallery');
@@ -2797,18 +2791,6 @@ window.quitarFotoTest = () => {
   if (galeria) galeria.innerHTML = "";
   if (cont) cont.classList.add('hidden');
   if (inputOculto) inputOculto.value = "";
-};
-/**
- * Limpia la foto del test y oculta la vista previa
- */
-window.quitarFotoTest = () => {
-    const input = document.getElementById('inputFotoTest');
-    const previewContainer = document.getElementById('previewTestContainer');
-    const imgPreview = document.getElementById('imgTestPreview');
-
-    if (input) input.value = "";
-    if (imgPreview) imgPreview.src = "";
-    if (previewContainer) previewContainer.classList.add('hidden');
 };
   // Función para abrir el visor de imágenes
 window.verFotoGrande = (src) => {
@@ -6070,6 +6052,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
