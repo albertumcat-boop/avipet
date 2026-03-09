@@ -2744,54 +2744,6 @@ window.activarModoMovil = (cedula) => {
     });
 };
 
-// --- 3. GENERAR QR (HISTORIA O TEST) ---
-window.generarEnlaceMovil = (tipo = 'historia') => {
-    const inputCI = document.getElementById('hCI');
-    const cedula = inputCI ? inputCI.value.trim() : "";
-    
-    if(!cedula) return alert("⚠️ Escribe la Cédula en la historia clínica primero.");
-
-    // Ajustamos según sea historia o test
-    const qrDivID = tipo === 'test' ? "qrcodeTest" : "qrcode";
-    const containerID = tipo === 'test' ? "qrContainerTest" : "qrContainer";
-    
-    const qrDiv = document.getElementById(qrDivID);
-    if (qrDiv) qrDiv.innerHTML = "";
-
-    const urlVinculo = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&type=${tipo}`;
-
-    new QRCode(document.getElementById(qrDivID), {
-        text: urlVinculo,
-        width: 128,
-        height: 128
-    });
-
-    document.getElementById(containerID)?.classList.remove('hidden');
-
-    // Radar de Firebase (Escuchando la llegada de la foto)
-    const docRef = doc(db, "transferencias_fotos", `${cedula}_${tipo}`);
-    onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (tipo === 'test') {
-                // Si es test, la ponemos en la previsualización de test
-                const imgTest = document.getElementById('imgTestPreview');
-                if(imgTest) imgTest.src = data.url;
-                document.getElementById('previewTestContainer')?.classList.remove('hidden');
-                const imgPrint = document.getElementById('imgTestPrint');
-                if(imgPrint) imgPrint.src = data.url;
-            } else {
-                // Si es historia, al input oculto y previsualización normal
-                const inputUrl = document.getElementById('pUrlExamen');
-                if (inputUrl) inputUrl.value = data.url;
-                const imgHist = document.getElementById('imgHistoriaPreview');
-                if(imgHist) imgHist.src = data.url;
-                document.getElementById('previewHistoriaContainer')?.classList.remove('hidden');
-            }
-            alert(`✅ ¡Foto de ${tipo.toUpperCase()} recibida!`);
-        }
-    });
-};
   // =========================================================
   // [06] ELIMINAR SERVICIO COMPLETO
   // =========================================================
@@ -5968,6 +5920,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
