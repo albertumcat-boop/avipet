@@ -540,7 +540,12 @@
     </label>
     
     <div class="flex flex-wrap items-center gap-4">
-        <input type="file" id="inputFotoHistoria" accept="image/*" class="hidden" onchange="window.previsualizarFotoHistoria(event)">
+       <input type="file"
+       id="inputFotoHistoria"
+       accept="image/*"
+       multiple
+       class="hidden"
+       onchange="window.previsualizarFotoHistoria(event)">
         
         <button type="button" onclick="document.getElementById('inputFotoHistoria').click()" 
                 class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-black transition-all flex items-center gap-2">
@@ -773,7 +778,12 @@
     </label>
     
     <div class="flex flex-wrap items-center gap-4">
-      <input type="file" id="inputFotoTest" accept="image/*" class="hidden" onchange="window.previsualizarFotoTest(event)">
+     <input type="file"
+       id="inputFotoTest"
+       accept="image/*"
+       multiple
+       class="hidden"
+       onchange="window.previsualizarFotoTest(event)">
       
       <button type="button" onclick="document.getElementById('inputFotoTest').click()" 
               class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-black transition-all flex items-center gap-2">
@@ -1995,18 +2005,19 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
     });
 
     // 5) ACTUALIZAR HIDDEN Y MOSTRAR/OCULTAR
-    if (urlsExistentes.size > 0) {
-      const arrUrls = Array.from(urlsExistentes);
-      const ultima = ultimaUrlNueva || arrUrls[arrUrls.length - 1];
+   if (urlsExistentes.size > 0) {
+  const arrUrls = Array.from(urlsExistentes);
+  const ultima = ultimaUrlNueva || arrUrls[arrUrls.length - 1];
+  if (hidden) hidden.value = ultima;  // guardamos la última para compatibilidad
 
-      if (hidden) hidden.value = ultima;  // guardamos la última para compatibilidad
-      cont.classList.remove('hidden');
-      document.getElementById(containerID)?.classList.add('hidden');
-    } else {
-      // Si no hay fotos en esta sesión, ocultamos contenedor
-      cont.classList.add('hidden');
-    }
-  });
+  // Mostramos las fotos recibidas…
+  cont.classList.remove('hidden');
+
+  // ...PERO YA NO OCULTAMOS EL QR AUTOMÁTICAMENTE
+  // document.getElementById(containerID)?.classList.add('hidden');
+} else {
+  cont.classList.add('hidden');
+}
 
   if (tipo === 'historia') window._unsubHist = unsub;
   if (tipo === 'test')     window._unsubTest = unsub;
@@ -2837,32 +2848,44 @@ window.agregarMedicamento = (nombreMed) => {
  
 // --- 1. PREVISUALIZACIÓN HISTORIA (MULTIFOTO) ---
 window.previsualizarFotoHistoria = (event) => {
-  const file = event.target.files[0];
+  const files = event.target.files;
   const galeria = document.getElementById('previewHistoriaGallery');
   const cont = document.getElementById('previewHistoriaContainer');
   const inputOculto = document.getElementById('pUrlExamen');
-  if (!file || !galeria) return;
+  if (!files || !files.length || !galeria) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    const wrapper = document.createElement('div');
-    wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
-    wrapper.innerHTML = `
-      <img src="${dataUrl}" class="w-full h-full object-cover">
-      <button type="button"
-              class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
-              onclick="this.parentElement.remove(); window.sincronizarHiddenHistoria()">
-        ✕
-      </button>
-    `;
-    galeria.appendChild(wrapper);
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const original = e.target.result;
+      // COMPRIME LA IMAGEN ANTES DE METERLA A LA GALERÍA
+      const dataUrl = await comprimirImagen(original); 
 
-    if (cont) cont.classList.remove('hidden');
-    if (inputOculto) inputOculto.value = dataUrl;
-  };
-  reader.readAsDataURL(file);
+      const wrapper = document.createElement('div');
+      wrapper.className =
+        "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
+      wrapper.innerHTML = `
+        <img src="${dataUrl}" class="w-full h-full object-cover">
+        <button type="button"
+                class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
+                onclick="this.parentElement.remove(); window.sincronizarHiddenHistoria()">
+          ✕
+        </button>
+      `;
+      galeria.appendChild(wrapper);
+
+      // mostrador
+      if (cont) cont.classList.remove('hidden');
+      // guardamos la última (ya comprimida) en el hidden para compatibilidad
+      if (inputOculto) inputOculto.value = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Limpia el input para que puedas elegir el mismo archivo otra vez si quieres
+  event.target.value = "";
 };
+
 // Sincroniza pUrlExamen con la última imagen de la galería (por compatibilidad)
 window.sincronizarHiddenHistoria = () => {
   const galeria = document.getElementById('previewHistoriaGallery');
@@ -2888,34 +2911,39 @@ window.quitarFotoHistoria = () => {
 };
   // --- 2. PREVISUALIZACIÓN TEST (MULTIFOTO) ---
 window.previsualizarFotoTest = (event) => {
-  const file = event.target.files[0];
+  const files = event.target.files;
   const galeria = document.getElementById('previewTestGallery');
   const cont = document.getElementById('previewTestContainer');
   const inputOculto = document.getElementById('pUrlTest');
-  if (!file || !galeria) return;
+  if (!files || !files.length || !galeria) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const original = e.target.result;
+      // COMPRIME LA IMAGEN ANTES DE METERLA A LA GALERÍA
+      const dataUrl = await comprimirImagen(original); 
 
-    const wrapper = document.createElement('div');
-    wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
+      const wrapper = document.createElement('div');
+      wrapper.className =
+        "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
+      wrapper.innerHTML = `
+        <img src="${dataUrl}" class="w-full h-full object.cover">
+        <button type="button"
+                class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
+                onclick="this.parentElement.remove(); window.sincronizarHiddenTest()">
+          ✕
+        </button>
+      `;
+      galeria.appendChild(wrapper);
 
-    wrapper.innerHTML = `
-      <img src="${dataUrl}" class="w-full h-full object-cover">
-      <button type="button"
-              class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
-              onclick="this.parentElement.remove(); window.sincronizarHiddenTest()">
-        ✕
-      </button>
-    `;
+      if (cont) cont.classList.remove('hidden');
+      if (inputOculto) inputOculto.value = dataUrl; // ya comprimida
+    };
+    reader.readAsDataURL(file);
+  });
 
-    galeria.appendChild(wrapper);
-
-    if (cont) cont.classList.remove('hidden');
-    if (inputOculto) inputOculto.value = dataUrl;
-  };
-  reader.readAsDataURL(file);
+  event.target.value = "";
 };
 
 window.sincronizarHiddenTest = () => {
@@ -3358,38 +3386,33 @@ window.buscarPorCedula = async () => {
             }
 
             div.innerHTML = `
-                <details class="group">
-                    <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
-                        <div class="flex gap-4 items-center">
-                            <div class="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
-                                <span class="block text-[8px] font-bold uppercase">Fecha</span>
-                                <span class="text-xs font-black">${d.fechaSimple || 'S/F'}</span>
-                            </div>
-                            <div>
-                                <h3 class="font-black text-slate-800 uppercase italic leading-tight">${d.paciente}</h3>
-                                <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
-                            </div>
-                        </div>
-                        <div class="text-blue-500 flex items-center.group-open:rotate-180 transition-transform font-bold">▼</div>
-                    </summary>
-                    <div class="p-4 bg-slate-50 border-t border-slate-100">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-[10px] font-bold text-blue-600.border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
-                                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold text-emerald-600.border-b mb-1 uppercase">Insumos:</p>
-                                <div class="space-y-1">${insHtml}</div>
-                            </div>
-                        </div>
-                        ${fotosHtml}
-                        <div class="mt-4 pt-3 border-t.border-slate-200 flex justify-between items-center">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Consulta</span>
-                            <span class="text-xl font-black text-blue-900">$${(d.montoVenta || 0).toFixed(2)}</span>
-                        </div>
-                    </div>
-                </details>`;
+  <details class="group">
+    <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
+      ... (lo que ya tienes)
+    </summary>
+    <div class="p-4 bg-slate-50 border-t border-slate-100">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ... (bloques de tratamiento e insumos)
+      </div>
+      ${fotosHtml}
+      <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
+        <div class="flex flex-col gap-1">
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Total Consulta
+          </span>
+          <span class="text-xl font-black text-blue-900">
+            $${(d.montoVenta || 0).toFixed(2)}
+          </span>
+        </div>
+        <!-- BOTÓN NUEVO -->
+        <button type="button"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700"
+                onclick='window.imprimirConsultaBuscador(${JSON.stringify(d)})'>
+          🖨 Imprimir
+        </button>
+      </div>
+    </div>
+  </details>`;
             contenedor.appendChild(div);
         });
 
@@ -3401,6 +3424,155 @@ window.buscarPorCedula = async () => {
             alert("Error en búsqueda: " + e.message);
         }
     }
+};
+  window.imprimirConsultaBuscador = (consulta) => {
+  // Abre una ventana nueva
+  const win = window.open("", "_blank", "width=900,height=700");
+  if (!win) return;
+
+  const {
+    paciente,
+    propietario,
+    cedula,
+    especie,
+    raza,
+    edad,
+    sexo,
+    peso,
+    color,
+    telefono,
+    direccion,
+    doctor,
+    fechaSimple,
+    tratamiento = "",
+    listaDetalladaInsumos = [],
+    fotosHistoria = [],
+    fotosTest = []
+  } = consulta;
+
+  // Construir HTML de fotos
+  let bloqueFotos = "";
+  if (Array.isArray(fotosHistoria) && fotosHistoria.length) {
+    bloqueFotos += `
+      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
+        Anexos: Exámenes / Documentos
+      </h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${fotosHistoria.map(src => `
+          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
+            <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
+          </div>
+        `).join("")}
+      </div>`;
+  }
+  if (Array.isArray(fotosTest) && fotosTest.length) {
+    bloqueFotos += `
+      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
+        Anexos: Resultados Test Rápido
+      </h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${fotosTest.map(src => `
+          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
+            <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
+          </div>
+        `).join("")}
+      </div>`;
+  }
+
+  // Construir HTML de insumos
+  let bloqueInsumos = "";
+  if (Array.isArray(listaDetalladaInsumos) && listaDetalladaInsumos.length) {
+    bloqueInsumos = `
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:10px;">
+        <thead>
+          <tr style="background:#e5e7eb;">
+            <th style="text-align:left;padding:4px;border:1px solid #cbd5e1;">Insumo</th>
+            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Cant.</th>
+            <th style="text-align.center;padding:4px;border:1px solid #cbd5e1;">Costo aprox.</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${listaDetalladaInsumos.map(i => `
+            <tr>
+              <td style="padding:4px;border:1px solid #e5e7eb;">${i.nombre || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${i.cant || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">
+                $${(i.costo || i.precio || 0).toFixed(2)}
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  win.document.write(`
+    <html>
+      <head>
+        <title>Historia Clínica - ${paciente || ""}</title>
+        <style>
+          @page { size: letter; margin: 1.2cm 0.8cm 0.8cm 0.8cm; }
+          body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color:#0f172a;
+            font-size:12px;
+            padding:16px;
+          }
+          h1 { font-size:18px;margin:0;color:#1d4ed8; }
+          h2 { font-size:13px;margin:2px 0 0;color:#64748b; }
+          pre {
+            white-space:pre-wrap;
+            font-size:12px;
+            line-height:1.6;
+            margin:0;
+          }
+          .bloque {
+            border:1px solid #e2e8f0;
+            border-radius:10px;
+            padding:12px;
+            margin-top:10px;
+            background:#f9fafb;
+          }
+        </style>
+      </head>
+      <body>
+        <div style="border-bottom:2px solid #3b82f6;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;">
+          <div>
+            <h1>AVIPET - Historia Clínica</h1>
+            <h2>Paciente: <b>${(paciente || "").toUpperCase()}</b></h2>
+            <h2>Propietario: ${propietario || ""} · CI: ${cedula || ""}</h2>
+          </div>
+          <div style="text-align:right;font-size:10px;color:#6b7280;">
+            <div>${fechaSimple || ""}</div>
+            <div>${doctor ? "Dr(a). " + doctor : ""}</div>
+          </div>
+        </div>
+
+        <div class="bloque">
+          <b>Ficha del Paciente</b><br>
+          Especie: ${especie || ""} · Raza: ${raza || ""} · Edad: ${edad || ""} · Sexo: ${sexo || ""} · Peso: ${peso || ""} · Color: ${color || ""}<br>
+          Teléfono: ${telefono || ""} · Dirección: ${direccion || ""}
+        </div>
+
+        <div class="bloque">
+          <b>Diagnóstico / Tratamiento</b>
+          <pre>${tratamiento}</pre>
+        </div>
+
+        ${bloqueInsumos ? `<div class="bloque"><b>Insumos utilizados</b>${bloqueInsumos}</div>` : ""}
+
+        ${bloqueFotos ? `<div class="bloque"><b>Anexos</b>${bloqueFotos}</div>` : ""}
+
+      </body>
+    </html>
+  `);
+
+  win.document.close();
+  win.onload = () => {
+    setTimeout(() => {
+      win.focus();
+      win.print();
+    }, 400);
+  };
 };
   // =========================================================
   // [10] AUTOCOMPLETAR POR CÉDULA (MODO OFFLINE RESISTENTE)
@@ -6275,6 +6447,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
