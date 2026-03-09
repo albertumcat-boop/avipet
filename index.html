@@ -1782,9 +1782,7 @@ window.guardarFirebase = async (imp) => {
         }
     }
 };
-  // ==========================================
-  // LÓGICA PC: GENERAR QR (EXPUESTA AL WINDOW)
-  // ==========================================
+  // GENERAR QR (HISTORIA O TEST) Y ESCUCHAR MULTIFOTO
 window.generarEnlaceMovil = (tipo = 'historia') => {
   const cedula = document.getElementById('hCI')?.value.trim();
   if (!cedula) return alert("⚠️ Escribe la Cédula primero.");
@@ -1801,7 +1799,7 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
   new QRCode(qrDiv, { text: urlVinculo, width: 128, height: 128 });
   document.getElementById(containerID)?.classList.remove('hidden');
 
-  // ==== ESCUCHA EN TIEMPO REAL (multi-foto) ====
+  // ---- MULTIFOTO: escuchar todos los docs de esta CI + tipo ----
   const fotosRef = collection(db, "transferencias_fotos");
   const q = query(
     fotosRef,
@@ -1810,22 +1808,26 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
     orderBy("fecha", "asc")
   );
 
-  // Por si abres varias veces el QR, conviene guardar el unsub en window
-  if (tipo === 'test' && window._unsubTest)   window._unsubTest();
-  if (tipo === 'historia' && window._unsubHist) window._unsubHist();
+  // Si ya había un listener anterior, lo apagamos
+  if (tipo === 'historia' && window._unsubHist) {
+    window._unsubHist();
+  }
+  if (tipo === 'test' && window._unsubTest) {
+    window._unsubTest();
+  }
 
   const unsub = onSnapshot(q, (snap) => {
-    const galleryId   = tipo === 'test' ? 'previewTestGallery'     : 'previewHistoriaGallery';
-    const containerId = tipo === 'test' ? 'previewTestContainer'   : 'previewHistoriaContainer';
-    const hiddenInput = tipo === 'test' ? 'pUrlTest'               : 'pUrlExamen';
+    const galeriaId   = tipo === 'test' ? 'previewTestGallery'      : 'previewHistoriaGallery';
+    const contId      = tipo === 'test' ? 'previewTestContainer'    : 'previewHistoriaContainer';
+    const hiddenId    = tipo === 'test' ? 'pUrlTest'                : 'pUrlExamen';
 
-    const gal = document.getElementById(galleryId);
-    const cont = document.getElementById(containerId);
-    const inputOculto = document.getElementById(hiddenInput);
-    if (!gal || !cont) return;
+    const galeria = document.getElementById(galeriaId);
+    const cont    = document.getElementById(contId);
+    const hidden  = document.getElementById(hiddenId);
 
-    // Limpiamos y volvemos a dibujar TODAS las fotos
-    gal.innerHTML = "";
+    if (!galeria || !cont) return;
+
+    galeria.innerHTML = "";
     let ultimaUrl = "";
 
     snap.forEach(docSnap => {
@@ -1833,25 +1835,33 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
       if (!d.url) return;
       ultimaUrl = d.url;
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "relative w-20 h-20 border border-slate-300 rounded-lg overflow-hidden";
+      const wrapper = document.createElement('div');
+      wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
 
       wrapper.innerHTML = `
         <img src="${d.url}" class="w-full h-full object-cover">
+        <button type="button"
+                class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
+                onclick="this.parentElement.remove(); ${tipo === 'test' ? 'window.sincronizarHiddenTest()' : 'window.sincronizarHiddenHistoria()'}">
+          ✕
+        </button>
       `;
 
-      gal.appendChild(wrapper);
+      galeria.appendChild(wrapper);
     });
 
     if (ultimaUrl) {
-      if (inputOculto) inputOculto.value = ultimaUrl;  // guarda la última por compatibilidad
+      if (hidden) hidden.value = ultimaUrl;  // guardamos la última para compatibilidad
       cont.classList.remove('hidden');
       document.getElementById(containerID)?.classList.add('hidden');
+    } else {
+      // Si no hay fotos, ocultamos contenedor
+      cont.classList.add('hidden');
     }
   });
 
-  if (tipo === 'test')   window._unsubTest = unsub;
   if (tipo === 'historia') window._unsubHist = unsub;
+  if (tipo === 'test')     window._unsubTest = unsub;
 };
   // ==========================================
   // INTERFAZ MÓVIL (EXPUESTA AL WINDOW)
@@ -1893,8 +1903,10 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
   const status = document.getElementById('statusMovil');
   const file = input.files[0];
   if (!file) return;
+
   if (status) status.innerText = "⏳ Procesando foto...";
 
+  // Convierte archivo → Base64
   const leerComoBase64 = (archivo) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1908,18 +1920,18 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
     const base64Original   = await leerComoBase64(file);
     const base64Comprimida = await comprimirImagen(base64Original);
 
-    // AHORA: doc nuevo cada vez
+    // MULTIFOTO: en lugar de setDoc(ci_tipo) usamos addDoc con auto-ID
     await addDoc(collection(db, "transferencias_fotos"), {
-      ci:   ci,
-      tipo: tipo,          // 'historia' o 'test'
-      url:  base64Comprimida,
+      ci:    ci,
+      tipo:  tipo,   // 'historia' o 'test'
+      url:   base64Comprimida,
       fecha: serverTimestamp()
     });
 
     if (status) {
       status.innerHTML = "<b class='text-emerald-400'>✅ ENVIADO EXITOSAMENTE</b>";
     }
-    console.log("🚀 Foto enviada a la PC via Firestore (multi-foto)");
+    console.log("🚀 Foto enviada a la PC via Firestore (MULTIFOTO)");
   } catch (e) {
     console.error("Error al subir desde móvil:", e);
     if (status) status.innerText = "❌ Error: " + e.message;
@@ -2675,29 +2687,54 @@ window.agregarMedicamento = (nombreMed) => {
     document.getElementById('selectorMedicamentos').value = "";
   };
  
-// --- 1. PREVISUALIZACIÓN HISTORIA (Corregido para PRUEBA INDEX) ---
+// --- 1. PREVISUALIZACIÓN HISTORIA (MULTIFOTO) ---
 window.previsualizarFotoHistoria = (event) => {
-    const file = event.target.files[0];
-    const imgPreview = document.getElementById('imgHistoriaPreview');
-    const previewCont = document.getElementById('previewHistoriaContainer');
-    const imgPrint = document.getElementById('imgHistoriaPrint');
+  const file = event.target.files[0];
+  const galeria = document.getElementById('previewHistoriaGallery');
+  const cont = document.getElementById('previewHistoriaContainer');
+  const inputOculto = document.getElementById('pUrlExamen');
+  if (!file || !galeria) return;
 
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const dataUrl = e.target.result;
-            if (imgPreview) imgPreview.src = dataUrl;
-            if (previewCont) previewCont.classList.remove('hidden');
-            
-            if (imgPrint) {
-                imgPrint.src = dataUrl;
-                // CAMBIO CLAVE: De 'printExamenCont' a 'printHistoriaCont'
-                const contImpresion = document.getElementById('printHistoriaCont');
-                if (contImpresion) contImpresion.classList.remove('hidden');
-            }
-        };
-        reader.readAsDataURL(file);
-    }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+
+    // Crear tarjeta de imagen
+    const wrapper = document.createElement('div');
+    wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
+
+    wrapper.innerHTML = `
+      <img src="${dataUrl}" class="w-full h-full object-cover">
+      <button type="button"
+              class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
+              onclick="this.parentElement.remove(); window.sincronizarHiddenHistoria()">
+        ✕
+      </button>
+    `;
+
+    galeria.appendChild(wrapper);
+
+    // Mostrar contenedor y actualizar hidden (última imagen)
+    if (cont) cont.classList.remove('hidden');
+    if (inputOculto) inputOculto.value = dataUrl;
+  };
+  reader.readAsDataURL(file);
+};
+
+// Sincroniza pUrlExamen con la última imagen de la galería (por compatibilidad)
+window.sincronizarHiddenHistoria = () => {
+  const galeria = document.getElementById('previewHistoriaGallery');
+  const inputOculto = document.getElementById('pUrlExamen');
+  if (!galeria || !inputOculto) return;
+
+  const imgs = galeria.querySelectorAll('img');
+  if (imgs.length === 0) {
+    inputOculto.value = "";
+    document.getElementById('previewHistoriaContainer')?.classList.add('hidden');
+  } else {
+    // última
+    inputOculto.value = imgs[imgs.length - 1].src;
+  }
 };
 // --- 3. LIMPIEZA DE FOTOS ---
 window.quitarFotoHistoria = () => {
@@ -2707,29 +2744,59 @@ window.quitarFotoHistoria = () => {
     if (imgPrint) imgPrint.src = "";
     document.getElementById('printExamenCont')?.classList.add('hidden');
 };
-  // --- 2. PREVISUALIZACIÓN TEST (Corregido para PRUEBA INDEX) ---
+  // --- 2. PREVISUALIZACIÓN TEST (MULTIFOTO) ---
 window.previsualizarFotoTest = (event) => {
-    const file = event.target.files[0];
-    const imgPreview = document.getElementById('imgTestPreview');
-    const previewCont = document.getElementById('previewTestContainer');
-    const imgPrint = document.getElementById('imgTestPrint');
+  const file = event.target.files[0];
+  const galeria = document.getElementById('previewTestGallery');
+  const cont = document.getElementById('previewTestContainer');
+  const inputOculto = document.getElementById('pUrlTest');
+  if (!file || !galeria) return;
 
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const dataUrl = e.target.result;
-            if (imgPreview) imgPreview.src = dataUrl;
-            if (previewCont) previewCont.classList.remove('hidden');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
 
-            if (imgPrint) {
-                imgPrint.src = dataUrl;
-                // CAMBIO CLAVE: De 'printTestCont' a 'printTestCont' (Verificar que coincida con el HTML)
-                const contTest = document.getElementById('printTestCont');
-                if (contTest) contTest.classList.remove('hidden');
-            }
-        };
-        reader.readAsDataURL(file);
-    }
+    const wrapper = document.createElement('div');
+    wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
+
+    wrapper.innerHTML = `
+      <img src="${dataUrl}" class="w-full h-full object-cover">
+      <button type="button"
+              class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
+              onclick="this.parentElement.remove(); window.sincronizarHiddenTest()">
+        ✕
+      </button>
+    `;
+
+    galeria.appendChild(wrapper);
+
+    if (cont) cont.classList.remove('hidden');
+    if (inputOculto) inputOculto.value = dataUrl;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.sincronizarHiddenTest = () => {
+  const galeria = document.getElementById('previewTestGallery');
+  const inputOculto = document.getElementById('pUrlTest');
+  if (!galeria || !inputOculto) return;
+
+  const imgs = galeria.querySelectorAll('img');
+  if (imgs.length === 0) {
+    inputOculto.value = "";
+    document.getElementById('previewTestContainer')?.classList.add('hidden');
+  } else {
+    inputOculto.value = imgs[imgs.length - 1].src;
+  }
+};
+
+window.quitarFotoTest = () => {
+  const galeria = document.getElementById('previewTestGallery');
+  const cont = document.getElementById('previewTestContainer');
+  const inputOculto = document.getElementById('pUrlTest');
+  if (galeria) galeria.innerHTML = "";
+  if (cont) cont.classList.add('hidden');
+  if (inputOculto) inputOculto.value = "";
 };
 /**
  * Limpia la foto del test y oculta la vista previa
@@ -6003,6 +6070,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
