@@ -3447,30 +3447,6 @@ window.buscarPorCedula = async () => {
   }
 };
 
-Tienes bien el imprimirConsultaDesdeElemento, pero te falta definir window.imprimirConsultaBuscador en tu <script type="module">. Por eso sale:
-
-window.imprimirConsultaBuscador is not a function
-
-Te dejo una versión completa de imprimirConsultaBuscador ya preparada para:
-
-Imprimir ficha del paciente.
-Imprimir tratamiento.
-Imprimir insumos.
-Imprimir tests rápidos (testsRealizados) con resultado POS/NEG/INVÁLIDO.
-Imprimir fotos de historia y de test (usando fotosHistoria/fotosTest o urlExamen/urlFotoTest de respaldo).
-Paso 1: Pega esta función en tu script
-En tu <script type="module">, justo debajo de:
-
-window.imprimirConsultaDesdeElemento = (btn) => {
-  const consulta = btn && btn._consulta;
-  if (!consulta) {
-    alert("No se encontraron los datos de esta consulta para imprimir.");
-    return;
-  }
-  window.imprimirConsultaBuscador(consulta);
-};
-pega esto tal cual:
-
 window.imprimirConsultaBuscador = (consulta) => {
   // Abre una ventana nueva
   const win = window.open("", "_blank", "width=900,height=700");
@@ -6541,6 +6517,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
