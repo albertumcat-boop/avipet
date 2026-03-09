@@ -1770,7 +1770,9 @@ window.guardarFirebase = async (imp) => {
         await addDoc(collection(db, "consultas"), data);
 
         alert("✅ ¡Consulta guardada con éxito!");
-        if (imp) window.print();
+        // ⬇⬇⬇ ÚNICO CAMBIO AQUÍ ⬇⬇⬇
+        if (imp) window.imprimirDocumento();
+        // ⬆⬆⬆ EN LUGAR DE window.print() ⬆⬆⬆
 
     } catch (e) {
         console.error("Error en el sistema:", e);
@@ -1801,13 +1803,11 @@ window.generarEnlaceMovil = (tipo = 'historia') => {
 
   // ---- MULTIFOTO: escuchar todos los docs de esta CI + tipo ----
   const fotosRef = collection(db, "transferencias_fotos");
-  const q = query(
-    fotosRef,
-    where("ci", "==", cedula),
-    where("tipo", "==", tipo),
-    orderBy("fecha", "asc")
-  );
-
+ const q = query(
+  fotosRef,
+  where("ci", "==", cedula),
+  where("tipo", "==", tipo)
+);
   // Si ya había un listener anterior, lo apagamos
   if (tipo === 'historia' && window._unsubHist) {
     window._unsubHist();
@@ -6052,6 +6052,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
