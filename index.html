@@ -3624,7 +3624,14 @@ window.buscarPorCedula = async () => {
     }
   }
 };
-
+// Puente entre el botón del buscador y la función real de impresión
+window.imprimirConsultaDesdeElemento = (btn) => {
+  if (!btn || !btn._consulta) {
+    alert("No se encontró la consulta a imprimir.");
+    return;
+  }
+  window.imprimirConsultaBuscador(btn._consulta);
+};
 window.imprimirConsultaBuscador = (consulta) => {
   // Abre una ventana nueva
   const win = window.open("", "_blank", "width=900,height=700");
@@ -6712,6 +6719,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
