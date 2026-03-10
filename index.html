@@ -6821,11 +6821,89 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
     return null;
   }
 };
- 
+ // =========================
+// PELUQUERÍA: AUTORRELLENO POR CÉDULA
+// =========================
+window.buscarClientePeluqueria = async (cedulaInput) => {
+    // 1) Normalizar la cédula: quitar puntos y espacios
+    const valor = (cedulaInput || "").replace(/\./g, '').trim();
+    if (!valor || valor.length < 5) return;
+
+    try {
+        // 2) Buscar en HISTORIAS CLÍNICAS (consultas) por cédula
+        const qPac = query(
+            collection(db, "consultas"),
+            where("cedula", "==", valor),
+            limit(1)
+        );
+        const snapPac = await getDocs(qPac);
+
+        let datosEncontrados = null;
+
+        if (!snapPac.empty) {
+            datosEncontrados = snapPac.docs[0].data();
+        } else {
+            // 3) (Opcional) Intentar con fidelidad_peluqueria por CI sola
+            const idFidPorCi = valor.toLowerCase();
+            const fidRef2 = doc(db, "fidelidad_peluqueria", idFidPorCi);
+            const fidSnap2 = await getDoc(fidRef2);
+            if (fidSnap2.exists()) datosEncontrados = fidSnap2.data();
+        }
+
+        // 4) Rellenar campos si se encontró algo
+        if (datosEncontrados) {
+            const llenar = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val || "";
+            };
+
+            llenar('pDuenio',   datosEncontrados.propietario || datosEncontrados.duenio);
+            llenar('pNombre',   datosEncontrados.paciente);
+            llenar('pRaza',     datosEncontrados.raza);
+            llenar('pTelefono', datosEncontrados.telefono);
+            llenar('pDireccion',datosEncontrados.direccion);
+
+            // 5) Intentar leer fidelidad para pintar sellos
+            try {
+                const idFidelidad = `${valor}-${datosEncontrados.paciente || ''}`
+                                      .toLowerCase()
+                                      .replace(/\s+/g, '');
+                const fidRef = doc(db, "fidelidad_peluqueria", idFidelidad);
+                const fidSnap = await getDoc(fidRef);
+                let visitasTotales = 0;
+                if (fidSnap.exists()) {
+                    const dFid = fidSnap.data();
+                    visitasTotales = dFid.contador || 0;
+                }
+                if (typeof window.renderizarSellos === "function") {
+                    window.renderizarSellos(visitasTotales);
+                }
+            } catch (errFid) {
+                console.warn("No se pudo leer fidelidad_peluqueria:", errFid);
+                if (typeof window.renderizarSellos === "function") {
+                    window.renderizarSellos(0);
+                }
+            }
+
+        } else {
+            // Cliente sin historial: limpiar y poner 0 sellos
+            ['pDuenio','pNombre','pRaza','pTelefono','pDireccion'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+            });
+            if (typeof window.renderizarSellos === "function") {
+                window.renderizarSellos(0);
+            }
+        }
+    } catch (error) {
+        console.error("❌ Error en búsqueda de cliente peluquería:", error);
+    }
+};
 </script>
 
 </body>
 </html>
+
 
 
 
