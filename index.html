@@ -1295,13 +1295,22 @@
             <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
               Tipo de Trabajo
             </label>
-            <select id="pTipoServicio"
-                    onchange="window.recalcularTotalPelu()"
-                    class="w-full border-b border-slate-300 p-1 font-black text-xs uppercase bg-transparent outline-none text-slate-700">
-              <option value="completo">Baño y Corte Completo</option>
-              <option value="solo_banio">Solo Baño</option>
-              <option value="solo_unas">Corte de Uñas ($5)</option>
-            </select>
+           <select id="pTipoServicio"
+        onchange="window.recalcularTotalPelu()"
+        class="w-full border-b border-slate-300 p-1 font-black text-xs uppercase bg-transparent outline-none text-slate-700">
+  <option value="completo">Baño y Corte Completo</option>
+  <option value="solo_unas">Corte de Uñas</option>
+</select>
+            <div class="mt-2">
+  <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+    Precio Corte de Uñas ($)
+  </label>
+  <input type="number" id="pPrecioUnas"
+         value="5"
+         step="0.5"
+         oninput="window.recalcularTotalPelu()"
+         class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 outline-none bg-transparent">
+</div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -1539,6 +1548,10 @@
     <p class="text-[9px] text-blue-100 text-center font-medium mt-1">
       Completa 10 servicios y gana uno GRATIS.
     </p>
+    <div id="tarjetaFechasMini"
+     class="mt-2 bg-white/10 rounded-xl p-2 text-[8px] text-blue-100 text-left max-h-24 overflow-y-auto">
+  <!-- Fechas de visitas se llenan por JS -->
+</div>
   </div>
 </div>
                 <!-- ========== INVENTARIO ========== -->
@@ -1776,11 +1789,11 @@
 </section>
 <script type="module">
   // 1. IMPORTACIONES CORREGIDAS Y COMPLETAS
-  import { db, storage } from './firebase-config.js';
   import {
-    collection, addDoc, query, where, getDocs, serverTimestamp,
-    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, orderBy, limit
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  collection, addDoc, query, where, getDocs, serverTimestamp,
+  doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, orderBy, limit,
+  arrayUnion
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   // 2. CONFIGURACIÓN DE PERSISTENCIA (MODO OFFLINE)
   import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -3508,6 +3521,34 @@ window.buscarPorCedula = async () => {
             </div>`).join('')
         : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
+      // TESTS RÁPIDOS (nuevo bloque)
+      let testsHtml = "";
+      if (Array.isArray(d.testsRealizados) && d.testsRealizados.length > 0) {
+        testsHtml = `
+          <div class="mt-4">
+            <p class="text-[10px] font-bold text-violet-600 border-b mb-1 uppercase">
+              Tests Rápidos:
+            </p>
+            <div class="space-y-1 text-[11px]">
+              ${d.testsRealizados.map(t => `
+                <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
+                  <div>
+                    <p class="font-bold text-slate-800 uppercase">${t.nombre || ''}</p>
+                    <p class="text-[10px] text-slate-500 italic">${t.nota || ''}</p>
+                  </div>
+                  <span class="text-[10px] font-black ${
+                    (t.resultado || "").includes("POSI") ? "text-red-600" :
+                    (t.resultado || "").includes("NEGA") ? "text-emerald-600" :
+                    "text-slate-600"
+                  }">
+                    ${t.resultado || ''}
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          </div>`;
+      }
+
       // FOTOS
       let fotosHtml = "";
 
@@ -3546,7 +3587,7 @@ window.buscarPorCedula = async () => {
                 Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
               </p>
               <img src="${src}"
-                   class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm.cursor-pointer hover:scale-105 transition-transform"
+                   class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
                    onclick="window.verFotoGrande('${src}')">
             </div>`;
         });
@@ -3559,7 +3600,7 @@ window.buscarPorCedula = async () => {
         <details class="group">
           <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
             <div class="flex gap-4 items-center">
-              <div class="bg-blue-100 text-blue-700 p-2.rounded-lg text-center min-w-[50px]">
+              <div class="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
                 <span class="block text-[8px] font-bold uppercase">Fecha</span>
                 <span class="text-xs font-black">${d.fechaSimple || 'S/F'}</span>
               </div>
@@ -3568,7 +3609,7 @@ window.buscarPorCedula = async () => {
                 <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
               </div>
             </div>
-            <div class="text-blue-500 flex.items-center group-open:rotate-180 transition-transform font-bold">▼</div>
+            <div class="text-blue-500 flex items-center group-open:rotate-180 transition-transform font-bold">▼</div>
           </summary>
           <div class="p-4 bg-slate-50 border-t border-slate-100">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3587,8 +3628,9 @@ window.buscarPorCedula = async () => {
                 <div class="space-y-1">${insHtml}</div>
               </div>
             </div>
+            ${testsHtml}
             ${fotosHtml}
-            <div class="mt-4 pt-3 border-t border-slate-200 flex.justify-between items-center gap-2">
+            <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
               <div class="flex flex-col gap-1">
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Total Consulta
@@ -3598,7 +3640,7 @@ window.buscarPorCedula = async () => {
                 </span>
               </div>
               <button type="button"
-                      class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase.shadow hover:bg-blue-700"
+                      class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700"
                       onclick="window.imprimirConsultaDesdeElemento(this)">
                 🖨 Imprimir
               </button>
@@ -5513,14 +5555,19 @@ window.guardarPeluqueriaPro = async () => {
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
 
         // --- ACTUALIZAR CONTADOR DE FIDELIDAD ---
-        await setDoc(fidelidadRef, { 
-            contador: nuevaVisita, 
-            ultimaVisita: serverTimestamp(),
-            ultimaFechaSimple: fechaSimple,
-            paciente: mascota,
-            propietario: duenio,
-            cedula: cedula
-        }, { merge: true });
+       await setDoc(fidelidadRef, { 
+    contador: nuevaVisita, 
+    ultimaVisita: serverTimestamp(),
+    ultimaFechaSimple: fechaSimple,
+    paciente: mascota,
+    propietario: duenio,
+    cedula: cedula,
+    historialVisitas: arrayUnion({
+        visita: nuevaVisita,
+        fecha: fechaSimple,
+        creadoEn: serverTimestamp()
+    })
+}, { merge: true });
 
         // --- AVISO DE ÉXITO ---
         await Swal.fire({
@@ -5796,53 +5843,61 @@ window.recalcularTotalPelu = () => {
     const tipo = document.getElementById('pTipoServicio')?.value || 'completo';
     const base = parseFloat(document.getElementById('pTamano')?.value) || 0;
     const ajuste = parseFloat(document.getElementById('pAjuste')?.value) || 0;
-    
+
     const extraSolo = document.getElementById('pExtraSolo')?.checked;
     const ayu1Activo = document.getElementById('pAyudante1')?.checked;
     const ayuExtraActivo = document.getElementById('pAyudanteExtra')?.checked;
     const montoAyu1 = parseFloat(document.getElementById('pMontoAyu1')?.value) || 0;
 
-    // 1. Calculamos el cobro al cliente
-    let cobroCliente = (tipo === 'solo_unas') ? 5 : (base + ajuste);
-    
+    // Nuevo: precio configurable de corte de uñas
+    const precioUnas = parseFloat(document.getElementById('pPrecioUnas')?.value) || 0;
+
+    // 1. Calcular precio según tipo
+    let cobroCliente = 0;
+
+    if (tipo === 'solo_unas') {
+        // Corte de uñas usa precio configurable
+        cobroCliente = precioUnas;
+    } else {
+        // "completo": mismo precio base por tamaño + ajuste
+        cobroCliente = base + ajuste;
+    }
+
     let pagoPeluquera = 0;
     let pagoAyu1 = 0;
     let pagoAyuExtra = 0;
 
-    // CASO A: El ayudante hizo todo solo (Regla especial)
+    // CASO A: El ayudante extra hizo todo solo
     if (extraSolo) {
         pagoPeluquera = 0;
         pagoAyu1 = 0;
         pagoAyuExtra = (cobroCliente * 0.40);
-        // Bloqueamos los otros checks para evitar errores de cálculo
-        if(document.getElementById('pAyudante1')) document.getElementById('pAyudante1').disabled = true;
-    } 
-    
-    // CASO B: Entra el AYUDANTE EXTRA (Tu Regla del Tridente)
+        const ayu1Chk = document.getElementById('pAyudante1');
+        if (ayu1Chk) ayu1Chk.disabled = true;
+    }
+
+    // CASO B: Regla del Tridente (entra ayudante extra)
     else if (ayuExtraActivo) {
-        // Se deshabilita el principal por regla de negocio
-        if(document.getElementById('pAyudante1')) {
-            document.getElementById('pAyudante1').checked = false;
-            document.getElementById('pAyudante1').disabled = true;
+        const ayu1Chk = document.getElementById('pAyudante1');
+        if (ayu1Chk) {
+            ayu1Chk.checked = false;
+            ayu1Chk.disabled = true;
         }
-        
-        // LA REGLA: Total dividido entre 3 (Peluquera, Extra, Avipet)
         const parteIgual = cobroCliente / 3;
-        
         pagoPeluquera = parteIgual;
         pagoAyuExtra = parteIgual;
-        pagoAyu1 = 0; 
-    } 
-    
-    // CASO C: Servicio Normal (Peluquera + Ayudante Principal opcional)
+        pagoAyu1 = 0;
+    }
+
+    // CASO C: Servicio normal (sin extra)
     else {
-        if(document.getElementById('pAyudante1')) document.getElementById('pAyudante1').disabled = false;
-        
-        // Pago estándar Peluquera (40%)
+        const ayu1Chk = document.getElementById('pAyudante1');
+        if (ayu1Chk) ayu1Chk.disabled = false;
+
+        // 40% peluquera / 60% Avipet
         pagoPeluquera = (cobroCliente * 0.40);
-        
+
         if (ayu1Activo) {
-            // Se descuenta el monto del principal de la parte de la peluquera
             pagoPeluquera -= montoAyu1;
             pagoAyu1 = montoAyu1;
         }
@@ -5850,9 +5905,9 @@ window.recalcularTotalPelu = () => {
     }
 
     // --- RENDERIZADO EN PANTALLA ---
-    const setT = (id, val) => { 
+    const setT = (id, val) => {
         const el = document.getElementById(id);
-        if(el) el.innerText = `$ ${val.toFixed(2)}`; 
+        if (el) el.innerText = `$ ${val.toFixed(2)}`;
     };
 
     setT('pTotalCobro', cobroCliente);
@@ -5860,74 +5915,9 @@ window.recalcularTotalPelu = () => {
     setT('pResAyudante1', pagoAyu1);
     setT('pResAyudanteExtra', pagoAyuExtra);
 
-    // Suma oculta para reportes
     const sumaAyudantes = pagoAyu1 + pagoAyuExtra;
     const elSuma = document.getElementById('pResAyudantes');
-    if(elSuma) elSuma.innerText = `$ ${sumaAyudantes.toFixed(2)}`;
-};
-
-window.buscarClientePeluqueria = async (cedulaInput) => {
-    const valor = cedulaInput.replace(/\./g, '').trim();
-    if (!valor || valor.length < 5) return;
-
-    try {
-        const qPac = query(collection(db, "consultas"), where("cedula", "==", valor), limit(1));
-        const snapPac = await getDocs(qPac);
-        let datosEncontrados = null;
-
-        if (!snapPac.empty) {
-            datosEncontrados = snapPac.docs[0].data();
-        } else {
-            const fidRef = doc(db, "fidelidad_peluqueria", valor.toLowerCase()); 
-            const fidSnap = await getDoc(fidRef);
-            if (fidSnap.exists()) datosEncontrados = fidSnap.data();
-        }
-
-        if (datosEncontrados) {
-            // Llenado SEGURO: Si el ID no existe en el HTML, no da error
-            const llenar = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.value = val || "";
-            };
-
-            llenar('pDuenio', datosEncontrados.propietario || datosEncontrados.nombreDuenio);
-            llenar('pNombre', datosEncontrados.paciente);
-            llenar('pRaza', datosEncontrados.raza);
-            llenar('pTelefono', datosEncontrados.telefono);
-            llenar('pDireccion', datosEncontrados.direccion); // Ya no romperá el código
-
-            // 2. BUSCAR HISTORIAL EN PELUQUERÍA
-            const qServ = query(
-                collection(db, "servicios_estetica"), 
-                where("cedulaCliente", "==", valor),
-                orderBy("fecha", "asc") 
-            );
-            const snapServ = await getDocs(qServ);
-            
-            // Contamos cuántos servicios de peluquería tiene este cliente
-            let totalVisitas = 0;
-            snapServ.forEach(doc => {
-                totalVisitas++;
-            });
-
-            // Usamos la función oficial de sellos (si existe)
-            if (typeof window.renderizarSellos === "function") {
-                window.renderizarSellos(totalVisitas);
-            } else {
-                console.warn("renderizarSellos no está definida en window.");
-            }
-
-        } else {
-            // Cliente sin historial: 0 visitas en la tarjeta
-            if (typeof window.renderizarSellos === "function") {
-                window.renderizarSellos(0);
-            } else {
-                console.warn("renderizarSellos no está definida en window.");
-            }
-        }
-    } catch (error) {
-        console.error("❌ Error en búsqueda:", error);
-    }
+    if (elSuma) elSuma.innerText = `$ ${sumaAyudantes.toFixed(2)}`;
 };
 // =========================================================
 // [PELUQUERÍA] CIERRE Y LIQUIDACIÓN SEMANAL - FINAL
@@ -6089,13 +6079,81 @@ window.exportarExcelPeluqueria = async () => {
 // =========================================================
 // [PELUQUERÍA] TARJETA DIGITAL Y WHATSAPP
 // =========================================================
-window.descargarTarjetaPelu = function() {
+window.descargarTarjetaPelu = async function() {
     const tarjeta = document.getElementById('tarjetaFidelidad');
-    const nombreMascota = document.getElementById('pNombre').value || "tu mascota";
-    const telefono = document.getElementById('pTelefono').value.replace(/\D/g, '');
+    const nombreMascota = document.getElementById('pNombre')?.value || "Mascota VIP";
+    const cedula = document.getElementById('pCedula')?.value || "";
+    const telefono = document.getElementById('pTelefono')?.value.replace(/\D/g, '');
 
     if (!tarjeta) return;
 
+    // 1) Cargar historial de visitas de Firestore (para fechas)
+    let historial = [];
+    try {
+        if (cedula && nombreMascota) {
+            const idFidelidad = `${cedula}-${nombreMascota}`.toLowerCase().replace(/\s+/g, '');
+            const fidRef = doc(db, "fidelidad_peluqueria", idFidelidad);
+            const fidSnap = await getDoc(fidRef);
+            if (fidSnap.exists()) {
+                const d = fidSnap.data();
+                if (Array.isArray(d.historialVisitas)) {
+                    historial = d.historialVisitas
+                        .slice()
+                        .sort((a, b) => (a.visita || 0) - (b.visita || 0))
+                        .slice(-10);
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar historial de visitas para la tarjeta:", e);
+    }
+
+    // 2) Rellenar los textos de la tarjeta mini
+    const tfNombre = document.getElementById('tf_nombreMascota');
+    const tfCedula = document.getElementById('tf_cedula');
+    const contFechas = document.getElementById('tarjetaFechasMini');
+    const contSellosMini = document.getElementById('tarjetaSellosMini');
+
+    if (tfNombre) tfNombre.textContent = nombreMascota;
+    if (tfCedula) tfCedula.textContent = cedula ? `CI: ${cedula}` : "";
+
+    // Sellos mini (como indicador de progreso)
+    if (contSellosMini) {
+        contSellosMini.innerHTML = "";
+        const totalVisitas = historial.length > 0 ? historial[historial.length - 1].visita : 0;
+        let visitasVisuales = totalVisitas % 10;
+        if (visitasVisuales === 0 && totalVisitas > 0) visitasVisuales = 10;
+
+        for (let i = 1; i <= 10; i++) {
+            const estaActivo = i <= visitasVisuales;
+            const div = document.createElement("div");
+            div.className = "h-6 w-6 flex items-center justify-center";
+            div.innerHTML = `
+              <div class="relative w-full h-full flex items-center justify-center">
+                <svg class="w-5 h-5 ${estaActivo ? 'text-blue-100' : 'text-blue-900/30'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
+                </svg>
+              </div>
+            `;
+            contSellosMini.appendChild(div);
+        }
+    }
+
+    // Fechas de visitas (timeline mini)
+    if (contFechas) {
+        if (historial.length === 0) {
+            contFechas.innerHTML = `<p class="italic opacity-70">Aún no hay historial registrado.</p>`;
+        } else {
+            contFechas.innerHTML = historial.map(v => `
+                <div class="flex justify-between items-center mb-1">
+                    <span>#${v.visita || "?"}</span>
+                    <span>${v.fecha || ""}</span>
+                </div>
+            `).join("");
+        }
+    }
+
+    // 3) Mostrar loading mientras generamos la imagen
     Swal.fire({
         title: '🐾 GENERANDO TARJETA...',
         text: `Preparando premio para ${nombreMascota}`,
@@ -6103,38 +6161,67 @@ window.descargarTarjetaPelu = function() {
         didOpen: () => { Swal.showLoading(); }
     });
 
+    // 4) Mostrar tarjeta, esperar un poco y hacer captura
     tarjeta.classList.remove('hidden');
 
     setTimeout(() => {
         html2canvas(tarjeta, {
-            scale: 2, // 2 es suficiente para WhatsApp y más rápido
+            scale: 2,
             useCORS: true,
-            backgroundColor: "#ffffff",
+            backgroundColor: "#0f172a",
             logging: false
         }).then(canvas => {
             tarjeta.classList.add('hidden');
-            const imgData = canvas.toDataURL("image/png");
-            
-            // Abrir imagen para guardar
-            const nuevaVentana = window.open("");
-            if (nuevaVentana) {
-                nuevaVentana.document.body.innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:#f0f2f5; font-family:sans-serif; margin:0; text-align:center;">
-                        <p style="padding:15px; font-weight:900; color:#1d4ed8; font-size:18px;">¡TARJETA LISTA!</p>
-                        <img src="${imgData}" style="max-width:85%; border-radius:20px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 5px solid white;">
-                        <p style="padding:20px; font-size:14px; color:#475569; font-weight:600;">1. Mantén presionada la imagen para GUARDAR<br>2. Envíala por el WhatsApp que se abrió</p>
-                        <button onclick="window.close()" style="background:#1d4ed8; color:white; border:none; border-radius:12px; padding:15px 40px; font-weight:bold; cursor:pointer;">LISTO</button>
-                    </div>`;
-            }
 
-            // Disparar WhatsApp
-            if (telefono) {
-                const mensaje = encodeURIComponent(`🐾 ¡Hola! Soy de *Avipet*. Aquí te envío la Tarjeta Digital de Fidelidad de *${nombreMascota}*. \n\n¡Acumula visitas y gana la #10 GRATIS! 🎁`);
-                setTimeout(() => {
-                    window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
-                }, 800);
-            }
+            const imgData = canvas.toDataURL("image/png");
+
+            // DESCARGA AUTOMÁTICA COMO PNG
+            const enlace = document.createElement("a");
+            enlace.href = imgData;
+            enlace.download = `Tarjeta_${nombreMascota.replace(/\s+/g, '_')}.png`;
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+
             Swal.close();
+
+            // 5) Preguntar si desea abrir WhatsApp con mensaje automático
+            if (telefono) {
+                Swal.fire({
+                    icon: 'question',
+                    title: '¿Enviar por WhatsApp?',
+                    text: 'La tarjeta ya se descargó. ¿Quieres abrir WhatsApp con el mensaje listo?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, abrir WhatsApp',
+                    cancelButtonText: 'No, solo descargar'
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        const mensaje = encodeURIComponent(
+`🐾 ¡Hola! Soy de *Avipet*.
+
+Te compartimos la *Tarjeta Digital de Fidelidad* de *${nombreMascota}*.
+
+✅ Cada visita suma un sello.
+🎁 Al completar 10 servicios, la próxima visita es *GRATIS*.
+
+Guarda la imagen adjunta como recuerdo y para mostrarla en tu próxima visita. ¡Gracias por confiar en Avipet!`
+                        );
+                        window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Tarjeta descargada',
+                    text: 'Se guardó la imagen en tu dispositivo.',
+                    timer: 2000
+                });
+            }
+        }).catch(e => {
+            tarjeta.classList.add('hidden');
+            Swal.close();
+            console.error("Error generando tarjeta:", e);
+            Swal.fire('Error', 'No se pudo generar la tarjeta.', 'error');
         });
     }, 600);
 };
@@ -6719,6 +6806,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
