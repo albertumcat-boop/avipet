@@ -1042,115 +1042,129 @@
 </section>
   <!-- ========== CONFIG PRECIOS ========== -->
 <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
-      <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">
-        🛠 Panel de Control Maestro
-      </h2>
-      <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">
-        Gestión de Tarifas, Comisiones y Costos de Materiales
-      </p>
+  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
+    <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic">
+      🛠 Panel de Control Maestro
+    </h2>
 
-      <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
-        <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ"
-                class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
-          💉 Servicios y Ganancias
-        </button>
-        <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns"
-                class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
-          📦 Costo de Insumos
-        </button>
+    <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">
+      Gestión de Tarifas, Comisiones y Costos de Materiales
+    </p>
+
+    <!-- Tabs Servicios / Insumos -->
+    <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+      <button onclick="window.cambiarSubTabConfig('servicios')" id="btnTabServ"
+              class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-white text-blue-600 shadow-sm">
+        💉 Servicios y Ganancias
+      </button>
+      <button onclick="window.cambiarSubTabConfig('insumos')" id="btnTabIns"
+              class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition text-slate-500 hover:bg-white/50">
+        📦 Costo de Insumos
+      </button>
+    </div>
+
+    <!-- Botón agregar insumo -->
+    <div id="areaBtnAgregarInsumo" class="hidden mb-4 flex justify-end">
+      <button onclick="window.agregarInsumoNuevoManual && window.agregarInsumoNuevoManual()"
+              class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md font-black text-[10px] uppercase transition-all">
+        ➕ Agregar Insumo Nuevo
+      </button>
+    </div>
+
+    <!-- Banner de sincronización -->
+    <div id="bannerSincro"
+         class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
+      <div class="flex-1">
+        <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
+        <p class="text-[9px] text-orange-400">
+          Usa esto solo para subir los datos del código a la nube por primera vez.
+        </p>
       </div>
+      <button onclick="window.inicializarBaseDeDatosCompleta()"
+              class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
+        🚀 Sincronizar Todo
+      </button>
+    </div>
 
-      <div id="areaBtnAgregarInsumo" class="hidden mb-4 flex justify-end">
-        <button onclick="window.agregarInsumoNuevoManual && window.agregarInsumoNuevoManual()"
-                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md font-black text-[10px] uppercase transition-all">
-          ➕ Agregar Insumo Nuevo
-        </button>
-      </div>
+    <!-- Config Pagos Peluquería -->
+    <div class="mt-8 border-t-2 border-purple-200 pt-6 mb-8">
+      <h3 class="font-black text-purple-900 uppercase text-xs mb-4 flex items-center gap-2">
+        ✂️ Configuración de Pagos Peluquería
+      </h3>
 
-      <div id="bannerSincro"
-           class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
-        <div class="flex-1">
-          <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
-          <p class="text-[9px] text-orange-400">
-            Usa esto solo para subir los datos del código a la nube por primera vez.
-          </p>
+      <div class="bg-purple-50/50 p-6 rounded-xl border border-purple-100 shadow-inner">
+        <div class="space-y-4">
+          <h4 class="text-[9px] font-black text-purple-600 uppercase tracking-widest text-center">
+            💰 Tabla de Comisiones para Ayudantes
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Ayudante principal -->
+            <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
+                Ayudante Principal ($)
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-indigo-400 font-bold text-xs">$</span>
+                <input type="number" id="confPagoAyu1" value="2"
+                       class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-indigo-700 outline-none focus:border-purple-400 transition-all">
+              </div>
+              <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto fijo por servicio estándar.</p>
+            </div>
+
+            <!-- Ayudante extra (ARREGLADO: sin <<div) -->
+            <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
+                Ayudante Extra ($)
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-amber-400 font-bold text-xs">$</span>
+                <input type="number" id="confPagoAyuExtra" value="0"
+                       class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-amber-700 outline-none focus:border-purple-400 transition-all"
+                       oninput="window.recalcularTotalPelu()">
+              </div>
+              <p class="text-[8px] text-slate-400 mt-2 italic font-medium">
+                Monto que se aplicará si se activa la Regla del Tridente.
+              </p>
+            </div>
+          </div>
         </div>
-        <button onclick="window.inicializarBaseDeDatosCompleta()"
-                class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-transform">
-          🚀 Sincronizar Todo
-        </button>
       </div>
-
-      <div class="mt-8 border-t-2 border-purple-200 pt-6 mb-8">
-          <h3 class="font-black text-purple-900 uppercase text-xs mb-4 flex items-center gap-2">
-              ✂️ Configuración de Pagos Peluquería
-          </h3>
-          
-          <div class="bg-purple-50/50 p-6 rounded-xl border border-purple-100 shadow-inner">
-              <div class="space-y-4">
-                  <h4 class="text-[9px] font-black text-purple-600 uppercase tracking-widest text-center">
-                      💰 Tabla de Comisiones para Ayudantes
-                  </h4>
-                  
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
-                          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
-                              Ayudante Principal ($)
-                          </label>
-                          <div class="relative">
-                              <span class="absolute left-3 top-2 text-indigo-400 font-bold text-xs">$</span>
-                              <input type="number" id="confPagoAyu1" value="2" 
-                                     class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-indigo-700 outline-none focus:border-purple-400 transition-all">
-                          </div>
-                          <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto fijo por servicio estándar.</p>
-                      </div>
-
-                      <<div class="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
-    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-2">
-        Ayudante Extra ($)
-    </label>
-    <div class="relative">
-        <span class="absolute left-3 top-2 text-amber-400 font-bold text-xs">$</span>
-        <input type="number" id="confPagoAyuExtra" value="0" 
-               class="w-full border-2 border-slate-100 pl-7 p-2 rounded-lg text-sm font-black text-amber-700 outline-none focus:border-purple-400 transition-all"
-               oninput="window.recalcularTotalPelu()">
     </div>
-    <p class="text-[8px] text-slate-400 mt-2 italic font-medium">Monto que se aplicará si se activa la Regla del Tridente.</p>
-</div>
 
-      <div id="contenedorTabServicios"
-           class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-        <table class="w-full text-left text-[12px]">
-          <thead>
-          <tr class="text-blue-900 font-black uppercase text-[10px]">
-            <th class="p-3">Servicio / Tratamiento</th>
-            <th class="p-3 w-28 text-center">Precio ($)</th>
-            <th class="p-3 w-28 text-center">Doc (%)</th>
-            <th class="p-3 w-24 text-center">Acción</th>
-          </tr>
-          </thead>
-          <tbody id="tablaMaestraServicios" class="bg-white divide-y"></tbody>
-        </table>
-      </div>
-
-      <div id="contenedorTabInsumos"
-           class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-        <table class="w-full text-left text-[12px]">
-          <thead>
-          <tr class="text-emerald-900 font-black uppercase text-[10px]">
-            <th class="p-3">Insumo / Material</th>
-            <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
-            <th class="p-3 w-24 text-center">Acción</th>
-          </tr>
-          </thead>
-          <tbody id="tablaMaestraInsumos" class="bg-white divide-y"></tbody>
-        </table>
-      </div>
-      
+    <!-- TABLA SERVICIOS -->
+    <div id="contenedorTabServicios"
+         class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+      <table class="w-full text-left text-[12px]">
+        <thead>
+        <tr class="text-blue-900 font-black uppercase text-[10px]">
+          <th class="p-3">Servicio / Tratamiento</th>
+          <th class="p-3 w-28 text-center">Precio ($)</th>
+          <th class="p-3 w-28 text-center">Doc (%)</th>
+          <th class="p-3 w-24 text-center">Acción</th>
+        </tr>
+        </thead>
+        <tbody id="tablaMaestraServicios" class="bg-white divide-y"></tbody>
+      </table>
     </div>
-  </section>
 
+    <!-- TABLA INSUMOS -->
+    <div id="contenedorTabInsumos"
+         class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
+      <table class="w-full text-left text-[12px]">
+        <thead>
+        <tr class="text-emerald-900 font-black uppercase text-[10px]">
+          <th class="p-3">Insumo / Material</th>
+          <th class="p-3 w-32 text-center">Costo Unitario ($)</th>
+          <th class="p-3 w-24 text-center">Acción</th>
+        </tr>
+        </thead>
+        <tbody id="tablaMaestraInsumos" class="bg-white divide-y"></tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
   <!-- ========== SALA DE ESPERA ========== -->
   <section id="sectionEspera" class="hidden p-4 animate-fadeIn">
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-3xl mx-auto">
@@ -1187,11 +1201,11 @@
 </section>
  
 <!-- ========== PELUQUERIA CANINA ========== -->
-<div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen.animate-fadeIn">
-  <div class="max-w-6xl mx-auto bg-white.rounded-xl shadow-sm border border-slate-300 overflow-hidden print-area">
+<div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen animate-fadeIn">
+  <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden print-area">
 
     <!-- ENCABEZADO -->
-    <div class="flex flex-wrap sm:flex-nowrap justify-between.items-start border-b-2 border-blue-600 p-4 mb-2">
+    <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 p-4 mb-2">
       <div class="flex items-center">
         <div class="relative w-48 flex flex-col items-center sm:items-start">
           <img src="avipet.png" alt="Logo Avipet" class="w-full h-20 object-contain">
@@ -1214,8 +1228,7 @@
       </div>
     </div>
 
-    <div class="p-6.grid grid-cols-1 lg:grid-cols-3 gap-6">
-
+    <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- COLUMNA 1: FICHA DEL PACIENTE -->
       <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
         <div class="flex items-center gap-2 mb-2">
@@ -1225,7 +1238,7 @@
           </h3>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 border.border-slate-200 p-4 rounded-xl bg-slate-50/30">
+        <div class="grid grid-cols-1 gap-3 border border-slate-200 p-4 rounded-xl bg-slate-50/30">
           <div>
             <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
               Cédula del Dueño
@@ -1259,14 +1272,14 @@
             </div>
           </div>
           <div>
-            <label class="block text-[9px] font-bold text-slate-400.uppercase mb-1">
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
               Raza / Dirección
             </label>
             <div class="flex gap-2">
               <input type="text" id="pRaza" placeholder="Raza"
                      class="w-1/2 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
               <input type="text" id="pDireccion" placeholder="Ubicación"
-                     class="w-1/2 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none.bg-transparent">
+                     class="w-1/2 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
             </div>
           </div>
         </div>
@@ -1276,7 +1289,7 @@
             📝 Notas de Salud / Conducta
           </h3>
           <textarea id="pCondicion" rows="3"
-                    class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 text-[11px].font-bold text-slate-600 focus:border-blue-600 outline-none.leading-tight"
+                    class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 text-[11px] font-bold text-slate-600 focus:border-blue-600 outline-none leading-tight"
                     placeholder="¿Es agresivo? ¿Verrugas? ¿Soplos?"></textarea>
         </div>
       </div>
@@ -1295,23 +1308,24 @@
             <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
               Tipo de Trabajo
             </label>
-           <select id="pTipoServicio"
-        onchange="window.recalcularTotalPelu()"
-        class="w-full border-b border-slate-300 p-1 font-black text-xs uppercase bg-transparent outline-none text-slate-700">
-  <option value="completo">Baño y Corte Completo</option>
-  <option value="solo_unas">Corte de Uñas</option>
-</select>
+            <select id="pTipoServicio"
+                    onchange="window.recalcularTotalPelu()"
+                    class="w-full border-b border-slate-300 p-1 font-black text-xs uppercase bg-transparent outline-none text-slate-700">
+              <option value="completo">Baño y Corte Completo</option>
+              <option value="solo_unas">Corte de Uñas</option>
+            </select>
             <div class="mt-2">
-  <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
-    Precio Corte de Uñas ($)
-  </label>
-  <input type="number" id="pPrecioUnas"
-         value="5"
-         step="0.5"
-         oninput="window.recalcularTotalPelu()"
-         class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 outline-none bg-transparent">
-</div>
+              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+                Precio Corte de Uñas ($)
+              </label>
+              <input type="number" id="pPrecioUnas"
+                     value="5"
+                     step="0.5"
+                     oninput="window.recalcularTotalPelu()"
+                     class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 outline-none bg-transparent">
+            </div>
           </div>
+
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
@@ -1355,8 +1369,8 @@
             👥 Comisiones de Apoyo
           </h4>
 
-          <div class="flex.items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
-            <label class="flex items-center.gap-2 cursor-pointer">
+          <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
+            <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" id="pExtraSolo"
                      onchange="window.recalcularTotalPelu()"
                      class="w-4 h-4 accent-blue-600">
@@ -1366,7 +1380,7 @@
             </label>
           </div>
 
-          <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border.border-slate-200">
+          <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" id="pAyudante1" checked
                      onchange="window.recalcularTotalPelu()"
@@ -1384,8 +1398,8 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border.border-slate-200">
-            <label class="flex.items-center gap-2 cursor-pointer">
+          <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
+            <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" id="pAyudanteExtra"
                      onchange="window.recalcularTotalPelu()"
                      class="w-4 h-4 accent-blue-600">
@@ -1407,7 +1421,7 @@
       <!-- COLUMNA 3: RESUMEN, FIDELIDAD Y BOTONES -->
       <div class="space-y-4 flex flex-col justify-between">
         <!-- RESUMEN MONTOS -->
-        <div class="bg-white p-6 rounded-3xl border-2.border-blue-600 shadow-sm relative overflow-hidden">
+        <div class="bg-white p-6 rounded-3xl border-2 border-blue-600 shadow-sm relative overflow-hidden">
           <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
             <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">
               Monto a Cobrar
@@ -1417,7 +1431,6 @@
               $ 0.00
             </span>
           </div>
-
           <div class="space-y-2 mt-4">
             <div class="flex justify-between items-center border-b border-slate-50 pb-1">
               <span class="text-[9px] font-bold uppercase text-slate-500 italic">
@@ -1438,7 +1451,7 @@
               </span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-[9px] font-bold.uppercase text-slate-400 italic">
+              <span class="text-[9px] font-bold uppercase text-slate-400 italic">
                 Extra:
               </span>
               <span id="pResAyudanteExtra"
@@ -1455,7 +1468,6 @@
           <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 italic">
             🐾 Tarjeta de Fidelidad
           </h4>
-
           <div class="flex items-center justify-between mb-2">
             <span id="contadorVisitas"
                   class="text-[10px] font-black text-blue-700 uppercase">
@@ -1466,12 +1478,10 @@
               ¡Esta es la visita #10 GRATIS!
             </span>
           </div>
-
           <div id="contenedorSellos"
                class="grid grid-cols-5 gap-1 bg-white rounded-xl border border-slate-200 p-2">
             <!-- renderizarSellos() pinta aquí -->
           </div>
-
           <div class="mt-3 flex flex-col sm:flex-row gap-2">
             <button type="button"
                     onclick="window.descargarTarjetaPelu()"
@@ -1480,7 +1490,7 @@
             </button>
             <button type="button"
                     onclick="window.mostrarQRTarjeta()"
-                    class="flex-1 bg-white border border-blue-300 text-[9px] font-black.uppercase text-blue-700 py-2 rounded-lg">
+                    class="flex-1 bg-white border border-blue-300 text-[9px] font-black uppercase text-blue-700 py-2 rounded-lg">
               🔳 Mostrar QR
             </button>
           </div>
@@ -1489,11 +1499,11 @@
         <!-- BOTONES PRINCIPALES -->
         <div class="space-y-3">
           <button onclick="window.guardarPeluqueriaPro()"
-                  class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black shadow-md.transition-all uppercase text-xs tracking-[2px] italic border-b-4 border-blue-800 active:border-b-0 active:translate-y-1">
+                  class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black shadow-md transition-all uppercase text-xs tracking-[2px] italic border-b-4 border-blue-800 active:border-b-0 active:translate-y-1">
             🚀 Registrar Servicio
           </button>
           <button onclick="window.showTab('historia')"
-                  class="w-full.py-2 font-bold text-slate-400 hover:text-red-500 transition-all uppercase text-[9px] tracking-[2px]">
+                  class="w-full py-2 font-bold text-slate-400 hover:text-red-500 transition-all uppercase text-[9px] tracking-[2px]">
             ❌ Cancelar Registro
           </button>
         </div>
@@ -1501,21 +1511,20 @@
     </div>
 
     <!-- BITÁCORA DE HOY -->
-    <div class="bg-slate-50 p-6.border-t border-slate-200">
+    <div class="bg-slate-50 p-6 border-t border-slate-200">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-sm font-black text-slate-800 uppercase italic flex items-center gap-2">
           <span class="w-1 h-5 bg-blue-600 rounded-full"></span>
           Bitácora de Salida (Hoy)
         </h3>
         <button onclick="window.cargarBitacoraHoy()"
-                class="text-[9px] bg-white border border-slate-300 px-3 py-1 rounded-lg.font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-100">
+                class="text-[9px] bg-white border border-slate-300 px-3 py-1 rounded-lg font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-100">
           🔄 Actualizar Listado
         </button>
       </div>
-
       <div id="bitacoraPeluqueriaHoy"
            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="col-span-full py-8 text-center border-2.border-dashed border-slate-300 rounded-2xl bg-white">
+        <div class="col-span-full py-8 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white">
           <p class="text-slate-400 text-[9px] font-black uppercase italic tracking-widest">
             Sin movimientos registrados hoy
           </p>
@@ -1549,9 +1558,9 @@
       Completa 10 servicios y gana uno GRATIS.
     </p>
     <div id="tarjetaFechasMini"
-     class="mt-2 bg-white/10 rounded-xl p-2 text-[8px] text-blue-100 text-left max-h-24 overflow-y-auto">
-  <!-- Fechas de visitas se llenan por JS -->
-</div>
+         class="mt-2 bg-white/10 rounded-xl p-2 text-[8px] text-blue-100 text-left max-h-24 overflow-y-auto">
+      <!-- Fechas de visitas se llenan por JS -->
+    </div>
   </div>
 </div>
                 <!-- ========== INVENTARIO ========== -->
@@ -1788,12 +1797,15 @@
   </div>
 </section>
 <script type="module">
-  // 1. IMPORTACIONES CORREGIDAS Y COMPLETAS
+  // 0. IMPORTAR TU CONFIG DE FIREBASE (db y storage)
+  import { db, storage } from './firebase-config.js';
+
+  // 1. IMPORTACIONES CORREGIDAS Y COMPLETAS DE FIRESTORE
   import {
-  collection, addDoc, query, where, getDocs, serverTimestamp,
-  doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, orderBy, limit,
-  arrayUnion
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    collection, addDoc, query, where, getDocs, serverTimestamp,
+    doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc, orderBy, limit,
+    arrayUnion
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   // 2. CONFIGURACIÓN DE PERSISTENCIA (MODO OFFLINE)
   import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -6806,6 +6818,7 @@ window.validarEmpleadoConPin = async (pinIngresado) => {
 
 </body>
 </html>
+
 
 
 
