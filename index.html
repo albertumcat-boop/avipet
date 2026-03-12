@@ -6455,16 +6455,30 @@ window.inventarioSelId = null; // id del producto seleccionado
 window.cargarInventario = async () => {
   const listaDiv = document.getElementById('inv_lista');
   if (!listaDiv) return;
+  
   listaDiv.innerHTML =
     '<p class="text-center text-[10px] text-slate-400 mt-4">Cargando inventario...</p>';
+    
   try {
     const snap = await getDocs(collection(db, "inventario"));
     const arr = [];
     snap.forEach(docSnap => {
       arr.push({ id: docSnap.id, ...docSnap.data() });
     });
+    
+    // 1. Guardamos en el caché
     window.inventarioCache = arr;
+    
+    // 2. Dibujamos la lista de productos
     window.renderListaInventario(arr);
+    
+    // --- ⚓ LA PIEZA QUE FALTABA AQUÍ ---
+    // 3. Llenamos el selector de proveedores de una vez
+    if (typeof window.actualizarSelectorProveedores === 'function') {
+        window.actualizarSelectorProveedores();
+    }
+    // ------------------------------------
+
   } catch (e) {
     console.error("Error cargando inventario:", e);
     listaDiv.innerHTML =
@@ -6578,44 +6592,41 @@ window.actualizarSelectorProveedores = () => {
   const select = document.getElementById('inv_filtro_proveedor');
   if (!select) return;
   
+  // Si no hay datos en el cache aún, no podemos llenar el select
   if (!window.inventarioCache || window.inventarioCache.length === 0) {
     select.innerHTML = '<option value="todos">Todos los Prov. (Cargando...)</option>';
     return;
   }
 
   // Extraemos proveedores únicos, limpiamos espacios y ordenamos
-  const proveedores = [...new Set(window.inventarioCache.map(p => p.proveedor?.trim()).filter(Boolean))].sort();
+  const proveedores = [...new Set(window.inventarioCache.map(p => {
+    // Si el campo se llama 'proveedor' o 'Proveedor', lo tomamos
+    const val = p.proveedor || p.Proveedor || "";
+    return val.trim();
+  }).filter(Boolean))].sort();
   
+  // Construimos el HTML
   let html = '<option value="todos">Todos los Prov.</option>';
   proveedores.forEach(prov => {
     html += `<option value="${prov}">${prov.toUpperCase()}</option>`;
   });
   
   select.innerHTML = html;
-  console.log("✅ Selector de proveedores actualizado:", proveedores);
+  console.log("⚓ Radar Avipet: Proveedores detectados:", proveedores);
 };
 
-// 2. FILTRO MAESTRO (Busca por Texto + Categoría + Proveedor)
 window.filtrarInventario = () => {
-  const txt = (document.getElementById('inv_buscar')?.value || "").toLowerCase();
-  const cat = document.getElementById('inv_filtro_categoria')?.value || "todos";
-  const prov = document.getElementById('inv_filtro_proveedor')?.value || "todos";
-  const base = window.inventarioCache || [];
+  const buscador = (document.getElementById('inv_buscar')?.value || "").toLowerCase();
+  const categoria = document.getElementById('inv_filtro_categoria')?.value || "todos";
+  const proveedor = document.getElementById('inv_filtro_proveedor')?.value || "todos";
 
-  const filtrados = base.filter(p => {
-    // Filtro por Categoría
-    const okCat = (cat === "todos") ? true : (p.categoria === cat);
-    
-    // Filtro por Proveedor
-    const okProv = (prov === "todos") ? true : (p.proveedor === prov);
+  const filtrados = window.inventarioCache.filter(p => {
+    const matchTxt = (p.nombre || "").toLowerCase().includes(buscador) || 
+                     (p.proveedor || "").toLowerCase().includes(buscador);
+    const matchCat = (categoria === "todos" || p.categoria === categoria);
+    const matchProv = (proveedor === "todos" || p.proveedor === proveedor);
 
-    // Filtro por Texto (Nombre, Código o Proveedor)
-    const nombre    = (p.nombre        || "").toLowerCase();
-    const codigo    = (p.codigoInterno || "").toLowerCase();
-    const proveedor = (p.proveedor     || "").toLowerCase();
-    const okTxt = !txt || nombre.includes(txt) || codigo.includes(txt) || proveedor.includes(txt);
-
-    return okCat && okProv && okTxt;
+    return matchTxt && matchCat && matchProv;
   });
 
   window.renderListaInventario(filtrados);
@@ -7161,6 +7172,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
