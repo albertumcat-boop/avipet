@@ -1574,7 +1574,7 @@
       </div>
       <div class="text-right">
         <button onclick="window.ajustarTasaDolar()" class="bg-slate-800 text-white text-[9px] px-3 py-1.5 rounded-lg font-black uppercase shadow-sm hover:bg-blue-700 transition-colors">
-          💵 Dólar Oficial: <span id="displayTasa">440.97</span>
+          💵 Dólar Oficial BCV: <span id="displayTasa">440.97</span>
         </button>
       </div>
     </div>
@@ -1600,7 +1600,7 @@
                   onchange="window.filtrarInventario()"
                   class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
             <option value="todos">Todos los Prov.</option>
-            </select>
+          </select>
         </div>
 
         <div class="w-full sm:w-40">
@@ -1636,7 +1636,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
       
       <div class="border-r border-slate-200 max-h-[70vh] overflow-y-auto p-2" id="inv_lista">
-        </div>
+      </div>
 
       <div class="p-3">
         <div id="inv_sin_seleccion" class="text-center text-[10px] text-slate-400 italic mt-10">
@@ -1645,59 +1645,59 @@
 
         <div id="inv_ficha" class="hidden space-y-2">
           
-        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-3 shadow-sm">
-  <div class="flex items-center justify-between mb-3">
-    <p class="text-[10px] font-black text-blue-700 uppercase tracking-wider flex items-center gap-2">
-      <span class="text-xs">📟</span> Calculadora de Precio Automática
-    </p>
-    <span class="bg-blue-200 text-blue-700 text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase">Contraste Radical</span>
-  </div>
+          <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-3 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-[10px] font-black text-blue-700 uppercase tracking-wider flex items-center gap-2">
+                <span class="text-xs">📟</span> Calculadora de Precio Automática
+              </p>
+              <span class="bg-blue-200 text-blue-700 text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase">Contraste Radical</span>
+            </div>
 
-  <div class="grid grid-cols-3 gap-3">
-    <div class="space-y-1">
-      <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Tasa Proveedor</label>
-      <div class="relative">
-        <span class="absolute left-0 top-1 text-[8px] text-blue-400 font-bold">Bs.</span>
-        <input id="inv_tasa_prov" 
-               type="number" 
-               step="0.01" 
-               value="440.97"
-               oninput="window.calcularPrecioFinalAvipet()"
-               class="w-full border-b-2 border-blue-200 pl-4 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent focus:border-blue-500 transition-colors">
-      </div>
-    </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="space-y-1">
+                <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Tasa Proveedor</label>
+                <div class="relative">
+                  <span class="absolute left-0 top-1 text-[8px] text-blue-400 font-bold">Bs.</span>
+                  <input id="inv_tasa_prov" 
+                         type="number" 
+                         step="0.01" 
+                         value="440.97"
+                         oninput="window.calcularPrecioFinalAvipet()"
+                         class="w-full border-b-2 border-blue-200 pl-4 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent focus:border-blue-500 transition-colors">
+                </div>
+              </div>
 
-    <div class="flex flex-col justify-end pb-1">
-      <label class="flex items-center gap-2 cursor-pointer group">
-        <input id="inv_tiene_iva" 
-               type="checkbox" 
-               onchange="window.calcularPrecioFinalAvipet()"
-               class="w-3.5 h-3.5 rounded border-blue-300 text-blue-600 focus:ring-blue-500 transition-all">
-        <span class="text-[8px] font-bold text-slate-500 uppercase group-hover:text-blue-600 transition-colors">Aplicar IVA</span>
-      </label>
-    </div>
+              <div class="flex flex-col justify-end pb-1">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input id="inv_tiene_iva" 
+                         type="checkbox" 
+                         onchange="window.calcularPrecioFinalAvipet()"
+                         class="w-3.5 h-3.5 rounded border-blue-300 text-blue-600 focus:ring-blue-500 transition-all">
+                  <span class="text-[8px] font-bold text-slate-500 uppercase group-hover:text-blue-600 transition-colors">Aplicar IVA</span>
+                </label>
+              </div>
 
-    <div class="space-y-1">
-      <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-tighter">% Ganancia</label>
-      <div class="relative">
-        <input id="inv_ganancia" 
-               type="number" 
-               value="30"
-               oninput="window.calcularPrecioFinalAvipet()"
-               class="w-full border-b-2 border-blue-200 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent focus:border-blue-500 transition-colors text-right pr-3">
-        <span class="absolute right-0 top-1 text-[8px] text-blue-400 font-bold">%</span>
-      </div>
-    </div>
-  </div>
+              <div class="space-y-1">
+                <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-tighter">% Ganancia</label>
+                <div class="relative">
+                  <input id="inv_ganancia" 
+                         type="number" 
+                         value="30"
+                         oninput="window.calcularPrecioFinalAvipet()"
+                         class="w-full border-b-2 border-blue-200 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent focus:border-blue-500 transition-colors text-right pr-3">
+                  <span class="absolute right-0 top-1 text-[8px] text-blue-400 font-bold">%</span>
+                </div>
+              </div>
+            </div>
 
-  <p class="text-[7px] text-blue-400 font-medium italic mt-3 uppercase text-center tracking-widest border-t border-blue-100 pt-2">
-    Sincronización en tiempo real activa
-  </p>
-</div>
+            <p class="text-[7px] text-blue-400 font-medium italic mt-3 uppercase text-center tracking-widest border-t border-blue-100 pt-2">
+              Sincronización en tiempo real activa
+            </p>
+          </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div class="col-span-2">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nombre</label>
+              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nombre del Producto</label>
               <input id="inv_nombre"
                      class="w-full border-b border-slate-300 p-1 text-xs font-black text-slate-800 uppercase outline-none bg-transparent">
             </div>
@@ -1722,7 +1722,7 @@
               <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Presentación</label>
               <input id="inv_presentacion"
                      class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent"
-                     placeholder="Ej: 20kg, caja x10">
+                     placeholder="Ej: 20kg">
             </div>
             <div>
               <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tipo de venta</label>
@@ -1735,8 +1735,7 @@
             <div>
               <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Proveedor</label>
               <input id="inv_proveedor"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent"
-                     placeholder="Nombre proveedor">
+                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
             </div>
           </div>
 
@@ -1755,26 +1754,29 @@
                      class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent"
                      oninput="window.actualizarEstadoInventarioVisual()">
             </div>
-            <div class="flex items-end">
+            <div class="flex items-end pb-1">
               <span id="inv_badge_estado"
-                    class="mt-1 text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-emerald-100 text-emerald-700">
+                    class="text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-emerald-100 text-emerald-700">
                 Normal
               </span>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-2 gap-2 bg-slate-100 p-2 rounded-lg">
             <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Precio compra $</label>
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Precio compra $</label>
               <input id="inv_precioCompra"
                      type="number" step="0.01"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
+                     oninput="window.calcularPrecioFinalAvipet()" 
+                     class="w-full border-b border-blue-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
             </div>
+
             <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Precio venta $</label>
+              <label class="block text-[9px] font-bold text-blue-600 uppercase mb-1">Precio venta $ (Final)</label>
               <input id="inv_precioVenta"
                      type="number" step="0.01"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-black text-blue-700 outline-none bg-transparent">
+                     class="w-full border-b border-blue-400 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent transition-all duration-300"
+                     readonly>
             </div>
           </div>
 
@@ -1834,7 +1836,7 @@
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Motivo</label>
                 <input id="inv_ajuste_motivo"
                        class="w-full border-b border-slate-300 p-1 text-[11px] font-medium text-slate-700 outline-none bg-transparent"
-                       placeholder="Compra, pérdida, etc.">
+                       placeholder="Compra, pérdida...">
               </div>
             </div>
             <div class="mt-2 flex justify-end gap-2">
@@ -1855,7 +1857,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </section>
 <script type="module">
@@ -2164,48 +2165,52 @@ window.guardarFirebase = async (imp) => {
   window.tasaDolarHoy = parseFloat(localStorage.getItem('tasaDolarAvipet')) || 440.97;
 
   // 2. Función principal de ajuste (Intenta buscar en internet, si falla pide manual)
-  window.ajustarTasaDolar = async () => {
-    try {
-      // Intento de conexión con API de indicadores
-      const response = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv');
-      const data = await response.json();
-      
-      if (data && data.monitors && data.monitors.bcv) {
-        const tasaBCV = parseFloat(data.monitors.bcv.price);
-        if (confirm(`📡 Tasa BCV detectada: ${tasaBCV}\n¿Deseas aplicarla al sistema?`)) {
-          window.tasaDolarHoy = tasaBCV;
-          aplicarYGuardarTasa();
-          return;
-        }
+ window.ajustarTasaDolar = async () => {
+  try {
+    // Intento de conexión con API de indicadores
+    const response = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv');
+    const data = await response.json();
+    
+    if (data && data.monitors && data.monitors.bcv) {
+      const tasaBCV = parseFloat(data.monitors.bcv.price);
+      if (confirm(`📡 Tasa BCV detectada: ${tasaBCV}\n¿Deseas aplicarla al sistema?`)) {
+        window.tasaDolarHoy = tasaBCV;
+        aplicarYGuardarTasa();
+        return;
       }
-    } catch (error) {
-      console.warn("No se pudo obtener tasa automática. Abriendo modo manual...");
     }
-
-    // Modo Manual (Tu código original mejorado)
-    const manual = prompt("Ingrese la tasa del dólar oficial manualmente:", window.tasaDolarHoy);
-    if (manual && !isNaN(manual)) {
-      window.tasaDolarHoy = parseFloat(manual);
-      aplicarYGuardarTasa();
-    }
-  };
-
-  // 3. Función de apoyo para guardar y refrescar pantalla
-  function aplicarYGuardarTasa() {
-    // Guarda en la memoria del navegador
-    localStorage.setItem('tasaDolarAvipet', window.tasaDolarHoy);
-    
-    // Actualiza el número en el botón negro de la interfaz
-    const display = document.getElementById('displayTasa');
-    if (display) display.innerText = window.tasaDolarHoy.toFixed(2);
-    
-    // Refresca la lista de inventario si hay datos cargados
-    if (window.inventarioCache) {
-        window.renderListaInventario(window.inventarioCache);
-    }
-    
-    alert("✅ Tasa actualizada y guardada: " + window.tasaDolarHoy);
+  } catch (error) {
+    console.warn("No se pudo obtener tasa automática. Abriendo modo manual...");
   }
+
+  // Modo Manual
+  const manual = prompt("Ingrese la tasa del dólar oficial manualmente:", window.tasaDolarHoy);
+  if (manual && !isNaN(manual)) {
+    window.tasaDolarHoy = parseFloat(manual);
+    aplicarYGuardarTasa();
+  }
+};
+
+function aplicarYGuardarTasa() {
+  // 1. Guarda en la memoria del navegador
+  localStorage.setItem('tasaDolarAvipet', window.tasaDolarHoy);
+  
+  // 2. Actualiza el número en el botón de la interfaz
+  const display = document.getElementById('displayTasa');
+  if (display) display.innerText = window.tasaDolarHoy.toFixed(2);
+  
+  // 3. RECALCULA EL PRECIO DE VENTA (Crucial para que el cambio se vea en vivo)
+  if (typeof window.calcularPrecioFinalAvipet === 'function') {
+      window.calcularPrecioFinalAvipet();
+  }
+  
+  // 4. Refresca la lista de inventario
+  if (window.inventarioCache) {
+      window.renderListaInventario(window.inventarioCache);
+  }
+  
+  console.log("⚓ Sistema Avipet: Tasa sincronizada a " + window.tasaDolarHoy);
+}
   // GENERAR QR (HISTORIA O TEST) Y ESCUCHAR MULTIFOTO
 window.generarEnlaceMovil = (tipo = 'historia') => {
   const cedula = document.getElementById('hCI')?.value.trim();
@@ -7174,6 +7179,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
