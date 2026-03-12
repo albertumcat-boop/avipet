@@ -7088,40 +7088,42 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
 };
   // [PIEZA 3] Cálculo de precio con Tasa Proveedor vs Tasa Oficial
 window.calcularPrecioFinalAvipet = () => {
-  // 1. Obtención de valores (con valores por defecto para evitar errores)
+  // 1. Obtención de valores
   const costoDolar   = parseFloat(document.getElementById('inv_precioCompra')?.value) || 0;
   const tasaProv     = parseFloat(document.getElementById('inv_tasa_prov')?.value) || window.tasaDolarHoy;
   const tieneIva     = document.getElementById('inv_tiene_iva')?.checked;
   const porcGanancia = parseFloat(document.getElementById('inv_ganancia')?.value) || 0;
   
-  // Si no hay precio de compra, no calculamos nada aún
+  // 2. Definir el campo de destino (ESTA ES LA LÍNEA QUE FALTABA)
+  const campoVenta = document.getElementById('inv_precioVenta');
+
+  // Si no hay precio de compra, salimos
   if (costoDolar <= 0) return;
 
   // LÓGICA DE CÁLCULO ALBERT PEÑA:
   
-  // A. Costo en Bs según Proveedor (Ej: 40 * 520 = 20.800)
+  // A. Costo en Bs según Proveedor
   let costoBs = costoDolar * tasaProv;
   
-  // B. Aplicar IVA si corresponde (Ej: 20.800 * 1.16 = 24.128)
+  // B. Aplicar IVA si corresponde
   if (tieneIva) {
     costoBs = costoBs * 1.16;
   }
   
   // C. Margen de Ganancia Real (División)
-  // Si ganancia es 30, divisor es 0.70. (Ej: 24.128 / 0.7 = 34.468,57)
   const divisor = (100 - porcGanancia) / 100;
   
-  // Evitamos división por cero si el usuario pone 100% de ganancia
+  // Evitamos división por cero
   const precioVentaBs = divisor > 0 ? (costoBs / divisor) : (costoBs * 2); 
   
-  // D. Conversión a Dólar Oficial del Sistema (Ej: 34.468,57 / 440.97 = 78,16)
-  const precioFinalDolar = precioVentaBs / window.tasaDolarHoy;
+  // D. Conversión a Dólar Oficial del Sistema (BCV)
+  const precioFinalDolar = precioVentaBs / (window.tasaDolarHoy || 44.50); // Ajusta la tasa si es necesario
   
-if (campoVenta) {
+  // 3. Llenado automático con EFECTO VISUAL
+  if (campoVenta) {
     campoVenta.value = precioFinalDolar.toFixed(2);
     
-    // --- EFECTO VISUAL DE CÁLCULO EN VIVO ---
-    // Se pone azulito claro por un instante para que sepas que cambió
+    // Efecto visual
     campoVenta.classList.add('bg-blue-50'); 
     setTimeout(() => {
       campoVenta.classList.remove('bg-blue-50');
@@ -7172,6 +7174,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
