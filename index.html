@@ -1595,30 +1595,39 @@
                  placeholder="Escriba aquí...">
         </div>
         
-        <div class="w-full sm:w-40">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
-            Proveedor
-          </label>
-          <select id="inv_filtro_proveedor"
-                  onchange="window.filtrarInventario()"
-                  class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
-            <option value="todos">Todos los Prov.</option>
-          </select>
-        </div>
+       <div class="w-full sm:w-40">
+  <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+    Proveedor
+  </label>
+  <div class="flex items-center gap-1">
+    <select id="inv_filtro_proveedor"
+            onchange="window.filtrarInventario()"
+            class="flex-1 border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
+      <option value="todos">Todos los Prov.</option>
+    </select>
+    
+    <button type="button" 
+            onclick="const sel=document.getElementById('inv_filtro_proveedor'); if(sel.value!=='todos') window.eliminarProveedor(sel.value, sel.options[sel.selectedIndex].text)"
+            class="text-slate-400 hover:text-red-600 p-1 transition-colors transition-transform active:scale-90" 
+            title="Eliminar proveedor seleccionado">
+      🗑️
+    </button>
+  </div>
+</div>
 
-        <div class="w-full sm:w-40">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
-            Categoría
-          </label>
-          <select id="inv_filtro_categoria"
-                  onchange="window.filtrarInventario()"
-                  class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
-            <option value="todos">Todas las Cat.</option>
-            <option value="alimento">Alimento</option>
-            <option value="medicina">Medicina</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
+<div class="w-full sm:w-40">
+  <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+    Categoría
+  </label>
+  <select id="inv_filtro_categoria"
+          onchange="window.filtrarInventario()"
+          class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
+    <option value="todos">Todas las Cat.</option>
+    <option value="alimento">Alimento</option>
+    <option value="medicina">Medicina</option>
+    <option value="otro">Otro</option>
+  </select>
+</div>
         
         <div class="flex gap-1 items-end">
           <button type="button"
@@ -1800,23 +1809,24 @@
                       class="w-full border border-slate-200 rounded-lg p-2 text-[11px] font-medium text-slate-600 outline-none bg-slate-50"></textarea>
           </div>
 
-          <div id="inv_botones" class="hidden mt-3 flex flex-col gap-2">
-            <button type="button"
-                    onclick="window.guardarProductoInventario()"
-                    class="w-full bg-blue-600 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow">
-              💾 Guardar producto
-            </button>
-            <button type="button"
-                    onclick="window.mostrarAjusteRapido()"
-                    class="w-full bg-amber-500 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow">
-              🔧 Ajuste rápido de stock
-            </button>
-            <button type="button"
-                    onclick="window.verMovimientosProducto()"
-                    class="w-full bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
-              📜 Ver movimientos
-            </button>
-          </div>
+         <div id="inv_botones" class="hidden mt-3 flex flex-col gap-2">
+  <button type="button" onclick="window.guardarProductoInventario()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow">
+    💾 Guardar producto
+  </button>
+  <button type="button" onclick="window.mostrarAjusteRapido()" class="w-full bg-amber-500 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow">
+    🔧 Ajuste rápido de stock
+  </button>
+  
+  <button type="button" 
+          onclick="window.eliminarProductoInventarioActual()" 
+          class="w-full bg-white text-red-600 border-2 border-red-600 hover:bg-red-50 py-2 rounded-lg font-black text-[10px] uppercase transition-colors">
+    🗑️ Eliminar Producto Definitivamente
+  </button>
+
+  <button type="button" onclick="window.verMovimientosProducto()" class="w-full bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
+    📜 Ver movimientos
+  </button>
+</div>
 
           <div id="inv_panel_ajuste" class="hidden mt-3 border border-slate-200 rounded-lg p-2 bg-slate-50">
             <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Ajuste rápido</p>
@@ -4547,35 +4557,89 @@ window.cargarReporte = async () => {
   window.MASTER_KEY_SISTEMA = "AVIPET2026"; 
 
   // 2. Validación de Acceso Administrativo
-  window.validarAcceso = async () => {
+window.validarAcceso = async () => {
     const pass = document.getElementById('inputPass').value;
-    try {
-      const snap = await getDoc(doc(db, "configuracion", "seguridad"));
-      const pinActual = snap.exists() ? (snap.data().pin || "AVIPET2026") : "AVIPET2026";
+    
+    // --- 1. AQUÍ ASIGNAS LAS CLAVES AL PERSONAL (Como en Peluquería) ---
+    const clavesPersonal = {
+        "AVIPET2026": "Albert Peña (Master)",
+        "2021": "daniel",
+        "2022": "carlos",
+        
+    };
 
-      if (pass === pinActual || pass === window.MASTER_KEY_SISTEMA) {
-        window.cerrarModalLogin();
-        window.ejecutarCambioDeTab(window.tabPendiente);
-      } else {
-        alert("🚫 PIN Incorrecto.");
-      }
+    let responsable = null;
+
+    // Verificamos si la clave ingresada existe en nuestro listado
+    if (clavesPersonal[pass]) {
+        responsable = clavesPersonal[pass];
+    } else if (pass === window.MASTER_KEY_SISTEMA) {
+        responsable = "Albert Peña (Master)";
+    }
+
+    try {
+        const snap = await getDoc(doc(db, "configuracion", "seguridad"));
+        const pinGeneral = snap.exists() ? (snap.data().pin || "AVIPET2026") : "AVIPET2026";
+
+        // Si no es un PIN personal, verificamos si es el PIN general de la tienda
+        if (!responsable && pass === pinGeneral) {
+            responsable = "Personal General";
+        }
+
+        if (responsable) {
+            // Guardamos el usuario globalmente
+            window.usuarioActivoSistema = responsable;
+
+            // REGISTRO DE BITÁCORA: Aquí es donde queda grabado QUIÉN entró
+            if (window.tabPendiente === 'inventario') {
+                await window.registrarLogAuditoria("ACCESO INVENTARIO", `Ingreso autorizado para: ${responsable}`);
+            } else {
+                // Registro para otras áreas protegidas (Reportes, Config)
+                await window.registrarLogAuditoria("ACCESO PROTEGIDO", `Entró a ${window.tabPendiente} como ${responsable}`);
+            }
+
+            window.cerrarModalLogin();
+            window.ejecutarCambioDeTab(window.tabPendiente);
+        } else {
+            alert("🚫 PIN Incorrecto. Intente de nuevo.");
+        }
     } catch (e) {
-      console.warn("Modo Offline: Verificando con Master Key.");
-      if (pass === window.MASTER_KEY_SISTEMA) {
-        window.cerrarModalLogin();
-        window.ejecutarCambioDeTab(window.tabPendiente);
-      } else {
-        alert("🚫 Error de conexión y PIN incorrecto.");
-      }
+        console.warn("Modo Offline.");
+        if (responsable || pass === window.MASTER_KEY_SISTEMA) {
+            window.usuarioActivoSistema = responsable || "Albert Peña (Master - Offline)";
+            window.cerrarModalLogin();
+            window.ejecutarCambioDeTab(window.tabPendiente);
+        } else {
+            alert("🚫 Error de conexión y PIN incorrecto.");
+        }
     }
     document.getElementById('inputPass').value = "";
-  };
+};
+
+/**
+ * FUNCIÓN DE BITÁCORA (Colócala cerca de tus otras funciones de Firebase)
+ * Esta función crea el rastro de quién hizo qué.
+ */
+window.registrarLogAuditoria = async (accion, detalle) => {
+    try {
+        const { collection, addDoc, serverTimestamp } = window.FirebaseFirestore; // Asegurando acceso a funciones
+        await addDoc(collection(db, "auditoria_sistema"), {
+            usuario: window.usuarioActivoSistema || "Desconocido",
+            accion: accion,
+            detalle: detalle,
+            fecha: new Date().toLocaleString(),
+            timestamp: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("Error al registrar en bitácora:", error);
+    }
+};
 
   // 3. Control de Pestañas (The Gateway)
-  window.showTab = async (t) => {
-    // Si intenta entrar a Configuración o Reportes, pedimos login
-    if (t === 'config_precios' || t === 'reporte') {
-      window.tabPendiente = t; // Guardamos destino
+ window.showTab = async (t) => {
+    // 1. Añadimos 'inventario' a la lista protegida [cite: 333]
+    if (t === 'config_precios' || t === 'reporte' || t === 'inventario') {
+      window.tabPendiente = t; 
       const modal = document.getElementById('modalLogin');
       if (modal) {
         modal.classList.remove('hidden');
@@ -4587,7 +4651,7 @@ window.cargarReporte = async () => {
       return;
     }
     window.ejecutarCambioDeTab(t);
-  };
+};
 
   // 4. Ejecución del Cambio (DOM Manipulation)
  window.ejecutarCambioDeTab = async (t) => {
@@ -6771,9 +6835,8 @@ window.guardarProductoInventario = async () => {
     categoria: getV('inv_categoria') || "otro",
     codigoInterno: getV('inv_codigo').trim(),
     presentacion: getV('inv_presentacion').trim(),
-    tipoVenta: getV('inv_tipoVenta') || "unidad",   // <-- NUEVO
-    // NUEVO: proveedor
-    proveedor: getV('inv_proveedor').trim(),   // ← campo nuevo
+    tipoVenta: getV('inv_tipoVenta') || "unidad",
+    proveedor: getV('inv_proveedor').trim(),
     stockActual: Number(getV('inv_stockActual') || 0),
     stockMinimo: Number(getV('inv_stockMinimo') || 0),
     precioCompra: Number(getV('inv_precioCompra') || 0),
@@ -6782,17 +6845,31 @@ window.guardarProductoInventario = async () => {
     notas: getV('inv_notas').trim(),
     actualizadoEn: serverTimestamp()
   };
+
   if (!data.nombre) {
     alert("Ingrese al menos el nombre del producto.");
     return;
   }
+
   try {
+    let accionRealizada = "";
+    
     if (window.inventarioSelId) {
       await updateDoc(doc(db, "inventario", window.inventarioSelId), data);
+      accionRealizada = "ACTUALIZACIÓN";
     } else {
       const ref = await addDoc(collection(db, "inventario"), data);
       window.inventarioSelId = ref.id;
+      accionRealizada = "CREACIÓN";
     }
+
+    // --- SOLDADURA DE AUDITORÍA ---
+    // Registramos quién hizo el cambio, qué acción tomó y sobre qué producto
+    await window.registrarLogAuditoria(
+      accionRealizada, 
+      `${accionRealizada} de producto: ${data.nombre} (Stock: ${data.stockActual}, Precio: ${data.precioVenta}$)`
+    );
+
     alert("✅ Inventario actualizado.");
     await window.cargarInventario();
   } catch (e) {
@@ -6800,7 +6877,46 @@ window.guardarProductoInventario = async () => {
     alert("❌ Error al guardar: " + e.message);
   }
 };
+// --- ELIMINAR PRODUCTO DEL INVENTARIO ---
+window.eliminarProductoInventario = async (id, nombre) => {
+    if (!id) return alert("Seleccione un producto primero.");
+    const confirmar = confirm(`⚠️ ¿ESTÁS SEGURO? Vas a eliminar: "${nombre}".`);
+    
+    if (confirmar) {
+        try {
+            await deleteDoc(doc(db, "inventario", id));
+            await window.registrarLogAuditoria("ELIMINACIÓN", `Eliminó el producto: ${nombre}`);
+            
+            alert("✅ Producto eliminado.");
+            
+            // LIMPIEZA VISUAL:
+            document.getElementById('inv_ficha').classList.add('hidden'); // Escondemos la ficha
+            document.getElementById('inv_sin_seleccion').classList.remove('hidden'); // Mostramos mensaje inicial
+            window.inventarioSelId = null; // Limpiamos el ID seleccionado
+            
+            await window.cargarInventario(); // Recargamos la lista
+        } catch (e) { alert("❌ Error: " + e.message); }
+    }
+};
 
+// --- ELIMINAR PROVEEDOR ---
+// Nota: Si los proveedores están en una colección aparte, usa este:
+window.eliminarProveedor = async (id, nombre) => {
+    const confirmar = confirm(`⚠️ ¿Deseas eliminar al proveedor: "${nombre}"?`);
+    
+    if (confirmar) {
+        try {
+            await deleteDoc(doc(db, "proveedores", id));
+            
+            await window.registrarLogAuditoria("ELIMINACIÓN PROVEEDOR", `Eliminó al proveedor: ${nombre}`);
+            
+            alert("✅ Proveedor eliminado.");
+            // Aquí llamarías a la función que recarga tu lista de proveedores
+        } catch (e) {
+            alert("❌ Error: " + e.message);
+        }
+    }
+};
 // Mostrar panel de ajuste rápido
 window.mostrarAjusteRapido = () => {
   if (!window.inventarioSelId) {
@@ -7182,6 +7298,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
