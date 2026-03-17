@@ -2070,13 +2070,19 @@ window.guardarFirebase = async (imp) => {
   // =========================================================
   
   // 1. Carga inicial: Lee la última guardada o usa la base
-  window.tasaDolarHoy = parseFloat(localStorage.getItem('tasaDolarAvipet')) || 440.97;
+ 
+window.tasaDolarHoy = parseFloat(localStorage.getItem('tasaDolarAvipet')) || 440.97;
 
-  // 2. Función principal de ajuste (Intenta buscar en internet, si falla pide manual)
- window.ajustarTasaDolar = async () => {
+// 2. Función principal de ajuste (Automático con caída a Manual)
+window.ajustarTasaDolar = async () => {
   try {
-    // Intento de conexión con API de indicadores
-    const response = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv');
+    // Timeout de 3 segundos para evitar que el sistema se congele si la API no responde
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
     const data = await response.json();
     
     if (data && data.monitors && data.monitors.bcv) {
@@ -2088,36 +2094,42 @@ window.guardarFirebase = async (imp) => {
       }
     }
   } catch (error) {
-    console.warn("No se pudo obtener tasa automática. Abriendo modo manual...");
+    console.warn("⚓ Radar Avipet: No se pudo obtener tasa automática. Abriendo modo manual...");
   }
 
-  // Modo Manual
+  // MODO MANUAL: Se activa si la API falla o el usuario cancela la detección
   const manual = prompt("Ingrese la tasa del dólar oficial manualmente:", window.tasaDolarHoy);
-  if (manual && !isNaN(manual)) {
+  if (manual !== null && manual !== "" && !isNaN(manual)) {
     window.tasaDolarHoy = parseFloat(manual);
     aplicarYGuardarTasa();
   }
 };
 
+// 3. Función de Aplicación y Persistencia
 function aplicarYGuardarTasa() {
-  // 1. Guarda en la memoria del navegador
+  // 1. Guarda en la memoria del navegador (Persistencia)
   localStorage.setItem('tasaDolarAvipet', window.tasaDolarHoy);
   
   // 2. Actualiza el número en el botón de la interfaz
   const display = document.getElementById('displayTasa');
   if (display) display.innerText = window.tasaDolarHoy.toFixed(2);
   
-  // 3. RECALCULA EL PRECIO DE VENTA (Crucial para que el cambio se vea en vivo)
+  // 3. RECALCULA EL PRECIO DE VENTA EN VIVO
   if (typeof window.calcularPrecioFinalAvipet === 'function') {
       window.calcularPrecioFinalAvipet();
   }
   
-  // 4. Refresca la lista de inventario
-  if (window.inventarioCache) {
+  // 4. Refresca la lista visual del inventario
+  if (window.inventarioCache && typeof window.renderListaInventario === 'function') {
       window.renderListaInventario(window.inventarioCache);
   }
   
   console.log("⚓ Sistema Avipet: Tasa sincronizada a " + window.tasaDolarHoy);
+}
+
+// Ejecución inmediata para asegurar que la interfaz muestre el valor guardado al cargar
+if (document.getElementById('displayTasa')) {
+    document.getElementById('displayTasa').innerText = window.tasaDolarHoy.toFixed(2);
 }
   // GENERAR QR (HISTORIA O TEST) Y ESCUCHAR MULTIFOTO
 window.generarEnlaceMovil = (tipo = 'historia') => {
@@ -7276,6 +7288,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
