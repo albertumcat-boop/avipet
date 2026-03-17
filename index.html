@@ -669,6 +669,8 @@
 
 <section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col" style="height: 92vh;">
   
+  <button type="button" onclick="window.print()" class="no-print absolute top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨️ Imprimir</button>
+
   <div class="no-print mb-4">
     <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento:</label>
     <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white">
@@ -785,6 +787,7 @@
         </table>
       </div>
     </div>
+  </div>
 
    <div id="bloqueTests" class="hidden">
   <div class="no-print mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-300">
@@ -7179,6 +7182,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
