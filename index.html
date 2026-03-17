@@ -1818,10 +1818,10 @@
   </button>
   
   <button type="button" 
-          onclick="window.eliminarProductoInventarioActual()" 
-          class="w-full bg-white text-red-600 border-2 border-red-600 hover:bg-red-50 py-2 rounded-lg font-black text-[10px] uppercase transition-colors">
-    🗑️ Eliminar Producto Definitivamente
-  </button>
+        onclick="window.eliminarProductoInventario(window.inventarioSelId, document.getElementById('inv_nombre').value)" 
+        class="w-full bg-white text-red-600 border-2 border-red-600 ...">
+  🗑️ Eliminar Producto Definitivamente
+</button>
 
   <button type="button" onclick="window.verMovimientosProducto()" class="w-full bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
     📜 Ver movimientos
@@ -4622,7 +4622,7 @@ window.validarAcceso = async () => {
  */
 window.registrarLogAuditoria = async (accion, detalle) => {
     try {
-        const { collection, addDoc, serverTimestamp } = window.FirebaseFirestore; // Asegurando acceso a funciones
+        // Usamos directamente addDoc y collection que ya funcionan en tu cargarInventario
         await addDoc(collection(db, "auditoria_sistema"), {
             usuario: window.usuarioActivoSistema || "Desconocido",
             accion: accion,
@@ -4630,11 +4630,11 @@ window.registrarLogAuditoria = async (accion, detalle) => {
             fecha: new Date().toLocaleString(),
             timestamp: serverTimestamp()
         });
+        console.log("⚓ Bitácora: Movimiento registrado.");
     } catch (error) {
-        console.error("Error al registrar en bitácora:", error);
+        console.error("❌ Error en bitácora:", error);
     }
 };
-
   // 3. Control de Pestañas (The Gateway)
  window.showTab = async (t) => {
     // 1. Añadimos 'inventario' a la lista protegida [cite: 333]
@@ -6880,40 +6880,63 @@ window.guardarProductoInventario = async () => {
 // --- ELIMINAR PRODUCTO DEL INVENTARIO ---
 window.eliminarProductoInventario = async (id, nombre) => {
     if (!id) return alert("Seleccione un producto primero.");
-    const confirmar = confirm(`⚠️ ¿ESTÁS SEGURO? Vas a eliminar: "${nombre}".`);
+    
+    const confirmar = confirm(`⚠️ CONTRASTE RADICAL: ¿Eliminar "${nombre}"?\nEsta acción quedará registrada a nombre de: ${window.usuarioActivoSistema}`);
     
     if (confirmar) {
         try {
             await deleteDoc(doc(db, "inventario", id));
+            
+            // Ahora la bitácora no dará error
             await window.registrarLogAuditoria("ELIMINACIÓN", `Eliminó el producto: ${nombre}`);
             
-            alert("✅ Producto eliminado.");
+            alert("✅ Eliminado con éxito.");
             
-            // LIMPIEZA VISUAL:
-            document.getElementById('inv_ficha').classList.add('hidden'); // Escondemos la ficha
-            document.getElementById('inv_sin_seleccion').classList.remove('hidden'); // Mostramos mensaje inicial
-            window.inventarioSelId = null; // Limpiamos el ID seleccionado
+            // Limpieza de interfaz
+            document.getElementById('inv_ficha').classList.add('hidden');
+            document.getElementById('inv_sin_seleccion').classList.remove('hidden');
+            window.inventarioSelId = null;
             
-            await window.cargarInventario(); // Recargamos la lista
-        } catch (e) { alert("❌ Error: " + e.message); }
-    }
-};
-
-// --- ELIMINAR PROVEEDOR ---
-// Nota: Si los proveedores están en una colección aparte, usa este:
-window.eliminarProveedor = async (id, nombre) => {
-    const confirmar = confirm(`⚠️ ¿Deseas eliminar al proveedor: "${nombre}"?`);
-    
-    if (confirmar) {
-        try {
-            await deleteDoc(doc(db, "proveedores", id));
-            
-            await window.registrarLogAuditoria("ELIMINACIÓN PROVEEDOR", `Eliminó al proveedor: ${nombre}`);
-            
-            alert("✅ Proveedor eliminado.");
-            // Aquí llamarías a la función que recarga tu lista de proveedores
+            await window.cargarInventario(); 
         } catch (e) {
             alert("❌ Error: " + e.message);
+        }
+    }
+};
+// --- ELIMINAR PROVEEDOR ---
+// Nota: Si los proveedores están en una colección aparte, usa este:
+window.eliminarProveedor = async (nombreProv, textoMostrar) => {
+    if (nombreProv === "todos") return;
+
+    const confirmar = confirm(`⚠️ ¡ALERTA DE SEGURIDAD!\n\nEstás por eliminar TODOS los productos del proveedor: "${textoMostrar}".\n\nEsta acción es irreversible. ¿Deseas continuar?`);
+
+    if (confirmar) {
+        try {
+            // 1. Buscamos todos los productos que pertenecen a ese proveedor en el caché
+            const productosABorrar = window.inventarioCache.filter(p => 
+                (p.proveedor || p.Proveedor || "").trim() === nombreProv
+            );
+
+            if (productosABorrar.length === 0) {
+                alert("No se encontraron productos para este proveedor.");
+                return;
+            }
+
+            // 2. Borramos cada producto en Firebase
+            const promesas = productosABorrar.map(p => deleteDoc(doc(db, "inventario", p.id)));
+            await Promise.all(promesas);
+
+            // 3. Registramos en la Bitácora quién hizo esta limpieza masiva
+            await window.registrarLogAuditoria("LIMPIEZA PROVEEDOR", `Eliminó al proveedor ${textoMostrar} y sus ${productosABorrar.length} productos.`);
+
+            alert(`✅ Se han eliminado ${productosABorrar.length} productos del proveedor ${textoMostrar}.`);
+            
+            // 4. Recargamos todo
+            await window.cargarInventario();
+
+        } catch (e) {
+            console.error("Error al eliminar proveedor:", e);
+            alert("❌ Error en la operación masiva.");
         }
     }
 };
@@ -7298,6 +7321,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
