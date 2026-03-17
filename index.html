@@ -1585,284 +1585,179 @@
     <div class="p-3 border-b border-slate-200 bg-slate-50">
       <div class="flex flex-col sm:flex-row gap-2">
         <div class="flex-1">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
-            Buscar (nombre, código o proveedor)
-          </label>
-          <input id="inv_buscar"
-                 type="text"
-                 oninput="window.filtrarInventario()"
-                 class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent"
-                 placeholder="Escriba aquí...">
+          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Buscar (nombre, código o proveedor)</label>
+          <input id="inv_buscar" type="text" oninput="window.filtrarInventario()" class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent" placeholder="Escriba aquí...">
         </div>
         
-       <div class="w-full sm:w-40">
-  <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
-    Proveedor
-  </label>
-  <div class="flex items-center gap-1">
-    <select id="inv_filtro_proveedor"
-            onchange="window.filtrarInventario()"
-            class="flex-1 border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
-      <option value="todos">Todos los Prov.</option>
-    </select>
-    
-    <button type="button" 
-            onclick="const sel=document.getElementById('inv_filtro_proveedor'); if(sel.value!=='todos') window.eliminarProveedor(sel.value, sel.options[sel.selectedIndex].text)"
-            class="text-slate-400 hover:text-red-600 p-1 transition-colors transition-transform active:scale-90" 
-            title="Eliminar proveedor seleccionado">
-      🗑️
-    </button>
-  </div>
-</div>
+        <div class="w-full sm:w-40">
+          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Proveedor</label>
+          <div class="flex items-center gap-1">
+            <select id="inv_filtro_proveedor" onchange="window.filtrarInventario()" class="flex-1 border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
+              <option value="todos">Todos los Prov.</option>
+            </select>
+            <button type="button" onclick="const sel=document.getElementById('inv_filtro_proveedor'); if(sel.value!=='todos') window.eliminarProveedor(sel.value, sel.options[sel.selectedIndex].text)" class="text-slate-400 hover:text-red-600 p-1 transition-colors transition-transform active:scale-90" title="Eliminar proveedor seleccionado">🗑️</button>
+          </div>
+        </div>
 
-<div class="w-full sm:w-40">
-  <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
-    Categoría
-  </label>
-  <select id="inv_filtro_categoria"
-          onchange="window.filtrarInventario()"
-          class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
-    <option value="todos">Todas las Cat.</option>
-    <option value="alimento">Alimento</option>
-    <option value="medicina">Medicina</option>
-    <option value="otro">Otro</option>
-  </select>
-</div>
+        <div class="w-full sm:w-40">
+          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Categoría</label>
+          <select id="inv_filtro_categoria" onchange="window.filtrarInventario()" class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent">
+            <option value="todos">Todas las Cat.</option>
+            <option value="alimento">Alimento</option>
+            <option value="medicina">Medicina</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
         
         <div class="flex gap-1 items-end">
-          <button type="button"
-                  onclick="window.nuevoProductoInventario()"
-                  class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">
-            + Nuevo
-          </button>
-          <button type="button"
-                  onclick="window.descargarReporteProveedor()"
-                  class="bg-emerald-600 text-white px-3 py-2 rounded-lg font-black text-[10px] uppercase shadow-md"
-                  title="Descargar stock del proveedor seleccionado">
-            📊 Stock
-          </button>
+          <button type="button" onclick="window.nuevoProductoInventario()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">+ Nuevo</button>
+          <button type="button" onclick="window.descargarReporteProveedor()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg font-black text-[10px] uppercase shadow-md" title="Descargar stock del proveedor seleccionado">📊 Stock</button>
         </div>
       </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
       
-      <div class="border-r border-slate-200 max-h-[70vh] overflow-y-auto p-2" id="inv_lista">
-      </div>
+      <div class="border-r border-slate-200 max-h-[70vh] overflow-y-auto p-2" id="inv_lista"></div>
 
       <div class="p-3">
-        <div id="inv_sin_seleccion" class="text-center text-[10px] text-slate-400 italic mt-10">
-          Seleccione un producto de la lista o cree uno nuevo.
-        </div>
+        <div id="inv_sin_seleccion" class="text-center text-[10px] text-slate-400 italic mt-10">Seleccione un producto de la lista o cree uno nuevo.</div>
 
-        <div id="inv_ficha" class="hidden space-y-2">
+        <div id="inv_ficha" class="hidden space-y-3">
           
-          <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-3 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
-              <p class="text-[10px] font-black text-blue-700 uppercase tracking-wider flex items-center gap-2">
-                <span class="text-xs">📟</span> Calculadora de Precio Automática
+          <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-blue-500 shadow-md text-white">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                <span class="text-xs text-blue-400">📟</span> Calculadora de Costos e Interés
               </p>
-              <span class="bg-blue-200 text-blue-700 text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase">Contraste Radical</span>
+              <span class="bg-blue-600 text-[8px] px-2 py-0.5 rounded-full font-bold uppercase">Contraste Radical</span>
             </div>
 
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div class="space-y-1">
-                <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Tasa Proveedor</label>
-                <div class="relative">
-                  <span class="absolute left-0 top-1 text-[8px] text-blue-400 font-bold">Bs.</span>
-                  <input id="inv_tasa_prov" 
-                         type="number" 
-                         step="0.01" 
-                         value="440.97"
-                         oninput="window.calcularPrecioFinalAvipet()"
-                         class="w-full border-b-2 border-blue-200 pl-4 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent focus:border-blue-500 transition-colors">
-                </div>
-              </div>
-
-              <div class="flex flex-col justify-end pb-1">
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input id="inv_tiene_iva" 
-                         type="checkbox" 
-                         onchange="window.calcularPrecioFinalAvipet()"
-                         class="w-3.5 h-3.5 rounded border-blue-300 text-blue-600 focus:ring-blue-500 transition-all">
-                  <span class="text-[8px] font-bold text-slate-500 uppercase group-hover:text-blue-600 transition-colors">Aplicar IVA</span>
-                </label>
+                <label class="block text-[8px] font-bold text-slate-400 uppercase">Costo Proveedor $</label>
+                <input id="inv_precioCompra" type="number" step="0.01" oninput="window.calcularPrecioFinalAvipet()" class="w-full bg-slate-700 border-b border-blue-400 p-2 text-xs font-black text-white outline-none">
               </div>
 
               <div class="space-y-1">
-                <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-tighter">% Ganancia</label>
-                <div class="relative">
-                  <input id="inv_ganancia" 
-                         type="number" 
-                         value="30"
-                         oninput="window.calcularPrecioFinalAvipet()"
-                         class="w-full border-b-2 border-blue-200 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent focus:border-blue-500 transition-colors text-right pr-3">
-                  <span class="absolute right-0 top-1 text-[8px] text-blue-400 font-bold">%</span>
-                </div>
+                <label class="block text-[8px] font-bold text-slate-400 uppercase">Tasa Prov. (Bs)</label>
+                <input id="inv_tasa_prov" type="number" step="0.01" value="440.97" oninput="window.calcularPrecioFinalAvipet()" class="w-full bg-slate-700 border-b border-blue-400 p-2 text-xs font-black text-white outline-none">
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-[8px] font-bold text-slate-400 uppercase">% Ganancia</label>
+                <input id="inv_ganancia" type="number" value="30" oninput="window.calcularPrecioFinalAvipet()" class="w-full bg-slate-700 border-b border-blue-400 p-2 text-xs font-black text-white outline-none text-right">
               </div>
             </div>
 
-            <p class="text-[7px] text-blue-400 font-medium italic mt-3 uppercase text-center tracking-widest border-t border-blue-100 pt-2">
-              Sincronización en tiempo real activa
-            </p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div class="col-span-2">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nombre del Producto</label>
-              <input id="inv_nombre"
-                     class="w-full border-b border-slate-300 p-1 text-xs font-black text-slate-800 uppercase outline-none bg-transparent">
-            </div>
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Categoría</label>
-              <select id="inv_categoria"
-                      class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
-                <option value="alimento">Alimento</option>
-                <option value="medicina">Medicina</option>
-                <option value="otro">Otro</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Código interno</label>
-              <input id="inv_codigo"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
+            <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-700">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input id="inv_tiene_iva" type="checkbox" onchange="window.calcularPrecioFinalAvipet()" class="w-4 h-4 rounded border-slate-600 text-blue-500 bg-slate-700">
+                <span class="text-[9px] font-bold text-slate-300 uppercase">Aplicar IVA (16%)</span>
+              </label>
+              <div class="text-right">
+                <p class="text-[8px] text-slate-400 uppercase font-bold tracking-tighter">Precio de Venta Final</p>
+                <div class="flex items-baseline justify-end gap-1">
+                  <span class="text-blue-400 font-black text-sm">$</span>
+                  <input id="inv_precioVenta" type="number" step="0.01" class="bg-transparent text-2xl font-black text-emerald-400 outline-none w-28 text-right" readonly>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Presentación</label>
-              <input id="inv_presentacion"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent"
-                     placeholder="Ej: 20kg">
+          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div class="col-span-2">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nombre del Producto</label>
+                <input id="inv_nombre" class="w-full border-b border-slate-300 p-1 text-xs font-black text-slate-800 uppercase outline-none bg-transparent">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Categoría</label>
+                <select id="inv_categoria" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
+                  <option value="alimento">Alimento</option>
+                  <option value="medicina">Medicina</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Código interno</label>
+                <input id="inv_codigo" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
+              </div>
             </div>
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tipo de venta</label>
-              <select id="inv_tipoVenta"
-                      class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
-                <option value="unidad">Por UNIDAD</option>
-                <option value="bulto">Por BULTO / SACO</option>
-              </select>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Presentación</label>
+                <input id="inv_presentacion" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent" placeholder="Ej: 20kg">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tipo de venta</label>
+                <select id="inv_tipoVenta" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
+                  <option value="unidad">Por UNIDAD</option>
+                  <option value="bulto">Por BULTO / SACO</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Proveedor</label>
+                <input id="inv_proveedor" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
+              </div>
             </div>
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Proveedor</label>
-              <input id="inv_proveedor"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 uppercase outline-none bg-transparent">
+
+            <div class="grid grid-cols-3 gap-2 items-end">
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Stock actual</label>
+                <input id="inv_stockActual" type="number" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent" oninput="window.actualizarEstadoInventarioVisual()">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Stock mínimo</label>
+                <input id="inv_stockMinimo" type="number" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent" oninput="window.actualizarEstadoInventarioVisual()">
+              </div>
+              <div class="pb-1">
+                <span id="inv_badge_estado" class="text-[10px] font-black uppercase px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">Normal</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Fecha vencimiento</label>
+                <input id="inv_vencimiento" type="date" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Notas</label>
+                <textarea id="inv_notas" rows="1" class="w-full border-b border-slate-300 p-1 text-[11px] font-medium text-slate-600 outline-none bg-transparent"></textarea>
+              </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Stock actual</label>
-              <input id="inv_stockActual"
-                     type="number"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent"
-                     oninput="window.actualizarEstadoInventarioVisual()">
-            </div>
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Stock mínimo</label>
-              <input id="inv_stockMinimo"
-                     type="number"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent"
-                     oninput="window.actualizarEstadoInventarioVisual()">
-            </div>
-            <div class="flex items-end pb-1">
-              <span id="inv_badge_estado"
-                    class="text-[10px] font-black uppercase px-2 py-1 rounded-full inline-block bg-emerald-100 text-emerald-700">
-                Normal
-              </span>
-            </div>
+          <div id="inv_botones" class="hidden mt-3 flex flex-col gap-2">
+            <button type="button" onclick="window.guardarProductoInventario()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow hover:bg-blue-700">💾 Guardar producto</button>
+            <button type="button" onclick="window.mostrarAjusteRapido()" class="w-full bg-amber-500 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow hover:bg-amber-600">🔧 Ajuste rápido de stock</button>
+            <button type="button" onclick="window.verMovimientosProducto()" class="w-full bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">📜 Ver movimientos</button>
+            <button type="button" onclick="window.eliminarProductoInventario(window.inventarioSelId, document.getElementById('inv_nombre').value)" class="w-full bg-white text-red-600 border-2 border-red-600 py-2 rounded-lg font-black text-[10px] uppercase hover:bg-red-50 transition-colors mt-2">🗑️ Eliminar Producto Definitivamente</button>
           </div>
-
-          <div class="grid grid-cols-2 gap-2 bg-slate-100 p-2 rounded-lg">
-            <div>
-              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Precio compra $</label>
-              <input id="inv_precioCompra"
-                     type="number" step="0.01"
-                     oninput="window.calcularPrecioFinalAvipet()" 
-                     class="w-full border-b border-blue-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
-            </div>
-
-            <div>
-              <label class="block text-[9px] font-bold text-blue-600 uppercase mb-1">Precio venta $ (Final)</label>
-              <input id="inv_precioVenta"
-                     type="number" step="0.01"
-                     class="w-full border-b border-blue-400 p-1 text-[11px] font-black text-blue-800 outline-none bg-transparent transition-all duration-300"
-                     readonly>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Fecha vencimiento</label>
-              <input id="inv_vencimiento"
-                     type="date"
-                     class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent"
-                     oninput="window.actualizarEstadoInventarioVisual()">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Notas</label>
-            <textarea id="inv_notas"
-                      rows="2"
-                      class="w-full border border-slate-200 rounded-lg p-2 text-[11px] font-medium text-slate-600 outline-none bg-slate-50"></textarea>
-          </div>
-
-         <div id="inv_botones" class="hidden mt-3 flex flex-col gap-2">
-  <button type="button" onclick="window.guardarProductoInventario()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow">
-    💾 Guardar producto
-  </button>
-  <button type="button" onclick="window.mostrarAjusteRapido()" class="w-full bg-amber-500 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow">
-    🔧 Ajuste rápido de stock
-  </button>
-  
-  <button type="button" 
-        onclick="window.eliminarProductoInventario(window.inventarioSelId, document.getElementById('inv_nombre').value)" 
-        class="w-full bg-white text-red-600 border-2 border-red-600 ...">
-  🗑️ Eliminar Producto Definitivamente
-</button>
-
-  <button type="button" onclick="window.verMovimientosProducto()" class="w-full bg-slate-200 text-slate-700 py-2 rounded-lg font-black text-[10px] uppercase">
-    📜 Ver movimientos
-  </button>
-</div>
 
           <div id="inv_panel_ajuste" class="hidden mt-3 border border-slate-200 rounded-lg p-2 bg-slate-50">
             <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Ajuste rápido</p>
             <div class="grid grid-cols-3 gap-2 items-end">
               <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tipo</label>
-                <select id="inv_ajuste_tipo"
-                        class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
+                <select id="inv_ajuste_tipo" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
                   <option value="ingreso">Ingreso</option>
                   <option value="salida">Salida</option>
                 </select>
               </div>
               <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Cantidad</label>
-                <input id="inv_ajuste_cant"
-                       type="number"
-                       class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
+                <input id="inv_ajuste_cant" type="number" class="w-full border-b border-slate-300 p-1 text-[11px] font-bold text-slate-700 outline-none bg-transparent">
               </div>
               <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Motivo</label>
-                <input id="inv_ajuste_motivo"
-                       class="w-full border-b border-slate-300 p-1 text-[11px] font-medium text-slate-700 outline-none bg-transparent"
-                       placeholder="Compra, pérdida...">
+                <input id="inv_ajuste_motivo" class="w-full border-b border-slate-300 p-1 text-[11px] font-medium text-slate-700 outline-none bg-transparent" placeholder="Compra, pérdida...">
               </div>
             </div>
             <div class="mt-2 flex justify-end gap-2">
-              <button type="button"
-                      onclick="document.getElementById('inv_panel_ajuste').classList.add('hidden')"
-                      class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase">
-                Cancelar
-              </button>
-              <button type="button"
-                      onclick="window.aplicarAjusteRapido()"
-                      class="px-3 py-1 bg-emerald-600 text-white text-[10px] font-black rounded-lg uppercase">
-                Aplicar
-              </button>
+              <button type="button" onclick="document.getElementById('inv_panel_ajuste').classList.add('hidden')" class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase">Cancelar</button>
+              <button type="button" onclick="window.aplicarAjusteRapido()" class="px-3 py-1 bg-emerald-600 text-white text-[10px] font-black rounded-lg uppercase">Aplicar</button>
             </div>
           </div>
 
@@ -6735,27 +6630,73 @@ window.descargarReporteProveedor = () => {
 // Crear producto nuevo
 window.nuevoProductoInventario = () => {
   window.inventarioSelId = null;
+  
+  // 1. Mostrar la ficha
+  const ficha = document.getElementById('inv_ficha');
   document.getElementById('inv_sin_seleccion').classList.add('hidden');
-  document.getElementById('inv_ficha').classList.remove('hidden');
+  ficha.classList.remove('hidden');
   document.getElementById('inv_botones').classList.remove('hidden');
 
+  // 2. Limpiar campos con tu lógica de setV
   const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  
   setV('inv_nombre', "");
   setV('inv_categoria', "alimento");
   setV('inv_codigo', "");
   setV('inv_presentacion', "");
-  setV('inv_tipoVenta', "unidad");    // <-- NUEVO
-  setV('inv_proveedor',     "");
+  setV('inv_tipoVenta', "unidad");
+  setV('inv_proveedor', "");
   setV('inv_stockActual', "0");
   setV('inv_stockMinimo', "0");
+  
+  // Reset de Calculadora
   setV('inv_precioCompra', "0");
   setV('inv_precioVenta', "0");
+  setV('inv_tasa_prov', "440.97"); // Valor por defecto
+  setV('inv_ganancia', "30");      // Valor por defecto
+  if(document.getElementById('inv_tiene_iva')) document.getElementById('inv_tiene_iva').checked = false;
+
   setV('inv_vencimiento', "");
   setV('inv_notas', "");
+
+  // 3. ⚓ EL AJUSTE MARCIAL: Subir automáticamente al inicio de la ficha
+  // Esto evita que tengas que hacer scroll manual hacia abajo
+  ficha.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // 4. Actualizar visuales y poner foco
   window.actualizarEstadoInventarioVisual();
   document.getElementById('inv_movimientos').classList.add('hidden');
+  
+  // Pone el cursor directo en el nombre para empezar a escribir
+  setTimeout(() => document.getElementById('inv_nombre').focus(), 500);
 };
+window.limpiarFormularioInventario = () => {
+    // Reset de IDs
+    window.inventarioSelId = null;
 
+    // Campos de la Calculadora
+    document.getElementById('inv_precioCompra').value = "";
+    document.getElementById('inv_tasa_prov').value = "440.97"; // O tu tasa por defecto
+    document.getElementById('inv_ganancia').value = "30";
+    document.getElementById('inv_tiene_iva').checked = false;
+    document.getElementById('inv_precioVenta').value = "";
+
+    // Campos de Información
+    document.getElementById('inv_nombre').value = "";
+    document.getElementById('inv_codigo').value = "";
+    document.getElementById('inv_presentacion').value = "";
+    document.getElementById('inv_proveedor').value = "";
+    document.getElementById('inv_stockActual').value = "";
+    document.getElementById('inv_stockMinimo').value = "";
+    document.getElementById('inv_vencimiento').value = "";
+    document.getElementById('inv_notas').value = "";
+    
+    // Reset de Badges y Paneles
+    document.getElementById('inv_badge_estado').innerText = "Normal";
+    document.getElementById('inv_badge_estado').className = "text-[10px] font-black uppercase px-2 py-1 rounded-full bg-emerald-100 text-emerald-700";
+    document.getElementById('inv_panel_ajuste').classList.add('hidden');
+    document.getElementById('inv_movimientos').classList.add('hidden');
+};
 // Seleccionar producto de la lista
 window.seleccionarProductoInventario = (id) => {
   const prod = (window.inventarioCache || []).find(p => p.id === id);
@@ -6847,7 +6788,7 @@ window.guardarProductoInventario = async () => {
   };
 
   if (!data.nombre) {
-    alert("Ingrese al menos el nombre del producto.");
+    alert("⚠️ Ingrese al menos el nombre del producto.");
     return;
   }
 
@@ -6863,15 +6804,29 @@ window.guardarProductoInventario = async () => {
       accionRealizada = "CREACIÓN";
     }
 
-    // --- SOLDADURA DE AUDITORÍA ---
-    // Registramos quién hizo el cambio, qué acción tomó y sobre qué producto
+    // Registro en Bitácora
     await window.registrarLogAuditoria(
       accionRealizada, 
       `${accionRealizada} de producto: ${data.nombre} (Stock: ${data.stockActual}, Precio: ${data.precioVenta}$)`
     );
 
-    alert("✅ Inventario actualizado.");
+    alert("✅ Inventario actualizado con éxito.");
+
+    // --- ⚓ LIMPIEZA Y RETORNO AL INICIO ---
+    // 1. Limpiamos el formulario usando la lógica de "Nuevo"
+    window.nuevoProductoInventario(); 
+    
+    // 2. Ocultamos la ficha para volver al estado inicial o dejarla lista para otro
+    // Si prefieres que la ficha desaparezca tras guardar, descomenta la siguiente línea:
+    // document.getElementById('inv_ficha').classList.add('hidden');
+    // document.getElementById('inv_sin_seleccion').classList.remove('hidden');
+
+    // 3. Recargamos la tabla para ver los cambios
     await window.cargarInventario();
+
+    // 4. Scroll hacia arriba de la página o del contenedor para no quedar "abajo"
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
   } catch (e) {
     console.error("Error guardando inventario:", e);
     alert("❌ Error al guardar: " + e.message);
@@ -7321,6 +7276,7 @@ function actualizarInterfazTasa() {
 
 </body>
 </html>
+
 
 
 
