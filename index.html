@@ -91,10 +91,18 @@
         background-clip: content-box !important;
     }
     /* 1. OCULTAR TODO LO QUE NO SEA RELEVANTE */
-    .no-print, button, nav, #loginSection,
-    .finanzas-ocultar, .menu-desplegable, .hidden, #hTratamiento, .no-imprimir { 
-        display: none !important; 
-    }
+   .no-print, button, nav, #loginSection,
+.finanzas-ocultar, .menu-desplegable,
+.hidden:not(.resultado-print),
+#hTratamiento, .no-imprimir { 
+    display: none !important; 
+}
+  /* FORZAR VISIBILIDAD DE RESULTADOS */
+span.resultado-print {
+    display: inline !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
     /* 2. ASEGURAR QUE LAS IMÁGENES SE VEAN */
     img, .print-area img {
         display: block !important;
