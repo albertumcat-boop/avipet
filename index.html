@@ -90,13 +90,11 @@
         color-adjust: exact !important;
         background-clip: content-box !important;
     }
-
     /* 1. OCULTAR TODO LO QUE NO SEA RELEVANTE */
     .no-print, button, nav, #loginSection,
     .finanzas-ocultar, .menu-desplegable, .hidden, #hTratamiento, .no-imprimir { 
         display: none !important; 
     }
-
     /* 2. ASEGURAR QUE LAS IMÁGENES SE VEAN */
     img, .print-area img {
         display: block !important;
@@ -105,20 +103,17 @@
         visibility: visible !important;
         image-rendering: auto !important;
     }
-
     /* 3. VISIBILIDAD Y ELIMINACIÓN DE ESPACIOS EN BLANCO */
     #sectionHojaVacunas:not(.hidden), 
     #sectionHojaTest:not(.hidden),
     #sectionHojaExamen:not(.hidden) {
         display: block !important;
-        height: auto !important; /* CLAVE: Quita el 94% para eliminar el hueco blanco */
+        height: auto !important;
         min-height: 0 !important;
         padding-top: 10px !important;
         overflow: visible !important;
     }
-
     /* 4. AJUSTE PARA RESULTADOS DE TESTS (INPUTS Y SELECTS) */
-    /* Forzamos que el texto escrito se vea negro y nítido */
     input, textarea, select {
         border: none !important;
         box-shadow: none !important;
@@ -128,17 +123,19 @@
         font-weight: bold !important;
         width: 100% !important;
     }
-
-    /* Si usas el truco del "Espejo" que te pasé antes, esta regla es vital */
+    /* OCULTAR SELECT Y MOSTRAR EL ESPEJO DE RESULTADO */
+    .print\:hidden {
+        display: none !important;
+    }
+    .resultado-print {
+        display: inline !important;
+        visibility: visible !important;
+    }
+    /* COMPATIBILIDAD CON CLASES ANTIGUAS (por si hay divs con hidden print:block) */
     .hidden.print\:block {
         display: block !important;
         visibility: visible !important;
     }
-
-    .print\:hidden {
-        display: none !important;
-    }
-
     /* 5. CONTENEDORES DE FOTOS */
     #printExamenCont, #printTestCont {
         display: block !important;
@@ -146,18 +143,16 @@
         margin-top: 15px;
         text-align: center;
     }
-
     .foto-anexo {
         max-width: 100% !important;
-        max-height: 350px !important; /* Ajustado para que no salte de página */
+        max-height: 350px !important;
         object-fit: contain;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
     }
-
     /* 6. PIE DE PÁGINA */
     .footer-direccion {
-        position: fixed !important; /* Cambiado a fixed para que se pegue al final de la hoja */
+        position: fixed !important;
         bottom: 0 !important;
         left: 0;
         right: 0;
@@ -165,7 +160,6 @@
         background: white !important;
         border-top: 1px solid #e2e8f0;
     }
-
     body {
         background-color: white !important;
         margin: 0.5cm !important;
@@ -786,7 +780,6 @@
     <input type="text" id="notaFotoTest" placeholder="Nota sobre este test (Ej: Positivo tenue)" 
            class="w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white">
   </div>
-
   <div class="no-print mb-4 p-3 bg-slate-100 rounded-lg border border-slate-300">
     <label class="block text-[10px] font-black text-slate-700 uppercase mb-1 italic">🔬 Añadir Test:</label>
     <select id="selectorTestCertificado" class="w-full p-2 rounded border border-slate-800 font-bold text-xs uppercase" onchange="window.agregarFilaTest(this.value); this.value=''">
@@ -799,7 +792,6 @@
       <option value="OTRO">-- OTRO TEST (MANUAL) --</option>
     </select>
   </div>
-
   <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
     <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">Certificado de Diagnóstico Rápido</div>
     <table class="w-full text-[11px]">
@@ -815,22 +807,28 @@
       </tbody>
     </table>
   </div>
-
   <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
     <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
   </div>
-</div>
 
+  <!-- CONTENEDOR EXCLUSIVO PARA FOTOS AL IMPRIMIR (solo visible al imprimir) -->
+  <div id="printTestCont" style="display:none;" class="mt-4">
+    <div class="text-[10px] font-black uppercase text-slate-700 mb-2">📷 Imágenes del Test</div>
+    <div id="printTestGallery" class="flex flex-wrap gap-2 justify-center">
+      <!-- Las imágenes se clonan aquí justo antes de imprimir -->
+    </div>
+  </div>
+
+</div>
 <footer class="mt-auto pt-2">
   <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
     <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
     Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California. Teléfono: (0212) 271-0435
   </div>
 </footer>
-
 <div class="no-print flex justify-between gap-4 mt-4">
   <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="flex-1 bg-slate-200 py-2 rounded-lg font-black text-[10px] uppercase text-slate-600 border border-slate-300">⬅ Volver</button>
-  <button type="button" onclick="window.print()" class="flex-1 bg-blue-700 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨 Imprimir</button>
+  <button type="button" onclick="window.imprimirHojaTest()" class="flex-1 bg-blue-700 text-white py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨 Imprimir</button>
 </div>
 </section>
   <!-- ========== BUSCADOR ========== -->
@@ -1784,7 +1782,7 @@
 window.guardarFirebase = async (imp) => {
     const selectorDoc = document.getElementById('selectDoctor');
     const nombreDoctor = selectorDoc ? selectorDoc.value : "";
-    if (!nombreDoctor) return alert("⚠️ Seleccione un doctor para firmar.");
+    if (!nombreDoctor) return alert("⚠ Seleccione un doctor para firmar.");
     const pinIngresado = prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);
     if (!pinIngresado) return;
     const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
@@ -1796,7 +1794,6 @@ window.guardarFirebase = async (imp) => {
         btnGuardar.innerText = "⏳ PROCESANDO...";
     }
     try {
-        // --- FUNCIÓN DE LECTURA SIMPLE (BASE64) ---
         const leerImagen = (archivo) => {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -1807,31 +1804,42 @@ window.guardarFirebase = async (imp) => {
         };
         const fileHistoria = document.getElementById('inputFotoHistoria')?.files[0];
         const fileTest     = document.getElementById('inputFotoTest')?.files[0];
-
-        // 1. Prioridad de imágenes: Primero el input manual, si no, lo que llegó por QR
         let urlFotoFinal = "";
         if (fileHistoria) {
             btnGuardar.innerText = "📸 Cargando Historia...";
             const base64H   = await leerImagen(fileHistoria);
-            urlFotoFinal    = await comprimirImagen(base64H);   // usa el compresor
+            urlFotoFinal    = await comprimirImagen(base64H);
         } else {
             urlFotoFinal = document.getElementById('pUrlExamen')?.value || "";
         }
-
         let urlFotoTestFinal = "";
         if (fileTest) {
             btnGuardar.innerText = "🧪 Cargando Test...";
             const base64T      = await leerImagen(fileTest);
-            urlFotoTestFinal   = await comprimirImagen(base64T); // usa el compresor
+            urlFotoTestFinal   = await comprimirImagen(base64T);
         } else {
             urlFotoTestFinal = document.getElementById('pUrlTest')?.value || "";
         }
 
+        // ===== LEER TABLA DE TESTS (AJUSTADO) =====
         const listaTests = [];
         document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila => {
-            const nombre    = fila.cells[0].querySelector('input')?.value || fila.cells[0].innerText.trim();
-            const resultado = fila.cells[1].querySelector('select')?.value;
-            const nota      = fila.cells[2].querySelector('input')?.value || "";
+            // Nombre: input si es "OTRO", si no el texto del span
+            const inputNombre = fila.cells[0]?.querySelector('input');
+            const nombre = inputNombre
+                ? inputNombre.value.trim()
+                : (fila.cells[0]?.querySelector('span')?.innerText?.trim() || fila.cells[0]?.innerText?.trim() || "");
+
+            // Resultado: leer del span espejo (resultado-print) como fuente principal,
+            // con fallback al select por si el span aún no fue actualizado
+            const spanResultado = fila.cells[1]?.querySelector('.resultado-print');
+            const selectResultado = fila.cells[1]?.querySelector('select');
+            const resultado = (spanResultado?.innerText?.trim() && spanResultado.innerText.trim() !== "---")
+                ? spanResultado.innerText.trim()
+                : (selectResultado?.value || "---");
+
+            const nota = fila.cells[2]?.querySelector('input')?.value?.trim() || "";
+
             if (nombre && resultado && resultado !== "---") {
                 listaTests.push({ nombre, resultado, nota });
             }
@@ -1840,17 +1848,14 @@ window.guardarFirebase = async (imp) => {
         const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
         const configSnap = await getDoc(doc(db, "configuracion", "tarifas"));
         let porcGlobal = configSnap.exists() ? (configSnap.data().porcentajeDoc || null) : null;
-
         const montoVentaTotal = parseFloat(document.getElementById('precioVenta')?.value) || 0;
         let totalGastos = 0;
         let pagoDoctorTotal = 0;
         const detalleInsumos = [];
-
         document.querySelectorAll('.servicio-principal').forEach(fila => {
             const grupoID = fila.getAttribute('data-grupo');
             const precioServicio = parseFloat(fila.getAttribute('data-precio')) || 0;
             const pEfect = porcGlobal || parseFloat(fila.getAttribute('data-porc')) || 0;
-
             let gastosEsteServicio = 0;
             document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(insumoFila => {
                 const cant  = parseFloat(insumoFila.querySelector('.i-cant')?.value) || 0;
@@ -1865,20 +1870,15 @@ window.guardarFirebase = async (imp) => {
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
-        // ===== LEER TABLA HOJA DE VACUNAS / DESPARASITACIONES =====
+        // ===== LEER HOJA DE VACUNAS / DESPARASITACIONES =====
         const leerTablaVacunas = () => {
-            const resultado = {
-                vacunas: [],
-                desparasitaciones: []
-            };
+            const resultado = { vacunas: [], desparasitaciones: [] };
             try {
                 const bloqueVacunas = document.querySelector('#bloqueVacunas');
                 if (bloqueVacunas) {
                     const tablas = bloqueVacunas.querySelectorAll('table');
-                    // 1) Tabla Control de Vacunación (primera tabla)
                     if (tablas[0]) {
-                        const filasVac = tablas[0].querySelectorAll('tbody tr');
-                        filasVac.forEach(tr => {
+                        tablas[0].querySelectorAll('tbody tr').forEach(tr => {
                             const celdas = tr.querySelectorAll('td');
                             if (celdas.length >= 5) {
                                 const fecha   = celdas[0].querySelector('input')?.value.trim() || "";
@@ -1886,30 +1886,20 @@ window.guardarFirebase = async (imp) => {
                                 const peso    = celdas[2].querySelector('input')?.value.trim() || "";
                                 const proxima = celdas[3].querySelector('input')?.value.trim() || "";
                                 const firma   = celdas[4].querySelector('input')?.value.trim() || "";
-                                if (fecha || vacuna) {
-                                    resultado.vacunas.push({
-                                        fecha, vacuna, peso, proxima, firma
-                                    });
-                                }
+                                if (fecha || vacuna) resultado.vacunas.push({ fecha, vacuna, peso, proxima, firma });
                             }
                         });
                     }
-                    // 2) Tabla Desparasitaciones (segunda tabla)
                     if (tablas[1]) {
-                        const filasDesp = tablas[1].querySelectorAll('tbody tr');
-                        filasDesp.forEach(tr => {
+                        tablas[1].querySelectorAll('tbody tr').forEach(tr => {
                             const celdas = tr.querySelectorAll('td');
                             if (celdas.length >= 5) {
-                                const fecha   = celdas[0].querySelector('input')?.value.trim() || "";
-                                const producto= celdas[1].querySelector('input')?.value.trim() || "";
-                                const peso    = celdas[2].querySelector('input')?.value.trim() || "";
-                                const proxima = celdas[3].querySelector('input')?.value.trim() || "";
-                                const firma   = celdas[4].querySelector('input')?.value.trim() || "";
-                                if (fecha || producto) {
-                                    resultado.desparasitaciones.push({
-                                        fecha, producto, peso, proxima, firma
-                                    });
-                                }
+                                const fecha    = celdas[0].querySelector('input')?.value.trim() || "";
+                                const producto = celdas[1].querySelector('input')?.value.trim() || "";
+                                const peso     = celdas[2].querySelector('input')?.value.trim() || "";
+                                const proxima  = celdas[3].querySelector('input')?.value.trim() || "";
+                                const firma    = celdas[4].querySelector('input')?.value.trim() || "";
+                                if (fecha || producto) resultado.desparasitaciones.push({ fecha, producto, peso, proxima, firma });
                             }
                         });
                     }
@@ -1919,28 +1909,21 @@ window.guardarFirebase = async (imp) => {
             }
             return resultado;
         };
-
         const datosVacunas = leerTablaVacunas();
 
-        // --- LEER TODAS LAS FOTOS DE LAS GALERÍAS DE PREVIEW (PC + QR) ---
+        // ===== LEER FOTOS DE GALERÍAS =====
         const leerTodasLasFotosDeGaleria = (galeriaId) => {
             const galeria = document.getElementById(galeriaId);
             if (!galeria) return [];
             const urls = [];
-            galeria.querySelectorAll('img').forEach(img => {
-                if (img.src) urls.push(img.src);
-            });
+            galeria.querySelectorAll('img').forEach(img => { if (img.src) urls.push(img.src); });
             return urls;
         };
-
         const fotosHistoria = leerTodasLasFotosDeGaleria('previewHistoriaGallery');
         const fotosTest     = leerTodasLasFotosDeGaleria('previewTestGallery');
-
-        // Última de cada lista para compatibilidad con urlExamen / urlFotoTest
         const ultimaHistoria = fotosHistoria.length > 0 ? fotosHistoria[fotosHistoria.length - 1] : urlFotoFinal;
         const ultimaTest     = fotosTest.length > 0     ? fotosTest[fotosTest.length - 1]         : urlFotoTestFinal;
 
-        // --- ESTRUCTURA FINAL CORREGIDA (PARA EL AUTORRELLENO) ---
         const data = {
             cedula:      dInput('hCI'),
             propietario: dInput('hProp'),
@@ -1949,37 +1932,25 @@ window.guardarFirebase = async (imp) => {
             raza:        dInput('hRaza'),
             sexo:        dInput('hSexo'),
             edad:        dInput('hEdad'),
-
-            // CAMPOS NUEVOS PARA QUE EL RADAR FUNCIONE:
             peso:        dInput('hPeso'),
             color:       dInput('hColor'),
             telefono:    dInput('hTlf'),
             correo:      dInput('hMail'),
             direccion:   dInput('hDir'),
-            alerta:      document.getElementById('hAlerta')?.checked || false,  // opcional
-
+            alerta:      document.getElementById('hAlerta')?.checked || false,
             doctor:      nombreDoctor,
-
-            // Compatibilidad (última foto)
             urlExamen:   ultimaHistoria || "",
             urlFotoTest: ultimaTest     || "",
-
-            // TODAS LAS FOTOS (PC + QR)
             fotosHistoria: fotosHistoria,
             fotosTest:     fotosTest,
-
             testsRealizados: listaTests,
-
-            // HOJA DE VACUNAS
             vacunasAplicadas:           datosVacunas.vacunas,
             desparasitacionesAplicadas: datosVacunas.desparasitaciones,
-
             montoVenta:   montoVentaTotal,
             montoInsumos: totalGastos,
             pagoDoctor:   pagoDoctorTotal,
             pagoAvipet:   (montoVentaTotal - totalGastos - pagoDoctorTotal),
             listaDetalladaInsumos: detalleInsumos,
-
             tratamiento:  dInput('hTratamiento'),
             fecha:        serverTimestamp(),
             fechaSimple:  new Date().toLocaleDateString()
@@ -1999,6 +1970,7 @@ window.guardarFirebase = async (imp) => {
         }
     }
 };
+
   // =========================================================
   // CONFIGURACIÓN DE TASA CAMBIARIA (MODO DUAL: AUTO/MANUAL)
   // =========================================================
@@ -5402,37 +5374,34 @@ window.volverAHistoriaDesdeVacunas = () => {
     }, 500);
   };
 window.imprimirHojaTest = function() {
-    // 1. Ubicamos los contenedores
     const previewGallery = document.getElementById('previewTestGallery');
-    const printGallery = document.getElementById('printTestGallery');
-    const printContainer = document.getElementById('printTestCont');
-
-    if (!previewGallery || !printGallery) {
-        console.error("No se encontraron las galerías de fotos.");
-        return;
-    }
-
-    // 2. LIMPIEZA Y CLONACIÓN: Pasamos las fotos de la pantalla al papel
-    printGallery.innerHTML = ""; // Limpiamos rastro anterior
+    const printGallery = document.getElementById('printTestGalleryVacunas');
+    const printContainer = document.getElementById('printTestContVacunas');
     
-    const fotos = previewGallery.querySelectorAll('img');
-    fotos.forEach(foto => {
-        const clon = foto.cloneNode(true);
-        clon.classList.add('foto-anexo'); // La clase que definimos en el CSS
-        printGallery.appendChild(clon);
+    if (printGallery && previewGallery) {
+        printGallery.innerHTML = "";
+        previewGallery.querySelectorAll('img').forEach(foto => {
+            const wrapper = document.createElement('div');
+            wrapper.style = 'border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;';
+            wrapper.innerHTML = `<img src="${foto.src}" style="max-width:100%;max-height:260px;object-fit:contain;display:block;">`;
+            printGallery.appendChild(wrapper);
+        });
+        if (printGallery.children.length > 0) printContainer.style.display = 'block';
+    }
+    
+    // Sincronizar spans de resultado antes de imprimir
+    document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(tr => {
+        const select = tr.cells[1]?.querySelector('select');
+        const span = tr.cells[1]?.querySelector('.resultado-print');
+        if (select && span) span.innerText = select.value;
     });
-
-    // 3. FORCE VISIBILITY: Quitamos el 'hidden' momentáneamente para la impresora
-    printContainer.classList.remove('hidden');
-
-    // 4. TRUCO DE TIEMPO: Esperamos 300ms para que el navegador renderice las fotos
+    
     setTimeout(() => {
         window.print();
-        
-        // 5. RE-OCULTAR: Después de imprimir (o cancelar), volvemos a esconder el bloque en pantalla
-        printContainer.classList.add('hidden');
-    }, 300);
+        if (printContainer) printContainer.style.display = 'none';
+    }, 400);
 };
+
  // --- NUEVA FUNCIÓN PARA EL SELECTOR DE FORMATOS ---
 window.cambiarTipoFormato = (valor) => {
     const tituloDoc = document.getElementById('tituloDocumentoDinámico');
@@ -5462,7 +5431,6 @@ window.agregarFilaTest = (nombre) => {
     if (!nombre) return;
     const tabla = document.getElementById('cuerpoTablaCertificado');
     if (!tabla) return;
-
     const fila = document.createElement('tr');
     fila.className = "h-14 border-b border-slate-400 bg-white";
     
@@ -5476,7 +5444,7 @@ window.agregarFilaTest = (nombre) => {
             <select 
                 class="print:hidden font-black text-[11px] border rounded p-1 uppercase outline-none bg-white w-full cursor-pointer" 
                 onchange="
-                    const espejo = this.nextElementSibling;
+                    const espejo = this.parentElement.querySelector('.resultado-print');
                     const valor = this.value;
                     espejo.innerText = valor;
                     const color = (valor.includes('POSITIVO')) ? '#dc2626' : (valor.includes('NEGATIVO') ? '#16a34a' : 'black');
@@ -5490,7 +5458,7 @@ window.agregarFilaTest = (nombre) => {
                 <option value="INVALIDO">INVALIDO</option>
             </select>
             
-            <div class="hidden print:block font-black text-[12px] uppercase text-center">---</div>
+            <span class="resultado-print hidden print:inline font-black text-[12px] uppercase text-center">---</span>
         </td>
         <td class="px-2 border-l border-slate-300">
             <input type="text" class="w-full outline-none text-[10px] bg-transparent italic" placeholder="Nota..." oninput="this.setAttribute('value', this.value)">
@@ -5501,6 +5469,7 @@ window.agregarFilaTest = (nombre) => {
     `;
     tabla.appendChild(fila);
 };
+
 // =========================================================
 // [PELUQUERÍA PRO] - VERSIÓN PURA (SIN INSUMOS)
 // =========================================================
