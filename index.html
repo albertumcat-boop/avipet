@@ -82,7 +82,6 @@
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
  /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
-/* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
 @media print {
     /* 0. REGLA DE ORO: FORZAR COLORES E IMÁGENES */
     * {
@@ -5461,28 +5460,28 @@ window.cambiarTipoFormato = (valor) => {
 // --- FUNCIÓN DINÁMICA PARA EL CERTIFICADO DE TESTS ---
 window.agregarFilaTest = (nombre) => {
     if (!nombre) return;
-    
     const tabla = document.getElementById('cuerpoTablaCertificado');
     if (!tabla) return;
 
-    const esOtro = (nombre === "OTRO");
     const fila = document.createElement('tr');
     fila.className = "h-14 border-b border-slate-400 bg-white";
     
     fila.innerHTML = `
         <td class="px-3 font-bold uppercase italic text-slate-800">
-            ${esOtro ? 
+            ${nombre === "OTRO" ? 
                 `<input type="text" class="w-full border-b border-blue-300 outline-none bg-transparent" placeholder="NOMBRE DEL TEST..." oninput="this.setAttribute('value', this.value)">` : 
                 `<span>${nombre}</span>`}
         </td>
         <td class="px-2 text-center border-l border-r border-slate-200 relative">
             <select 
-                class="print:hidden font-black text-[11px] border rounded p-1 uppercase outline-none bg-white w-full" 
+                class="print:hidden font-black text-[11px] border rounded p-1 uppercase outline-none bg-white w-full cursor-pointer" 
                 onchange="
                     const espejo = this.nextElementSibling;
-                    espejo.innerText = this.value;
-                    this.style.color = (this.value.includes('POSITIVO')) ? '#dc2626' : (this.value.includes('NEGATIVO') ? '#16a34a' : 'black');
-                    espejo.style.color = this.style.color;
+                    const valor = this.value;
+                    espejo.innerText = valor;
+                    const color = (valor.includes('POSITIVO')) ? '#dc2626' : (valor.includes('NEGATIVO') ? '#16a34a' : 'black');
+                    this.style.color = color;
+                    espejo.style.color = color;
                 "
             >
                 <option value="---">---</option>
@@ -5490,19 +5489,16 @@ window.agregarFilaTest = (nombre) => {
                 <option value="POSITIVO (+)">POSITIVO (+)</option>
                 <option value="INVALIDO">INVALIDO</option>
             </select>
+            
             <div class="hidden print:block font-black text-[12px] uppercase text-center">---</div>
         </td>
         <td class="px-2 border-l border-slate-300">
-            <input type="text" 
-                   class="w-full outline-none text-[10px] bg-transparent italic" 
-                   placeholder="Añadir nota médica..."
-                   oninput="this.setAttribute('value', this.value)">
+            <input type="text" class="w-full outline-none text-[10px] bg-transparent italic" placeholder="Nota..." oninput="this.setAttribute('value', this.value)">
         </td>
         <td class="no-print px-2 text-center">
             <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold">✕</button>
         </td>
     `;
-    
     tabla.appendChild(fila);
 };
 // =========================================================
