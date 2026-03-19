@@ -3652,27 +3652,87 @@ window.imprimirConsultaDesdeElemento = (btn) => {
     alert("No se encontró la consulta a imprimir.");
     return;
   }
-  window.imprimirConsultaBuscador(btn._consulta);
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);
+    display:flex;align-items:center;justify-content:center;z-index:9999;`;
+
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:24px;min-width:300px;
+                box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <h3 style="font-size:14px;font-weight:900;color:#1e293b;
+                 margin:0 0 16px;text-transform:uppercase;letter-spacing:.05em;">
+        🖨 ¿Qué deseas imprimir?
+      </h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="optInsumos" checked
+                 style="width:16px;height:16px;accent-color:#2563eb;">
+          Insumos utilizados
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="optTests" checked
+                 style="width:16px;height:16px;accent-color:#7c3aed;">
+          Tests rápidos
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="optVacunas" checked
+                 style="width:16px;height:16px;accent-color:#0f766e;">
+          Vacunas y desparasitaciones
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="optFotos" checked
+                 style="width:16px;height:16px;accent-color:#0284c7;">
+          Anexos / Fotos
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="btnCancelarPrint"
+                style="padding:8px 16px;border-radius:8px;border:1px solid #e2e8f0;
+                       background:white;font-size:12px;cursor:pointer;font-weight:bold;">
+          Cancelar
+        </button>
+        <button id="btnConfirmarPrint"
+                style="padding:8px 20px;border-radius:8px;border:none;
+                       background:#2563eb;color:white;font-size:12px;
+                       cursor:pointer;font-weight:900;">
+          Imprimir
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('btnCancelarPrint').onclick = () => overlay.remove();
+
+  document.getElementById('btnConfirmarPrint').onclick = () => {
+    const opciones = {
+      insumos: document.getElementById('optInsumos').checked,
+      tests:   document.getElementById('optTests').checked,
+      vacunas: document.getElementById('optVacunas').checked,
+      fotos:   document.getElementById('optFotos').checked,
+    };
+    overlay.remove();
+    window.imprimirConsultaBuscador(btn._consulta, opciones);
+  };
 };
 
-window.imprimirConsultaBuscador = (consulta) => {
+window.imprimirConsultaBuscador = (consulta, opciones = {}) => {
+  const {
+    insumos: mostrarInsumos = true,
+    tests:   mostrarTests   = true,
+    vacunas: mostrarVacunas = true,
+    fotos:   mostrarFotos   = true,
+  } = opciones;
+
   const win = window.open("", "_blank", "width=900,height=700");
   if (!win) return;
 
   const {
-    paciente,
-    propietario,
-    cedula,
-    especie,
-    raza,
-    edad,
-    sexo,
-    peso,
-    color,
-    telefono,
-    direccion,
-    doctor,
-    fechaSimple,
+    paciente, propietario, cedula,
+    especie, raza, edad, sexo, peso, color,
+    telefono, direccion, doctor, fechaSimple,
     tratamiento = "",
     listaDetalladaInsumos = [],
     fotosHistoria = [],
@@ -3691,7 +3751,8 @@ window.imprimirConsultaBuscador = (consulta) => {
 
   if (listaFotosHistoria.length) {
     bloqueFotos += `
-      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
+      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;
+                 color:#334155;text-transform:uppercase;">
         Anexos: Exámenes / Documentos
       </h3>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -3703,7 +3764,8 @@ window.imprimirConsultaBuscador = (consulta) => {
   }
   if (listaFotosTest.length) {
     bloqueFotos += `
-      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
+      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;
+                 color:#334155;text-transform:uppercase;">
         Anexos: Resultados Test Rápido
       </h3>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -3816,23 +3878,12 @@ window.imprimirConsultaBuscador = (consulta) => {
         <title>Historia Clínica - ${paciente || ""}</title>
         <style>
           @page { size: letter; margin: 1.2cm 0.8cm 0.8cm 0.8cm; }
-          body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            color: #0f172a;
-            font-size: 12px;
-            padding: 16px;
-          }
-          h1 { font-size: 18px; margin: 0; color: #1d4ed8; }
-          h2 { font-size: 13px; margin: 2px 0 0; color: #64748b; }
-          pre { white-space: pre-wrap; font-size: 12px; line-height: 1.6; margin: 0; }
-          .bloque {
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 10px;
-            background: #f9fafb;
-          }
-          .bloque b { display: block; margin-bottom: 6px; color: #1e293b; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; color:#0f172a; font-size:12px; padding:16px; }
+          h1 { font-size:18px; margin:0; color:#1d4ed8; }
+          h2 { font-size:13px; margin:2px 0 0; color:#64748b; }
+          pre { white-space:pre-wrap; font-size:12px; line-height:1.6; margin:0; }
+          .bloque { border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-top:10px; background:#f9fafb; }
+          .bloque b { display:block; margin-bottom:6px; color:#1e293b; }
         </style>
       </head>
       <body>
@@ -3861,19 +3912,19 @@ window.imprimirConsultaBuscador = (consulta) => {
           <pre>${tratamiento}</pre>
         </div>
 
-        ${bloqueInsumos
+        ${mostrarInsumos && bloqueInsumos
           ? `<div class="bloque"><b>Insumos utilizados</b>${bloqueInsumos}</div>`
           : ""}
 
-        ${bloqueTests
+        ${mostrarTests && bloqueTests
           ? `<div class="bloque"><b>Tests Rápidos Realizados</b>${bloqueTests}</div>`
           : ""}
 
-        ${bloqueVacunasPrint
+        ${mostrarVacunas && bloqueVacunasPrint
           ? `<div class="bloque"><b>Vacunas y Desparasitaciones</b>${bloqueVacunasPrint}</div>`
           : ""}
 
-        ${bloqueFotos
+        ${mostrarFotos && bloqueFotos
           ? `<div class="bloque"><b>Anexos</b>${bloqueFotos}</div>`
           : ""}
       </body>
@@ -3882,10 +3933,7 @@ window.imprimirConsultaBuscador = (consulta) => {
 
   win.document.close();
   win.onload = () => {
-    setTimeout(() => {
-      win.focus();
-      win.print();
-    }, 400);
+    setTimeout(() => { win.focus(); win.print(); }, 400);
   };
 };
   // =========================================================
@@ -5500,35 +5548,34 @@ window.agregarFilaTest = (nombre) => {
     if (!tabla) return;
     const fila = document.createElement('tr');
     fila.className = "h-14 border-b border-slate-400 bg-white";
-    
     fila.innerHTML = `
         <td class="px-3 font-bold uppercase italic text-slate-800">
-            ${nombre === "OTRO" ? 
-                `<input type="text" class="w-full border-b border-blue-300 outline-none bg-transparent" placeholder="NOMBRE DEL TEST..." oninput="this.setAttribute('value', this.value)">` : 
+            ${nombre === "OTRO" ?
+                `<input type="text" class="w-full border-b border-blue-300 outline-none bg-transparent" placeholder="NOMBRE DEL TEST..." oninput="this.setAttribute('value', this.value)">` :
                 `<span>${nombre}</span>`}
         </td>
         <td class="px-2 text-center border-l border-r border-slate-200 relative">
-            <select 
-                class="print:hidden font-black text-[11px] border rounded p-1 uppercase outline-none bg-white w-full cursor-pointer" 
+            <select
+                class="print:hidden font-black text-[11px] border rounded p-1 uppercase outline-none bg-white w-full cursor-pointer"
                 onchange="
                     const espejo = this.parentElement.querySelector('.resultado-print');
                     const valor = this.value;
                     espejo.innerText = valor;
-                    const color = (valor.includes('POSITIVO')) ? '#dc2626' : (valor.includes('NEGATIVO') ? '#16a34a' : 'black');
+                    const color = valor.includes('POSITIVO') ? '#dc2626' : valor.includes('NEGATIVO') ? '#16a34a' : 'black';
                     this.style.color = color;
                     espejo.style.color = color;
-                "
-            >
+                ">
                 <option value="---">---</option>
                 <option value="NEGATIVO (-)">NEGATIVO (-)</option>
                 <option value="POSITIVO (+)">POSITIVO (+)</option>
                 <option value="INVALIDO">INVALIDO</option>
             </select>
-            
-            <span class="resultado-print hidden print:inline font-black text-[12px] uppercase text-center">---</span>
+            <span class="resultado-print font-black text-[12px] uppercase text-center"
+                  style="display:none;">---</span>
         </td>
         <td class="px-2 border-l border-slate-300">
-            <input type="text" class="w-full outline-none text-[10px] bg-transparent italic" placeholder="Nota..." oninput="this.setAttribute('value', this.value)">
+            <input type="text" class="w-full outline-none text-[10px] bg-transparent italic"
+                   placeholder="Nota..." oninput="this.setAttribute('value', this.value)">
         </td>
         <td class="no-print px-2 text-center">
             <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold">✕</button>
@@ -5536,7 +5583,6 @@ window.agregarFilaTest = (nombre) => {
     `;
     tabla.appendChild(fila);
 };
-
 // =========================================================
 // [PELUQUERÍA PRO] - VERSIÓN PURA (SIN INSUMOS)
 // =========================================================
