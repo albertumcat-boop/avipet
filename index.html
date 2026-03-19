@@ -263,7 +263,7 @@
               class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none mb-1">
         <option value="">-- SELECCIONE DOCTOR --</option>
         <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
-        <option value="Joan Silva">DRA. JOAN SILVA</option>
+        <option value="Joan Silva">DR. JOAN SILVA</option>
       </select>
 
       <div class="no-print mt-1 flex gap-2 justify-end">
@@ -486,15 +486,6 @@
 
 
 <!-- GALERÍA MÚLTIPLE PARA IMPRESIÓN - TEST -->
-<div id="printTestCont" class="hidden print:block mt-4 text-center">
-  <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">
-    Anexos: Resultados Test Rápido
-  </p>
-  <div id="printTestGallery"
-       class="flex flex-wrap gap-3 justify-center">
-    <!-- Aquí se clonarán las imágenes de previewTestGallery al imprimir -->
-  </div>
-</div>
 
 <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
     <label class="block text-[10px] font-black text-slate-500 uppercase mb-2 italic tracking-widest">
@@ -922,7 +913,7 @@
                         <span id="repDocSandoval" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold uppercase text-slate-600 italic">Dra. Joan Silva</span>
+                        <span class="text-[10px] font-bold uppercase text-slate-600 italic">Dr. Joan Silva</span>
                         <span id="repDocSilva" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
                     </div>
                 </div>
@@ -1840,7 +1831,8 @@ window.guardarFirebase = async (imp) => {
 
             const nota = fila.cells[2]?.querySelector('input')?.value?.trim() || "";
 
-            if (nombre && resultado && resultado !== "---") {
+            // DESPUÉS (guarda el test aunque no se haya cambiado el resultado):
+              if (nombre) {
                 listaTests.push({ nombre, resultado, nota });
             }
         });
@@ -2674,7 +2666,7 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
 
     if (esValido) {
       window.doctorVerificado = nombre;
-      const prefijo = (nombre === "Joan Silva") ? "DRA. " : "DR. ";
+      const prefijo = (nombre === "Joan Silva") ? "DR. " : "DR. ";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
       alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
@@ -3373,13 +3365,11 @@ window.buscarPorCedula = async () => {
   const selectPac  = document.getElementById('searchPaciente');
   const selectMode = document.getElementById('searchMode');
   const contenedor = document.getElementById('resultadosBusqueda');
-
   const modo = selectMode ? selectMode.value : 'ci';
 
-  // En modo CI, la cédula es obligatoria
   if (modo === 'ci') {
     if (!inputCI || !inputCI.value.trim()) {
-      alert("⚠️ Ingrese una cédula, Albert.");
+      alert("⚠ Ingrese una cédula, Albert.");
       return;
     }
   }
@@ -3396,29 +3386,20 @@ window.buscarPorCedula = async () => {
   try {
     const consultasRef = collection(db, "consultas");
     let q;
-
     if (modo === 'ci') {
-      q = query(
-        consultasRef,
-        where("cedula", "==", ci)
-        // , orderBy("fecha", "desc")
-      );
+      q = query(consultasRef, where("cedula", "==", ci));
     } else {
       q = query(consultasRef);
     }
 
     const snap = await getDocs(q);
-
     if (snap.empty) {
       contenedor.innerHTML =
         `<p class="p-6 text-center text-slate-500">No hay registros para el criterio seleccionado.</p>`;
-      if (selectPac) {
-        selectPac.innerHTML = '<option value="">-- TODOS --</option>';
-      }
+      if (selectPac) selectPac.innerHTML = '<option value="">-- TODOS --</option>';
       return;
     }
 
-    // Si modo = CI, llenamos la lista de pacientes
     if (modo === 'ci' && selectPac) {
       const setPacientes = new Set();
       snap.forEach(docSnap => {
@@ -3436,38 +3417,27 @@ window.buscarPorCedula = async () => {
       if (seleccionadoAntes) selectPac.value = seleccionadoAntes;
     }
 
-    // Pasamos a array para poder ordenar por fecha
     const registros = [];
-    snap.forEach(docSnap => {
-      registros.push(docSnap.data());
-    });
+    snap.forEach(docSnap => registros.push(docSnap.data()));
 
-    // Ordenar por fecha (más reciente primero)
     registros.sort((a, b) => {
-      if (a.fecha && a.fecha.toDate && b.fecha && b.fecha.toDate) {
-        return b.fecha.toDate() - a.fecha.toDate();
-      }
-      const fsA = a.fechaSimple || "";
-      const fsB = b.fechaSimple || "";
-      const [dA, mA, yA] = fsA.split('/').map(Number);
-      const [dB, mB, yB] = fsB.split('/').map(Number);
-      const da = new Date(yA || 0, (mA || 1) - 1, dA || 1);
-      const db = new Date(yB || 0, (mB || 1) - 1, dB || 1);
-      return db - da;
+      if (a.fecha?.toDate && b.fecha?.toDate) return b.fecha.toDate() - a.fecha.toDate();
+      const parse = fs => {
+        const [d, m, y] = (fs || '').split('/').map(Number);
+        return new Date(y || 0, (m || 1) - 1, d || 1);
+      };
+      return parse(b.fechaSimple) - parse(a.fechaSimple);
     });
 
     contenedor.innerHTML = "";
 
     registros.forEach(d => {
-      // Filtro por paciente si está seleccionado
       if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
 
       const div = document.createElement('div');
       div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
 
-      const drPref = (d.doctor === "Joan Silva") ? "Dra." : "Dr.";
-
-      // INSUMOS
+      // ── INSUMOS ──────────────────────────────────────────────
       const insHtml = d.listaDetalladaInsumos
         ? d.listaDetalladaInsumos.map(ins => `
             <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
@@ -3476,7 +3446,7 @@ window.buscarPorCedula = async () => {
             </div>`).join('')
         : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
-      // TESTS RÁPIDOS (nuevo bloque)
+      // ── TESTS RÁPIDOS ─────────────────────────────────────────
       let testsHtml = "";
       if (Array.isArray(d.testsRealizados) && d.testsRealizados.length > 0) {
         testsHtml = `
@@ -3504,9 +3474,59 @@ window.buscarPorCedula = async () => {
           </div>`;
       }
 
-      // FOTOS
-      let fotosHtml = "";
+     // ── VACUNAS Y DESPARASITACIONES ───────────────────────────
+      let vacunasHtml = "";
+      const tieneVacunas = Array.isArray(d.vacunasAplicadas) && d.vacunasAplicadas.length > 0;
+      const tieneDesp    = Array.isArray(d.desparasitacionesAplicadas) && d.desparasitacionesAplicadas.length > 0;
 
+      if (tieneVacunas || tieneDesp) {
+        vacunasHtml = `<div class="mt-4">`;
+
+        if (tieneVacunas) {
+          vacunasHtml += `
+            <p class="text-[10px] font-bold text-teal-600 border-b mb-1 uppercase">
+              Vacunas Aplicadas:
+            </p>
+            <div class="space-y-1 text-[11px] mb-3">
+              ${d.vacunasAplicadas.map(v => `
+                <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
+                  <div>
+                    <p class="font-bold text-slate-800 uppercase">${v.vacuna || ''}</p>
+                    <p class="text-[10px] text-slate-500 italic">
+                      ${[v.peso ? 'Peso: ' + v.peso : '', v.proxima ? 'Próxima: ' + v.proxima : ''].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                  <span class="text-[10px] font-black text-teal-700">${v.fecha || ''}</span>
+                </div>
+              `).join('')}
+            </div>`;
+        }
+
+        if (tieneDesp) {
+          vacunasHtml += `
+            <p class="text-[10px] font-bold text-amber-600 border-b mb-1 uppercase">
+              Desparasitaciones:
+            </p>
+            <div class="space-y-1 text-[11px]">
+              ${d.desparasitacionesAplicadas.map(dp => `
+                <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
+                  <div>
+                    <p class="font-bold text-slate-800 uppercase">${dp.producto || ''}</p>
+                    <p class="text-[10px] text-slate-500 italic">
+                      ${[dp.peso ? 'Peso: ' + dp.peso : '', dp.proxima ? 'Próxima: ' + dp.proxima : ''].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                  <span class="text-[10px] font-black text-amber-700">${dp.fecha || ''}</span>
+                </div>
+              `).join('')}
+            </div>`;
+        }
+
+        vacunasHtml += `</div>`;
+      }
+
+      // ── FOTOS ─────────────────────────────────────────────────
+      let fotosHtml = "";
       const listaHistoria = Array.isArray(d.fotosHistoria)
         ? d.fotosHistoria
         : (d.urlExamen ? [d.urlExamen] : []);
@@ -3521,7 +3541,6 @@ window.buscarPorCedula = async () => {
           </p>
           <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
 
-        // Historia
         listaHistoria.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
@@ -3534,7 +3553,6 @@ window.buscarPorCedula = async () => {
             </div>`;
         });
 
-        // Test
         listaTest.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
@@ -3550,7 +3568,8 @@ window.buscarPorCedula = async () => {
         fotosHtml += `</div>`;
       }
 
-      // TARJETA COMPLETA DEL RESULTADO
+      // ── TARJETA COMPLETA ──────────────────────────────────────
+      const drPref = "Dr.";
       div.innerHTML = `
         <details class="group">
           <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
@@ -3584,6 +3603,7 @@ window.buscarPorCedula = async () => {
               </div>
             </div>
             ${testsHtml}
+            ${vacunasHtml}
             ${fotosHtml}
             <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
               <div class="flex flex-col gap-1">
@@ -3605,17 +3625,14 @@ window.buscarPorCedula = async () => {
 
       contenedor.appendChild(div);
 
-      // Guardamos la consulta en la propiedad del botón para poder imprimir luego
       const btnImpr = div.querySelector('button[onclick^="window.imprimirConsultaDesdeElemento"]');
-      if (btnImpr) {
-        btnImpr._consulta = d;
-      }
+      if (btnImpr) btnImpr._consulta = d;
     });
 
   } catch (e) {
     console.error("❌ Fallo en la consulta:", e);
-    if (e.message && e.message.includes("index")) {
-      alert("⚠️ ERROR DE ÍNDICE: si vuelves a activar orderBy, tendrás que crear el índice en Firestore (mira la consola F12 para el enlace).");
+    if (e.message?.includes("index")) {
+      alert("⚠ ERROR DE ÍNDICE: crea el índice en Firestore (mira la consola F12 para el enlace).");
     } else {
       alert("Error en búsqueda: " + e.message);
     }
@@ -3629,8 +3646,8 @@ window.imprimirConsultaDesdeElemento = (btn) => {
   }
   window.imprimirConsultaBuscador(btn._consulta);
 };
+
 window.imprimirConsultaBuscador = (consulta) => {
-  // Abre una ventana nueva
   const win = window.open("", "_blank", "width=900,height=700");
   if (!win) return;
 
@@ -3652,18 +3669,14 @@ window.imprimirConsultaBuscador = (consulta) => {
     listaDetalladaInsumos = [],
     fotosHistoria = [],
     fotosTest = [],
-    testsRealizados = []   // <-- tests rápidos guardados en Firestore
+    testsRealizados = []
   } = consulta;
 
-  // -------------------------
-  // BLOQUE FOTOS (Historia + Test)
-  // -------------------------
+  // ── FOTOS ─────────────────────────────────────────────────────
   let bloqueFotos = "";
-
   const listaFotosHistoria = Array.isArray(fotosHistoria) && fotosHistoria.length
     ? fotosHistoria
     : (consulta.urlExamen ? [consulta.urlExamen] : []);
-
   const listaFotosTest = Array.isArray(fotosTest) && fotosTest.length
     ? fotosTest
     : (consulta.urlFotoTest ? [consulta.urlFotoTest] : []);
@@ -3677,11 +3690,9 @@ window.imprimirConsultaBuscador = (consulta) => {
         ${listaFotosHistoria.map(src => `
           <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
             <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
-          </div>
-        `).join("")}
+          </div>`).join("")}
       </div>`;
   }
-
   if (listaFotosTest.length) {
     bloqueFotos += `
       <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
@@ -3691,14 +3702,11 @@ window.imprimirConsultaBuscador = (consulta) => {
         ${listaFotosTest.map(src => `
           <div style="border:1px solid #e2e8f0;border-radius:8px;padding:4px;max-width:45%;">
             <img src="${src}" style="max-width:100%;max-height:280px;object-fit:contain;display:block;">
-          </div>
-        `).join("")}
+          </div>`).join("")}
       </div>`;
   }
 
-  // -------------------------
-  // BLOQUE INSUMOS
-  // -------------------------
+  // ── INSUMOS ───────────────────────────────────────────────────
   let bloqueInsumos = "";
   if (Array.isArray(listaDetalladaInsumos) && listaDetalladaInsumos.length) {
     bloqueInsumos = `
@@ -3716,23 +3724,17 @@ window.imprimirConsultaBuscador = (consulta) => {
               <td style="padding:4px;border:1px solid #e5e7eb;">${i.nombre || ""}</td>
               <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${i.cant || ""}</td>
               <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">
-                $${(i.costo || i.precio || 0).toFixed(2)}
+                $${parseFloat(i.costo ?? i.precio ?? 0).toFixed(2)}
               </td>
-            </tr>
-          `).join("")}
+            </tr>`).join("")}
         </tbody>
       </table>`;
   }
 
-  // -------------------------
-  // BLOQUE TESTS RÁPIDOS
-  // -------------------------
+  // ── TESTS RÁPIDOS ─────────────────────────────────────────────
   let bloqueTests = "";
   if (Array.isArray(testsRealizados) && testsRealizados.length) {
     bloqueTests = `
-      <h3 style="font-size:11px;margin:15px 0 5px;font-weight:bold;color:#334155;text-transform:uppercase;">
-        Tests Rápidos Realizados
-      </h3>
       <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:5px;">
         <thead>
           <tr style="background:#e5e7eb;">
@@ -3745,17 +3747,61 @@ window.imprimirConsultaBuscador = (consulta) => {
           ${testsRealizados.map(t => `
             <tr>
               <td style="padding:4px;border:1px solid #e5e7eb;">${t.nombre || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${t.resultado || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;
+                         font-weight:900;color:${
+                           (t.resultado || "").includes("POSI") ? "#dc2626" :
+                           (t.resultado || "").includes("NEGA") ? "#059669" : "#334155"
+                         }">
+                ${t.resultado || ""}
+              </td>
               <td style="padding:4px;border:1px solid #e5e7eb;">${t.nota || ""}</td>
-            </tr>
-          `).join("")}
+            </tr>`).join("")}
         </tbody>
       </table>`;
   }
 
-  // -------------------------
-  // HTML COMPLETO DE LA VENTANA
-  // -------------------------
+  // ── VACUNAS Y DESPARASITACIONES ───────────────────────────────
+  let bloqueVacunasPrint = "";
+  const vacList  = Array.isArray(consulta.vacunasAplicadas)
+    ? consulta.vacunasAplicadas.filter(v => v.fecha || v.vacuna)
+    : [];
+  const despList = Array.isArray(consulta.desparasitacionesAplicadas)
+    ? consulta.desparasitacionesAplicadas.filter(v => v.fecha || v.producto)
+    : [];
+
+  if (vacList.length || despList.length) {
+    bloqueVacunasPrint = `
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:5px;">
+        <thead>
+          <tr style="background:#e5e7eb;">
+            <th style="text-align:left;padding:4px;border:1px solid #cbd5e1;">Vacuna / Producto</th>
+            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Fecha</th>
+            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Próxima</th>
+            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Peso</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${vacList.map(v => `
+            <tr>
+              <td style="padding:4px;border:1px solid #e5e7eb;">${v.vacuna || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.fecha || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.proxima || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.peso || ""}</td>
+            </tr>`).join("")}
+          ${despList.map(v => `
+            <tr>
+              <td style="padding:4px;border:1px solid #e5e7eb;background:#fffbeb;">
+                ${v.producto || ""} <span style="font-size:9px;color:#92400e;">(Desp.)</span>
+              </td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.fecha || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.proxima || ""}</td>
+              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.peso || ""}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  // ── VENTANA DE IMPRESIÓN ──────────────────────────────────────
   win.document.write(`
     <html>
       <head>
@@ -3764,29 +3810,26 @@ window.imprimirConsultaBuscador = (consulta) => {
           @page { size: letter; margin: 1.2cm 0.8cm 0.8cm 0.8cm; }
           body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            color:#0f172a;
-            font-size:12px;
-            padding:16px;
+            color: #0f172a;
+            font-size: 12px;
+            padding: 16px;
           }
-          h1 { font-size:18px;margin:0;color:#1d4ed8; }
-          h2 { font-size:13px;margin:2px 0 0;color:#64748b; }
-          pre {
-            white-space:pre-wrap;
-            font-size:12px;
-            line-height:1.6;
-            margin:0;
-          }
+          h1 { font-size: 18px; margin: 0; color: #1d4ed8; }
+          h2 { font-size: 13px; margin: 2px 0 0; color: #64748b; }
+          pre { white-space: pre-wrap; font-size: 12px; line-height: 1.6; margin: 0; }
           .bloque {
-            border:1px solid #e2e8f0;
-            border-radius:10px;
-            padding:12px;
-            margin-top:10px;
-            background:#f9fafb;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+            background: #f9fafb;
           }
+          .bloque b { display: block; margin-bottom: 6px; color: #1e293b; }
         </style>
       </head>
       <body>
-        <div style="border-bottom:2px solid #3b82f6;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;">
+        <div style="border-bottom:2px solid #3b82f6;padding-bottom:8px;margin-bottom:10px;
+                    display:flex;justify-content:space-between;align-items:flex-end;">
           <div>
             <h1>AVIPET - Historia Clínica</h1>
             <h2>Paciente: <b>${(paciente || "").toUpperCase()}</b></h2>
@@ -3799,8 +3842,9 @@ window.imprimirConsultaBuscador = (consulta) => {
         </div>
 
         <div class="bloque">
-          <b>Ficha del Paciente</b><br>
-          Especie: ${especie || ""} · Raza: ${raza || ""} · Edad: ${edad || ""} · Sexo: ${sexo || ""} · Peso: ${peso || ""} · Color: ${color || ""}<br>
+          <b>Ficha del Paciente</b>
+          Especie: ${especie || ""} · Raza: ${raza || ""} · Edad: ${edad || ""} ·
+          Sexo: ${sexo || ""} · Peso: ${peso || ""} · Color: ${color || ""}<br>
           Teléfono: ${telefono || ""} · Dirección: ${direccion || ""}
         </div>
 
@@ -3809,11 +3853,21 @@ window.imprimirConsultaBuscador = (consulta) => {
           <pre>${tratamiento}</pre>
         </div>
 
-        ${bloqueInsumos ? `<div class="bloque"><b>Insumos utilizados</b>${bloqueInsumos}</div>` : ""}
+        ${bloqueInsumos
+          ? `<div class="bloque"><b>Insumos utilizados</b>${bloqueInsumos}</div>`
+          : ""}
 
-        ${bloqueTests ? `<div class="bloque"><b>Tests rápidos</b>${bloqueTests}</div>` : ""}
+        ${bloqueTests
+          ? `<div class="bloque"><b>Tests Rápidos Realizados</b>${bloqueTests}</div>`
+          : ""}
 
-        ${bloqueFotos ? `<div class="bloque"><b>Anexos</b>${bloqueFotos}</div>` : ""}
+        ${bloqueVacunasPrint
+          ? `<div class="bloque"><b>Vacunas y Desparasitaciones</b>${bloqueVacunasPrint}</div>`
+          : ""}
+
+        ${bloqueFotos
+          ? `<div class="bloque"><b>Anexos</b>${bloqueFotos}</div>`
+          : ""}
       </body>
     </html>
   `);
@@ -5326,7 +5380,7 @@ window.exportarExcelPeluqueria = async () => {
       logo: "petshop-admin/img/logo_darwin.jpg"
     },
     "DR_JOAN": {
-      nombre: "Dra. Joan Silva", // Corregido a Dra. como mencionaste antes
+      nombre: "Dr. Joan Silva", // Corregido a Dr. como mencionaste antes
       clinica: "AVIPET - Medicina Veterinaria",
       logo: "petshop-admin/img/logo_joan.jpg"
     }
@@ -5374,9 +5428,9 @@ window.volverAHistoriaDesdeVacunas = () => {
     }, 500);
   };
 window.imprimirHojaTest = function() {
-    const previewGallery = document.getElementById('previewTestGallery');
-    const printGallery = document.getElementById('printTestGalleryVacunas');
-    const printContainer = document.getElementById('printTestContVacunas');
+    const previewGallery  = document.getElementById('previewTestGallery');
+    const printGallery    = document.getElementById('printTestGallery');
+    const printContainer  = document.getElementById('printTestCont');
     
     if (printGallery && previewGallery) {
         printGallery.innerHTML = "";
@@ -5392,8 +5446,14 @@ window.imprimirHojaTest = function() {
     // Sincronizar spans de resultado antes de imprimir
     document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(tr => {
         const select = tr.cells[1]?.querySelector('select');
-        const span = tr.cells[1]?.querySelector('.resultado-print');
-        if (select && span) span.innerText = select.value;
+        const span   = tr.cells[1]?.querySelector('.resultado-print');
+        if (select && span) {
+            span.innerText = select.value;
+            const color = select.value.includes('POSITIVO') ? '#dc2626'
+                        : select.value.includes('NEGATIVO') ? '#16a34a'
+                        : 'black';
+            span.style.color = color;
+        }
     });
     
     setTimeout(() => {
@@ -5401,7 +5461,6 @@ window.imprimirHojaTest = function() {
         if (printContainer) printContainer.style.display = 'none';
     }, 400);
 };
-
  // --- NUEVA FUNCIÓN PARA EL SELECTOR DE FORMATOS ---
 window.cambiarTipoFormato = (valor) => {
     const tituloDoc = document.getElementById('tituloDocumentoDinámico');
