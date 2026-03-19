@@ -5485,10 +5485,18 @@ window.volverAHistoriaDesdeVacunas = () => {
   };
 window.imprimirHojaTest = function() {
 
-  // ── 1. DATOS DEL PACIENTE ─────────────────────────────────────
-  const paciente    = document.getElementById('hNombre')?.value     || "";
-  const propietario = document.getElementById('hProp')?.value       || "";
-  const especie     = document.getElementById('hEspecie')?.value    || "";
+  // ── 1. DATOS COMPLETOS DEL PACIENTE / CLIENTE ─────────────────
+  const paciente    = document.getElementById('hNombre')?.value      || "";
+  const propietario = document.getElementById('hProp')?.value        || "";
+  const cedula      = document.getElementById('hCI')?.value          || "";
+  const especie     = document.getElementById('hEspecie')?.value     || "";
+  const raza        = document.getElementById('hRaza')?.value        || "";
+  const edad        = document.getElementById('hEdad')?.value        || "";
+  const sexo        = document.getElementById('hSexo')?.value        || "";
+  const peso        = document.getElementById('hPeso')?.value        || "";
+  const color       = document.getElementById('hColor')?.value       || "";
+  const telefono    = document.getElementById('hTlf')?.value         || "";
+  const direccion   = document.getElementById('hDir')?.value         || "";
   const doctor      = document.getElementById('selectDoctor')?.value || "";
   const fecha       = new Date().toLocaleDateString();
 
@@ -5539,15 +5547,15 @@ window.imprimirHojaTest = function() {
     if (f.resultado.includes("NEGATIVO")) colorResultado = "#16a34a";
     return `
       <tr>
-        <td style="padding:10px;border:1px solid #cbd5e1;
-                   font-weight:bold;background:#f8fafc;">
+        <td style="padding:6px 8px;border:1px solid #e5e7eb;
+                   font-weight:bold;text-transform:uppercase;background:#f8fafc;">
           ${f.nombre}
         </td>
-        <td style="padding:10px;border:1px solid #cbd5e1;text-align:center;
+        <td style="padding:6px 8px;border:1px solid #e5e7eb;text-align:center;
                    font-weight:900;font-size:14px;color:${colorResultado};">
           ${f.resultado}
         </td>
-        <td style="padding:10px;border:1px solid #cbd5e1;
+        <td style="padding:6px 8px;border:1px solid #e5e7eb;
                    font-style:italic;color:#475569;font-size:11px;">
           ${f.nota || '-'}
         </td>
@@ -5556,22 +5564,19 @@ window.imprimirHojaTest = function() {
 
   // ── 5. CONSTRUIR FOTOS ────────────────────────────────────────
   const fotosHtml = fotos.length ? `
-    <div style="margin-top:30px;page-break-inside:avoid;">
-      <p style="font-size:11px;font-weight:900;text-transform:uppercase;color:#1e293b;
-                border-bottom:2px solid #e2e8f0;padding-bottom:5px;margin-bottom:15px;">
-        Anexos: Registro Fotográfico
-      </p>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;">
+    <div class="bloque" style="page-break-inside:avoid;">
+      <b>Anexos: Registro Fotográfico</b>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px;">
         ${fotos.map(src => `
           <div style="border:1px solid #e2e8f0;border-radius:10px;
                       overflow:hidden;background:#fff;text-align:center;">
             <img src="${src}"
-                 style="width:100%;height:250px;object-fit:contain;display:block;">
+                 style="width:100%;height:240px;object-fit:contain;display:block;">
           </div>`).join("")}
       </div>
     </div>` : "";
 
-  // ── 6. ABRIR VENTANA E INYECTAR HTML ──────────────────────────
+  // ── 6. VENTANA DE IMPRESIÓN ───────────────────────────────────
   const win = window.open("", "_blank");
   if (!win) {
     alert("Habilita las ventanas emergentes para imprimir.");
@@ -5583,83 +5588,112 @@ window.imprimirHojaTest = function() {
     <html lang="es">
     <head>
       <meta charset="UTF-8">
-      <title>Resultado Test - ${paciente}</title>
+      <title>Certificado Test - ${paciente}</title>
       <style>
-        @page { size: letter; margin: 1.5cm; }
+        @page { size: letter; margin: 1.2cm 0.8cm 0.8cm 0.8cm; }
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          color: #1e293b;
+          font-family: 'Segoe UI', Arial, sans-serif;
+          color: #0f172a;
+          font-size: 12px;
+          padding: 16px;
           margin: 0;
-          padding: 0;
-          line-height: 1.5;
         }
+        h1 { font-size: 18px; margin: 0; color: #7c3aed; }
+        h2 { font-size: 13px; margin: 2px 0 0; color: #64748b; }
         table { width: 100%; border-collapse: collapse; }
-        .header {
-          border-bottom: 3px solid #7c3aed;
-          padding-bottom: 15px;
-          margin-bottom: 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
+        .bloque {
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 12px;
+          margin-top: 10px;
+          background: #f9fafb;
+        }
+        .bloque b {
+          display: block;
+          margin-bottom: 6px;
+          color: #1e293b;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: .04em;
         }
         @media print { .no-print { display: none !important; } }
       </style>
     </head>
     <body>
 
-      <div class="header">
+      <!-- MEMBRETE / ENCABEZADO -->
+      <div style="border-bottom:2px solid #7c3aed;padding-bottom:8px;margin-bottom:10px;
+                  display:flex;justify-content:space-between;align-items:flex-end;">
         <div>
-          <h1 style="margin:0;color:#7c3aed;font-size:20px;text-transform:uppercase;">
-            Certificado de Test Rápido
-          </h1>
-          <p style="margin:5px 0 0;font-size:12px;color:#64748b;">
-            Paciente: <b style="color:#0f172a;">${paciente.toUpperCase()}</b>
-            &nbsp;|&nbsp; Propietario: ${propietario}
-            &nbsp;|&nbsp; Especie: ${especie}
-          </p>
+          <h1>AVIPET — Certificado de Diagnóstico Rápido</h1>
+          <h2>Paciente: <b>${paciente.toUpperCase()}</b></h2>
+          <h2>Propietario: ${propietario} &nbsp;·&nbsp; CI: ${cedula}</h2>
         </div>
-        <div style="text-align:right;font-size:12px;">
-          <b>${fecha}</b><br>
-          <span style="color:#7c3aed;font-weight:bold;">AVIPET VETERINARIA</span>
+        <div style="text-align:right;font-size:10px;color:#6b7280;">
+          <div><b>${fecha}</b></div>
+          <div style="color:#7c3aed;font-weight:bold;">
+            ${doctor ? "Dr(a). " + doctor : ""}
+          </div>
         </div>
       </div>
 
-      ${filas.length ? `
-        <table>
-          <thead>
-            <tr style="background:#f1f5f9;">
-              <th style="padding:10px;border:1px solid #cbd5e1;
-                         text-align:left;font-size:11px;text-transform:uppercase;">
-                Prueba Realizada
-              </th>
-              <th style="padding:10px;border:1px solid #cbd5e1;text-align:center;
-                         font-size:11px;text-transform:uppercase;width:150px;">
-                Resultado
-              </th>
-              <th style="padding:10px;border:1px solid #cbd5e1;
-                         text-align:left;font-size:11px;text-transform:uppercase;">
-                Observaciones
-              </th>
-            </tr>
-          </thead>
-          <tbody>${filasHtml}</tbody>
-        </table>`
-      : '<p style="color:#94a3b8;font-style:italic;">Sin tests registrados.</p>'}
+      <!-- FICHA DEL PACIENTE -->
+      <div class="bloque">
+        <b>Ficha del Paciente</b>
+        Especie: ${especie} &nbsp;·&nbsp;
+        Raza: ${raza} &nbsp;·&nbsp;
+        Edad: ${edad} &nbsp;·&nbsp;
+        Sexo: ${sexo} &nbsp;·&nbsp;
+        Peso: ${peso} &nbsp;·&nbsp;
+        Color: ${color}<br>
+        Teléfono: ${telefono} &nbsp;·&nbsp;
+        Dirección: ${direccion}
+      </div>
 
+      <!-- TABLA DE RESULTADOS -->
+      ${filas.length ? `
+        <div class="bloque">
+          <b>Resultados de Tests Rápidos</b>
+          <table>
+            <thead>
+              <tr style="background:#ede9fe;">
+                <th style="padding:8px;border:1px solid #c4b5fd;text-align:left;
+                           font-size:11px;color:#5b21b6;text-transform:uppercase;">
+                  Prueba Realizada
+                </th>
+                <th style="padding:8px;border:1px solid #c4b5fd;text-align:center;
+                           font-size:11px;color:#5b21b6;text-transform:uppercase;width:140px;">
+                  Resultado
+                </th>
+                <th style="padding:8px;border:1px solid #c4b5fd;text-align:left;
+                           font-size:11px;color:#5b21b6;text-transform:uppercase;">
+                  Observaciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>${filasHtml}</tbody>
+          </table>
+        </div>`
+      : `<div class="bloque">
+           <p style="color:#94a3b8;font-style:italic;margin:0;">Sin tests registrados.</p>
+         </div>`}
+
+      <!-- FOTOS -->
       ${fotosHtml}
 
-      <div style="margin-top:40px;text-align:center;font-size:10px;color:#94a3b8;
+      <!-- PIE DE PÁGINA -->
+      <div style="margin-top:30px;text-align:center;font-size:10px;color:#94a3b8;
                   border-top:1px solid #e2e8f0;padding-top:10px;">
-        Documento emitido por el sistema AVIPET.
-        ${doctor ? `Médico Veterinario: <b>${doctor}</b>` : ""}
+        Documento emitido por el sistema integral AVIPET.
+        ${doctor ? `&nbsp;·&nbsp; Médico Veterinario: <b>${doctor}</b>` : ""}
       </div>
 
-      <div style="text-align:center;margin-top:30px;" class="no-print">
+      <!-- BOTÓN (desaparece al imprimir) -->
+      <div style="text-align:center;margin-top:20px;" class="no-print">
         <button onclick="window.print()"
-                style="padding:12px 25px;background:#7c3aed;color:white;
-                       border:none;border-radius:6px;cursor:pointer;
-                       font-weight:bold;font-size:13px;">
-          CONFIRMAR IMPRESIÓN
+                style="padding:10px 28px;background:#7c3aed;color:white;border:none;
+                       border-radius:8px;cursor:pointer;font-weight:900;font-size:13px;">
+          IMPRIMIR CERTIFICADO
         </button>
       </div>
 
@@ -5670,6 +5704,7 @@ window.imprimirHojaTest = function() {
   win.document.close();
   win.onload = () => setTimeout(() => { win.focus(); win.print(); }, 600);
 };
+
  // --- NUEVA FUNCIÓN PARA EL SELECTOR DE FORMATOS ---
 window.cambiarTipoFormato = (valor) => {
     const tituloDoc = document.getElementById('tituloDocumentoDinámico');
