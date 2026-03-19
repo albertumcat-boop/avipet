@@ -82,6 +82,7 @@
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
  /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
+/* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
 @media print {
     /* 0. REGLA DE ORO: FORZAR COLORES E IMÁGENES */
     * {
@@ -93,7 +94,7 @@
 
     /* 1. OCULTAR TODO LO QUE NO SEA RELEVANTE */
     .no-print, button, nav, #loginSection,
-    .finanzas-ocultar, .menu-desplegable, .hidden, #hTratamiento { 
+    .finanzas-ocultar, .menu-desplegable, .hidden, #hTratamiento, .no-imprimir { 
         display: none !important; 
     }
 
@@ -106,80 +107,71 @@
         image-rendering: auto !important;
     }
 
-    /* 3. VISIBILIDAD DE SECCIONES DE TEST Y EXAMEN */
-    #sectionHojaTest:not(.hidden), 
+    /* 3. VISIBILIDAD Y ELIMINACIÓN DE ESPACIOS EN BLANCO */
+    #sectionHojaVacunas:not(.hidden), 
+    #sectionHojaTest:not(.hidden),
     #sectionHojaExamen:not(.hidden) {
         display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        height: auto !important; /* CLAVE: Quita el 94% para eliminar el hueco blanco */
+        min-height: 0 !important;
+        padding-top: 10px !important;
+        overflow: visible !important;
     }
 
+    /* 4. AJUSTE PARA RESULTADOS DE TESTS (INPUTS Y SELECTS) */
+    /* Forzamos que el texto escrito se vea negro y nítido */
+    input, textarea, select {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        appearance: none !important;
+        color: black !important;
+        font-weight: bold !important;
+        width: 100% !important;
+    }
+
+    /* Si usas el truco del "Espejo" que te pasé antes, esta regla es vital */
+    .hidden.print\:block {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    .print\:hidden {
+        display: none !important;
+    }
+
+    /* 5. CONTENEDORES DE FOTOS */
     #printExamenCont, #printTestCont {
-        display: flex !important;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 200px;
+        display: block !important;
         page-break-inside: avoid;
         margin-top: 15px;
         text-align: center;
-        visibility: visible !important;
     }
 
     .foto-anexo {
         max-width: 100% !important;
-        max-height: 400px !important;
+        max-height: 350px !important; /* Ajustado para que no salte de página */
         object-fit: contain;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        margin: 0 auto;
     }
 
-    /* 4. CONFIGURACIÓN DE PÁGINA Y CUERPO */
+    /* 6. PIE DE PÁGINA */
+    .footer-direccion {
+        position: fixed !important; /* Cambiado a fixed para que se pegue al final de la hoja */
+        bottom: 0 !important;
+        left: 0;
+        right: 0;
+        width: 100% !important;
+        background: white !important;
+        border-top: 1px solid #e2e8f0;
+    }
+
     body {
         background-color: white !important;
-        padding: 0;
-        margin: 0;
+        margin: 0.5cm !important;
     }
-
-    .print-area {
-        border: none !important;
-        box-shadow: none !important;
-        width: 100% !important;
-        display: block !important;
-    }
-
-    /* Caso específico para Vacunas */
-    #sectionHojaVacunas:not(.hidden) {
-        display: flex !important;
-        flex-direction: column !important;
-        height: 94% !important;
-        padding-top: 15px !important;
-    }
-
-    /* Estilos para inputs y textos en impresión */
-    input, textarea, select {
-        border: none !important;
-        color: black !important;
-        font-weight: bold;
-        background: transparent !important;
-        appearance: none !important;
-    }
-
-    #hTratamientoPrint {
-        display: block !important;
-        white-space: pre-wrap !important;
-        font-size: 13px;
-        line-height: 1.6;
-        color: black !important;
-    }
-
-    .footer-direccion {
-        position: absolute !important;
-        bottom: 0 !important;
-        width: 100% !important;
-    }
-} /* <--- AQUÍ TERMINA EL BLOQUE DE IMPRESIÓN CORRECTAMENTE */
+}
 @page {
     size: letter;
     margin: 1.2cm 0.5cm 0.5cm 0.5cm;
@@ -5471,10 +5463,7 @@ window.agregarFilaTest = (nombre) => {
     if (!nombre) return;
     
     const tabla = document.getElementById('cuerpoTablaCertificado');
-    if (!tabla) {
-        console.error("No se encontró el cuerpo de la tabla 'cuerpoTablaCertificado'");
-        return;
-    }
+    if (!tabla) return;
 
     const esOtro = (nombre === "OTRO");
     const fila = document.createElement('tr');
@@ -5483,24 +5472,25 @@ window.agregarFilaTest = (nombre) => {
     fila.innerHTML = `
         <td class="px-3 font-bold uppercase italic text-slate-800">
             ${esOtro ? 
-                `<input type="text" 
-                        class="w-full border-b border-blue-300 outline-none bg-transparent" 
-                        placeholder="ESCRIBA EL NOMBRE DEL TEST..."
-                        oninput="this.setAttribute('value', this.value)">` : 
+                `<input type="text" class="w-full border-b border-blue-300 outline-none bg-transparent" placeholder="NOMBRE DEL TEST..." oninput="this.setAttribute('value', this.value)">` : 
                 `<span>${nombre}</span>`}
         </td>
-        <td class="px-2 text-center border-l border-r border-slate-200">
+        <td class="px-2 text-center border-l border-r border-slate-200 relative">
             <select 
-                class="font-black text-[11px] border rounded p-1 uppercase outline-none bg-white cursor-pointer transition-colors" 
-                onchange="this.style.color = (this.value.includes('POSITIVO')) ? '#dc2626' : (this.value.includes('NEGATIVO') ? '#16a34a' : 'black'); 
-                          this.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
-                          this.options[this.selectedIndex].setAttribute('selected', 'selected');"
+                class="print:hidden font-black text-[11px] border rounded p-1 uppercase outline-none bg-white w-full" 
+                onchange="
+                    const espejo = this.nextElementSibling;
+                    espejo.innerText = this.value;
+                    this.style.color = (this.value.includes('POSITIVO')) ? '#dc2626' : (this.value.includes('NEGATIVO') ? '#16a34a' : 'black');
+                    espejo.style.color = this.style.color;
+                "
             >
-                <option value="---" style="color: black;">---</option>
-                <option value="NEGATIVO (-)" style="color: #16a34a;">NEGATIVO (-)</option>
-                <option value="POSITIVO (+)" style="color: #dc2626;">POSITIVO (+)</option>
-                <option value="INVALIDO" style="color: #4b5563;">INVÁLIDO</option>
+                <option value="---">---</option>
+                <option value="NEGATIVO (-)">NEGATIVO (-)</option>
+                <option value="POSITIVO (+)">POSITIVO (+)</option>
+                <option value="INVALIDO">INVALIDO</option>
             </select>
+            <div class="hidden print:block font-black text-[12px] uppercase text-center">---</div>
         </td>
         <td class="px-2 border-l border-slate-300">
             <input type="text" 
@@ -5509,9 +5499,7 @@ window.agregarFilaTest = (nombre) => {
                    oninput="this.setAttribute('value', this.value)">
         </td>
         <td class="no-print px-2 text-center">
-            <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold hover:scale-125 transition-transform">
-                ✕
-            </button>
+            <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold">✕</button>
         </td>
     `;
     
