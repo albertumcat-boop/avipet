@@ -81,14 +81,13 @@
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-  /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
+ /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
 @media print {
     /* 0. REGLA DE ORO: FORZAR COLORES E IMÁGENES */
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
-        /* Refuerzo para que nada tape las imágenes */
         background-clip: content-box !important;
     }
 
@@ -98,59 +97,49 @@
         display: none !important; 
     }
 
-    /* 2. ASEGURAR QUE LAS IMÁGENES SE VEAN (Especialmente Base64) */
+    /* 2. ASEGURAR QUE LAS IMÁGENES SE VEAN */
     img, .print-area img {
         display: block !important;
         max-width: 100%;
         opacity: 1 !important;
         visibility: visible !important;
-        /* Forzamos que el navegador las renderice antes de disparar la impresión */
         image-rendering: auto !important;
     }
-  /* --- AJUSTE DINÁMICO PARA LAS FOTOS RECIBIDAS POR QR --- */
+
+    /* 3. VISIBILIDAD DE SECCIONES DE TEST Y EXAMEN */
+    #sectionHojaTest:not(.hidden), 
+    #sectionHojaExamen:not(.hidden) {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
     #printExamenCont, #printTestCont {
-        display: block !important; /* Se asegura de que se vean en papel */
-        page-break-inside: avoid;   /* Evita que la foto se corte entre dos páginas */
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+        page-break-inside: avoid;
         margin-top: 15px;
         text-align: center;
+        visibility: visible !important;
     }
 
     .foto-anexo {
         max-width: 100% !important;
-        max-height: 400px !important; /* Evita que una foto gigante gaste toda la hoja */
+        max-height: 400px !important;
         object-fit: contain;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
         margin: 0 auto;
     }
 
-    /* Título de los anexos en la impresión */
-    .titulo-anexo {
-        font-size: 10px;
-        font-weight: 800;
-        color: #64748b;
-        text-transform: uppercase;
-        margin-bottom: 5px;
-        letter-spacing: 1px;
-    }
-
-    /* Regla maestra para tus fotos comprimidas (Base64) */
-    img[src^="data:image"] {
-        min-height: 100px;
-        min-width: 100px;
-        display: block !important;
-    }
-
-    /* 3. FORZAR QUE SOLO SE VEA LA SECCIÓN ACTIVA */
-    section.hidden {
-        display: none !important;
-    }
-
+    /* 4. CONFIGURACIÓN DE PÁGINA Y CUERPO */
     body {
         background-color: white !important;
         padding: 0;
         margin: 0;
-        -webkit-print-color-adjust: exact;
     }
 
     .print-area {
@@ -166,40 +155,9 @@
         flex-direction: column !important;
         height: 94% !important;
         padding-top: 15px !important;
-        overflow: hidden !important;
     }
 
-    #sectionHojaVacunas table tbody tr {
-        height: 44px !important;
-    }
-
-    #sectionHojaVacunas table td {
-        vertical-align: middle !important;
-        padding: 0 8px !important;
-        font-size: 12px !important;
-    }
-
-    #doctorPrint {
-        display: block !important;
-        font-weight: 800;
-        text-transform: uppercase;
-        font-size: 14px;
-        color: black;
-        margin-top: 10px;
-    }
-
-    #hTratamientoPrint {
-        display: block !important;
-        border: none !important;
-        height: auto !important;
-        overflow: visible !important;
-        white-space: pre-wrap !important;
-        font-size: 13px;
-        line-height: 1.6;
-        color: black !important;
-        width: 100% !important;
-    }
-
+    /* Estilos para inputs y textos en impresión */
     input, textarea, select {
         border: none !important;
         color: black !important;
@@ -208,16 +166,20 @@
         appearance: none !important;
     }
 
+    #hTratamientoPrint {
+        display: block !important;
+        white-space: pre-wrap !important;
+        font-size: 13px;
+        line-height: 1.6;
+        color: black !important;
+    }
+
     .footer-direccion {
         position: absolute !important;
         bottom: 0 !important;
-        left: 0 !important;
         width: 100% !important;
-        background: white !important;
-        padding-bottom: 5px !important;
     }
-} /* <--- AQUÍ TERMINA EL BLOQUE DE IMPRESIÓN */
-
+} /* <--- AQUÍ TERMINA EL BLOQUE DE IMPRESIÓN CORRECTAMENTE */
 @page {
     size: letter;
     margin: 1.2cm 0.5cm 0.5cm 0.5cm;
@@ -5448,7 +5410,38 @@ window.volverAHistoriaDesdeVacunas = () => {
       if (hv)   hv.classList.add('hidden');
     }, 500);
   };
+window.imprimirHojaTest = function() {
+    // 1. Ubicamos los contenedores
+    const previewGallery = document.getElementById('previewTestGallery');
+    const printGallery = document.getElementById('printTestGallery');
+    const printContainer = document.getElementById('printTestCont');
 
+    if (!previewGallery || !printGallery) {
+        console.error("No se encontraron las galerías de fotos.");
+        return;
+    }
+
+    // 2. LIMPIEZA Y CLONACIÓN: Pasamos las fotos de la pantalla al papel
+    printGallery.innerHTML = ""; // Limpiamos rastro anterior
+    
+    const fotos = previewGallery.querySelectorAll('img');
+    fotos.forEach(foto => {
+        const clon = foto.cloneNode(true);
+        clon.classList.add('foto-anexo'); // La clase que definimos en el CSS
+        printGallery.appendChild(clon);
+    });
+
+    // 3. FORCE VISIBILITY: Quitamos el 'hidden' momentáneamente para la impresora
+    printContainer.classList.remove('hidden');
+
+    // 4. TRUCO DE TIEMPO: Esperamos 300ms para que el navegador renderice las fotos
+    setTimeout(() => {
+        window.print();
+        
+        // 5. RE-OCULTAR: Después de imprimir (o cancelar), volvemos a esconder el bloque en pantalla
+        printContainer.classList.add('hidden');
+    }, 300);
+};
  // --- NUEVA FUNCIÓN PARA EL SELECTOR DE FORMATOS ---
 window.cambiarTipoFormato = (valor) => {
     const tituloDoc = document.getElementById('tituloDocumentoDinámico');
@@ -5490,13 +5483,18 @@ window.agregarFilaTest = (nombre) => {
     fila.innerHTML = `
         <td class="px-3 font-bold uppercase italic text-slate-800">
             ${esOtro ? 
-                `<input type="text" class="w-full border-b border-blue-300 outline-none bg-transparent" placeholder="ESCRIBA EL NOMBRE DEL TEST...">` : 
+                `<input type="text" 
+                        class="w-full border-b border-blue-300 outline-none bg-transparent" 
+                        placeholder="ESCRIBA EL NOMBRE DEL TEST..."
+                        oninput="this.setAttribute('value', this.value)">` : 
                 `<span>${nombre}</span>`}
         </td>
         <td class="px-2 text-center border-l border-r border-slate-200">
             <select 
                 class="font-black text-[11px] border rounded p-1 uppercase outline-none bg-white cursor-pointer transition-colors" 
-                onchange="this.style.color = (this.value.includes('POSITIVO')) ? '#dc2626' : (this.value.includes('NEGATIVO') ? '#16a34a' : 'black')"
+                onchange="this.style.color = (this.value.includes('POSITIVO')) ? '#dc2626' : (this.value.includes('NEGATIVO') ? '#16a34a' : 'black'); 
+                          this.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
+                          this.options[this.selectedIndex].setAttribute('selected', 'selected');"
             >
                 <option value="---" style="color: black;">---</option>
                 <option value="NEGATIVO (-)" style="color: #16a34a;">NEGATIVO (-)</option>
@@ -5505,7 +5503,10 @@ window.agregarFilaTest = (nombre) => {
             </select>
         </td>
         <td class="px-2 border-l border-slate-300">
-            <input type="text" class="w-full outline-none text-[10px] bg-transparent italic" placeholder="Añadir nota médica...">
+            <input type="text" 
+                   class="w-full outline-none text-[10px] bg-transparent italic" 
+                   placeholder="Añadir nota médica..."
+                   oninput="this.setAttribute('value', this.value)">
         </td>
         <td class="no-print px-2 text-center">
             <button onclick="this.closest('tr').remove()" class="text-red-500 font-bold hover:scale-125 transition-transform">
