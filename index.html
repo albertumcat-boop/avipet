@@ -370,80 +370,80 @@ span.resultado-print {
       </div>
     </div>
 
-    <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden">
-      <div class="bg-slate-100 p-3 no-print">
+    <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden bg-white shadow-sm">
+  
+  <div class="bg-slate-100 p-3 no-print border-b border-slate-300">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
         <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
-          Añadir Servicios Rápidos:</label>
-        <select id="selectorServicios" class="menu-desplegable" onchange="window.insertarServicio(this.value)">
-    <option value="">-- SELECCIONE UN SERVICIO --</option>
-    
-    <optgroup label="🩺 CONSULTAS">
-        <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
-        <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
-        <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
-        <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
-        <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
-        <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
-    </optgroup>
+          Añadir Servicios Rápidos:
+        </label>
+        <select id="selectorServicios" class="menu-desplegable w-full p-2 border border-slate-400 rounded bg-white text-xs font-bold" onchange="window.insertarServicio(this.value)">
+          <option value="">-- SELECCIONE UN SERVICIO --</option>
+          <optgroup label="🩺 CONSULTAS">
+            <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
+            <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+            <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+            <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+            <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+            <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
+          </optgroup>
+          <optgroup label="💉 VACUNAS">
+            <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
+            <option value="VACUNA PUPPY">VACUNA PUPPY</option>
+            <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+            <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
+            <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+            <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+            <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
+          </optgroup>
+          <optgroup label="🔬 LABORATORIO">
+            <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+            <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+            <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
+            <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+            <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
+            <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
+            <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
+            <option value="RASPADO PIEL">RASPADO PIEL</option>
+            <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
+          </optgroup>
+          <optgroup label="🧪 TESTS RÁPIDOS">
+            <option value="DESCARTE HEMOPARASITO">TEST HEMOPARÁSITO (4DX/ERL/ANA)</option>
+            <option value="DISTEMPER">TEST DISTEMPER (MOQUILLO)</option>
+            <option value="PARVOVIRUS - CORONAVIRUS">TEST PARVOVIRUS - CORONAVIRUS</option>
+            <option value="FILARIASIS">TEST FILARIASIS</option>
+            <option value="SIDA - LEUCEMIA">TEST SIDA - LEUCEMIA</option>
+            <option value="TEST HELICOBACTER PYLORI AG">TEST HELICOBACTER PYLORI AG</option>
+          </optgroup>
+          <optgroup label="📋 REFERIDOS (EXTERNOS)">
+            <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
+            <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
+            <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
+            <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
+            <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
+            <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS - CORONAVIRUS</option>
+            <option value="REFERIDO: ECOGRAFÍA">REFERIDO: ECOGRAFÍA</option>
+          </optgroup>
+          <optgroup label="🐾 OTROS PROCEDIMIENTOS">
+            <option value="ABSCESO">ABSCESO</option>
+            <option value="ECOGRAFÍA">ECOGRAFÍA</option>
+            <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
+            <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
+            <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
+            <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
+            <option value="KG ADICIONAL">KG ADICIONAL</option>
+            <option value="DISPOSICION">DISPOSICIÓN</option>
+            <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
+          </optgroup>
+        </select>
+      </div>
 
-    <optgroup label="💉 VACUNAS">
-        <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
-        <option value="VACUNA PUPPY">VACUNA PUPPY</option>
-        <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
-        <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
-        <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
-        <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
-        <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
-    </optgroup>
-
-    <optgroup label="🔬 LABORATORIO">
-        <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
-        <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
-        <option value="HEMATOLOGIA+QUIMICA+HEMOPARASITOS">COMBO LABORATORIO</option>
-        <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-        <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
-        <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
-        <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
-        <option value="RASPADO PIEL">RASPADO PIEL</option>
-        <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
-    </optgroup>
-
-    <optgroup label="🧪 TESTS RÁPIDOS">
-        <option value="DESCARTE HEMOPARASITO">TEST HEMOPARÁSITO (4DX/ERL/ANA)</option>
-        <option value="DISTEMPER">TEST DISTEMPER (MOQUILLO)</option>
-        <option value="PARVOVIRUS - CORONAVIRUS">TEST PARVOVIRUS - CORONAVIRUS</option>
-        <option value="FILARIASIS">TEST FILARIASIS</option>
-        <option value="SIDA - LEUCEMIA">TEST SIDA - LEUCEMIA</option>
-        <option value="TEST HELICOBACTER PYLORI AG">TEST HELICOBACTER PYLORI AG</option>
-    </optgroup>
-
-    <optgroup label="📋 REFERIDOS (EXTERNOS)">
-        <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: EXAMEN DE HECES</option>
-        <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: EXAMENES DE ORINA</option>
-        <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
-        <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: DESCARTE HEMOPARASITO</option>
-        <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
-        <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS - CORONAVIRUS</option>
-        <option value="REFERIDO: ECOGRAFÍA">REFERIDO: ECOGRAFÍA</option>
-    </optgroup>
-
-    <optgroup label="🐾 OTROS PROCEDIMIENTOS">
-        <option value="ABSCESO">ABSCESO</option>
-        <option value="ECOGRAFÍA">ECOGRAFÍA</option>
-        <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
-        <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
-        <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
-        <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
-        <option value="KG ADICIONAL">KG ADICIONAL</option>
-        <option value="DISPOSICION">DISPOSICIÓN</option>
-        <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
-    </optgroup>
-</select>
-
-        <label class="block text-blue-900 text-[10px] font-black uppercase mb-1 mt-3">
-          Añadir Medicamentos:</label>
-        <select id="selectorMedicamentos" class="menu-desplegable"
-                onchange="window.agregarMedicamento(this.value)">
+      <div>
+        <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">
+          Añadir Medicamentos:
+        </label>
+        <select id="selectorMedicamentos" class="menu-desplegable w-full p-2 border border-slate-400 rounded bg-white text-xs font-bold" onchange="window.agregarMedicamento(this.value)">
           <option value="">-- SELECCIONE UN MEDICAMENTO --</option>
           <option value="Piroyet">Piroyet</option>
           <option value="Enrofloxacina">Enrofloxacina</option>
@@ -473,25 +473,41 @@ span.resultado-print {
           <option value="Infervac">Infervac</option>
         </select>
       </div>
-     <textarea id="hTratamiento"
-    class="w-full h-64 p-4 text-sm font-medium leading-relaxed bg-white outline-none border border-slate-200"
-    placeholder="Escriba aquí el diagnóstico..."
-    oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
+    </div>
+  </div>
 
-<div id="hTratamientoPrint"
-    class="hidden print:block p-4 whitespace-pre-wrap text-sm leading-relaxed border-none"></div>
+  <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-400 min-h-[250px]">
+    
+    <div class="p-3 bg-slate-50">
+      <label class="block text-[9px] font-bold text-blue-600 uppercase mb-2 italic tracking-wider">
+        🩺 Servicios y Medicación Aplicada:
+      </label>
+      <div id="visualizacionServicios" class="text-[11px] font-bold text-slate-700 space-y-1">
+        <p class="text-slate-400 font-normal italic">Sin servicios registrados...</p>
+      </div>
+    </div>
 
-<!-- GALERÍA MÚLTIPLE PARA IMPRESIÓN - HISTORIA -->
+    <div class="flex flex-col">
+      <label class="p-3 pb-0 text-[9px] font-bold text-blue-600 uppercase italic tracking-wider">
+        ✍️ Diagnóstico y Evaluación Clínica:
+      </label>
+      <textarea id="hTratamiento"
+        class="w-full flex-grow p-3 text-sm font-medium leading-relaxed bg-white outline-none"
+        placeholder="Escriba aquí los hallazgos..."
+        oninput="document.getElementById('hTratamientoPrint').innerText = this.value"></textarea>
+    </div>
+  </div>
+
+  <div id="hTratamientoPrint" class="hidden print:block p-4 whitespace-pre-wrap text-[12px] leading-relaxed border-t border-slate-400"></div>
+
+</div>
+
 <div id="printExamenCont" class="hidden print:block mt-4 text-center">
   <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">
     Anexos: Exámenes / Documentos
   </p>
-  <div id="printHistoriaGallery"
-       class="flex flex-wrap gap-3 justify-center">
-    <!-- Aquí se clonarán las imágenes de previewHistoriaGallery al imprimir -->
-  </div>
+  <div id="printHistoriaGallery" class="flex flex-wrap gap-3 justify-center"></div>
 </div>
-
 
 <!-- GALERÍA MÚLTIPLE PARA IMPRESIÓN - TEST -->
 
@@ -1956,13 +1972,18 @@ window.guardarFirebase = async (imp) => {
             fechaSimple:  new Date().toLocaleDateString()
         };
 
-        btnGuardar.innerText = "💾 REGISTRANDO...";
+               btnGuardar.innerText = "💾 REGISTRANDO...";
         await addDoc(collection(db, "consultas"), data);
+
+        // ✅ Limpiar respaldo local al guardar exitosamente
+        localStorage.removeItem('respaldoConsulta');
+
         alert("✅ ¡Consulta guardada con éxito!");
         if (imp) window.imprimirDocumento();
+
     } catch (e) {
         console.error("Error en el sistema:", e);
-        alert("❌ Error: " + e.message);
+        alert("❌ Error al guardar: " + e.message);
     } finally {
         if (btnGuardar && btnGuardar.tagName === 'BUTTON') {
             btnGuardar.disabled = false;
@@ -1970,6 +1991,7 @@ window.guardarFirebase = async (imp) => {
         }
     }
 };
+
 
   // =========================================================
   // CONFIGURACIÓN DE TASA CAMBIARIA (MODO DUAL: AUTO/MANUAL)
@@ -2709,9 +2731,10 @@ const normalizarNombre = (texto = "") => {
     .replace(/[\u0300-\u036f]/g, "")// quita acentos
     .replace(/[^a-z0-9]/g, "");     // quita espacios y símbolos
 };
- window.insertarServicio = async (v) => {
+window.insertarServicio = async (v) => {
     if (!v) return;
     const area = document.getElementById('hTratamiento');
+    const visual = document.getElementById('visualizacionServicios'); // Nuevo contenedor visual
 
     let nombreFinal = v;
     let precioFinal = 0;
@@ -2766,7 +2789,6 @@ const normalizarNombre = (texto = "") => {
         porcentajeServicio = 0;
       } else return;
     } else if (vLimpio.includes("referido")) {
-        // AJUSTE PARA REFERIDOS: Ahora solo usa el precio cargado sin preguntar nada.
         console.log(`📋 Referido detectado: ${nombreFinal} | Precio: $${precioFinal}`);
     } else {
       // Combos
@@ -2812,6 +2834,18 @@ const normalizarNombre = (texto = "") => {
 
     const grupoID = "srv-" + Date.now();
     serviciosEnLista.push(v);
+    
+    // --- LÓGICA DE ACTUALIZACIÓN VISUAL (LO NUEVO) ---
+    if (visual.innerText.includes("Sin servicios registrados")) {
+        visual.innerHTML = "";
+    }
+    const nuevoBadge = document.createElement('div');
+    nuevoBadge.id = "badge-" + grupoID; // Para poder borrarlo si eliminas el servicio
+    nuevoBadge.className = "bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";
+    nuevoBadge.innerHTML = `<span class="text-[10px]">🔹</span> <span class="flex-1">${nombreFinal}</span>`;
+    visual.appendChild(nuevoBadge);
+    // -------------------------------------------------
+
     area.value += (area.value ? "\n" : "") + "=> " + nombreFinal;
 
     document.getElementById('contenedorInsumos').classList.remove('hidden');
@@ -2877,18 +2911,27 @@ const normalizarNombre = (texto = "") => {
         </td>`;
       cuerpo.appendChild(tr);
     });
+    
+    // Actualizamos impresión
+    document.getElementById('hTratamientoPrint').innerText = area.value;
+    
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
+  // al final, antes del cierre }
+respaldarProgresoLocal();
   };
-
+  
 window.agregarMedicamento = (nombreMed) => {
     if (!nombreMed) return;
     const cfg = CONFIG_MEDICAMENTOS[nombreMed];
     if (!cfg) return;
 
+    const area = document.getElementById('hTratamiento');
+    const visual = document.getElementById('visualizacionServicios'); // El nuevo contenedor
     let precioCliente = 0;
     let descripcion = nombreMed;
 
+    // Lógica de dosis y precios especiales
     if (nombreMed === "Suero hiperinmune") {
       const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
       if (!ml || isNaN(ml) || parseFloat(ml) <= 0) {
@@ -2897,7 +2940,7 @@ window.agregarMedicamento = (nombreMed) => {
       }
       const cantMl = parseFloat(ml);
       precioCliente = (cfg.precioClientePorMl || 0) * cantMl;
-      descripcion  += ` (${cantMl} ml)`;
+      descripcion += ` (${cantMl} ml)`;
     } else if (nombreMed === "Artrosan") {
       const kg = prompt("Ingrese el peso del paciente (kg) para Artrosan (1 ml cada 20 kg):");
       if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
@@ -2907,7 +2950,7 @@ window.agregarMedicamento = (nombreMed) => {
       const pesoKg = parseFloat(kg);
       const mlNecesarios = pesoKg / 20;
       precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
-      descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
+      descripcion += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
     } else if (nombreMed === "Lisavac") {
       const kg = prompt("Ingrese el peso del paciente (kg) para Lisavac (1 ml por kg):");
       if (!kg || isNaN(kg) || parseFloat(kg) <= 0) {
@@ -2917,7 +2960,7 @@ window.agregarMedicamento = (nombreMed) => {
       const pesoKg = parseFloat(kg);
       const mlNecesarios = pesoKg;
       precioCliente = (cfg.precioCliente || 0) * mlNecesarios;
-      descripcion  += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
+      descripcion += ` (${mlNecesarios.toFixed(2)} ml para ${pesoKg} kg)`;
     } else {
       precioCliente = cfg.precioCliente || 0;
     }
@@ -2928,6 +2971,18 @@ window.agregarMedicamento = (nombreMed) => {
     const grupoID = "med-" + Date.now();
     const porcentajeServicioMedicamento = 40;
 
+    // --- SOLDADURA VISUAL (Columna Izquierda) ---
+    if (visual.innerText.includes("Sin servicios registrados")) {
+        visual.innerHTML = "";
+    }
+    const nuevoBadge = document.createElement('div');
+    nuevoBadge.id = "badge-" + grupoID;
+    nuevoBadge.className = "bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";
+    nuevoBadge.innerHTML = `<span class="text-[10px]">💊</span> <span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;
+    visual.appendChild(nuevoBadge);
+    // --------------------------------------------
+
+    // Fila en la tabla de costos
     const filaTitulo = document.createElement('tr');
     filaTitulo.className = "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
     filaTitulo.setAttribute('data-grupo', grupoID);
@@ -2947,17 +3002,18 @@ window.agregarMedicamento = (nombreMed) => {
       </td>`;
     cuerpo.appendChild(filaTitulo);
 
-    const area = document.getElementById('hTratamiento');
+    // Actualización de Historia Clínica
     if (area) {
       area.value += (area.value ? "\n" : "") + `=> MEDICAMENTO: ${descripcion} ($${precioCliente.toFixed(2)})`;
       document.getElementById('hTratamientoPrint').innerText = area.value;
+      area.scrollTop = area.scrollHeight; // Auto-scroll para el doctor
     }
 
     const inputVenta = document.getElementById('precioVenta');
     const montoActual = parseFloat(inputVenta.value) || 0;
-    const nuevoMonto = montoActual + precioCliente;
-    inputVenta.value = nuevoMonto.toFixed(2);
+    inputVenta.value = (montoActual + precioCliente).toFixed(2);
 
+    // Lógica de insumos base (Jeringas, etc.)
     if (typeof insumosBaseMedicamentoAgregados !== 'undefined' && !insumosBaseMedicamentoAgregados) {
       const insumosMedicamento = [
         { nombre: "Jeringa para medicamento", costo: 0.50 },
@@ -2980,7 +3036,10 @@ window.agregarMedicamento = (nombreMed) => {
 
     window.calcularTodo();
     document.getElementById('selectorMedicamentos').value = "";
-  };
+    area.focus(); // Foco listo para que el doctor complete la historia
+   // al final, antes del cierre }
+respaldarProgresoLocal();
+};
  
 // --- 1. PREVISUALIZACIÓN HISTORIA (MULTIFOTO) ---
 window.previsualizarFotoHistoria = (event) => {
@@ -7019,6 +7078,12 @@ window.actualizarEstadoInventarioVisual = () => {
 // Guardar (nuevo o editar)
 window.guardarProductoInventario = async () => {
   const getV = id => document.getElementById(id)?.value || "";
+  
+  // --- ⚓ CAPTURA DE FILTROS ACTUALES (Contraste Radical) ---
+  const busquedaPrevia  = getV('inv_buscar');
+  const proveedorPrevio = getV('inv_filtro_proveedor');
+  const categoriaPrevia = getV('inv_filtro_categoria');
+
   const data = {
     nombre: getV('inv_nombre').trim(),
     categoria: getV('inv_categoria') || "otro",
@@ -7060,20 +7125,30 @@ window.guardarProductoInventario = async () => {
 
     alert("✅ Inventario actualizado con éxito.");
 
-    // --- ⚓ LIMPIEZA Y RETORNO AL INICIO ---
-    // 1. Limpiamos el formulario usando la lógica de "Nuevo"
+    // --- ⚓ LIMPIEZA Y RESTAURACIÓN DE FILTROS ---
+    
+    // 1. Limpiamos la ficha de edición
     window.nuevoProductoInventario(); 
     
-    // 2. Ocultamos la ficha para volver al estado inicial o dejarla lista para otro
-    // Si prefieres que la ficha desaparezca tras guardar, descomenta la siguiente línea:
-    // document.getElementById('inv_ficha').classList.add('hidden');
-    // document.getElementById('inv_sin_seleccion').classList.remove('hidden');
-
-    // 3. Recargamos la tabla para ver los cambios
+    // 2. Recargamos la tabla desde Firebase
     await window.cargarInventario();
 
-    // 4. Scroll hacia arriba de la página o del contenedor para no quedar "abajo"
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 3. REAPLICAMOS LA BUSQUEDA (La soldadura clave)
+    const inputBusqueda = document.getElementById('inv_buscar');
+    const selectProv    = document.getElementById('inv_filtro_proveedor');
+    const selectCat     = document.getElementById('inv_filtro_categoria');
+
+    if (inputBusqueda) inputBusqueda.value = busquedaPrevia;
+    if (selectProv)    selectProv.value    = proveedorPrevio;
+    if (selectCat)     selectCat.value     = categoriaPrevia;
+
+    // Ejecutamos la función de filtrado para que la lista se actualice con los valores recuperados
+    window.filtrarInventario();
+
+    console.log(`📍 Filtros mantenidos: [${busquedaPrevia}] [${proveedorPrevio}]`);
+
+    // 4. Mantenemos la vista en la lista (Quitamos el scrollTo top para no perder el foco)
+    // window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch (e) {
     console.error("Error guardando inventario:", e);
@@ -7520,6 +7595,55 @@ function actualizarInterfazTasa() {
   // Refrescamos la lista para que los precios se vean actualizados
   if (window.inventarioCache) window.renderListaInventario(window.inventarioCache);
 }
+  // ═══════════════════════════════════════════════════════════════
+// ESCUDO DE RESPALDO LOCAL — Protege contra apagones inesperados
+// ═══════════════════════════════════════════════════════════════
+
+// 1. FUNCIÓN DE RESPALDO
+const respaldarProgresoLocal = () => {
+  const area   = document.getElementById('hTratamiento');
+  const visual = document.getElementById('visualizacionServicios');
+  if (!area || !visual) return;
+  localStorage.setItem('respaldo_historia_activa', JSON.stringify({
+    diagnostico:       area.value,
+    serviciosVisuales: visual.innerHTML,
+    timestamp:         Date.now()
+  }));
+};
+
+// 2. ESCUCHA — se activa cada vez que el doctor escribe
+const elTratamiento = document.getElementById('hTratamiento');
+if (elTratamiento) {
+  elTratamiento.addEventListener('input', respardarProgresoLocal);
+}
+
+// 3. RECUPERACIÓN — se activa al cargar la página
+window.addEventListener('load', () => {
+  const raw = localStorage.getItem('respaldo_historia_activa');
+  if (!raw) return;
+  try {
+    const datos = JSON.parse(raw);
+    const hace24h = Date.now() - (24 * 60 * 60 * 1000);
+    if (datos.timestamp > hace24h && datos.diagnostico?.trim().length > 0) {
+      const recuperar = confirm(
+        "⚠ Se detectó una historia no guardada por cierre inesperado.\n¿Deseas recuperar los datos?"
+      );
+      if (recuperar) {
+        const area   = document.getElementById('hTratamiento');
+        const visual = document.getElementById('visualizacionServicios');
+        const print  = document.getElementById('hTratamientoPrint');
+        if (area)   area.value        = datos.diagnostico;
+        if (visual) visual.innerHTML  = datos.serviciosVisuales;
+        if (print)  print.innerText   = datos.diagnostico;
+      } else {
+        localStorage.removeItem('respaldo_historia_activa');
+      }
+    }
+  } catch(e) {
+    localStorage.removeItem('respaldo_historia_activa');
+  }
+});
+
 </script>
 
 </body>
