@@ -2846,8 +2846,6 @@ window.insertarServicio = async (v) => {
     visual.appendChild(nuevoBadge);
     // -------------------------------------------------
 
-    area.value += (area.value ? "\n" : "") + "=> " + nombreFinal;
-
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
 
@@ -2911,9 +2909,6 @@ window.insertarServicio = async (v) => {
         </td>`;
       cuerpo.appendChild(tr);
     });
-    
-    // Actualizamos impresión
-    document.getElementById('hTratamientoPrint').innerText = area.value;
     
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
@@ -3004,8 +2999,6 @@ window.agregarMedicamento = (nombreMed) => {
 
     // Actualización de Historia Clínica
     if (area) {
-      area.value += (area.value ? "\n" : "") + `=> MEDICAMENTO: ${descripcion} ($${precioCliente.toFixed(2)})`;
-      document.getElementById('hTratamientoPrint').innerText = area.value;
       area.scrollTop = area.scrollHeight; // Auto-scroll para el doctor
     }
 
@@ -7614,7 +7607,7 @@ const respaldarProgresoLocal = () => {
 // 2. ESCUCHA — se activa cada vez que el doctor escribe
 const elTratamiento = document.getElementById('hTratamiento');
 if (elTratamiento) {
-  elTratamiento.addEventListener('input', respardarProgresoLocal);
+  elTratamiento.addEventListener('input', respaldarProgresoLocal);
 }
 
 // 3. RECUPERACIÓN — se activa al cargar la página
