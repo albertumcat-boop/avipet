@@ -259,9 +259,13 @@ span.resultado-print {
     
     <div class="flex items-center">
       <div class="relative w-48 flex flex-col items-center sm:items-start"> 
-          <img src="avipet.png" alt="Logo Avipet" class="w-full h-24 object-contain">
+          <img id="logoIzquierdoHistoria" src="avipet.png" alt="Logo Avipet" class="w-full h-24 object-contain">
           <p class="text-[10px] font-bold text-slate-700 mt-[-14px] uppercase tracking-wider">RIF: J-00068577-0</p>
       </div>
+    </div>
+
+    <div class="flex flex-col items-center justify-center flex-1 px-4">
+        <img id="logoCentroHistoria" src="" class="hidden h-24 object-contain">
     </div>
     
     <div class="flex flex-col items-end text-right z-10">
@@ -509,11 +513,9 @@ span.resultado-print {
   <div id="printHistoriaGallery" class="flex flex-wrap gap-3 justify-center"></div>
 </div>
 
-<!-- GALERÍA MÚLTIPLE PARA IMPRESIÓN - TEST -->
-
 <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
     <label class="block text-[10px] font-black text-slate-500 uppercase mb-2 italic tracking-widest">
-        📁 Adjuntar Examen o Documento (PC o Teléfono)
+      📁 Adjuntar Examen o Documento (PC o Teléfono)
     </label>
     
     <div class="flex flex-wrap items-center gap-4">
@@ -542,12 +544,10 @@ span.resultado-print {
   </p>
 </div>
 
-<!-- PREVIEW MULTIPLE DE HISTORIA -->
 <div id="previewHistoriaContainer"
      class="hidden relative w-full border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white p-2 mt-2">
   <div id="previewHistoriaGallery" class="flex gap-2 overflow-x-auto">
-    <!-- aquí se van agregando varias <div> con <img> -->
-  </div>
+    </div>
 </div>
 <input type="hidden" id="pUrlExamen">
     
@@ -643,23 +643,26 @@ span.resultado-print {
 
   <div class="flex-grow">
     <div class="border-b-2 border-slate-800 pb-2 mb-2 flex flex-col sm:flex-row items-center justify-between gap-2" style="min-height: 80px;">
+      
       <div class="flex items-center justify-center sm:justify-start">
         <div class="w-32 flex flex-col items-center sm:items-start">
           <div class="w-full h-20">
-            <img src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
+            <img id="logoIzquierdoVacuna" src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
           </div>
           <p class="text-[9px] font-bold text-slate-700 mt-[-14px] leading-none uppercase">RIF: J-00068577-0</p>
         </div>
       </div>
 
-      <div class="flex flex-col items-center sm:items-end text-center sm:text-right">
-        <div class="flex-grow text-center">
+      <div class="flex flex-col items-center flex-1 text-center">
           <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">
             Tarjeta de Vacunación y Desparasitación
           </h2>
-        </div>
       </div>
-      <div class="w-32 no-print"></div>
+
+      <div class="w-32 flex items-center justify-center">
+          <img id="logoDerechoVacuna" src="" class="hidden w-full h-20 object-contain">
+          <div class="w-32 no-print" id="spacerDerechoVacuna"></div>
+      </div>
     </div>
 
     <div class="flex justify-between items-end mb-2">
@@ -783,12 +786,10 @@ span.resultado-print {
   </p>
 </div>
 
-<!-- PREVIEW MÚLTIPLE DE TEST -->
 <div id="previewTestContainer"
      class="hidden relative w-full border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white p-2 mt-2">
   <div id="previewTestGallery" class="flex gap-2 overflow-x-auto">
-    <!-- varias imágenes de test -->
-  </div>
+    </div>
 </div>
 <input type="hidden" id="pUrlTest">
     
@@ -825,6 +826,7 @@ span.resultado-print {
   <div class="mt-4 p-3 border-l-4 border-blue-600 bg-blue-50 text-[10px] text-blue-900 italic leading-relaxed">
     <strong>Aviso Legal y Médico:</strong> Este reporte certifica el resultado obtenido mediante la técnica de inmunocromatografía al momento de la toma de muestra. Los resultados deben ser interpretados por el Médico Veterinario tratante considerando la anamnesis y el cuadro clínico del paciente.
   </div>
+</section>
 
   <!-- CONTENEDOR EXCLUSIVO PARA FOTOS AL IMPRIMIR (solo visible al imprimir) -->
   <div id="printTestCont" style="display:none;" class="mt-4">
@@ -2683,12 +2685,22 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
   // [04] VALIDAR DOCTOR
   // =========================================================
   window.validarAccesoDoctor = async (nombre) => {
+    // 1. Referencias visuales para los logos
+    const logoCentroH = document.getElementById('logoCentroHistoria');
+    const logoDerechoV = document.getElementById('logoDerechoVacuna');
+    const spacerV = document.getElementById('spacerDerechoVacuna');
+
     // Si se limpia el select (elige opción vacía)
     if (!nombre) {
       window.doctorVerificado = "";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-      // limpiar doctorActivoId
+      
+      // Limpiar logos al deseleccionar
+      if(logoCentroH) logoCentroH.classList.add('hidden');
+      if(logoDerechoV) logoDerechoV.classList.add('hidden');
+      if(spacerV) spacerV.classList.remove('hidden');
+
       window.doctorActivoId = null;
       return;
     }
@@ -2696,7 +2708,6 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
     // Pedir PIN o Llave Maestra
     const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
     if (!pinIngresado) {
-      // Si cancela o deja vacío, se revierte la selección
       const sel = document.getElementById('selectDoctor');
       if (sel) sel.value = "";
       return;
@@ -2709,17 +2720,37 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
       const prefijo = (nombre === "Joan Silva") ? "DR. " : "DR. ";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
+      
+      // >>> AJUSTE DE LOGOS SEGÚN DOCTOR VERIFICADO <<<
+      if (nombre === "Darwin Sandoval") {
+          const urlDarwin = "logo_darwin.jpg"; // Asegúrate que el nombre coincida con tu archivo
+          
+          if(logoCentroH) {
+              logoCentroH.src = urlDarwin;
+              logoCentroH.classList.remove('hidden');
+          }
+          if(logoDerechoV) {
+              logoDerechoV.src = urlDarwin;
+              logoDerechoV.classList.remove('hidden');
+          }
+          if(spacerV) spacerV.classList.add('hidden');
+          
+          onDoctorAutenticado("DR_DARWIN");
+      } else {
+          // Si es Joan Silva u otro, ocultamos logos adicionales (solo queda Avipet)
+          if(logoCentroH) logoCentroH.classList.add('hidden');
+          if(logoDerechoV) logoDerechoV.classList.add('hidden');
+          if(spacerV) spacerV.classList.remove('hidden');
+          
+          if (nombre === "Joan Silva") {
+              onDoctorAutenticado("DR_JOAN");
+          } else {
+              onDoctorAutenticado(null);
+          }
+      }
+
       alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
       await window.calcularTodo();
-
-      // >>> NUEVO: fijar doctorActivoId según el nombre seleccionado <<<
-      if (nombre === "Darwin Sandoval") {
-        onDoctorAutenticado("DR_DARWIN");
-      } else if (nombre === "Joan Silva") {
-        onDoctorAutenticado("DR_JOAN");
-      } else {
-        onDoctorAutenticado(null);
-      }
 
     } else {
       alert("❌ PIN INCORRECTO.");
@@ -2728,9 +2759,16 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
       window.doctorVerificado = "";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
+      
+      // Limpiar logos si el PIN falla
+      if(logoCentroH) logoCentroH.classList.add('hidden');
+      if(logoDerechoV) logoDerechoV.classList.add('hidden');
+      if(spacerV) spacerV.classList.remove('hidden');
+
       window.doctorActivoId = null;
     }
   };
+
 // =========================================================
 // FUNCIÓN AUXILIAR: NORMALIZAR NOMBRES DE SERVICIOS
 // =========================================================
@@ -5072,6 +5110,38 @@ window.cerrarModalLogin = () => {
 window.imprimirDocumento = () => {
   console.log("⚓ Iniciando secuencia de impresión Avipet...");
 
+  // --- 🩺 LÓGICA DE LOGOS SEGMENTADA ---
+  const selectorDoc = document.getElementById('selectDoctor');
+  const nombreDoctor = selectorDoc ? selectorDoc.value.toUpperCase() : "";
+
+  // 1. Logo General (Esquina Izquierda del reporte principal)
+  const imgLogoIzqGeneral = document.getElementById('logoIzquierdo');
+  
+  // 2. Logos de la Hoja de Vacunación (Contenedores específicos)
+  const imgLogoIzqVacuna = document.getElementById('logoIzquierdoVacuna');
+  const imgLogoDerVacuna = document.getElementById('logoDerechoVacuna');
+
+  const urlAvicola = "URL_DE_TU_LOGO_AVICOLA";
+  const urlDarwin  = "URL_DE_TU_LOGO_DARWIN_SANDOVAL";
+
+  // Aplicar logo de Avícola a ambos lados izquierdos (General y Vacuna)
+  if (imgLogoIzqGeneral) imgLogoIzqGeneral.src = urlAvicola;
+  if (imgLogoIzqVacuna) imgLogoIzqVacuna.src = urlAvicola;
+
+  // Lógica para el logo de Darwin (SOLO EN VACUNAS)
+  if (imgLogoDerVacuna) {
+    if (nombreDoctor.includes("DARWIN")) {
+      imgLogoDerVacuna.src = urlDarwin;
+      imgLogoDerVacuna.style.display = "block";
+      imgLogoDerVacuna.classList.remove('hidden');
+    } else {
+      imgLogoDerVacuna.src = "";
+      imgLogoDerVacuna.style.display = "none";
+      imgLogoDerVacuna.classList.add('hidden');
+    }
+  }
+  // --- FIN LÓGICA DE LOGOS ---
+
   // 1. Sincronizar texto de tratamiento
   const hTrat = document.getElementById('hTratamiento');
   const hTratPrint = document.getElementById('hTratamientoPrint');
@@ -5079,37 +5149,27 @@ window.imprimirDocumento = () => {
     hTratPrint.innerText = hTrat.value;
   }
 
-  // 2. Copiar todas las imágenes de HISTORIA (galería preview -> galería print)
+  // 2. Copiar todas las imágenes de HISTORIA
   try {
     const galPrevHist = document.getElementById('previewHistoriaGallery');
     const galPrintHist = document.getElementById('printHistoriaGallery');
     const contPrintHist = document.getElementById('printExamenCont');
 
     if (galPrevHist && galPrintHist && contPrintHist) {
-      galPrintHist.innerHTML = ""; // limpiamos anterior
-
+      galPrintHist.innerHTML = ""; 
       const imgsPrev = galPrevHist.querySelectorAll('img');
       imgsPrev.forEach(img => {
         const wrapper = document.createElement('div');
         wrapper.className = "max-w-[45%] md:max-w-[30%] border border-slate-300 rounded-lg overflow-hidden";
-        wrapper.innerHTML = `
-          <img src="${img.src}"
-               class="w-full h-auto max-h-[300px] object-contain foto-anexo">
-        `;
+        wrapper.innerHTML = `<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;
         galPrintHist.appendChild(wrapper);
       });
-
-      if (imgsPrev.length > 0) {
-        contPrintHist.classList.remove('hidden');
-      } else {
-        contPrintHist.classList.add('hidden');
-      }
+      if (imgsPrev.length > 0) contPrintHist.classList.remove('hidden');
+      else contPrintHist.classList.add('hidden');
     }
-  } catch (e) {
-    console.warn("No se pudo preparar galería de Historia para impresión:", e);
-  }
+  } catch (e) { console.warn("Error en galería Historia:", e); }
 
-  // 3. Copiar todas las imágenes de TEST (galería preview -> galería print)
+  // 3. Copiar todas las imágenes de TEST
   try {
     const galPrevTest = document.getElementById('previewTestGallery');
     const galPrintTest = document.getElementById('printTestGallery');
@@ -5117,27 +5177,17 @@ window.imprimirDocumento = () => {
 
     if (galPrevTest && galPrintTest && contPrintTest) {
       galPrintTest.innerHTML = "";
-
       const imgsPrevTest = galPrevTest.querySelectorAll('img');
       imgsPrevTest.forEach(img => {
         const wrapper = document.createElement('div');
         wrapper.className = "max-w-[45%] md:max-w-[30%] border border-slate-300 rounded-lg overflow-hidden";
-        wrapper.innerHTML = `
-          <img src="${img.src}"
-               class="w-full h-auto max-h-[300px] object-contain foto-anexo">
-        `;
+        wrapper.innerHTML = `<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;
         galPrintTest.appendChild(wrapper);
       });
-
-      if (imgsPrevTest.length > 0) {
-        contPrintTest.classList.remove('hidden');
-      } else {
-        contPrintTest.classList.add('hidden');
-      }
+      if (imgsPrevTest.length > 0) contPrintTest.classList.remove('hidden');
+      else contPrintTest.classList.add('hidden');
     }
-  } catch (e) {
-    console.warn("No se pudo preparar galería de Test para impresión:", e);
-  }
+  } catch (e) { console.warn("Error en galería Test:", e); }
 
   // 4. Asegurar logos / imágenes visibles
   const logos = document.querySelectorAll('img[src^="data:image"], .print-area img');
@@ -5147,10 +5197,10 @@ window.imprimirDocumento = () => {
     img.style.opacity   = '1';
   });
 
-  // 5. Disparar impresión con un pequeño delay
+  // 5. Disparar impresión
   setTimeout(() => {
     window.print();
-    console.log("✅ Impresión enviada con anexos múltiples.");
+    console.log("✅ Impresión enviada con logos de vacunación validados.");
   }, 500);
 };
   // =========================================================
