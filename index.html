@@ -3469,7 +3469,7 @@ window.buscarPorCedula = async () => {
       return;
     }
 
-    // 🔴 [PUNTO DE LIMPIEZA] Borramos datos visuales previos antes de cargar lo nuevo
+    // 🔴 [PUNTO DE LIMPIEZA]
     const headerMascota = document.getElementById('datosMascotaHeader');
     if(headerMascota) headerMascota.innerHTML = "";
 
@@ -3504,11 +3504,9 @@ window.buscarPorCedula = async () => {
 
     contenedor.innerHTML = "";
 
-    // 🔵 [NUEVA CABECERA DE DATOS FIJOS]
+    // 🔵 [LÓGICA DE AUTOCOMPLETADO MANTENIDA]
     if (registros.length > 0) {
         const ult = registros[0]; 
-        
-        // 1. Autocompletado de inputs (Mantenido)
         const mapping = {
             'hNombre': ult.paciente, 'hProp': ult.propietario, 'hEspecie': ult.especie,
             'hRaza': ult.raza, 'hSexo': ult.sexo, 'hEdad': ult.edad, 'hPeso': ult.peso,
@@ -3519,42 +3517,6 @@ window.buscarPorCedula = async () => {
             const el = document.getElementById(id);
             if(el) el.value = val || "";
         });
-
-        // 2. Insertar Ficha de Identidad en el contenedor de resultados
-        const fichaHTML = `
-            <div class="bg-white border-2 border-blue-600 rounded-xl p-5 mb-6 shadow-md animate-fadeIn">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <p class="text-[10px] font-black text-blue-600 uppercase italic tracking-widest border-b border-blue-100 pb-1">Identificación del Paciente</p>
-                        <h3 class="text-2xl font-black text-slate-800 uppercase italic leading-none">${ult.paciente}</h3>
-                        <div class="grid grid-cols-2 gap-2 text-[11px] font-bold text-slate-500 uppercase">
-                            <p>Especie: <span class="text-slate-800">${ult.especie || '---'}</span></p>
-                            <p>Raza: <span class="text-slate-800">${ult.raza || '---'}</span></p>
-                            <p>Edad: <span class="text-slate-800">${ult.edad || '---'}</span></p>
-                            <p>Sexo: <span class="text-slate-800">${ult.sexo || '---'}</span></p>
-                            <p>Color: <span class="text-slate-800">${ult.color || '---'}</span></p>
-                            <p>Peso: <span class="text-slate-800">${ult.peso || '---'} kg</span></p>
-                        </div>
-                    </div>
-                    <div class="md:border-l border-slate-200 md:pl-6 space-y-2">
-                        <p class="text-[10px] font-black text-emerald-600 uppercase italic tracking-widest border-b border-emerald-100 pb-1">Información del Propietario</p>
-                        <h3 class="text-lg font-black text-slate-800 uppercase">${ult.propietario}</h3>
-                        <div class="flex flex-col gap-1 text-[11px] font-bold text-slate-500 uppercase">
-                            <p>Cédula: <span class="text-slate-800">${ult.cedula}</span></p>
-                            <p>Teléfono: <span class="text-slate-800">${ult.telefono || '---'}</span></p>
-                            <p>Correo: <span class="text-slate-800 lowercase font-medium">${ult.correo || '---'}</span></p>
-                            <p class="truncate">Dir: <span class="text-slate-800 normal-case italic font-medium">${ult.direccion || '---'}</span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center gap-4 mb-4">
-                <hr class="flex-1 border-slate-300">
-                <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Historial de Consultas</span>
-                <hr class="flex-1 border-slate-300">
-            </div>
-        `;
-        contenedor.innerHTML = fichaHTML;
     }
 
     registros.forEach(d => {
@@ -3563,7 +3525,7 @@ window.buscarPorCedula = async () => {
       const div = document.createElement('div');
       div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
 
-      // ── INSUMOS ──────────────────────────────────────────────
+      // ── INSUMOS (Tus líneas originales) ──
       const insHtml = d.listaDetalladaInsumos
         ? d.listaDetalladaInsumos.map(ins => `
             <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
@@ -3572,14 +3534,12 @@ window.buscarPorCedula = async () => {
             </div>`).join('')
         : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
 
-      // ── TESTS RÁPIDOS ─────────────────────────────────────────
+      // ── TESTS RÁPIDOS (Tus líneas originales) ──
       let testsHtml = "";
       if (Array.isArray(d.testsRealizados) && d.testsRealizados.length > 0) {
         testsHtml = `
           <div class="mt-4">
-            <p class="text-[10px] font-bold text-violet-600 border-b mb-1 uppercase">
-              Tests Rápidos:
-            </p>
+            <p class="text-[10px] font-bold text-violet-600 border-b mb-1 uppercase">Tests Rápidos:</p>
             <div class="space-y-1 text-[11px]">
               ${d.testsRealizados.map(t => `
                 <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
@@ -3587,97 +3547,54 @@ window.buscarPorCedula = async () => {
                     <p class="font-bold text-slate-800 uppercase">${t.nombre || ''}</p>
                     <p class="text-[10px] text-slate-500 italic">${t.nota || ''}</p>
                   </div>
-                  <span class="text-[10px] font-black ${
-                    (t.resultado || "").includes("POSI") ? "text-red-600" :
-                    (t.resultado || "").includes("NEGA") ? "text-emerald-600" :
-                    "text-slate-600"
-                  }">
+                  <span class="text-[10px] font-black ${(t.resultado || "").includes("POSI") ? "text-red-600" : (t.resultado || "").includes("NEGA") ? "text-emerald-600" : "text-slate-600"}">
                     ${t.resultado || ''}
                   </span>
-                </div>
-              `).join('')}
+                </div>`).join('')}
             </div>
           </div>`;
       }
 
-      // ── VACUNAS Y DESPARASITACIONES ───────────────────────────
+      // ── VACUNAS Y DESPARASITACIONES (Tus líneas originales) ──
       let vacunasHtml = "";
       const tieneVacunas = Array.isArray(d.vacunasAplicadas) && d.vacunasAplicadas.length > 0;
       const tieneDesp    = Array.isArray(d.desparasitacionesAplicadas) && d.desparasitacionesAplicadas.length > 0;
-
       if (tieneVacunas || tieneDesp) {
         vacunasHtml = `<div class="mt-4">`;
         if (tieneVacunas) {
-          vacunasHtml += `
-            <p class="text-[10px] font-bold text-teal-600 border-b mb-1 uppercase">
-              Vacunas Aplicadas:
-            </p>
-            <div class="space-y-1 text-[11px] mb-3">
-              ${d.vacunasAplicadas.map(v => `
+          vacunasHtml += `<p class="text-[10px] font-bold text-teal-600 border-b mb-1 uppercase">Vacunas Aplicadas:</p>
+            <div class="space-y-1 text-[11px] mb-3">${d.vacunasAplicadas.map(v => `
                 <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
-                  <div>
-                    <p class="font-bold text-slate-800 uppercase">${v.vacuna || ''}</p>
-                    <p class="text-[10px] text-slate-500 italic">
-                      ${[v.peso ? 'Peso: ' + v.peso : '', v.proxima ? 'Próxima: ' + v.proxima : ''].filter(Boolean).join(' · ')}
-                    </p>
-                  </div>
+                  <div><p class="font-bold text-slate-800 uppercase">${v.vacuna || ''}</p>
+                  <p class="text-[10px] text-slate-500 italic">${[v.peso ? 'Peso: ' + v.peso : '', v.proxima ? 'Próxima: ' + v.proxima : ''].filter(Boolean).join(' · ')}</p></div>
                   <span class="text-[10px] font-black text-teal-700">${v.fecha || ''}</span>
-                </div>
-              `).join('')}
-            </div>`;
+                </div>`).join('')}</div>`;
         }
         if (tieneDesp) {
-          vacunasHtml += `
-            <p class="text-[10px] font-bold text-amber-600 border-b mb-1 uppercase">
-              Desparasitaciones:
-            </p>
-            <div class="space-y-1 text-[11px]">
-              ${d.desparasitacionesAplicadas.map(dp => `
+          vacunasHtml += `<p class="text-[10px] font-bold text-amber-600 border-b mb-1 uppercase">Desparasitaciones:</p>
+            <div class="space-y-1 text-[11px]">${d.desparasitacionesAplicadas.map(dp => `
                 <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
-                  <div>
-                    <p class="font-bold text-slate-800 uppercase">${dp.producto || ''}</p>
-                    <p class="text-[10px] text-slate-500 italic">
-                      ${[dp.peso ? 'Peso: ' + dp.peso : '', dp.proxima ? 'Próxima: ' + dp.proxima : ''].filter(Boolean).join(' · ')}
-                    </p>
-                  </div>
+                  <div><p class="font-bold text-slate-800 uppercase">${dp.producto || ''}</p>
+                  <p class="text-[10px] text-slate-500 italic">${[dp.peso ? 'Peso: ' + dp.peso : '', dp.proxima ? 'Próxima: ' + dp.proxima : ''].filter(Boolean).join(' · ')}</p></div>
                   <span class="text-[10px] font-black text-amber-700">${dp.fecha || ''}</span>
-                </div>
-              `).join('')}
-            </div>`;
+                </div>`).join('')}</div>`;
         }
         vacunasHtml += `</div>`;
       }
 
-      // ── FOTOS ─────────────────────────────────────────────────
+      // ── FOTOS (Tus líneas originales) ──
       let fotosHtml = "";
       const listaHistoria = Array.isArray(d.fotosHistoria) ? d.fotosHistoria : (d.urlExamen ? [d.urlExamen] : []);
       const listaTest = Array.isArray(d.fotosTest) ? d.fotosTest : (d.urlFotoTest ? [d.urlFotoTest] : []);
-
       if (listaHistoria.length > 0 || listaTest.length > 0) {
-        fotosHtml = `
-          <p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">
-            Anexos Visuales:
-          </p>
+        fotosHtml = `<p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">Anexos Visuales:</p>
           <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
-        listaHistoria.forEach((src, idx) => {
-          fotosHtml += `
-            <div class="flex-shrink-0">
-              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}</p>
-              <img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')">
-            </div>`;
-        });
-        listaTest.forEach((src, idx) => {
-          fotosHtml += `
-            <div class="flex-shrink-0">
-              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}</p>
-              <img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')">
-            </div>`;
-        });
+        listaHistoria.forEach((src, idx) => { fotosHtml += `<div class="flex-shrink-0"><p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}</p><img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')"></div>`; });
+        listaTest.forEach((src, idx) => { fotosHtml += `<div class="flex-shrink-0"><p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}</p><img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')"></div>`; });
         fotosHtml += `</div>`;
       }
 
-      // ── TARJETA COMPLETA ──────────────────────────────────────
-      const drPref = "Dr.";
+      // ── TARJETA COMPLETA CON IDENTIDAD INTEGRADA ──
       div.innerHTML = `
         <details class="group">
           <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
@@ -3688,12 +3605,26 @@ window.buscarPorCedula = async () => {
               </div>
               <div>
                 <h3 class="font-black text-slate-800 uppercase italic leading-tight">${d.paciente}</h3>
-                <p class="text-[10px] text-slate-500 font-bold uppercase">${drPref} ${d.doctor}</p>
+                <p class="text-[10px] text-slate-500 font-bold uppercase">Dr. ${d.doctor}</p>
               </div>
             </div>
             <div class="text-blue-500 flex items-center group-open:rotate-180 transition-transform font-bold">▼</div>
           </summary>
           <div class="p-4 bg-slate-50 border-t border-slate-100">
+            
+            <div class="mb-4 grid grid-cols-2 gap-4 bg-white p-3 rounded-lg border border-slate-200 text-[11px] font-bold">
+              <div class="space-y-1">
+                <p class="text-blue-600 uppercase text-[9px]">Paciente:</p>
+                <p class="text-slate-800">${d.especie || '-'} / ${d.raza || '-'} / ${d.sexo || '-'}</p>
+                <p class="text-slate-800">Edad: ${d.edad || '-'} / Peso: ${d.peso || '-'} kg</p>
+              </div>
+              <div class="space-y-1 border-l pl-3">
+                <p class="text-emerald-600 uppercase text-[9px]">Propietario:</p>
+                <p class="text-slate-800">${d.propietario} (${d.cedula})</p>
+                <p class="text-slate-500 italic normal-case font-medium">${d.telefono || '-'}</p>
+              </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
@@ -3704,9 +3635,7 @@ window.buscarPorCedula = async () => {
                 <div class="space-y-1">${insHtml}</div>
               </div>
             </div>
-            ${testsHtml}
-            ${vacunasHtml}
-            ${fotosHtml}
+            ${testsHtml} ${vacunasHtml} ${fotosHtml}
             <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
               <div class="flex flex-col gap-1">
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Consulta</span>
