@@ -265,13 +265,13 @@ span.resultado-print {
     </div>
 
     <div class="flex flex-col items-center justify-center flex-1 px-4">
-        <img id="logoCentroHistoria" src="" class="hidden h-24 object-contain">
     </div>
     
     <div class="flex flex-col items-end text-right z-10">
       
-      <select id="selectDoctor"
-              onchange="window.validarAccesoDoctor(this.value)"
+<select id="selectDoctor"
+        onchange="window.validarAccesoDoctor(this.value); actualizarLogoDoctor(this.value);"
+
               class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none mb-1">
         <option value="">-- SELECCIONE DOCTOR --</option>
         <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
@@ -2676,27 +2676,19 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
   };
 
   // Función requerida por el selector de doctores
-  window.validarAccesoDoctor = (idSelect) => {
-    const el = document.getElementById(idSelect);
-    if (el) console.log("Cambiando sesión a:", el.value);
-  };
+window.validarAccesoDoctor = async (nombre) => {
+    // 1. Referencias a los contenedores de logos
+    const logoCentroH = document.getElementById('logoCentroHistoria'); // El de Historia Clínica
+    const logoDerechoV = document.getElementById('logoDerechoVacuna'); // El de Vacunas
+    const spacerV = document.getElementById('spacerDerechoVacuna');   // El espacio de equilibrio
 
-  // =========================================================
-  // [04] VALIDAR DOCTOR
-  // =========================================================
-  window.validarAccesoDoctor = async (nombre) => {
-    // 1. Referencias visuales para los logos
-    const logoCentroH = document.getElementById('logoCentroHistoria');
-    const logoDerechoV = document.getElementById('logoDerechoVacuna');
-    const spacerV = document.getElementById('spacerDerechoVacuna');
-
-    // Si se limpia el select (elige opción vacía)
+    // Si se limpia el select
     if (!nombre) {
       window.doctorVerificado = "";
       const dPrint = document.getElementById('doctorPrint');
       if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
       
-      // Limpiar logos al deseleccionar
+      // Limpiamos y ocultamos TODO
       if(logoCentroH) logoCentroH.classList.add('hidden');
       if(logoDerechoV) logoDerechoV.classList.add('hidden');
       if(spacerV) spacerV.classList.remove('hidden');
@@ -2705,8 +2697,8 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
       return;
     }
 
-    // Pedir PIN o Llave Maestra
-    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()} (o Llave Maestra):`);
+    // Pedir PIN
+    const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
     if (!pinIngresado) {
       const sel = document.getElementById('selectDoctor');
       if (sel) sel.value = "";
@@ -2717,67 +2709,48 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
 
     if (esValido) {
       window.doctorVerificado = nombre;
-      const prefijo = (nombre === "Joan Silva") ? "DR. " : "DR. ";
       const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = prefijo + nombre.toUpperCase();
+      if (dPrint) dPrint.innerText = "DR. " + nombre.toUpperCase();
       
-      // >>> AJUSTE DE LOGOS SEGÚN DOCTOR VERIFICADO <<<
+      // >>> LÓGICA DE FILTRADO DE LOGOS <<<
       if (nombre === "Darwin Sandoval") {
-          const urlDarwin = "logo_darwin.jpg"; // Asegúrate que el nombre coincida con tu archivo
+          const urlDarwin = "logo_darwin.jpg"; 
           
+          // A. HISTORIA CLÍNICA: Forzamos que se mantenga oculto (tu petición)
           if(logoCentroH) {
-              logoCentroH.src = urlDarwin;
-              logoCentroH.classList.remove('hidden');
+              logoCentroH.classList.add('hidden'); 
+              logoCentroH.src = ""; 
           }
+
+          // B. HOJA DE VACUNAS: Aquí sí lo encendemos
           if(logoDerechoV) {
               logoDerechoV.src = urlDarwin;
               logoDerechoV.classList.remove('hidden');
           }
-          if(spacerV) spacerV.classList.add('hidden');
+          if(spacerV) spacerV.classList.add('hidden'); // Quitamos el espacio vacío
           
           onDoctorAutenticado("DR_DARWIN");
       } else {
-          // Si es Joan Silva u otro, ocultamos logos adicionales (solo queda Avipet)
+          // Si es Joan Silva u otro doctor sin logo personalizado
           if(logoCentroH) logoCentroH.classList.add('hidden');
           if(logoDerechoV) logoDerechoV.classList.add('hidden');
           if(spacerV) spacerV.classList.remove('hidden');
           
-          if (nombre === "Joan Silva") {
-              onDoctorAutenticado("DR_JOAN");
-          } else {
-              onDoctorAutenticado(null);
-          }
+          onDoctorAutenticado(nombre === "Joan Silva" ? "DR_JOAN" : null);
       }
 
-      alert(`✅ Identidad confirmada: ${prefijo}${nombre}`);
+      alert(`✅ Identidad confirmada: DR. ${nombre}`);
       await window.calcularTodo();
 
     } else {
       alert("❌ PIN INCORRECTO.");
       const sel = document.getElementById('selectDoctor');
       if (sel) sel.value = "";
-      window.doctorVerificado = "";
-      const dPrint = document.getElementById('doctorPrint');
-      if (dPrint) dPrint.innerText = "SELECCIONE DOCTOR";
-      
-      // Limpiar logos si el PIN falla
+      // Limpiar logos por seguridad en caso de error
       if(logoCentroH) logoCentroH.classList.add('hidden');
       if(logoDerechoV) logoDerechoV.classList.add('hidden');
       if(spacerV) spacerV.classList.remove('hidden');
-
-      window.doctorActivoId = null;
     }
-  };
-
-// =========================================================
-// FUNCIÓN AUXILIAR: NORMALIZAR NOMBRES DE SERVICIOS
-// =========================================================
-const normalizarNombre = (texto = "") => {
-  return String(texto)
-    .toLowerCase()
-    .normalize("NFD")               // separa acentos
-    .replace(/[\u0300-\u036f]/g, "")// quita acentos
-    .replace(/[^a-z0-9]/g, "");     // quita espacios y símbolos
 };
 window.insertarServicio = async (v) => {
     if (!v) return;
@@ -4625,7 +4598,15 @@ window.registrarLogAuditoria = async (accion, detalle) => {
 };
 
   // 4. Ejecución del Cambio (DOM Manipulation)
- window.ejecutarCambioDeTab = async (t) => {
+window.ejecutarCambioDeTab = async (t) => {
+
+  // 🔥 LIMPIAR LOGO SI ENTRA A HISTORIA
+  if (t === 'historia') {
+    if (typeof limpiarLogoHistoria === 'function') {
+      limpiarLogoHistoria();
+    }
+  }
+
   // A. Ocultar todas las secciones
   const secciones = [
     'sectionHistoria',
@@ -4684,37 +4665,45 @@ window.registrarLogAuditoria = async (accion, detalle) => {
   if (t === 'reporte' && typeof window.cargarReporte === 'function') {
     window.cargarReporte();
   }
+
   if (t === 'espera' && typeof window.cargarListaEspera === 'function') {
     window.cargarListaEspera();
   }
+
   if (t === 'config_precios' && typeof window.cambiarSubTabConfig === 'function') {
     window.cambiarSubTabConfig('servicios');
   }
   
-  // AJUSTE AVIPET: Carga de Inventario y Proveedores
+  // INVENTARIO
   if (t === 'inventario') {
     if (typeof window.cargarInventario === 'function') {
       window.cargarInventario(); 
     }
-    // Activa la lista desplegable de proveedores dinámicamente
+
     if (typeof window.actualizarSelectorProveedores === 'function') {
       window.actualizarSelectorProveedores();
     }
   }
 
-  // Sincronizar selector móvil si existe
+  // Sincronizar selector móvil
   const navMobile = document.getElementById('navMobile');
   if (navMobile) {
     navMobile.value = t;
   }
+
   console.log(`⚓ Navegación exitosa a: ${t}`);
 };
+
+
+// CERRAR MODAL LOGIN
 window.cerrarModalLogin = () => {
   const modal = document.getElementById('modalLogin');
   if (modal) modal.classList.add('hidden');
+
   const inp = document.getElementById('inputPass');
   if (inp) inp.value = "";
 };
+
   // =========================================================
   // [24] DOCTOR: VER Y ABRIR COLA DE ESPERA
   // =========================================================
@@ -7644,6 +7633,33 @@ window.addEventListener('load', () => {
     localStorage.removeItem('respaldo_historia_activa');
   }
 });
+const logosDoctores = {
+  "Darwin Sandoval": "logo_darwin.png",
+  "Joan Silva": "logo_joan.png"
+};
+
+function actualizarLogoDoctor(doctor) {
+  const logoVacuna = document.getElementById("logoDerechoVacuna");
+
+  if (!logoVacuna) return;
+
+  logoVacuna.src = "";
+  logoVacuna.classList.add("hidden");
+
+  if (logosDoctores[doctor]) {
+    logoVacuna.src = logosDoctores[doctor];
+    logoVacuna.classList.remove("hidden");
+  }
+}
+
+function limpiarLogoHistoria() {
+  const logoHistoria = document.getElementById("logoCentroHistoria");
+
+  if (logoHistoria) {
+    logoHistoria.src = "";
+    logoHistoria.classList.add("hidden");
+  }
+}
 
 </script>
 
