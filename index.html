@@ -3504,10 +3504,11 @@ window.buscarPorCedula = async () => {
 
     contenedor.innerHTML = "";
 
-    // 🔵 [LÓGICA DE AUTOCOMPLETADO AGREGADA]
+    // 🔵 [NUEVA CABECERA DE DATOS FIJOS]
     if (registros.length > 0) {
         const ult = registros[0]; 
-        // Solo rellenamos si el header existe (indicando que estamos en modo edición/historia)
+        
+        // 1. Autocompletado de inputs (Mantenido)
         const mapping = {
             'hNombre': ult.paciente, 'hProp': ult.propietario, 'hEspecie': ult.especie,
             'hRaza': ult.raza, 'hSexo': ult.sexo, 'hEdad': ult.edad, 'hPeso': ult.peso,
@@ -3518,6 +3519,42 @@ window.buscarPorCedula = async () => {
             const el = document.getElementById(id);
             if(el) el.value = val || "";
         });
+
+        // 2. Insertar Ficha de Identidad en el contenedor de resultados
+        const fichaHTML = `
+            <div class="bg-white border-2 border-blue-600 rounded-xl p-5 mb-6 shadow-md animate-fadeIn">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <p class="text-[10px] font-black text-blue-600 uppercase italic tracking-widest border-b border-blue-100 pb-1">Identificación del Paciente</p>
+                        <h3 class="text-2xl font-black text-slate-800 uppercase italic leading-none">${ult.paciente}</h3>
+                        <div class="grid grid-cols-2 gap-2 text-[11px] font-bold text-slate-500 uppercase">
+                            <p>Especie: <span class="text-slate-800">${ult.especie || '---'}</span></p>
+                            <p>Raza: <span class="text-slate-800">${ult.raza || '---'}</span></p>
+                            <p>Edad: <span class="text-slate-800">${ult.edad || '---'}</span></p>
+                            <p>Sexo: <span class="text-slate-800">${ult.sexo || '---'}</span></p>
+                            <p>Color: <span class="text-slate-800">${ult.color || '---'}</span></p>
+                            <p>Peso: <span class="text-slate-800">${ult.peso || '---'} kg</span></p>
+                        </div>
+                    </div>
+                    <div class="md:border-l border-slate-200 md:pl-6 space-y-2">
+                        <p class="text-[10px] font-black text-emerald-600 uppercase italic tracking-widest border-b border-emerald-100 pb-1">Información del Propietario</p>
+                        <h3 class="text-lg font-black text-slate-800 uppercase">${ult.propietario}</h3>
+                        <div class="flex flex-col gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <p>Cédula: <span class="text-slate-800">${ult.cedula}</span></p>
+                            <p>Teléfono: <span class="text-slate-800">${ult.telefono || '---'}</span></p>
+                            <p>Correo: <span class="text-slate-800 lowercase font-medium">${ult.correo || '---'}</span></p>
+                            <p class="truncate">Dir: <span class="text-slate-800 normal-case italic font-medium">${ult.direccion || '---'}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 mb-4">
+                <hr class="flex-1 border-slate-300">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Historial de Consultas</span>
+                <hr class="flex-1 border-slate-300">
+            </div>
+        `;
+        contenedor.innerHTML = fichaHTML;
     }
 
     registros.forEach(d => {
