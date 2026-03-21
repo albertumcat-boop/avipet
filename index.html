@@ -1836,27 +1836,20 @@ window.guardarFirebase = async (imp) => {
             urlFotoTestFinal = document.getElementById('pUrlTest')?.value || "";
         }
 
-        // ===== LEER TABLA DE TESTS (AJUSTADO) =====
+        // ===== LEER TABLA DE TESTS (MANTENIDO) =====
         const listaTests = [];
         document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila => {
-            // Nombre: input si es "OTRO", si no el texto del span
             const inputNombre = fila.cells[0]?.querySelector('input');
             const nombre = inputNombre
                 ? inputNombre.value.trim()
                 : (fila.cells[0]?.querySelector('span')?.innerText?.trim() || fila.cells[0]?.innerText?.trim() || "");
-
-            // Resultado: leer del span espejo (resultado-print) como fuente principal,
-            // con fallback al select por si el span aún no fue actualizado
             const spanResultado = fila.cells[1]?.querySelector('.resultado-print');
             const selectResultado = fila.cells[1]?.querySelector('select');
             const resultado = (spanResultado?.innerText?.trim() && spanResultado.innerText.trim() !== "---")
                 ? spanResultado.innerText.trim()
                 : (selectResultado?.value || "---");
-
             const nota = fila.cells[2]?.querySelector('input')?.value?.trim() || "";
-
-            // DESPUÉS (guarda el test aunque no se haya cambiado el resultado):
-              if (nombre) {
+            if (nombre) {
                 listaTests.push({ nombre, resultado, nota });
             }
         });
@@ -1886,7 +1879,7 @@ window.guardarFirebase = async (imp) => {
             pagoDoctorTotal += (Math.max(0, precioServicio - gastosEsteServicio) * (pEfect / 100));
         });
 
-        // ===== LEER HOJA DE VACUNAS / DESPARASITACIONES =====
+        // ===== LEER HOJA DE VACUNAS (MANTENIDO) =====
         const leerTablaVacunas = () => {
             const resultado = { vacunas: [], desparasitaciones: [] };
             try {
@@ -1927,7 +1920,6 @@ window.guardarFirebase = async (imp) => {
         };
         const datosVacunas = leerTablaVacunas();
 
-        // ===== LEER FOTOS DE GALERÍAS =====
         const leerTodasLasFotosDeGaleria = (galeriaId) => {
             const galeria = document.getElementById(galeriaId);
             if (!galeria) return [];
@@ -1972,13 +1964,33 @@ window.guardarFirebase = async (imp) => {
             fechaSimple:  new Date().toLocaleDateString()
         };
 
-               btnGuardar.innerText = "💾 REGISTRANDO...";
+        btnGuardar.innerText = "💾 REGISTRANDO...";
         await addDoc(collection(db, "consultas"), data);
 
-        // ✅ Limpiar respaldo local al guardar exitosamente
+        // ✅ LIMPIEZA DE RESPALDO LOCAL
         localStorage.removeItem('respaldoConsulta');
+        localStorage.removeItem('respaldo_historia_activa');
 
         alert("✅ ¡Consulta guardada con éxito!");
+
+        // --- ⚓ ANCLA DE LIMPIEZA (RESET DE FORMULARIO) ---
+        // Limpiamos los campos de texto para el próximo paciente
+        ['hCI','hProp','hNombre','hEspecie','hRaza','hSexo','hEdad','hPeso','hColor','hTlf','hMail','hDir','hTratamiento'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+        
+        // Limpiamos la visualización de la izquierda y la tabla de insumos
+        const visual = document.getElementById('visualizacionServicios');
+        if (visual) visual.innerHTML = '<p class="text-[10px] text-slate-400 italic">Sin servicios registrados</p>';
+        const cuerpoInsumos = document.getElementById('listaInsumosDinamica');
+        if (cuerpoInsumos) cuerpoInsumos.innerHTML = "";
+        if (document.getElementById('precioVenta')) document.getElementById('precioVenta').value = "0.00";
+        
+        // Limpiamos los datos visuales del paciente de la cabecera (Punto 2)
+        const headerInfo = document.getElementById('datosMascotaHeader');
+        if (headerInfo) headerInfo.innerHTML = "";
+
         if (imp) window.imprimirDocumento();
 
     } catch (e) {
@@ -1991,8 +2003,6 @@ window.guardarFirebase = async (imp) => {
         }
     }
 };
-
-
   // =========================================================
   // CONFIGURACIÓN DE TASA CAMBIARIA (MODO DUAL: AUTO/MANUAL)
   // =========================================================
@@ -3454,11 +3464,14 @@ window.buscarPorCedula = async () => {
 
     const snap = await getDocs(q);
     if (snap.empty) {
-      contenedor.innerHTML =
-        `<p class="p-6 text-center text-slate-500">No hay registros para el criterio seleccionado.</p>`;
+      contenedor.innerHTML = `<p class="p-6 text-center text-slate-500">No hay registros para el criterio seleccionado.</p>`;
       if (selectPac) selectPac.innerHTML = '<option value="">-- TODOS --</option>';
       return;
     }
+
+    // 🔴 [PUNTO DE LIMPIEZA] Borramos datos visuales previos antes de cargar lo nuevo
+    const headerMascota = document.getElementById('datosMascotaHeader');
+    if(headerMascota) headerMascota.innerHTML = "";
 
     if (modo === 'ci' && selectPac) {
       const setPacientes = new Set();
@@ -3490,6 +3503,22 @@ window.buscarPorCedula = async () => {
     });
 
     contenedor.innerHTML = "";
+
+    // 🔵 [LÓGICA DE AUTOCOMPLETADO AGREGADA]
+    if (registros.length > 0) {
+        const ult = registros[0]; 
+        // Solo rellenamos si el header existe (indicando que estamos en modo edición/historia)
+        const mapping = {
+            'hNombre': ult.paciente, 'hProp': ult.propietario, 'hEspecie': ult.especie,
+            'hRaza': ult.raza, 'hSexo': ult.sexo, 'hEdad': ult.edad, 'hPeso': ult.peso,
+            'hColor': ult.color, 'hTlf': ult.telefono, 'hMail': ult.correo, 'hDir': ult.direccion,
+            'hCI': ult.cedula
+        };
+        Object.entries(mapping).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if(el) el.value = val || "";
+        });
+    }
 
     registros.forEach(d => {
       if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
@@ -3534,14 +3563,13 @@ window.buscarPorCedula = async () => {
           </div>`;
       }
 
-     // ── VACUNAS Y DESPARASITACIONES ───────────────────────────
+      // ── VACUNAS Y DESPARASITACIONES ───────────────────────────
       let vacunasHtml = "";
       const tieneVacunas = Array.isArray(d.vacunasAplicadas) && d.vacunasAplicadas.length > 0;
       const tieneDesp    = Array.isArray(d.desparasitacionesAplicadas) && d.desparasitacionesAplicadas.length > 0;
 
       if (tieneVacunas || tieneDesp) {
         vacunasHtml = `<div class="mt-4">`;
-
         if (tieneVacunas) {
           vacunasHtml += `
             <p class="text-[10px] font-bold text-teal-600 border-b mb-1 uppercase">
@@ -3561,7 +3589,6 @@ window.buscarPorCedula = async () => {
               `).join('')}
             </div>`;
         }
-
         if (tieneDesp) {
           vacunasHtml += `
             <p class="text-[10px] font-bold text-amber-600 border-b mb-1 uppercase">
@@ -3581,18 +3608,13 @@ window.buscarPorCedula = async () => {
               `).join('')}
             </div>`;
         }
-
         vacunasHtml += `</div>`;
       }
 
       // ── FOTOS ─────────────────────────────────────────────────
       let fotosHtml = "";
-      const listaHistoria = Array.isArray(d.fotosHistoria)
-        ? d.fotosHistoria
-        : (d.urlExamen ? [d.urlExamen] : []);
-      const listaTest = Array.isArray(d.fotosTest)
-        ? d.fotosTest
-        : (d.urlFotoTest ? [d.urlFotoTest] : []);
+      const listaHistoria = Array.isArray(d.fotosHistoria) ? d.fotosHistoria : (d.urlExamen ? [d.urlExamen] : []);
+      const listaTest = Array.isArray(d.fotosTest) ? d.fotosTest : (d.urlFotoTest ? [d.urlFotoTest] : []);
 
       if (listaHistoria.length > 0 || listaTest.length > 0) {
         fotosHtml = `
@@ -3600,31 +3622,20 @@ window.buscarPorCedula = async () => {
             Anexos Visuales:
           </p>
           <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
-
         listaHistoria.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
-              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
-                Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}
-              </p>
-              <img src="${src}"
-                   class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                   onclick="window.verFotoGrande('${src}')">
+              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}</p>
+              <img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')">
             </div>`;
         });
-
         listaTest.forEach((src, idx) => {
           fotosHtml += `
             <div class="flex-shrink-0">
-              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">
-                Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}
-              </p>
-              <img src="${src}"
-                   class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                   onclick="window.verFotoGrande('${src}')">
+              <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}</p>
+              <img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')">
             </div>`;
         });
-
         fotosHtml += `</div>`;
       }
 
@@ -3648,17 +3659,11 @@ window.buscarPorCedula = async () => {
           <div class="p-4 bg-slate-50 border-t border-slate-100">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">
-                  Diagnóstico / Tratamiento:
-                </p>
-                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
-                  ${d.tratamiento || ""}
-                </p>
+                <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
+                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
               </div>
               <div>
-                <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">
-                  Insumos:
-                </p>
+                <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">Insumos:</p>
                 <div class="space-y-1">${insHtml}</div>
               </div>
             </div>
@@ -3667,35 +3672,22 @@ window.buscarPorCedula = async () => {
             ${fotosHtml}
             <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
               <div class="flex flex-col gap-1">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Total Consulta
-                </span>
-                <span class="text-xl font-black text-blue-900">
-                  $${(d.montoVenta || 0).toFixed(2)}
-                </span>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Consulta</span>
+                <span class="text-xl font-black text-blue-900">$${(d.montoVenta || 0).toFixed(2)}</span>
               </div>
-              <button type="button"
-                      class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700"
-                      onclick="window.imprimirConsultaDesdeElemento(this)">
-                🖨 Imprimir
-              </button>
+              <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700" onclick="window.imprimirConsultaDesdeElemento(this)">🖨 Imprimir</button>
             </div>
           </div>
         </details>`;
 
       contenedor.appendChild(div);
-
       const btnImpr = div.querySelector('button[onclick^="window.imprimirConsultaDesdeElemento"]');
       if (btnImpr) btnImpr._consulta = d;
     });
 
   } catch (e) {
     console.error("❌ Fallo en la consulta:", e);
-    if (e.message?.includes("index")) {
-      alert("⚠ ERROR DE ÍNDICE: crea el índice en Firestore (mira la consola F12 para el enlace).");
-    } else {
-      alert("Error en búsqueda: " + e.message);
-    }
+    alert("Error en búsqueda: " + e.message);
   }
 };
 // Puente entre el botón del buscador y la función real de impresión
