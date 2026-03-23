@@ -5065,23 +5065,27 @@ window.cerrarModalLogin = () => {
   // [21] GUARDAR RESUMEN DEL DÍA EN LA NUBE
   // =========================================================
   window.guardarResumenDelDia = async () => {
-    try {
-      const hoy = new Date();
-      const fechaSimple =
-        `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
+  try {
+    const hoy = new Date();
+    const fechaSimple =
+      `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
 
-      const snap = await getDocs(collection(db, "consultas"));
+    const snapVet  = await getDocs(collection(db, "consultas"));
+    const snapPelu = await getDocs(collection(db, "servicios_estetica"));
 
-      let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
-      let pacientes = 0;
+    let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
+    let pacientes = 0;
 
+    const procesar = (snap) => {
       snap.forEach(docSnap => {
         const d = docSnap.data();
+
         if (d.fechaSimple === fechaSimple) {
           const b = parseFloat(d.montoVenta)  || 0;
           const g = parseFloat(d.montoInsumos)|| 0;
           const p = parseFloat(d.pagoDoctor)  || 0;
           const n = b - g - p;
+
           bruto      += b;
           gastos     += g;
           pagoDoctor += p;
@@ -5089,53 +5093,63 @@ window.cerrarModalLogin = () => {
           pacientes++;
         }
       });
+    };
 
-      const resumen = {
-        fecha: serverTimestamp(),
-        fechaSimple,
-        pacientes,
-        bruto,
-        gastos,
-        pagoDoctor,
-        neto
-      };
+    procesar(snapVet);
+    procesar(snapPelu);
 
-      await addDoc(collection(db, "resumen_caja"), resumen);
-      alert("✅ Resumen del día guardado en la nube.");
-    } catch (e) {
-      console.error("Error guardando resumen:", e);
-      alert("❌ No se pudo guardar el resumen: " + e.message);
+    const resumen = {
+      fecha: serverTimestamp(),
+      fechaSimple,
+      pacientes,
+      bruto,
+      gastos,
+      pagoDoctor,
+      neto
+    };
+
+    await addDoc(collection(db, "resumen_caja"), resumen);
+    alert("✅ Resumen del día guardado en la nube.");
+
+  } catch (e) {
+    console.error("Error guardando resumen:", e);
+    alert("❌ No se pudo guardar el resumen: " + e.message);
+  }
+};
+
+ // =========================================================
+// [22] DESCARGAR REPORTE TXT DEL DÍA (VET + PELU)
+// =========================================================
+window.descargarReporte = async () => {
+  try {
+    const hoy = new Date();
+    const fechaSimple = `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
+
+    // 🔥 CONSULTAS SEPARADAS PERO OPTIMIZADAS
+    const qVet  = query(collection(db, "consultas"), where("fechaSimple", "==", fechaSimple));
+    const qPelu = query(collection(db, "servicios_estetica"), where("fechaSimple", "==", fechaSimple));
+
+    const snapVet  = await getDocs(qVet);
+    const snapPelu = await getDocs(qPelu);
+
+    if (snapVet.empty && snapPelu.empty) {
+      alert("📅 No hay registros para la fecha de hoy: " + fechaSimple);
+      return;
     }
-  };
 
-  // =========================================================
-  // [22] DESCARGAR REPORTE TXT DEL DÍA (OPTIMIZADO)
-  // =========================================================
-  window.descargarReporte = async () => {
-    try {
-      const hoy = new Date();
-      const fechaSimple = `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
+    let lineas = [];
+    let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
+    let pacientes = 0;
 
-      // OPTIMIZACIÓN: Solo pedimos las consultas de hoy a la base de datos
-      const q = query(collection(db, "consultas"), where("fechaSimple", "==", fechaSimple));
-      const snap = await getDocs(q);
+    lineas.push(`AVIPET - RESUMEN DE CAJA - ${fechaSimple}`);
+    lineas.push("====================================================================");
+    lineas.push(`Generado por: ${window.doctorVerificado || "Administrador"}`);
+    lineas.push("====================================================================\n");
 
-      if (snap.empty) {
-        alert("📅 No hay registros para la fecha de hoy: " + fechaSimple);
-        return;
-      }
-
-      let lineas = [];
-      let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
-      let pacientes = 0;
-
-      lineas.push(`AVIPET - RESUMEN DE CAJA - ${fechaSimple}`);
-      lineas.push("====================================================================");
-      lineas.push(`Generado por: ${window.doctorVerificado || "Administrador"}`);
-      lineas.push("====================================================================\n");
-
+    const procesar = (snap, tipo) => {
       snap.forEach(docSnap => {
         const d = docSnap.data();
+
         const b = parseFloat(d.montoVenta)   || 0;
         const g = parseFloat(d.montoInsumos) || 0;
         const p = parseFloat(d.pagoDoctor)   || 0;
@@ -5147,42 +5161,47 @@ window.cerrarModalLogin = () => {
         neto       += n;
         pacientes++;
 
-        // Formateo tipo recibo
-        lineas.push(`[${pacientes}] PACIENTE: ${d.paciente.padEnd(15)} | DR: ${d.doctor.padEnd(15)}`);
+        lineas.push(`[${pacientes}] (${tipo}) PACIENTE: ${(d.paciente || "---").padEnd(15)} | DR: ${(d.doctor || "---").padEnd(15)}`);
         lineas.push(`    VENTA: $${b.toFixed(2).padStart(8)} | INSUMOS: $${g.toFixed(2).padStart(8)} | DOC: $${p.toFixed(2).padStart(8)} | NETO: $${n.toFixed(2).padStart(8)}`);
         lineas.push(`    TRATAMIENTO: ${d.tratamiento ? d.tratamiento.substring(0, 50) + "..." : "N/A"}`);
         lineas.push("--------------------------------------------------------------------");
       });
+    };
 
-      lineas.push("\n====================================");
-      lineas.push(`   RESUMEN FINAL`);
-      lineas.push("====================================");
-      lineas.push(`PACIENTES ATENDIDOS:  ${pacientes}`);
-      lineas.push(`BRUTO TOTAL (VENTAS): $${bruto.toFixed(2)}`);
-      lineas.push(`COSTO INSUMOS:        $${gastos.toFixed(2)}`);
-      lineas.push(`PAGOS A DOCTORES:     $${pagoDoctor.toFixed(2)}`);
-      lineas.push(`------------------------------------`);
-      lineas.push(`UTILIDAD NETA AVIPET: $${neto.toFixed(2)}`);
-      lineas.push("====================================");
+    procesar(snapVet,  "VET");
+    procesar(snapPelu, "PELU");
 
-      const contenido = lineas.join("\n");
-      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-      const url  = URL.createObjectURL(blob);
+    lineas.push("\n====================================");
+    lineas.push(`   RESUMEN FINAL`);
+    lineas.push("====================================");
+    lineas.push(`PACIENTES ATENDIDOS:  ${pacientes}`);
+    lineas.push(`BRUTO TOTAL (VENTAS): $${bruto.toFixed(2)}`);
+    lineas.push(`COSTO INSUMOS:        $${gastos.toFixed(2)}`);
+    lineas.push(`PAGOS:                $${pagoDoctor.toFixed(2)}`);
+    lineas.push(`------------------------------------`);
+    lineas.push(`UTILIDAD NETA AVIPET: $${neto.toFixed(2)}`);
+    lineas.push("====================================");
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Caja_Avipet_${fechaSimple.replace(/\//g, "-")}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    const contenido = lineas.join("\n");
+    const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
 
-      console.log("✅ Reporte TXT generado y descargado.");
-    } catch (e) {
-      console.error("Error al descargar reporte:", e);
-      alert("❌ Error al generar reporte: " + e.message);
-    }
-  };
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Caja_Avipet_${fechaSimple.replace(/\//g, "-")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log("✅ Reporte TXT generado y descargado.");
+
+  } catch (e) {
+    console.error("Error al descargar reporte:", e);
+    alert("❌ Error al generar reporte: " + e.message);
+  }
+};
+
  
 // =========================================================
 // [21] MOTOR DE IMPRESIÓN UNIVERSAL AVIPET
