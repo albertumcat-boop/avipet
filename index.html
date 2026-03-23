@@ -2292,6 +2292,13 @@ window.procesarSubidaMovil = async (input, ci, tipo) => {
     if (status) status.innerText = "❌ Error: " + e.message;
   }
 };
+  const normalizarNombre = (str) => {
+  return String(str)
+    .toLowerCase()
+    .normalize("NFD")                        // descompone acentos
+    .replace(/[\u0300-\u036f]/g, "")         // elimina marcas de acento
+    .replace(/[^a-z0-9]/g, "");             // quita espacios, guiones, paréntesis, etc.
+};
   const CONFIG_SERVICIOS = {
     "CONSULTA GENERAL": { precio: 0, porc: 40 },
     "CONSULTA OFTALMOLÓGICA": { precio: 0, porc: 12.5 },
