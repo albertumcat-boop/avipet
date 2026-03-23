@@ -871,114 +871,267 @@ style="min-height: 100vh;"
 </section>
  <!-- ========== REPORTE ========== -->
 <section id="sectionReporte" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
-    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
-        
-        <div class="flex justify-between items-center border-b-2 border-blue-600 p-4">
-            <div class="flex items-center gap-3">
-                <img src="avipet.png" alt="Logo" class="h-10 object-contain">
-                <h2 class="text-lg font-black text-slate-800 uppercase italic leading-none">Caja Diaria</h2>
-            </div>
-
-        <div class="p-6">
-            <div class="mb-6">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest italic">Resumen de Operaciones</h3>
-                <div id="listaReporte"
-                     class="divide-y divide-slate-100 text-[10px] max-h-40 overflow-y-auto bg-slate-50 p-3 rounded-lg border border-slate-200 font-bold text-slate-600 italic">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-6">
-               <div class="p-3 border border-slate-200 rounded-lg">
-    <p class="text-[9px] font-black uppercase text-slate-400">Total Bruto</p>
-    <p id="repBruto" class="text-xl font-black text-slate-800 font-mono">$0.00</p>
-
-    <!-- 🔥 NUEVO -->
-    <p class="text-[8px] text-blue-600 font-bold mt-1">Vet: <span id="repBrutoVet">$0.00</span></p>
-    <p class="text-[8px] text-indigo-600 font-bold">Pelu: <span id="repBrutoPelu">$0.00</span></p>
-</div>
-
-                <div class="p-3 border border-slate-200 rounded-lg bg-slate-50">
-                    <p class="text-[9px] font-black uppercase text-slate-400">Costos Operativos</p>
-                    <p id="repGastos" class="text-xl font-black text-slate-800 font-mono">$0.00</p>
-                </div>
-                
-                <div class="p-4 border-l-4 border-blue-600 bg-blue-50/30 col-span-2 space-y-2 rounded-r-lg">
-                    <div class="flex justify-between items-center border-b border-blue-100 pb-1">
-                        <span class="text-[10px] font-bold uppercase text-slate-600 italic">Dr. Darwin Sandoval</span>
-                        <span id="repDocSandoval" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold uppercase text-slate-600 italic">Dr. Joan Silva</span>
-                        <span id="repDocSilva" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
-                    </div>
-                </div>
-
-                <div class="p-5 border-2 border-blue-600 rounded-xl col-span-2 text-center bg-white shadow-sm">
-                    <p class="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1 italic">Utilidad Neta del Día (Avipet)</p>
-                    <p id="repNeto" class="text-4xl font-black text-slate-800 font-mono">$0.00</p>
-                </div>
-            </div>
-
-            <div class="border border-slate-300 rounded-xl p-4 bg-slate-50/50 mb-6">
-                <p class="text-[10px] font-black text-slate-400 uppercase text-center mb-3 tracking-widest border-b border-slate-200 pb-2 italic">✂️ Balance Estética Canina (Hoy)</p>
-                
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="text-center">
-                        <p class="text-[8px] font-bold text-slate-400 uppercase">Bruto</p>
-                        <p id="fPeluTotal" class="text-sm font-black text-slate-800 font-mono">$0.00</p>
-                    </div>
-                    <div class="text-center border-x border-slate-200">
-                        <p class="text-[8px] font-bold text-slate-400 uppercase">Peluquera</p>
-                        <p id="fPeluPagos" class="text-sm font-black text-blue-600 font-mono">$0.00</p>
-                    </div>
-                    <div class="text-center border-r border-slate-200">
-                        <p class="text-[8px] font-bold text-slate-400 uppercase">Ayudante P.</p>
-                        <p id="fPeluAyudantes" class="text-sm font-black text-blue-600 font-mono">$0.00</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[8px] font-bold text-slate-400 uppercase">Ayudante E.</p>
-                        <p id="fPeluAyudantesExtra" class="text-sm font-black text-blue-600 font-mono">$0.00</p>
-                    </div>
-                </div>
-            </div>
-          <!-- Caja real Peluquería por moneda (solo PAGADO) -->
-<div class="mt-3 grid grid-cols-2 gap-2 text-center text-[8px]">
-    <div class="border border-emerald-200 rounded-lg bg-emerald-50 py-2">
-        <p class="font-bold text-emerald-700 uppercase tracking-widest">Caja Pelu USD (Pagado)</p>
-        <p id="fPeluCajaUsd" class="text-sm font-black text-emerald-800 font-mono">$0.00</p>
+<div class="max-w-4xl mx-auto space-y-4">
+ 
+  <!-- ENCABEZADO -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="avipet.png" alt="Logo" class="h-10 object-contain">
+      <div>
+        <h2 class="text-lg font-black text-slate-800 uppercase italic leading-none">Finanzas</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase" id="repFechaHoy"></p>
+      </div>
     </div>
-    <div class="border border-amber-200 rounded-lg bg-amber-50 py-2">
-        <p class="font-bold text-amber-700 uppercase tracking-widest">Caja Pelu Bs (Pagado)</p>
-        <p id="fPeluCajaBs" class="text-sm font-black text-amber-800 font-mono">Bs 0.00</p>
+    <button onclick="window.cargarReporte()"
+            class="bg-slate-800 hover:bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase transition-all flex items-center gap-2">
+      🔄 Sincronizar
+    </button>
+  </div>
+ 
+  <!-- TABS -->
+  <div class="flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+    <button id="tabFinVet"
+            onclick="window.switchFinTab('vet')"
+            class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase transition-all bg-blue-600 text-white shadow-sm">
+      🩺 Veterinaria
+    </button>
+    <button id="tabFinPelu"
+            onclick="window.switchFinTab('pelu')"
+            class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      ✂️ Peluquería
+    </button>
+    <button id="tabFinGlobal"
+            onclick="window.switchFinTab('global')"
+            class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      📊 Global
+    </button>
+  </div>
+ 
+  <!-- ===== PANEL VETERINARIA ===== -->
+  <div id="panelFinVet" class="space-y-4">
+ 
+    <!-- KPIs Vet -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Pacientes</p>
+        <p id="vetPacientes" class="text-3xl font-black text-slate-800">0</p>
+      </div>
+      <div class="bg-blue-600 rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-blue-200 uppercase mb-1">Bruto</p>
+        <p id="vetBruto" class="text-2xl font-black text-white">$0.00</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-amber-200 p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-amber-500 uppercase mb-1">Insumos</p>
+        <p id="vetGastos" class="text-2xl font-black text-amber-600">$0.00</p>
+      </div>
+      <div class="bg-emerald-500 rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-emerald-100 uppercase mb-1">Neto Avipet</p>
+        <p id="vetNeto" class="text-2xl font-black text-white">$0.00</p>
+      </div>
     </div>
-</div>
-
-            <div class="space-y-3">
-                <button onclick="window.generarCierrePeluqueria()"
-                    class="w-full bg-white border-2 border-blue-600 text-blue-600 py-3 rounded-lg font-black shadow-sm hover:bg-blue-600 hover:text-white transition-all uppercase text-[10px] tracking-widest italic">
-                    Liquidador Semanal Peluquería
-                </button>
-
-                <div id="reportePeluqueriaResultados" class="hidden"></div>
-
-                <button onclick="window.cargarReporte()"
-                        class="w-full bg-slate-700 text-white py-2 rounded-lg font-bold text-[9px] hover:bg-slate-600 transition-all uppercase tracking-widest">
-                    🔄 Sincronizar Balance General
-                </button>
-                
-                <div class="grid grid-cols-2 gap-2 mt-4">
-                    <button onclick="window.descargarReporte()"
-                            class="bg-white border border-slate-300 text-slate-500 py-2 rounded-lg font-black text-[9px] hover:bg-slate-50 transition-colors uppercase italic tracking-tighter">
-                        Descargar TXT
-                    </button>
-                    <button onclick="window.guardarResumenDelDia()"
-                            class="bg-blue-600 text-white py-2 rounded-lg font-black text-[9px] shadow-md hover:bg-blue-700 transition-colors uppercase italic tracking-tighter">
-                        Guardar en Nube
-                    </button>
-                </div>
-            </div>
+ 
+    <!-- Doctores -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-slate-800 text-white px-4 py-2 font-black text-[10px] uppercase tracking-widest">
+        💰 Comisiones Doctores
+      </div>
+      <div class="divide-y divide-slate-100">
+        <div class="flex justify-between items-center px-4 py-3">
+          <div>
+            <p class="font-black text-[11px] text-slate-800 uppercase">Dr. Darwin Sandoval</p>
+            <p id="vetSandovalPac" class="text-[9px] text-slate-400">0 consultas</p>
+          </div>
+          <p id="vetSandoval" class="text-xl font-black text-blue-700 font-mono">$0.00</p>
         </div>
+        <div class="flex justify-between items-center px-4 py-3">
+          <div>
+            <p class="font-black text-[11px] text-slate-800 uppercase">Dr. Joan Silva</p>
+            <p id="vetSilvaPac" class="text-[9px] text-slate-400">0 consultas</p>
+          </div>
+          <p id="vetSilva" class="text-xl font-black text-blue-700 font-mono">$0.00</p>
+        </div>
+      </div>
     </div>
+ 
+    <!-- Lista de consultas del día -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-slate-100 px-4 py-2 font-black text-[10px] uppercase text-slate-600 tracking-widest flex justify-between">
+        <span>📋 Consultas de Hoy</span>
+        <span id="vetTicketProm" class="text-blue-600">Ticket prom: $0.00</span>
+      </div>
+      <div id="vetListaConsultas" class="max-h-56 overflow-y-auto divide-y divide-slate-50 text-[11px]">
+        <p class="text-center text-slate-400 italic p-4">Sin registros hoy</p>
+      </div>
+    </div>
+ 
+    <!-- Servicios más frecuentes -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-slate-100 px-4 py-2 font-black text-[10px] uppercase text-slate-600 tracking-widest">
+        ⭐ Servicios del Día
+      </div>
+      <div id="vetServiciosTop" class="p-4 space-y-2 text-[11px]">
+        <p class="text-slate-400 italic">Sin datos</p>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ===== PANEL PELUQUERÍA ===== -->
+  <div id="panelFinPelu" class="hidden space-y-4">
+ 
+    <!-- KPIs Pelu -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Servicios</p>
+        <p id="peluServicios" class="text-3xl font-black text-slate-800">0</p>
+      </div>
+      <div class="bg-indigo-600 rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-indigo-200 uppercase mb-1">Bruto</p>
+        <p id="peluBruto" class="text-2xl font-black text-white">$0.00</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-purple-200 p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-purple-500 uppercase mb-1">Peluquera</p>
+        <p id="peluPagos" class="text-2xl font-black text-purple-600">$0.00</p>
+      </div>
+      <div class="bg-emerald-500 rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-[9px] font-black text-emerald-100 uppercase mb-1">Neto Avipet</p>
+        <p id="peluNeto" class="text-2xl font-black text-white">$0.00</p>
+      </div>
+    </div>
+ 
+    <!-- Ayudantes + Caja por moneda -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <p class="text-[9px] font-black text-slate-500 uppercase mb-3 tracking-widest">👥 Nómina Apoyo</p>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-[11px] font-bold text-slate-600">Ayudante Principal</span>
+            <span id="peluAyu1" class="font-black text-slate-800 font-mono">$0.00</span>
+          </div>
+          <div class="flex justify-between items-center border-t pt-2">
+            <span class="text-[11px] font-bold text-slate-600">Ayudante Extra</span>
+            <span id="peluAyuExtra" class="font-black text-slate-800 font-mono">$0.00</span>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <p class="text-[9px] font-black text-slate-500 uppercase mb-3 tracking-widest">💵 Caja (Solo Pagados)</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-200">
+            <p class="text-[8px] font-bold text-emerald-600 uppercase">USD</p>
+            <p id="peluCajaUsd" class="text-lg font-black text-emerald-700 font-mono">$0.00</p>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-200">
+            <p class="text-[8px] font-bold text-amber-600 uppercase">Bolívares</p>
+            <p id="peluCajaBs" class="text-lg font-black text-amber-700 font-mono">Bs 0.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- Bitácora del día -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-slate-100 px-4 py-2 font-black text-[10px] uppercase text-slate-600 tracking-widest flex justify-between">
+        <span>✂️ Servicios de Hoy</span>
+        <div class="flex gap-2">
+          <span id="peluPagados" class="text-emerald-600">0 pagados</span>
+          <span class="text-slate-300">|</span>
+          <span id="peluPendientes" class="text-red-500">0 pendientes</span>
+        </div>
+      </div>
+      <div id="peluListaServicios" class="max-h-56 overflow-y-auto divide-y divide-slate-50 text-[11px]">
+        <p class="text-center text-slate-400 italic p-4">Sin registros hoy</p>
+      </div>
+    </div>
+ 
+    <!-- Liquidación semanal -->
+    <button onclick="window.generarCierrePeluqueria()"
+            class="w-full bg-white border-2 border-indigo-600 text-indigo-600 py-3 rounded-xl font-black shadow-sm hover:bg-indigo-600 hover:text-white transition-all uppercase text-[10px] tracking-widest">
+      📅 Liquidación Semanal (Últimos 7 días)
+    </button>
+    <div id="reportePeluqueriaResultados" class="hidden"></div>
+  </div>
+ 
+  <!-- ===== PANEL GLOBAL ===== -->
+  <div id="panelFinGlobal" class="hidden space-y-4">
+ 
+    <!-- Resumen total -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div class="bg-slate-800 rounded-2xl p-5 text-center shadow-sm col-span-1 md:col-span-1">
+        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Bruto Total del Día</p>
+        <p id="globalBruto" class="text-4xl font-black text-white font-mono">$0.00</p>
+        <div class="mt-2 flex justify-center gap-4 text-[9px]">
+          <span class="text-blue-300">Vet: <b id="globalBrutoVet">$0</b></span>
+          <span class="text-indigo-300">Pelu: <b id="globalBrutoPelu">$0</b></span>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 text-center shadow-sm">
+        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Total Egresos (Insumos + Nómina)</p>
+        <p id="globalEgresos" class="text-3xl font-black text-red-500 font-mono">$0.00</p>
+      </div>
+      <div class="bg-emerald-500 rounded-2xl p-5 text-center shadow-sm">
+        <p class="text-[9px] font-black text-emerald-100 uppercase mb-1">Utilidad Neta Avipet</p>
+        <p id="globalNeto" class="text-4xl font-black text-white font-mono">$0.00</p>
+      </div>
+    </div>
+ 
+    <!-- Barra visual de distribución -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <p class="text-[9px] font-black text-slate-500 uppercase mb-3 tracking-widest">Distribución del Ingreso Bruto</p>
+      <div class="space-y-3">
+        <div>
+          <div class="flex justify-between text-[10px] font-bold mb-1">
+            <span class="text-emerald-600">Avipet (Utilidad)</span>
+            <span id="globalPorcAvipet" class="text-emerald-600">0%</span>
+          </div>
+          <div class="bg-slate-100 rounded-full h-3 overflow-hidden">
+            <div id="barAvipet" class="bg-emerald-500 h-3 rounded-full transition-all duration-700" style="width:0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[10px] font-bold mb-1">
+            <span class="text-blue-600">Doctores</span>
+            <span id="globalPorcDoc" class="text-blue-600">0%</span>
+          </div>
+          <div class="bg-slate-100 rounded-full h-3 overflow-hidden">
+            <div id="barDoc" class="bg-blue-500 h-3 rounded-full transition-all duration-700" style="width:0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[10px] font-bold mb-1">
+            <span class="text-purple-600">Peluquera + Ayudantes</span>
+            <span id="globalPorcPelu" class="text-purple-600">0%</span>
+          </div>
+          <div class="bg-slate-100 rounded-full h-3 overflow-hidden">
+            <div id="barPelu" class="bg-purple-500 h-3 rounded-full transition-all duration-700" style="width:0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[10px] font-bold mb-1">
+            <span class="text-amber-600">Insumos</span>
+            <span id="globalPorcIns" class="text-amber-600">0%</span>
+          </div>
+          <div class="bg-slate-100 rounded-full h-3 overflow-hidden">
+            <div id="barIns" class="bg-amber-400 h-3 rounded-full transition-all duration-700" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- Acciones -->
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="window.guardarResumenDelDia()"
+              class="bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-md hover:bg-blue-700 transition-all">
+        💾 Guardar en Nube
+      </button>
+      <button onclick="window.descargarReporte()"
+              class="bg-white border border-slate-300 text-slate-600 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-slate-50 transition-all">
+        📄 Descargar TXT
+      </button>
+    </div>
+  </div>
+ 
+</div>
 </section>
   <!-- ========== CONFIG PRECIOS ========== -->
 <section id="sectionConfigPrecios" class="hidden p-4 animate-fadeIn">
@@ -2788,7 +2941,6 @@ window.validarAccesoDoctor = async (nombre) => {
 window.insertarServicio = async (v) => {
   if (!v) return;
  
-  const area   = document.getElementById('hTratamiento');
   const visual = document.getElementById('visualizacionServicios');
  
   let nombreFinal        = v;
@@ -2797,34 +2949,32 @@ window.insertarServicio = async (v) => {
  
   const vLimpio = normalizarNombre(v);
  
-  // 1. Intentar precio desde Firebase
+  // 1. Precio desde Firebase o respaldo local
   try {
     const docSnap = await getDoc(doc(db, "servicios_maestro", v));
     if (docSnap.exists()) {
-      const data = docSnap.data();
+      const data    = docSnap.data();
       precioFinal        = parseFloat(data.precioVenta) || 0;
       porcentajeServicio = parseFloat(data.porcDoc ?? data.porcentajeDoc ?? 30);
     } else {
-      // Respaldo local
-      const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
-      const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
-      precioFinal        = llaveReceta ? (recetas[llaveReceta].precioVenta || 0) : 0;
-      porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
+      const llaveR = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+      const llaveC = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+      precioFinal        = llaveR ? (recetas[llaveR].precioVenta || 0) : 0;
+      porcentajeServicio = llaveC ? CONFIG_SERVICIOS[llaveC].porc : 30;
     }
   } catch (e) {
-    const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
-    const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
-    precioFinal        = llaveReceta ? (recetas[llaveReceta].precioVenta || 0) : 0;
-    porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
+    const llaveR = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+    const llaveC = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+    precioFinal        = llaveR ? (recetas[llaveR].precioVenta || 0) : 0;
+    porcentajeServicio = llaveC ? CONFIG_SERVICIOS[llaveC].porc : 30;
   }
  
   // 2. Excepciones de negocio
   if (vLimpio.includes("kgadicional")) {
     const kgs = prompt("Ingrese la cantidad de KG adicionales:");
     if (!kgs || isNaN(kgs)) { document.getElementById('selectorServicios').value = ""; return; }
-    const numKgs = parseFloat(kgs);
-    nombreFinal        = `KG ADICIONAL (${numKgs}kg)`;
-    precioFinal        = numKgs * 7;
+    nombreFinal        = `KG ADICIONAL (${parseFloat(kgs)}kg)`;
+    precioFinal        = parseFloat(kgs) * 7;
     porcentajeServicio = 0;
   } else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
     const monto = prompt(`Precio pactado para ${v}:`);
@@ -2832,11 +2982,11 @@ window.insertarServicio = async (v) => {
     precioFinal        = parseFloat(monto);
     porcentajeServicio = 0;
   } else if (vLimpio.includes("vacunakc")) {
-    const tieneOtraVacuna = serviciosEnLista.some(s => {
+    const tieneOtra = serviciosEnLista.some(s => {
       const n = normalizarNombre(s);
       return n.includes("vacuna") || n.includes("sextuple") || n.includes("puppy") || n.includes("antirrabica");
     });
-    if (tieneOtraVacuna) { precioFinal = 40; nombreFinal += " (Combo)"; } else { precioFinal = 45; }
+    if (tieneOtra) { precioFinal = 40; nombreFinal += " (Combo)"; } else { precioFinal = 45; }
   } else if (vLimpio.includes("hematologiacompleta")) {
     const tieneOtroLab = serviciosEnLista.some(s => {
       const n = normalizarNombre(s);
@@ -2844,39 +2994,33 @@ window.insertarServicio = async (v) => {
     });
     if (tieneOtroLab) { precioFinal = 20; nombreFinal += " (Combo)"; } else { precioFinal = 23; }
   } else if (vLimpio.includes("vacunaantirrabica")) {
-    const tieneOtraVacuna = serviciosEnLista.some(s => {
+    const tieneOtra = serviciosEnLista.some(s => {
       const n = normalizarNombre(s);
       return n.includes("vacuna") && !n.includes("antirrabica");
     });
-    if (tieneOtraVacuna) { precioFinal = 25; nombreFinal += " (Combo)"; } else { precioFinal = 30; }
+    if (tieneOtra) { precioFinal = 25; nombreFinal += " (Combo)"; } else { precioFinal = 30; }
   }
  
-  // 3. ID de grupo único
   const grupoID = "srv-" + Date.now();
   serviciosEnLista.push(v);
  
-  // 4. Escribir en el textarea de diagnóstico
-  if (area) {
-    area.value += `=> ${nombreFinal}\n`;
-    area.scrollTop = area.scrollHeight;
-    document.getElementById('hTratamientoPrint').innerText = area.value;
-  }
- 
-  // 5. Badge visual (columna izquierda)
+  // 3. Badge visual SOLO en columna izquierda (SIN tocar el textarea)
   if (visual) {
     if (visual.innerText.includes("Sin servicios registrados")) visual.innerHTML = "";
     const badge = document.createElement('div');
     badge.id        = "badge-" + grupoID;
-    badge.className = "bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";
-    badge.innerHTML = `<span>🔹</span><span class="flex-1">${nombreFinal}</span>`;
+    badge.className = "bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2 text-[11px]";
+    badge.innerHTML = `
+      <span class="text-blue-400">🔹</span>
+      <span class="flex-1 font-bold">${nombreFinal}</span>
+      <span class="font-black text-blue-600">$${precioFinal.toFixed(2)}</span>`;
     visual.appendChild(badge);
   }
  
-  // 6. Mostrar tabla de insumos
+  // 4. Tabla de insumos (necesaria para calcularTodo)
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo = document.getElementById('listaInsumosDinamica');
  
-  // 6a. Fila título del servicio (la que lee calcularTodo)
   const filaTitulo = document.createElement('tr');
   filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
   filaTitulo.setAttribute('data-grupo', grupoID);
@@ -2884,18 +3028,19 @@ window.insertarServicio = async (v) => {
   filaTitulo.setAttribute('data-porc',   porcentajeServicio);
   filaTitulo.innerHTML = `
     <td colspan="3" class="p-2 text-[11px] uppercase">
-      🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})
+      🔹 ${nombreFinal}
+      <span class="font-black text-blue-700 ml-1">$${precioFinal.toFixed(2)}</span>
       <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
         ${porcentajeServicio.toFixed(1)}% DOC
       </span>
     </td>
     <td class="p-2 text-center">
       <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)"
-              class="text-red-500 font-bold text-lg">×</button>
+              class="text-red-400 hover:text-red-600 font-bold text-lg leading-none">×</button>
     </td>`;
   cuerpo.appendChild(filaTitulo);
  
-  // 6b. Insumos base (guantes, alcohol, etc.) — solo en el primer servicio
+  // Insumos base
   let listaNuevos = [];
   if (cuerpo.querySelectorAll('.servicio-principal').length === 1) {
     listaNuevos = [...insumosFijosMedicos];
@@ -2904,23 +3049,21 @@ window.insertarServicio = async (v) => {
     const yaHayVial = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("Vial"));
     if (!yaHayVial) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
   }
-  const llaveRecetaIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
-  if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) {
-    listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos];
-  }
+  const llaveIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+  if (llaveIns && recetas[llaveIns].insumos) listaNuevos = [...listaNuevos, ...recetas[llaveIns].insumos];
  
   listaNuevos.forEach(insumo => {
     const tr = document.createElement('tr');
     tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`;
     tr.innerHTML = `
-      <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+      <td class="p-2 font-bold text-gray-600 text-[10px] italic pl-4">↳ ${insumo.nombre}</td>
       <td class="p-2 text-center">
-        <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
+        <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded text-[11px]">
       </td>
       <td class="p-2 text-center">
-        <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
+        <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded text-[11px]">
       </td>
-      <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
+      <td class="p-2 text-center text-red-400 cursor-pointer hover:text-red-600"
           onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
     cuerpo.appendChild(tr);
   });
@@ -2931,12 +3074,12 @@ window.insertarServicio = async (v) => {
 };
  
 // =========================================================
-// REEMPLAZA window.agregarMedicamento COMPLETO
+// FIX 1b — agregarMedicamento SIN escribir en el textarea
+// Reemplaza window.agregarMedicamento completo
 // =========================================================
 window.agregarMedicamento = (nombreMed) => {
   if (!nombreMed) return;
  
-  const area   = document.getElementById('hTratamiento');
   const visual = document.getElementById('visualizacionServicios');
   const cfg    = CONFIG_MEDICAMENTOS[nombreMed];
   if (!cfg) return;
@@ -2944,46 +3087,38 @@ window.agregarMedicamento = (nombreMed) => {
   let precioCliente = 0;
   let descripcion   = nombreMed;
  
-  // Lógica de dosis especiales
   if (nombreMed === "Suero hiperinmune") {
     const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
     if (!ml || isNaN(ml) || parseFloat(ml) <= 0) { document.getElementById('selectorMedicamentos').value = ""; return; }
-    const cantMl = parseFloat(ml);
-    precioCliente = (cfg.precioClientePorMl || 0) * cantMl;
-    descripcion  += ` (${cantMl} ml)`;
+    precioCliente = (cfg.precioClientePorMl || 0) * parseFloat(ml);
+    descripcion  += ` (${parseFloat(ml)} ml)`;
   } else if (nombreMed === "Artrosan") {
-    const kg = prompt("Ingrese el peso del paciente (kg) para Artrosan (1 ml cada 20 kg):");
+    const kg = prompt("Ingrese el peso (kg) para Artrosan (1 ml / 20 kg):");
     if (!kg || isNaN(kg) || parseFloat(kg) <= 0) { document.getElementById('selectorMedicamentos').value = ""; return; }
     const ml = parseFloat(kg) / 20;
     precioCliente = (cfg.precioCliente || 0) * ml;
-    descripcion  += ` (${ml.toFixed(2)} ml para ${kg} kg)`;
+    descripcion  += ` (${ml.toFixed(2)} ml / ${kg} kg)`;
   } else if (nombreMed === "Lisavac") {
-    const kg = prompt("Ingrese el peso del paciente (kg) para Lisavac (1 ml por kg):");
+    const kg = prompt("Ingrese el peso (kg) para Lisavac (1 ml / kg):");
     if (!kg || isNaN(kg) || parseFloat(kg) <= 0) { document.getElementById('selectorMedicamentos').value = ""; return; }
-    const ml = parseFloat(kg);
-    precioCliente = (cfg.precioCliente || 0) * ml;
-    descripcion  += ` (${ml.toFixed(2)} ml para ${kg} kg)`;
+    precioCliente = (cfg.precioCliente || 0) * parseFloat(kg);
+    descripcion  += ` (${parseFloat(kg).toFixed(2)} ml / ${kg} kg)`;
   } else {
     precioCliente = cfg.precioCliente || 0;
   }
  
-  const grupoID              = "med-" + Date.now();
-  const porcentajeMedicamento = 40;
+  const grupoID = "med-" + Date.now();
  
-  // Escribir en textarea
-  if (area) {
-    area.value += `💊 ${descripcion}\n`;
-    area.scrollTop = area.scrollHeight;
-    document.getElementById('hTratamientoPrint').innerText = area.value;
-  }
- 
-  // Badge visual
+  // Badge visual SOLO (SIN tocar textarea)
   if (visual) {
     if (visual.innerText.includes("Sin servicios registrados")) visual.innerHTML = "";
     const badge = document.createElement('div');
     badge.id        = "badge-" + grupoID;
-    badge.className = "bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";
-    badge.innerHTML = `<span>💊</span><span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;
+    badge.className = "bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2 text-[11px]";
+    badge.innerHTML = `
+      <span class="text-emerald-400">💊</span>
+      <span class="flex-1 font-bold">${descripcion}</span>
+      <span class="font-black text-emerald-600">$${precioCliente.toFixed(2)}</span>`;
     visual.appendChild(badge);
   }
  
@@ -2991,44 +3126,36 @@ window.agregarMedicamento = (nombreMed) => {
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo = document.getElementById('listaInsumosDinamica');
  
-  // Fila título (la que lee calcularTodo)
   const filaTitulo = document.createElement('tr');
-  filaTitulo.className = "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
+  filaTitulo.className = "bg-emerald-50 border-b-2 border-emerald-200 text-slate-700 font-black servicio-principal";
   filaTitulo.setAttribute('data-grupo', grupoID);
   filaTitulo.setAttribute('data-precio', precioCliente);
-  filaTitulo.setAttribute('data-porc',   porcentajeMedicamento);
+  filaTitulo.setAttribute('data-porc',   40);
   filaTitulo.innerHTML = `
     <td colspan="3" class="p-2 text-[11px] uppercase">
-      💊 ${descripcion} ($${precioCliente.toFixed(2)})
-      <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-purple-200">
-        MEDICAMENTO
-      </span>
+      💊 ${descripcion}
+      <span class="font-black text-emerald-700 ml-1">$${precioCliente.toFixed(2)}</span>
+      <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-purple-200">MEDICAMENTO</span>
     </td>
     <td class="p-2 text-center">
       <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioCliente}, event)"
-              class="text-red-500 font-bold text-lg">×</button>
+              class="text-red-400 hover:text-red-600 font-bold text-lg leading-none">×</button>
     </td>`;
   cuerpo.appendChild(filaTitulo);
  
-  // Insumos base de medicamento (una sola vez)
   if (!insumosBaseMedicamentoAgregados) {
     [
-      { nombre: "Jeringa para medicamento", costo: 0.50 },
-      { nombre: "Algodón para medicamento", costo: 0.10 },
-      { nombre: "Alcohol para medicamento", costo: 0.10 }
+      { nombre: "Jeringa", costo: 0.50 },
+      { nombre: "Algodón", costo: 0.10 },
+      { nombre: "Alcohol", costo: 0.10 }
     ].forEach(ins => {
       const tr = document.createElement('tr');
-      tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;
+      tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`;
       tr.innerHTML = `
-        <td class="p-2 font-bold text-[11px] italic">➕ ${ins.nombre.toUpperCase()}</td>
-        <td class="p-2 text-center">
-          <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
-        </td>
-        <td class="p-2 text-center">
-          <input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
-        </td>
-        <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
-            onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+        <td class="p-2 font-bold text-gray-600 text-[10px] italic pl-4">↳ ${ins.nombre}</td>
+        <td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded text-[11px]"></td>
+        <td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded text-[11px]"></td>
+        <td class="p-2 text-center text-red-400 cursor-pointer hover:text-red-600" onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
       cuerpo.appendChild(tr);
     });
     insumosBaseMedicamentoAgregados = true;
@@ -3038,7 +3165,6 @@ window.agregarMedicamento = (nombreMed) => {
   document.getElementById('selectorMedicamentos').value = "";
   respaldarProgresoLocal();
 };
- 
 // --- 1. PREVISUALIZACIÓN HISTORIA (MULTIFOTO) ---
 window.previsualizarFotoHistoria = (event) => {
   const files = event.target.files;
@@ -4108,169 +4234,212 @@ window.autocompletarPorCedula = async (ci) => {
     }
   };
 
- // =========================================================
-// [11] REPORTE / CAJA
-// =========================================================
-window.cargarReporte = async () => {
-    const listaDiv = document.getElementById('listaReporte');
-    const netoDiv = document.getElementById('repNeto');
-    if (!listaDiv) return;
-
-    listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400 text-[10px] uppercase'>🔄 SINCRONIZANDO CAJA GLOBAL...</p>";
-
-    try {
-        const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
-        
-        // =========================
-        // 1. CONSULTAS MÉDICAS
-        // =========================
-        const qMed = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
-        const snapMed = await getDocs(qMed);
-        
-        listaDiv.innerHTML = "";
-
-        let brutoMed = 0, gastosMed = 0, netoAvipetMed = 0;
-        let sandovalTotal = 0, silvaTotal = 0;
-
-        snapMed.forEach(docSnap => {
-            const d = docSnap.data();
-            const pVenta = parseFloat(d.montoVenta) || 0;
-            const pGasto = parseFloat(d.montoInsumos) || 0;
-            const pagoRealDoc = parseFloat(d.pagoDoctor) || 0;
-
-            brutoMed += pVenta;
-            gastosMed += pGasto;
-
-            if (d.doctor?.includes("Darwin")) sandovalTotal += pagoRealDoc;
-            else if (d.doctor?.includes("Joan")) silvaTotal += pagoRealDoc;
-
-            netoAvipetMed += (pVenta - pGasto - pagoRealDoc);
-
-            let colorBorde = d.doctor?.includes("Darwin") ? "border-l-blue-500" : "border-l-emerald-500";
-
-            listaDiv.innerHTML += `
-                <div class="py-2 border-b flex justify-between items-center bg-white px-3 mb-1 rounded-lg shadow-sm border-l-4 ${colorBorde}">
-                    <div>
-                        <p class="font-black text-[10px] uppercase text-slate-700">${d.paciente}</p>
-                        <p class="text-[8px] font-bold text-slate-400 uppercase">🩺 ${d.doctor}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-black text-[10px] text-slate-800">$${pVenta.toFixed(2)}</p>
-                    </div>
-                </div>`;
-        });
-
-        // =========================
-        // 2. PELUQUERÍA
-        // =========================
-        const qPelu = query(collection(db, "servicios_estetica"), where("fechaSimple", "==", hoy));
-        const snapPelu = await getDocs(qPelu);
-        
-        let brutoPelu = 0;
-        let pagoPeluqueras = 0;
-        let pagoAyuPrincipal = 0;
-        let pagoAyuExtra = 0;
-        let netoAvipetPelu = 0;
-
-        let brutoPeluUsdPagado = 0;
-        let brutoPeluBsPagado = 0;
-
-        snapPelu.forEach(docSnap => {
-            const d = docSnap.data();
-
-            const precio = parseFloat(d.precioTotal || 0);
-            const pagoPel = parseFloat(d.pagoPeluquera || 0);
-            const pagoA1 = parseFloat(d.pagoAyudante1 || 0);
-            const pagoAx = parseFloat(d.pagoAyudanteExtra || 0);
-            const ingresoAvipet = parseFloat(d.ingresoAvipet || 0);
-
-            const moneda = (d.metodoPago || 'USD').toUpperCase();
-            const estatus = d.estatusPago || 'pendiente';
-
-            brutoPelu += precio;
-            pagoPeluqueras += pagoPel;
-            pagoAyuPrincipal += pagoA1;
-            pagoAyuExtra += pagoAx;
-            netoAvipetPelu += ingresoAvipet;
-
-            if (estatus === 'pagado') {
-                if (moneda === 'BS') brutoPeluBsPagado += precio;
-                else brutoPeluUsdPagado += precio;
-            }
-
-            listaDiv.innerHTML += `
-                <div class="py-2 border-b flex justify-between items-center bg-slate-50 px-3 mb-1 rounded-lg border-l-4 border-l-indigo-500">
-                    <div>
-                        <p class="font-black text-[10px] uppercase text-slate-700">${d.paciente}</p>
-                        <p class="text-[8px] font-bold text-indigo-400 uppercase">✂️ PELUQUERÍA</p>
-                        <p class="text-[8px] font-bold ${
-                            estatus === 'pagado' ? 'text-emerald-600' : 'text-red-500'
-                        } uppercase">
-                            ${estatus === 'pagado' ? 'PAGADO' : 'PENDIENTE'} · ${moneda === 'BS' ? 'Bs' : '$'}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-black text-[10px] text-slate-800">
-                            ${moneda === 'BS' ? 'Bs' : '$'}${precio.toFixed(2)}
-                        </p>
-                    </div>
-                </div>`;
-        });
-
-        // =========================
-        // 3. UI GLOBAL
-        // =========================
-        const setVal = (id, valor) => {
-            const el = document.getElementById(id);
-            if (el) el.innerText = valor;
-        };
-
-        // 🔥 TOTAL + SEPARACIÓN
-        const totalBruto = brutoMed + brutoPelu;
-
-        setVal('repBruto', `$${totalBruto.toFixed(2)}`);
-        setVal('repBrutoVet', `$${brutoMed.toFixed(2)}`);   // 🔥 NUEVO
-        setVal('repBrutoPelu', `$${brutoPelu.toFixed(2)}`); // 🔥 NUEVO
-
-        setVal('repGastos', `$${gastosMed.toFixed(2)}`);
-        setVal('repDocSandoval', `$${sandovalTotal.toFixed(2)}`);
-        setVal('repDocSilva', `$${silvaTotal.toFixed(2)}`);
-
-        // =========================
-        // 4. BALANCE PELUQUERÍA
-        // =========================
-        const fPeluTotal = document.getElementById('fPeluTotal');
-        const fPeluPagos = document.getElementById('fPeluPagos');
-        const fPeluAyudantes = document.getElementById('fPeluAyudantes');
-        const fPeluAyudantesExtra = document.getElementById('fPeluAyudantesExtra');
-
-        if (fPeluTotal) fPeluTotal.innerText = `$${brutoPelu.toFixed(2)}`;
-        if (fPeluPagos) fPeluPagos.innerText = `$${pagoPeluqueras.toFixed(2)}`;
-        if (fPeluAyudantes) fPeluAyudantes.innerText = `$${pagoAyuPrincipal.toFixed(2)}`;
-        if (fPeluAyudantesExtra) fPeluAyudantesExtra.innerText = `$${pagoAyuExtra.toFixed(2)}`;
-
-        const fPeluCajaUsd = document.getElementById('fPeluCajaUsd');
-        const fPeluCajaBs = document.getElementById('fPeluCajaBs');
-
-        if (fPeluCajaUsd) fPeluCajaUsd.innerText = `$${brutoPeluUsdPagado.toFixed(2)}`;
-        if (fPeluCajaBs) fPeluCajaBs.innerText = `Bs ${brutoPeluBsPagado.toFixed(2)}`;
-
-        // =========================
-        // 5. UTILIDAD FINAL
-        // =========================
-        const utilidadFinal = netoAvipetMed + netoAvipetPelu;
-
-        if (netoDiv) {
-            netoDiv.innerText = `$${utilidadFinal.toFixed(2)}`;
-            netoDiv.className = utilidadFinal > 0
-                ? "text-3xl font-black text-emerald-700 font-mono"
-                : "text-3xl font-black text-orange-600 font-mono";
-        }
-
-    } catch (e) {
-        console.error("Error al cargar reporte:", e);
-        listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold text-[10px]'>❌ ERROR DE CONEXIÓN</p>";
+ window.switchFinTab = (tab) => {
+  const panels = { vet: 'panelFinVet', pelu: 'panelFinPelu', global: 'panelFinGlobal' };
+  const tabs   = { vet: 'tabFinVet',   pelu: 'tabFinPelu',   global: 'tabFinGlobal'   };
+ 
+  Object.keys(panels).forEach(k => {
+    const panel = document.getElementById(panels[k]);
+    const btn   = document.getElementById(tabs[k]);
+    if (!panel || !btn) return;
+    if (k === tab) {
+      panel.classList.remove('hidden');
+      btn.className = "flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase transition-all shadow-sm " +
+        (k === 'vet'    ? "bg-blue-600 text-white" :
+         k === 'pelu'   ? "bg-indigo-600 text-white" :
+                          "bg-slate-800 text-white");
+    } else {
+      panel.classList.add('hidden');
+      btn.className = "flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase transition-all text-slate-500 hover:bg-slate-100";
     }
+  });
+};
+ 
+window.cargarReporte = async () => {
+  // Fecha de hoy
+  const hoy = new Date();
+  const fechaSimple = `${hoy.getDate()}/${hoy.getMonth() + 1}/${hoy.getFullYear()}`;
+  const repFecha = document.getElementById('repFechaHoy');
+  if (repFecha) repFecha.innerText = hoy.toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+ 
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+ 
+  try {
+    // ── VETERINARIA ──────────────────────────────────────────────
+    const snapVet = await getDocs(query(collection(db, "consultas"), where("fechaSimple", "==", fechaSimple)));
+ 
+    let vetBruto = 0, vetGastos = 0, vetNeto = 0;
+    let sandovalTotal = 0, sandovalPac = 0;
+    let silvaTotal    = 0, silvaPac    = 0;
+    const serviciosContados = {};
+    const consultasHtml = [];
+ 
+    snapVet.forEach(docSnap => {
+      const d = docSnap.data();
+      const b = parseFloat(d.montoVenta)   || 0;
+      const g = parseFloat(d.montoInsumos) || 0;
+      const p = parseFloat(d.pagoDoctor)   || 0;
+ 
+      vetBruto  += b;
+      vetGastos += g;
+      vetNeto   += (b - g - p);
+ 
+      if (d.doctor?.includes("Darwin")) { sandovalTotal += p; sandovalPac++; }
+      else if (d.doctor?.includes("Joan")) { silvaTotal += p; silvaPac++; }
+ 
+      // Contar servicios del día
+      if (d.tratamiento) {
+        d.tratamiento.split('\n').forEach(linea => {
+          const l = linea.trim();
+          if (l.startsWith("=>")) {
+            const nombre = l.replace("=>", "").trim().toUpperCase();
+            serviciosContados[nombre] = (serviciosContados[nombre] || 0) + 1;
+          }
+        });
+      }
+ 
+      const colorBorde = d.doctor?.includes("Darwin") ? "border-l-blue-500" : "border-l-emerald-500";
+      consultasHtml.push(`
+        <div class="px-4 py-2.5 flex justify-between items-center border-l-4 ${colorBorde} hover:bg-slate-50 transition-colors">
+          <div>
+            <p class="font-black text-[11px] text-slate-800 uppercase">${d.paciente || '-'}</p>
+            <p class="text-[9px] text-slate-400 font-bold">🩺 ${d.doctor || '-'}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-black text-[11px] text-blue-700">$${b.toFixed(2)}</p>
+            <p class="text-[9px] text-slate-400">Doc: $${p.toFixed(2)}</p>
+          </div>
+        </div>`);
+    });
+ 
+    const totalPac = sandovalPac + silvaPac;
+    const ticketProm = totalPac > 0 ? vetBruto / totalPac : 0;
+ 
+    set('vetPacientes', totalPac);
+    set('vetBruto',  `$${vetBruto.toFixed(2)}`);
+    set('vetGastos', `$${vetGastos.toFixed(2)}`);
+    set('vetNeto',   `$${vetNeto.toFixed(2)}`);
+    set('vetSandoval',    `$${sandovalTotal.toFixed(2)}`);
+    set('vetSandovalPac', `${sandovalPac} consultas`);
+    set('vetSilva',    `$${silvaTotal.toFixed(2)}`);
+    set('vetSilvaPac', `${silvaPac} consultas`);
+    set('vetTicketProm', `Ticket prom: $${ticketProm.toFixed(2)}`);
+ 
+    const listaVet = document.getElementById('vetListaConsultas');
+    if (listaVet) listaVet.innerHTML = consultasHtml.length ? consultasHtml.join('') : '<p class="text-center text-slate-400 italic p-4">Sin consultas hoy</p>';
+ 
+    // Top servicios del día
+    const topServ = Object.entries(serviciosContados).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const topDiv = document.getElementById('vetServiciosTop');
+    if (topDiv) {
+      topDiv.innerHTML = topServ.length
+        ? topServ.map(([nombre, cnt], i) => `
+            <div class="flex items-center gap-3">
+              <span class="w-5 h-5 rounded-full bg-blue-${i === 0 ? '600' : i === 1 ? '400' : '200'} text-white text-[8px] font-black flex items-center justify-center">${i + 1}</span>
+              <span class="flex-1 font-bold text-slate-700 text-[11px]">${nombre}</span>
+              <span class="text-[10px] font-black text-slate-500">×${cnt}</span>
+            </div>`).join('')
+        : '<p class="text-slate-400 italic text-[11px]">Sin datos de servicios</p>';
+    }
+ 
+    // ── PELUQUERÍA ───────────────────────────────────────────────
+    const snapPelu = await getDocs(query(collection(db, "servicios_estetica"), where("fechaSimple", "==", fechaSimple)));
+ 
+    let peluBruto = 0, peluPagoPel = 0, peluAyu1 = 0, peluAyuExtra = 0, peluNeto = 0;
+    let peluCajaUsd = 0, peluCajaBs = 0;
+    let peluPagados = 0, peluPendientes = 0;
+    const peluHtml = [];
+ 
+    snapPelu.forEach(docSnap => {
+      const d = docSnap.data();
+      const precio    = parseFloat(d.precioTotal || 0);
+      const pagoPel   = parseFloat(d.pagoPeluquera || 0);
+      const pagoA1    = parseFloat(d.pagoAyudante1 || 0);
+      const pagoAx    = parseFloat(d.pagoAyudanteExtra || 0);
+      const ingreso   = parseFloat(d.ingresoAvipet || 0);
+      const moneda    = (d.metodoPago || 'USD').toUpperCase();
+      const estatus   = d.estatusPago || 'pendiente';
+      const esPagado  = estatus === 'pagado';
+ 
+      peluBruto    += precio;
+      peluPagoPel  += pagoPel;
+      peluAyu1     += pagoA1;
+      peluAyuExtra += pagoAx;
+      peluNeto     += ingreso;
+ 
+      if (esPagado) {
+        if (moneda === 'BS') peluCajaBs  += precio;
+        else                 peluCajaUsd += precio;
+        peluPagados++;
+      } else {
+        peluPendientes++;
+      }
+ 
+      peluHtml.push(`
+        <div class="px-4 py-2.5 flex justify-between items-center border-l-4 ${esPagado ? 'border-l-emerald-500' : 'border-l-red-400'} hover:bg-slate-50 transition-colors">
+          <div>
+            <p class="font-black text-[11px] text-slate-800 uppercase">${d.paciente || '-'}</p>
+            <p class="text-[9px] font-bold ${esPagado ? 'text-emerald-500' : 'text-red-400'}">${esPagado ? '✔ PAGADO' : '⏳ PENDIENTE'} · ${moneda === 'BS' ? 'Bs' : '$'}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-black text-[11px] text-indigo-700">${moneda === 'BS' ? 'Bs' : '$'}${precio.toFixed(2)}</p>
+            <p class="text-[9px] text-slate-400">Pel: $${pagoPel.toFixed(2)}</p>
+          </div>
+        </div>`);
+    });
+ 
+    set('peluServicios', peluPagados + peluPendientes);
+    set('peluBruto',    `$${peluBruto.toFixed(2)}`);
+    set('peluPagos',    `$${peluPagoPel.toFixed(2)}`);
+    set('peluNeto',     `$${peluNeto.toFixed(2)}`);
+    set('peluAyu1',     `$${peluAyu1.toFixed(2)}`);
+    set('peluAyuExtra', `$${peluAyuExtra.toFixed(2)}`);
+    set('peluCajaUsd',  `$${peluCajaUsd.toFixed(2)}`);
+    set('peluCajaBs',   `Bs ${peluCajaBs.toFixed(2)}`);
+    set('peluPagados',    `${peluPagados} pagados`);
+    set('peluPendientes', `${peluPendientes} pendientes`);
+ 
+    const listaPelu = document.getElementById('peluListaServicios');
+    if (listaPelu) listaPelu.innerHTML = peluHtml.length ? peluHtml.join('') : '<p class="text-center text-slate-400 italic p-4">Sin servicios hoy</p>';
+ 
+    // ── GLOBAL ───────────────────────────────────────────────────
+    const totalBruto   = vetBruto + peluBruto;
+    const totalDoctores= sandovalTotal + silvaTotal;
+    const totalPeluNom = peluPagoPel + peluAyu1 + peluAyuExtra;
+    const totalEgresos = vetGastos + totalDoctores + totalPeluNom;
+    const netoFinal    = vetNeto + peluNeto;
+ 
+    set('globalBruto',     `$${totalBruto.toFixed(2)}`);
+    set('globalBrutoVet',  `$${vetBruto.toFixed(2)}`);
+    set('globalBrutoPelu', `$${peluBruto.toFixed(2)}`);
+    set('globalEgresos',   `$${totalEgresos.toFixed(2)}`);
+    set('globalNeto',      `$${netoFinal.toFixed(2)}`);
+ 
+    // Barras de distribución
+    const pct = (val) => totalBruto > 0 ? Math.round((val / totalBruto) * 100) : 0;
+    const pAvipet = pct(netoFinal);
+    const pDoc    = pct(totalDoctores);
+    const pPelu   = pct(totalPeluNom);
+    const pIns    = pct(vetGastos);
+ 
+    set('globalPorcAvipet', `${pAvipet}%`);
+    set('globalPorcDoc',    `${pDoc}%`);
+    set('globalPorcPelu',   `${pPelu}%`);
+    set('globalPorcIns',    `${pIns}%`);
+ 
+    const barAvipet = document.getElementById('barAvipet');
+    const barDoc    = document.getElementById('barDoc');
+    const barPelu   = document.getElementById('barPelu');
+    const barIns    = document.getElementById('barIns');
+    if (barAvipet) barAvipet.style.width = pAvipet + '%';
+    if (barDoc)    barDoc.style.width    = pDoc    + '%';
+    if (barPelu)   barPelu.style.width   = pPelu   + '%';
+    if (barIns)    barIns.style.width    = pIns    + '%';
+ 
+  } catch (e) {
+    console.error("Error en cargarReporte:", e);
+    alert("❌ Error al sincronizar: " + e.message);
+  }
 };
 
   // =========================================================
