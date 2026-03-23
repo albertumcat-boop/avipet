@@ -270,8 +270,7 @@ span.resultado-print {
     <div class="flex flex-col items-end text-right z-10">
       
 <select id="selectDoctor"
-        onchange="window.validarAccesoDoctor(this.value); actualizarLogoDoctor(this.value);"
-
+        
               class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none mb-1">
         <option value="">-- SELECCIONE DOCTOR --</option>
         <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
@@ -628,8 +627,8 @@ span.resultado-print {
     </button>
 
 </section> 
-
-<section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col" style="height: 92vh;">
+<!-- ========== hoja de vacuancion ========== -->
+<section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col" style="height: 100vh;">
   
   <button type="button" onclick="window.print()" class="no-print absolute top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨️ Imprimir</button>
 
@@ -646,7 +645,7 @@ span.resultado-print {
       
       <div class="flex items-center justify-center sm:justify-start">
         <div class="w-32 flex flex-col items-center sm:items-start">
-          <div class="w-full h-20">
+          <div class="w-full h-28">
             <img id="logoIzquierdoVacuna" src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
           </div>
           <p class="text-[9px] font-bold text-slate-700 mt-[-14px] leading-none uppercase">RIF: J-00068577-0</p>
@@ -708,7 +707,7 @@ span.resultado-print {
     <div id="bloqueVacunas">
       <div class="border border-slate-800 rounded mb-2 overflow-hidden">
         <div class="bg-slate-800 text-white px-2 py-0.5 font-black text-[9px] text-center uppercase tracking-widest">Control de Vacunación</div>
-        <table class="w-full text-[9px]">
+        <table class="w-full text-[10px]">
           <thead class="bg-slate-100 border-b border-slate-400">
             <tr class="text-center font-bold">
               <th class="py-1 border-r border-slate-300 w-20">Fecha</th>
@@ -719,14 +718,14 @@ span.resultado-print {
             </tr>
           </thead>
           <tbody>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
@@ -1754,6 +1753,57 @@ span.resultado-print {
 
   // Ejecutar al cargar
   ejecutarDetectorMovil();
+  window.appState = {
+  doctor: ""
+};
+
+const doctores = {
+  "Darwin Sandoval": {
+    logo: "logo_darwin.png"
+  },
+  "Joan Silva": {
+    logo: "logo_joan.png"
+  }
+};
+
+function actualizarLogoDoctor() {
+  const logo = document.getElementById("logoDerechoVacuna");
+
+  if (!logo) return;
+
+  // limpiar primero
+  logo.src = "";
+  logo.classList.add("hidden");
+
+  const doctor = window.appState.doctor;
+
+  if (doctor && doctores[doctor]) {
+    logo.src = doctores[doctor].logo;
+    logo.classList.remove("hidden");
+  }
+}
+function limpiarLogoHistoria() {
+  const logo = document.getElementById("logoDerechoVacuna");
+
+  if (logo) {
+    logo.src = "";
+    logo.classList.add("hidden");
+  }
+}
+document.getElementById("selectDoctor").addEventListener("change", function () {
+  const doctor = this.value;
+
+  // guardar doctor activo
+  window.appState.doctor = doctor;
+
+  // validar si tienes esa función
+  if (typeof window.validarAccesoDoctor === "function") {
+    window.validarAccesoDoctor(doctor);
+  }
+
+  // actualizar logo
+  actualizarLogoDoctor();
+});
 
   // Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
   window.addEventListener('popstate', ejecutarDetectorMovil);
@@ -4758,6 +4808,14 @@ window.ejecutarCambioDeTab = async (t) => {
   if (navMobile) {
     navMobile.value = t;
   }
+// CONTROL DE LOGO
+if (t === "historia") {
+  limpiarLogoHistoria();
+}
+
+if (t === "vacunas") {
+  actualizarLogoDoctor();
+}
 
   console.log(`⚓ Navegación exitosa a: ${t}`);
 };
@@ -7706,29 +7764,6 @@ const logosDoctores = {
   "Darwin Sandoval": "logo_darwin.png",
   "Joan Silva": "logo_joan.png"
 };
-
-function actualizarLogoDoctor(doctor) {
-  const logoVacuna = document.getElementById("logoDerechoVacuna");
-
-  if (!logoVacuna) return;
-
-  logoVacuna.src = "";
-  logoVacuna.classList.add("hidden");
-
-  if (logosDoctores[doctor]) {
-    logoVacuna.src = logosDoctores[doctor];
-    logoVacuna.classList.remove("hidden");
-  }
-}
-
-function limpiarLogoHistoria() {
-  const logoHistoria = document.getElementById("logoCentroHistoria");
-
-  if (logoHistoria) {
-    logoHistoria.src = "";
-    logoHistoria.classList.add("hidden");
-  }
-}
 
 </script>
 
