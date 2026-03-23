@@ -629,7 +629,7 @@ span.resultado-print {
 </section> 
 <!-- ========== hoja de vacuancion ========== -->
 <section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col overflow-hidden"
- style="min-height: 100vh;"
+style="min-height: 100vh; max-height: 100vh;"
 >
   
   <button type="button" onclick="window.print()" class="no-print absolute top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨️ Imprimir</button>
@@ -666,7 +666,7 @@ span.resultado-print {
       </div>
     </div>
 
-   <div class="flex justify-between items-end mb-2 relative">
+<div class="flex items-end mb-2 relative">
      <div class="flex-1 flex flex-col items-center text-center mx-auto">
         <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
         <p id="hv_clinicaDoctor" class="text-[10px] text-slate-700 leading-tight font-medium"></p>
@@ -829,22 +829,19 @@ span.resultado-print {
   </div>
 </section>
 
-  <!-- CONTENEDOR EXCLUSIVO PARA FOTOS AL IMPRIMIR (solo visible al imprimir) -->
+  <!-- CONTENEDOR EXCLUSIVO PARA FOTOS -->
   <div id="printTestCont" style="display:none;" class="mt-4">
     <div class="text-[10px] font-black uppercase text-slate-700 mb-2">📷 Imágenes del Test</div>
-    <div id="printTestGallery" class="flex flex-wrap gap-2 justify-center">
-      <!-- Las imágenes se clonan aquí justo antes de imprimir -->
-    </div>
+    <div id="printTestGallery" class="flex flex-wrap gap-2 justify-center"></div>
   </div>
 
-</div>
-<footer class="mt-auto pt-2">
-  <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
-    <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
-    Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California. Teléfono: (0212) 271-0435
-  </div>
-</footer>
-  
+  <footer class="pt-2">
+    <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
+      <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
+      Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California. Teléfono: (0212) 271-0435
+    </div>
+  </footer>
+
 </section>
   <!-- ========== BUSCADOR ========== -->
 <section id="sectionBuscador" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
