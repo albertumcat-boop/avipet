@@ -1721,73 +1721,65 @@ style="min-height: 100vh;"
     }
   };
 
-  // Ejecutar al cargar
-  ejecutarDetectorMovil();
-  window.appState = {
-  doctor: ""
-};
-
+ // Ejecutar al cargar
+ejecutarDetectorMovil();
+ 
+// Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
+window.addEventListener('popstate', ejecutarDetectorMovil);
+if ('navigation' in window) {
+  window.navigation.addEventListener('navigate', () => {
+    setTimeout(ejecutarDetectorMovil, 100);
+  });
+}
+ 
+// =========================================================
+// ESTADO GLOBAL DEL DOCTOR
+// =========================================================
+window.appState = { doctor: "" };
+ 
 const doctores = {
-  "Darwin Sandoval": {
-    logo: "logo_darwin.png"
-  },
-  "Joan Silva": {
-    logo: "logo_joan.png"
-  }
+  "Darwin Sandoval": { logo: "logo_darwin.png" },
+  "Joan Silva":      { logo: "logo_joan.png"   }
 };
-
+ 
 function actualizarLogoDoctor() {
   const logo = document.getElementById("logoDerechoVacuna");
-
   if (!logo) return;
-
-  // limpiar primero
+ 
   logo.src = "";
   logo.classList.add("hidden");
-
+ 
   const doctor = window.appState.doctor;
-
   if (doctor && doctores[doctor]) {
     logo.src = doctores[doctor].logo;
     logo.classList.remove("hidden");
   }
 }
+ 
 function limpiarLogoHistoria() {
   const logo = document.getElementById("logoDerechoVacuna");
-
   if (logo) {
     logo.src = "";
     logo.classList.add("hidden");
   }
 }
+ 
+// =========================================================
+// LISTENER DEL SELECTOR DE DOCTOR (con PIN)
+// =========================================================
 const selectDoctor = document.getElementById("selectDoctor");
-
 if (selectDoctor) {
-  selectDoctor.addEventListener("change", function () {
+  selectDoctor.addEventListener("change", async function () {
     const doctor = this.value;
-
     window.appState.doctor = doctor;
-
+ 
     if (typeof window.validarAccesoDoctor === "function") {
-      window.validarAccesoDoctor(doctor);
+      await window.validarAccesoDoctor(doctor);
     }
-
+ 
     actualizarLogoDoctor();
   });
 }
-
-
-  // guardar doctor activo
-  window.appState.doctor = doctor;
-
-  // validar si tienes esa función
-  if (typeof window.validarAccesoDoctor === "function") {
-    window.validarAccesoDoctor(doctor);
-  }
-
-  // actualizar logo
-  actualizarLogoDoctor();
-});
 
   // Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
   window.addEventListener('popstate', ejecutarDetectorMovil);
@@ -3271,230 +3263,228 @@ window.activarModoMovil = (cedula) => {
 // [09] BUSCADOR (CORREGIDO CON VISOR MODAL)
 // =========================================================
 window.buscarPorCedula = async () => {
-  const inputCI    = document.getElementById('searchCI');
-  const selectPac  = document.getElementById('searchPaciente');
-  const selectMode = document.getElementById('searchMode');
-  const contenedor = document.getElementById('resultadosBusqueda');
-  const modo = selectMode ? selectMode.value : 'ci';
+    const inputCI    = document.getElementById('searchCI');
+    const selectPac  = document.getElementById('searchPaciente');
+    const selectMode = document.getElementById('searchMode');
+    const contenedor = document.getElementById('resultadosBusqueda');
+    const modo = selectMode ? selectMode.value : 'ci';
 
-  if (modo === 'ci') {
-    if (!inputCI || !inputCI.value.trim()) {
-      alert("⚠ Ingrese una cédula, Albert.");
-      return;
-    }
-  }
-
-  const ci = (inputCI?.value || '').trim();
-  const pacienteFiltro = selectPac?.value || "";
-
-  contenedor.innerHTML = `
-    <div class="text-center py-8">
-      <div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2 mx-auto rounded-full"></div>
-      <p class="text-slate-500 italic">Consultando bitácora...</p>
-    </div>`;
-
-  try {
-    const consultasRef = collection(db, "consultas");
-    let q;
     if (modo === 'ci') {
-      q = query(consultasRef, where("cedula", "==", ci));
-    } else {
-      q = query(consultasRef);
+        if (!inputCI || !inputCI.value.trim()) {
+            alert("⚠ Ingrese una cédula, Albert.");
+            return;
+        }
     }
 
-    const snap = await getDocs(q);
-    if (snap.empty) {
-      contenedor.innerHTML = `<p class="p-6 text-center text-slate-500">No hay registros para el criterio seleccionado.</p>`;
-      if (selectPac) selectPac.innerHTML = '<option value="">-- TODOS --</option>';
-      return;
-    }
+    const ci = (inputCI?.value || '').trim();
+    const pacienteFiltro = selectPac?.value || "";
 
-    // 🔴 [PUNTO DE LIMPIEZA]
-    const headerMascota = document.getElementById('datosMascotaHeader');
-    if(headerMascota) headerMascota.innerHTML = "";
+    contenedor.innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mb-2 mx-auto rounded-full"></div>
+            <p class="text-slate-500 italic">Consultando bitácora...</p>
+        </div>`;
 
-    if (modo === 'ci' && selectPac) {
-      const setPacientes = new Set();
-      snap.forEach(docSnap => {
-        const d = docSnap.data();
-        if (d.paciente) setPacientes.add(d.paciente);
-      });
-      const seleccionadoAntes = pacienteFiltro;
-      selectPac.innerHTML = '<option value="">-- TODOS --</option>';
-      Array.from(setPacientes).forEach(nombre => {
-        const opt = document.createElement("option");
-        opt.value = nombre;
-        opt.textContent = nombre;
-        selectPac.appendChild(opt);
-      });
-      if (seleccionadoAntes) selectPac.value = seleccionadoAntes;
-    }
+    try {
+        const consultasRef = collection(db, "consultas");
+        let q;
+        if (modo === 'ci') {
+            q = query(consultasRef, where("cedula", "==", ci));
+        } else {
+            q = query(consultasRef);
+        }
 
-    const registros = [];
-    snap.forEach(docSnap => registros.push(docSnap.data()));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+            contenedor.innerHTML = `<p class="p-6 text-center text-slate-500">No hay registros para el criterio seleccionado.</p>`;
+            if (selectPac) selectPac.innerHTML = '<option value="">-- TODOS --</option>';
+            return;
+        }
 
-    registros.sort((a, b) => {
-      if (a.fecha?.toDate && b.fecha?.toDate) return b.fecha.toDate() - a.fecha.toDate();
-      const parse = fs => {
-        const [d, m, y] = (fs || '').split('/').map(Number);
-        return new Date(y || 0, (m || 1) - 1, d || 1);
-      };
-      return parse(b.fechaSimple) - parse(a.fechaSimple);
-    });
+        // 🔴 [PUNTO DE LIMPIEZA]
+        const headerMascota = document.getElementById('datosMascotaHeader');
+        if(headerMascota) headerMascota.innerHTML = "";
 
-    contenedor.innerHTML = "";
+        if (modo === 'ci' && selectPac) {
+            const setPacientes = new Set();
+            snap.forEach(docSnap => {
+                const d = docSnap.data();
+                if (d.paciente) setPacientes.add(d.paciente);
+            });
+            const seleccionadoAntes = pacienteFiltro;
+            selectPac.innerHTML = '<option value="">-- TODOS --</option>';
+            Array.from(setPacientes).forEach(nombre => {
+                const opt = document.createElement("option");
+                opt.value = nombre;
+                opt.textContent = nombre;
+                selectPac.appendChild(opt);
+            });
+            if (seleccionadoAntes) selectPac.value = seleccionadoAntes;
+        }
 
-    // 🔵 [LÓGICA DE AUTOCOMPLETADO MANTENIDA]
-    if (registros.length > 0) {
-        const ult = registros[0]; 
-        const mapping = {
-            'hNombre': ult.paciente, 'hProp': ult.propietario, 'hEspecie': ult.especie,
-            'hRaza': ult.raza, 'hSexo': ult.sexo, 'hEdad': ult.edad, 'hPeso': ult.peso,
-            'hColor': ult.color, 'hTlf': ult.telefono, 'hMail': ult.correo, 'hDir': ult.direccion,
-            'hCI': ult.cedula
-        };
-        Object.entries(mapping).forEach(([id, val]) => {
-            const el = document.getElementById(id);
-            if(el) el.value = val || "";
+        const registros = [];
+        snap.forEach(docSnap => registros.push(docSnap.data()));
+
+        registros.sort((a, b) => {
+            if (a.fecha?.toDate && b.fecha?.toDate) return b.fecha.toDate() - a.fecha.toDate();
+            const parse = fs => {
+                const [d, m, y] = (fs || '').split('/').map(Number);
+                return new Date(y || 0, (m || 1) - 1, d || 1);
+            };
+            return parse(b.fechaSimple) - parse(a.fechaSimple);
         });
+
+        contenedor.innerHTML = "";
+
+        // 🔵 [LÓGICA DE AUTOCOMPLETADO MANTENIDA]
+        if (registros.length > 0) {
+            const ult = registros[0]; 
+            const mapping = {
+                'hNombre': ult.paciente, 'hProp': ult.propietario, 'hEspecie': ult.especie,
+                'hRaza': ult.raza, 'hSexo': ult.sexo, 'hEdad': ult.edad, 'hPeso': ult.peso,
+                'hColor': ult.color, 'hTlf': ult.telefono, 'hMail': ult.correo, 'hDir': ult.direccion,
+                'hCI': ult.cedula
+            };
+            Object.entries(mapping).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if(el) el.value = val || "";
+            });
+        }
+
+        registros.forEach(d => {
+            if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
+
+            const div = document.createElement('div');
+            div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
+
+            // ── INSUMOS ──
+            const insHtml = d.listaDetalladaInsumos
+                ? d.listaDetalladaInsumos.map(ins => `
+                    <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
+                        <span class="text-slate-600">${ins.nombre} (x${ins.cant})</span>
+                        <b class="text-slate-800">$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b>
+                    </div>`).join('')
+                : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
+
+            // ── TESTS RÁPIDOS ──
+            let testsHtml = "";
+            if (Array.isArray(d.testsRealizados) && d.testsRealizados.length > 0) {
+                testsHtml = `
+                    <div class="mt-4">
+                        <p class="text-[10px] font-bold text-violet-600 border-b mb-1 uppercase">Tests Rápidos:</p>
+                        <div class="space-y-1 text-[11px]">
+                            ${d.testsRealizados.map(t => `
+                                <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
+                                    <div>
+                                        <p class="font-bold text-slate-800 uppercase">${t.nombre || ''}</p>
+                                        <p class="text-[10px] text-slate-500 italic">${t.nota || ''}</p>
+                                    </div>
+                                    <span class="text-[10px] font-black ${(t.resultado || "").includes("POSI") ? "text-red-600" : (t.resultado || "").includes("NEGA") ? "text-emerald-600" : "text-slate-600"}">
+                                        ${t.resultado || ''}
+                                    </span>
+                                </div>`).join('')}
+                        </div>
+                    </div>`;
+            }
+
+            // ── VACUNAS Y DESPARASITACIONES ──
+            let vacunasHtml = "";
+            const tieneVacunas = Array.isArray(d.vacunasAplicadas) && d.vacunasAplicadas.length > 0;
+            const tieneDesp    = Array.isArray(d.desparasitacionesAplicadas) && d.desparasitacionesAplicadas.length > 0;
+            if (tieneVacunas || tieneDesp) {
+                vacunasHtml = `<div class="mt-4">`;
+                if (tieneVacunas) {
+                    vacunasHtml += `<p class="text-[10px] font-bold text-teal-600 border-b mb-1 uppercase">Vacunas Aplicadas:</p>
+                        <div class="space-y-1 text-[11px] mb-3">${d.vacunasAplicadas.map(v => `
+                            <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
+                                <div><p class="font-bold text-slate-800 uppercase">${v.vacuna || ''}</p>
+                                <p class="text-[10px] text-slate-500 italic">${[v.peso ? 'Peso: ' + v.peso : '', v.proxima ? 'Próxima: ' + v.proxima : ''].filter(Boolean).join(' · ')}</p></div>
+                                <span class="text-[10px] font-black text-teal-700">${v.fecha || ''}</span>
+                            </div>`).join('')}</div>`;
+                }
+                if (tieneDesp) {
+                    vacunasHtml += `<p class="text-[10px] font-bold text-amber-600 border-b mb-1 uppercase">Desparasitaciones:</p>
+                        <div class="space-y-1 text-[11px]">${d.desparasitacionesAplicadas.map(dp => `
+                            <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
+                                <div><p class="font-bold text-slate-800 uppercase">${dp.producto || ''}</p>
+                                <p class="text-[10px] text-slate-500 italic">${[dp.peso ? 'Peso: ' + dp.peso : '', dp.proxima ? 'Próxima: ' + dp.proxima : ''].filter(Boolean).join(' · ')}</p></div>
+                                <span class="text-[10px] font-black text-amber-700">${dp.fecha || ''}</span>
+                            </div>`).join('')}</div>`;
+                }
+                vacunasHtml += `</div>`;
+            }
+
+            // ── FOTOS ──
+            let fotosHtml = "";
+            const listaHistoria = Array.isArray(d.fotosHistoria) ? d.fotosHistoria : (d.urlExamen ? [d.urlExamen] : []);
+            const listaTest = Array.isArray(d.fotosTest) ? d.fotosTest : (d.urlFotoTest ? [d.urlFotoTest] : []);
+            if (listaHistoria.length > 0 || listaTest.length > 0) {
+                fotosHtml = `<p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">Anexos Visuales:</p>
+                    <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
+                listaHistoria.forEach((src, idx) => { fotosHtml += `<div class="flex-shrink-0"><p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}</p><img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')"></div>`; });
+                listaTest.forEach((src, idx) => { fotosHtml += `<div class="flex-shrink-0"><p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}</p><img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')"></div>`; });
+                fotosHtml += `</div>`;
+            }
+
+            // ── TARJETA COMPLETA ──
+            div.innerHTML = `
+                <details class="group">
+                    <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
+                        <div class="flex gap-4 items-center">
+                            <div class="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
+                                <span class="block text-[8px] font-bold uppercase">Fecha</span>
+                                <span class="text-xs font-black">${d.fechaSimple || 'S/F'}</span>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-slate-800 uppercase italic leading-tight">${d.paciente}</h3>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">Dr. ${d.doctor}</p>
+                            </div>
+                        </div>
+                        <div class="text-blue-500 flex items-center group-open:rotate-180 transition-transform font-bold">▼</div>
+                    </summary>
+                    <div class="p-4 bg-slate-50 border-t border-slate-100">
+                        <div class="mb-4 grid grid-cols-2 gap-4 bg-white p-3 rounded-lg border border-slate-200 text-[11px] font-bold">
+                            <div class="space-y-1">
+                                <p class="text-blue-600 uppercase text-[9px]">Paciente:</p>
+                                <p class="text-slate-800">${d.especie || '-'} / ${d.raza || '-'} / ${d.sexo || '-'}</p>
+                                <p class="text-slate-800">Edad: ${d.edad || '-'} / Peso: ${d.peso || '-'} kg</p>
+                            </div>
+                            <div class="space-y-1 border-l pl-3">
+                                <p class="text-emerald-600 uppercase text-[9px]">Propietario:</p>
+                                <p class="text-slate-800">${d.propietario} (${d.cedula})</p>
+                                <p class="text-slate-500 italic normal-case font-medium">${d.telefono || '-'}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
+                                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">Insumos:</p>
+                                <div class="space-y-1">${insHtml}</div>
+                            </div>
+                        </div>
+                        ${testsHtml} ${vacunasHtml} ${fotosHtml}
+                        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Consulta</span>
+                                <span class="text-xl font-black text-blue-900">$${(d.montoVenta || 0).toFixed(2)}</span>
+                            </div>
+                            <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700" onclick="window.imprimirConsultaDesdeElemento(this)">🖨 Imprimir</button>
+                        </div>
+                    </div>
+                </details>`;
+
+            contenedor.appendChild(div);
+            const btnImpr = div.querySelector('button[onclick^="window.imprimirConsultaDesdeElemento"]');
+            if (btnImpr) btnImpr._consulta = d;
+        });
+
+    } catch (e) {
+        console.error("❌ Fallo en la consulta:", e);
+        alert("Error en búsqueda: " + e.message);
     }
-
-    registros.forEach(d => {
-      if (modo === 'ci' && pacienteFiltro && d.paciente !== pacienteFiltro) return;
-
-      const div = document.createElement('div');
-      div.className = "mb-4 border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm hover:border-blue-300 transition-colors";
-
-      // ── INSUMOS (Tus líneas originales) ──
-      const insHtml = d.listaDetalladaInsumos
-        ? d.listaDetalladaInsumos.map(ins => `
-            <div class="flex justify-between text-[11px] border-b border-dotted border-slate-300 py-1">
-              <span class="text-slate-600">${ins.nombre} (x${ins.cant})</span>
-              <b class="text-slate-800">$${parseFloat(ins.precio ?? ins.costo ?? 0).toFixed(2)}</b>
-            </div>`).join('')
-        : "<p class='text-[10px] italic text-slate-400'>Sin insumos registrados</p>";
-
-      // ── TESTS RÁPIDOS (Tus líneas originales) ──
-      let testsHtml = "";
-      if (Array.isArray(d.testsRealizados) && d.testsRealizados.length > 0) {
-        testsHtml = `
-          <div class="mt-4">
-            <p class="text-[10px] font-bold text-violet-600 border-b mb-1 uppercase">Tests Rápidos:</p>
-            <div class="space-y-1 text-[11px]">
-              ${d.testsRealizados.map(t => `
-                <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
-                  <div>
-                    <p class="font-bold text-slate-800 uppercase">${t.nombre || ''}</p>
-                    <p class="text-[10px] text-slate-500 italic">${t.nota || ''}</p>
-                  </div>
-                  <span class="text-[10px] font-black ${(t.resultado || "").includes("POSI") ? "text-red-600" : (t.resultado || "").includes("NEGA") ? "text-emerald-600" : "text-slate-600"}">
-                    ${t.resultado || ''}
-                  </span>
-                </div>`).join('')}
-            </div>
-          </div>`;
-      }
-
-      // ── VACUNAS Y DESPARASITACIONES (Tus líneas originales) ──
-      let vacunasHtml = "";
-      const tieneVacunas = Array.isArray(d.vacunasAplicadas) && d.vacunasAplicadas.length > 0;
-      const tieneDesp    = Array.isArray(d.desparasitacionesAplicadas) && d.desparasitacionesAplicadas.length > 0;
-      if (tieneVacunas || tieneDesp) {
-        vacunasHtml = `<div class="mt-4">`;
-        if (tieneVacunas) {
-          vacunasHtml += `<p class="text-[10px] font-bold text-teal-600 border-b mb-1 uppercase">Vacunas Aplicadas:</p>
-            <div class="space-y-1 text-[11px] mb-3">${d.vacunasAplicadas.map(v => `
-                <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
-                  <div><p class="font-bold text-slate-800 uppercase">${v.vacuna || ''}</p>
-                  <p class="text-[10px] text-slate-500 italic">${[v.peso ? 'Peso: ' + v.peso : '', v.proxima ? 'Próxima: ' + v.proxima : ''].filter(Boolean).join(' · ')}</p></div>
-                  <span class="text-[10px] font-black text-teal-700">${v.fecha || ''}</span>
-                </div>`).join('')}</div>`;
-        }
-        if (tieneDesp) {
-          vacunasHtml += `<p class="text-[10px] font-bold text-amber-600 border-b mb-1 uppercase">Desparasitaciones:</p>
-            <div class="space-y-1 text-[11px]">${d.desparasitacionesAplicadas.map(dp => `
-                <div class="flex justify-between items-start border-b border-dotted border-slate-300 pb-1">
-                  <div><p class="font-bold text-slate-800 uppercase">${dp.producto || ''}</p>
-                  <p class="text-[10px] text-slate-500 italic">${[dp.peso ? 'Peso: ' + dp.peso : '', dp.proxima ? 'Próxima: ' + dp.proxima : ''].filter(Boolean).join(' · ')}</p></div>
-                  <span class="text-[10px] font-black text-amber-700">${dp.fecha || ''}</span>
-                </div>`).join('')}</div>`;
-        }
-        vacunasHtml += `</div>`;
-      }
-
-      // ── FOTOS (Tus líneas originales) ──
-      let fotosHtml = "";
-      const listaHistoria = Array.isArray(d.fotosHistoria) ? d.fotosHistoria : (d.urlExamen ? [d.urlExamen] : []);
-      const listaTest = Array.isArray(d.fotosTest) ? d.fotosTest : (d.urlFotoTest ? [d.urlFotoTest] : []);
-      if (listaHistoria.length > 0 || listaTest.length > 0) {
-        fotosHtml = `<p class="text-[10px] font-bold text-blue-600 border-b border-blue-100 mb-2 mt-4 uppercase tracking-tighter">Anexos Visuales:</p>
-          <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">`;
-        listaHistoria.forEach((src, idx) => { fotosHtml += `<div class="flex-shrink-0"><p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Historia / Eco ${listaHistoria.length > 1 ? `#${idx + 1}` : ""}</p><img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')"></div>`; });
-        listaTest.forEach((src, idx) => { fotosHtml += `<div class="flex-shrink-0"><p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Test ${listaTest.length > 1 ? `#${idx + 1}` : ""}</p><img src="${src}" class="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform" onclick="window.verFotoGrande('${src}')"></div>`; });
-        fotosHtml += `</div>`;
-      }
-
-      // ── TARJETA COMPLETA CON IDENTIDAD INTEGRADA ──
-      div.innerHTML = `
-        <details class="group">
-          <summary class="flex justify-between p-4 cursor-pointer hover:bg-blue-50/50 transition-colors list-none">
-            <div class="flex gap-4 items-center">
-              <div class="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
-                <span class="block text-[8px] font-bold uppercase">Fecha</span>
-                <span class="text-xs font-black">${d.fechaSimple || 'S/F'}</span>
-              </div>
-              <div>
-                <h3 class="font-black text-slate-800 uppercase italic leading-tight">${d.paciente}</h3>
-                <p class="text-[10px] text-slate-500 font-bold uppercase">Dr. ${d.doctor}</p>
-              </div>
-            </div>
-            <div class="text-blue-500 flex items-center group-open:rotate-180 transition-transform font-bold">▼</div>
-          </summary>
-          <div class="p-4 bg-slate-50 border-t border-slate-100">
-            
-            <div class="mb-4 grid grid-cols-2 gap-4 bg-white p-3 rounded-lg border border-slate-200 text-[11px] font-bold">
-              <div class="space-y-1">
-                <p class="text-blue-600 uppercase text-[9px]">Paciente:</p>
-                <p class="text-slate-800">${d.especie || '-'} / ${d.raza || '-'} / ${d.sexo || '-'}</p>
-                <p class="text-slate-800">Edad: ${d.edad || '-'} / Peso: ${d.peso || '-'} kg</p>
-              </div>
-              <div class="space-y-1 border-l pl-3">
-                <p class="text-emerald-600 uppercase text-[9px]">Propietario:</p>
-                <p class="text-slate-800">${d.propietario} (${d.cedula})</p>
-                <p class="text-slate-500 italic normal-case font-medium">${d.telefono || '-'}</p>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p class="text-[10px] font-bold text-blue-600 border-b mb-1 uppercase">Diagnóstico / Tratamiento:</p>
-                <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${d.tratamiento || ""}</p>
-              </div>
-              <div>
-                <p class="text-[10px] font-bold text-emerald-600 border-b mb-1 uppercase">Insumos:</p>
-                <div class="space-y-1">${insHtml}</div>
-              </div>
-            </div>
-            ${testsHtml} ${vacunasHtml} ${fotosHtml}
-            <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center gap-2">
-              <div class="flex flex-col gap-1">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Consulta</span>
-                <span class="text-xl font-black text-blue-900">$${(d.montoVenta || 0).toFixed(2)}</span>
-              </div>
-              <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow hover:bg-blue-700" onclick="window.imprimirConsultaDesdeElemento(this)">🖨 Imprimir</button>
-            </div>
-          </div>
-        </details>`;
-
-      contenedor.appendChild(div);
-      const btnImpr = div.querySelector('button[onclick^="window.imprimirConsultaDesdeElemento"]');
-      if (btnImpr) btnImpr._consulta = d;
-    });
-
-  } catch (e) {
-    console.error("❌ Fallo en la consulta:", e);
-    alert("Error en búsqueda: " + e.message);
-  }
 };
 // Puente entre el botón del buscador y la función real de impresión
 window.imprimirConsultaDesdeElemento = (btn) => {
