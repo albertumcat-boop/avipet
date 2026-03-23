@@ -660,7 +660,7 @@ span.resultado-print {
       </div>
 
       <div class="w-32 flex items-center justify-center">
-          <img id="logoDerechoVacuna" src="" class="hidden w-full h-20 object-contain">
+          <img id="logoDerechoVacuna" src="" class="hidden w-full h-30 object-contain">
           <div class="w-32 no-print" id="spacerDerechoVacuna"></div>
       </div>
     </div>
@@ -3852,45 +3852,113 @@ window.imprimirConsultaBuscador = (consulta, opciones = {}) => {
   }
 
   // ── VACUNAS Y DESPARASITACIONES ───────────────────────────────
-  let bloqueVacunasPrint = "";
-  const vacList  = Array.isArray(consulta.vacunasAplicadas)
-    ? consulta.vacunasAplicadas.filter(v => v.fecha || v.vacuna)
-    : [];
-  const despList = Array.isArray(consulta.desparasitacionesAplicadas)
-    ? consulta.desparasitacionesAplicadas.filter(v => v.fecha || v.producto)
-    : [];
+// ── VACUNAS Y DESPARASITACIONES ───────────────────────────────
+let bloqueVacunasPrint = "";
 
-  if (vacList.length || despList.length) {
-    bloqueVacunasPrint = `
-      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:5px;">
+const vacList  = Array.isArray(consulta.vacunasAplicadas)
+  ? consulta.vacunasAplicadas.filter(v => v.fecha || v.vacuna)
+  : [];
+
+const despList = Array.isArray(consulta.desparasitacionesAplicadas)
+  ? consulta.desparasitacionesAplicadas.filter(v => v.fecha || v.producto)
+  : [];
+
+if (vacList.length || despList.length) {
+
+  // 🔥 DATOS DOCTOR
+  const doctor = (typeof appState !== "undefined" && appState.doctor && doctores[appState.doctor])
+    ? doctores[appState.doctor]
+    : null;
+
+  bloqueVacunasPrint = `
+    
+    <div style="width:100%; padding:20px; font-family:Arial, sans-serif;">
+
+      <!-- 🏥 ENCABEZADO -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        
+        <div>
+          <h2 style="margin:0; font-size:20px;">${doctor?.clinica || "CLÍNICA VETERINARIA"}</h2>
+          <div style="font-size:14px;">Cartilla de Vacunación</div>
+        </div>
+
+        <div style="text-align:right;">
+          <img src="${doctor?.logo || ""}" style="height:80px; object-fit:contain;">
+        </div>
+
+      </div>
+
+      <!-- 🐶 DATOS PACIENTE -->
+      <div style="margin-bottom:10px; font-size:13px;">
+        <strong>Mascota:</strong> ${consulta.mascota || ""} &nbsp;&nbsp;
+        <strong>Propietario:</strong> ${consulta.duenio || ""} &nbsp;&nbsp;
+        <strong>Fecha:</strong> ${consulta.fecha || ""}
+      </div>
+
+      <!-- 💉 TABLA -->
+      <table style="
+        width:100%;
+        border-collapse:collapse;
+        font-size:14px;
+        table-layout:fixed;
+      ">
+
         <thead>
           <tr style="background:#e5e7eb;">
-            <th style="text-align:left;padding:4px;border:1px solid #cbd5e1;">Vacuna / Producto</th>
-            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Fecha</th>
-            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Próxima</th>
-            <th style="text-align:center;padding:4px;border:1px solid #cbd5e1;">Peso</th>
+            <th style="padding:10px;border:1px solid #cbd5e1;text-align:left;">Vacuna / Producto</th>
+            <th style="padding:10px;border:1px solid #cbd5e1;text-align:center;">Fecha</th>
+            <th style="padding:10px;border:1px solid #cbd5e1;text-align:center;">Próxima</th>
+            <th style="padding:10px;border:1px solid #cbd5e1;text-align:center;">Peso</th>
           </tr>
         </thead>
+
         <tbody>
+
           ${vacList.map(v => `
-            <tr>
-              <td style="padding:4px;border:1px solid #e5e7eb;">${v.vacuna || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.fecha || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.proxima || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.peso || ""}</td>
-            </tr>`).join("")}
+            <tr style="height:55px;">
+              <td style="padding:10px;border:1px solid #e5e7eb;">${v.vacuna || ""}</td>
+              <td style="padding:10px;text-align:center;border:1px solid #e5e7eb;">${v.fecha || ""}</td>
+              <td style="padding:10px;text-align:center;border:1px solid #e5e7eb;">${v.proxima || ""}</td>
+              <td style="padding:10px;text-align:center;border:1px solid #e5e7eb;">${v.peso || ""}</td>
+            </tr>
+          `).join("")}
+
           ${despList.map(v => `
-            <tr>
-              <td style="padding:4px;border:1px solid #e5e7eb;background:#fffbeb;">
-                ${v.producto || ""} <span style="font-size:9px;color:#92400e;">(Desp.)</span>
+            <tr style="height:55px;">
+              <td style="padding:10px;border:1px solid #e5e7eb;background:#fffbeb;">
+                ${v.producto || ""} 
+                <span style="font-size:11px;color:#92400e;">(Desp.)</span>
               </td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.fecha || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.proxima || ""}</td>
-              <td style="padding:4px;text-align:center;border:1px solid #e5e7eb;">${v.peso || ""}</td>
-            </tr>`).join("")}
+              <td style="padding:10px;text-align:center;border:1px solid #e5e7eb;">${v.fecha || ""}</td>
+              <td style="padding:10px;text-align:center;border:1px solid #e5e7eb;">${v.proxima || ""}</td>
+              <td style="padding:10px;text-align:center;border:1px solid #e5e7eb;">${v.peso || ""}</td>
+            </tr>
+          `).join("")}
+
+          <!-- 🔥 FILAS VACÍAS -->
+          ${Array.from({ length: 10 }).map(() => `
+            <tr style="height:55px;">
+              <td style="border:1px solid #e5e7eb;"></td>
+              <td style="border:1px solid #e5e7eb;"></td>
+              <td style="border:1px solid #e5e7eb;"></td>
+              <td style="border:1px solid #e5e7eb;"></td>
+            </tr>
+          `).join("")}
+
         </tbody>
-      </table>`;
-  }
+      </table>
+
+      <!-- ✍️ FIRMA -->
+      <div style="margin-top:40px; display:flex; justify-content:flex-end;">
+        <div style="text-align:center;">
+          <img src="${doctor?.firma || ""}" style="height:60px;"><br>
+          <span style="font-size:12px;">${doctor?.nombre || ""}</span>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
 
   // ── VENTANA DE IMPRESIÓN ──────────────────────────────────────
   win.document.write(`
