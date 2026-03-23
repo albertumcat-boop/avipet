@@ -5959,7 +5959,7 @@ window.guardarPeluqueriaPro = async () => {
 
         await addDoc(collection(db, "servicios_estetica"), dataPelu);
 
-        // --- ACTUALIZAR CONTADOR DE FIDELIDAD ---
+        
         await setDoc(fidelidadRef, {
             contador:          nuevaVisita,
             ultimaVisita:      serverTimestamp(),
@@ -5970,7 +5970,8 @@ window.guardarPeluqueriaPro = async () => {
             historialVisitas:  arrayUnion({
                 visita:    nuevaVisita,
                 fecha:     fechaSimple,
-                creadoEn:  serverTimestamp()
+                creadoEn: new Date()
+
             })
         }, { merge: true });
 
