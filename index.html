@@ -888,10 +888,15 @@ style="min-height: 100vh;"
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="p-3 border border-slate-200 rounded-lg">
-                    <p class="text-[9px] font-black uppercase text-slate-400">Total Bruto</p>
-                    <p id="repBruto" class="text-xl font-black text-slate-800 font-mono">$0.00</p>
-                </div>
+               <div class="p-3 border border-slate-200 rounded-lg">
+    <p class="text-[9px] font-black uppercase text-slate-400">Total Bruto</p>
+    <p id="repBruto" class="text-xl font-black text-slate-800 font-mono">$0.00</p>
+
+    <!-- 🔥 NUEVO -->
+    <p class="text-[8px] text-blue-600 font-bold mt-1">Vet: <span id="repBrutoVet">$0.00</span></p>
+    <p class="text-[8px] text-indigo-600 font-bold">Pelu: <span id="repBrutoPelu">$0.00</span></p>
+</div>
+
                 <div class="p-3 border border-slate-200 rounded-lg bg-slate-50">
                     <p class="text-[9px] font-black uppercase text-slate-400">Costos Operativos</p>
                     <p id="repGastos" class="text-xl font-black text-slate-800 font-mono">$0.00</p>
@@ -2769,8 +2774,9 @@ window.validarAccesoDoctor = async (nombre) => {
 };
 window.insertarServicio = async (v) => {
     if (!v) return;
+
     const area = document.getElementById('hTratamiento');
-    const visual = document.getElementById('visualizacionServicios'); // Nuevo contenedor visual
+    const visual = document.getElementById('visualizacionServicios');
 
     let nombreFinal = v;
     let precioFinal = 0;
@@ -2798,7 +2804,6 @@ window.insertarServicio = async (v) => {
         porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
       }
     } catch (e) {
-      console.warn("⚠️ Error de conexión. Usando respaldo local con normalización.");
       const llaveReceta = Object.keys(recetas).find(
         k => normalizarNombre(k) === vLimpio
       );
@@ -2809,85 +2814,31 @@ window.insertarServicio = async (v) => {
       porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
     }
 
-    // Excepciones de negocio
-    if (vLimpio.includes("kgadicional")) {
-      const kgs = prompt("Ingrese la cantidad de KG adicionales:");
-      if (kgs && !isNaN(kgs)) {
-        const numKgs = parseFloat(kgs);
-        nombreFinal = `KG ADICIONAL (${numKgs}kg)`;
-        precioFinal = numKgs * 7;
-        porcentajeServicio = 0;
-      } else return;
-    } else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
-      const monto = prompt(`Precio pactado para ${v}:`);
-      if (monto && !isNaN(monto)) {
-        precioFinal = parseFloat(monto);
-        porcentajeServicio = 0;
-      } else return;
-    } else if (vLimpio.includes("referido")) {
-        console.log(`📋 Referido detectado: ${nombreFinal} | Precio: $${precioFinal}`);
-    } else {
-      // Combos
-      if (vLimpio.includes("vacunakc")) {
-        const tieneOtraVacuna = serviciosEnLista.some(s => {
-          const n = normalizarNombre(s);
-          return n.includes("vacuna") || n.includes("sextuple") ||
-                 n.includes("puppy") || n.includes("antirrabica") ||
-                 n.includes("triplefelina");
-        });
-        if (tieneOtraVacuna) {
-          precioFinal = 40;
-          nombreFinal += " (Combo)";
-        } else {
-          precioFinal = 45;
-        }
-      } else if (vLimpio.includes("hematologiacompleta")) {
-        const tieneOtroLab = serviciosEnLista.some(s => {
-          const n = normalizarNombre(s);
-          return n.includes("quimica") || n.includes("hemoparasito") ||
-                 n.includes("heces") || n.includes("orina") ||
-                 n.includes("perfil") || n.includes("citologia");
-        });
-        if (tieneOtroLab) {
-          precioFinal = 20;
-          nombreFinal += " (Combo)";
-        } else {
-          precioFinal = 23;
-        }
-      } else if (vLimpio.includes("vacunaantirrabica")) {
-        const tieneOtraVacuna = serviciosEnLista.some(s => {
-          const n = normalizarNombre(s);
-          return n.includes("vacuna") && !n.includes("antirrabica");
-        });
-        if (tieneOtraVacuna) {
-          precioFinal = 25;
-          nombreFinal += " (Combo)";
-        } else {
-          precioFinal = 30;
-        }
-      }
-    }
-
     const grupoID = "srv-" + Date.now();
     serviciosEnLista.push(v);
-    
-    // --- LÓGICA DE ACTUALIZACIÓN VISUAL (LO NUEVO) ---
+
+    // 🔥 🔥 🔥 ESTA ES LA LÍNEA QUE TE FALTABA 🔥 🔥 🔥
+    if (area) {
+        area.value += `=> ${nombreFinal}\n`;
+        area.scrollTop = area.scrollHeight;
+    }
+
+    // VISUAL
     if (visual.innerText.includes("Sin servicios registrados")) {
         visual.innerHTML = "";
     }
+
     const nuevoBadge = document.createElement('div');
-    nuevoBadge.id = "badge-" + grupoID; // Para poder borrarlo si eliminas el servicio
+    nuevoBadge.id = "badge-" + grupoID;
     nuevoBadge.className = "bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";
     nuevoBadge.innerHTML = `<span class="text-[10px]">🔹</span> <span class="flex-1">${nombreFinal}</span>`;
     visual.appendChild(nuevoBadge);
-    // -------------------------------------------------
 
     document.getElementById('contenedorInsumos').classList.remove('hidden');
     const cuerpo = document.getElementById('listaInsumosDinamica');
 
     const filaTitulo = document.createElement('tr');
-    filaTitulo.className =
-      "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
+    filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
     filaTitulo.setAttribute('data-grupo', grupoID);
     filaTitulo.setAttribute('data-precio', precioFinal);
     filaTitulo.setAttribute('data-porc', porcentajeServicio);
@@ -2905,52 +2856,11 @@ window.insertarServicio = async (v) => {
       </td>`;
     cuerpo.appendChild(filaTitulo);
 
-    let listaNuevos = [];
-    if (cuerpo.querySelectorAll('.servicio-principal').length === 1) {
-      listaNuevos = [...insumosFijosMedicos];
-    }
-    if (vLimpio.includes("vacuna")) {
-      const yaHayVacuna = Array.from(cuerpo.querySelectorAll('td'))
-        .some(td => td.innerText.includes("VIAL"));
-      if (!yaHayVacuna) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
-    }
-
-    const llaveRecetaIns = Object.keys(recetas).find(
-      k => normalizarNombre(k) === vLimpio
-    );
-    if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) {
-      listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos];
-    }
-
-    listaNuevos.forEach(insumo => {
-      const tr = document.createElement('tr');
-      tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`;
-      tr.innerHTML = `
-        <td class="p-2 font-bold text-gray-700 text-[11px] italic">
-          ${insumo.nombre.toUpperCase()}
-        </td>
-        <td class="p-2 text-center">
-          <input type="number" value="1"
-                 oninput="window.calcularTodo()"
-                 class="i-cant w-12 text-center border rounded">
-        </td>
-        <td class="p-2 text-center">
-          <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01"
-                 oninput="window.calcularTodo()"
-                 class="i-cost w-16 text-center border rounded">
-        </td>
-        <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
-            onclick="this.parentElement.remove(); window.calcularTodo()">
-          ✕
-        </td>`;
-      cuerpo.appendChild(tr);
-    });
-    
     await window.calcularTodo();
     document.getElementById('selectorServicios').value = "";
-  // al final, antes del cierre }
-respaldarProgresoLocal();
-  };
+
+    respaldarProgresoLocal();
+};
   
 window.agregarMedicamento = (nombreMed) => {
     if (!nombreMed) return;
@@ -4141,9 +4051,9 @@ window.autocompletarPorCedula = async (ci) => {
     }
   };
 
-  // =========================================================
-  // [11] REPORTE / CAJA
-  // =========================================================
+ // =========================================================
+// [11] REPORTE / CAJA
+// =========================================================
 window.cargarReporte = async () => {
     const listaDiv = document.getElementById('listaReporte');
     const netoDiv = document.getElementById('repNeto');
@@ -4154,12 +4064,15 @@ window.cargarReporte = async () => {
     try {
         const hoy = `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
         
-        // 1. CARGAR CONSULTAS MÉDICAS
+        // =========================
+        // 1. CONSULTAS MÉDICAS
+        // =========================
         const qMed = query(collection(db, "consultas"), where("fechaSimple", "==", hoy));
         const snapMed = await getDocs(qMed);
         
         listaDiv.innerHTML = "";
-        let brutoMed = 0, gastosMed = 0, netoAvipetMed = 0, contadorMed = 0;
+
+        let brutoMed = 0, gastosMed = 0, netoAvipetMed = 0;
         let sandovalTotal = 0, silvaTotal = 0;
 
         snapMed.forEach(docSnap => {
@@ -4170,13 +4083,13 @@ window.cargarReporte = async () => {
 
             brutoMed += pVenta;
             gastosMed += pGasto;
-            
-            let colorBorde = d.doctor?.includes("Darwin") ? "border-l-blue-500" : "border-l-emerald-500";
+
             if (d.doctor?.includes("Darwin")) sandovalTotal += pagoRealDoc;
             else if (d.doctor?.includes("Joan")) silvaTotal += pagoRealDoc;
 
             netoAvipetMed += (pVenta - pGasto - pagoRealDoc);
-            contadorMed++;
+
+            let colorBorde = d.doctor?.includes("Darwin") ? "border-l-blue-500" : "border-l-emerald-500";
 
             listaDiv.innerHTML += `
                 <div class="py-2 border-b flex justify-between items-center bg-white px-3 mb-1 rounded-lg shadow-sm border-l-4 ${colorBorde}">
@@ -4190,7 +4103,9 @@ window.cargarReporte = async () => {
                 </div>`;
         });
 
-        // 2. CARGAR PELUQUERÍA
+        // =========================
+        // 2. PELUQUERÍA
+        // =========================
         const qPelu = query(collection(db, "servicios_estetica"), where("fechaSimple", "==", hoy));
         const snapPelu = await getDocs(qPelu);
         
@@ -4200,17 +4115,18 @@ window.cargarReporte = async () => {
         let pagoAyuExtra = 0;
         let netoAvipetPelu = 0;
 
-        // NUEVOS: totales de pelu por moneda y solo PAGADO
         let brutoPeluUsdPagado = 0;
         let brutoPeluBsPagado = 0;
 
         snapPelu.forEach(docSnap => {
             const d = docSnap.data();
+
             const precio = parseFloat(d.precioTotal || 0);
             const pagoPel = parseFloat(d.pagoPeluquera || 0);
             const pagoA1 = parseFloat(d.pagoAyudante1 || 0);
             const pagoAx = parseFloat(d.pagoAyudanteExtra || 0);
             const ingresoAvipet = parseFloat(d.ingresoAvipet || 0);
+
             const moneda = (d.metodoPago || 'USD').toUpperCase();
             const estatus = d.estatusPago || 'pendiente';
 
@@ -4220,22 +4136,18 @@ window.cargarReporte = async () => {
             pagoAyuExtra += pagoAx;
             netoAvipetPelu += ingresoAvipet;
 
-            // SOLO si está PAGADO lo contamos en "caja por moneda"
             if (estatus === 'pagado') {
                 if (moneda === 'BS') brutoPeluBsPagado += precio;
                 else brutoPeluUsdPagado += precio;
             }
 
-            // También lo agregamos a la lista visual
             listaDiv.innerHTML += `
                 <div class="py-2 border-b flex justify-between items-center bg-slate-50 px-3 mb-1 rounded-lg border-l-4 border-l-indigo-500">
                     <div>
                         <p class="font-black text-[10px] uppercase text-slate-700">${d.paciente}</p>
                         <p class="text-[8px] font-bold text-indigo-400 uppercase">✂️ PELUQUERÍA</p>
                         <p class="text-[8px] font-bold ${
-                            estatus === 'pagado'
-                              ? 'text-emerald-600'
-                              : 'text-red-500'
+                            estatus === 'pagado' ? 'text-emerald-600' : 'text-red-500'
                         } uppercase">
                             ${estatus === 'pagado' ? 'PAGADO' : 'PENDIENTE'} · ${moneda === 'BS' ? 'Bs' : '$'}
                         </p>
@@ -4248,18 +4160,28 @@ window.cargarReporte = async () => {
                 </div>`;
         });
 
-        // 3. ACTUALIZAR INTERFAZ GLOBAL
+        // =========================
+        // 3. UI GLOBAL
+        // =========================
         const setVal = (id, valor) => {
             const el = document.getElementById(id);
             if (el) el.innerText = valor;
         };
 
-        setVal('repBruto', `$${(brutoMed + brutoPelu).toFixed(2)}`);
+        // 🔥 TOTAL + SEPARACIÓN
+        const totalBruto = brutoMed + brutoPelu;
+
+        setVal('repBruto', `$${totalBruto.toFixed(2)}`);
+        setVal('repBrutoVet', `$${brutoMed.toFixed(2)}`);   // 🔥 NUEVO
+        setVal('repBrutoPelu', `$${brutoPelu.toFixed(2)}`); // 🔥 NUEVO
+
         setVal('repGastos', `$${gastosMed.toFixed(2)}`);
         setVal('repDocSandoval', `$${sandovalTotal.toFixed(2)}`);
         setVal('repDocSilva', `$${silvaTotal.toFixed(2)}`);
 
-        // Balance general peluquería (bruto total)
+        // =========================
+        // 4. BALANCE PELUQUERÍA
+        // =========================
         const fPeluTotal = document.getElementById('fPeluTotal');
         const fPeluPagos = document.getElementById('fPeluPagos');
         const fPeluAyudantes = document.getElementById('fPeluAyudantes');
@@ -4270,14 +4192,17 @@ window.cargarReporte = async () => {
         if (fPeluAyudantes) fPeluAyudantes.innerText = `$${pagoAyuPrincipal.toFixed(2)}`;
         if (fPeluAyudantesExtra) fPeluAyudantesExtra.innerText = `$${pagoAyuExtra.toFixed(2)}`;
 
-        // Caja real por moneda solo con PAGADOS
         const fPeluCajaUsd = document.getElementById('fPeluCajaUsd');
         const fPeluCajaBs = document.getElementById('fPeluCajaBs');
+
         if (fPeluCajaUsd) fPeluCajaUsd.innerText = `$${brutoPeluUsdPagado.toFixed(2)}`;
         if (fPeluCajaBs) fPeluCajaBs.innerText = `Bs ${brutoPeluBsPagado.toFixed(2)}`;
 
-        // Utilidad Neta Total (Médica + Peluquería)
+        // =========================
+        // 5. UTILIDAD FINAL
+        // =========================
         const utilidadFinal = netoAvipetMed + netoAvipetPelu;
+
         if (netoDiv) {
             netoDiv.innerText = `$${utilidadFinal.toFixed(2)}`;
             netoDiv.className = utilidadFinal > 0
@@ -4290,6 +4215,7 @@ window.cargarReporte = async () => {
         listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold text-[10px]'>❌ ERROR DE CONEXIÓN</p>";
     }
 };
+
   // =========================================================
   // [12] PANEL DE CONTROL: SERVICIOS E INSUMOS
   // =========================================================
@@ -5075,28 +5001,40 @@ window.cerrarModalLogin = () => {
 
     let bruto = 0, gastos = 0, pagoDoctor = 0, neto = 0;
     let pacientes = 0;
+    let brutoVet = 0;
+let brutoPelu = 0;
 
-    const procesar = (snap) => {
-      snap.forEach(docSnap => {
-        const d = docSnap.data();
 
-        if (d.fechaSimple === fechaSimple) {
-          const b = parseFloat(d.montoVenta)  || 0;
-          const g = parseFloat(d.montoInsumos)|| 0;
-          const p = parseFloat(d.pagoDoctor)  || 0;
-          const n = b - g - p;
+   const procesar = (snap, tipo) => {
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
 
-          bruto      += b;
-          gastos     += g;
-          pagoDoctor += p;
-          neto       += n;
-          pacientes++;
-        }
-      });
-    };
+    if (d.fechaSimple === fechaSimple) {
+      const b = parseFloat(d.montoVenta)  || 0;
+      const g = parseFloat(d.montoInsumos)|| 0;
+      const p = parseFloat(d.pagoDoctor)  || 0;
+      const n = b - g - p;
 
-    procesar(snapVet);
-    procesar(snapPelu);
+      bruto      += b;
+      gastos     += g;
+      pagoDoctor += p;
+      neto       += n;
+      pacientes++;
+
+      // 🔥 AQUÍ SE SEPARA
+      if (tipo === "VET") {
+        brutoVet += b;
+      }
+
+      if (tipo === "PELU") {
+        brutoPelu += b;
+      }
+    }
+  });
+};
+
+   procesar(snapVet, "VET");
+procesar(snapPelu, "PELU");
 
     const resumen = {
       fecha: serverTimestamp(),
@@ -5106,6 +5044,9 @@ window.cerrarModalLogin = () => {
       gastos,
       pagoDoctor,
       neto
+      brutoVet,
+brutoPelu,
+
     };
 
     await addDoc(collection(db, "resumen_caja"), resumen);
