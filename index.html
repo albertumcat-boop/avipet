@@ -2786,101 +2786,257 @@ window.validarAccesoDoctor = async (nombre) => {
     }
 };
 window.insertarServicio = async (v) => {
-    if (!v) return;
-
-    const area = document.getElementById('hTratamiento');
-    const visual = document.getElementById('visualizacionServicios');
-
-    let nombreFinal = v;
-    let precioFinal = 0;
-    let porcentajeServicio = 30;
-
-    const vLimpio = normalizarNombre(v);
-
-    try {
-        const docRef = doc(db, "servicios_maestro", v);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            precioFinal = parseFloat(data.precioVenta) || 0;
-            porcentajeServicio = parseFloat(data.porcDoc ?? data.porcentajeDoc ?? 30);
-        }
-    } catch (e) {}
-
-    const grupoID = "srv-" + Date.now();
-    serviciosEnLista.push(v);
-
-    // ✅ ESCRIBIR EN HISTORIA (CLAVE)
-    if (area) {
-        area.value += `=> ${nombreFinal}\n`;
-        area.scrollTop = area.scrollHeight;
+  if (!v) return;
+ 
+  const area   = document.getElementById('hTratamiento');
+  const visual = document.getElementById('visualizacionServicios');
+ 
+  let nombreFinal        = v;
+  let precioFinal        = 0;
+  let porcentajeServicio = 30;
+ 
+  const vLimpio = normalizarNombre(v);
+ 
+  // 1. Intentar precio desde Firebase
+  try {
+    const docSnap = await getDoc(doc(db, "servicios_maestro", v));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      precioFinal        = parseFloat(data.precioVenta) || 0;
+      porcentajeServicio = parseFloat(data.porcDoc ?? data.porcentajeDoc ?? 30);
+    } else {
+      // Respaldo local
+      const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+      const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+      precioFinal        = llaveReceta ? (recetas[llaveReceta].precioVenta || 0) : 0;
+      porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
     }
-
-    // ✅ VISUAL
-    if (visual) {
-        if (visual.innerText.includes("Sin servicios registrados")) {
-            visual.innerHTML = "";
-        }
-
-        const nuevoBadge = document.createElement('div');
-        nuevoBadge.id = "badge-" + grupoID;
-        nuevoBadge.className = "bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";
-        nuevoBadge.innerHTML = `<span>🔹</span> <span class="flex-1">${nombreFinal}</span>`;
-        visual.appendChild(nuevoBadge);
-    }
-
-    document.getElementById('contenedorInsumos').classList.remove('hidden');
-
-    await window.calcularTodo();
-    document.getElementById('selectorServicios').value = "";
-
-    respaldarProgresoLocal();
+  } catch (e) {
+    const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+    const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
+    precioFinal        = llaveReceta ? (recetas[llaveReceta].precioVenta || 0) : 0;
+    porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
+  }
+ 
+  // 2. Excepciones de negocio
+  if (vLimpio.includes("kgadicional")) {
+    const kgs = prompt("Ingrese la cantidad de KG adicionales:");
+    if (!kgs || isNaN(kgs)) { document.getElementById('selectorServicios').value = ""; return; }
+    const numKgs = parseFloat(kgs);
+    nombreFinal        = `KG ADICIONAL (${numKgs}kg)`;
+    precioFinal        = numKgs * 7;
+    porcentajeServicio = 0;
+  } else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
+    const monto = prompt(`Precio pactado para ${v}:`);
+    if (!monto || isNaN(monto)) { document.getElementById('selectorServicios').value = ""; return; }
+    precioFinal        = parseFloat(monto);
+    porcentajeServicio = 0;
+  } else if (vLimpio.includes("vacunakc")) {
+    const tieneOtraVacuna = serviciosEnLista.some(s => {
+      const n = normalizarNombre(s);
+      return n.includes("vacuna") || n.includes("sextuple") || n.includes("puppy") || n.includes("antirrabica");
+    });
+    if (tieneOtraVacuna) { precioFinal = 40; nombreFinal += " (Combo)"; } else { precioFinal = 45; }
+  } else if (vLimpio.includes("hematologiacompleta")) {
+    const tieneOtroLab = serviciosEnLista.some(s => {
+      const n = normalizarNombre(s);
+      return n.includes("quimica") || n.includes("hemoparasito") || n.includes("heces") || n.includes("orina") || n.includes("perfil") || n.includes("citologia");
+    });
+    if (tieneOtroLab) { precioFinal = 20; nombreFinal += " (Combo)"; } else { precioFinal = 23; }
+  } else if (vLimpio.includes("vacunaantirrabica")) {
+    const tieneOtraVacuna = serviciosEnLista.some(s => {
+      const n = normalizarNombre(s);
+      return n.includes("vacuna") && !n.includes("antirrabica");
+    });
+    if (tieneOtraVacuna) { precioFinal = 25; nombreFinal += " (Combo)"; } else { precioFinal = 30; }
+  }
+ 
+  // 3. ID de grupo único
+  const grupoID = "srv-" + Date.now();
+  serviciosEnLista.push(v);
+ 
+  // 4. Escribir en el textarea de diagnóstico
+  if (area) {
+    area.value += `=> ${nombreFinal}\n`;
+    area.scrollTop = area.scrollHeight;
+    document.getElementById('hTratamientoPrint').innerText = area.value;
+  }
+ 
+  // 5. Badge visual (columna izquierda)
+  if (visual) {
+    if (visual.innerText.includes("Sin servicios registrados")) visual.innerHTML = "";
+    const badge = document.createElement('div');
+    badge.id        = "badge-" + grupoID;
+    badge.className = "bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";
+    badge.innerHTML = `<span>🔹</span><span class="flex-1">${nombreFinal}</span>`;
+    visual.appendChild(badge);
+  }
+ 
+  // 6. Mostrar tabla de insumos
+  document.getElementById('contenedorInsumos').classList.remove('hidden');
+  const cuerpo = document.getElementById('listaInsumosDinamica');
+ 
+  // 6a. Fila título del servicio (la que lee calcularTodo)
+  const filaTitulo = document.createElement('tr');
+  filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
+  filaTitulo.setAttribute('data-grupo', grupoID);
+  filaTitulo.setAttribute('data-precio', precioFinal);
+  filaTitulo.setAttribute('data-porc',   porcentajeServicio);
+  filaTitulo.innerHTML = `
+    <td colspan="3" class="p-2 text-[11px] uppercase">
+      🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})
+      <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">
+        ${porcentajeServicio.toFixed(1)}% DOC
+      </span>
+    </td>
+    <td class="p-2 text-center">
+      <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioFinal}, event)"
+              class="text-red-500 font-bold text-lg">×</button>
+    </td>`;
+  cuerpo.appendChild(filaTitulo);
+ 
+  // 6b. Insumos base (guantes, alcohol, etc.) — solo en el primer servicio
+  let listaNuevos = [];
+  if (cuerpo.querySelectorAll('.servicio-principal').length === 1) {
+    listaNuevos = [...insumosFijosMedicos];
+  }
+  if (vLimpio.includes("vacuna")) {
+    const yaHayVial = Array.from(cuerpo.querySelectorAll('td')).some(td => td.innerText.includes("Vial"));
+    if (!yaHayVial) listaNuevos = [...listaNuevos, ...insumosBaseVacuna];
+  }
+  const llaveRecetaIns = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
+  if (llaveRecetaIns && recetas[llaveRecetaIns].insumos) {
+    listaNuevos = [...listaNuevos, ...recetas[llaveRecetaIns].insumos];
+  }
+ 
+  listaNuevos.forEach(insumo => {
+    const tr = document.createElement('tr');
+    tr.className = `border-b border-gray-100 insumo-fila ${grupoID}`;
+    tr.innerHTML = `
+      <td class="p-2 font-bold text-gray-700 text-[11px] italic">${insumo.nombre.toUpperCase()}</td>
+      <td class="p-2 text-center">
+        <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
+      </td>
+      <td class="p-2 text-center">
+        <input type="number" value="${insumo.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
+      </td>
+      <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
+          onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+    cuerpo.appendChild(tr);
+  });
+ 
+  await window.calcularTodo();
+  document.getElementById('selectorServicios').value = "";
+  respaldarProgresoLocal();
 };
-  
+ 
+// =========================================================
+// REEMPLAZA window.agregarMedicamento COMPLETO
+// =========================================================
 window.agregarMedicamento = (nombreMed) => {
-    if (!nombreMed) return;
-
-    const area = document.getElementById('hTratamiento');
-    const visual = document.getElementById('visualizacionServicios');
-
-    let descripcion = nombreMed;
-    let precioCliente = 0;
-
-    const cfg = CONFIG_MEDICAMENTOS[nombreMed];
-    if (!cfg) return;
-
+  if (!nombreMed) return;
+ 
+  const area   = document.getElementById('hTratamiento');
+  const visual = document.getElementById('visualizacionServicios');
+  const cfg    = CONFIG_MEDICAMENTOS[nombreMed];
+  if (!cfg) return;
+ 
+  let precioCliente = 0;
+  let descripcion   = nombreMed;
+ 
+  // Lógica de dosis especiales
+  if (nombreMed === "Suero hiperinmune") {
+    const ml = prompt("Ingrese cantidad (ml) de Suero hiperinmune:");
+    if (!ml || isNaN(ml) || parseFloat(ml) <= 0) { document.getElementById('selectorMedicamentos').value = ""; return; }
+    const cantMl = parseFloat(ml);
+    precioCliente = (cfg.precioClientePorMl || 0) * cantMl;
+    descripcion  += ` (${cantMl} ml)`;
+  } else if (nombreMed === "Artrosan") {
+    const kg = prompt("Ingrese el peso del paciente (kg) para Artrosan (1 ml cada 20 kg):");
+    if (!kg || isNaN(kg) || parseFloat(kg) <= 0) { document.getElementById('selectorMedicamentos').value = ""; return; }
+    const ml = parseFloat(kg) / 20;
+    precioCliente = (cfg.precioCliente || 0) * ml;
+    descripcion  += ` (${ml.toFixed(2)} ml para ${kg} kg)`;
+  } else if (nombreMed === "Lisavac") {
+    const kg = prompt("Ingrese el peso del paciente (kg) para Lisavac (1 ml por kg):");
+    if (!kg || isNaN(kg) || parseFloat(kg) <= 0) { document.getElementById('selectorMedicamentos').value = ""; return; }
+    const ml = parseFloat(kg);
+    precioCliente = (cfg.precioCliente || 0) * ml;
+    descripcion  += ` (${ml.toFixed(2)} ml para ${kg} kg)`;
+  } else {
     precioCliente = cfg.precioCliente || 0;
-
-    const grupoID = "med-" + Date.now();
-
-    // 🔥🔥🔥 ESTA ES LA LÍNEA QUE FALTABA 🔥🔥🔥
-    if (area) {
-        area.value += `💊 ${descripcion}\n`;
-        area.scrollTop = area.scrollHeight;
-    }
-
-    // ✅ VISUAL
-    if (visual) {
-        if (visual.innerText.includes("Sin servicios registrados")) {
-            visual.innerHTML = "";
-        }
-
-        const nuevoBadge = document.createElement('div');
-        nuevoBadge.id = "badge-" + grupoID;
-        nuevoBadge.className = "bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";
-        nuevoBadge.innerHTML = `<span>💊</span> <span class="flex-1">${descripcion}</span>`;
-        visual.appendChild(nuevoBadge);
-    }
-
-    const inputVenta = document.getElementById('precioVenta');
-    const montoActual = parseFloat(inputVenta.value) || 0;
-    inputVenta.value = (montoActual + precioCliente).toFixed(2);
-
-    window.calcularTodo();
-    document.getElementById('selectorMedicamentos').value = "";
-
-    respaldarProgresoLocal();
+  }
+ 
+  const grupoID              = "med-" + Date.now();
+  const porcentajeMedicamento = 40;
+ 
+  // Escribir en textarea
+  if (area) {
+    area.value += `💊 ${descripcion}\n`;
+    area.scrollTop = area.scrollHeight;
+    document.getElementById('hTratamientoPrint').innerText = area.value;
+  }
+ 
+  // Badge visual
+  if (visual) {
+    if (visual.innerText.includes("Sin servicios registrados")) visual.innerHTML = "";
+    const badge = document.createElement('div');
+    badge.id        = "badge-" + grupoID;
+    badge.className = "bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";
+    badge.innerHTML = `<span>💊</span><span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;
+    visual.appendChild(badge);
+  }
+ 
+  // Tabla de insumos
+  document.getElementById('contenedorInsumos').classList.remove('hidden');
+  const cuerpo = document.getElementById('listaInsumosDinamica');
+ 
+  // Fila título (la que lee calcularTodo)
+  const filaTitulo = document.createElement('tr');
+  filaTitulo.className = "bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";
+  filaTitulo.setAttribute('data-grupo', grupoID);
+  filaTitulo.setAttribute('data-precio', precioCliente);
+  filaTitulo.setAttribute('data-porc',   porcentajeMedicamento);
+  filaTitulo.innerHTML = `
+    <td colspan="3" class="p-2 text-[11px] uppercase">
+      💊 ${descripcion} ($${precioCliente.toFixed(2)})
+      <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-purple-200">
+        MEDICAMENTO
+      </span>
+    </td>
+    <td class="p-2 text-center">
+      <button onclick="window.eliminarServicioCompleto('${grupoID}', ${precioCliente}, event)"
+              class="text-red-500 font-bold text-lg">×</button>
+    </td>`;
+  cuerpo.appendChild(filaTitulo);
+ 
+  // Insumos base de medicamento (una sola vez)
+  if (!insumosBaseMedicamentoAgregados) {
+    [
+      { nombre: "Jeringa para medicamento", costo: 0.50 },
+      { nombre: "Algodón para medicamento", costo: 0.10 },
+      { nombre: "Alcohol para medicamento", costo: 0.10 }
+    ].forEach(ins => {
+      const tr = document.createElement('tr');
+      tr.className = `border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;
+      tr.innerHTML = `
+        <td class="p-2 font-bold text-[11px] italic">➕ ${ins.nombre.toUpperCase()}</td>
+        <td class="p-2 text-center">
+          <input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded">
+        </td>
+        <td class="p-2 text-center">
+          <input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded">
+        </td>
+        <td class="p-2 text-center text-red-500 font-bold cursor-pointer"
+            onclick="this.parentElement.remove(); window.calcularTodo()">✕</td>`;
+      cuerpo.appendChild(tr);
+    });
+    insumosBaseMedicamentoAgregados = true;
+  }
+ 
+  window.calcularTodo();
+  document.getElementById('selectorMedicamentos').value = "";
+  respaldarProgresoLocal();
 };
  
 // --- 1. PREVISUALIZACIÓN HISTORIA (MULTIFOTO) ---
