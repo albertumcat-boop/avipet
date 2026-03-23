@@ -628,7 +628,9 @@ span.resultado-print {
 
 </section> 
 <!-- ========== hoja de vacuancion ========== -->
-<section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col" style="height: 100vh;">
+<section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col overflow-hidden"
+ style="min-height: 100vh;"
+>
   
   <button type="button" onclick="window.print()" class="no-print absolute top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨️ Imprimir</button>
 
@@ -664,8 +666,8 @@ span.resultado-print {
       </div>
     </div>
 
-    <div class="flex justify-between items-end mb-2">
-      <div class="flex-1 flex flex-col items-center text-center">
+   <div class="flex justify-between items-end mb-2 relative">
+     <div class="flex-1 flex flex-col items-center text-center mx-auto">
         <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
         <p id="hv_clinicaDoctor" class="text-[10px] text-slate-700 leading-tight font-medium"></p>
         <p id="tituloFormatoDinamico" class="text-[12px] font-black text-blue-800 uppercase mt-1">CONTROL DE VACUNAS</p>
