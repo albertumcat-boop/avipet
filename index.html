@@ -1760,8 +1760,22 @@ function limpiarLogoHistoria() {
     logo.classList.add("hidden");
   }
 }
-document.getElementById("selectDoctor").addEventListener("change", function () {
-  const doctor = this.value;
+const selectDoctor = document.getElementById("selectDoctor");
+
+if (selectDoctor) {
+  selectDoctor.addEventListener("change", function () {
+    const doctor = this.value;
+
+    window.appState.doctor = doctor;
+
+    if (typeof window.validarAccesoDoctor === "function") {
+      window.validarAccesoDoctor(doctor);
+    }
+
+    actualizarLogoDoctor();
+  });
+}
+
 
   // guardar doctor activo
   window.appState.doctor = doctor;
