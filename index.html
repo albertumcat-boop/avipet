@@ -628,7 +628,6 @@ span.resultado-print {
 
 </section> 
 <!-- ========== hoja de vacuancion ========== -->
-<!-- ========== hoja de vacuancion ========== -->
 <section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col overflow-hidden"
 style="min-height: 100vh; max-height: 100vh;"
 >
@@ -707,13 +706,95 @@ style="min-height: 100vh; max-height: 100vh;"
       </div>
     </div>
 
+    <!-- ===== VACUNAS ===== -->
     <div id="bloqueVacunas">
-      <!-- (tablas originales intactas) -->
+      <div class="border border-slate-800 rounded mb-2 overflow-hidden">
+        <div class="bg-slate-800 text-white px-2 py-0.5 font-black text-[9px] text-center uppercase tracking-widest">Control de Vacunación</div>
+        <table class="w-full text-[10px]">
+          <thead class="bg-slate-100 border-b border-slate-400">
+            <tr class="text-center font-bold">
+              <th class="py-1 border-r border-slate-300 w-20">Fecha</th>
+              <th class="py-1 border-r border-slate-300">Vacuna / Lote</th>
+              <th class="py-1 border-r border-slate-300 w-14">Peso</th>
+              <th class="py-1 border-r border-slate-300 w-20">Próxima</th>
+              <th class="py-1">Firma/Sello</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-12"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border border-slate-800 rounded overflow-hidden">
+        <div class="bg-slate-800 text-white px-2 py-0.5 font-black text-[9px] text-center uppercase tracking-widest">Desparasitaciones Internas / Externas</div>
+        <table class="w-full text-[9px]">
+          <thead class="bg-slate-100 border-b border-slate-400">
+            <tr class="text-center font-bold">
+              <th class="py-1 border-r border-slate-300 w-20">Fecha</th>
+              <th class="py-1 border-r border-slate-300">Producto</th>
+              <th class="py-1 border-r border-slate-300 w-14">Peso</th>
+              <th class="py-1 border-r border-slate-300 w-20">Próxima</th>
+              <th class="py-1">Firma/Sello</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-8"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+
   </div>
 
+  <!-- ===== TESTS ===== -->
   <div id="bloqueTests" class="hidden">
-    <!-- (todo el bloque test completo intacto) -->
+    <div class="no-print mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-300">
+      <label class="block text-[10px] font-black text-blue-700 uppercase mb-2 italic tracking-widest">
+        📸 Evidencia de Cassette / Test (PC o Teléfono)
+      </label>
+
+      <div class="flex flex-wrap items-center gap-4">
+        <input type="file" id="inputFotoTest" accept="image/*" multiple class="hidden" onchange="window.previsualizarFotoTest(event)">
+        
+        <button type="button" onclick="document.getElementById('inputFotoTest').click()" 
+          class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">
+          💻 PC / Archivo
+        </button>
+
+        <button type="button" onclick="window.generarEnlaceMovil('test')" 
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">
+          📱 Usar Teléfono (QR)
+        </button>
+      </div>
+    </div>
+
+    <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
+      <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase tracking-widest">
+        Certificado de Diagnóstico Rápido
+      </div>
+      <table class="w-full text-[11px]">
+        <thead class="bg-slate-200 border-b-2 border-slate-800">
+          <tr>
+            <th class="p-3 text-left">Antígeno / Prueba Analizada</th>
+            <th class="p-3 text-center w-40">Resultado</th>
+            <th class="p-3 text-left">Observaciones</th>
+            <th class="no-print p-1 w-8"></th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTablaCertificado"></tbody>
+      </table>
+    </div>
   </div>
 
   <div id="printTestCont" style="display:none;" class="mt-4">
@@ -729,6 +810,7 @@ style="min-height: 100vh; max-height: 100vh;"
   </footer>
 
 </section>
+
 
   <!-- ========== BUSCADOR ========== -->
 <section id="sectionBuscador" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
