@@ -1738,7 +1738,7 @@ if ('navigation' in window) {
 window.appState = { doctor: "" };
  
 const doctores = {
-  "Darwin Sandoval": { logo: "logo_darwin.png" },
+  "Darwin Sandoval": { logo: "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg" },
   "Joan Silva":      { logo: "logo_joan.png"   }
 };
  
@@ -2747,7 +2747,7 @@ window.validarAccesoDoctor = async (nombre) => {
       
       // >>> LÓGICA DE FILTRADO DE LOGOS <<<
       if (nombre === "Darwin Sandoval") {
-          const urlDarwin = "logo_darwin.png";  // ← cambia esta ruta si el archivo tiene otro nombre 
+          const urlDarwin = "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg"; 
           
           // A. HISTORIA CLÍNICA: Forzamos que se mantenga oculto (tu petición)
           if(logoCentroH) {
@@ -5215,7 +5215,7 @@ window.imprimirDocumento = () => {
   const imgLogoDerVacuna = document.getElementById('logoDerechoVacuna');
 
   const urlAvicola = "avipet.png";
-  const urlDarwin  = "logo_darwin.png";  // ← mismo archivo que en validarAccesoDoctor
+  const urlDarwin = "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg";
 
   // Aplicar logo de Avícola a ambos lados izquierdos (General y Vacuna)
   if (imgLogoIzqGeneral) imgLogoIzqGeneral.src = urlAvicola;
@@ -5569,18 +5569,18 @@ window.exportarExcelPeluqueria = async () => {
   // =========================================================
   // [20] CONFIGURACIÓN DE IDENTIDAD VISUAL
   // =========================================================
-  window.CONFIG_DOCTORES = {
-    "DR_DARWIN": {
-      nombre: "Dr. Darwin Sandoval",
-      clinica: "AVIPET - Medicina Veterinaria",
-      logo: "logo_darwin.png"
-    },
-    "DR_JOAN": {
-      nombre: "Dr. Joan Silva", // Corregido a Dr. como mencionaste antes
-      clinica: "AVIPET - Medicina Veterinaria",
-      logo: "petshop-admin/img/logo_joan.jpg"
-    }
-  };
+ window.CONFIG_DOCTORES = {
+  "DR_DARWIN": {
+    nombre: "Dr. Darwin Sandoval",
+    clinica: "AVIPET - Medicina Veterinaria",
+    logo: "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg"
+  },
+  "DR_JOAN": {
+    nombre: "Dr. Joan Silva",
+    clinica: "AVIPET - Medicina Veterinaria",
+    logo: "logo_joan.png"
+  }
+};
 
   window.doctorActivoId = null;
 
@@ -7687,7 +7687,7 @@ window.addEventListener('load', () => {
   }
 });
 const logosDoctores = {
-  "Darwin Sandoval": "logo_darwin.png",
+  "Darwin Sandoval": "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg",
   "Joan Silva": "logo_joan.png"
 };
 
