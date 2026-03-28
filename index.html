@@ -2855,13 +2855,6 @@ window.insertarServicio = async (v) => {
   const grupoID = "srv-" + Date.now();
   serviciosEnLista.push(v);
  
-  // 4. Escribir en el textarea de diagnóstico
-  if (area) {
-    area.value += `=> ${nombreFinal}\n`;
-    area.scrollTop = area.scrollHeight;
-    document.getElementById('hTratamientoPrint').innerText = area.value;
-  }
- 
   // 5. Badge visual (columna izquierda)
   if (visual) {
     if (visual.innerText.includes("Sin servicios registrados")) visual.innerHTML = "";
@@ -2936,7 +2929,6 @@ window.insertarServicio = async (v) => {
 window.agregarMedicamento = (nombreMed) => {
   if (!nombreMed) return;
  
-  const area   = document.getElementById('hTratamiento');
   const visual = document.getElementById('visualizacionServicios');
   const cfg    = CONFIG_MEDICAMENTOS[nombreMed];
   if (!cfg) return;
@@ -2969,13 +2961,6 @@ window.agregarMedicamento = (nombreMed) => {
  
   const grupoID              = "med-" + Date.now();
   const porcentajeMedicamento = 40;
- 
-  // Escribir en textarea
-  if (area) {
-    area.value += `💊 ${descripcion}\n`;
-    area.scrollTop = area.scrollHeight;
-    document.getElementById('hTratamientoPrint').innerText = area.value;
-  }
  
   // Badge visual
   if (visual) {
