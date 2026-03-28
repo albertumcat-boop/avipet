@@ -3242,8 +3242,6 @@ window.activarModoMovil = (cedula) => {
       insumosBaseMedicamentoAgregados = false;
     }
 
-    const filasRestantes = document.querySelectorAll('.servicio-principal');
-
     filasRestantes.forEach(fila => {
       const texto = normalizarNombre(fila.innerText);
 
@@ -5386,19 +5384,6 @@ window.imprimirDocumento = () => {
         }, 300);
     };
 };
-
-  // =========================================================
-  // [19] INICIALIZACIÓN BÁSICA
-  // =========================================================
-  window.addEventListener('DOMContentLoaded', () => {
-    const f = new Date();
-    const campoFecha = document.getElementById('fechaDoc');
-    if (campoFecha) {
-      campoFecha.value =
-        `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
-    }
-    window.ejecutarCambioDeTab('historia');
-  });
 
   // =========================================================
   // [NUEVO] EXPORTAR HISTORIAL CLÍNICO A EXCEL (CSV) POR DOCTOR
