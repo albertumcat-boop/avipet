@@ -651,9 +651,7 @@ span.resultado-print {
 
 </section> 
 <!-- ========== hoja de vacuancion ========== -->
-<section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col overflow-hidden"
-style="min-height: 100vh;"
->
+<section id="sectionHojaVacunas" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col overflow-hidden">
   
   <button type="button" onclick="window.print()" class="no-print absolute top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨️ Imprimir</button>
 
@@ -817,12 +815,12 @@ style="min-height: 100vh;"
     </div>
   </div>
 
-  <footer class="mt-auto pt-2">
-    <div class="border-t-2 border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
-      <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
-      Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California. Teléfono: (0212) 271-0435
-    </div>
-  </footer>
+  <footer class="pt-1">
+  <div class="border-t border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
+    <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
+    Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California. Teléfono: (0212) 271-0435
+  </div>
+</footer>
 
 </section>
 
@@ -1750,15 +1748,31 @@ style="min-height: 100vh;"
   };
 
   // Ejecutar al cargar
-  ejecutarDetectorMovil();
+ejecutarDetectorMovil();
 
-  // Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
-  window.addEventListener('popstate', ejecutarDetectorMovil);
-  if ('navigation' in window) {
-    window.navigation.addEventListener('navigate', () => {
-      setTimeout(ejecutarDetectorMovil, 100);
-    });
+// Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
+window.addEventListener('popstate', ejecutarDetectorMovil);
+if ('navigation' in window) {
+  window.navigation.addEventListener('navigate', () => {
+    setTimeout(ejecutarDetectorMovil, 100);
+  });
+}
+
+// =========================================================
+// [19] INICIALIZACIÓN BÁSICA
+// =========================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const f = new Date();
+  const campoFecha = document.getElementById('fechaDoc');
+  if (campoFecha) {
+    campoFecha.value =
+      `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
   }
+  window.ejecutarCambioDeTab('historia');
+
+  // ── LISTENER EN TIEMPO REAL DE COLA DE ESPERA ──
+  window.iniciarListenerCola();
+});
  
 // =========================================================
 // ESTADO GLOBAL DEL DOCTOR
