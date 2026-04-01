@@ -7816,7 +7816,23 @@ console.log("agregarMedicamento:", typeof window.agregarMedicamento);
     return;
   }
   const d = btn._consulta;
-  const telefono = (d.telefono || "").replace(/\D/g, '');
+  // Limpiar número y agregar código de país Venezuela (58)
+let telefono = (d.telefono || "").replace(/\D/g, '');
+
+// Si empieza con 0 (ej: 0412...) quitamos el 0 y ponemos 58
+if (telefono.startsWith('0')) {
+  telefono = '58' + telefono.substring(1);
+}
+// Si ya empieza con 58 lo dejamos igual
+// Si no tiene prefijo y tiene 10 dígitos asumimos Venezuela
+if (!telefono.startsWith('58') && telefono.length === 10) {
+  telefono = '58' + telefono;
+}
+```
+
+Lo mismo aplica para `window.enviarEncuestaWhatsapp` si lo tienes en otro lugar. El número final debe quedar algo como `584121234567` sin el `+` porque la URL de WhatsApp lo maneja así:
+```
+https://wa.me/584121234567?text=...
   const paciente = d.paciente || "";
   const cedula   = d.cedula || "";
   const doctor   = d.doctor || "";
