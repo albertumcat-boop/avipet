@@ -81,7 +81,7 @@
     }
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
- /* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
+/* ========= UN SOLO BLOQUE DE IMPRESIÓN SANEADO Y REFORZADO ========= */
 @media print {
     /* 0. REGLA DE ORO: FORZAR COLORES E IMÁGENES */
     * {
@@ -91,18 +91,18 @@
         background-clip: content-box !important;
     }
     /* 1. OCULTAR TODO LO QUE NO SEA RELEVANTE */
-   .no-print, button, nav, #loginSection,
-.finanzas-ocultar, .menu-desplegable,
-.hidden:not(.resultado-print),
-#hTratamiento, .no-imprimir { 
-    display: none !important; 
-}
-  /* FORZAR VISIBILIDAD DE RESULTADOS */
-span.resultado-print {
-    display: inline !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
+    .no-print, button, nav, #loginSection,
+    .finanzas-ocultar, .menu-desplegable,
+    .hidden:not(.resultado-print),
+    #hTratamiento, .no-imprimir { 
+        display: none !important; 
+    }
+    /* FORZAR VISIBILIDAD DE RESULTADOS */
+    span.resultado-print {
+        display: inline !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
     /* 2. ASEGURAR QUE LAS IMÁGENES SE VEAN */
     img, .print-area img {
         display: block !important;
@@ -118,8 +118,29 @@ span.resultado-print {
         display: block !important;
         height: auto !important;
         min-height: 0 !important;
-        padding-top: 10px !important;
+        padding-top: 4px !important;
         overflow: visible !important;
+        flex-direction: column !important;
+    }
+    /* HOJA DE VACUNAS: forzar que todo quede en una sola hoja */
+    #sectionHojaVacunas {
+        min-height: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    #sectionHojaVacunas .flex-grow {
+        flex-grow: 0 !important;
+    }
+    #sectionHojaVacunas footer {
+        position: static !important;
+        margin-top: 2px !important;
+        padding-top: 2px !important;
+        page-break-inside: avoid !important;
+        page-break-before: avoid !important;
+    }
+    #bloqueVacunas {
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
     }
     /* 4. AJUSTE PARA RESULTADOS DE TESTS (INPUTS Y SELECTS) */
     input, textarea, select {
@@ -139,7 +160,7 @@ span.resultado-print {
         display: inline !important;
         visibility: visible !important;
     }
-    /* COMPATIBILIDAD CON CLASES ANTIGUAS (por si hay divs con hidden print:block) */
+    /* COMPATIBILIDAD CON CLASES ANTIGUAS */
     .hidden.print\:block {
         display: block !important;
         visibility: visible !important;
@@ -148,7 +169,7 @@ span.resultado-print {
     #printExamenCont, #printTestCont {
         display: block !important;
         page-break-inside: avoid;
-        margin-top: 15px;
+        margin-top: 8px;
         text-align: center;
     }
     .foto-anexo {
@@ -158,26 +179,21 @@ span.resultado-print {
         border: 1px solid #e2e8f0;
         border-radius: 12px;
     }
-    /* 6. PIE DE PÁGINA */
+    /* 6. PIE DE PÁGINA — ELIMINADO position:fixed que causaba segunda hoja */
     .footer-direccion {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0;
-        right: 0;
         width: 100% !important;
         background: white !important;
         border-top: 1px solid #e2e8f0;
     }
     body {
         background-color: white !important;
-        margin: 0.5cm !important;
+        margin: 0.3cm !important;
     }
 }
 @page {
     size: letter;
-    margin: 1.2cm 0.5cm 0.5cm 0.5cm;
+    margin: 0.5cm 0.5cm 0.4cm 0.5cm;
 }
-
     /* AJUSTE PARA TELÉFONOS: Evita que el logo se monte en las letras */
     @media screen and (max-width: 640px) {
       #sectionHojaVacunas header, 
