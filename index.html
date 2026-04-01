@@ -304,41 +304,50 @@ span.resultado-print {
   </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
-      <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
-        <div class="header-box italic">Ficha Técnica de Mascota</div>
-        <div class="grid grid-cols-2 gap-2">
-          <div class="col-span-2">
-            <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
-            <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
-          </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">ESPECIE</label>
-            <input id="hEspecie" class="border-b w-full uppercase">
-          </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">RAZA</label>
-            <input id="hRaza" class="border-b w-full uppercase">
-          </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
-            <input id="hPeso" class="border-b w-full">
-          </div>
-          <div class="grid grid-cols-3 gap-1">
-            <div>
-              <label class="text-[9px] font-bold text-slate-400">EDAD</label>
-              <input id="hEdad" class="border-b w-full uppercase">
-            </div>
-            <div>
-              <label class="text-[9px] font-bold text-slate-400">SEXO</label>
-              <input id="hSexo" class="border-b w-full uppercase">
-            </div>
-            <div>
-              <label class="text-[9px] font-bold text-slate-400">COLOR</label>
-              <input id="hColor" class="border-b w-full uppercase">
-            </div>
-          </div>
-        </div>
+  <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
+    <div class="header-box italic">Ficha Técnica de Mascota</div>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="col-span-2">
+        <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
+        <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
       </div>
+      <div>
+        <label class="text-[9px] font-bold text-slate-400">ESPECIE</label>
+        <input id="hEspecie" class="border-b w-full uppercase">
+      </div>
+      <div>
+        <label class="text-[9px] font-bold text-slate-400">RAZA</label>
+        <input id="hRaza" class="border-b w-full uppercase">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="text-[9px] font-bold text-slate-400">PESO (KG)</label>
+        <input id="hPeso" class="border-b w-full text-[11px]" placeholder="0.00">
+      </div>
+      <div>
+        <label class="text-[9px] font-bold text-slate-400">F. NACIMIENTO</label>
+        <input id="hFechaNac" type="date" class="border-b w-full text-[10px]">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-1">
+      <div>
+        <label class="text-[9px] font-bold text-slate-400">EDAD</label>
+        <input id="hEdad" class="border-b w-full uppercase">
+      </div>
+      <div>
+        <label class="text-[9px] font-bold text-slate-400">SEXO</label>
+        <input id="hSexo" class="border-b w-full uppercase">
+      </div>
+      <div>
+        <label class="text-[9px] font-bold text-slate-400">COLOR</label>
+        <input id="hColor" class="border-b w-full uppercase">
+      </div>
+    </div>
+
+  </div>
 
       <div class="p-3 space-y-2">
         <div class="header-box italic">Datos del Propietario</div>
@@ -554,32 +563,46 @@ span.resultado-print {
               class="no-print w-full mt-3 p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white" rows="1"></textarea>
 </div>
 
-    <div id="contenedorInsumos"
-         class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
-      <table class="w-full text-[11px] text-left">
-        <thead class="bg-blue-600 text-white uppercase italic">
-        <tr>
-          <th class="p-2">Insumo</th>
-          <th class="p-2 w-16 text-center">Cant.</th>
-          <th class="p-2 w-16 text-center">Precio $</th>
-          <th class="p-2 w-10"></th>
-        </tr>
-        </thead>
-        <tbody id="listaInsumosDinamica" class="bg-white"></tbody>
-      </table>
-      <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
-        <input type="text" id="nombreExtra"
-                placeholder="Añadir algo extra..."
-                class="flex-1 text-[10px] p-2 border rounded bg-white">
-        <input type="number" id="costoExtra"
-                placeholder="0.00"
-                class="w-14 text-[10px] p-2 border rounded bg-white">
-        <button onclick="window.agregarInsumoManual()"
-                class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">
-          + AGREGAR
-        </button>
-      </div>
-    </div>
+   <div id="contenedorInsumos"
+     class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
+
+  <!-- NUEVO: banner de vacuna ya pagada -->
+  <div class="bg-amber-50 border-b border-amber-200 p-2 flex items-center gap-3">
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" id="chkVacunaPagada"
+             class="w-4 h-4 accent-amber-500"
+             onchange="window.toggleVacunaPagada(this.checked)">
+      <span class="text-[10px] font-black text-amber-700 uppercase">
+        ⚠️ Vacuna ya pagada anteriormente — no sumar a caja ni al doctor
+      </span>
+    </label>
+  </div>
+
+  <table class="w-full text-[11px] text-left">
+    <thead class="bg-blue-600 text-white uppercase italic">
+      <tr>
+        <th class="p-2">Insumo</th>
+        <th class="p-2 w-16 text-center">Cant.</th>
+        <th class="p-2 w-16 text-center">Precio $</th>
+        <th class="p-2 w-10"></th>
+      </tr>
+    </thead>
+    <tbody id="listaInsumosDinamica" class="bg-white"></tbody>
+  </table>
+
+  <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
+    <input type="text" id="nombreExtra"
+           placeholder="Añadir algo extra..."
+           class="flex-1 text-[10px] p-2 border rounded bg-white">
+    <input type="number" id="costoExtra"
+           placeholder="0.00"
+           class="w-14 text-[10px] p-2 border rounded bg-white">
+    <button onclick="window.agregarInsumoManual()"
+            class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">
+      + AGREGAR
+    </button>
+  </div>
+</div>
 
     <div class="no-print flex justify-center mb-6">
       <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
@@ -613,6 +636,11 @@ span.resultado-print {
             class="no-print w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
       📄 Receta Sin Costos
     </button>
+  <button type="button"
+        onclick="window.enviarEncuestaWhatsapp()"
+        class="no-print w-full bg-green-600 text-white py-4 rounded-xl font-black uppercase text-xs mt-3">
+  📲 Enviar Encuesta de Satisfacción
+</button>
 
     <button type="button"
             onclick="window.abrirHojaVacunasDesdeHistoria()"
@@ -634,7 +662,7 @@ style="min-height: 100vh;"
   
   <button type="button" onclick="window.print()" class="no-print absolute top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">🖨️ Imprimir</button>
 
-  <div class="no-print mb-4">
+  <div class="no-print mb-2">
     <label class="font-black text-slate-700 text-[10px] uppercase">📄 Tipo de Documento:</label>
     <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)" class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white">
       <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
@@ -643,30 +671,30 @@ style="min-height: 100vh;"
   </div>
 
   <div class="flex-grow">
-    <div class="border-b-2 border-slate-800 pb-2 mb-2 flex flex-col sm:flex-row items-center justify-between gap-2" style="min-height: 80px;">
+    <div class="border-b-2 border-slate-800 pb-1 mb-1 flex flex-col sm:flex-row items-center justify-between gap-2" style="min-height: 70px;">
       
       <div class="flex items-center justify-center sm:justify-start">
-        <div class="w-32 flex flex-col items-center sm:items-start">
-          <div class="w-full h-28">
+        <div class="w-28 flex flex-col items-center sm:items-start">
+          <div class="w-full h-20">
             <img id="logoIzquierdoVacuna" src="avipet.png" alt="Logo Avipet" class="w-full h-full object-contain">
           </div>
-          <p class="text-[9px] font-bold text-slate-700 mt-[-14px] leading-none uppercase">RIF: J-00068577-0</p>
+          <p class="text-[9px] font-bold text-slate-700 mt-[-10px] leading-none uppercase">RIF: J-00068577-0</p>
         </div>
       </div>
 
       <div class="flex flex-col items-center flex-1 text-center">
-          <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">
-            Tarjeta de Vacunación y Desparasitación
-          </h2>
+        <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">
+          Tarjeta de Vacunación y Desparasitación
+        </h2>
       </div>
 
-      <div class="w-32 flex items-center justify-center">
-          <img id="logoDerechoVacuna" src="" class="hidden w-full h-30 object-contain">
-          <div class="w-32 no-print" id="spacerDerechoVacuna"></div>
+      <div class="w-28 flex items-center justify-center">
+        <img id="logoDerechoVacuna" src="" class="hidden w-full h-20 object-contain">
+        <div class="w-28 no-print" id="spacerDerechoVacuna"></div>
       </div>
     </div>
 
-    <div class="flex items-end mb-2 relative">
+    <div class="flex items-end mb-1 relative">
       <div class="flex-1 flex flex-col items-center text-center mx-auto">
         <h2 id="hv_nombreDoctor" class="text-[12px] font-black text-slate-900 uppercase"></h2>
         <p id="hv_clinicaDoctor" class="text-[10px] text-slate-700 leading-tight font-medium"></p>
@@ -721,14 +749,14 @@ style="min-height: 100vh;"
             </tr>
           </thead>
           <tbody>
-            <tr class="h-12 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
-            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-12"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-16"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
@@ -746,10 +774,10 @@ style="min-height: 100vh;"
             </tr>
           </thead>
           <tbody>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
-            <tr class="h-8"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-14 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+            <tr class="h-14 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-14 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+            <tr class="h-14"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
           </tbody>
         </table>
       </div>
@@ -763,15 +791,12 @@ style="min-height: 100vh;"
       <label class="block text-[10px] font-black text-blue-700 uppercase mb-2 italic tracking-widest">
         📸 Evidencia de Cassette / Test (PC o Teléfono)
       </label>
-
       <div class="flex flex-wrap items-center gap-4">
         <input type="file" id="inputFotoTest" accept="image/*" multiple class="hidden" onchange="window.previsualizarFotoTest(event)">
-        
         <button type="button" onclick="document.getElementById('inputFotoTest').click()" 
           class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">
           💻 PC / Archivo
         </button>
-
         <button type="button" onclick="window.generarEnlaceMovil('test')" 
           class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">
           📱 Usar Teléfono (QR)
@@ -810,7 +835,6 @@ style="min-height: 100vh;"
   </footer>
 
 </section>
-
 
   <!-- ========== BUSCADOR ========== -->
 <section id="sectionBuscador" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
@@ -1703,15 +1727,29 @@ style="min-height: 100vh;"
       console.warn("Persistencia falló (múltiples pestañas).");
   });
 
- // 3. DETECTOR MÓVIL MEJORADO (Evita cruces de fotos)
+  // 3. DETECTOR MÓVIL MEJORADO (Evita cruces de fotos)
   const ejecutarDetectorMovil = () => {
     const params = new URLSearchParams(window.location.search);
+
+    // MODO ENCUESTA
+    if (params.get('mode') === 'encuesta') {
+      const ci       = params.get('ci') || "";
+      const paciente = params.get('paciente') || "";
+      const doctor   = params.get('doctor') || "";
+      const checkEncuesta = setInterval(() => {
+        if (window.mostrarEncuesta) {
+          window.mostrarEncuesta(ci, paciente, doctor);
+          clearInterval(checkEncuesta);
+        }
+      }, 100);
+      return;
+    }
+
+    // MODO MÓVIL (el que ya existía)
     if (params.get('mode') === 'mobile') {
       const ciMascota = params.get('ci');
       const tipoFoto = params.get('tipo') || 'historia';
-
       console.log(`📱 Modo Móvil Detectado: CI=${ciMascota}, Tipo=${tipoFoto}`);
-
       const checkInterfaz = setInterval(() => {
         if (window.mostrarInterfazSoloCamara) {
           window.mostrarInterfazSoloCamara(ciMascota, tipoFoto);
@@ -1721,16 +1759,16 @@ style="min-height: 100vh;"
     }
   };
 
- // Ejecutar al cargar
-ejecutarDetectorMovil();
- 
-// Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
-window.addEventListener('popstate', ejecutarDetectorMovil);
-if ('navigation' in window) {
-  window.navigation.addEventListener('navigate', () => {
-    setTimeout(ejecutarDetectorMovil, 100);
-  });
-}
+  // Ejecutar al cargar
+  ejecutarDetectorMovil();
+
+  // Escuchar si el doctor escanea un QR nuevo sin cerrar la pestaña
+  window.addEventListener('popstate', ejecutarDetectorMovil);
+  if ('navigation' in window) {
+    window.navigation.addEventListener('navigate', () => {
+      setTimeout(ejecutarDetectorMovil, 100);
+    });
+  }
  
 // =========================================================
 // ESTADO GLOBAL DEL DOCTOR
@@ -1973,6 +2011,7 @@ window.guardarFirebase = async (imp) => {
             telefono:    dInput('hTlf'),
             correo:      dInput('hMail'),
             direccion:   dInput('hDir'),
+            fechaNacimiento: dInput('hFechaNac'),
             alerta:      document.getElementById('hAlerta')?.checked || false,
             doctor:      nombreDoctor,
             urlExamen:   ultimaHistoria || "",
@@ -1982,10 +2021,11 @@ window.guardarFirebase = async (imp) => {
             testsRealizados: listaTests,
             vacunasAplicadas:           datosVacunas.vacunas,
             desparasitacionesAplicadas: datosVacunas.desparasitaciones,
-            montoVenta:   montoVentaTotal,
-            montoInsumos: totalGastos,
-            pagoDoctor:   pagoDoctorTotal,
-            pagoAvipet:   (montoVentaTotal - totalGastos - pagoDoctorTotal),
+           montoVenta:   window.vacunaPagadaAnteriormente ? 0 : montoVentaTotal,
+           montoInsumos: window.vacunaPagadaAnteriormente ? 0 : totalGastos,
+           pagoDoctor:   window.vacunaPagadaAnteriormente ? 0 : pagoDoctorTotal,
+           pagoAvipet:   window.vacunaPagadaAnteriormente ? 0 : (montoVentaTotal - totalGastos - pagoDoctorTotal),
+           vacunaPagadaAnteriormente: window.vacunaPagadaAnteriormente || false,
             listaDetalladaInsumos: detalleInsumos,
             tratamiento:  dInput('hTratamiento'),
             fecha:        serverTimestamp(),
@@ -2018,6 +2058,11 @@ window.guardarFirebase = async (imp) => {
         // Limpiamos los datos visuales del paciente de la cabecera (Punto 2)
         const headerInfo = document.getElementById('datosMascotaHeader');
         if (headerInfo) headerInfo.innerHTML = "";
+      // Resetear vacuna ya pagada
+        const chk = document.getElementById('chkVacunaPagada');
+        if (chk) chk.checked = false;
+        window.vacunaPagadaAnteriormente = false;
+        window.toggleVacunaPagada(false);
 
         if (imp) window.imprimirDocumento();
 
@@ -4043,6 +4088,7 @@ window.autocompletarPorCedula = async (ci) => {
             setV('hTlf', d.telefono);
             setV('hMail', d.correo || d.email);
             setV('hDir', d.direccion);
+            setV('hFechaNac', d.fechaNacimiento);
 
             // Manejo de Alerta Administrativa
             if (d.alerta === true) {
@@ -7741,7 +7787,246 @@ console.log("🔥 JS CARGADO");
 
 console.log("insertarServicio:", typeof window.insertarServicio);
 console.log("agregarMedicamento:", typeof window.agregarMedicamento);
+  // =========================================================
+// ENCUESTA DE SATISFACCIÓN — WHATSAPP
+// =========================================================
+window.enviarEncuestaWhatsapp = () => {
+  const telefono = document.getElementById('hTlf')?.value.replace(/\D/g, '');
+  const paciente = document.getElementById('hNombre')?.value || "";
+  const cedula   = document.getElementById('hCI')?.value || "";
+  const doctor   = document.getElementById('selectDoctor')?.value || "";
 
+  if (!telefono || telefono.length < 7) {
+    alert("⚠️ No hay teléfono registrado para este paciente.");
+    return;
+  }
+
+  const base = `${window.location.origin}${window.location.pathname}`;
+  const url  = `${base}?mode=encuesta&ci=${encodeURIComponent(cedula)}&paciente=${encodeURIComponent(paciente)}&doctor=${encodeURIComponent(doctor)}`;
+
+  const mensaje = encodeURIComponent(
+`🐾 Hola, estimado/a propietario/a de *${paciente}*.
+
+Gracias por confiar en *AVIPET - Centro Veterinario*.
+
+Nos gustaría conocer tu experiencia de hoy. Por favor responde nuestra breve encuesta (solo 1 minuto):
+
+👉 ${url}
+
+¡Tu opinión nos ayuda a mejorar! 🙏`
+  );
+
+  window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
+};
+
+// =========================================================
+// ENCUESTA — PANTALLA DEL CLIENTE
+// =========================================================
+window.mostrarEncuesta = (ci, paciente, doctor) => {
+  document.body.innerHTML = `
+    <div class="min-h-screen bg-gradient-to-br from-blue-900 to-slate-900 p-6 flex flex-col items-center justify-center font-sans">
+      <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
+        
+        <div class="bg-blue-600 p-6 text-center">
+          <img src="avipet.png" alt="Avipet" class="h-16 object-contain mx-auto mb-2">
+          <h1 class="text-white font-black text-lg uppercase">Encuesta de Satisfacción</h1>
+          <p class="text-blue-200 text-[11px]">Tu opinión es muy importante para nosotros</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+            <p class="text-[10px] font-bold text-slate-500 uppercase">Paciente atendido</p>
+            <p class="font-black text-blue-700 uppercase">${paciente}</p>
+            <p class="text-[10px] text-slate-400">Dr. ${doctor}</p>
+          </div>
+
+          <!-- Pregunta 1: Calificación -->
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-2">
+              1. ¿Cómo calificarías el servicio recibido hoy?
+            </label>
+            <div class="flex justify-around text-3xl" id="estrellasContainer">
+              ${[1,2,3,4,5].map(n => `
+                <span class="cursor-pointer transition-transform hover:scale-125 estrella" 
+                      data-val="${n}"
+                      onclick="window.seleccionarEstrella(${n})">
+                  ⭐
+                </span>`).join('')}
+            </div>
+            <p id="textoEstrella" class="text-center text-[10px] font-bold text-blue-600 mt-1 h-4"></p>
+            <input type="hidden" id="encCalificacion" value="">
+          </div>
+
+          <!-- Pregunta 2: Atención del doctor -->
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-2">
+              2. ¿Cómo fue la atención del Dr. ${doctor}?
+            </label>
+            <div class="grid grid-cols-3 gap-2">
+              ${['Excelente 🌟','Buena 👍','Mejorable 💬'].map(op => `
+                <button type="button"
+                        onclick="window.seleccionarOpcion('encDoctor', this)"
+                        data-val="${op}"
+                        class="opcion-btn border-2 border-slate-200 rounded-xl py-2 text-[10px] font-black text-slate-600 hover:border-blue-500 hover:bg-blue-50 transition-all">
+                  ${op}
+                </button>`).join('')}
+            </div>
+            <input type="hidden" id="encDoctor" value="">
+          </div>
+
+          <!-- Pregunta 3: Volvería -->
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-2">
+              3. ¿Volvería a visitarnos?
+            </label>
+            <div class="grid grid-cols-3 gap-2">
+              ${['Sí, seguro ✅','Tal vez 🤔','No por ahora ❌'].map(op => `
+                <button type="button"
+                        onclick="window.seleccionarOpcion('encVolveria', this)"
+                        data-val="${op}"
+                        class="opcion-btn border-2 border-slate-200 rounded-xl py-2 text-[10px] font-black text-slate-600 hover:border-blue-500 hover:bg-blue-50 transition-all">
+                  ${op}
+                </button>`).join('')}
+            </div>
+            <input type="hidden" id="encVolveria" value="">
+          </div>
+
+          <!-- Pregunta 4: Cómo nos conoció -->
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-2">
+              4. ¿Cómo nos conociste?
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              ${['Recomendación 🗣️','Redes Sociales 📱','Pasé por aquí 🚶','Ya era cliente ⭐'].map(op => `
+                <button type="button"
+                        onclick="window.seleccionarOpcion('encConocio', this)"
+                        data-val="${op}"
+                        class="opcion-btn border-2 border-slate-200 rounded-xl py-2 text-[10px] font-black text-slate-600 hover:border-blue-500 hover:bg-blue-50 transition-all">
+                  ${op}
+                </button>`).join('')}
+            </div>
+            <input type="hidden" id="encConocio" value="">
+          </div>
+
+          <!-- Pregunta 5: Comentarios -->
+          <div>
+            <label class="block text-[11px] font-black text-slate-700 uppercase mb-2">
+              5. ¿Tienes algún comentario o sugerencia?
+            </label>
+            <textarea id="encComentario" rows="3"
+                      class="w-full border-2 border-slate-200 rounded-xl p-3 text-[11px] outline-none focus:border-blue-500 bg-slate-50"
+                      placeholder="Escribe aquí tu comentario..."></textarea>
+          </div>
+
+          <button onclick="window.enviarEncuesta('${ci}', '${paciente}', '${doctor}')"
+                  class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-sm shadow-lg active:scale-95 transition-all">
+            Enviar mi Opinión 🚀
+          </button>
+        </div>
+
+        <div class="text-center pb-4">
+          <p class="text-[9px] text-slate-400">AVIPET - Centro Veterinario · Petare, Caracas</p>
+        </div>
+      </div>
+    </div>`;
+};
+
+window.seleccionarEstrella = (n) => {
+  const textos = ['','Muy malo 😞','Malo 😕','Regular 😐','Bueno 😊','Excelente 🤩'];
+  document.getElementById('encCalificacion').value = n;
+  document.getElementById('textoEstrella').innerText = textos[n];
+  document.querySelectorAll('.estrella').forEach(s => {
+    s.style.filter = Number(s.dataset.val) <= n ? 'none' : 'grayscale(1)';
+    s.style.opacity = Number(s.dataset.val) <= n ? '1' : '0.4';
+  });
+};
+
+window.seleccionarOpcion = (campoId, btn) => {
+  const grupo = btn.closest('div').querySelectorAll('.opcion-btn');
+  grupo.forEach(b => {
+    b.classList.remove('border-blue-500','bg-blue-50','text-blue-700');
+    b.classList.add('border-slate-200','text-slate-600');
+  });
+  btn.classList.add('border-blue-500','bg-blue-50','text-blue-700');
+  btn.classList.remove('border-slate-200','text-slate-600');
+  document.getElementById(campoId).value = btn.dataset.val;
+};
+
+window.enviarEncuesta = async (ci, paciente, doctor) => {
+  const calificacion = document.getElementById('encCalificacion').value;
+  const atencionDoc  = document.getElementById('encDoctor').value;
+  const volveria     = document.getElementById('encVolveria').value;
+  const conocio      = document.getElementById('encConocio').value;
+  const comentario   = document.getElementById('encComentario').value.trim();
+
+  if (!calificacion) {
+    alert("⭐ Por favor selecciona una calificación.");
+    return;
+  }
+
+  const btn = document.querySelector('button[onclick^="window.enviarEncuesta"]');
+  if (btn) { btn.disabled = true; btn.innerText = "⏳ Enviando..."; }
+
+  try {
+    await addDoc(collection(db, "encuestas"), {
+      ci, paciente, doctor,
+      calificacion:  Number(calificacion),
+      atencionDoctor: atencionDoc,
+      volveria,
+      comoNosConocio: conocio,
+      comentario,
+      fecha:      new Date().toLocaleDateString(),
+      timestamp:  serverTimestamp()
+    });
+
+    document.body.innerHTML = `
+      <div class="min-h-screen bg-gradient-to-br from-blue-900 to-slate-900 flex items-center justify-center p-6">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+          <div class="text-6xl mb-4">🎉</div>
+          <h2 class="text-2xl font-black text-blue-700 uppercase mb-2">¡Gracias!</h2>
+          <p class="text-slate-600 font-bold text-sm mb-1">Tu opinión fue registrada.</p>
+          <p class="text-slate-400 text-[11px]">En AVIPET trabajamos cada día para brindarte el mejor cuidado para tu mascota. ¡Hasta la próxima! 🐾</p>
+          <img src="avipet.png" alt="Avipet" class="h-16 object-contain mx-auto mt-6">
+        </div>
+      </div>`;
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.innerText = "Enviar mi Opinión 🚀"; }
+    alert("❌ Error al enviar: " + e.message);
+  }
+};
+// =========================================================
+// VACUNA YA PAGADA — no suma a caja ni al doctor
+// =========================================================
+window.toggleVacunaPagada = (marcado) => {
+  window.vacunaPagadaAnteriormente = marcado;
+
+  const banner = document.getElementById('chkVacunaPagada')?.closest('div');
+  if (banner) {
+    banner.className = marcado
+      ? "bg-amber-100 border-b border-amber-400 p-2 flex items-center gap-3"
+      : "bg-amber-50 border-b border-amber-200 p-2 flex items-center gap-3";
+  }
+
+  // Visual: tachar el monto si está marcado
+  const inputPrecio = document.getElementById('precioVenta');
+  if (inputPrecio) {
+    inputPrecio.style.textDecoration = marcado ? 'line-through' : 'none';
+    inputPrecio.style.color = marcado ? '#f59e0b' : '';
+  }
+
+  // Mostrar aviso
+  const aviso = document.getElementById('avisoVacunaPagada');
+  if (!aviso) {
+    const div = document.createElement('div');
+    div.id = 'avisoVacunaPagada';
+    div.className = 'no-print text-center text-[10px] font-black text-amber-600 uppercase mt-1';
+    div.innerText = '⚠️ Este servicio NO se sumará a la caja ni al doctor';
+    document.getElementById('precioVenta')?.parentElement?.appendChild(div);
+  }
+  if (document.getElementById('avisoVacunaPagada')) {
+    document.getElementById('avisoVacunaPagada').classList.toggle('hidden', !marcado);
+  }
+};
 </script>
 
 </body>
