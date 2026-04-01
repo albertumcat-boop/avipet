@@ -7810,43 +7810,52 @@ console.log("🔥 JS CARGADO");
 
 console.log("insertarServicio:", typeof window.insertarServicio);
 console.log("agregarMedicamento:", typeof window.agregarMedicamento);
-  window.enviarEncuestaDesdeCard = (btn) => {
+ window.enviarEncuestaDesdeCard = (btn) => {
   if (!btn || !btn._consulta) {
     alert("No se pudo obtener la consulta.");
     return;
   }
+
   const d = btn._consulta;
-  // Limpiar número y agregar código de país Venezuela (58)
-let telefono = (d.telefono || "").replace(/\D/g, '');
 
-// Si empieza con 0 (ej: 0412...) quitamos el 0 y ponemos 58
-if (telefono.startsWith('0')) {
-  telefono = '58' + telefono.substring(1);
-}
-// Si ya empieza con 58 lo dejamos igual
-// Si no tiene prefijo y tiene 10 dígitos asumimos Venezuela
-if (!telefono.startsWith('58') && telefono.length === 10) {
-  telefono = '58' + telefono;
-}
-```
+  // -------------------------
+  // 📞 FORMATEO DE TELÉFONO
+  // -------------------------
+  let telefono = (d.telefono || "").replace(/\D/g, '');
 
-Lo mismo aplica para `window.enviarEncuestaWhatsapp` si lo tienes en otro lugar. El número final debe quedar algo como `584121234567` sin el `+` porque la URL de WhatsApp lo maneja así:
-```
-https://wa.me/584121234567?text=...
+  if (telefono.startsWith('00')) {
+    telefono = telefono.substring(2);
+  }
+
+  if (telefono.startsWith('0')) {
+    telefono = '58' + telefono.substring(1);
+  }
+
+  if (!telefono.startsWith('58') && telefono.length === 10) {
+    telefono = '58' + telefono;
+  }
+
+  // ✅ Validación real (Venezuela: 58 + 10 dígitos = 12)
+  if (!/^58\d{10}$/.test(telefono)) {
+    alert("⚠️ Número de teléfono inválido.");
+    console.warn('Número inválido:', telefono);
+    return;
+  }
+
+  // -------------------------
+  // 📄 DATOS
+  // -------------------------
   const paciente = d.paciente || "";
   const cedula   = d.cedula || "";
   const doctor   = d.doctor || "";
 
-  if (!telefono || telefono.length < 7) {
-    alert("⚠️ Este paciente no tiene teléfono registrado.");
-    return;
-  }
-
   const base = `${window.location.origin}${window.location.pathname}`;
   const url  = `${base}?mode=encuesta&ci=${encodeURIComponent(cedula)}&paciente=${encodeURIComponent(paciente)}&doctor=${encodeURIComponent(doctor)}`;
 
-  const mensaje = encodeURIComponent(
-`🐾 Hola, estimado/a propietario/a de *${paciente}*.
+  // -------------------------
+  // 💬 MENSAJE
+  // -------------------------
+  const mensaje = `🐾 Hola, estimado/a propietario/a de *${paciente}*.
 
 Gracias por confiar en *AVIPET - Centro Veterinario*.
 
@@ -7854,10 +7863,14 @@ Nos gustaría conocer tu experiencia de hoy. Por favor responde nuestra breve en
 
 👉 ${url}
 
-¡Tu opinión nos ayuda a mejorar! 🙏`
-  );
+¡Tu opinión nos ayuda a mejorar! 🙏`;
 
-  window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
+  // -------------------------
+  // 🚀 WHATSAPP
+  // -------------------------
+  const link = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+  window.open(link, '_blank');
 };
   // =========================================================
 // ENCUESTA DE SATISFACCIÓN — WHATSAPP
