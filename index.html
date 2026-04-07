@@ -2016,7 +2016,24 @@ window.guardarFirebase = async (imp) => {
         const ultimaHistoria = fotosHistoria.length > 0 ? fotosHistoria[fotosHistoria.length - 1] : urlFotoFinal;
         const ultimaTest     = fotosTest.length > 0     ? fotosTest[fotosTest.length - 1]         : urlFotoTestFinal;
 
-        const data = {
+        // ── VACUNA PENDIENTE: descontar solo el precio de la vacuna ──
+let montoVacunaPendiente = 0;
+if (window.vacunaPagadaAnteriormente) {
+  document.querySelectorAll('.servicio-principal').forEach(fila => {
+    const texto = normalizarNombre(fila.innerText);
+    if (texto.includes("vacuna")) {
+      montoVacunaPendiente += parseFloat(fila.getAttribute('data-precio')) || 0;
+    }
+  });
+}
+const montoVentaFinal = window.vacunaPagadaAnteriormente
+  ? Math.max(0, montoVentaTotal - montoVacunaPendiente) : montoVentaTotal;
+const gastosFinal = window.vacunaPagadaAnteriormente
+  ? Math.max(0, totalGastos - montoVacunaPendiente * 0.3) : totalGastos;
+const pagoDoctorFinal = window.vacunaPagadaAnteriormente
+  ? Math.max(0, pagoDoctorTotal - montoVacunaPendiente * 0.5) : pagoDoctorTotal;
+      
+      const data = {
             cedula:      dInput('hCI'),
             propietario: dInput('hProp'),
             paciente:    dInput('hNombre'),
@@ -2039,11 +2056,11 @@ window.guardarFirebase = async (imp) => {
             testsRealizados: listaTests,
             vacunasAplicadas:           datosVacunas.vacunas,
             desparasitacionesAplicadas: datosVacunas.desparasitaciones,
-           montoVenta:   window.vacunaPagadaAnteriormente ? 0 : montoVentaTotal,
-           montoInsumos: window.vacunaPagadaAnteriormente ? 0 : totalGastos,
-           pagoDoctor:   window.vacunaPagadaAnteriormente ? 0 : pagoDoctorTotal,
-           pagoAvipet:   window.vacunaPagadaAnteriormente ? 0 : (montoVentaTotal - totalGastos - pagoDoctorTotal),
-           vacunaPagadaAnteriormente: window.vacunaPagadaAnteriormente || false,
+           montoVenta:   montoVentaFinal,
+montoInsumos: gastosFinal,
+pagoDoctor:   pagoDoctorFinal,
+pagoAvipet:   (montoVentaFinal - gastosFinal - pagoDoctorFinal),
+vacunaPagadaAnteriormente: window.vacunaPagadaAnteriormente || false,
             listaDetalladaInsumos: detalleInsumos,
             tratamiento:  dInput('hTratamiento'),
             fecha:        serverTimestamp(),
