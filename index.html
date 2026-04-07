@@ -2851,7 +2851,6 @@ window.validarAccesoDoctor = async (nombre) => {
 window.insertarServicio = async (v) => {
   if (!v) return;
  
-  const area   = document.getElementById('hTratamiento');
   const visual = document.getElementById('visualizacionServicios');
  
   let nombreFinal        = v;
@@ -2868,7 +2867,6 @@ window.insertarServicio = async (v) => {
       precioFinal        = parseFloat(data.precioVenta) || 0;
       porcentajeServicio = parseFloat(data.porcDoc ?? data.porcentajeDoc ?? 30);
     } else {
-      // Respaldo local
       const llaveReceta = Object.keys(recetas).find(k => normalizarNombre(k) === vLimpio);
       const llaveConfig = Object.keys(CONFIG_SERVICIOS).find(k => normalizarNombre(k) === vLimpio);
       precioFinal        = llaveReceta ? (recetas[llaveReceta].precioVenta || 0) : 0;
@@ -2881,7 +2879,7 @@ window.insertarServicio = async (v) => {
     porcentajeServicio = llaveConfig ? CONFIG_SERVICIOS[llaveConfig].porc : 30;
   }
  
-  // 2. Excepciones de negocio
+  // 2. Excepciones de negocio — AHORA LEEN DEL DOM (fix combos)
   if (vLimpio.includes("kgadicional")) {
     const kgs = prompt("Ingrese la cantidad de KG adicionales:");
     if (!kgs || isNaN(kgs)) { document.getElementById('selectorServicios').value = ""; return; }
@@ -2889,36 +2887,51 @@ window.insertarServicio = async (v) => {
     nombreFinal        = `KG ADICIONAL (${numKgs}kg)`;
     precioFinal        = numKgs * 7;
     porcentajeServicio = 0;
+
   } else if (vLimpio === "disposicion" || vLimpio === "cremacionconcenizas") {
     const monto = prompt(`Precio pactado para ${v}:`);
     if (!monto || isNaN(monto)) { document.getElementById('selectorServicios').value = ""; return; }
     precioFinal        = parseFloat(monto);
     porcentajeServicio = 0;
+
   } else if (vLimpio.includes("vacunakc")) {
-    const tieneOtraVacuna = serviciosEnLista.some(s => {
-      const n = normalizarNombre(s);
-      return n.includes("vacuna") || n.includes("sextuple") || n.includes("puppy") || n.includes("antirrabica");
+    // ✅ LEE DEL DOM — no de serviciosEnLista
+    const filasActuales = document.querySelectorAll('.servicio-principal');
+    const tieneOtraVacuna = Array.from(filasActuales).some(f => {
+      const n = normalizarNombre(f.innerText);
+      return n.includes("vacuna") && !n.includes("vacunakc");
     });
-    if (tieneOtraVacuna) { precioFinal = 40; nombreFinal += " (Combo)"; } else { precioFinal = 45; }
+    if (tieneOtraVacuna) { precioFinal = 40; nombreFinal += " (Combo)"; }
+    else { precioFinal = 45; }
+
   } else if (vLimpio.includes("hematologiacompleta")) {
-    const tieneOtroLab = serviciosEnLista.some(s => {
-      const n = normalizarNombre(s);
-      return n.includes("quimica") || n.includes("hemoparasito") || n.includes("heces") || n.includes("orina") || n.includes("perfil") || n.includes("citologia");
+    // ✅ LEE DEL DOM
+    const filasActuales = document.querySelectorAll('.servicio-principal');
+    const tieneOtroLab = Array.from(filasActuales).some(f => {
+      const n = normalizarNombre(f.innerText);
+      return n.includes("quimica") || n.includes("hemoparasito") ||
+             n.includes("heces")   || n.includes("orina") ||
+             n.includes("perfil")  || n.includes("citologia");
     });
-    if (tieneOtroLab) { precioFinal = 20; nombreFinal += " (Combo)"; } else { precioFinal = 23; }
+    if (tieneOtroLab) { precioFinal = 20; nombreFinal += " (Combo)"; }
+    else { precioFinal = 23; }
+
   } else if (vLimpio.includes("vacunaantirrabica")) {
-    const tieneOtraVacuna = serviciosEnLista.some(s => {
-      const n = normalizarNombre(s);
+    // ✅ LEE DEL DOM
+    const filasActuales = document.querySelectorAll('.servicio-principal');
+    const tieneOtraVacuna = Array.from(filasActuales).some(f => {
+      const n = normalizarNombre(f.innerText);
       return n.includes("vacuna") && !n.includes("antirrabica");
     });
-    if (tieneOtraVacuna) { precioFinal = 25; nombreFinal += " (Combo)"; } else { precioFinal = 30; }
+    if (tieneOtraVacuna) { precioFinal = 25; nombreFinal += " (Combo)"; }
+    else { precioFinal = 30; }
   }
  
   // 3. ID de grupo único
   const grupoID = "srv-" + Date.now();
   serviciosEnLista.push(v);
  
-  // 5. Badge visual (columna izquierda)
+  // 4. Badge visual (columna izquierda)
   if (visual) {
     if (visual.innerText.includes("Sin servicios registrados")) visual.innerHTML = "";
     const badge = document.createElement('div');
@@ -2928,11 +2941,11 @@ window.insertarServicio = async (v) => {
     visual.appendChild(badge);
   }
  
-  // 6. Mostrar tabla de insumos
+  // 5. Mostrar tabla de insumos
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo = document.getElementById('listaInsumosDinamica');
  
-  // 6a. Fila título del servicio (la que lee calcularTodo)
+  // 5a. Fila título del servicio
   const filaTitulo = document.createElement('tr');
   filaTitulo.className = "bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";
   filaTitulo.setAttribute('data-grupo', grupoID);
@@ -2951,7 +2964,7 @@ window.insertarServicio = async (v) => {
     </td>`;
   cuerpo.appendChild(filaTitulo);
  
-  // 6b. Insumos base (guantes, alcohol, etc.) — solo en el primer servicio
+  // 5b. Insumos base
   let listaNuevos = [];
   if (cuerpo.querySelectorAll('.servicio-principal').length === 1) {
     listaNuevos = [...insumosFijosMedicos];
