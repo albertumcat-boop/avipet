@@ -5,7 +5,7 @@
 //        notas internas por paciente (campo observacionesPermanentes)
 // =========================================================
 
-import { db } from '../firebase-config.js';
+import { db } from './firebase-config.js';
 import {
   collection, addDoc, doc, getDoc, updateDoc,
   getDocs, query, where, orderBy, limit,
