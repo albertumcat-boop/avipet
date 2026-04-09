@@ -5,7 +5,7 @@
 //        impresión rápida de recibo desde bitácora
 // =========================================================
 
-import { db } from '../firebase-config.js';
+import { db } from './firebase-config.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   deleteDoc, getDocs, query, where, orderBy, serverTimestamp,
