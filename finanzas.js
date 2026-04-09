@@ -256,4 +256,31 @@ window.enviarEncuesta = async (ci,paciente,doctor) => {
   } catch(e){if(btn){btn.disabled=false;btn.innerText="Enviar mi Opinión 🚀";}alert("❌ Error: "+e.message);}
 };
 
+// ─── CALCULADORA BS ↔ USD ───
+window.calcularConversor = () => {
+  const tasa   = window.tasaDolarHoy || 36;
+  const modoEl = document.getElementById('calcModo');
+  const inputEl= document.getElementById('calcInput');
+  const resultEl=document.getElementById('calcResultado');
+  const tasaEl = document.getElementById('calcTasaMostrar');
+
+  if (!modoEl || !inputEl || !resultEl) return;
+
+  const modo  = modoEl.value;   // 'usdToBS' o 'bsToUSD'
+  const monto = parseFloat(inputEl.value) || 0;
+  if (tasaEl) tasaEl.innerText = `Tasa: Bs ${tasa.toFixed(2)} / $1`;
+
+  if (modo === 'usdToBS') {
+    const resultado = monto * tasa;
+    resultEl.innerHTML = `
+      <p class="text-[10px] text-slate-400 uppercase font-bold">$${monto.toFixed(2)} equivale a:</p>
+      <p class="text-3xl font-black text-amber-600 font-mono">Bs ${resultado.toFixed(2)}</p>`;
+  } else {
+    const resultado = monto / tasa;
+    resultEl.innerHTML = `
+      <p class="text-[10px] text-slate-400 uppercase font-bold">Bs ${monto.toFixed(2)} equivale a:</p>
+      <p class="text-3xl font-black text-emerald-600 font-mono">$ ${resultado.toFixed(2)}</p>`;
+  }
+};
+
 console.log("✅ finanzas.js cargado");
