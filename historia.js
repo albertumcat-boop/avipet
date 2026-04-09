@@ -139,6 +139,84 @@ async function _verificarStockServicio(nombreServicio) {
 }
 
 // ─── INSERTAR SERVICIO ───
+// ─── RECALCULAR COMBOS ───────────────────────────────────────────────────────
+// Se llama SIEMPRE después de insertar o eliminar cualquier servicio.
+// Lee el DOM completo y ajusta precios según lo que realmente está en la lista.
+//
+// REGLAS:
+//   KC sola        → $45  |  KC + otra vacuna      → $40
+//   Antirrábica sola → $30  |  Antirrábica + otra vacuna → $25
+//   Hematología sola → $23  |  Hematología + otro lab    → $20
+// ─────────────────────────────────────────────────────────────────────────────
+function _recalcularCombos() {
+  const filas = Array.from(document.querySelectorAll('.servicio-principal'));
+  const nombres = filas.map(f => normalizarNombre(f.querySelector('td')?.innerText || ""));
+
+  filas.forEach((fila, idx) => {
+    const n   = nombres[idx];
+    const td  = fila.querySelector('td');
+    if (!td) return;
+
+    // ── KC ──
+    if (n.includes("vacunakc")) {
+      // hay otra vacuna en la lista (distinta de KC)?
+      const hayOtraVacuna = nombres.some((o, i) => i !== idx && o.includes("vacuna") && !o.includes("vacunakc"));
+      const precioNuevo   = hayOtraVacuna ? 40 : 45;
+      const textoCombo    = hayOtraVacuna ? " (Combo)" : "";
+      const precioActual  = parseFloat(fila.getAttribute('data-precio')) || 0;
+
+      if (precioActual !== precioNuevo) {
+        fila.setAttribute('data-precio', precioNuevo);
+        // Actualizar texto visible en la celda
+        td.innerHTML = td.innerHTML
+          .replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)}`)
+          .replace(/\s*\(Combo\)/gi, "") + (hayOtraVacuna ? "" : "");
+        // Limpiar y poner (Combo) solo si aplica
+        td.innerHTML = td.innerHTML.replace(/\(Combo\)/gi, "");
+        if (hayOtraVacuna) {
+          td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)} (Combo)`);
+        }
+      }
+    }
+
+    // ── ANTIRRÁBICA ──
+    if (n.includes("vacunaantirrabica")) {
+      const hayOtraVacuna = nombres.some((o, i) => i !== idx && o.includes("vacuna") && !o.includes("antirrabica"));
+      const precioNuevo   = hayOtraVacuna ? 25 : 30;
+      const precioActual  = parseFloat(fila.getAttribute('data-precio')) || 0;
+
+      if (precioActual !== precioNuevo) {
+        fila.setAttribute('data-precio', precioNuevo);
+        td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)}`);
+        td.innerHTML = td.innerHTML.replace(/\(Combo\)/gi, "");
+        if (hayOtraVacuna) {
+          td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)} (Combo)`);
+        }
+      }
+    }
+
+    // ── HEMATOLOGÍA ──
+    if (n.includes("hematologiacompleta")) {
+      const otrosLabs = ["quimica","hemoparasito","heces","orina","perfil","citologia"];
+      const hayOtroLab = nombres.some((o, i) => i !== idx && otrosLabs.some(lab => o.includes(lab)));
+      const precioNuevo  = hayOtroLab ? 20 : 23;
+      const precioActual = parseFloat(fila.getAttribute('data-precio')) || 0;
+
+      if (precioActual !== precioNuevo) {
+        fila.setAttribute('data-precio', precioNuevo);
+        td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)}`);
+        td.innerHTML = td.innerHTML.replace(/\(Combo\)/gi, "");
+        if (hayOtroLab) {
+          td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)} (Combo)`);
+        }
+      }
+    }
+  });
+
+  // Recalcular totales después de ajustar precios
+  window.calcularTodo();
+}
+
 window.insertarServicio = async (v) => {
   if (!v) return;
   const visual=document.getElementById('visualizacionServicios');
@@ -149,9 +227,19 @@ window.insertarServicio = async (v) => {
 
   if(vLimpio.includes("kgadicional")){const kgs=prompt("KGs adicionales:");if(!kgs||isNaN(kgs)){document.getElementById('selectorServicios').value="";return;}nombreFinal=`KG ADICIONAL (${parseFloat(kgs)}kg)`;precioFinal=parseFloat(kgs)*7;porcServ=0;}
   else if(vLimpio==="disposicion"||vLimpio==="cremacionconcenizas"){const m=prompt(`Precio pactado para ${v}:`);if(!m||isNaN(m)){document.getElementById('selectorServicios').value="";return;}precioFinal=parseFloat(m);porcServ=0;}
-  else if(vLimpio.includes("vacunakc")){const hay=Array.from(document.querySelectorAll('.servicio-principal')).some(f=>normalizarNombre(f.innerText).includes("vacuna")&&!normalizarNombre(f.innerText).includes("vacunakc"));if(hay){precioFinal=40;nombreFinal+=" (Combo)";}else precioFinal=45;}
-  else if(vLimpio.includes("hematologiacompleta")){const hay=Array.from(document.querySelectorAll('.servicio-principal')).some(f=>{const n=normalizarNombre(f.innerText);return n.includes("quimica")||n.includes("hemoparasito")||n.includes("heces")||n.includes("orina")||n.includes("perfil")||n.includes("citologia");});if(hay){precioFinal=20;nombreFinal+=" (Combo)";}else precioFinal=23;}
-  else if(vLimpio.includes("vacunaantirrabica")){const hay=Array.from(document.querySelectorAll('.servicio-principal')).some(f=>normalizarNombre(f.innerText).includes("vacuna")&&!normalizarNombre(f.innerText).includes("antirrabica"));if(hay){precioFinal=25;nombreFinal+=" (Combo)";}else precioFinal=30;}
+  else if(vLimpio.includes("vacunakc")){
+    // Precio base: solo → $45, en combo con otra vacuna → $40
+    // Se inserta primero con precio base; _recalcularCombos lo ajusta al final
+    precioFinal=45;
+  }
+  else if(vLimpio.includes("hematologiacompleta")){
+    // Precio base: solo → $23, en combo con otro lab → $20
+    precioFinal=23;
+  }
+  else if(vLimpio.includes("vacunaantirrabica")){
+    // Precio base: solo → $30, en combo con otra vacuna → $25
+    precioFinal=30;
+  }
 
   const grupoID="srv-"+Date.now();
   if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span>🔹</span><span class="flex-1">${nombreFinal}</span>`;visual.appendChild(badge);}
@@ -172,6 +260,8 @@ window.insertarServicio = async (v) => {
   await window.calcularTodo();
   document.getElementById('selectorServicios').value="";
   respaldarProgresoLocal();
+  // Recalcular precios de combos DESPUÉS de insertar (actualiza los ya existentes)
+  _recalcularCombos();
   // Verificar stock DESPUÉS de insertar
   _verificarStockServicio(v);
 };
@@ -227,7 +317,7 @@ window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
   document.querySelectorAll('tr.insumo-fila').forEach(tr=>{if(tr.classList.contains(idGrupo))tr.remove();});
   const filasRest=document.querySelectorAll('.servicio-principal');
   if(filasRest.length===0){document.getElementById('contenedorInsumos')?.classList.add('hidden');const visual=document.getElementById('visualizacionServicios');if(visual)visual.innerHTML='<p class="text-slate-400 font-normal italic text-[11px]">Sin servicios registrados...</p>';insumosBaseMedAgregados=false;}
-  filasRest.forEach(fila=>{const texto=normalizarNombre(fila.innerText);const td=fila.querySelector('td');if(texto.includes("vacunakc")){const hay=Array.from(filasRest).some(f=>f!==fila&&normalizarNombre(f.innerText).includes("vacuna")&&!normalizarNombre(f.innerText).includes("vacunakc"));if(!hay&&td){fila.setAttribute('data-precio',45);td.innerHTML=td.innerHTML.replace("40.00","45.00").replace(/\(Combo\)/gi,"");}}if(texto.includes("hematologiacompleta")){const hay=Array.from(filasRest).some(f=>f!==fila&&(normalizarNombre(f.innerText).includes("quimica")||normalizarNombre(f.innerText).includes("hemoparasito")));if(!hay&&td){fila.setAttribute('data-precio',23);td.innerHTML=td.innerHTML.replace("20.00","23.00").replace(/\(Combo\)/gi,"");}}if(texto.includes("vacunaantirrabica")){const hay=Array.from(filasRest).some(f=>f!==fila&&normalizarNombre(f.innerText).includes("vacuna")&&!normalizarNombre(f.innerText).includes("antirrabica"));if(!hay&&td){fila.setAttribute('data-precio',30);td.innerHTML=td.innerHTML.replace("25.00","30.00").replace(/\(Combo\)/gi,"");}}});
+  _recalcularCombos();
   await window.calcularTodo();
 };
 
