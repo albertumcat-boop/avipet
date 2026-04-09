@@ -1035,6 +1035,16 @@
                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-emerald-300 outline-none focus:border-emerald-400">
                   </div>
 
+                  <!-- IVA -->
+                  <div class="flex items-center justify-between bg-slate-700 rounded-lg px-3 py-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="calcInvIVA" onchange="window.calcularCostoInventario()"
+                             class="w-4 h-4 accent-amber-400">
+                      <span class="text-[10px] font-black text-slate-300 uppercase">Aplicar IVA (16%)</span>
+                    </label>
+                    <span class="text-[9px] font-bold text-amber-400 italic">+16% al costo</span>
+                  </div>
+
                   <!-- Margen -->
                   <div>
                     <div class="flex justify-between items-center mb-1">
