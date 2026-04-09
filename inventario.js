@@ -57,7 +57,25 @@ window.nuevoProductoInventario=()=>{window._productoEditandoId=null;['invNombre'
 
 window.eliminarProductoInventario=async()=>{const id=window._productoEditandoId;if(!id){alert("⚠️ Selecciona un producto.");return;}const clave=prompt("🔐 CLAVE MAESTRA:");if(!clave)return;if(clave.trim()!==MASTER_KEY()){alert("🚫 Incorrecta.");return;}const nombre=document.getElementById('invNombre')?.value||"---";if(!confirm(`⚠️ Eliminar "${nombre}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"inventario",id));if(typeof window.registrarLogAuditoria==='function')await window.registrarLogAuditoria("ELIMINACIÓN INVENTARIO",`Eliminó: ${nombre}`);alert(`✅ "${nombre}" eliminado.`);await window.cargarInventario();window.nuevoProductoInventario();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 
-window.filtrarInventario=()=>{const filtro=document.getElementById('filtroInventario')?.value.toLowerCase().trim()||"";if(!window._inventarioCache)return;const filtrados=filtro?window._inventarioCache.filter(p=>(p.nombre||"").toLowerCase().includes(filtro)||(p.proveedor||"").toLowerCase().includes(filtro)||(p.categoria||"").toLowerCase().includes(filtro)):window._inventarioCache;window.renderListaInventario(filtrados);};
+window.filtrarInventario=()=>{
+  const filtroTexto=document.getElementById('filtroInventario')?.value.toLowerCase().trim()||"";
+  const filtroProveedor=document.getElementById('filtroProveedor')?.value||"";
+  if(!window._inventarioCache)return;
+  let filtrados=window._inventarioCache;
+  // Filtrar por proveedor seleccionado
+  if(filtroProveedor){
+    filtrados=filtrados.filter(p=>(p.proveedor||"")===filtroProveedor);
+  }
+  // Filtrar por texto
+  if(filtroTexto){
+    filtrados=filtrados.filter(p=>
+      (p.nombre||"").toLowerCase().includes(filtroTexto)||
+      (p.proveedor||"").toLowerCase().includes(filtroTexto)||
+      (p.categoria||"").toLowerCase().includes(filtroTexto)
+    );
+  }
+  window.renderListaInventario(filtrados);
+};
 
 window.actualizarSelectorProveedores=()=>{if(!window._inventarioCache)return;const proveedores=[...new Set(window._inventarioCache.map(p=>p.proveedor).filter(Boolean))];const sel=document.getElementById('filtroProveedor');if(!sel)return;sel.innerHTML=`<option value="">Todos los proveedores</option>`;proveedores.forEach(p=>{sel.innerHTML+=`<option value="${p}">${p}</option>`;});};
 
@@ -91,5 +109,118 @@ try{Swal.fire({title:'⏳ Inicializando...',allowOutsideClick:false,didOpen:()=>
 
 // ─── CAMBIAR SUB-TAB CONFIG ───
 window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white":"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();};
+
+// ═══════════════════════════════════════════════════════
+// CALCULADORA DE COSTOS DE INVENTARIO
+//
+// LÓGICA:
+//
+// MODO BCV (proveedor cobra en Bs a tasa oficial):
+//   Precio Bs ÷ Tasa BCV = Costo real USD
+//   Costo USD ÷ (1 - margen/100) = Precio venta USD
+//
+// MODO PROVEEDOR (cobra en USD pero a su propia tasa):
+//   Precio USD × Tasa proveedor = Total Bs que pago
+//   Total Bs ÷ Tasa BCV = Costo real en USD (a cuánto me sale en dólares BCV)
+//   Costo USD ÷ (1 - margen/100) = Precio venta USD
+//
+// El margen se aplica SOBRE VENTA (no sobre costo):
+//   Ej: margen 30% → divido entre 0.70
+//   Esto garantiza que el 30% del precio de venta sea ganancia
+// ═══════════════════════════════════════════════════════
+
+let _calcInvModo = 'bcv'; // 'bcv' | 'proveedor'
+
+window.calcInvSetModo = (modo) => {
+  _calcInvModo = modo;
+  const btnBCV  = document.getElementById('calcInvBtnBCV');
+  const btnProv = document.getElementById('calcInvBtnProv');
+  const filaBS  = document.getElementById('calcInvFilaBS');
+  const filaUSD = document.getElementById('calcInvFilaUSD');
+  const filaTasaProv = document.getElementById('calcInvFilaTasaProv');
+
+  if (modo === 'bcv') {
+    if (btnBCV)  btnBCV.className  = 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all bg-blue-600 text-white';
+    if (btnProv) btnProv.className = 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all text-slate-400';
+    if (filaBS)  filaBS.classList.remove('hidden');
+    if (filaUSD) filaUSD.classList.add('hidden');
+    if (filaTasaProv) filaTasaProv.classList.add('hidden');
+  } else {
+    if (btnProv) btnProv.className = 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all bg-amber-500 text-white';
+    if (btnBCV)  btnBCV.className  = 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all text-slate-400';
+    if (filaBS)  filaBS.classList.add('hidden');
+    if (filaUSD) filaUSD.classList.remove('hidden');
+    if (filaTasaProv) filaTasaProv.classList.remove('hidden');
+  }
+  window.calcularCostoInventario();
+};
+
+window.calcularCostoInventario = () => {
+  const tasaBCV   = parseFloat(document.getElementById('calcInvTasaBCV')?.value)   || window.tasaDolarHoy || 36;
+  const margen    = parseFloat(document.getElementById('calcInvMargen')?.value)     || 30;
+  const resultDiv = document.getElementById('calcInvResultado');
+  const margenLbl = document.getElementById('calcInvMargenLabel');
+
+  if (margenLbl) margenLbl.innerText = `divide entre ${(1 - margen/100).toFixed(2)}`;
+
+  let costoUSD = 0;
+  let detalleTexto = '';
+
+  if (_calcInvModo === 'bcv') {
+    // ── MODO BCV ──
+    // Proveedor cobra en Bs a tasa BCV
+    const precioBS = parseFloat(document.getElementById('calcInvPrecioBS')?.value) || 0;
+    if (precioBS <= 0 || tasaBCV <= 0) { if (resultDiv) resultDiv.classList.add('hidden'); return; }
+
+    costoUSD = precioBS / tasaBCV;
+    detalleTexto = `Bs ${precioBS.toFixed(2)} ÷ ${tasaBCV.toFixed(2)} (BCV) = $${costoUSD.toFixed(4)}`;
+
+  } else {
+    // ── MODO PROVEEDOR ──
+    // Proveedor cobra en USD pero a su propia tasa (diferente al BCV)
+    // Ej: 100$ × tasa 680 = 68,000 Bs pagados → 68,000 ÷ BCV 475.95 = $142.87 costo real
+    const precioUSD   = parseFloat(document.getElementById('calcInvPrecioUSD')?.value)  || 0;
+    const tasaProv    = parseFloat(document.getElementById('calcInvTasaProv')?.value)    || 0;
+    if (precioUSD <= 0 || tasaProv <= 0 || tasaBCV <= 0) { if (resultDiv) resultDiv.classList.add('hidden'); return; }
+
+    const totalBsPagado = precioUSD * tasaProv;          // cuántos Bs pago
+    costoUSD = totalBsPagado / tasaBCV;                  // a cuánto me sale en USD reales (BCV)
+    detalleTexto = `$${precioUSD} × ${tasaProv} (prov) = Bs ${totalBsPagado.toFixed(2)} ÷ ${tasaBCV.toFixed(2)} (BCV) = $${costoUSD.toFixed(4)}`;
+  }
+
+  // Calcular precio de venta (margen sobre venta)
+  const divisor      = 1 - (margen / 100);
+  const precioVenta  = divisor > 0 ? costoUSD / divisor : 0;
+
+  // Mostrar resultado
+  if (resultDiv) resultDiv.classList.remove('hidden');
+  const elCosto  = document.getElementById('calcInvCostoUSD');
+  const elVenta  = document.getElementById('calcInvPrecioVentaCalc');
+  const elDetalle= document.getElementById('calcInvDetalle');
+  if (elCosto)   elCosto.innerText   = `$${costoUSD.toFixed(2)}`;
+  if (elVenta)   elVenta.innerText   = `$${precioVenta.toFixed(2)}`;
+  if (elDetalle) elDetalle.innerText = `${detalleTexto} ÷ ${divisor.toFixed(2)} = $${precioVenta.toFixed(2)}`;
+
+  // Guardar para aplicar
+  window._calcInvResultado = { costoUSD, precioVenta };
+};
+
+window.calcInvAplicar = () => {
+  if (!window._calcInvResultado) return;
+  const { costoUSD, precioVenta } = window._calcInvResultado;
+  const elCosto = document.getElementById('invCostoCompra');
+  const elVenta = document.getElementById('invPrecioVenta');
+  if (elCosto) { elCosto.value = costoUSD.toFixed(2); elCosto.classList.add('bg-emerald-50'); setTimeout(()=>elCosto.classList.remove('bg-emerald-50'), 1500); }
+  if (elVenta) { elVenta.value = precioVenta.toFixed(2); elVenta.classList.add('bg-blue-50'); setTimeout(()=>elVenta.classList.remove('bg-blue-50'), 1500); }
+  Swal.fire({ icon:'success', title:'✅ Valores aplicados', text:`Costo: $${costoUSD.toFixed(2)} · Venta: $${precioVenta.toFixed(2)}`, timer:2000, showConfirmButton:false });
+};
+
+// Inicializar calculadora al abrir inventario
+window.inicializarCalculadoraInventario = () => {
+  const tasa = window.tasaDolarHoy || 36;
+  const el   = document.getElementById('calcInvTasaBCV');
+  if (el && !el.value) el.value = tasa.toFixed(2);
+  window.calcInvSetModo('bcv');
+};
 
 console.log("✅ inventario.js v2 cargado");
