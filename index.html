@@ -77,7 +77,7 @@
     </div>
     <!-- Móvil -->
     <div class="sm:hidden px-2 py-2">
-      <select class="w-full border border-slate-300 rounded-lg px-2 py-2 text-[11px] font-bold uppercase text-slate-700 bg-white" onchange="window.showTab(this.value)">
+      <select class="w-full border border-slate-300 rounded-lg px-2 py-2 text-[11px] font-bold uppercase text-slate-700 bg-white" onchange="if(typeof window.showTab==='function')window.showTab(this.value)">
         <option value="historia">Historia Clínica</option>
         <option value="buscador">Buscador</option>
         <option value="peluqueria">Peluquería</option>
@@ -91,7 +91,7 @@
   <!-- ═══════════════════════════════════════════
        HISTORIA CLÍNICA
   ════════════════════════════════════════════ -->
-  <section id="sectionHistoria" class="block bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
+  <section id="sectionHistoria" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
 
     <!-- Encabezado -->
     <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height:100px;">
@@ -102,7 +102,7 @@
         </div>
       </div>
       <div class="flex flex-col items-end text-right z-10">
-        <select id="selectDoctor" onchange="window.validarAccesoDoctor(this.value)"
+        <select id="selectDoctor" onchange="if(typeof window.validarAccesoDoctor==='function'){window.validarAccesoDoctor(this.value);}else{alert('Sistema cargando, intenta en un momento.');this.value='';}"
                 class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none mb-1">
           <option value="">-- SELECCIONE DOCTOR --</option>
           <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
@@ -1049,22 +1049,22 @@
      IMPORTS JS — ORDEN IMPORTANTE: main primero
 ════════════════════════════════════════════ -->
 <script type="module">
-  // Firebase persistence
-  import { db } from './firebase-config.js';
-  import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  enableIndexedDbPersistence(db).catch(err => {
-    if (err.code === 'failed-precondition') console.warn("Persistencia falló (múltiples pestañas).");
-  });
+  // Firebase persistence (silencioso)
+  try {
+    const { db } = await import('./firebase-config.js');
+    const { enableIndexedDbPersistence } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+    enableIndexedDbPersistence(db).catch(() => {});
+  } catch (e) { console.warn("Persistencia no disponible:", e); }
 </script>
 
 <script type="module" src="./js/main.js"></script>
+<script type="module" src="./js/seguridad.js"></script>
 <script type="module" src="./js/historia.js"></script>
 <script type="module" src="./js/buscador.js"></script>
 <script type="module" src="./js/peluqueria.js"></script>
 <script type="module" src="./js/finanzas.js"></script>
 <script type="module" src="./js/inventario.js"></script>
 <script type="module" src="./js/vacunas.js"></script>
-<script type="module" src="./js/seguridad.js"></script>
 
 </body>
 </html>
