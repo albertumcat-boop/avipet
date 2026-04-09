@@ -80,7 +80,12 @@ window.ejecutarCambioDeTab = (tabId) => {
 
   // Acciones post-navegación
   try {
-    if (tabId === 'reporte'       && typeof window.cargarReporte      === 'function') window.cargarReporte();
+    if (tabId === 'reporte'       && typeof window.cargarReporte      === 'function') {
+      window.cargarReporte();
+      // Actualizar tasa en calculadora
+      const tasaEl = document.getElementById('calcTasaMostrar');
+      if (tasaEl) tasaEl.innerText = `Tasa: Bs ${(window.tasaDolarHoy||36).toFixed(2)} / $1`;
+    }
     if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') window.cargarBitacoraHoy();
     if (tabId === 'historia'      && typeof window.cargarListaEspera  === 'function') window.cargarListaEspera();
     if (tabId === 'inventario'    && typeof window.cargarInventario   === 'function') window.cargarInventario();
