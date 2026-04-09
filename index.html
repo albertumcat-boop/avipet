@@ -963,92 +963,109 @@
               <div><label class="text-[9px] font-bold text-slate-400 uppercase">Categoría</label>
                 <input id="invCategoria" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold text-slate-700 outline-none bg-transparent"></div>
             </div>
-            <!-- ═══ CALCULADORA DE COSTOS ═══ -->
-            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 mb-1">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="text-base">🧮</span>
-                <h4 class="text-[10px] font-black text-white uppercase tracking-widest">Calculadora de Costo</h4>
-              </div>
+            <!-- ═══ CALCULADORA DE COSTOS (desplegable) ═══ -->
+            <div class="rounded-2xl overflow-hidden border border-slate-700 mb-1">
+              <!-- Header desplegable -->
+              <button type="button" onclick="window.calcInvToggle()"
+                      class="w-full bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-3 flex items-center justify-between hover:from-slate-700 hover:to-slate-600 transition-all">
+                <div class="flex items-center gap-2">
+                  <span>🧮</span>
+                  <span class="text-[10px] font-black text-white uppercase tracking-widest">Calculadora de Costo</span>
+                </div>
+                <span id="calcInvChevron" class="text-slate-400 font-black text-xs transition-all">▼ Abrir</span>
+              </button>
+              <!-- Cuerpo colapsable -->
+              <div id="calcInvCuerpo" class="hidden bg-gradient-to-br from-slate-800 to-slate-900 p-4">
 
-              <!-- Tipo de tasa -->
-              <div class="flex bg-slate-700 rounded-xl p-1 mb-3">
-                <button id="calcInvBtnBCV" type="button" onclick="window.calcInvSetModo('bcv')"
-                        class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all bg-blue-600 text-white">
-                  📊 Tasa BCV
-                </button>
-                <button id="calcInvBtnProv" type="button" onclick="window.calcInvSetModo('proveedor')"
-                        class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all text-slate-400">
-                  🏪 Tasa Proveedor
-                </button>
-              </div>
-
-              <div class="space-y-2">
-                <!-- Precio en USD (solo modo proveedor) -->
-                <div id="calcInvFilaUSD" class="hidden">
-                  <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Precio que cobra el proveedor ($)</label>
-                  <input type="number" id="calcInvPrecioUSD" placeholder="0.00" step="0.01" min="0"
-                         oninput="window.calcularCostoInventario()"
-                         class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-white outline-none focus:border-blue-400">
+                <!-- Tipo de tasa -->
+                <div class="flex bg-slate-700 rounded-xl p-1 mb-3">
+                  <button id="calcInvBtnBCV" type="button" onclick="window.calcInvSetModo('bcv')"
+                          class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all bg-blue-600 text-white">
+                    📊 Tasa BCV
+                  </button>
+                  <button id="calcInvBtnProv" type="button" onclick="window.calcInvSetModo('proveedor')"
+                          class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all text-slate-400">
+                    🏪 Tasa Proveedor
+                  </button>
                 </div>
 
-                <!-- Tasa del proveedor (solo modo proveedor) -->
-                <div id="calcInvFilaTasaProv" class="hidden">
-                  <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Tasa del proveedor (Bs / $1)</label>
-                  <input type="number" id="calcInvTasaProv" placeholder="Ej: 680" step="0.01" min="1"
-                         oninput="window.calcularCostoInventario()"
-                         class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-amber-300 outline-none focus:border-amber-400">
-                </div>
-
-                <!-- Precio en Bs (solo modo BCV) -->
-                <div id="calcInvFilaBS">
-                  <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Precio que cobra el proveedor (Bs)</label>
-                  <input type="number" id="calcInvPrecioBS" placeholder="0.00" step="1" min="0"
-                         oninput="window.calcularCostoInventario()"
-                         class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-white outline-none focus:border-blue-400">
-                </div>
-
-                <!-- Tasa BCV (siempre visible) -->
-                <div>
-                  <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">
-                    Tasa BCV (Bs / $1)
-                    <span id="calcInvBcvAuto" class="text-emerald-400 italic ml-1">● automática</span>
-                  </label>
-                  <input type="number" id="calcInvTasaBCV" step="0.01" min="1"
-                         oninput="window.calcularCostoInventario()"
-                         class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-emerald-300 outline-none focus:border-emerald-400">
-                </div>
-
-                <!-- Margen de ganancia -->
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <label class="text-[9px] font-bold text-slate-400 uppercase">Margen de ganancia (%)</label>
-                    <span id="calcInvMargenLabel" class="text-[9px] font-bold text-blue-300"></span>
+                <div class="space-y-2">
+                  <!-- MODO BCV: precio en Bs o USD -->
+                  <div id="calcInvFilaBS">
+                    <div class="flex bg-slate-700 rounded-lg p-0.5 mb-2">
+                      <button id="calcInvBtnMonedaBS" type="button" onclick="window.calcInvSetMoneda('bs')"
+                              class="flex-1 py-1 rounded-md font-black text-[9px] uppercase transition-all bg-amber-500 text-white">
+                        🟡 Cobra en Bs
+                      </button>
+                      <button id="calcInvBtnMonedaUSD" type="button" onclick="window.calcInvSetMoneda('usd')"
+                              class="flex-1 py-1 rounded-md font-black text-[9px] uppercase transition-all text-slate-400">
+                        💵 Cobra en USD
+                      </button>
+                    </div>
+                    <label id="calcInvLabelPrecio" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">
+                      Precio del proveedor (Bs)
+                    </label>
+                    <input type="number" id="calcInvPrecioBS" placeholder="0.00" step="0.01" min="0"
+                           oninput="window.calcularCostoInventario()"
+                           class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-white outline-none focus:border-blue-400">
                   </div>
-                  <input type="number" id="calcInvMargen" value="30" step="1" min="1" max="99"
-                         oninput="window.calcularCostoInventario()"
-                         class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-blue-300 outline-none focus:border-blue-400">
-                </div>
-              </div>
 
-              <!-- Resultado -->
-              <div id="calcInvResultado" class="mt-3 bg-slate-700/60 rounded-xl p-3 hidden">
-                <div class="grid grid-cols-2 gap-2 text-center">
-                  <div class="bg-slate-800 rounded-lg p-2">
-                    <p class="text-[8px] text-slate-400 uppercase font-bold mb-1">Me costó (USD)</p>
-                    <p id="calcInvCostoUSD" class="text-lg font-black text-white font-mono">$0.00</p>
+                  <!-- MODO PROVEEDOR: precio en USD + tasa propia -->
+                  <div id="calcInvFilaUSD" class="hidden">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Precio del proveedor ($)</label>
+                    <input type="number" id="calcInvPrecioUSD" placeholder="0.00" step="0.01" min="0"
+                           oninput="window.calcularCostoInventario()"
+                           class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-white outline-none focus:border-blue-400">
                   </div>
-                  <div class="bg-blue-600 rounded-lg p-2">
-                    <p class="text-[8px] text-blue-200 uppercase font-bold mb-1">Vendo a (USD)</p>
-                    <p id="calcInvPrecioVentaCalc" class="text-lg font-black text-white font-mono">$0.00</p>
+                  <div id="calcInvFilaTasaProv" class="hidden">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Tasa del proveedor (Bs / $1)</label>
+                    <input type="number" id="calcInvTasaProv" placeholder="Ej: 680" step="0.01" min="1"
+                           oninput="window.calcularCostoInventario()"
+                           class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-amber-300 outline-none focus:border-amber-400">
+                  </div>
+
+                  <!-- Tasa BCV -->
+                  <div>
+                    <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">
+                      Tasa BCV (Bs / $1)
+                      <span class="text-emerald-400 italic ml-1">● automática</span>
+                    </label>
+                    <input type="number" id="calcInvTasaBCV" step="0.01" min="1"
+                           oninput="window.calcularCostoInventario()"
+                           class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-emerald-300 outline-none focus:border-emerald-400">
+                  </div>
+
+                  <!-- Margen -->
+                  <div>
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-[9px] font-bold text-slate-400 uppercase">Margen de ganancia (%)</label>
+                      <span id="calcInvMargenLabel" class="text-[9px] font-bold text-blue-300"></span>
+                    </div>
+                    <input type="number" id="calcInvMargen" value="30" step="1" min="1" max="99"
+                           oninput="window.calcularCostoInventario()"
+                           class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-blue-300 outline-none focus:border-blue-400">
                   </div>
                 </div>
-                <div class="mt-2 text-center">
-                  <p id="calcInvDetalle" class="text-[9px] text-slate-400 italic"></p>
+
+                <!-- Resultado -->
+                <div id="calcInvResultado" class="mt-3 bg-slate-700/60 rounded-xl p-3 hidden">
+                  <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="bg-slate-800 rounded-lg p-2">
+                      <p class="text-[8px] text-slate-400 uppercase font-bold mb-1">Me costó (USD)</p>
+                      <p id="calcInvCostoUSD" class="text-lg font-black text-white font-mono">$0.00</p>
+                    </div>
+                    <div class="bg-blue-600 rounded-lg p-2">
+                      <p class="text-[8px] text-blue-200 uppercase font-bold mb-1">Vendo a (USD)</p>
+                      <p id="calcInvPrecioVentaCalc" class="text-lg font-black text-white font-mono">$0.00</p>
+                    </div>
+                  </div>
+                  <p id="calcInvDetalle" class="text-[9px] text-slate-400 italic text-center mt-2"></p>
+                  <button type="button" onclick="window.calcInvAplicar()"
+                          class="w-full mt-3 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-black text-[10px] uppercase transition-all">
+                    ✅ Aplicar al producto
+                  </button>
                 </div>
-                <button type="button" onclick="window.calcInvAplicar()"
-                        class="w-full mt-3 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-black text-[10px] uppercase transition-all">
-                  ✅ Aplicar estos valores al producto
-                </button>
+
               </div>
             </div>
             <!-- ═══ FIN CALCULADORA ═══ -->
