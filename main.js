@@ -50,11 +50,9 @@ window.showTab = (tabId) => {
 window.ejecutarCambioDeTab = (tabId) => {
   if (!tabId) return;
 
-  // Ocultar todas las secciones navegables (NO la hoja de vacunas)
-  Object.values(SECTION_IDS).forEach(id => {
-    if (id === 'sectionHojaVacunas') return; // la maneja abrirHojaVacunas
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
+  // Ocultar TODAS las secciones (por selector genérico, cubre cualquier caso)
+  document.querySelectorAll('[id^="section"]').forEach(el => {
+    el.classList.add('hidden');
   });
 
   // Mostrar la sección destino
@@ -161,23 +159,46 @@ export const registrarLogAuditoria = async (accion, descripcion) => {
 };
 window.registrarLogAuditoria = registrarLogAuditoria;
 
-// ─── TASA DEL DÓLAR (NO BLOQUEA al inicio) ───
-window.ajustarTasaDolar = async (silencioso = false) => {
-  try {
-    const res  = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
-    const json = await res.json();
-    const tasa = parseFloat(json?.monitors?.usd?.price || json?.price) || 0;
-    if (tasa > 10) {
-      window.tasaDolarHoy = tasa;
-      const el = document.getElementById('tasaDolarMostrar');
-      if (el) el.innerText = `Bs ${tasa.toFixed(2)} / USD`;
-      return tasa;
-    }
-  } catch { /* sin conexión, usar tasa por defecto */ }
+// ─── TASA DEL DÓLAR — múltiples APIs en cascada ───
+const _APIS_TASA = [
+  // API 1: ve.dolarapi.com — gratuita, sin registro, CORS ok
+  async () => {
+    const r = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+    const j = await r.json();
+    return parseFloat(j?.promedio || j?.precio) || 0;
+  },
+  // API 2: dolarapi.com alternativo
+  async () => {
+    const r = await fetch("https://dolarapi.com/v1/dolares/oficial");
+    const j = await r.json();
+    return parseFloat(j?.promedio || j?.precio) || 0;
+  },
+  // API 3: exchangerate-api (USD → VES)
+  async () => {
+    const r = await fetch("https://open.er-api.com/v6/latest/USD");
+    const j = await r.json();
+    return parseFloat(j?.rates?.VES) || 0;
+  }
+];
 
-  // Si es llamado manualmente (no al inicio), pedir manual
+window.ajustarTasaDolar = async (silencioso = false) => {
+  // Intentar cada API en orden
+  for (const apiFn of _APIS_TASA) {
+    try {
+      const tasa = await apiFn();
+      if (tasa > 1) {
+        window.tasaDolarHoy = tasa;
+        const el = document.getElementById('tasaDolarMostrar');
+        if (el) el.innerText = `Bs ${tasa.toFixed(2)} / USD`;
+        console.log(`[AVIPET] Tasa BCV obtenida: Bs ${tasa.toFixed(2)}`);
+        return tasa;
+      }
+    } catch { /* intentar siguiente API */ }
+  }
+
+  // Todas fallaron — si es manual, pedir al usuario
   if (!silencioso) {
-    const manual = prompt("💵 Tasa BCV no disponible.\nIngresa la tasa actual (Bs por $1):");
+    const manual = prompt("💵 No se pudo obtener la tasa BCV automáticamente.\nIngresa la tasa actual (Bs por $1):");
     if (manual && !isNaN(parseFloat(manual)) && parseFloat(manual) > 1) {
       window.tasaDolarHoy = parseFloat(manual);
       const el = document.getElementById('tasaDolarMostrar');
@@ -185,6 +206,8 @@ window.ajustarTasaDolar = async (silencioso = false) => {
       return parseFloat(manual);
     }
   }
+
+  console.warn("[AVIPET] No se pudo obtener tasa BCV. Usando última conocida:", window.tasaDolarHoy);
   return window.tasaDolarHoy;
 };
 
