@@ -82,13 +82,20 @@ window.ejecutarCambioDeTab = (tabId) => {
   try {
     if (tabId === 'reporte'       && typeof window.cargarReporte      === 'function') {
       window.cargarReporte();
-      // Actualizar tasa en calculadora
-      const tasaEl = document.getElementById('calcTasaMostrar');
-      if (tasaEl) tasaEl.innerText = `Tasa: Bs ${(window.tasaDolarHoy||36).toFixed(2)} / $1`;
+      // Inicializar calculadora con tasa actual
+      setTimeout(() => {
+        if (typeof window.inicializarCalculadora === 'function') window.inicializarCalculadora();
+      }, 100);
     }
     if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') window.cargarBitacoraHoy();
     if (tabId === 'historia'      && typeof window.cargarListaEspera  === 'function') window.cargarListaEspera();
-    if (tabId === 'inventario'    && typeof window.cargarInventario   === 'function') window.cargarInventario();
+    if (tabId === 'inventario' && typeof window.cargarInventario === 'function') {
+      window.cargarInventario();
+      setTimeout(() => {
+        if (typeof window.inicializarCalculadoraInventario === 'function')
+          window.inicializarCalculadoraInventario();
+      }, 200);
+    }
     if (tabId === 'config_precios'&& typeof window.cambiarSubTabConfig=== 'function') window.cambiarSubTabConfig('servicios');
   } catch (e) {
     console.warn('[AVIPET] Error en acción post-navegación:', e);
