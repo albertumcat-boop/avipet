@@ -21,17 +21,19 @@ window.buscarPorCedula = async () => {
   const ci     = inputCI?.value.trim()    || "";
   const nombre = inputNombre?.value.trim().toUpperCase() || "";
 
-  resultDiv.innerHTML = "";
-
-  if (!ci && !nombre) {
-    resultDiv.innerHTML = `<p class="text-slate-400 text-[10px] font-black uppercase italic text-center py-8">Ingresa una cédula o nombre de mascota para buscar.</p>`;
-    return;
-  }
-
   resultDiv.innerHTML = `<p class="text-blue-500 text-[10px] font-black uppercase italic text-center py-8 animate-pulse">🔍 Buscando historial...</p>`;
 
   try {
     let snap;
+
+    // Sin filtros → traer TODO el historial
+    if (!ci && !nombre) {
+      snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
+      const registrosTodo = [];
+      snap.forEach(d => registrosTodo.push({ id: d.id, ...d.data() }));
+      _renderResultados(registrosTodo, "TODOS LOS REGISTROS", resultDiv);
+      return;
+    }
 
     if (ci === "*" || ci.toLowerCase() === "all") {
       snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
