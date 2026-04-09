@@ -22,7 +22,7 @@ window._inventarioCache          = [];
 window._buscadorResultados       = {};
 window.doctorActivoId            = null;
 
-const TABS_PROTEGIDAS = ['config_precios', 'reporte', 'inventario'];
+const TABS_PROTEGIDAS = ['config_precios', 'reporte']; // inventario tiene su propio modal de acceso
 
 // ─── MAPA DE IDs DE SECCIONES (evita errores de capitalización) ───
 const SECTION_IDS = {
@@ -89,12 +89,22 @@ window.ejecutarCambioDeTab = (tabId) => {
     }
     if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') window.cargarBitacoraHoy();
     if (tabId === 'historia'      && typeof window.cargarListaEspera  === 'function') window.cargarListaEspera();
-    if (tabId === 'inventario' && typeof window.cargarInventario === 'function') {
-      window.cargarInventario();
-      setTimeout(() => {
-        if (typeof window.inicializarCalculadoraInventario === 'function')
-          window.inicializarCalculadoraInventario();
-      }, 200);
+    if (tabId === 'inventario') {
+      // Pedir acceso con modal especializado (Daniel, Carlos, doctores, admin)
+      setTimeout(async () => {
+        const yaLogueado = window.usuarioInventarioActivo || window.doctorVerificado;
+        if (!yaLogueado) {
+          if (typeof window.pedirAccesoInventario === 'function') {
+            const ok = await window.pedirAccesoInventario();
+            if (!ok) { window.ejecutarCambioDeTab('historia'); return; }
+          }
+        }
+        if (typeof window.cargarInventario === 'function') window.cargarInventario();
+        setTimeout(() => {
+          if (typeof window.inicializarCalculadoraInventario === 'function')
+            window.inicializarCalculadoraInventario();
+        }, 200);
+      }, 100);
     }
     if (tabId === 'config_precios'&& typeof window.cambiarSubTabConfig=== 'function') window.cambiarSubTabConfig('servicios');
   } catch (e) {
