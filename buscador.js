@@ -3,7 +3,7 @@
 // NUEVO: búsqueda por nombre de mascota además de cédula
 // =========================================================
 
-import { db } from '../firebase-config.js';
+import { db } from './firebase-config.js';
 import {
   collection, getDocs, query, where, orderBy,
   deleteDoc, doc
