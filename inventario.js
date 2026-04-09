@@ -228,17 +228,22 @@ window.calcularCostoInventario = () => {
     return;
   }
 
-  const precioVenta = divisor > 0 ? costoUSD / divisor : 0;
+  // Aplicar IVA al costo si está marcado
+  const aplicaIVA  = document.getElementById('calcInvIVA')?.checked || false;
+  const costoConIVA = aplicaIVA ? costoUSD * 1.16 : costoUSD;
+  if (aplicaIVA) detalle += ` + IVA 16% = $${costoConIVA.toFixed(4)}`;
+
+  const precioVenta = divisor > 0 ? costoConIVA / divisor : 0;
 
   if (resultDiv) resultDiv.classList.remove('hidden');
   const elCosto   = document.getElementById('calcInvCostoUSD');
   const elVenta   = document.getElementById('calcInvPrecioVentaCalc');
   const elDetalle = document.getElementById('calcInvDetalle');
-  if (elCosto)   elCosto.innerText   = `$${costoUSD.toFixed(2)}`;
+  if (elCosto)   elCosto.innerText   = `$${costoConIVA.toFixed(2)}${aplicaIVA ? ' (c/IVA)' : ''}`;
   if (elVenta)   elVenta.innerText   = `$${precioVenta.toFixed(2)}`;
   if (elDetalle) elDetalle.innerText = `${detalle} ÷ ${divisor.toFixed(2)} = $${precioVenta.toFixed(2)}`;
 
-  window._calcInvResultado = { costoUSD, precioVenta };
+  window._calcInvResultado = { costoUSD: costoConIVA, precioVenta };
 };
 
 // ── Aplicar al formulario del producto ──
