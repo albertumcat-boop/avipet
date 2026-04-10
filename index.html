@@ -573,7 +573,7 @@
                  class="w-full border-b-2 border-slate-200 p-2 outline-none focus:border-purple-500 font-bold text-slate-700 uppercase bg-transparent">
         </div>
         <p class="text-[8px] text-slate-400 italic text-center mb-3">Deja ambos campos vacíos para ver <b>todo el historial</b></p>
-        <button onclick="window.buscarPorCedula()"
+        <button onclick="_llamarFuncion('buscarPorCedula')"
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black italic shadow-sm uppercase text-xs mb-6">
           🔍 Consultar
         </button>
@@ -787,21 +787,21 @@
           <div class="space-y-4 p-4 border border-slate-200 rounded-xl bg-slate-50/30">
             <div>
               <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tipo de Trabajo</label>
-              <select id="pTipoServicio" onchange="window.recalcularTotalPelu()"
+              <select id="pTipoServicio" onchange="_llamarFuncion('recalcularTotalPelu')"
                       class="w-full border-b border-slate-300 p-1 font-black text-xs uppercase bg-transparent outline-none text-slate-700">
                 <option value="completo">Baño y Corte Completo</option>
                 <option value="solo_unas">Corte de Uñas</option>
               </select>
               <div class="mt-2">
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Precio Corte de Uñas ($)</label>
-                <input type="number" id="pPrecioUnas" value="0" step="0.5" oninput="window.recalcularTotalPelu()"
+                <input type="number" id="pPrecioUnas" value="0" step="0.5" oninput="_llamarFuncion('recalcularTotalPelu')"
                        class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 outline-none bg-transparent">
               </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tamaño (Base)</label>
-                <select id="pTamano" onchange="window.recalcularTotalPelu()"
+                <select id="pTamano" onchange="_llamarFuncion('recalcularTotalPelu')"
                         class="w-full border-b border-slate-300 p-1 text-xs font-black bg-transparent outline-none text-slate-700">
                   <option value="30">Pequeño ($30)</option>
                   <option value="40">Mediano ($40)</option>
@@ -811,7 +811,7 @@
               </div>
               <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Ajuste +/-</label>
-                <input type="number" id="pAjuste" value="0" oninput="window.recalcularTotalPelu()"
+                <input type="number" id="pAjuste" value="0" oninput="_llamarFuncion('recalcularTotalPelu')"
                        class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 outline-none bg-transparent">
               </div>
             </div>
@@ -822,24 +822,24 @@
             <h4 class="text-[10px] font-black text-blue-600 uppercase text-center tracking-widest mb-1 italic">👥 Comisiones de Apoyo</h4>
             <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
               <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" id="pExtraSolo" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
+                <input type="checkbox" id="pExtraSolo" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600">
                 <span class="text-[9px] font-black text-slate-600 uppercase italic">¿Extra hizo TODO solo?</span>
               </label>
             </div>
             <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
               <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" id="pAyudante1" checked onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
+                <input type="checkbox" id="pAyudante1" checked onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600">
                 <span class="text-[9px] font-black text-slate-600 uppercase">Ayudante Principal</span>
               </label>
               <div class="flex items-center gap-1 font-mono text-blue-600 font-bold">
                 <span class="text-[10px]">$</span>
-                <input type="number" id="pMontoAyu1" value="2" oninput="window.recalcularTotalPelu()"
+                <input type="number" id="pMontoAyu1" value="2" oninput="_llamarFuncion('recalcularTotalPelu')"
                        class="w-8 text-center text-xs outline-none bg-transparent">
               </div>
             </div>
             <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
               <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" id="pAyudanteExtra" onchange="window.recalcularTotalPelu()" class="w-4 h-4 accent-blue-600">
+                <input type="checkbox" id="pAyudanteExtra" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600">
                 <span class="text-[9px] font-black text-slate-600 uppercase">Ayudante Extra (Tridente)</span>
               </label>
             </div>
@@ -1233,6 +1233,29 @@
 <script type="module" src="./finanzas.js"></script>
 <script type="module" src="./inventario.js"></script>
 <script type="module" src="./vacunas.js"></script>
+
+<!-- Wrapper de seguridad: si los módulos tardan en cargar, los botones esperan -->
+<script>
+  function _llamarFuncion(nombre, ...args) {
+    if (typeof window[nombre] === 'function') {
+      window[nombre](...args);
+    } else {
+      // Reintentar hasta 20 veces con 200ms de espera
+      let intentos = 0;
+      const intervalo = setInterval(() => {
+        intentos++;
+        if (typeof window[nombre] === 'function') {
+          clearInterval(intervalo);
+          window[nombre](...args);
+        } else if (intentos >= 20) {
+          clearInterval(intervalo);
+          console.error('Función no disponible:', nombre);
+          alert('⏳ Sistema cargando, intenta en un momento.');
+        }
+      }, 200);
+    }
+  }
+</script>
 
 </body>
 </html>
