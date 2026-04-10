@@ -352,8 +352,7 @@ window.guardarFirebase = async (imp) => {
     const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
     const data={cedula:dInput('hCI'),propietario:dInput('hProp'),paciente:dInput('hNombre'),especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:new Date().toLocaleDateString()};
     await addDoc(collection(db,"consultas"),data);localStorage.removeItem('respaldoConsulta');localStorage.removeItem('respaldo_historia_activa');alert("✅ ¡Consulta guardada con éxito!");
-    ['hCI','hProp','hNombre','hEspecie','hRaza','hSexo','hEdad','hPeso','hColor','hTlf','hMail','hDir','hTratamiento','hFechaNac'].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-    const visual=document.getElementById('visualizacionServicios');if(visual)visual.innerHTML='<p class="text-[10px] text-slate-400 italic">Sin servicios registrados</p>';const cuerpo=document.getElementById('listaInsumosDinamica');if(cuerpo)cuerpo.innerHTML="";const pv=document.getElementById('precioVenta');if(pv)pv.value="0.00";const chk=document.getElementById('chkVacunaPagada');if(chk)chk.checked=false;window.vacunaPagadaAnteriormente=false;window.toggleVacunaPagada(false);insumosBaseMedAgregados=false;document.getElementById('contenedorInsumos')?.classList.add('hidden');
+    _limpiarFormularioHistoria();
     _limpiarNotasInternas();
     if(imp)window.imprimirDocumento();
   }catch(e){console.error("Error guardando:",e);alert("❌ Error: "+e.message);}
@@ -443,5 +442,259 @@ window.enviarAColaEspera=async()=>{try{const dVal=(id)=>document.getElementById(
 window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-700">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} • CI: ${p.cedula}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
 window.abrirPacienteDesdeEspera=async(idEspera)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};set('hCI',d.cedula);set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hTlf',d.telefono);set('hMail',d.correo);set('hDir',d.direccion);set('hColor',d.color);await updateDoc(doc(db,"espera",idEspera),{estado:"atendiendo",fechaAtencion:serverTimestamp()});window.showTab('historia');alert(`✅ ${d.paciente} cargado.`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 window.eliminarDeSalaEspera=async(idEspera)=>{if(!confirm("¿Eliminar de la sala de espera?"))return;try{await updateDoc(doc(db,"espera",idEspera),{estado:"eliminado",fechaEliminacion:serverTimestamp()});alert("✅ Eliminado.");window.cargarListaEspera();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+
+// ─── LIMPIAR FORMULARIO COMPLETO ───────────────────────────────────────────
+function _limpiarFormularioHistoria() {
+  // Campos de texto
+  ['hCI','hProp','hNombre','hEspecie','hRaza','hSexo','hEdad',
+   'hPeso','hColor','hTlf','hMail','hDir','hTratamiento','hFechaNac']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+
+  // Checkbox alerta
+  const chkAlerta = document.getElementById('hAlerta');
+  if (chkAlerta) { chkAlerta.checked = false; }
+
+  // Fotos galería historia
+  const galeriaH = document.getElementById('previewHistoriaGallery');
+  if (galeriaH) galeriaH.innerHTML = "";
+  document.getElementById('previewHistoriaContainer')?.classList.add('hidden');
+  const pUrlExamen = document.getElementById('pUrlExamen');
+  if (pUrlExamen) pUrlExamen.value = "";
+
+  // Fotos galería test
+  const galeriaT = document.getElementById('previewTestGallery');
+  if (galeriaT) galeriaT.innerHTML = "";
+  document.getElementById('previewTestContainer')?.classList.add('hidden');
+  const pUrlTest = document.getElementById('pUrlTest');
+  if (pUrlTest) pUrlTest.value = "";
+
+  // QR containers
+  document.getElementById('qrContainer')?.classList.add('hidden');
+  document.getElementById('qrContainerTest')?.classList.add('hidden');
+
+  // Servicios y tabla de insumos
+  const visual = document.getElementById('visualizacionServicios');
+  if (visual) visual.innerHTML = '<p class="text-[10px] text-slate-400 italic">Sin servicios registrados</p>';
+  const cuerpo = document.getElementById('listaInsumosDinamica');
+  if (cuerpo) cuerpo.innerHTML = "";
+  document.getElementById('contenedorInsumos')?.classList.add('hidden');
+  insumosBaseMedAgregados = false;
+
+  // Montos
+  const pv = document.getElementById('precioVenta');
+  if (pv) pv.value = "0.00";
+  const md = document.getElementById('montoDoctor');
+  if (md) md.innerText = "$ 0.00";
+
+  // Vacuna pagada
+  const chkVac = document.getElementById('chkVacunaPagada');
+  if (chkVac) chkVac.checked = false;
+  window.vacunaPagadaAnteriormente = false;
+  window.toggleVacunaPagada(false);
+
+  // Color de advertencia en propietario
+  const hProp = document.getElementById('hProp');
+  if (hProp) { hProp.style.color = ""; hProp.style.fontWeight = ""; }
+
+  // Selector de medicamentos y servicios
+  const selServ = document.getElementById('selectorServicios');
+  if (selServ) selServ.value = "";
+  const selMed = document.getElementById('selectorMedicamentos');
+  if (selMed) selMed.value = "";
+
+  // Tratamiento print
+  const hTratPrint = document.getElementById('hTratamientoPrint');
+  if (hTratPrint) hTratPrint.innerText = "";
+}
+window._limpiarFormularioHistoria = _limpiarFormularioHistoria;
+
+// ─── EDITAR CONSULTA DESDE BUSCADOR ────────────────────────────────────────
+window.abrirConsultaParaEditar = async (idConsulta) => {
+  // Confirmar con el usuario
+  const res = await Swal.fire({
+    title: '✏️ Editar Consulta',
+    html: `<p class="text-[11px] text-slate-600">Se cargará esta consulta en el formulario de Historia Clínica para que puedas editarla y guardar los cambios.<br><br><b>¿Continuar?</b></p>`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, editar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#2563eb'
+  });
+  if (!res.isConfirmed) return;
+
+  try {
+    const snap = await getDoc(doc(db, "consultas", idConsulta));
+    if (!snap.exists()) { alert("❌ Consulta no encontrada."); return; }
+    const d = snap.data();
+
+    // Guardar ID para actualizar en lugar de crear nuevo
+    window._editandoConsultaId = idConsulta;
+
+    // Ir a Historia Clínica y limpiar primero
+    window.showTab('historia');
+    await new Promise(r => setTimeout(r, 300));
+    _limpiarFormularioHistoria();
+
+    // Llenar los campos con los datos existentes
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+    set('hCI',       d.cedula);
+    set('hProp',     d.propietario);
+    set('hNombre',   d.paciente);
+    set('hEspecie',  d.especie);
+    set('hRaza',     d.raza);
+    set('hSexo',     d.sexo);
+    set('hEdad',     d.edad);
+    set('hPeso',     d.peso);
+    set('hColor',    d.color);
+    set('hTlf',      d.telefono);
+    set('hMail',     d.correo || d.email);
+    set('hDir',      d.direccion);
+    set('hFechaNac', d.fechaNacimiento);
+    set('hTratamiento', d.tratamiento);
+
+    // Checkbox alerta
+    const chkAlerta = document.getElementById('hAlerta');
+    if (chkAlerta) chkAlerta.checked = d.alerta || false;
+
+    // Foto principal (si existe)
+    if (d.urlExamen) {
+      const pUrlExamen = document.getElementById('pUrlExamen');
+      if (pUrlExamen) pUrlExamen.value = d.urlExamen;
+      const galeriaH = document.getElementById('previewHistoriaGallery');
+      const contH    = document.getElementById('previewHistoriaContainer');
+      if (galeriaH && d.urlExamen) {
+        const wrapper = document.createElement('div');
+        wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
+        wrapper.innerHTML = `<img src="${d.urlExamen}" class="w-full h-full object-cover">
+          <button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
+                  onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">✕</button>`;
+        galeriaH.appendChild(wrapper);
+        contH?.classList.remove('hidden');
+      }
+    }
+
+    // Mostrar banner de edición
+    _mostrarBannerEdicion(d.paciente, d.fechaSimple);
+
+    await Swal.fire({
+      icon: 'info',
+      title: '✏️ Modo Edición',
+      html: `<p class="text-[11px]">Datos de <b>${d.paciente}</b> cargados.<br>Modifica lo que necesites y presiona <b>"Guardar Datos"</b>.</p>`,
+      timer: 3000,
+      showConfirmButton: false
+    });
+
+  } catch (e) {
+    console.error(e);
+    alert("❌ Error al cargar: " + e.message);
+  }
+};
+
+function _mostrarBannerEdicion(paciente, fecha) {
+  let banner = document.getElementById('bannerModoEdicion');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'bannerModoEdicion';
+    banner.className = "no-print mb-3 bg-amber-50 border-2 border-amber-400 rounded-xl p-3 flex items-center justify-between";
+    // Insertar antes del primer campo del formulario
+    const section = document.getElementById('sectionHistoria');
+    const firstChild = section?.querySelector('.grid');
+    if (firstChild) section.insertBefore(banner, firstChild);
+  }
+  banner.innerHTML = `
+    <div class="flex items-center gap-2">
+      <span class="text-xl">✏️</span>
+      <div>
+        <p class="text-[10px] font-black text-amber-700 uppercase">Modo Edición</p>
+        <p class="text-[9px] text-amber-600">Editando: <b>${paciente}</b> · ${fecha || ''}</p>
+      </div>
+    </div>
+    <button type="button" onclick="window.cancelarEdicion()"
+            class="text-[9px] font-black text-red-500 uppercase border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50">
+      ✕ Cancelar edición
+    </button>`;
+  banner.classList.remove('hidden');
+}
+
+window.cancelarEdicion = () => {
+  window._editandoConsultaId = null;
+  document.getElementById('bannerModoEdicion')?.classList.add('hidden');
+  _limpiarFormularioHistoria();
+};
+
+// Modificar guardarFirebase para que actualice si estamos en modo edición
+const _guardarFirebaseOriginal = window.guardarFirebase;
+window.guardarFirebase = async (imp) => {
+  if (!window._editandoConsultaId) {
+    // Flujo normal — crear nueva consulta
+    return _guardarFirebaseOriginal(imp);
+  }
+
+  // ── MODO EDICIÓN — actualizar consulta existente ──
+  const idEditar = window._editandoConsultaId;
+  const selectorDoc  = document.getElementById('selectDoctor');
+  const nombreDoctor = selectorDoc?.value || "";
+  if (!nombreDoctor) return alert("⚠ Seleccione un doctor.");
+
+  const pinIngresado = prompt(`🔐 Firma para actualizar. PIN de ${nombreDoctor}:`);
+  if (!pinIngresado) return;
+  const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
+  if (!esValido) return alert("❌ PIN incorrecto.");
+
+  const btn = document.activeElement;
+  const textoOrig = btn?.innerText || "Guardar";
+  if (btn?.tagName === 'BUTTON') { btn.disabled = true; btn.innerText = "⏳ ACTUALIZANDO..."; }
+
+  try {
+    const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
+    const dataActualizada = {
+      cedula:          dInput('hCI'),
+      propietario:     dInput('hProp'),
+      paciente:        dInput('hNombre'),
+      especie:         dInput('hEspecie'),
+      raza:            dInput('hRaza'),
+      sexo:            dInput('hSexo'),
+      edad:            dInput('hEdad'),
+      peso:            dInput('hPeso'),
+      color:           dInput('hColor'),
+      telefono:        dInput('hTlf'),
+      correo:          dInput('hMail'),
+      direccion:       dInput('hDir'),
+      fechaNacimiento: dInput('hFechaNac'),
+      tratamiento:     dInput('hTratamiento'),
+      alerta:          document.getElementById('hAlerta')?.checked || false,
+      doctor:          nombreDoctor,
+      ultimaEdicion:   serverTimestamp(),
+      editadoPor:      nombreDoctor,
+    };
+
+    // Actualizar foto si cambió
+    const galeriaH = document.getElementById('previewHistoriaGallery');
+    const imgs     = galeriaH ? Array.from(galeriaH.querySelectorAll('img')).map(i => i.src) : [];
+    if (imgs.length > 0) dataActualizada.urlExamen = imgs[imgs.length - 1];
+
+    await updateDoc(doc(db, "consultas", idEditar), dataActualizada);
+
+    // Limpiar modo edición
+    window._editandoConsultaId = null;
+    document.getElementById('bannerModoEdicion')?.classList.add('hidden');
+    _limpiarFormularioHistoria();
+    _limpiarNotasInternas();
+
+    await Swal.fire({
+      icon: 'success', title: '✅ Consulta actualizada',
+      text: `Los datos de ${dataActualizada.paciente} fueron actualizados.`,
+      timer: 2500, showConfirmButton: false
+    });
+
+    if (imp) window.imprimirDocumento();
+
+  } catch (e) {
+    console.error("Error actualizando:", e);
+    alert("❌ Error: " + e.message);
+  } finally {
+    if (btn?.tagName === 'BUTTON') { btn.disabled = false; btn.innerText = textoOrig; }
+  }
+};
 
 console.log("✅ historia.js v3 — stock bajo, notas internas, recordatorio vacunas");
