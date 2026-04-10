@@ -5,7 +5,7 @@
 
 import { db } from './firebase-config.js';
 import {
-  collection, getDocs, query, where, orderBy,
+  collection, getDocs, query, where,
   deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -24,46 +24,43 @@ window.buscarPorCedula = async () => {
   resultDiv.innerHTML = `<p class="text-blue-500 text-[10px] font-black uppercase italic text-center py-8 animate-pulse">🔍 Buscando historial...</p>`;
 
   try {
-    let snap;
+    let registros = [];
 
     // Sin filtros → traer TODO el historial
     if (!ci && !nombre) {
-      snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
-      const registrosTodo = [];
-      snap.forEach(d => registrosTodo.push({ id: d.id, ...d.data() }));
-      _renderResultados(registrosTodo, "TODOS LOS REGISTROS", resultDiv);
+      const snap = await getDocs(collection(db, "consultas"));
+      snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
+      registros.sort((a,b) => (b.fecha?.seconds||0) - (a.fecha?.seconds||0));
+      _renderResultados(registros, "TODOS LOS REGISTROS", resultDiv);
       return;
     }
 
-    if (ci === "*" || ci.toLowerCase() === "all") {
-      snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
-    } else if (ci) {
-      snap = await getDocs(
-        query(collection(db, "consultas"), where("cedula", "==", ci), orderBy("fecha", "desc"))
+    if (ci) {
+      // Buscar por cédula — sin orderBy para evitar requerir índice compuesto
+      const snap = await getDocs(
+        query(collection(db, "consultas"), where("cedula", "==", ci.trim()))
       );
+      snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
     } else {
-      // Buscar por nombre de mascota — carga todo y filtra (Firestore no soporta LIKE)
-      const todo = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
-      const registros = [];
-      todo.forEach(d => {
+      // Buscar por nombre de mascota — carga todo y filtra en memoria
+      const snap = await getDocs(collection(db, "consultas"));
+      snap.forEach(d => {
         const r = d.data();
         if ((r.paciente || "").toUpperCase().includes(nombre)) {
           registros.push({ id: d.id, ...r });
         }
       });
-      _renderResultados(registros, nombre, resultDiv);
-      return;
     }
 
-    const registros = [];
-    snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
+    // Ordenar por fecha más reciente (en memoria, sin requerir índice)
+    registros.sort((a,b) => (b.fecha?.seconds||0) - (a.fecha?.seconds||0));
     _renderResultados(registros, ci || nombre, resultDiv);
 
   } catch (e) {
     console.error("Error buscando:", e);
     resultDiv.innerHTML = `
       <div class="text-center py-8 border-2 border-red-100 rounded-2xl bg-red-50">
-        <p class="text-red-500 text-[9px] font-black uppercase italic">❌ Error de conexión</p>
+        <p class="text-red-500 text-[9px] font-black uppercase italic">❌ Error: ${e.message}</p>
       </div>`;
   }
 };
