@@ -57,7 +57,16 @@ window.cargarBitacoraHoy = async () => {
     registros.forEach((d,i)=>{
       const estatus=d.estatusPago||'pendiente';const pagado=estatus==='pagado';
       const tlf=d.telefono||"Sin teléfono";const dir=d.direccion||"Sin dirección";
-      let resumenPago="";if(pagado){const usd=parseFloat(d.montoPagadoUSD||0),bs=parseFloat(d.montoPagadoBS||0);if(usd>0&&bs>0)resumenPago=`<span class="text-emerald-700 font-black">$${usd.toFixed(2)}+Bs${bs.toFixed(2)}</span>`;else if(bs>0)resumenPago=`<span class="text-amber-700 font-black">Bs${bs.toFixed(2)}</span>`;else resumenPago=`<span class="text-emerald-700 font-black">$${usd.toFixed(2)}</span>`;}
+      let resumenPago="";if(pagado){
+  const usd=parseFloat(d.montoPagadoUSD||0),bs=parseFloat(d.montoPagadoBS||0);
+  const modo=d.modoPago||'';
+  if(modo==='bs')
+    resumenPago=`<span class="text-amber-700 font-black">🟡 $${bs.toFixed(2)} en Bs</span>`;
+  else if(modo==='mixto')
+    resumenPago=`<span class="text-slate-700 font-black">🔀 $${usd.toFixed(2)} USD + $${bs.toFixed(2)} Bs</span>`;
+  else
+    resumenPago=`<span class="text-emerald-700 font-black">💵 $${usd.toFixed(2)} USD</span>`;
+}
       const card=document.createElement('div');card.className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm hover:border-blue-400 transition-all";
       card.innerHTML=`
         <div class="flex justify-between items-start mb-2"><span class="text-blue-600 font-black text-xs italic">#${i+1}</span><span class="text-[9px] font-bold text-slate-400 font-mono uppercase italic">${d.hora||'--:--'}</span></div>
@@ -91,20 +100,148 @@ window.cargarBitacoraHoy = async () => {
 window.eliminarRegistroBitacora=async(idDoc,nombreMascota)=>{const clave=prompt(`🔐 Eliminar registro de: "${nombreMascota}"\nCLAVE MAESTRA:`);if(!clave)return;if(clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`⚠️ Eliminar permanentemente "${nombreMascota}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"servicios_estetica",idDoc));if(typeof window.registrarLogAuditoria==='function')await window.registrarLogAuditoria("ELIMINACIÓN PELUQUERÍA",`Eliminó ${nombreMascota}`);alert(`✅ Eliminado.`);await window.cargarBitacoraHoy();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 
 // ─── 4. TOGGLE PAGO MIXTO ───
-window.togglePagoPeluqueria=async(idServicio,estatusActual)=>{
-  const estabaPagado=estatusActual==='pagado';
-  if(!estabaPagado){
-    const snap=await getDoc(doc(db,"servicios_estetica",idServicio));if(!snap.exists())return;
-    const precioTotal=parseFloat(snap.data().precioTotal||0);const tasaActual=window.tasaDolarHoy||36;
-    const res=await Swal.fire({title:'💰 Registrar Pago',html:`<p class="text-[11px] text-slate-500 mb-3">Total: <b class="text-slate-800">$${precioTotal.toFixed(2)}</b></p><div class="space-y-3 text-left"><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">💵 Dólares (USD)</label><input type="number" id="swal_usd" step="0.50" min="0" placeholder="0.00" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-blue-500" oninput="window._calcularRestoPago(${precioTotal},${tasaActual})"></div><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">🟡 Bolívares (Bs)</label><input type="number" id="swal_bs" step="1" min="0" placeholder="0.00" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-amber-500" oninput="window._calcularRestoPago(${precioTotal},${tasaActual})"></div><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">📊 Tasa Bs/$</label><input type="number" id="swal_tasa" step="0.01" min="1" value="${tasaActual}" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none" oninput="window._calcularRestoPago(${precioTotal},null)"></div><div id="swal_resumen" class="bg-slate-50 rounded-xl p-3 text-[10px] text-slate-600 border border-slate-200 hidden"><p id="swal_resumen_txt"></p></div></div>`,showCancelButton:true,confirmButtonText:'✅ Confirmar',cancelButtonText:'Cancelar',confirmButtonColor:'#16a34a',preConfirm:()=>{const usd=parseFloat(document.getElementById('swal_usd')?.value)||0;const bs=parseFloat(document.getElementById('swal_bs')?.value)||0;const tasa=parseFloat(document.getElementById('swal_tasa')?.value)||tasaActual;if(usd<=0&&bs<=0){Swal.showValidationMessage("⚠️ Ingresa al menos un monto.");return false;}const totalEnUSD=usd+(bs/tasa);if(totalEnUSD>precioTotal*1.5){Swal.showValidationMessage(`⚠️ Excede demasiado el total.`);return false;}return{usd,bs,tasa};}});
-    if(!res.isConfirmed)return;
-    const{usd,bs,tasa}=res.value;
-    try{await updateDoc(doc(db,"servicios_estetica",idServicio),{estatusPago:'pagado',montoPagadoUSD:usd,montoPagadoBS:bs,tasaCambioPago:tasa,actualizadoEn:serverTimestamp()});await window.cargarBitacoraHoy();let txt=usd>0&&bs>0?`$${usd.toFixed(2)} + Bs${bs.toFixed(2)}`:bs>0?`Bs${bs.toFixed(2)}`:`$${usd.toFixed(2)} USD`;await Swal.fire({icon:'success',title:'✅ Pago registrado',text:txt,timer:2000,showConfirmButton:false});}
-    catch(e){console.error(e);alert("❌ Error: "+e.message);}
-  }else{const res=await Swal.fire({title:'↩ Revertir Pago',text:'¿Marcar como PENDIENTE?',icon:'warning',showCancelButton:true,confirmButtonText:'Sí',cancelButtonText:'Cancelar'});if(!res.isConfirmed)return;try{await updateDoc(doc(db,"servicios_estetica",idServicio),{estatusPago:'pendiente',montoPagadoUSD:0,montoPagadoBS:0,tasaCambioPago:0,actualizadoEn:serverTimestamp()});await window.cargarBitacoraHoy();await Swal.fire({icon:'info',title:'Marcado como pendiente',timer:1400,showConfirmButton:false});}catch(e){console.error(e);alert("❌ Error: "+e.message);}}
-};
+window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
+  const estabaPagado = estatusActual === 'pagado';
 
-window._calcularRestoPago=(precioTotal,tasaBase)=>{const usd=parseFloat(document.getElementById('swal_usd')?.value)||0;const bs=parseFloat(document.getElementById('swal_bs')?.value)||0;const tasa=parseFloat(document.getElementById('swal_tasa')?.value)||tasaBase||36;const totalEnUSD=usd+(bs/tasa);const diff=precioTotal-totalEnUSD;const resumen=document.getElementById('swal_resumen');const txt=document.getElementById('swal_resumen_txt');if((usd>0||bs>0)&&resumen&&txt){resumen.classList.remove('hidden');if(diff>0.05)txt.innerHTML=`Falta: <b class="text-red-600">$${diff.toFixed(2)}</b>`;else if(diff<-0.05)txt.innerHTML=`Exceso: <b class="text-amber-600">$${Math.abs(diff).toFixed(2)}</b>`;else txt.innerHTML=`<b class="text-emerald-600">✅ Exacto</b>`;}else if(resumen)resumen.classList.add('hidden');};
+  if (!estabaPagado) {
+    const snap = await getDoc(doc(db, "servicios_estetica", idServicio));
+    if (!snap.exists()) return;
+    const precioTotal = parseFloat(snap.data().precioTotal || 0);
+
+    // ── PASO 1: Elegir modalidad de pago ──
+    const modalidad = await Swal.fire({
+      title: '💰 ¿Cómo pagó el cliente?',
+      html: `
+        <p class="text-[11px] text-slate-500 mb-4">Total a cobrar: <b class="text-slate-800 text-base">$${precioTotal.toFixed(2)}</b></p>
+        <div class="flex flex-col gap-3">
+          <button type="button" id="btnPagoUSD"
+                  onclick="window._selPago('usd')"
+                  class="w-full py-4 rounded-2xl border-2 border-blue-200 bg-blue-50 font-black text-sm text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
+            💵 Todo en Dólares (USD)
+          </button>
+          <button type="button" id="btnPagoBS"
+                  onclick="window._selPago('bs')"
+                  class="w-full py-4 rounded-2xl border-2 border-amber-200 bg-amber-50 font-black text-sm text-amber-700 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
+            🟡 Todo en Bolívares (Bs)
+          </button>
+          <button type="button" id="btnPagoMixto"
+                  onclick="window._selPago('mixto')"
+                  class="w-full py-4 rounded-2xl border-2 border-slate-200 bg-slate-50 font-black text-sm text-slate-600 hover:bg-slate-600 hover:text-white hover:border-slate-600 transition-all">
+            🔀 Pago Mixto (USD + Bs)
+          </button>
+        </div>`,
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      didOpen: () => {
+        window._selPago = (modo) => {
+          window._modoPago = modo;
+          Swal.clickConfirm();
+        };
+        // Hack para que el botón cancelar funcione sin confirmButton
+        document.querySelector('.swal2-cancel').onclick = () => Swal.close();
+      }
+    });
+
+    if (!modalidad.isConfirmed && !window._modoPago) return;
+    const modo = window._modoPago;
+    window._modoPago = null;
+    if (!modo) return;
+
+    // ── PASO 2: Ingresar monto (siempre en USD) ──
+    const labelModo = modo === 'usd' ? '💵 Monto en Dólares ($)' :
+                      modo === 'bs'  ? '🟡 Monto en Dólares ($ equivalente en Bs)' :
+                                       '💵 Cuánto pagó en USD';
+    const labelModo2 = modo === 'mixto' ? '🟡 Cuánto pagó en Bs (monto en $)' : '';
+
+    let htmlMonto = `
+      <p class="text-[10px] text-slate-400 mb-3">Total: <b class="text-slate-700">$${precioTotal.toFixed(2)}</b></p>
+      <div class="space-y-3 text-left">
+        <div>
+          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">${labelModo}</label>
+          <input type="number" id="swal_monto1" step="0.50" min="0" placeholder="0.00"
+                 class="w-full border-2 border-slate-200 rounded-xl px-3 py-3 text-lg font-black text-slate-800 outline-none focus:border-blue-500">
+        </div>`;
+
+    if (modo === 'mixto') {
+      htmlMonto += `
+        <div>
+          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">${labelModo2}</label>
+          <input type="number" id="swal_monto2" step="0.50" min="0" placeholder="0.00"
+                 class="w-full border-2 border-slate-200 rounded-xl px-3 py-3 text-lg font-black text-slate-800 outline-none focus:border-amber-500">
+        </div>`;
+    }
+    htmlMonto += '</div>';
+
+    const titulos = { usd: '💵 Pago en Dólares', bs: '🟡 Pago en Bolívares', mixto: '🔀 Pago Mixto' };
+
+    const resMonto = await Swal.fire({
+      title: titulos[modo],
+      html: htmlMonto,
+      showCancelButton: true,
+      confirmButtonText: '✅ Confirmar Pago',
+      cancelButtonText: '← Atrás',
+      confirmButtonColor: '#16a34a',
+      preConfirm: () => {
+        const m1 = parseFloat(document.getElementById('swal_monto1')?.value) || 0;
+        const m2 = modo === 'mixto' ? parseFloat(document.getElementById('swal_monto2')?.value) || 0 : 0;
+        if (m1 <= 0 && m2 <= 0) { Swal.showValidationMessage('⚠️ Ingresa al menos un monto.'); return false; }
+        return { m1, m2 };
+      }
+    });
+
+    if (!resMonto.isConfirmed) return;
+    const { m1, m2 } = resMonto.value;
+
+    // Guardar según modalidad:
+    // montoPagadoUSD = monto pagado en dólares físicos
+    // montoPagadoBS  = monto (en $) pagado en bolívares
+    // modoPago       = 'usd' | 'bs' | 'mixto'
+    let guardar = { modoPago: modo };
+    let txtConfirm = '';
+
+    if (modo === 'usd') {
+      guardar.montoPagadoUSD = m1;
+      guardar.montoPagadoBS  = 0;
+      txtConfirm = `$${m1.toFixed(2)} en Dólares`;
+    } else if (modo === 'bs') {
+      guardar.montoPagadoUSD = 0;
+      guardar.montoPagadoBS  = m1;   // guardamos el equivalente en $ que se pagó en Bs
+      txtConfirm = `$${m1.toFixed(2)} en Bolívares`;
+    } else {
+      guardar.montoPagadoUSD = m1;
+      guardar.montoPagadoBS  = m2;
+      txtConfirm = `$${m1.toFixed(2)} USD + $${m2.toFixed(2)} en Bs`;
+    }
+
+    try {
+      await updateDoc(doc(db, "servicios_estetica", idServicio), {
+        estatusPago: 'pagado',
+        ...guardar,
+        actualizadoEn: serverTimestamp()
+      });
+      await window.cargarBitacoraHoy();
+      await Swal.fire({ icon: 'success', title: '✅ Pago registrado', text: txtConfirm, timer: 2000, showConfirmButton: false });
+    } catch (e) { console.error(e); alert("❌ Error: " + e.message); }
+
+  } else {
+    // Revertir
+    const res = await Swal.fire({
+      title: '↩ Revertir Pago', text: '¿Marcar como PENDIENTE?',
+      icon: 'warning', showCancelButton: true,
+      confirmButtonText: 'Sí', cancelButtonText: 'Cancelar'
+    });
+    if (!res.isConfirmed) return;
+    try {
+      await updateDoc(doc(db, "servicios_estetica", idServicio), {
+        estatusPago: 'pendiente', montoPagadoUSD: 0, montoPagadoBS: 0,
+        modoPago: '', actualizadoEn: serverTimestamp()
+      });
+      await window.cargarBitacoraHoy();
+      await Swal.fire({ icon: 'info', title: 'Marcado como pendiente', timer: 1400, showConfirmButton: false });
+    } catch (e) { console.error(e); alert("❌ Error: " + e.message); }
+  }
+};
 
 // ─── 5. IMPRIMIR RECIBO DESDE BITÁCORA ───
 window.imprimirReciboPelu = async (idServicio) => {
@@ -112,7 +249,13 @@ window.imprimirReciboPelu = async (idServicio) => {
     const snap=await getDoc(doc(db,"servicios_estetica",idServicio));if(!snap.exists())return;
     const d=snap.data();
     const usd=parseFloat(d.montoPagadoUSD||0),bs=parseFloat(d.montoPagadoBS||0);
-    let pagoStr=d.estatusPago==='pagado'?(usd>0&&bs>0?`$${usd.toFixed(2)} + Bs ${bs.toFixed(2)}`:bs>0?`Bs ${bs.toFixed(2)}`:`$${usd.toFixed(2)} USD`):'PENDIENTE';
+    const modo=d.modoPago||'';
+    let pagoStr='PENDIENTE';
+    if(d.estatusPago==='pagado'){
+      if(modo==='bs') pagoStr=`🟡 $${bs.toFixed(2)} en Bolívares`;
+      else if(modo==='mixto') pagoStr=`🔀 $${usd.toFixed(2)} USD + $${bs.toFixed(2)} en Bs`;
+      else pagoStr=`💵 $${usd.toFixed(2)} Dólares`;
+    }
     const win=window.open("","_blank","width=400,height=500");if(!win)return;
     win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo AVIPET</title>
       <style>@page{size:80mm auto;margin:4mm;}body{font-family:'Courier New',monospace;font-size:11px;color:#000;margin:0;padding:8px;}
