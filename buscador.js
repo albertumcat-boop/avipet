@@ -64,54 +64,131 @@ function _renderResultados(registros, termino, resultDiv) {
   window._buscadorResultados = window._buscadorResultados || {};
 
   registros.forEach(function(consulta) {
-    var fecha    = consulta.fechaSimple    || "---";
-    var paciente = consulta.paciente       || "---";
-    var prop     = consulta.propietario    || "---";
-    var doctor   = consulta.doctor         || "---";
-    var cedula   = consulta.cedula         || "---";
-    var telefono = consulta.telefono       || "---";
-    var fechaNac = consulta.fechaNacimiento|| "";
-    var trat     = consulta.tratamiento    || "";
+    var fecha    = consulta.fechaSimple     || "---";
+    var paciente = consulta.paciente        || "---";
+    var prop     = consulta.propietario     || "---";
+    var doctor   = consulta.doctor          || "---";
+    var cedula   = consulta.cedula          || "---";
+    var telefono = consulta.telefono        || "---";
+    var correo   = consulta.correo          || consulta.email || "";
+    var direccion= consulta.direccion       || "";
+    var especie  = consulta.especie         || "";
+    var raza     = consulta.raza            || "";
+    var edad     = consulta.edad            || "";
+    var sexo     = consulta.sexo            || "";
+    var peso     = consulta.peso            || "";
+    var color    = consulta.color           || "";
+    var fechaNac = consulta.fechaNacimiento || "";
+    var trat     = consulta.tratamiento     || "";
     var venta    = parseFloat(consulta.montoVenta   || 0).toFixed(2);
     var insumos  = parseFloat(consulta.montoInsumos || 0).toFixed(2);
     var pagoDoc  = parseFloat(consulta.pagoDoctor   || 0).toFixed(2);
-    var urlFoto  = consulta.urlExamen      || "";
+    var urlFoto  = consulta.urlExamen       || "";
     var cid      = consulta.id;
+
+    // Servicios detallados
+    var serviciosHtml = "";
+    if (Array.isArray(consulta.listaDetalladaInsumos) && consulta.listaDetalladaInsumos.length > 0) {
+      var filas = consulta.listaDetalladaInsumos.map(function(ins) {
+        return '<tr><td style="padding:2px 6px;font-size:10px;">' + (ins.nombre || "") + '</td><td style="padding:2px 6px;text-align:center;font-size:10px;">' + (ins.cant || 1) + '</td><td style="padding:2px 6px;text-align:right;font-size:10px;">$' + parseFloat(ins.costo || 0).toFixed(2) + '</td></tr>';
+      }).join("");
+      serviciosHtml = '<div class="mt-2 border border-slate-100 rounded-xl overflow-hidden">' +
+        '<div class="bg-slate-100 px-3 py-1"><p class="text-[8px] font-black text-slate-500 uppercase">📦 Insumos y Servicios</p></div>' +
+        '<table style="width:100%;border-collapse:collapse;">' +
+        '<thead><tr style="background:#f8fafc;"><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Insumo</th><th style="padding:2px 6px;text-align:center;font-size:9px;color:#94a3b8;">Cant</th><th style="padding:2px 6px;text-align:right;font-size:9px;color:#94a3b8;">Costo</th></tr></thead>' +
+        '<tbody>' + filas + '</tbody></table></div>';
+    }
+
+    // Tests realizados
+    var testsHtml = "";
+    if (Array.isArray(consulta.testsRealizados) && consulta.testsRealizados.length > 0) {
+      var testFilas = consulta.testsRealizados.map(function(t) {
+        var color = t.resultado === "POSITIVO" ? "color:#dc2626;font-weight:900;" : t.resultado === "NEGATIVO" ? "color:#16a34a;font-weight:900;" : "color:#64748b;";
+        return '<tr><td style="padding:2px 6px;font-size:10px;">' + (t.nombre || "") + '</td><td style="padding:2px 6px;font-size:10px;' + color + '">' + (t.resultado || "---") + '</td><td style="padding:2px 6px;font-size:9px;color:#94a3b8;">' + (t.nota || "") + '</td></tr>';
+      }).join("");
+      testsHtml = '<div class="mt-2 border border-slate-100 rounded-xl overflow-hidden">' +
+        '<div class="bg-purple-50 px-3 py-1"><p class="text-[8px] font-black text-purple-500 uppercase">🧪 Tests Realizados</p></div>' +
+        '<table style="width:100%;border-collapse:collapse;">' +
+        '<thead><tr style="background:#f8fafc;"><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Test</th><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Resultado</th><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Nota</th></tr></thead>' +
+        '<tbody>' + testFilas + '</tbody></table></div>';
+    }
+
+    // Fotos
+    var fotoHtml = "";
+    var todasFotos = [];
+    if (Array.isArray(consulta.fotosHistoria) && consulta.fotosHistoria.length > 0) todasFotos = todasFotos.concat(consulta.fotosHistoria);
+    else if (urlFoto) todasFotos.push(urlFoto);
+    if (Array.isArray(consulta.fotosTest) && consulta.fotosTest.length > 0) todasFotos = todasFotos.concat(consulta.fotosTest);
+    else if (consulta.urlFotoTest) todasFotos.push(consulta.urlFotoTest);
+    if (todasFotos.length > 0) {
+      var imgs = todasFotos.map(function(u) {
+        return '<img src="' + u + '" onclick="window.verFotoGrande(\'' + u + '\')" class="w-20 h-20 object-cover rounded-xl border-2 border-blue-200 cursor-pointer hover:scale-105 transition-transform shadow-sm">';
+      }).join("");
+      fotoHtml = '<div class="flex gap-2 flex-wrap mt-3">' + imgs + '</div>';
+    }
 
     window._buscadorResultados[cid] = consulta;
 
     var card = document.createElement('div');
-    card.className = "bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-blue-400 transition-all p-4 mb-3";
+    card.className = "bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-4";
     card.dataset.consultaId = cid;
 
-    var fotoHtml = urlFoto
-      ? '<div class="mt-2"><img src="' + urlFoto + '" onclick="window.verFotoGrande(\'' + urlFoto + '\')" class="w-16 h-16 object-cover rounded-lg border border-blue-200 cursor-pointer hover:scale-105 transition-transform"></div>'
-      : "";
-
-    var nacHtml = fechaNac ? '<p class="text-[9px] text-slate-400">🎂 ' + fechaNac + '</p>' : "";
-    var tratHtml = trat ? '<p class="italic text-slate-400 truncate text-[9px]">💊 ' + trat.substring(0, 80) + (trat.length > 80 ? "..." : "") + '</p>' : "";
-
+    // Cabecera siempre visible
     card.innerHTML =
-      '<div class="flex justify-between items-start mb-2">' +
+      // ── HEADER ──
+      '<div class="flex justify-between items-start mb-3 border-b border-slate-100 pb-3">' +
         '<div>' +
-          '<p class="font-black text-slate-800 uppercase text-xs">' + paciente + '</p>' +
-          '<p class="text-[9px] text-slate-400 font-bold">👤 ' + prop + ' · CI: ' + cedula + '</p>' +
-          nacHtml +
+          '<p class="font-black text-slate-800 uppercase text-sm tracking-tight">' + paciente + '</p>' +
+          '<p class="text-[10px] text-slate-500 font-bold mt-0.5">👤 ' + prop + ' &nbsp;·&nbsp; CI: ' + cedula + '</p>' +
+          (especie ? '<p class="text-[9px] text-slate-400">' + especie + (raza ? ' · ' + raza : '') + (sexo ? ' · ' + sexo : '') + (peso ? ' · ' + peso + 'kg' : '') + '</p>' : '') +
+          (fechaNac ? '<p class="text-[9px] text-slate-400">🎂 ' + fechaNac + '</p>' : '') +
         '</div>' +
-        '<span class="text-[8px] font-bold text-slate-400">' + fecha + '</span>' +
+        '<div class="text-right">' +
+          '<span class="text-[8px] font-bold text-slate-400 block">' + fecha + '</span>' +
+          '<span class="text-[9px] font-black text-blue-600 block mt-1">🩺 ' + doctor + '</span>' +
+        '</div>' +
       '</div>' +
-      '<div class="text-[9px] text-slate-500 font-bold space-y-0.5 mb-2">' +
-        '<p>🩺 <span class="text-blue-600">' + doctor + '</span></p>' +
+
+      // ── DATOS CONTACTO ──
+      '<div class="grid grid-cols-2 gap-1 mb-3 text-[9px] text-slate-500 font-bold">' +
         '<p>📞 ' + telefono + '</p>' +
-        tratHtml +
+        (correo ? '<p>✉️ ' + correo + '</p>' : '') +
+        (direccion ? '<p class="col-span-2">📍 ' + direccion + '</p>' : '') +
       '</div>' +
+
+      // ── DIAGNÓSTICO / TRATAMIENTO completo (sin truncar) ──
+      (trat ? '<div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-3">' +
+        '<p class="text-[8px] font-black text-blue-500 uppercase mb-1">✍️ Diagnóstico / Tratamiento</p>' +
+        '<pre class="text-[10px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed" style="font-family:inherit;">' + trat + '</pre>' +
+      '</div>' : '') +
+
+      // ── INSUMOS Y SERVICIOS ──
+      serviciosHtml +
+
+      // ── TESTS ──
+      testsHtml +
+
+      // ── FOTOS ──
       fotoHtml +
-      '<div class="grid grid-cols-3 gap-1 mt-2 text-center">' +
-        '<div class="bg-slate-50 rounded-lg py-1"><p class="text-[7px] font-black text-slate-400 uppercase">Venta</p><p class="text-[10px] font-black text-slate-700">$' + venta + '</p></div>' +
-        '<div class="bg-slate-50 rounded-lg py-1"><p class="text-[7px] font-black text-slate-400 uppercase">Insumos</p><p class="text-[10px] font-black text-slate-700">$' + insumos + '</p></div>' +
-        '<div class="bg-blue-50 rounded-lg py-1"><p class="text-[7px] font-black text-blue-400 uppercase">Doctor</p><p class="text-[10px] font-black text-blue-700">$' + pagoDoc + '</p></div>' +
+
+      // ── FINANZAS ──
+      '<div class="grid grid-cols-3 gap-1 mt-3 text-center">' +
+        '<div class="bg-slate-50 rounded-lg py-1.5">' +
+          '<p class="text-[7px] font-black text-slate-400 uppercase">Venta</p>' +
+          '<p class="text-[11px] font-black text-slate-700">$' + venta + '</p>' +
+        '</div>' +
+        '<div class="bg-slate-50 rounded-lg py-1.5">' +
+          '<p class="text-[7px] font-black text-slate-400 uppercase">Insumos</p>' +
+          '<p class="text-[11px] font-black text-slate-700">$' + insumos + '</p>' +
+        '</div>' +
+        '<div class="bg-blue-50 rounded-lg py-1.5">' +
+          '<p class="text-[7px] font-black text-blue-400 uppercase">Doctor</p>' +
+          '<p class="text-[11px] font-black text-blue-700">$' + pagoDoc + '</p>' +
+        '</div>' +
       '</div>' +
-      '<div class="flex gap-1.5 mt-3 flex-wrap">' +
+
+      // ── BOTONES ──
+      '<div class="flex gap-1.5 mt-3 flex-wrap border-t border-slate-100 pt-3">' +
         '<button type="button" onclick="window.imprimirConsultaBuscador(\'' + cid + '\')" class="text-[8px] px-3 py-1.5 rounded-lg font-black uppercase bg-blue-600 text-white hover:bg-blue-700">🖨 Imprimir</button>' +
         '<button type="button" onclick="window.abrirConsultaParaEditar(\'' + cid + '\')" class="text-[8px] px-3 py-1.5 rounded-lg font-black uppercase bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white">✏️ Editar</button>' +
         '<button type="button" onclick="window.enviarEncuestaDesdeCard_buscador(\'' + telefono + '\',\'' + paciente + '\',\'' + cedula + '\',\'' + doctor + '\')" class="text-[8px] px-3 py-1.5 rounded-lg font-black uppercase bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white">📲 Encuesta</button>' +
