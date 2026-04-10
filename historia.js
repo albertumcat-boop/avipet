@@ -90,7 +90,7 @@ const CONFIG_MEDICAMENTOS = {
 let insumosBaseMedAgregados = false;
 
 // ─── COMPRESOR ───
-const comprimirImagen = (b64, maxW=1000, q=0.7) => new Promise(res=>{
+const comprimirImagen = (b64, maxW=800, q=0.55) => new Promise(res=>{
   const img=new Image();img.src=b64;img.onload=()=>{
     const c=document.createElement('canvas');let w=img.width,h=img.height;
     if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}c.width=w;c.height=h;
