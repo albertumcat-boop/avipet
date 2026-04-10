@@ -87,7 +87,13 @@ window.ejecutarCambioDeTab = (tabId) => {
         if (typeof window.inicializarCalculadora === 'function') window.inicializarCalculadora();
       }, 100);
     }
-    if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') window.cargarBitacoraHoy();
+    if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') {
+      window.cargarBitacoraHoy();
+      // Recalcular total al abrir la sección (para que muestre desde el inicio)
+      setTimeout(() => {
+        if (typeof window.recalcularTotalPelu === 'function') window.recalcularTotalPelu();
+      }, 100);
+    }
     if (tabId === 'historia'      && typeof window.cargarListaEspera  === 'function') window.cargarListaEspera();
     if (tabId === 'espera'        && typeof window.cargarListaEspera  === 'function') window.cargarListaEspera();
     if (tabId === 'inventario') {
