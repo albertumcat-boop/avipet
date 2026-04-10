@@ -69,6 +69,7 @@
     <!-- Escritorio -->
     <div class="hidden sm:flex justify-around py-1">
       <button onclick="window.showTab('historia')"      data-tab="historia"      class="py-2 text-[11px] px-2 uppercase font-bold">Historia Clínica</button>
+      <button onclick="window.showTab('espera')"        data-tab="espera"        class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Sala Espera</button>
       <button onclick="window.showTab('buscador')"      data-tab="buscador"      class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Buscador</button>
       <button onclick="window.showTab('peluqueria')"    data-tab="peluqueria"    class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Peluquería</button>
       <button onclick="window.showTab('reporte')"       data-tab="reporte"       class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Finanzas</button>
@@ -79,6 +80,7 @@
     <div class="sm:hidden px-2 py-2">
       <select class="w-full border border-slate-300 rounded-lg px-2 py-2 text-[11px] font-bold uppercase text-slate-700 bg-white" onchange="if(typeof window.showTab==='function')window.showTab(this.value)">
         <option value="historia">Historia Clínica</option>
+        <option value="espera">Sala de Espera</option>
         <option value="buscador">Buscador</option>
         <option value="peluqueria">Peluquería</option>
         <option value="reporte">Finanzas / Caja</option>
