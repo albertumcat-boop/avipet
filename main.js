@@ -89,6 +89,7 @@ window.ejecutarCambioDeTab = (tabId) => {
     }
     if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') window.cargarBitacoraHoy();
     if (tabId === 'historia'      && typeof window.cargarListaEspera  === 'function') window.cargarListaEspera();
+    if (tabId === 'espera'        && typeof window.cargarListaEspera  === 'function') window.cargarListaEspera();
     if (tabId === 'inventario') {
       // Pedir acceso con modal especializado (Daniel, Carlos, doctores, admin)
       setTimeout(async () => {
