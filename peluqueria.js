@@ -29,9 +29,14 @@ window.agregarMascotaPelu = () => {
       <input type="text" placeholder="Nombre mascota"
              class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
     </div>
-    <div class="w-24">
+    <div class="w-20">
       <input type="text" placeholder="Raza"
              class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+    </div>
+    <div class="w-16">
+      <input type="number" placeholder="$0" step="0.50" min="0"
+             class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+             title="Precio individual">
     </div>
     <button type="button" onclick="this.parentElement.remove()"
             class="text-red-400 font-black text-lg hover:text-red-600 flex-shrink-0">×</button>`;
@@ -43,9 +48,10 @@ function _leerMascotasPelu() {
   const filas = document.querySelectorAll('.mascota-pelu-row');
   const mascotas = [];
   filas.forEach(row => {
-    const nombre = row.querySelector('.pelu-nombre')?.value.trim().toUpperCase();
-    const raza   = row.querySelector('.pelu-raza')?.value.trim() || '';
-    if (nombre) mascotas.push({ nombre, raza });
+    const nombre  = row.querySelector('.pelu-nombre')?.value.trim().toUpperCase();
+    const raza    = row.querySelector('.pelu-raza')?.value.trim()   || '';
+    const precioI = parseFloat(row.querySelector('.pelu-precio')?.value) || null;
+    if (nombre) mascotas.push({ nombre, raza, precioIndividual: precioI });
   });
   return mascotas;
 }
@@ -70,15 +76,17 @@ window.guardarPeluqueriaPro = async () => {
   else if(tieneAyuExt){const p=precioFinal/3;pagoPelu=p;pagoAyuExt=p;ingresoAvipet=p;}
   else{pagoPelu=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;if(tieneAyu1){pagoPelu-=montoAyu1;pagoAyu1=montoAyu1;}}
 
-  // PIN — mostrar total acumulado si son varias mascotas
-  const totalAcumulado = precioFinal * mascotas.length;
-  const txtPin = mascotas.length > 1
-    ? `🔐 FIRMA EMPLEADO
-${mascotas.length} mascotas · $${precioFinal.toFixed(2)} c/u = $${totalAcumulado.toFixed(2)} total
-PIN de empleado o clave maestra:`
-    : `🔐 FIRMA EMPLEADO
-Total: $${precioFinal.toFixed(2)}
-PIN de empleado o clave maestra:`;
+  // PIN — calcular total real sumando precios individuales
+  const totalAcumulado = mascotas.reduce((sum, pet) => {
+    return sum + (pet.precioIndividual !== null ? pet.precioIndividual : precioFinal);
+  }, 0);
+  const detallePin = mascotas.map(p => {
+    const pr = p.precioIndividual !== null ? p.precioIndividual : precioFinal;
+    return p.nombre + ': $' + pr.toFixed(2);
+  }).join(' | ');
+  const txtPin = '🔐 FIRMA EMPLEADO' +
+    (mascotas.length > 1 ? '\n' + detallePin + '\nTotal: $' + totalAcumulado.toFixed(2) : '\nTotal: $' + totalAcumulado.toFixed(2)) +
+    '\nPIN de empleado o clave maestra:';
   const pin=prompt(txtPin);if(!pin)return;
   const empleadoInfo=await window.validarEmpleadoConPin(String(pin).trim());
   if(!empleadoInfo&&String(pin).trim()!==MASTER_KEY()){alert("❌ PIN incorrecto.");return;}
@@ -95,6 +103,20 @@ PIN de empleado o clave maestra:`;
       const mascota = pet.nombre;
       const raza    = pet.raza;
 
+      // Precio: usar el individual si lo tiene, si no el precio general del formulario
+      const precioEsta = pet.precioIndividual !== null ? pet.precioIndividual : precioFinal;
+
+      // Recalcular comisiones con el precio individual
+      let pagoPeluEsta=0, pagoAyu1Esta=0, pagoAyuExtEsta=0, ingresoAvipetEsta=0;
+      if(extraSolo){
+        pagoAyuExtEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
+      } else if(tieneAyuExt){
+        const p=precioEsta/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
+      } else {
+        pagoPeluEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
+        if(tieneAyu1){ pagoPeluEsta-=montoAyu1; pagoAyu1Esta=montoAyu1; }
+      }
+
       const idFid=`${cedula}-${mascota}`.toLowerCase().replace(/\s+/g,'');
       const fidRef=doc(db,"fidelidad_peluqueria",idFid);
       const fidSnap=await getDoc(fidRef);
@@ -105,10 +127,10 @@ PIN de empleado o clave maestra:`;
 
       await addDoc(collection(db,"servicios_estetica"),{
         cedulaCliente:cedula,duenio,paciente:mascota,raza,telefono,direccion,condicion,
-        precioTotal:precioFinal,visitaNumero:nuevaVis,
+        precioTotal:precioEsta,visitaNumero:nuevaVis,
         fecha:serverTimestamp(),fechaSimple,hora,tipo:"PELUQUERIA",servicio:tipoServ,
-        pagoPeluquera:pagoPelu,pagoAyudante1:pagoAyu1,pagoAyudanteExtra:pagoAyuExt,
-        ingresoAvipet:esPremio?0:ingresoAvipet,
+        pagoPeluquera:pagoPeluEsta,pagoAyudante1:pagoAyu1Esta,pagoAyudanteExtra:pagoAyuExtEsta,
+        ingresoAvipet:esPremio?0:ingresoAvipetEsta,
         estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,
         montoPagadoUSD:0,montoPagadoBS:0,modoPago:''
       });
@@ -125,9 +147,13 @@ PIN de empleado o clave maestra:`;
       await Swal.fire({icon:'success',title:'🎉 ¡VISITA #10 GRATIS!',
         text:`¡${premios.join(', ')} llegó a la visita #10!`,timer:3000,showConfirmButton:false});
     } else {
+      const detalles = mascotas.map(p => {
+        const pr = p.precioIndividual !== null ? p.precioIndividual : precioFinal;
+        return `${p.nombre}: $${pr.toFixed(2)}`;
+      }).join(' · ');
       const txt = mascotas.length > 1
-        ? `${mascotas.length} mascotas registradas · $${totalAcumulado.toFixed(2)} total`
-        : `${mascotas[0].nombre} registrada`;
+        ? `${detalles} = $${totalAcumulado.toFixed(2)} total`
+        : `${mascotas[0].nombre}: $${totalAcumulado.toFixed(2)}`;
       await Swal.fire({icon:'info',title:'✅ REGISTRO EXITOSO',text:txt,timer:2000,showConfirmButton:false});
     }
 
@@ -154,9 +180,14 @@ function _limpiarPelu(){
           <input type="text" placeholder="Nombre mascota"
                  class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
         </div>
-        <div class="w-24">
+        <div class="w-20">
           <input type="text" placeholder="Raza"
                  class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+        </div>
+        <div class="w-16">
+          <input type="number" placeholder="$0" step="0.50" min="0"
+                 class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+                 title="Precio individual">
         </div>
       </div>`;
   }
@@ -477,7 +508,55 @@ window.imprimirReciboPelu = async (idServicio) => {
 window.recalcularTotalPelu=()=>{const tipo=document.getElementById('pTipoServicio')?.value||'completo';const base=parseFloat(document.getElementById('pTamano')?.value)||0;const ajuste=parseFloat(document.getElementById('pAjuste')?.value)||0;const exSolo=document.getElementById('pExtraSolo')?.checked;const ayu1Act=document.getElementById('pAyudante1')?.checked;const ayuExt=document.getElementById('pAyudanteExtra')?.checked;const mAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||0;let unas=parseFloat(document.getElementById('pPrecioUnas')?.value);if(isNaN(unas)||unas<0)unas=0;let cobro=tipo==='solo_unas'?unas:(base+ajuste);let pelu=0,a1=0,aex=0;const chkA1=document.getElementById('pAyudante1');if(exSolo){aex=cobro*0.40;if(chkA1){chkA1.checked=false;chkA1.disabled=true;}}else if(ayuExt){if(chkA1){chkA1.checked=false;chkA1.disabled=true;}pelu=cobro/3;aex=cobro/3;}else{if(chkA1)chkA1.disabled=false;pelu=cobro*0.40;if(ayu1Act){pelu-=mAyu1;a1=mAyu1;}}const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.innerText=`$ ${v.toFixed(2)}`;};setT('pTotalCobro',cobro);setT('pResPeluquera',pelu);setT('pResAyudante1',a1);setT('pResAyudanteExtra',aex);const suma=document.getElementById('pResAyudantes');if(suma)suma.innerText=`$ ${(a1+aex).toFixed(2)}`;};
 
 // ─── 7. BUSCAR CLIENTE ───
-window.buscarClientePeluqueria=async(cedulaInput)=>{const valor=(cedulaInput||"").replace(/\./g,'').trim();if(!valor||valor.length<5)return;try{const qPac=query(collection(db,"consultas"),where("cedula","==",valor),limit(1));const snap=await getDocs(qPac);let datos=null;if(!snap.empty)datos=snap.docs[0].data();if(!datos){const fidSnap=await getDoc(doc(db,"fidelidad_peluqueria",valor.toLowerCase()));if(fidSnap.exists())datos=fidSnap.data();}if(datos){const llenar=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};llenar('pDuenio',datos.propietario||datos.duenio);llenar('pNombre',datos.paciente);llenar('pRaza',datos.raza);llenar('pTelefono',datos.telefono);llenar('pDireccion',datos.direccion);}try{const pacNombre=document.getElementById('pNombre')?.value||'';const idFid=`${valor}-${pacNombre}`.toLowerCase().replace(/\s+/g,'');const fidSnap=await getDoc(doc(db,"fidelidad_peluqueria",idFid));const vis=fidSnap.exists()?(fidSnap.data().contador||0):0;if(typeof window.renderizarSellos==='function')window.renderizarSellos(vis);}catch{if(typeof window.renderizarSellos==='function')window.renderizarSellos(0);}}catch(e){console.error("Error búsqueda:",e);}};
+window.buscarClientePeluqueria = async (cedulaInput) => {
+  const valor = (cedulaInput || "").replace(/\./g,'').trim();
+  if (!valor || valor.length < 5) return;
+  try {
+    // Buscar en consultas primero, luego en fidelidad
+    const qPac = query(collection(db,"consultas"), where("cedula","==",valor), limit(1));
+    const snap  = await getDocs(qPac);
+    let datos   = null;
+    if (!snap.empty) datos = snap.docs[0].data();
+    if (!datos) {
+      const fidSnap = await getDoc(doc(db,"fidelidad_peluqueria", valor.toLowerCase()));
+      if (fidSnap.exists()) datos = fidSnap.data();
+    }
+
+    if (datos) {
+      // Llenar campos de texto del dueño
+      const llenar = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||""; };
+      llenar('pDuenio',   datos.propietario || datos.duenio);
+      llenar('pTelefono', datos.telefono);
+      llenar('pDireccion',datos.direccion);
+
+      // Llenar la PRIMERA fila de mascotas con el nombre y raza del paciente
+      const lista      = document.getElementById('listaMascotasPelu');
+      const primeraFila = lista?.querySelector('.mascota-pelu-row');
+      if (primeraFila) {
+        const inputNombre = primeraFila.querySelector('.pelu-nombre');
+        const inputRaza   = primeraFila.querySelector('.pelu-raza');
+        if (inputNombre) inputNombre.value = datos.paciente || "";
+        if (inputRaza)   inputRaza.value   = datos.raza     || "";
+      }
+
+      // También actualizar campos hidden para compatibilidad
+      llenar('pNombre', datos.paciente);
+      llenar('pRaza',   datos.raza);
+    }
+
+    // Cargar sellos de fidelidad (usando la primera mascota encontrada)
+    try {
+      const pacNombre = datos?.paciente || "";
+      const idFid = `${valor}-${pacNombre}`.toLowerCase().replace(/\s+/g,'');
+      const fidSnap = await getDoc(doc(db,"fidelidad_peluqueria", idFid));
+      const vis = fidSnap.exists() ? (fidSnap.data().contador || 0) : 0;
+      if (typeof window.renderizarSellos === 'function') window.renderizarSellos(vis);
+    } catch {
+      if (typeof window.renderizarSellos === 'function') window.renderizarSellos(0);
+    }
+
+  } catch(e) { console.error("Error búsqueda:", e); }
+};
 
 // ─── 8. SELLOS DE FIDELIDAD ───
 window.renderizarSellos=(numVisitas)=>{const cont=document.getElementById('contenedorSellos');const contTxt=document.getElementById('contadorVisitas');const badge=document.getElementById('badgeFidelidad');const msg=document.getElementById('proximaGratis');if(!cont||!contTxt)return;let vis=numVisitas%10;if(vis===0&&numVisitas>0)vis=10;contTxt.innerText=`${vis} / 10 VISITAS`;cont.innerHTML='';for(let i=1;i<=10;i++){const activo=i<=vis;const s=document.createElement('div');s.className="h-10 w-10 flex items-center justify-center";s.innerHTML=`<div class="relative w-full h-full flex items-center justify-center"><svg class="w-7 h-7 ${activo?'text-blue-100':'text-slate-200'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" stroke-linecap="round"/></svg><svg class="absolute w-7 h-7 fill-blue-600 transition-all duration-700 ${activo?'opacity-100 scale-110':'opacity-0 scale-0'}" viewBox="0 0 24 24"><path d="M12 11.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zM12 11.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 13.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM17.5 13.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM12 21.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div>`;cont.appendChild(s);}const esPremio=vis===10;if(badge)badge.classList.toggle('hidden',!esPremio);if(msg)msg.classList.toggle('hidden',!esPremio);};
