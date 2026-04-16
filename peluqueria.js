@@ -27,6 +27,7 @@ window.agregarMascotaPelu = () => {
   row.innerHTML = `
     <div class="flex-1">
       <input type="text" placeholder="Nombre mascota"
+             oninput="window.recalcularTotalPelu()"
              class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
     </div>
     <div class="w-20">
@@ -36,9 +37,10 @@ window.agregarMascotaPelu = () => {
     <div class="w-16">
       <input type="number" placeholder="$0" step="0.50" min="0"
              class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+             oninput="window.recalcularTotalPelu()"
              title="Precio individual">
     </div>
-    <button type="button" onclick="this.parentElement.remove()"
+    <button type="button" onclick="this.parentElement.remove();window.recalcularTotalPelu()"
             class="text-red-400 font-black text-lg hover:text-red-600 flex-shrink-0">×</button>`;
   lista.appendChild(row);
 };
@@ -187,6 +189,7 @@ function _limpiarPelu(){
         <div class="w-16">
           <input type="number" placeholder="$0" step="0.50" min="0"
                  class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+                 oninput="window.recalcularTotalPelu()"
                  title="Precio individual">
         </div>
       </div>`;
@@ -505,7 +508,78 @@ window.imprimirReciboPelu = async (idServicio) => {
 };
 
 // ─── 6. RECALCULAR TOTAL ───
-window.recalcularTotalPelu=()=>{const tipo=document.getElementById('pTipoServicio')?.value||'completo';const base=parseFloat(document.getElementById('pTamano')?.value)||0;const ajuste=parseFloat(document.getElementById('pAjuste')?.value)||0;const exSolo=document.getElementById('pExtraSolo')?.checked;const ayu1Act=document.getElementById('pAyudante1')?.checked;const ayuExt=document.getElementById('pAyudanteExtra')?.checked;const mAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||0;let unas=parseFloat(document.getElementById('pPrecioUnas')?.value);if(isNaN(unas)||unas<0)unas=0;let cobro=tipo==='solo_unas'?unas:(base+ajuste);let pelu=0,a1=0,aex=0;const chkA1=document.getElementById('pAyudante1');if(exSolo){aex=cobro*0.40;if(chkA1){chkA1.checked=false;chkA1.disabled=true;}}else if(ayuExt){if(chkA1){chkA1.checked=false;chkA1.disabled=true;}pelu=cobro/3;aex=cobro/3;}else{if(chkA1)chkA1.disabled=false;pelu=cobro*0.40;if(ayu1Act){pelu-=mAyu1;a1=mAyu1;}}const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.innerText=`$ ${v.toFixed(2)}`;};setT('pTotalCobro',cobro);setT('pResPeluquera',pelu);setT('pResAyudante1',a1);setT('pResAyudanteExtra',aex);const suma=document.getElementById('pResAyudantes');if(suma)suma.innerText=`$ ${(a1+aex).toFixed(2)}`;};
+window.recalcularTotalPelu = () => {
+  const tipo   = document.getElementById('pTipoServicio')?.value || 'completo';
+  const base   = parseFloat(document.getElementById('pTamano')?.value)  || 0;
+  const ajuste = parseFloat(document.getElementById('pAjuste')?.value)  || 0;
+  const exSolo = document.getElementById('pExtraSolo')?.checked;
+  const ayu1Act= document.getElementById('pAyudante1')?.checked;
+  const ayuExt = document.getElementById('pAyudanteExtra')?.checked;
+  const mAyu1  = parseFloat(document.getElementById('pMontoAyu1')?.value) || 0;
+  let unas = parseFloat(document.getElementById('pPrecioUnas')?.value);
+  if (isNaN(unas) || unas < 0) unas = 0;
+
+  // Precio base del formulario (para mascotas sin precio individual)
+  const precioBase = tipo === 'solo_unas' ? unas : (base + ajuste);
+
+  // Sumar precio de CADA mascota (individual si tiene, si no el base)
+  const filas = document.querySelectorAll('.mascota-pelu-row');
+  let totalCobro = 0;
+  let totalPelu  = 0;
+  let totalA1    = 0;
+  let totalAex   = 0;
+
+  const chkA1 = document.getElementById('pAyudante1');
+
+  filas.forEach(row => {
+    const nombre = row.querySelector('.pelu-nombre')?.value.trim();
+    if (!nombre) return; // fila vacía, no contar
+
+    const precioInd = parseFloat(row.querySelector('.pelu-precio')?.value) || null;
+    const cobro = precioInd !== null ? precioInd : precioBase;
+
+    let pelu = 0, a1 = 0, aex = 0;
+    if (exSolo) {
+      aex = cobro * 0.40;
+      if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
+    } else if (ayuExt) {
+      if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
+      pelu = cobro / 3;
+      aex  = cobro / 3;
+    } else {
+      if (chkA1) chkA1.disabled = false;
+      pelu = cobro * 0.40;
+      if (ayu1Act) { pelu -= mAyu1; a1 = mAyu1; }
+    }
+
+    totalCobro += cobro;
+    totalPelu  += pelu;
+    totalA1    += a1;
+    totalAex   += aex;
+  });
+
+  // Si no hay ninguna mascota con nombre, usar el precio base solo
+  if (totalCobro === 0) {
+    totalCobro = precioBase;
+    if (exSolo) {
+      totalAex  = precioBase * 0.40;
+    } else if (ayuExt) {
+      totalPelu = precioBase / 3;
+      totalAex  = precioBase / 3;
+    } else {
+      totalPelu = precioBase * 0.40;
+      if (ayu1Act) { totalPelu -= mAyu1; totalA1 = mAyu1; }
+    }
+  }
+
+  const setT = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = `$ ${v.toFixed(2)}`; };
+  setT('pTotalCobro',      totalCobro);
+  setT('pResPeluquera',    totalPelu);
+  setT('pResAyudante1',    totalA1);
+  setT('pResAyudanteExtra',totalAex);
+  const suma = document.getElementById('pResAyudantes');
+  if (suma) suma.innerText = `$ ${(totalA1 + totalAex).toFixed(2)}`;
+};
 
 // ─── 7. BUSCAR CLIENTE ───
 window.buscarClientePeluqueria = async (cedulaInput) => {
