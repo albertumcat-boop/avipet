@@ -88,6 +88,7 @@ window.cargarBitacoraHoy = async () => {
           <div class="flex gap-1 flex-wrap justify-end">
             <button type="button" onclick="window.togglePagoPeluqueria('${d.id}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${pagado?'bg-slate-200 text-slate-600':'bg-emerald-600 text-white'}">${pagado?'↩ Revertir':'💰 Pagar'}</button>
             <button type="button" onclick="window.imprimirReciboPelu('${d.id}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">🖨 Recibo</button>
+            <button type="button" onclick="window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
             <button type="button" onclick="window.eliminarRegistroBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">🗑</button>
           </div>
         </div>`;
@@ -241,6 +242,82 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
       await Swal.fire({ icon: 'info', title: 'Marcado como pendiente', timer: 1400, showConfirmButton: false });
     } catch (e) { console.error(e); alert("❌ Error: " + e.message); }
   }
+};
+
+// ─── 5. ENVIAR MENSAJE WHATSAPP DESDE BITÁCORA ───
+window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
+  if (!telefonoRaw || telefonoRaw.length < 7) {
+    Swal.fire({ icon:'warning', title:'Sin teléfono', text:'Este registro no tiene número registrado.', timer:2000, showConfirmButton:false });
+    return;
+  }
+
+  // Limpiar y formatear teléfono
+  let tlf = telefonoRaw.replace(/\D/g,'');
+  if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1);
+  if (!tlf.startsWith('58') && tlf.length === 10) tlf = '58' + tlf;
+
+  // Elegir tipo de mensaje
+  const res = await Swal.fire({
+    title: '📲 Enviar Mensaje',
+    html: `
+      <p class="text-[11px] text-slate-500 mb-4">Para: <b>${duenio}</b> · ${mascota}</p>
+      <div class="flex flex-col gap-2">
+        <button type="button" onclick="window._tipoMsgPelu=1;Swal.clickConfirm()"
+                class="w-full py-3 rounded-xl border-2 border-green-200 bg-green-50 font-black text-[11px] text-green-700 hover:bg-green-600 hover:text-white transition-all">
+          🐾 Recordatorio de próxima visita
+        </button>
+        <button type="button" onclick="window._tipoMsgPelu=2;Swal.clickConfirm()"
+                class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-[11px] text-blue-700 hover:bg-blue-600 hover:text-white transition-all">
+          ✅ Confirmación de servicio realizado
+        </button>
+        <button type="button" onclick="window._tipoMsgPelu=3;Swal.clickConfirm()"
+                class="w-full py-3 rounded-xl border-2 border-purple-200 bg-purple-50 font-black text-[11px] text-purple-700 hover:bg-purple-600 hover:text-white transition-all">
+          ✏️ Mensaje personalizado
+        </button>
+      </div>`,
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (res.isDismissed) return;
+  const tipo = window._tipoMsgPelu || 1;
+  window._tipoMsgPelu = null;
+
+  let mensaje = '';
+
+  if (tipo === 1) {
+    // Recordatorio próxima visita
+    mensaje = `🐾 Hola ${duenio}, te recordamos que *${mascota}* ya está lista para su próxima visita de estética en *AVIPET*.
+
+✂️ ¡Escríbenos para agendar tu cita!
+
+📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.`;
+
+  } else if (tipo === 2) {
+    // Confirmación de servicio
+    mensaje = `🐾 Hola ${duenio}, te confirmamos que el servicio de estética de *${mascota}* fue completado exitosamente en *AVIPET*.
+
+¡Gracias por confiar en nosotros! 🙏
+Esperamos verte pronto. ✂️`;
+
+  } else {
+    // Mensaje personalizado
+    const custom = await Swal.fire({
+      title: '✏️ Escribe tu mensaje',
+      input: 'textarea',
+      inputPlaceholder: 'Escribe aquí el mensaje para el cliente...',
+      inputAttributes: { rows: 4 },
+      showCancelButton: true,
+      confirmButtonText: 'Enviar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#16a34a'
+    });
+    if (!custom.isConfirmed || !custom.value) return;
+    mensaje = custom.value;
+  }
+
+  window.open('https://wa.me/' + tlf + '?text=' + encodeURIComponent(mensaje), '_blank');
 };
 
 // ─── 5. IMPRIMIR RECIBO DESDE BITÁCORA ───
