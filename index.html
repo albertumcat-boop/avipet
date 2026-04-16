@@ -423,13 +423,20 @@
           <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">ESPECIE:</span><input id="hv_especie" class="flex-1 text-[9px] uppercase"></div>
           <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">RAZA:</span><input id="hv_raza" class="flex-1 text-[9px] uppercase"></div>
         </div>
-        <div class="grid grid-cols-3 gap-1">
+        <div class="grid grid-cols-4 gap-1">
           <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">EDAD:</span><input id="hv_edad" class="w-full text-[9px]"></div>
           <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">SEXO:</span><input id="hv_sexo" class="w-full text-[9px]"></div>
           <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">COLOR:</span><input id="hv_color" class="w-full text-[9px]"></div>
+          <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">PESO:</span><input id="hv_peso" class="w-full text-[9px]" placeholder="kg"></div>
         </div>
-        <!-- NUEVO: Fecha de nacimiento en vacunas -->
-        <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-20">F. NAC.:</span><input id="hv_fechaNacimiento" type="date" class="flex-1 text-[9px]"></div>
+        <!-- Fecha de nacimiento con botón para borrar -->
+        <div class="flex items-center gap-1 border-b border-slate-200">
+          <span class="text-[8px] font-bold text-slate-500 w-20 flex-shrink-0">F. NAC.:</span>
+          <input id="hv_fechaNacimiento" type="date" class="flex-1 text-[9px]">
+          <button type="button" onclick="document.getElementById('hv_fechaNacimiento').value=''"
+                  class="no-print text-slate-300 hover:text-red-400 font-black text-sm flex-shrink-0 px-1"
+                  title="Borrar fecha">✕</button>
+        </div>
       </div>
       <div class="border border-slate-400 rounded p-1.5 space-y-1">
         <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">DUEÑO:</span><input id="hv_propietario" class="flex-1 font-bold text-[10px] uppercase"></div>
@@ -763,14 +770,37 @@
             <div class="grid grid-cols-2 gap-4">
               <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Teléfono</label>
                 <input type="text" id="pTelefono" class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 outline-none bg-transparent"></div>
-              <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Mascota</label>
-                <input type="text" id="pNombre" class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none bg-transparent"></div>
             </div>
-            <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Raza / Dirección</label>
-              <div class="flex gap-2">
-                <input type="text" id="pRaza"      placeholder="Raza"      class="w-1/2 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
-                <input type="text" id="pDireccion" placeholder="Ubicación" class="w-1/2 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+
+            <!-- MASCOTAS — una o varias -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase">Mascotas</label>
+                <button type="button" onclick="window.agregarMascotaPelu()"
+                        class="text-[8px] font-black text-blue-600 border border-blue-200 bg-blue-50 px-2 py-0.5 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
+                  + Agregar otra
+                </button>
               </div>
+              <!-- Mascota 1 siempre visible -->
+              <!-- Campos hidden para compatibilidad con buscarClientePeluqueria -->
+            <input type="hidden" id="pNombre">
+            <input type="hidden" id="pRaza">
+            <div id="listaMascotasPelu" class="space-y-2">
+                <div class="mascota-pelu-row flex gap-2 items-center">
+                  <div class="flex-1">
+                    <input type="text" placeholder="Nombre mascota"
+                           class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
+                  </div>
+                  <div class="w-24">
+                    <input type="text" placeholder="Raza"
+                           class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Dirección</label>
+              <input type="text" id="pDireccion" placeholder="Ubicación" class="w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
             </div>
           </div>
           <div class="pt-2">
