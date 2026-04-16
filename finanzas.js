@@ -341,27 +341,27 @@ window.inicializarCalculadora=()=>{const tasa=window.tasaDolarHoy||36,tasaEl=doc
 
 // ─── AJUSTAR PAGO DESDE FINANZAS ─────────────────────────
 // Permite marcar como pagado servicios de días anteriores
+
+// ─── AJUSTAR PAGO DESDE FINANZAS ─────────────────────────
 window.ajustarPagoPeluqueria = async () => {
   // Paso 1: pedir fecha
   const resFecha = await Swal.fire({
     title: '📅 Ajustar Pago — Seleccionar Fecha',
-    html: `<p class="text-[11px] text-slate-500 mb-3">¿De qué fecha son los servicios a ajustar?</p>
-           <input type="date" id="swal_fecha_ajuste"
-                  class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500">`,
+    html: '<p class="text-[11px] text-slate-500 mb-3">Fecha de los servicios a ajustar:</p>' +
+          '<input type="date" id="swal_fecha_ajuste" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500">',
     showCancelButton: true,
-    confirmButtonText: 'Ver servicios →',
+    confirmButtonText: 'Ver servicios',
     cancelButtonText: 'Cancelar',
     preConfirm: () => {
       const val = document.getElementById('swal_fecha_ajuste')?.value;
       if (!val) { Swal.showValidationMessage('Selecciona una fecha'); return false; }
-      const [yr,mo,dy] = val.split('-');
-      return parseInt(dy)+'/'+parseInt(mo)+'/'+yr;
+      const parts = val.split('-');
+      return parseInt(parts[2]) + '/' + parseInt(parts[1]) + '/' + parts[0];
     }
   });
   if (!resFecha.isConfirmed) return;
   const fechaSimple = resFecha.value;
 
-  // Paso 2: cargar servicios pendientes de esa fecha
   try {
     const snap = await getDocs(query(collection(db,"servicios_estetica"), where("fechaSimple","==",fechaSimple)));
     if (snap.empty) {
@@ -369,8 +369,8 @@ window.ajustarPagoPeluqueria = async () => {
       return;
     }
 
-    const pendientes = [];
     const todos = [];
+    const pendientes = [];
     snap.forEach(d => {
       const r = d.data();
       todos.push({ id:d.id, ...r });
@@ -378,39 +378,35 @@ window.ajustarPagoPeluqueria = async () => {
     });
 
     if (pendientes.length === 0) {
-      // Todos están pagados — mostrar opción de revertir
-      const rows = todos.map(r =>
-        '<div class="flex justify-between items-center py-1.5 border-b border-slate-100 text-[10px]">' +
-          '<span class="font-bold text-slate-700">' + (r.paciente||'---') + ' · ' + (r.duenio||'') + '</span>' +
-          '<span class="text-emerald-600 font-black">✅ $' + parseFloat(r.precioTotal||0).toFixed(2) + '</span>' +
-        '</div>'
-      ).join('');
-      Swal.fire({ title:'✅ Todo pagado', html:'<div class="max-h-48 overflow-y-auto">'+rows+'</div>', confirmButtonText:'OK' });
+      Swal.fire({ icon:'info', title:'Todo pagado', text:'No hay pendientes para '+fechaSimple, timer:2000, showConfirmButton:false });
       return;
     }
 
-    // Mostrar lista de pendientes para marcar
-    const rows = pendientes.map(r =>
-      '<label class="flex items-center gap-2 py-1.5 border-b border-slate-100 cursor-pointer">' +
-        '<input type="checkbox" class="chk-ajuste w-4 h-4 accent-blue-600" value="' + r.id + '">' +
-        '<span class="text-[10px] font-bold text-slate-700 flex-1">' + (r.paciente||'---') + ' · ' + (r.duenio||'') + '</span>' +
-        '<span class="text-[10px] font-black text-slate-800">$' + parseFloat(r.precioTotal||0).toFixed(2) + '</span>' +
-      '</label>'
-    ).join('');
+    // Paso 2: mostrar lista para marcar
+    let htmlLista = '<p class="text-[10px] text-slate-500 mb-2">Marca los que SÍ fueron pagados:</p>';
+    htmlLista += '<div class="max-h-60 overflow-y-auto border border-slate-200 rounded-xl p-2">';
+    pendientes.forEach(r => {
+      const precio = parseFloat(r.precioTotal||0).toFixed(2);
+      htmlLista += '<label class="flex items-center gap-2 py-1.5 border-b border-slate-100 cursor-pointer">';
+      htmlLista += '<input type="checkbox" class="chk-ajuste w-4 h-4 accent-blue-600" value="' + r.id + '">';
+      htmlLista += '<span class="text-[10px] font-bold text-slate-700 flex-1">' + (r.paciente||'---') + ' · ' + (r.duenio||'') + '</span>';
+      htmlLista += '<span class="text-[10px] font-black">$' + precio + '</span>';
+      htmlLista += '</label>';
+    });
+    htmlLista += '</div>';
+    htmlLista += '<label class="flex items-center gap-2 mt-2 cursor-pointer">';
+    htmlLista += '<input type="checkbox" id="chk_todos" onchange="document.querySelectorAll(\'.chk-ajuste\').forEach(function(c){c.checked=document.getElementById(\'chk_todos\').checked;})">';
+    htmlLista += '<span class="text-[10px] font-bold text-slate-600">Seleccionar todos</span>';
+    htmlLista += '</label>';
 
     const resServ = await Swal.fire({
-      title: '💰 Ajustar Pagos — ' + fechaSimple,
-      html: '<p class="text-[10px] text-slate-500 mb-2">Marca los servicios que SÍ fueron pagados:</p>' +
-            '<div class="max-h-60 overflow-y-auto border border-slate-200 rounded-xl p-2">' + rows + '</div>' +
-            '<label class="flex items-center gap-2 mt-3 cursor-pointer">' +
-              '<input type="checkbox" id="chk_todos_ajuste" onchange="document.querySelectorAll('.chk-ajuste').forEach(c=>c.checked=this.checked)">' +
-              '<span class="text-[10px] font-bold text-slate-600">Marcar todos</span>' +
-            '</label>',
+      title: 'Ajustar — ' + fechaSimple,
+      html: htmlLista,
       showCancelButton: true,
-      confirmButtonText: 'Continuar →',
+      confirmButtonText: 'Continuar',
       cancelButtonText: 'Cancelar',
       preConfirm: () => {
-        const sel = Array.from(document.querySelectorAll('.chk-ajuste:checked')).map(c => c.value);
+        const sel = Array.from(document.querySelectorAll('.chk-ajuste:checked')).map(function(c){return c.value;});
         if (sel.length === 0) { Swal.showValidationMessage('Marca al menos uno'); return false; }
         return sel;
       }
@@ -418,60 +414,51 @@ window.ajustarPagoPeluqueria = async () => {
     if (!resServ.isConfirmed) return;
     const idsAjustar = resServ.value;
 
-    // Paso 3: elegir modalidad de pago
-    const resModo = await Swal.fire({
-      title: '💵 ¿Cómo pagaron?',
-      html: `<div class="flex flex-col gap-2 mt-2">
-        <button type="button" onclick="window._modoAjuste='usd';Swal.clickConfirm()"
-                class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-sm text-blue-700 hover:bg-blue-600 hover:text-white transition-all">
-          💵 Dólares (USD)
-        </button>
-        <button type="button" onclick="window._modoAjuste='bs';Swal.clickConfirm()"
-                class="w-full py-3 rounded-xl border-2 border-amber-200 bg-amber-50 font-black text-sm text-amber-700 hover:bg-amber-500 hover:text-white transition-all">
-          🟡 Bolívares (Bs)
-        </button>
-        <button type="button" onclick="window._modoAjuste='mixto';Swal.clickConfirm()"
-                class="w-full py-3 rounded-xl border-2 border-slate-200 bg-slate-50 font-black text-sm text-slate-600 hover:bg-slate-600 hover:text-white transition-all">
-          🔀 Mixto
-        </button>
-      </div>`,
+    // Paso 3: modalidad de pago
+    let htmlModo = '<div class="flex flex-col gap-2 mt-2">';
+    htmlModo += '<button type="button" onclick="window._modoAjuste=\'usd\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-sm text-blue-700 hover:bg-blue-600 hover:text-white">💵 Dólares (USD)</button>';
+    htmlModo += '<button type="button" onclick="window._modoAjuste=\'bs\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-amber-200 bg-amber-50 font-black text-sm text-amber-700 hover:bg-amber-500 hover:text-white">🟡 Bolívares (Bs)</button>';
+    htmlModo += '<button type="button" onclick="window._modoAjuste=\'mixto\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-slate-200 bg-slate-50 font-black text-sm text-slate-600 hover:bg-slate-600 hover:text-white">🔀 Mixto</button>';
+    htmlModo += '</div>';
+
+    await Swal.fire({
+      title: 'Como pagaron?',
+      html: htmlModo,
       showConfirmButton: false,
       showCancelButton: true,
       cancelButtonText: 'Cancelar'
     });
-    if (resModo.isDismissed) return;
+
     const modo = window._modoAjuste || 'usd';
     window._modoAjuste = null;
 
     // Actualizar en Firebase
     let actualizados = 0;
-    for (const id of idsAjustar) {
-      const serv = pendientes.find(p => p.id === id);
-      const monto = parseFloat(serv?.precioTotal || 0);
+    for (let i = 0; i < idsAjustar.length; i++) {
+      const id = idsAjustar[i];
+      const serv = pendientes.find(function(p){return p.id===id;});
+      const monto = parseFloat(serv ? serv.precioTotal : 0);
+      let montUSD = monto, montBS = 0;
+      if (modo === 'bs')    { montUSD = 0; montBS = monto; }
+      if (modo === 'mixto') { montUSD = monto/2; montBS = monto/2; }
       await updateDoc(doc(db,"servicios_estetica",id), {
-        estatusPago:  'pagado',
-        modoPago:     modo,
-        montoPagadoUSD: modo === 'bs' ? 0 : monto,
-        montoPagadoBS:  modo === 'bs' ? monto : (modo === 'mixto' ? monto/2 : 0),
+        estatusPago: 'pagado',
+        modoPago: modo,
+        montoPagadoUSD: montUSD,
+        montoPagadoBS: montBS,
         ajustadoManualmente: true,
         actualizadoEn: serverTimestamp()
       });
       actualizados++;
     }
 
-    await Swal.fire({
-      icon: 'success',
-      title: '✅ ' + actualizados + ' servicio(s) ajustado(s)',
-      text: 'Fecha: ' + fechaSimple + ' · Modalidad: ' + modo.toUpperCase(),
-      timer: 2500,
-      showConfirmButton: false
-    });
+    await Swal.fire({ icon:'success', title:'✅ ' + actualizados + ' ajustado(s)', text:fechaSimple + ' · ' + modo.toUpperCase(), timer:2000, showConfirmButton:false });
     window.cargarReporte();
 
-  } catch(e) { console.error(e); alert("❌ Error: "+e.message); }
+  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
 };
 
-// ─── RESUMEN SEMANAL PELUQUERÍA CON DETALLE AYUDANTE ─────
+// ─── RESUMEN SEMANAL PELUQUERÍA ───────────────────────────
 window.verResumenSemanalPelu = async () => {
   try {
     const hoy = new Date();
@@ -480,23 +467,23 @@ window.verResumenSemanalPelu = async () => {
       const d = new Date(hoy); d.setDate(hoy.getDate()-i);
       fechas.push(d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear());
     }
+
     const snap = await getDocs(collection(db,"servicios_estetica"));
     const servicios = [];
-    snap.forEach(d => { const r=d.data(); if(fechas.includes(r.fechaSimple)) servicios.push({id:d.id,...r}); });
+    snap.forEach(function(d) { const r=d.data(); if(fechas.includes(r.fechaSimple)) servicios.push({id:d.id,...r}); });
 
     if (servicios.length === 0) {
       Swal.fire({ icon:'info', title:'Sin servicios esta semana', timer:2000, showConfirmButton:false });
       return;
     }
 
-    // Calcular totales con la nueva lógica de ayudante
-    let totalBruto=0, totalPelu=0, totalAyu1=0, totalAyuExt=0, totalAvipet=0;
-    let perrosConAyu=0, perrosSinAyu=0, pendiente=0;
+    servicios.sort(function(a,b){return (a.fecha&&b.fecha)?(a.fecha.seconds||0)-(b.fecha.seconds||0):0;});
+
+    let totalBruto=0, totalPelu=0, totalAyuExt=0, totalAvipet=0, pendiente=0;
+    let perrosConAyu=0, perrosSinAyu=0;
     let rows = '';
 
-    servicios.sort((a,b) => (a.fecha?.seconds||0)-(b.fecha?.seconds||0));
-
-    servicios.forEach((r,i) => {
+    servicios.forEach(function(r, i) {
       const precio  = parseFloat(r.precioTotal||0);
       const pagPelu = parseFloat(r.pagoPeluquera||0);
       const pagA1   = parseFloat(r.pagoAyudante1||0);
@@ -510,80 +497,68 @@ window.verResumenSemanalPelu = async () => {
       totalAyuExt += pagAx;
       totalAvipet += neto;
       if (!pagado) pendiente += precio;
+      if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
-      if (tieneA1) { perrosConAyu++; totalAyu1 += pagA1; }
-      else          perrosSinAyu++;
-
-      const colorEst = pagado ? 'text-emerald-600' : 'text-red-500';
-      rows += '<tr class="border-b border-slate-100 text-[9px]">' +
-        '<td class="px-2 py-1.5 text-slate-500">' + (r.fechaSimple||'---') + '</td>' +
-        '<td class="px-2 py-1.5 font-bold text-slate-800 uppercase">' + (r.paciente||'---') + '</td>' +
-        '<td class="px-2 py-1.5 text-center font-mono">$' + precio.toFixed(2) + '</td>' +
-        '<td class="px-2 py-1.5 text-center font-mono text-purple-700">$' + pagPelu.toFixed(2) + '</td>' +
-        '<td class="px-2 py-1.5 text-center font-mono text-blue-600">' + (tieneA1 ? '$'+pagA1.toFixed(2) : '—') + '</td>' +
-        '<td class="px-2 py-1.5 text-center font-mono ' + colorEst + '">' + (pagado?'✅':'⏳') + '</td>' +
-      '</tr>';
+      const colorEst = pagado ? '#16a34a' : '#dc2626';
+      const iconPago = pagado ? '✅' : '⏳';
+      rows += '<tr style="border-bottom:1px solid #f1f5f9;font-size:9px;">';
+      rows += '<td style="padding:4px 6px;color:#64748b;">' + (r.fechaSimple||'---') + '</td>';
+      rows += '<td style="padding:4px 6px;font-weight:700;text-transform:uppercase;">' + (r.paciente||'---') + '</td>';
+      rows += '<td style="padding:4px 6px;text-align:center;font-weight:700;">$' + precio.toFixed(2) + '</td>';
+      rows += '<td style="padding:4px 6px;text-align:center;color:#7c3aed;font-weight:700;">$' + pagPelu.toFixed(2) + '</td>';
+      rows += '<td style="padding:4px 6px;text-align:center;color:#2563eb;font-weight:700;">' + (tieneA1 ? '$'+pagA1.toFixed(2) : '—') + '</td>';
+      rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;">' + iconPago + '</td>';
+      rows += '</tr>';
     });
 
     // Pago real ayudante: $1 × perros_con_ayudante × 2
-    const pagoAyu1Real = perrosConAyu * 1 * 2;
+    const pagoAyu1Real = perrosConAyu * 2;
+
+    let htmlModal = '';
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:left;">';
+    htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Servicios semana</p>';
+    htmlModal += '<p style="font-size:20px;font-weight:900;color:#1e293b;">' + servicios.length + ' perros</p>';
+    htmlModal += '<p style="font-size:9px;color:#64748b;">Con ayudante: <b>' + perrosConAyu + '</b></p>';
+    htmlModal += '<p style="font-size:9px;color:#64748b;">Sin ayudante: <b>' + perrosSinAyu + '</b></p></div>';
+    htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;">Peluquera</p>';
+    htmlModal += '<p style="font-size:20px;font-weight:900;color:#7c3aed;">$' + totalPelu.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;">(-$1 por perro con ayu.)</p></div>';
+    htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante</p>';
+    htmlModal += '<p style="font-size:20px;font-weight:900;color:#2563eb;">$' + pagoAyu1Real.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' perros × $1 × 2</p></div></div>';
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">';
+    htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p></div>';
+    htmlModal += '<div style="background:#fef2f2;border-radius:10px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;text-transform:uppercase;">Pendiente</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#dc2626;">$' + pendiente.toFixed(2) + '</p></div>';
+    htmlModal += '<div style="background:#1e293b;border-radius:10px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p></div></div>';
+    htmlModal += '<div style="max-height:260px;overflow-y:auto;">';
+    htmlModal += '<table style="width:100%;border-collapse:collapse;">';
+    htmlModal += '<thead><tr style="background:#1e293b;color:#fff;font-size:8px;text-transform:uppercase;">';
+    htmlModal += '<th style="padding:5px 6px;text-align:left;">Fecha</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:left;">Mascota</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;">Precio</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;">Peluquera</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;">Ayu.</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;">Pago</th></tr></thead>';
+    htmlModal += '<tbody>' + rows + '</tbody></table></div>';
 
     Swal.fire({
       title: '📊 Resumen Semanal Peluquería',
-      width: 750,
-      html: `
-        <div class="grid grid-cols-3 gap-2 mb-4 text-left">
-          <div class="bg-slate-50 rounded-xl p-3">
-            <p class="text-[8px] font-black text-slate-400 uppercase">Total servicios</p>
-            <p class="text-lg font-black text-slate-800">${servicios.length} perros</p>
-            <p class="text-[9px] text-slate-500">Con ayudante: <b>${perrosConAyu}</b></p>
-            <p class="text-[9px] text-slate-500">Sin ayudante: <b>${perrosSinAyu}</b></p>
-          </div>
-          <div class="bg-purple-50 rounded-xl p-3">
-            <p class="text-[8px] font-black text-purple-400 uppercase">Peluquera</p>
-            <p class="text-lg font-black text-purple-700">$${totalPelu.toFixed(2)}</p>
-            <p class="text-[9px] text-slate-400">(ya descontado $1/perro)</p>
-          </div>
-          <div class="bg-blue-50 rounded-xl p-3">
-            <p class="text-[8px] font-black text-blue-400 uppercase">Ayudante</p>
-            <p class="text-lg font-black text-blue-700">$${pagoAyu1Real.toFixed(2)}</p>
-            <p class="text-[9px] text-slate-400">${perrosConAyu} perros × $1 × 2</p>
-          </div>
-        </div>
-        <div class="grid grid-cols-3 gap-2 mb-4">
-          <div class="bg-emerald-50 rounded-xl p-3 text-center">
-            <p class="text-[8px] font-black text-emerald-500 uppercase">Neto Avipet</p>
-            <p class="text-base font-black text-emerald-700">$${totalAvipet.toFixed(2)}</p>
-          </div>
-          <div class="bg-red-50 rounded-xl p-3 text-center">
-            <p class="text-[8px] font-black text-red-400 uppercase">Pendiente</p>
-            <p class="text-base font-black text-red-700">$${pendiente.toFixed(2)}</p>
-          </div>
-          <div class="bg-slate-800 rounded-xl p-3 text-center">
-            <p class="text-[8px] font-black text-slate-400 uppercase">Bruto semana</p>
-            <p class="text-base font-black text-white">$${totalBruto.toFixed(2)}</p>
-          </div>
-        </div>
-        <div style="max-height:300px;overflow-y:auto;">
-          <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr style="background:#1e293b;color:#fff;font-size:8px;text-transform:uppercase;">
-                <th style="padding:5px 8px;text-align:left;">Fecha</th>
-                <th style="padding:5px 8px;text-align:left;">Mascota</th>
-                <th style="padding:5px 8px;text-align:center;">Precio</th>
-                <th style="padding:5px 8px;text-align:center;">Peluquera</th>
-                <th style="padding:5px 8px;text-align:center;">Ayudante</th>
-                <th style="padding:5px 8px;text-align:center;">Pago</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`,
+      width: 700,
+      html: htmlModal,
       confirmButtonText: 'Cerrar',
       confirmButtonColor: '#1d4ed8'
     });
 
-  } catch(e) { console.error(e); alert("❌ Error: "+e.message); }
+  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
 };
 
 console.log("✅ finanzas.js v2 — cálculos completos, períodos Hoy/Semana/Mes");
