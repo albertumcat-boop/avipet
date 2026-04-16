@@ -10,7 +10,7 @@
 import { db } from './firebase-config.js';
 import {
   collection, addDoc, getDocs, query, where,
-  serverTimestamp
+  updateDoc, doc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let _chartDist = null, _chartDoc = null, _chartServ = null;
@@ -363,9 +363,6 @@ window.ajustarPagoPeluqueria = async () => {
 
   // Paso 2: cargar servicios pendientes de esa fecha
   try {
-    const { getDocs, query, where, collection, updateDoc, doc, serverTimestamp } =
-      await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-
     const snap = await getDocs(query(collection(db,"servicios_estetica"), where("fechaSimple","==",fechaSimple)));
     if (snap.empty) {
       Swal.fire({ icon:'info', title:'Sin registros', text:'No hay servicios para: '+fechaSimple, timer:2000, showConfirmButton:false });
