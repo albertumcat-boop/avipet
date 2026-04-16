@@ -14,36 +14,153 @@ import {
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
 
+// ─── GESTIÓN DE MASCOTAS EN FORMULARIO ───────────────────
+window.agregarMascotaPelu = () => {
+  const lista = document.getElementById('listaMascotasPelu');
+  if (!lista) return;
+
+  const filas = lista.querySelectorAll('.mascota-pelu-row');
+  if (filas.length >= 10) { alert('Máximo 10 mascotas por registro.'); return; }
+
+  const row = document.createElement('div');
+  row.className = "mascota-pelu-row flex gap-2 items-center";
+  row.innerHTML = `
+    <div class="flex-1">
+      <input type="text" placeholder="Nombre mascota"
+             class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
+    </div>
+    <div class="w-24">
+      <input type="text" placeholder="Raza"
+             class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+    </div>
+    <button type="button" onclick="this.parentElement.remove()"
+            class="text-red-400 font-black text-lg hover:text-red-600 flex-shrink-0">×</button>`;
+  lista.appendChild(row);
+};
+
+// Leer todas las mascotas del formulario
+function _leerMascotasPelu() {
+  const filas = document.querySelectorAll('.mascota-pelu-row');
+  const mascotas = [];
+  filas.forEach(row => {
+    const nombre = row.querySelector('.pelu-nombre')?.value.trim().toUpperCase();
+    const raza   = row.querySelector('.pelu-raza')?.value.trim() || '';
+    if (nombre) mascotas.push({ nombre, raza });
+  });
+  return mascotas;
+}
+
 // ─── 1. GUARDAR SERVICIO ───
 window.guardarPeluqueriaPro = async () => {
   const val=(id)=>document.getElementById(id)?.value.trim()||"";
-  const cedula=val('pCedula'),duenio=val('pDuenio'),mascota=val('pNombre'),raza=val('pRaza'),telefono=val('pTelefono'),direccion=val('pDireccion'),condicion=val('pCondicion');
+  const cedula=val('pCedula'),duenio=val('pDuenio'),telefono=val('pTelefono'),direccion=val('pDireccion'),condicion=val('pCondicion');
   const base=parseFloat(document.getElementById('pTamano')?.value)||0,ajuste=parseFloat(val('pAjuste'))||0;
   const tipoServ=document.getElementById('pTipoServicio')?.value||"completo";
   let precioUnas=parseFloat(document.getElementById('pPrecioUnas')?.value);if(isNaN(precioUnas)||precioUnas<0)precioUnas=0;
-  if(!cedula||!mascota){Swal.fire("⚠️ ATENCIÓN","Cédula y Mascota son obligatorios.","warning");return;}
+
+  // ── Leer TODAS las mascotas del formulario ──
+  const mascotas = _leerMascotasPelu();
+  if (!cedula) { Swal.fire("⚠️ ATENCIÓN","La cédula es obligatoria.","warning"); return; }
+  if (mascotas.length === 0) { Swal.fire("⚠️ ATENCIÓN","Agrega al menos una mascota.","warning"); return; }
+
   let precioFinal=tipoServ==='solo_unas'?precioUnas:(base+ajuste);
   const tieneAyu1=document.getElementById('pAyudante1')?.checked,tieneAyuExt=document.getElementById('pAyudanteExtra')?.checked,extraSolo=document.getElementById('pExtraSolo')?.checked,montoAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||2;
   let pagoPelu=0,pagoAyu1=0,pagoAyuExt=0,ingresoAvipet=0;
   if(extraSolo){pagoAyuExt=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;}
   else if(tieneAyuExt){const p=precioFinal/3;pagoPelu=p;pagoAyuExt=p;ingresoAvipet=p;}
   else{pagoPelu=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;if(tieneAyu1){pagoPelu-=montoAyu1;pagoAyu1=montoAyu1;}}
-  const pin=prompt(`🔐 FIRMA EMPLEADO\nTotal: $${precioFinal.toFixed(2)}\nPIN de empleado o clave maestra:`);if(!pin)return;
+
+  // PIN — mostrar total acumulado si son varias mascotas
+  const totalAcumulado = precioFinal * mascotas.length;
+  const txtPin = mascotas.length > 1
+    ? `🔐 FIRMA EMPLEADO
+${mascotas.length} mascotas · $${precioFinal.toFixed(2)} c/u = $${totalAcumulado.toFixed(2)} total
+PIN de empleado o clave maestra:`
+    : `🔐 FIRMA EMPLEADO
+Total: $${precioFinal.toFixed(2)}
+PIN de empleado o clave maestra:`;
+  const pin=prompt(txtPin);if(!pin)return;
   const empleadoInfo=await window.validarEmpleadoConPin(String(pin).trim());
   if(!empleadoInfo&&String(pin).trim()!==MASTER_KEY()){alert("❌ PIN incorrecto.");return;}
   const nombreEmpleado=empleadoInfo?empleadoInfo.nombre:"ADMIN_MASTER";
+
   try{
-    const idFid=`${cedula}-${mascota}`.toLowerCase().replace(/\s+/g,'');const fidRef=doc(db,"fidelidad_peluqueria",idFid);const fidSnap=await getDoc(fidRef);
-    let visitas=fidSnap.exists()?(fidSnap.data().contador||0):0;let nuevaVis=visitas+1;if(nuevaVis>10)nuevaVis=1;const esPremio=nuevaVis===10;
-    const ahora=new Date();const fechaSimple=`${ahora.getDate()}/${ahora.getMonth()+1}/${ahora.getFullYear()}`;const hora=ahora.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    await addDoc(collection(db,"servicios_estetica"),{cedulaCliente:cedula,duenio,paciente:mascota,raza,telefono,direccion,condicion,precioTotal:precioFinal,visitaNumero:nuevaVis,fecha:serverTimestamp(),fechaSimple,hora,tipo:"PELUQUERIA",servicio:tipoServ,pagoPeluquera:pagoPelu,pagoAyudante1:pagoAyu1,pagoAyudanteExtra:pagoAyuExt,ingresoAvipet:esPremio?0:ingresoAvipet,estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,montoPagadoUSD:0,montoPagadoBS:0,tasaCambioPago:0});
-    await setDoc(fidRef,{contador:nuevaVis,ultimaVisita:serverTimestamp(),ultimaFechaSimple:fechaSimple,paciente:mascota,propietario:duenio,cedula,telefono,historialVisitas:arrayUnion({visita:nuevaVis,fecha:fechaSimple,creadoEn:new Date()})},{merge:true});
-    await Swal.fire({icon:esPremio?'success':'info',title:esPremio?'🎉 ¡VISITA #10 GRATIS!':'✅ REGISTRO EXITOSO',text:`${mascota} — Visita ${nuevaVis}/10`,timer:2000,showConfirmButton:false});
-    await window.cargarBitacoraHoy();_limpiarPelu();window.showTab('historia');
+    const ahora=new Date();
+    const fechaSimple=`${ahora.getDate()}/${ahora.getMonth()+1}/${ahora.getFullYear()}`;
+    const hora=ahora.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const premios = [];
+
+    // ── Crear un registro independiente por cada mascota ──
+    for (const pet of mascotas) {
+      const mascota = pet.nombre;
+      const raza    = pet.raza;
+
+      const idFid=`${cedula}-${mascota}`.toLowerCase().replace(/\s+/g,'');
+      const fidRef=doc(db,"fidelidad_peluqueria",idFid);
+      const fidSnap=await getDoc(fidRef);
+      let visitas=fidSnap.exists()?(fidSnap.data().contador||0):0;
+      let nuevaVis=visitas+1;if(nuevaVis>10)nuevaVis=1;
+      const esPremio=nuevaVis===10;
+      if(esPremio) premios.push(mascota);
+
+      await addDoc(collection(db,"servicios_estetica"),{
+        cedulaCliente:cedula,duenio,paciente:mascota,raza,telefono,direccion,condicion,
+        precioTotal:precioFinal,visitaNumero:nuevaVis,
+        fecha:serverTimestamp(),fechaSimple,hora,tipo:"PELUQUERIA",servicio:tipoServ,
+        pagoPeluquera:pagoPelu,pagoAyudante1:pagoAyu1,pagoAyudanteExtra:pagoAyuExt,
+        ingresoAvipet:esPremio?0:ingresoAvipet,
+        estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,
+        montoPagadoUSD:0,montoPagadoBS:0,modoPago:''
+      });
+
+      await setDoc(fidRef,{
+        contador:nuevaVis,ultimaVisita:serverTimestamp(),ultimaFechaSimple:fechaSimple,
+        paciente:mascota,propietario:duenio,cedula,telefono,
+        historialVisitas:arrayUnion({visita:nuevaVis,fecha:fechaSimple,creadoEn:new Date()})
+      },{merge:true});
+    }
+
+    // Mensaje de confirmación
+    if (premios.length > 0) {
+      await Swal.fire({icon:'success',title:'🎉 ¡VISITA #10 GRATIS!',
+        text:`¡${premios.join(', ')} llegó a la visita #10!`,timer:3000,showConfirmButton:false});
+    } else {
+      const txt = mascotas.length > 1
+        ? `${mascotas.length} mascotas registradas · $${totalAcumulado.toFixed(2)} total`
+        : `${mascotas[0].nombre} registrada`;
+      await Swal.fire({icon:'info',title:'✅ REGISTRO EXITOSO',text:txt,timer:2000,showConfirmButton:false});
+    }
+
+    await window.cargarBitacoraHoy();
+    _limpiarPelu();
   }catch(e){console.error(e);alert("❌ ERROR: "+e.message);}
 };
 
-function _limpiarPelu(){['pCedula','pDuenio','pNombre','pRaza','pAjuste','pCondicion','pTelefono','pDireccion'].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});['pTotalCobro','pResPeluquera','pResAyudante1','pResAyudanteExtra'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerText="$ 0.00";});const a1=document.getElementById('pAyudante1');if(a1){a1.checked=true;a1.disabled=false;}['pAyudanteExtra','pExtraSolo'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});}
+function _limpiarPelu(){
+  ['pCedula','pDuenio','pNombre','pRaza','pAjuste','pCondicion','pTelefono','pDireccion']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  ['pTotalCobro','pResPeluquera','pResAyudante1','pResAyudanteExtra']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.innerText="$ 0.00";});
+  const a1=document.getElementById('pAyudante1');
+  if(a1){a1.checked=true;a1.disabled=false;}
+  ['pAyudanteExtra','pExtraSolo'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+
+  // Limpiar lista de mascotas — dejar solo la primera fila vacía
+  const lista=document.getElementById('listaMascotasPelu');
+  if(lista){
+    lista.innerHTML=`
+      <div class="mascota-pelu-row flex gap-2 items-center">
+        <div class="flex-1">
+          <input type="text" placeholder="Nombre mascota"
+                 class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
+        </div>
+        <div class="w-24">
+          <input type="text" placeholder="Raza"
+                 class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+        </div>
+      </div>`;
+  }
+}
 
 // ─── 2. BITÁCORA DEL DÍA ───
 window.cargarBitacoraHoy = async () => {
