@@ -433,9 +433,9 @@
         <div class="flex items-center gap-1 border-b border-slate-200">
           <span class="text-[8px] font-bold text-slate-500 w-20 flex-shrink-0">F. NAC.:</span>
           <input id="hv_fechaNacimiento" type="date" class="flex-1 text-[9px]">
-          <button type="button" onclick="document.getElementById('hv_fechaNacimiento').value=''"
-                  class="no-print text-slate-300 hover:text-red-400 font-black text-sm flex-shrink-0 px-1"
-                  title="Borrar fecha">✕</button>
+          <button type="button" onclick="_llamarFuncion('borrarFechaNacVacuna')"
+                  class="no-print text-red-400 hover:text-red-600 font-black text-sm flex-shrink-0 px-1 leading-none"
+                  title="Borrar fecha de nacimiento">✕</button>
         </div>
       </div>
       <div class="border border-slate-400 rounded p-1.5 space-y-1">
