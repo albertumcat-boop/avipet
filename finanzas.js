@@ -38,8 +38,13 @@ function _getFechasRango() {
   const fmt  = d => d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
   if (_periodoActual === 'hoy') return [fmt(hoy)];
   if (_periodoActual === 'semana') {
+    // Semana actual: desde el lunes hasta hoy
     const fechas = [];
-    for (let i = 6; i >= 0; i--) { const d = new Date(hoy); d.setDate(hoy.getDate()-i); fechas.push(fmt(d)); }
+    const diaSemana = hoy.getDay(); // 0=dom, 1=lun, ..., 6=sab
+    const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1; // lunes = inicio
+    for (let i = diasDesdeElLunes; i >= 0; i--) {
+      const d = new Date(hoy); d.setDate(hoy.getDate()-i); fechas.push(fmt(d));
+    }
     return fechas;
   }
   if (_periodoActual === 'mes') {
@@ -56,7 +61,7 @@ window.cargarReporte = async () => {
   const netoDiv  = document.getElementById('repNeto');
   if (!listaDiv) return;
 
-  const tituloP = { hoy:'Hoy', semana:'Últimos 7 días', mes:'Este mes' };
+  const tituloP = { hoy:'Hoy', semana:'Semana actual (Lun-Hoy)', mes:'Este mes' };
   listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400 text-[10px] uppercase'>🔄 Cargando " + tituloP[_periodoActual] + "...</p>";
   _destroyCharts();
 
@@ -463,7 +468,10 @@ window.verResumenSemanalPelu = async () => {
   try {
     const hoy = new Date();
     const fechas = [];
-    for (let i = 6; i >= 0; i--) {
+    // Semana actual: desde el lunes hasta hoy (no los últimos 7 días)
+    const diaSemana = hoy.getDay(); // 0=dom, 1=lun...6=sab
+    const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1;
+    for (let i = diasDesdeElLunes; i >= 0; i--) {
       const d = new Date(hoy); d.setDate(hoy.getDate()-i);
       fechas.push(d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear());
     }
