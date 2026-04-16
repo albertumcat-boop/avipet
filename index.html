@@ -594,86 +594,171 @@
   ════════════════════════════════════════════ -->
   <section id="sectionReporte" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
     <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
+
+      <!-- Header -->
       <div class="flex justify-between items-center border-b-2 border-blue-600 p-4">
         <div class="flex items-center gap-3">
           <img src="avipet.png" alt="Logo" class="h-10 object-contain">
-          <h2 class="text-lg font-black text-slate-800 uppercase italic">Caja Diaria</h2>
+          <div>
+            <h2 class="text-lg font-black text-slate-800 uppercase italic leading-none">Finanzas</h2>
+            <p class="text-[8px] font-bold text-slate-400 uppercase">Resumen de Caja</p>
+          </div>
         </div>
-        <button onclick="window.cargarReporte()" class="text-[9px] font-black text-blue-600 border border-blue-200 px-3 py-1 rounded-lg uppercase hover:bg-blue-50">🔄 Actualizar</button>
+        <button onclick="window.cargarReporte()" class="text-[9px] font-black text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg uppercase hover:bg-blue-50">🔄 Actualizar</button>
       </div>
-      <div class="p-6">
 
-        <!-- Lista de operaciones del día -->
-        <div class="mb-6">
-          <h3 class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest italic">Operaciones de Hoy</h3>
-          <div id="listaReporte" class="divide-y divide-slate-100 text-[10px] max-h-48 overflow-y-auto bg-slate-50 p-3 rounded-lg border border-slate-200 font-bold text-slate-600 italic"></div>
+      <div class="p-4 space-y-5">
+
+        <!-- Selector de período -->
+        <div class="flex bg-slate-100 rounded-xl p-1 gap-1">
+          <button id="btnPeriodo_hoy" onclick="_llamarFuncion('cambiarPeriodoFinanzas','hoy')"
+                  class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-blue-600 text-white transition-all">Hoy</button>
+          <button id="btnPeriodo_semana" onclick="_llamarFuncion('cambiarPeriodoFinanzas','semana')"
+                  class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">7 Días</button>
+          <button id="btnPeriodo_mes" onclick="_llamarFuncion('cambiarPeriodoFinanzas','mes')"
+                  class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Este Mes</button>
         </div>
 
-        <!-- Cards resumen -->
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="p-3 border border-slate-200 rounded-lg">
-            <p class="text-[9px] font-black uppercase text-slate-400">Total Bruto</p>
-            <p id="repBruto" class="text-xl font-black text-slate-800 font-mono">$0.00</p>
-            <p class="text-[8px] text-blue-600 font-bold mt-1">Vet: <span id="repBrutoVet">$0.00</span></p>
-            <p class="text-[8px] text-indigo-600 font-bold">Pelu: <span id="repBrutoPelu">$0.00</span></p>
+        <!-- ── VETERINARIA ── -->
+        <div class="border border-blue-100 rounded-2xl overflow-hidden">
+          <div class="bg-blue-600 px-4 py-2">
+            <p class="text-[9px] font-black text-white uppercase tracking-widest">🩺 Veterinaria</p>
           </div>
-          <div class="p-3 border border-slate-200 rounded-lg bg-slate-50">
-            <p class="text-[9px] font-black uppercase text-slate-400">Costos Operativos</p>
-            <p id="repGastos" class="text-xl font-black text-slate-800 font-mono">$0.00</p>
-          </div>
-          <div class="p-4 border-l-4 border-blue-600 bg-blue-50/30 col-span-2 space-y-2 rounded-r-lg">
-            <div class="flex justify-between items-center border-b border-blue-100 pb-1">
-              <span class="text-[10px] font-bold uppercase text-slate-600 italic">Dr. Darwin Sandoval</span>
-              <span id="repDocSandoval" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
+          <div class="p-3 grid grid-cols-2 gap-2">
+            <div class="bg-slate-50 rounded-xl p-3 text-center">
+              <p class="text-[8px] font-black text-slate-400 uppercase">Bruto Cobrado</p>
+              <p id="repBrutoVet" class="text-lg font-black text-slate-800 font-mono">$0.00</p>
             </div>
-            <div class="flex justify-between items-center">
-              <span class="text-[10px] font-bold uppercase text-slate-600 italic">Dr. Joan Silva</span>
-              <span id="repDocSilva" class="text-lg font-black text-blue-700 font-mono">$0.00</span>
+            <div class="bg-amber-50 rounded-xl p-3 text-center">
+              <p class="text-[8px] font-black text-amber-600 uppercase">Insumos</p>
+              <p id="repGastos" class="text-lg font-black text-amber-700 font-mono">$0.00</p>
             </div>
           </div>
-          <div class="p-5 border-2 border-blue-600 rounded-xl col-span-2 text-center bg-white shadow-sm">
-            <p class="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1 italic">Utilidad Neta del Día (Avipet)</p>
-            <p id="repNeto" class="text-4xl font-black text-slate-800 font-mono">$0.00</p>
+          <!-- Doctores -->
+          <div class="mx-3 mb-3 border border-blue-100 rounded-xl overflow-hidden">
+            <div class="bg-blue-50 px-3 py-1.5">
+              <p class="text-[8px] font-black text-blue-500 uppercase">Comisiones Doctores</p>
+            </div>
+            <div class="divide-y divide-blue-50">
+              <div class="flex justify-between items-center px-3 py-2">
+                <div>
+                  <p class="text-[10px] font-black text-slate-700">Dr. Darwin Sandoval</p>
+                  <p class="text-[8px] text-slate-400">% sobre (Venta − Insumos)</p>
+                </div>
+                <span id="repDocSandoval" class="text-base font-black text-blue-700 font-mono">$0.00</span>
+              </div>
+              <div class="flex justify-between items-center px-3 py-2">
+                <div>
+                  <p class="text-[10px] font-black text-slate-700">Dr. Joan Silva</p>
+                  <p class="text-[8px] text-slate-400">40–50% sobre utilidad</p>
+                </div>
+                <span id="repDocSilva" class="text-base font-black text-blue-700 font-mono">$0.00</span>
+              </div>
+            </div>
+          </div>
+          <div class="mx-3 mb-3 bg-blue-600 rounded-xl p-3 flex justify-between items-center">
+            <div>
+              <p class="text-[8px] font-black text-blue-200 uppercase">Neto Avipet Vet</p>
+              <p class="text-[8px] text-blue-300 italic">Bruto − Insumos − Doctores</p>
+            </div>
+            <span id="fNetoVet" class="text-xl font-black text-white font-mono">$0.00</span>
           </div>
         </div>
 
-        <!-- Gráficas Chart.js -->
-        <div class="mb-6 space-y-4">
-          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b pb-2">📊 Análisis Visual</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- ── PELUQUERÍA ── -->
+        <div class="border border-purple-100 rounded-2xl overflow-hidden">
+          <div class="bg-purple-600 px-4 py-2">
+            <p class="text-[9px] font-black text-white uppercase tracking-widest">✂️ Peluquería</p>
+          </div>
+          <div class="p-3 grid grid-cols-3 gap-2">
+            <div class="bg-slate-50 rounded-xl p-2 text-center">
+              <p class="text-[7px] font-black text-slate-400 uppercase">Bruto</p>
+              <p id="fPeluTotal" class="text-sm font-black text-slate-800 font-mono">$0.00</p>
+            </div>
+            <div class="bg-red-50 rounded-xl p-2 text-center">
+              <p class="text-[7px] font-black text-red-400 uppercase">⏳ Pendiente</p>
+              <p id="fPeluPendiente" class="text-sm font-black text-red-700 font-mono">$0.00</p>
+            </div>
+            <div class="bg-purple-50 rounded-xl p-2 text-center">
+              <p class="text-[7px] font-black text-purple-400 uppercase">Neto Avipet</p>
+              <p id="fNetoPelu" class="text-sm font-black text-purple-700 font-mono">$0.00</p>
+            </div>
+          </div>
+          <!-- Comisiones peluquería -->
+          <div class="mx-3 mb-3 border border-purple-100 rounded-xl overflow-hidden">
+            <div class="bg-purple-50 px-3 py-1.5">
+              <p class="text-[8px] font-black text-purple-500 uppercase">Comisiones Peluquería</p>
+            </div>
+            <div class="divide-y divide-purple-50">
+              <div class="flex justify-between items-center px-3 py-2">
+                <div>
+                  <p class="text-[10px] font-black text-slate-700">Peluquera</p>
+                  <p class="text-[8px] text-slate-400">40% del precio</p>
+                </div>
+                <span id="fPeluPagos" class="text-base font-black text-purple-700 font-mono">$0.00</span>
+              </div>
+              <div class="flex justify-between items-center px-3 py-2">
+                <div>
+                  <p class="text-[10px] font-black text-slate-700">Ayudante Principal</p>
+                  <p class="text-[8px] text-slate-400">$1×perros×2 (descont. de peluquera)</p>
+                </div>
+                <span id="fPeluAyudantes" class="text-base font-black text-blue-600 font-mono">$0.00</span>
+              </div>
+              <div class="flex justify-between items-center px-3 py-2">
+                <div>
+                  <p class="text-[10px] font-black text-slate-700">Ayudante Extra</p>
+                  <p class="text-[8px] text-slate-400">40% si va solo / ÷3 si tridente</p>
+                </div>
+                <span id="fPeluAyudantesExtra" class="text-base font-black text-blue-600 font-mono">$0.00</span>
+              </div>
+            </div>
+          </div>
+          <!-- Caja peluquería -->
+          <div class="mx-3 mb-3 grid grid-cols-2 gap-2">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2 text-center">
+              <p class="text-[7px] font-black text-emerald-600 uppercase">💵 Cobrado USD</p>
+              <p id="fPeluCajaUsd" class="text-sm font-black text-emerald-800 font-mono">$0.00</p>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-2 text-center">
+              <p class="text-[7px] font-black text-amber-600 uppercase">🟡 Cobrado Bs</p>
+              <p id="fPeluCajaBs" class="text-sm font-black text-amber-800 font-mono">$0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── NETO TOTAL ── -->
+        <div class="border-2 border-blue-600 rounded-2xl p-4 text-center bg-white shadow-sm">
+          <p class="text-[9px] font-black uppercase text-blue-600 tracking-widest mb-1">💰 Utilidad Neta Total (Avipet)</p>
+          <p class="text-[8px] text-slate-400 mb-2">Vet: Bruto − Insumos − Doctores · Pelu: 60% del cobrado pagado</p>
+          <p id="repNeto" class="text-4xl font-black text-emerald-700 font-mono">$0.00</p>
+          <p class="text-[8px] font-bold text-slate-400 mt-2">
+            Vet: <span id="repBruto" class="text-slate-600">$0.00</span> bruto ·
+            Pelu: <span id="repBrutoPelu" class="text-slate-600">$0.00</span> bruto
+          </p>
+        </div>
+
+        <!-- ── DETALLE OPERACIONES ── -->
+        <div>
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">📋 Detalle de Operaciones</p>
+          <div id="listaReporte" class="space-y-1 max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <!-- ── GRÁFICAS ── -->
+        <div class="space-y-3">
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest border-b pb-2">📊 Análisis Visual</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p class="text-[9px] font-black text-slate-500 uppercase mb-2">Distribución de Ingresos</p>
-              <canvas id="chartDistribucion" height="180"></canvas>
+              <p class="text-[8px] font-black text-slate-500 uppercase mb-2">Distribución de cada $</p>
+              <canvas id="chartDistribucion" height="200"></canvas>
             </div>
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p class="text-[9px] font-black text-slate-500 uppercase mb-2">Darwin vs Joan (Comisiones)</p>
-              <canvas id="chartDoctores" height="180"></canvas>
+              <p class="text-[8px] font-black text-slate-500 uppercase mb-2">Darwin vs Joan</p>
+              <canvas id="chartDoctores" height="200"></canvas>
             </div>
           </div>
           <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-            <p class="text-[9px] font-black text-slate-500 uppercase mb-2">Top Pacientes / Ingresos del Día</p>
+            <p class="text-[8px] font-black text-slate-500 uppercase mb-2">Top pacientes por ingreso</p>
             <canvas id="chartServicios" height="120"></canvas>
-          </div>
-        </div>
-
-        <!-- Balance peluquería -->
-        <div class="border border-slate-300 rounded-xl p-4 bg-slate-50/50 mb-4">
-          <p class="text-[10px] font-black text-slate-400 uppercase text-center mb-3 tracking-widest border-b border-slate-200 pb-2 italic">✂️ Balance Estética Canina (Hoy)</p>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div class="text-center"><p class="text-[8px] font-bold text-slate-400 uppercase">Bruto</p><p id="fPeluTotal" class="text-sm font-black text-slate-800 font-mono">$0.00</p></div>
-            <div class="text-center border-x border-slate-200"><p class="text-[8px] font-bold text-slate-400 uppercase">Peluquera</p><p id="fPeluPagos" class="text-sm font-black text-blue-600 font-mono">$0.00</p></div>
-            <div class="text-center border-r border-slate-200"><p class="text-[8px] font-bold text-slate-400 uppercase">Ayudante P.</p><p id="fPeluAyudantes" class="text-sm font-black text-blue-600 font-mono">$0.00</p></div>
-            <div class="text-center"><p class="text-[8px] font-bold text-slate-400 uppercase">Ayudante E.</p><p id="fPeluAyudantesExtra" class="text-sm font-black text-blue-600 font-mono">$0.00</p></div>
-          </div>
-          <div class="mt-3 grid grid-cols-2 gap-2 text-center text-[8px]">
-            <div class="border border-emerald-200 rounded-lg bg-emerald-50 py-2">
-              <p class="font-bold text-emerald-700 uppercase">Caja Pelu USD</p>
-              <p id="fPeluCajaUsd" class="text-sm font-black text-emerald-800 font-mono">$0.00</p>
-            </div>
-            <div class="border border-amber-200 rounded-lg bg-amber-50 py-2">
-              <p class="font-bold text-amber-700 uppercase">Caja Pelu Bs</p>
-              <p id="fPeluCajaBs" class="text-sm font-black text-amber-800 font-mono">Bs 0.00</p>
-            </div>
           </div>
         </div>
 
@@ -725,12 +810,26 @@
 
         <!-- Botones caja -->
         <div class="space-y-3 mt-4">
-          <button onclick="window.generarCierrePeluqueria()" class="w-full bg-white border-2 border-blue-600 text-blue-600 py-3 rounded-lg font-black shadow-sm hover:bg-blue-600 hover:text-white transition-all uppercase text-[10px] tracking-widest italic">Liquidador Semanal Peluquería</button>
-          <div id="reportePeluqueriaResultados" class="hidden"></div>
-          <div class="grid grid-cols-2 gap-2 mt-4">
-            <button onclick="window.descargarReporte()"    class="bg-white border border-slate-300 text-slate-500 py-2 rounded-lg font-black text-[9px] hover:bg-slate-50 transition-colors uppercase italic">Descargar TXT</button>
-            <button onclick="window.guardarResumenDelDia()" class="bg-blue-600 text-white py-2 rounded-lg font-black text-[9px] shadow-md hover:bg-blue-700 transition-colors uppercase italic">Guardar en Nube</button>
+          <!-- Botones de acción -->
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="_llamarFuncion('verResumenSemanalPelu')"
+                    class="bg-purple-600 text-white py-2.5 rounded-xl font-black text-[9px] uppercase shadow hover:bg-purple-700 transition-all">
+              📊 Resumen Semanal Pelu
+            </button>
+            <button onclick="_llamarFuncion('ajustarPagoPeluqueria')"
+                    class="bg-amber-500 text-white py-2.5 rounded-xl font-black text-[9px] uppercase shadow hover:bg-amber-600 transition-all">
+              ✏️ Ajustar Pagos Anteriores
+            </button>
+            <button onclick="window.descargarReporte()"
+                    class="bg-white border border-slate-300 text-slate-500 py-2.5 rounded-xl font-black text-[9px] uppercase hover:bg-slate-50 transition-all">
+              📄 Descargar TXT
+            </button>
+            <button onclick="window.guardarResumenDelDia()"
+                    class="bg-blue-600 text-white py-2.5 rounded-xl font-black text-[9px] uppercase shadow hover:bg-blue-700 transition-all">
+              ☁️ Guardar en Nube
+            </button>
           </div>
+          <div id="reportePeluqueriaResultados" class="hidden"></div>
         </div>
       </div>
     </div>
@@ -867,10 +966,9 @@
                 <input type="checkbox" id="pAyudante1" checked onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600">
                 <span class="text-[9px] font-black text-slate-600 uppercase">Ayudante Principal</span>
               </label>
-              <div class="flex items-center gap-1 font-mono text-blue-600 font-bold">
-                <span class="text-[10px]">$</span>
-                <input type="number" id="pMontoAyu1" value="2" oninput="_llamarFuncion('recalcularTotalPelu')"
-                       class="w-8 text-center text-xs outline-none bg-transparent">
+              <div class="flex items-center gap-1 font-mono text-blue-600 font-bold text-[9px]">
+                <span class="text-slate-400 font-normal">$1×perro×2</span>
+                <input type="hidden" id="pMontoAyu1" value="1">
               </div>
             </div>
             <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
@@ -936,13 +1034,22 @@
 
       <!-- Bitácora del día -->
       <div class="bg-slate-50 p-6 border-t border-slate-200">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex justify-between items-center mb-3">
           <h3 class="text-sm font-black text-slate-800 uppercase italic flex items-center gap-2">
             <span class="w-1 h-5 bg-blue-600 rounded-full"></span>
-            Bitácora de Salida (Hoy)
+            Bitácora de Peluquería
           </h3>
           <button onclick="window.cargarBitacoraHoy()"
-                  class="text-[9px] bg-white border border-slate-300 px-3 py-1 rounded-lg font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-100">🔄 Actualizar</button>
+                  class="text-[9px] bg-white border border-slate-300 px-3 py-1 rounded-lg font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-100">📅 Hoy</button>
+        </div>
+        <!-- Búsqueda por fecha -->
+        <div class="flex items-center gap-2 mb-4 bg-white border border-slate-200 rounded-xl p-2">
+          <input type="date" id="fechaBitacora"
+                 class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none focus:border-blue-500 bg-slate-50">
+          <button type="button" onclick="_llamarFuncion('buscarBitacoraFecha')"
+                  class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-blue-700 transition-all">
+            🔍 Buscar fecha
+          </button>
         </div>
         <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div class="col-span-full py-8 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white">
