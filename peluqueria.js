@@ -101,6 +101,11 @@ window.guardarPeluqueriaPro = async () => {
     const premios = [];
 
     // ── Crear un registro independiente por cada mascota ──
+    // Calcular pago ayudante principal: $1 × perros_con_ayudante × 2
+    const cantConAyu = tieneAyu1 ? mascotas.length : 0;
+    const totalAyu1  = cantConAyu * 1 * 2; // $1 por perro × 2 = pago total ayudante
+    const descPeluPorPerro = tieneAyu1 ? 1 : 0; // $1 se descuenta por perro de la peluquera
+
     for (const pet of mascotas) {
       const mascota = pet.nombre;
       const raza    = pet.raza;
@@ -116,7 +121,10 @@ window.guardarPeluqueriaPro = async () => {
         const p=precioEsta/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
       } else {
         pagoPeluEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
-        if(tieneAyu1){ pagoPeluEsta-=montoAyu1; pagoAyu1Esta=montoAyu1; }
+        if(tieneAyu1){
+          pagoPeluEsta -= descPeluPorPerro;   // $1 por perro descontado a peluquera
+          pagoAyu1Esta  = descPeluPorPerro;   // guardado por perro para sumar en semana
+        }
       }
 
       const idFid=`${cedula}-${mascota}`.toLowerCase().replace(/\s+/g,'');
@@ -196,14 +204,33 @@ function _limpiarPelu(){
   }
 }
 
-// ─── 2. BITÁCORA DEL DÍA ───
+// ─── BUSCAR BITÁCORA POR FECHA ───────────────────────────
+window.buscarBitacoraFecha = async () => {
+  const inputFecha = document.getElementById('fechaBitacora');
+  if (!inputFecha?.value) {
+    Swal.fire({ icon:'warning', title:'Selecciona una fecha', timer:1500, showConfirmButton:false });
+    return;
+  }
+  // Convertir de YYYY-MM-DD a D/M/YYYY
+  const [yr, mo, dy] = inputFecha.value.split('-');
+  const fechaSimple = parseInt(dy) + '/' + parseInt(mo) + '/' + yr;
+  await _cargarBitacoraFecha(fechaSimple);
+};
+
 window.cargarBitacoraHoy = async () => {
+  const hoy = new Date();
+  const fechaSimple = hoy.getDate() + '/' + (hoy.getMonth()+1) + '/' + hoy.getFullYear();
+  await _cargarBitacoraFecha(fechaSimple);
+};
+
+// ─── 2. BITÁCORA DEL DÍA ───
+async function _cargarBitacoraFecha(fechaSimple) {
   const cuerpo=document.getElementById('bitacoraPeluqueriaHoy');if(!cuerpo)return;
-  cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-dashed border-blue-200 rounded-2xl bg-blue-50/30"><p class="text-blue-500 text-[10px] font-black uppercase animate-pulse italic">⚙️ Sincronizando...</p></div>`;
+  cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-dashed border-blue-200 rounded-2xl bg-blue-50/30"><p class="text-blue-500 text-[10px] font-black uppercase animate-pulse italic">⚙️ Cargando ${fechaSimple}...</p></div>`;
   try{
-    const hoy=new Date();const hoyS=`${hoy.getDate()}/${hoy.getMonth()+1}/${hoy.getFullYear()}`;
+    const hoyS = fechaSimple;
     const snap=await getDocs(query(collection(db,"servicios_estetica"),where("fechaSimple","==",hoyS)));
-    if(snap.empty){cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white"><p class="text-slate-400 text-[9px] font-black uppercase italic tracking-widest">Sin servicios registrados hoy</p></div>`;return;}
+    if(snap.empty){cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white"><p class="text-slate-400 text-[9px] font-black uppercase italic tracking-widest">Sin servicios para esta fecha</p></div>`;return;}
     const registros=[];snap.forEach(d=>registros.push({id:d.id,...d.data()}));registros.sort((a,b)=>(a.fecha?.seconds||0)-(b.fecha?.seconds||0));cuerpo.innerHTML="";
     registros.forEach((d,i)=>{
       const estatus=d.estatusPago||'pendiente';const pagado=estatus==='pagado';
@@ -549,7 +576,10 @@ window.recalcularTotalPelu = () => {
     } else {
       if (chkA1) chkA1.disabled = false;
       pelu = cobro * 0.40;
-      if (ayu1Act) { pelu -= mAyu1; a1 = mAyu1; }
+      if (ayu1Act) {
+          // $1 por perro descontado a la peluquera, pago ayudante = $1×perros×2 (mostrado al final)
+          pelu -= 1; a1 = 1; // por esta mascota individual
+        }
     }
 
     totalCobro += cobro;
