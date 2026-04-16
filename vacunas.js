@@ -227,4 +227,17 @@ window.volverAHistoriaDesdeVacunas = () => {
   else if (typeof window.showTab === 'function') window.showTab('historia');
 };
 
+// ─── BORRAR FECHA DE NACIMIENTO ───
+window.borrarFechaNacVacuna = () => {
+  const el = document.getElementById('hv_fechaNacimiento');
+  if (!el) return;
+  el.value = "";
+  el.type  = "text";   // cambiar a texto para poder dejarlo vacío visualmente
+  el.type  = "date";   // volver a date
+  // Forzar limpieza con valueAsDate
+  try { el.valueAsDate = null; } catch {}
+  el.removeAttribute('value');
+  el.dispatchEvent(new Event('change'));
+};
+
 console.log("✅ vacunas.js v2 cargado — fecha de nacimiento incluida");
