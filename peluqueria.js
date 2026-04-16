@@ -170,7 +170,7 @@ window.cargarBitacoraHoy = async () => {
     const hoy=new Date();const hoyS=`${hoy.getDate()}/${hoy.getMonth()+1}/${hoy.getFullYear()}`;
     const snap=await getDocs(query(collection(db,"servicios_estetica"),where("fechaSimple","==",hoyS)));
     if(snap.empty){cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white"><p class="text-slate-400 text-[9px] font-black uppercase italic tracking-widest">Sin servicios registrados hoy</p></div>`;return;}
-    const registros=[];snap.forEach(d=>registros.push({id:d.id,...d.data()}));registros.sort((a,b)=>(a.hora||"").localeCompare(b.hora||""));cuerpo.innerHTML="";
+    const registros=[];snap.forEach(d=>registros.push({id:d.id,...d.data()}));registros.sort((a,b)=>(a.fecha?.seconds||0)-(b.fecha?.seconds||0));cuerpo.innerHTML="";
     registros.forEach((d,i)=>{
       const estatus=d.estatusPago||'pendiente';const pagado=estatus==='pagado';
       const tlf=d.telefono||"Sin teléfono";const dir=d.direccion||"Sin dirección";
