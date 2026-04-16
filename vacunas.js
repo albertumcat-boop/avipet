@@ -106,12 +106,12 @@ window.imprimirHojaTest = () => {
   const raza        = document.getElementById('hRaza')?.value       || "";
   const edad        = document.getElementById('hEdad')?.value       || "";
   const sexo        = document.getElementById('hSexo')?.value       || "";
-  const peso        = document.getElementById('hPeso')?.value       || "";
+  const peso        = document.getElementById('hv_peso')?.value || document.getElementById('hPeso')?.value || "";
   const color       = document.getElementById('hColor')?.value      || "";
   const telefono    = document.getElementById('hTlf')?.value        || "";
   const direccion   = document.getElementById('hDir')?.value        || "";
   const doctor      = document.getElementById('selectDoctor')?.value || "";
-  const fechaNac    = document.getElementById('hFechaNac')?.value   || "";  // ← NUEVO
+  const fechaNac    = document.getElementById('hv_fechaNacimiento')?.value || document.getElementById('hFechaNac')?.value || "";
   const fecha       = new Date().toLocaleDateString();
 
   const filas = [];
