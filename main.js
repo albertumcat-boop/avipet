@@ -80,12 +80,10 @@ window.ejecutarCambioDeTab = (tabId) => {
 
   // Acciones post-navegación
   try {
-    if (tabId === 'reporte'       && typeof window.cargarReporte      === 'function') {
-      window.cargarReporte();
-      // Inicializar calculadora con tasa actual
-      setTimeout(() => {
-        if (typeof window.inicializarCalculadora === 'function') window.inicializarCalculadora();
-      }, 100);
+    if (tabId === 'reporte') {
+      // Usar _llamarFuncion para esperar a que el módulo cargue
+      _llamarFuncion('cargarReporte');
+      setTimeout(() => _llamarFuncion('inicializarCalculadora'), 300);
     }
     if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') {
       window.cargarBitacoraHoy();
