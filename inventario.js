@@ -93,7 +93,9 @@ window.descargarReporteProveedor=async()=>{try{const snap=await getDocs(collecti
 
 // ─── PANEL CONFIG ───
 // ─── CARGAR SELECTOR DE SERVICIOS DINÁMICAMENTE ──────────
-// Se llama al iniciar la app y después de crear/eliminar un servicio
+// Estrategia: el HTML ya tiene los servicios base estáticos.
+// Esta función SOLO agrega los servicios NUEVOS de Firebase
+// que no estén ya en el selector — se ejecuta en segundo plano.
 window.cargarSelectorServicios = async () => {
   const sel = document.getElementById('selectorServicios');
   if (!sel) return;
@@ -102,14 +104,10 @@ window.cargarSelectorServicios = async () => {
     const snap = await getDocs(collection(db, "servicios_maestro"));
     if (snap.empty) return;
 
-    // Agrupar por categoría
-    const grupos = {};
-    snap.forEach(d => {
-      const r   = d.data();
-      const cat = r.categoria || 'OTROS';
-      if (!grupos[cat]) grupos[cat] = [];
-      grupos[cat].push({ id: d.id, ...r });
-    });
+    // Recoger todos los valores que ya están en el selector (opciones estáticas)
+    const yaExisten = new Set(
+      Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase())
+    );
 
     // Íconos por categoría
     const iconos = {
@@ -121,18 +119,36 @@ window.cargarSelectorServicios = async () => {
       'OTROS':         '🐾',
     };
 
-    // Reconstruir el selector
-    sel.innerHTML = '<option value="">-- SELECCIONE UN SERVICIO --</option>';
-    Object.entries(grupos).sort().forEach(([cat, servicios]) => {
-      const grp = document.createElement('optgroup');
-      grp.label = (iconos[cat] || '🔹') + ' ' + cat;
+    // Agrupar solo los NUEVOS (no están en el HTML estático)
+    const nuevos = {};
+    snap.forEach(d => {
+      const nombre = d.id.toUpperCase();
+      if (!yaExisten.has(nombre)) {
+        const cat = d.data().categoria || 'OTROS';
+        if (!nuevos[cat]) nuevos[cat] = [];
+        nuevos[cat].push({ id: d.id, ...d.data() });
+      }
+    });
+
+    // Agregar los nuevos al selector agrupados
+    Object.entries(nuevos).sort().forEach(([cat, servicios]) => {
+      // Buscar si ya existe el optgroup de esa categoría
+      let grp = Array.from(sel.querySelectorAll('optgroup'))
+        .find(g => g.label.includes(cat));
+
+      if (!grp) {
+        grp = document.createElement('optgroup');
+        grp.label = (iconos[cat] || '🔹') + ' ' + cat;
+        sel.appendChild(grp);
+      }
+
       servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
         const opt = document.createElement('option');
         opt.value       = s.id;
         opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
+        opt.dataset.nuevo = 'true'; // marcar como dinámico
         grp.appendChild(opt);
       });
-      sel.appendChild(grp);
     });
 
   } catch(e) {
@@ -142,69 +158,49 @@ window.cargarSelectorServicios = async () => {
 
 // ─── ABRIR MODAL NUEVO SERVICIO ───────────────────────────
 window.abrirModalNuevoServicio = async () => {
+  var htmlModal = '<div class="space-y-3 text-left">';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>';
+  htmlModal += '<input id="ns_nombre" type="text" placeholder="Ej: RADIOGRAFIA SIMPLE" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500"></div>';
+  htmlModal += '<div class="grid grid-cols-2 gap-2">';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Precio ($)</label>';
+  htmlModal += '<input id="ns_precio" type="number" placeholder="0.00" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">% Doctor</label>';
+  htmlModal += '<input id="ns_porc" type="number" placeholder="40" step="0.5" min="0" max="100" value="40" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div></div>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoria (grupo en el selector)</label>';
+  htmlModal += '<select id="ns_categoria" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">';
+  htmlModal += '<option value="CONSULTAS">Consultas</option>';
+  htmlModal += '<option value="VACUNAS">Vacunas</option>';
+  htmlModal += '<option value="LABORATORIO">Laboratorio</option>';
+  htmlModal += '<option value="TESTS RAPIDOS">Tests Rapidos</option>';
+  htmlModal += '<option value="REFERIDOS">Referidos</option>';
+  htmlModal += '<option value="OTROS">Otros</option>';
+  htmlModal += '<option value="__nueva__">Crear nueva categoria...</option>';
+  htmlModal += '</select>';
+  htmlModal += '<input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGIAS, HOSPITALIZACION..." style="display:none" class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500 mt-2"></div>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Es una vacuna? (afecta combos de precios)</label>';
+  htmlModal += '<div class="flex gap-3">';
+  htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600"> <span class="text-[10px] font-bold">Si</span></label>';
+  htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600"> <span class="text-[10px] font-bold">No</span></label>';
+  htmlModal += '</div></div>';
+  htmlModal += '<div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[9px] text-blue-700 font-bold">El % Doctor se aplica sobre (Precio - Insumos), no sobre el precio bruto.</div>';
+  htmlModal += '</div>';
+
   const res = await Swal.fire({
-    title: '➕ Nuevo Servicio',
-    html: `
-      <div class="space-y-3 text-left">
-        <div>
-          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>
-          <input id="ns_nombre" type="text" placeholder="Ej: RADIOGRAFÍA SIMPLE"
-                 class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Precio ($)</label>
-            <input id="ns_precio" type="number" placeholder="0.00" step="0.50" min="0"
-                   class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">% Doctor</label>
-            <input id="ns_porc" type="number" placeholder="40" step="0.5" min="0" max="100" value="40"
-                   class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500">
-          </div>
-        </div>
-        <div>
-          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoría (grupo en el selector)</label>
-          <select id="ns_categoria" onchange="window._toggleCatPersonalizada(this.value)"
-                  class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
-            <option value="CONSULTAS">🩺 CONSULTAS</option>
-            <option value="VACUNAS">💉 VACUNAS</option>
-            <option value="LABORATORIO">🔬 LABORATORIO</option>
-            <option value="TESTS RÁPIDOS">🧪 TESTS RÁPIDOS</option>
-            <option value="REFERIDOS">📋 REFERIDOS</option>
-            <option value="OTROS">🐾 OTROS</option>
-            <option value="__nueva__">✏️ Crear nueva categoría...</option>
-          </select>
-          <input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGÍAS, HOSPITALIZACIÓN..."
-                 style="display:none"
-                 class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500 mt-2">
-        </div>
-        <div>
-          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">¿Es una vacuna? (afecta combos de precios)</label>
-          <div class="flex gap-2">
-            <label class="flex items-center gap-1 cursor-pointer">
-              <input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600">
-              <span class="text-[10px] font-bold">Sí</span>
-            </label>
-            <label class="flex items-center gap-1 cursor-pointer">
-              <input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600">
-              <span class="text-[10px] font-bold">No</span>
-            </label>
-          </div>
-        </div>
-        <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[9px] text-blue-600 font-bold">
-          💡 El % Doctor se aplica sobre <b>(Precio − Insumos)</b>, no sobre el precio bruto.
-        </div>
-      </div>`,
+    title: 'Nuevo Servicio',
+    html: htmlModal,
     showCancelButton: true,
     confirmButtonText: '✅ Crear Servicio',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#2563eb',
     didOpen: () => {
-      window._toggleCatPersonalizada = (val) => {
-        const inp = document.getElementById('ns_categoria_nueva');
-        if (inp) inp.style.display = val === '__nueva__' ? 'block' : 'none';
-      };
+      // Listener para mostrar/ocultar campo de categoría nueva
+      const catSel = document.getElementById('ns_categoria');
+      if (catSel) {
+        catSel.addEventListener('change', function() {
+          const inp = document.getElementById('ns_categoria_nueva');
+          if (inp) inp.style.display = this.value === '__nueva__' ? 'block' : 'none';
+        });
+      }
     },
     preConfirm: () => {
       const nombre    = document.getElementById('ns_nombre')?.value.trim().toUpperCase();
