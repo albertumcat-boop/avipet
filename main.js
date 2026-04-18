@@ -111,7 +111,7 @@ window.ejecutarCambioDeTab = (tabId) => {
         }, 200);
       }, 100);
     }
-    if (tabId === 'config_precios'&& typeof window.cambiarSubTabConfig=== 'function') window.cambiarSubTabConfig('servicios');
+    if (tabId === 'config_precios') _llamarFuncion('cambiarSubTabConfig', 'servicios');
   } catch (e) {
     console.warn('[AVIPET] Error en acción post-navegación:', e);
   }
@@ -336,12 +336,13 @@ const _iniciarAppNormal = async () => {
   // 3. Mostrar tab inicial (pequeño delay para que todos los módulos carguen)
   setTimeout(() => window.ejecutarCambioDeTab('historia'), 300);
 
-  // 3b. Cargar selector de servicios desde Firebase (dinámico)
+  // 3b. Cargar servicios NUEVOS de Firebase en segundo plano (sin bloquear)
+  // El selector ya tiene los servicios base en el HTML — esto solo agrega los nuevos
   setTimeout(() => {
     if (typeof window.cargarSelectorServicios === 'function') {
-      window.cargarSelectorServicios();
+      window.cargarSelectorServicios(); // silencioso, no borra el selector
     }
-  }, 1000);
+  }, 2000); // esperar 2s para que Firebase esté listo
 
   // 4. Restaurar respaldo automáticamente si hay datos recientes (sin preguntar)
   setTimeout(() => {
