@@ -188,7 +188,7 @@
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
-            <input id="hCI" onblur="window.autocompletarPorCedula(this.value)" class="border-b w-full font-bold text-blue-700"></div>
+            <input id="hCI" onblur="window.autocompletarPorCedula(this.value); if(typeof respaldarProgresoLocal==='function') respaldarProgresoLocal();" oninput="if(typeof respaldarProgresoLocal==='function') respaldarProgresoLocal();" class="border-b w-full font-bold text-blue-700"></div>
           <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
         </div>
         <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
@@ -324,7 +324,7 @@
         </div>
         <div class="flex flex-col">
           <label class="p-3 pb-0 text-[9px] font-bold text-blue-600 uppercase italic tracking-wider">✍️ Diagnóstico y Tratamiento:</label>
-          <textarea id="hTratamiento" class="w-full flex-grow p-3 text-sm font-medium leading-relaxed bg-white outline-none"
+          <textarea id="hTratamiento" oninput="if(typeof respaldarProgresoLocal==='function') respaldarProgresoLocal()" class="w-full flex-grow p-3 text-sm font-medium leading-relaxed bg-white outline-none"
                     placeholder="Escriba aquí hallazgos clínicos, diagnóstico y tratamiento..."></textarea>
         </div>
       </div>
