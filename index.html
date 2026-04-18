@@ -221,65 +221,7 @@
             <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">Añadir Servicios:</label>
             <select id="selectorServicios" class="menu-desplegable w-full p-2 border border-slate-400 rounded bg-white text-xs font-bold"
                     onchange="window.insertarServicio(this.value)">
-              <option value="">-- SELECCIONE UN SERVICIO --</option>
-              <optgroup label="🩺 CONSULTAS">
-                <option value="CONSULTA GENERAL">CONSULTA GENERAL</option>
-                <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
-                <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
-                <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
-                <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
-                <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
-              </optgroup>
-              <optgroup label="💉 VACUNAS">
-                <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
-                <option value="VACUNA PUPPY">VACUNA PUPPY</option>
-                <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
-                <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
-                <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
-                <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
-                <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
-              </optgroup>
-              <optgroup label="🔬 LABORATORIO">
-                <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
-                <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
-                <option value="HEMATOLOGIA + QUIMICA + HEMOPARASITOS">COMBO LAB COMPLETO</option>
-                <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
-                <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
-                <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
-                <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
-                <option value="RASPADO PIEL">RASPADO PIEL</option>
-                <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
-              </optgroup>
-              <optgroup label="🧪 TESTS RÁPIDOS">
-                <option value="DESCARTE HEMOPARASITO">TEST HEMOPARÁSITO</option>
-                <option value="DISTEMPER">TEST DISTEMPER</option>
-                <option value="PARVOVIRUS - CORONAVIRUS">TEST PARVOVIRUS</option>
-                <option value="FILARIASIS">TEST FILARIASIS</option>
-                <option value="SIDA - LEUCEMIA">TEST SIDA - LEUCEMIA</option>
-                <option value="TEST HELICOBACTER PYLORI AG">TEST HELICOBACTER</option>
-              </optgroup>
-              <optgroup label="📋 REFERIDOS">
-                <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: HECES</option>
-                <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: ORINA</option>
-                <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
-                <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: HEMOPARÁSITO</option>
-                <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
-                <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS</option>
-              </optgroup>
-              <optgroup label="🐾 OTROS PROCEDIMIENTOS">
-                <option value="ABSCESO">ABSCESO</option>
-                <option value="ECOGRAFÍA">ECOGRAFÍA</option>
-                <option value="COLOCACION VIA">COLOCACIÓN DE VÍA</option>
-                <option value="ADMINISTRACION MEDICINA">ADMINISTRACIÓN MEDICINA</option>
-                <option value="TOMA DE MUESTRA SANGRE">TOMA DE MUESTRA SANGRE</option>
-                <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
-                <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
-                <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
-                <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
-                <option value="KG ADICIONAL">KG ADICIONAL</option>
-                <option value="DISPOSICION">DISPOSICIÓN</option>
-                <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
-              </optgroup>
+              <option value="">⏳ Cargando servicios...</option>
             </select>
           </div>
           <div>
@@ -1351,8 +1293,18 @@
                 class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg">🚀 Inicializar</button>
       </div>
 
-      <div id="panel_subTabServicios" class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-        <div id="tablaServiciosMaestro"></div>
+      <div id="panel_subTabServicios" class="bg-slate-50 rounded-xl border border-slate-100 p-3">
+        <!-- Botón nuevo servicio + buscador -->
+        <div class="flex gap-2 mb-3">
+          <input type="text" id="filtroServiciosMaestro" placeholder="🔍 Buscar servicio..."
+                 oninput="_llamarFuncion('filtrarTablaServicios')"
+                 class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+          <button onclick="_llamarFuncion('abrirModalNuevoServicio')"
+                  class="bg-blue-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-blue-700 transition-all shadow">
+            ➕ Nuevo Servicio
+          </button>
+        </div>
+        <div id="tablaServiciosMaestro" class="overflow-x-auto"></div>
       </div>
       <div id="panel_subTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
         <div id="tablaInsumosMaestro"></div>
