@@ -1,0 +1,26 @@
+{
+  "name": "AVIPET — Centro Veterinario",
+  "short_name": "AVIPET",
+  "description": "Sistema integral veterinario AVIPET",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/avipet.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/avipet.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "business"],
+  "lang": "es"
+}
