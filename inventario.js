@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET — inventario.js  v2
+// AVIPET — inventario.js  v3 — 2026-04-18 SIN TEMPLATE LITERALS
 // NUEVO: función pública verificarStockProducto() para llamar
 //        desde historia.js al agregar servicios/meds
 // =========================================================
@@ -399,7 +399,72 @@ window.renderizarTablaMaestra = async () => {
 
 window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});if(typeof window.porcGlobalCache!=='undefined')window.porcGlobalCache=undefined;}catch(e){console.error("Error actualizando precio:",e);}};
 
-window.renderizarTablaInsumos=async()=>{const cont=document.getElementById('tablaInsumosMaestro');if(!cont)return;cont.innerHTML=`<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>`;try{const snap=await getDocs(collection(db,"insumos_maestro"));if(snap.empty){cont.innerHTML=`<p class="text-center text-slate-400 text-[9px] italic py-4">Sin insumos.</p>`;return;}let html=`<table class="w-full text-left border-collapse"><thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black italic"><th class="p-2">Insumo</th><th class="p-2 text-center w-24">Costo ($)</th><th class="p-2 text-center w-16">✕</th></tr></thead><tbody class="text-[10px]">`;snap.forEach(d=>{const r=d.data();html+=`<tr class="border-b border-slate-100 hover:bg-emerald-50"><td class="p-2 font-bold italic text-slate-700">${r.nombre||d.id}</td><td class="p-2 text-center"><input type="number" value="${r.costo||0}" step="0.05" min="0" onblur="window.actualizarCostoInsumo('${d.id}',this.value)" class="w-20 text-center border border-slate-300 rounded px-1 py-0.5 focus:border-blue-500 outline-none text-[10px]"></td><td class="p-2 text-center"><button onclick="window.eliminarInsumoIndividual('${d.id}','${(r.nombre||d.id).replace(/'/g,'')}')" class="text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white transition-all">✕</button></td></tr>`;});html+=`</tbody></table>`;cont.innerHTML=html;}catch(e){console.error(e);cont.innerHTML=`<p class="text-red-500 text-[9px] text-center italic py-4">❌ Error</p>`;}};
+window.renderizarTablaInsumos = async () => {
+  const cont = document.getElementById('tablaInsumosMaestro');
+  if (!cont) return;
+  cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db, "insumos_maestro"));
+    if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin insumos.</p>'; return; }
+
+    const tabla = document.createElement('table');
+    tabla.className = 'w-full text-left border-collapse';
+    tabla.innerHTML = '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
+      '<th class="p-2">Insumo</th><th class="p-2 text-center w-24">Costo ($)</th><th class="p-2 text-center w-16">Del</th>' +
+      '</tr></thead>';
+
+    const tbody = document.createElement('tbody');
+    tbody.className = 'text-[10px]';
+
+    snap.forEach(d => {
+      const r = d.data();
+      const nombreMostrar = r.nombre || d.id;
+
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-slate-100 hover:bg-emerald-50';
+
+      const tdNom = document.createElement('td');
+      tdNom.className = 'p-2 font-bold italic text-slate-700';
+      tdNom.textContent = nombreMostrar;
+      tr.appendChild(tdNom);
+
+      const tdCosto = document.createElement('td');
+      tdCosto.className = 'p-2 text-center';
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = '0.05'; inp.min = '0';
+      inp.value = r.costo || 0;
+      inp.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px]';
+      inp.dataset.id = d.id;
+      inp.addEventListener('blur', function() {
+        window.actualizarCostoInsumo(this.dataset.id, this.value);
+      });
+      tdCosto.appendChild(inp);
+      tr.appendChild(tdCosto);
+
+      const tdDel = document.createElement('td');
+      tdDel.className = 'p-2 text-center';
+      const btn = document.createElement('button');
+      btn.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
+      btn.textContent = '✕';
+      btn.dataset.id = d.id;
+      btn.dataset.nombre = nombreMostrar;
+      btn.addEventListener('click', function() {
+        window.eliminarInsumoIndividual(this.dataset.id, this.dataset.nombre);
+      });
+      tdDel.appendChild(btn);
+      tr.appendChild(tdDel);
+
+      tbody.appendChild(tr);
+    });
+
+    tabla.appendChild(tbody);
+    cont.innerHTML = '';
+    cont.appendChild(tabla);
+  } catch(e) {
+    console.error(e);
+    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error</p>';
+  }
+};
 
 window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costo:parseFloat(valor)||0,actualizadoEn:serverTimestamp()});}catch(e){console.error(e);}};
 
