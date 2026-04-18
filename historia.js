@@ -438,7 +438,7 @@ window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamien
 window.abrirHojaVacunasDesdeHistoria=()=>{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};const f=new Date();set('hv_fecha',`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);const campos={'hv_propietario':'hProp','hv_cedula':'hCI','hv_telefono':'hTlf','hv_direccion':'hDir','hv_especie':'hEspecie','hv_raza':'hRaza','hv_paciente':'hNombre','hv_edad':'hEdad','hv_sexo':'hSexo','hv_color':'hColor','hv_peso':'hPeso'};Object.entries(campos).forEach(([d,o])=>set(d,dVal(o)));set('hv_fechaNacimiento',dVal('hFechaNac'));document.getElementById('sectionHistoria')?.classList.add('hidden');const v=document.getElementById('sectionHojaVacunas');if(v){v.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}};
 
 // ─── SALA DE ESPERA ───
-window.enviarAColaEspera=async()=>{try{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const data={cedula:dVal('hCI'),propietario:dVal('hProp'),paciente:dVal('hNombre'),especie:dVal('hEspecie'),raza:dVal('hRaza'),edad:dVal('hEdad'),sexo:dVal('hSexo'),peso:dVal('hPeso'),telefono:dVal('hTlf'),correo:dVal('hMail'),direccion:dVal('hDir'),color:dVal('hColor'),fechaIngreso:serverTimestamp(),fechaSimple:`${new Date().getDate()}/${new Date().getMonth()+1}/${new Date().getFullYear()}`,estado:"en_espera"};if(!data.cedula||!data.paciente||!data.propietario){alert("⚠️ Cédula, Propietario y Paciente son obligatorios.");return;}await addDoc(collection(db,"espera"),data);alert("✅ Paciente enviado a sala de espera.");}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.enviarAColaEspera=async()=>{try{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const data={cedula:dVal('hCI'),propietario:dVal('hProp'),paciente:dVal('hNombre'),especie:dVal('hEspecie'),raza:dVal('hRaza'),edad:dVal('hEdad'),sexo:dVal('hSexo'),peso:dVal('hPeso'),telefono:dVal('hTlf'),correo:dVal('hMail'),direccion:dVal('hDir'),color:dVal('hColor'),fechaIngreso:serverTimestamp(),fechaSimple:`${new Date().getDate()}/${new Date().getMonth()+1}/${new Date().getFullYear()}`,estado:"en_espera"};if(!data.cedula||!data.paciente||!data.propietario){alert("⚠️ Cédula, Propietario y Paciente son obligatorios.");return;}await addDoc(collection(db,"espera"),data);localStorage.removeItem("respaldo_historia_activa");_limpiarFormularioHistoria();_limpiarNotasInternas();await Swal.fire({icon:"success",title:"✅ Enviado a Sala de Espera",text:data.paciente,timer:2000,showConfirmButton:false});}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-700">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} • CI: ${p.cedula}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
 window.abrirPacienteDesdeEspera=async(idEspera)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};set('hCI',d.cedula);set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hTlf',d.telefono);set('hMail',d.correo);set('hDir',d.direccion);set('hColor',d.color);await updateDoc(doc(db,"espera",idEspera),{estado:"atendiendo",fechaAtencion:serverTimestamp()});window.showTab('historia');alert(`✅ ${d.paciente} cargado.`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 window.eliminarDeSalaEspera=async(idEspera)=>{if(!confirm("¿Eliminar de la sala de espera?"))return;try{await updateDoc(doc(db,"espera",idEspera),{estado:"eliminado",fechaEliminacion:serverTimestamp()});alert("✅ Eliminado.");window.cargarListaEspera();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
@@ -696,5 +696,389 @@ window.guardarFirebase = async (imp) => {
     if (btn?.tagName === 'BUTTON') { btn.disabled = false; btn.innerText = textoOrig; }
   }
 };
+
+// ─── FUNCIONES DE AJUSTES (movidas aquí para garantizar carga) ───
+window.cargarSelectorServicios = async () => {
+  const sel = document.getElementById('selectorServicios');
+  if (!sel) return;
+
+  try {
+    const snap = await getDocs(collection(db, "servicios_maestro"));
+    if (snap.empty) return;
+
+    // Recoger todos los valores que ya están en el selector (opciones estáticas)
+    const yaExisten = new Set(
+      Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase())
+    );
+
+    // Íconos por categoría
+    const iconos = {
+      'CONSULTAS':     '🩺',
+      'VACUNAS':       '💉',
+      'LABORATORIO':   '🔬',
+      'TESTS RÁPIDOS': '🧪',
+      'REFERIDOS':     '📋',
+      'OTROS':         '🐾',
+    };
+
+    // Agrupar solo los NUEVOS (no están en el HTML estático)
+    const nuevos = {};
+    snap.forEach(d => {
+      const nombre = d.id.toUpperCase();
+      if (!yaExisten.has(nombre)) {
+        const cat = d.data().categoria || 'OTROS';
+        if (!nuevos[cat]) nuevos[cat] = [];
+        nuevos[cat].push({ id: d.id, ...d.data() });
+      }
+    });
+
+    // Agregar los nuevos al selector agrupados
+    Object.entries(nuevos).sort().forEach(([cat, servicios]) => {
+      // Buscar si ya existe el optgroup de esa categoría
+      let grp = Array.from(sel.querySelectorAll('optgroup'))
+        .find(g => g.label.includes(cat));
+
+      if (!grp) {
+        grp = document.createElement('optgroup');
+        grp.label = (iconos[cat] || '🔹') + ' ' + cat;
+        sel.appendChild(grp);
+      }
+
+      servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value       = s.id;
+        opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
+        opt.dataset.nuevo = 'true'; // marcar como dinámico
+        grp.appendChild(opt);
+      });
+    });
+
+  } catch(e) {
+    console.warn('Error cargando selector servicios:', e);
+  }
+};
+
+// ─── ABRIR MODAL NUEVO SERVICIO ───────────────────────────
+window.abrirModalNuevoServicio = async () => {
+  var htmlModal = '<div class="space-y-3 text-left">';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>';
+  htmlModal += '<input id="ns_nombre" type="text" placeholder="Ej: RADIOGRAFIA SIMPLE" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500"></div>';
+  htmlModal += '<div class="grid grid-cols-2 gap-2">';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Precio ($)</label>';
+  htmlModal += '<input id="ns_precio" type="number" placeholder="0.00" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">% Doctor</label>';
+  htmlModal += '<input id="ns_porc" type="number" placeholder="40" step="0.5" min="0" max="100" value="40" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div></div>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoria (grupo en el selector)</label>';
+  htmlModal += '<select id="ns_categoria" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">';
+  htmlModal += '<option value="CONSULTAS">Consultas</option>';
+  htmlModal += '<option value="VACUNAS">Vacunas</option>';
+  htmlModal += '<option value="LABORATORIO">Laboratorio</option>';
+  htmlModal += '<option value="TESTS RAPIDOS">Tests Rapidos</option>';
+  htmlModal += '<option value="REFERIDOS">Referidos</option>';
+  htmlModal += '<option value="OTROS">Otros</option>';
+  htmlModal += '<option value="__nueva__">Crear nueva categoria...</option>';
+  htmlModal += '</select>';
+  htmlModal += '<input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGIAS, HOSPITALIZACION..." style="display:none" class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500 mt-2"></div>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Es una vacuna? (afecta combos de precios)</label>';
+  htmlModal += '<div class="flex gap-3">';
+  htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600"> <span class="text-[10px] font-bold">Si</span></label>';
+  htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600"> <span class="text-[10px] font-bold">No</span></label>';
+  htmlModal += '</div></div>';
+  htmlModal += '<div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[9px] text-blue-700 font-bold">El % Doctor se aplica sobre (Precio - Insumos), no sobre el precio bruto.</div>';
+  htmlModal += '</div>';
+
+  const res = await Swal.fire({
+    title: 'Nuevo Servicio',
+    html: htmlModal,
+    showCancelButton: true,
+    confirmButtonText: '✅ Crear Servicio',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#2563eb',
+    didOpen: () => {
+      // Listener para mostrar/ocultar campo de categoría nueva
+      const catSel = document.getElementById('ns_categoria');
+      if (catSel) {
+        catSel.addEventListener('change', function() {
+          const inp = document.getElementById('ns_categoria_nueva');
+          if (inp) inp.style.display = this.value === '__nueva__' ? 'block' : 'none';
+        });
+      }
+    },
+    preConfirm: () => {
+      const nombre    = document.getElementById('ns_nombre')?.value.trim().toUpperCase();
+      const precio    = parseFloat(document.getElementById('ns_precio')?.value) || 0;
+      const porc      = parseFloat(document.getElementById('ns_porc')?.value)   || 40;
+      const catSel    = document.getElementById('ns_categoria')?.value || 'OTROS';
+      const catNueva  = document.getElementById('ns_categoria_nueva')?.value.trim().toUpperCase();
+      const categoria = catSel === '__nueva__' ? catNueva : catSel;
+      const esVacuna  = document.getElementById('ns_vacuna_si')?.checked || false;
+      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('⚠️ Escribe el nombre de la nueva categoría'); return false; }
+      if (!nombre) { Swal.showValidationMessage('⚠️ El nombre es obligatorio'); return false; }
+      if (precio <= 0) { Swal.showValidationMessage('⚠️ El precio debe ser mayor a 0'); return false; }
+      return { nombre, precio, porc, categoria, esVacuna };
+    }
+  });
+
+  if (!res.isConfirmed) return;
+  const { nombre, precio, porc, categoria, esVacuna } = res.value;
+
+  try {
+    // Verificar si ya existe
+    const existe = await getDoc(doc(db, "servicios_maestro", nombre));
+    if (existe.exists()) {
+      Swal.fire({ icon:'warning', title:'Ya existe', text:'Un servicio con ese nombre ya está registrado.', timer:2500, showConfirmButton:false });
+      return;
+    }
+
+    // Guardar en Firebase
+    await setDoc(doc(db, "servicios_maestro", nombre), {
+      precioVenta: precio,
+      porcDoc:     porc,
+      categoria,
+      esVacuna,
+      creadoEn:    serverTimestamp(),
+      activo:      true
+    });
+
+    // Recargar tabla y selector
+    await window.renderizarTablaMaestra();
+    await window.cargarSelectorServicios();
+
+    await Swal.fire({
+      icon: 'success',
+      title: '✅ Servicio creado',
+      html: `<b>${nombre}</b><br>$${precio.toFixed(2)} · ${porc}% doctor · ${categoria}`,
+      timer: 2500,
+      showConfirmButton: false
+    });
+
+  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+};
+
+// ─── ELIMINAR SERVICIO ────────────────────────────────────
+window.eliminarServicioMaestro = async (nombreServicio) => {
+  const res = await Swal.fire({
+    title: '🗑 Eliminar Servicio',
+    html: `<p class="text-[11px] text-slate-600">¿Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecerá en el selector de Historia Clínica.</p>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#dc2626'
+  });
+  if (!res.isConfirmed) return;
+
+  try {
+    await deleteDoc(doc(db, "servicios_maestro", nombreServicio));
+    await window.renderizarTablaMaestra();
+    await window.cargarSelectorServicios();
+    Swal.fire({ icon:'success', title:'✅ Eliminado', timer:1500, showConfirmButton:false });
+  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+};
+
+// ─── FILTRAR TABLA DE SERVICIOS ───────────────────────────
+window.filtrarTablaServicios = () => {
+  const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase() || '';
+  document.querySelectorAll('#tablaServiciosMaestro tr[data-nombre]').forEach(tr => {
+    tr.style.display = tr.dataset.nombre.includes(filtro) ? '' : 'none';
+  });
+};
+
+window.renderizarTablaMaestra = async () => {
+  const cont = document.getElementById('tablaServiciosMaestro');
+  if (!cont) return;
+  cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db, "servicios_maestro"));
+    if (snap.empty) {
+      cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios. Usa el boton + para agregar.</p>';
+      return;
+    }
+
+    const servicios = [];
+    snap.forEach(d => servicios.push({ id: d.id, ...d.data() }));
+    servicios.sort((a, b) => a.id.localeCompare(b.id));
+
+    // Construir tabla
+    const tabla = document.createElement('table');
+    tabla.className = 'w-full text-left border-collapse';
+    tabla.innerHTML =
+      '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
+      '<th class="p-2">Servicio</th>' +
+      '<th class="p-2 text-center">Categoria</th>' +
+      '<th class="p-2 text-center">Precio ($)</th>' +
+      '<th class="p-2 text-center">% Doc</th>' +
+      '<th class="p-2 text-center">OK</th>' +
+      '<th class="p-2 text-center">Del</th>' +
+      '</tr></thead>';
+
+    const tbody = document.createElement('tbody');
+    tbody.className = 'text-[10px]';
+
+    servicios.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-slate-100 hover:bg-blue-50';
+      tr.dataset.nombre = r.id;
+
+      // Nombre
+      const tdNom = document.createElement('td');
+      tdNom.className = 'p-2 font-bold uppercase text-slate-800';
+      tdNom.textContent = (r.esVacuna ? '💉 ' : '') + r.id;
+      tr.appendChild(tdNom);
+
+      // Categoría
+      const tdCat = document.createElement('td');
+      tdCat.className = 'p-2 text-center text-slate-500 text-[9px]';
+      tdCat.textContent = r.categoria || 'OTROS';
+      tr.appendChild(tdCat);
+
+      // Input precio
+      const tdPrecio = document.createElement('td');
+      tdPrecio.className = 'p-2 text-center';
+      const inpPrecio = document.createElement('input');
+      inpPrecio.type = 'number'; inpPrecio.step = '0.50'; inpPrecio.min = '0';
+      inpPrecio.value = r.precioVenta || 0;
+      inpPrecio.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
+      inpPrecio.dataset.id = r.id; inpPrecio.dataset.campo = 'precioVenta';
+      inpPrecio.addEventListener('blur', function() {
+        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
+      });
+      tdPrecio.appendChild(inpPrecio);
+      tr.appendChild(tdPrecio);
+
+      // Input % doctor
+      const tdPorc = document.createElement('td');
+      tdPorc.className = 'p-2 text-center';
+      const inpPorc = document.createElement('input');
+      inpPorc.type = 'number'; inpPorc.step = '0.5'; inpPorc.min = '0'; inpPorc.max = '100';
+      inpPorc.value = r.porcDoc || r.porcentajeDoc || 30;
+      inpPorc.className = 'w-16 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
+      inpPorc.dataset.id = r.id; inpPorc.dataset.campo = 'porcDoc';
+      inpPorc.addEventListener('blur', function() {
+        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
+      });
+      tdPorc.appendChild(inpPorc);
+      tr.appendChild(tdPorc);
+
+      // Botón guardar
+      const tdGuardar = document.createElement('td');
+      tdGuardar.className = 'p-2 text-center';
+      const btnGuardar = document.createElement('button');
+      btnGuardar.className = 'text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700';
+      btnGuardar.textContent = '✅';
+      btnGuardar.dataset.id = r.id;
+      btnGuardar.addEventListener('click', function() {
+        window.actualizarPrecioIndividual(this.dataset.id, 'guardado', null, true);
+      });
+      tdGuardar.appendChild(btnGuardar);
+      tr.appendChild(tdGuardar);
+
+      // Botón eliminar
+      const tdElim = document.createElement('td');
+      tdElim.className = 'p-2 text-center';
+      const btnElim = document.createElement('button');
+      btnElim.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
+      btnElim.textContent = '🗑';
+      btnElim.dataset.id = r.id;
+      btnElim.addEventListener('click', function() {
+        window.eliminarServicioMaestro(this.dataset.id);
+      });
+      tdElim.appendChild(btnElim);
+      tr.appendChild(tdElim);
+
+      tbody.appendChild(tr);
+    });
+
+    tabla.appendChild(tbody);
+    cont.innerHTML = '';
+    cont.appendChild(tabla);
+
+  } catch(e) {
+    console.error(e);
+    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error al cargar</p>';
+  }
+};
+
+window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});if(typeof window.porcGlobalCache!=='undefined')window.porcGlobalCache=undefined;}catch(e){console.error("Error actualizando precio:",e);}};
+
+window.renderizarTablaInsumos = async () => {
+  const cont = document.getElementById('tablaInsumosMaestro');
+  if (!cont) return;
+  cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db, "insumos_maestro"));
+    if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin insumos.</p>'; return; }
+
+    const tabla = document.createElement('table');
+    tabla.className = 'w-full text-left border-collapse';
+    tabla.innerHTML = '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
+      '<th class="p-2">Insumo</th><th class="p-2 text-center w-24">Costo ($)</th><th class="p-2 text-center w-16">Del</th>' +
+      '</tr></thead>';
+
+    const tbody = document.createElement('tbody');
+    tbody.className = 'text-[10px]';
+
+    snap.forEach(d => {
+      const r = d.data();
+      const nombreMostrar = r.nombre || d.id;
+
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-slate-100 hover:bg-emerald-50';
+
+      const tdNom = document.createElement('td');
+      tdNom.className = 'p-2 font-bold italic text-slate-700';
+      tdNom.textContent = nombreMostrar;
+      tr.appendChild(tdNom);
+
+      const tdCosto = document.createElement('td');
+      tdCosto.className = 'p-2 text-center';
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = '0.05'; inp.min = '0';
+      inp.value = r.costo || 0;
+      inp.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px]';
+      inp.dataset.id = d.id;
+      inp.addEventListener('blur', function() {
+        window.actualizarCostoInsumo(this.dataset.id, this.value);
+      });
+      tdCosto.appendChild(inp);
+      tr.appendChild(tdCosto);
+
+      const tdDel = document.createElement('td');
+      tdDel.className = 'p-2 text-center';
+      const btn = document.createElement('button');
+      btn.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
+      btn.textContent = '✕';
+      btn.dataset.id = d.id;
+      btn.dataset.nombre = nombreMostrar;
+      btn.addEventListener('click', function() {
+        window.eliminarInsumoIndividual(this.dataset.id, this.dataset.nombre);
+      });
+      tdDel.appendChild(btn);
+      tr.appendChild(tdDel);
+
+      tbody.appendChild(tr);
+    });
+
+    tabla.appendChild(tbody);
+    cont.innerHTML = '';
+    cont.appendChild(tabla);
+  } catch(e) {
+    console.error(e);
+    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error</p>';
+  }
+};
+
+window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costo:parseFloat(valor)||0,actualizadoEn:serverTimestamp()});}catch(e){console.error(e);}};
+
+window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`🔐 Eliminar "${nombreInsumo}"\nCLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`⚠️ Eliminar "${nombreInsumo}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`✅ Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+
+// ─── INICIALIZAR BD ───
+window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("🔐 CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm("⚠️ ¿Inicializar catálogo de servicios en Firebase?"))return;
+const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULTA OFTALMOLÓGICA":{precioVenta:80,porcDoc:12.5},"CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40},"ABSCESO":{precioVenta:25,porcDoc:50},"ECOGRAFÍA":{precioVenta:30,porcDoc:40},"COLOCACION VIA":{precioVenta:15,porcDoc:50},"ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50},"TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50},"VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50},"VACUNA PUPPY":{precioVenta:40,porcDoc:50},"VACUNA ANTIRRÁBICA":{precioVenta:30,porcDoc:50},"VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50},"VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50},"VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50},"VACUNA BIOVETA":{precioVenta:60,porcDoc:50},"HEMATOLOGÍA COMPLETA":{precioVenta:23,porcDoc:34.78},"QUÍMICA SANGUÍNEA":{precioVenta:60,porcDoc:50},"DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50},"DISTEMPER":{precioVenta:35,porcDoc:50},"PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"FILARIASIS":{precioVenta:40,porcDoc:50},"SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50},"TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50},"HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50},"EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50},"CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50},"RASPADO PIEL":{precioVenta:10,porcDoc:50},"PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5},"EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50},"EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50},"EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50},"EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50},"REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50},"REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50},"REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50},"REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40},"CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40},"CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40}};
+try{Swal.fire({title:'⏳ Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`✅ ${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("❌ Error: "+e.message);}};
+
+// ─── CAMBIAR SUB-TAB CONFIG ───
+window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white":"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();};
+
 
 console.log("✅ historia.js v3 — stock bajo, notas internas, recordatorio vacunas");
