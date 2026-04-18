@@ -267,25 +267,44 @@ export const respaldarProgresoLocal = () => {
       especie: leer('hEspecie'), raza: leer('hRaza'), edad: leer('hEdad'),
       sexo: leer('hSexo'), peso: leer('hPeso'), color: leer('hColor'),
       telefono: leer('hTlf'), correo: leer('hMail'), direccion: leer('hDir'),
-      tratamiento: leer('hTratamiento'), servicios, timestamp: Date.now()
+      tratamiento: leer('hTratamiento'), fechaNac: leer('hFechaNac'),
+      servicios, timestamp: Date.now()
     }));
   } catch (e) { console.warn("Respaldo fallido:", e); }
 };
 
-window.restaurarRespaldoLocal = () => {
+window.restaurarRespaldoLocal = (silencioso = false) => {
   try {
     const raw = localStorage.getItem('respaldo_historia_activa');
-    if (!raw) { alert("Sin respaldo disponible."); return; }
-    const d   = JSON.parse(raw);
-    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-    set('hCI', d.cedula); set('hProp', d.propietario); set('hNombre', d.paciente);
-    set('hEspecie', d.especie); set('hRaza', d.raza); set('hEdad', d.edad);
-    set('hSexo', d.sexo); set('hPeso', d.peso); set('hColor', d.color);
-    set('hTlf', d.telefono); set('hMail', d.correo); set('hDir', d.direccion);
-    set('hTratamiento', d.tratamiento);
+    if (!raw) { if (!silencioso) alert("Sin respaldo disponible."); return; }
+    const d = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+    set('hCI',         d.cedula);
+    set('hProp',       d.propietario);
+    set('hNombre',     d.paciente);
+    set('hEspecie',    d.especie);
+    set('hRaza',       d.raza);
+    set('hEdad',       d.edad);
+    set('hSexo',       d.sexo);
+    set('hPeso',       d.peso);
+    set('hColor',      d.color);
+    set('hTlf',        d.telefono);
+    set('hMail',       d.correo);
+    set('hDir',        d.direccion);
+    set('hTratamiento',d.tratamiento);
+    set('hFechaNac',   d.fechaNac);
     const hace = Math.round((Date.now() - d.timestamp) / 60000);
-    alert(`✅ Respaldo restaurado (hace ${hace} min).`);
-  } catch { alert("❌ Error restaurando respaldo."); }
+    if (!silencioso) {
+      Swal.fire({ icon:'success', title:'✅ Datos restaurados', text:'Hace ' + hace + ' minuto(s)', timer:2000, showConfirmButton:false });
+    } else if (d.cedula) {
+      // Mostrar notificación discreta en lugar de alert
+      const nota = document.createElement('div');
+      nota.className = 'no-print fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-lg text-[11px] font-black z-50';
+      nota.innerHTML = '✅ Datos restaurados — ' + (d.paciente || d.cedula);
+      document.body.appendChild(nota);
+      setTimeout(() => nota.remove(), 3000);
+    }
+  } catch (e) { console.warn('Error restaurando respaldo:', e); }
 };
 
 // ─── CALLBACK DOCTOR ───
@@ -317,21 +336,29 @@ const _iniciarAppNormal = async () => {
   // 3. Mostrar tab inicial (pequeño delay para que todos los módulos carguen)
   setTimeout(() => window.ejecutarCambioDeTab('historia'), 300);
 
-  // 4. Verificar respaldo local (solo si hay datos recientes)
-  try {
-    const raw = localStorage.getItem('respaldo_historia_activa');
-    if (raw) {
+  // 4. Restaurar respaldo automáticamente si hay datos recientes (sin preguntar)
+  setTimeout(() => {
+    try {
+      const raw = localStorage.getItem('respaldo_historia_activa');
+      if (!raw) return;
       const d = JSON.parse(raw);
       const hace = Math.round((Date.now() - d.timestamp) / 60000);
-      if (hace < 120 && d.cedula) {
-        const ok = confirm(
-          `⚠️ RESPALDO ENCONTRADO\n\nPaciente: ${d.paciente || '---'} · CI: ${d.cedula}\nGuardado hace ${hace} minuto(s).\n\n¿Restaurar la historia en progreso?`
-        );
-        if (ok) window.restaurarRespaldoLocal();
-        else localStorage.removeItem('respaldo_historia_activa');
+      // Solo restaurar si tiene cédula y es de menos de 4 horas
+      if (hace < 240 && d.cedula) {
+        window.restaurarRespaldoLocal(true); // silencioso = sin alert
+      } else if (hace >= 240) {
+        localStorage.removeItem('respaldo_historia_activa');
       }
-    }
-  } catch { /* silencioso */ }
+    } catch { /* silencioso */ }
+  }, 800); // esperar a que los módulos carguen
+
+  // 4b. Guardar respaldo automáticamente cada 15 segundos mientras el doctor escribe
+  setInterval(() => {
+    try {
+      const ci = document.getElementById('hCI')?.value || '';
+      if (ci) respaldarProgresoLocal(); // solo si hay algo escrito
+    } catch { /* silencioso */ }
+  }, 15000);
 
   // 5. Enter en modal
   document.getElementById('modalPinInput')?.addEventListener('keydown', e => {
