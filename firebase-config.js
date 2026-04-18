@@ -3,7 +3,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
-  enableIndexedDbPersistence
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
@@ -20,20 +22,22 @@ const firebaseConfig = {
 // Encendemos el motor
 const app = initializeApp(firebaseConfig);
 
-// Exportamos las herramientas para el sistema
-export const db      = getFirestore(app);
-export const storage = getStorage(app);
+// ── BASE DE DATOS CON SOPORTE OFFLINE ────────────────────
+// Usamos initializeFirestore con persistentLocalCache (Firebase 10.x)
+// Esto permite trabajar sin internet y sincronizar al volver la conexión
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  });
+  console.log("✅ AVIPET — modo offline activado");
+} catch (err) {
+  // Fallback: si ya fue inicializado, usar instancia existente
+  db = getFirestore(app);
+  console.log("✅ AVIPET — Firebase conectado (modo estándar)");
+}
 
-// ── MODO OFFLINE ──────────────────────────────────────────
-// Firebase guarda una copia local de los datos en el navegador.
-// Sin internet: lee del cache, las escrituras se guardan en cola.
-// Cuando vuelve el internet: sincroniza todo automáticamente.
-enableIndexedDbPersistence(db).then(() => {
-  console.log("✅ AVIPET modo offline activado");
-}).catch(err => {
-  if (err.code === 'failed-precondition') {
-    console.warn("⚠️ Offline: cierra otras pestañas de AVIPET");
-  } else if (err.code === 'unimplemented') {
-    console.warn("⚠️ Offline: este navegador no lo soporta");
-  }
-});
+export { db };
+export const storage = getStorage(app);
