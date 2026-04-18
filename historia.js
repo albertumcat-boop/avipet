@@ -7,11 +7,12 @@
 
 import { db } from './firebase-config.js';
 import {
-  collection, addDoc, doc, getDoc, updateDoc,
+  collection, addDoc, doc, getDoc, updateDoc, setDoc, deleteDoc,
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { respaldarProgresoLocal } from './main.js';
+const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || 'AVIPET2026';
 
 const normalizarNombre = (str) =>
   String(str).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
