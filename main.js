@@ -336,6 +336,13 @@ const _iniciarAppNormal = async () => {
   // 3. Mostrar tab inicial (pequeño delay para que todos los módulos carguen)
   setTimeout(() => window.ejecutarCambioDeTab('historia'), 300);
 
+  // 3b. Cargar selector de servicios desde Firebase (dinámico)
+  setTimeout(() => {
+    if (typeof window.cargarSelectorServicios === 'function') {
+      window.cargarSelectorServicios();
+    }
+  }, 1000);
+
   // 4. Restaurar respaldo automáticamente si hay datos recientes (sin preguntar)
   setTimeout(() => {
     try {
