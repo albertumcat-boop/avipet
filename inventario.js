@@ -282,38 +282,119 @@ window.filtrarTablaServicios = () => {
   });
 };
 
-window.renderizarTablaMaestra=async()=>{
-  const cont=document.getElementById('tablaServiciosMaestro');
-  if(!cont)return;
-  cont.innerHTML='<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
-  try{
-    const snap=await getDocs(collection(db,"servicios_maestro"));
-    if(snap.empty){cont.innerHTML='<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios. Usa el botón ➕ para agregar.</p>';return;}
-    let html='<table class="w-full text-left border-collapse">';
-    html+='<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">';
-    html+='<th class="p-2">Servicio</th>';
-    html+='<th class="p-2 text-center">Categoría</th>';
-    html+='<th class="p-2 text-center w-24">Precio ($)</th>';
-    html+='<th class="p-2 text-center w-20">% Doctor</th>';
-    html+='<th class="p-2 text-center w-16">Guardar</th>';
-    html+='<th class="p-2 text-center w-12">Eliminar</th>';
-    html+='</tr></thead><tbody class="text-[10px]">';
-    const servicios=[];snap.forEach(d=>servicios.push({id:d.id,...d.data()}));
-    servicios.sort((a,b)=>a.id.localeCompare(b.id));
-    servicios.forEach(r=>{
-      const esVacuna=r.esVacuna?'💉':''
-      html+='<tr class="border-b border-slate-100 hover:bg-blue-50" data-nombre="'+r.id+'">';
-      html+='<td class="p-2 font-bold uppercase text-slate-800">'+esVacuna+r.id+'</td>';
-      html+='<td class="p-2 text-center text-slate-500 text-[9px]">'+(r.categoria||'OTROS')+'</td>';
-      html+='<td class="p-2 text-center"><input type="number" value="'+(r.precioVenta||0)+'" step="0.50" min="0" onblur="window.actualizarPrecioIndividual(''+r.id+'','precioVenta',this.value)" class="w-20 text-center border border-slate-300 rounded px-1 py-0.5 focus:border-blue-500 outline-none text-[10px] font-bold"></td>';
-      html+='<td class="p-2 text-center"><input type="number" value="'+(r.porcDoc||r.porcentajeDoc||30)+'" step="0.5" min="0" max="100" onblur="window.actualizarPrecioIndividual(''+r.id+'','porcDoc',this.value)" class="w-16 text-center border border-slate-300 rounded px-1 py-0.5 focus:border-blue-500 outline-none text-[10px] font-bold"></td>';
-      html+='<td class="p-2 text-center"><button onclick="window.actualizarPrecioIndividual(''+r.id+'','guardado',null,true)" class="text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700">✅</button></td>';
-      html+='<td class="p-2 text-center"><button onclick="window.eliminarServicioMaestro(''+r.id+'')" class="text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white">🗑</button></td>';
-      html+='</tr>';
+window.renderizarTablaMaestra = async () => {
+  const cont = document.getElementById('tablaServiciosMaestro');
+  if (!cont) return;
+  cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db, "servicios_maestro"));
+    if (snap.empty) {
+      cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios. Usa el boton + para agregar.</p>';
+      return;
+    }
+
+    const servicios = [];
+    snap.forEach(d => servicios.push({ id: d.id, ...d.data() }));
+    servicios.sort((a, b) => a.id.localeCompare(b.id));
+
+    // Construir tabla
+    const tabla = document.createElement('table');
+    tabla.className = 'w-full text-left border-collapse';
+    tabla.innerHTML =
+      '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
+      '<th class="p-2">Servicio</th>' +
+      '<th class="p-2 text-center">Categoria</th>' +
+      '<th class="p-2 text-center">Precio ($)</th>' +
+      '<th class="p-2 text-center">% Doc</th>' +
+      '<th class="p-2 text-center">OK</th>' +
+      '<th class="p-2 text-center">Del</th>' +
+      '</tr></thead>';
+
+    const tbody = document.createElement('tbody');
+    tbody.className = 'text-[10px]';
+
+    servicios.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-slate-100 hover:bg-blue-50';
+      tr.dataset.nombre = r.id;
+
+      // Nombre
+      const tdNom = document.createElement('td');
+      tdNom.className = 'p-2 font-bold uppercase text-slate-800';
+      tdNom.textContent = (r.esVacuna ? '💉 ' : '') + r.id;
+      tr.appendChild(tdNom);
+
+      // Categoría
+      const tdCat = document.createElement('td');
+      tdCat.className = 'p-2 text-center text-slate-500 text-[9px]';
+      tdCat.textContent = r.categoria || 'OTROS';
+      tr.appendChild(tdCat);
+
+      // Input precio
+      const tdPrecio = document.createElement('td');
+      tdPrecio.className = 'p-2 text-center';
+      const inpPrecio = document.createElement('input');
+      inpPrecio.type = 'number'; inpPrecio.step = '0.50'; inpPrecio.min = '0';
+      inpPrecio.value = r.precioVenta || 0;
+      inpPrecio.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
+      inpPrecio.dataset.id = r.id; inpPrecio.dataset.campo = 'precioVenta';
+      inpPrecio.addEventListener('blur', function() {
+        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
+      });
+      tdPrecio.appendChild(inpPrecio);
+      tr.appendChild(tdPrecio);
+
+      // Input % doctor
+      const tdPorc = document.createElement('td');
+      tdPorc.className = 'p-2 text-center';
+      const inpPorc = document.createElement('input');
+      inpPorc.type = 'number'; inpPorc.step = '0.5'; inpPorc.min = '0'; inpPorc.max = '100';
+      inpPorc.value = r.porcDoc || r.porcentajeDoc || 30;
+      inpPorc.className = 'w-16 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
+      inpPorc.dataset.id = r.id; inpPorc.dataset.campo = 'porcDoc';
+      inpPorc.addEventListener('blur', function() {
+        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
+      });
+      tdPorc.appendChild(inpPorc);
+      tr.appendChild(tdPorc);
+
+      // Botón guardar
+      const tdGuardar = document.createElement('td');
+      tdGuardar.className = 'p-2 text-center';
+      const btnGuardar = document.createElement('button');
+      btnGuardar.className = 'text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700';
+      btnGuardar.textContent = '✅';
+      btnGuardar.dataset.id = r.id;
+      btnGuardar.addEventListener('click', function() {
+        window.actualizarPrecioIndividual(this.dataset.id, 'guardado', null, true);
+      });
+      tdGuardar.appendChild(btnGuardar);
+      tr.appendChild(tdGuardar);
+
+      // Botón eliminar
+      const tdElim = document.createElement('td');
+      tdElim.className = 'p-2 text-center';
+      const btnElim = document.createElement('button');
+      btnElim.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
+      btnElim.textContent = '🗑';
+      btnElim.dataset.id = r.id;
+      btnElim.addEventListener('click', function() {
+        window.eliminarServicioMaestro(this.dataset.id);
+      });
+      tdElim.appendChild(btnElim);
+      tr.appendChild(tdElim);
+
+      tbody.appendChild(tr);
     });
-    html+='</tbody></table>';
-    cont.innerHTML=html;
-  }catch(e){console.error(e);cont.innerHTML='<p class="text-red-500 text-[9px] text-center italic py-4">❌ Error</p>';}
+
+    tabla.appendChild(tbody);
+    cont.innerHTML = '';
+    cont.appendChild(tabla);
+
+  } catch(e) {
+    console.error(e);
+    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error al cargar</p>';
+  }
 };
 
 window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});if(typeof window.porcGlobalCache!=='undefined')window.porcGlobalCache=undefined;}catch(e){console.error("Error actualizando precio:",e);}};
