@@ -2,6 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="AVIPET">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
 
@@ -1429,6 +1434,46 @@
       }, 200);
     }
   }
+</script>
+
+
+<!-- ── SERVICE WORKER + INDICADOR OFFLINE ── -->
+<script>
+  // Registrar Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('[AVIPET] SW registrado:', reg.scope))
+        .catch(err => console.warn('[AVIPET] SW falló:', err));
+    });
+  }
+
+  // ── INDICADOR DE CONEXIÓN ──────────────────────────────
+  function _mostrarEstadoConexion(online) {
+    let banner = document.getElementById('_banner_conexion');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = '_banner_conexion';
+      banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;padding:8px 20px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.2);pointer-events:none;';
+      document.body.appendChild(banner);
+    }
+    if (online) {
+      banner.style.background = '#16a34a';
+      banner.style.color = '#fff';
+      banner.innerText = '✅ Conexión restaurada';
+      setTimeout(() => { if (banner) banner.remove(); }, 3000);
+    } else {
+      banner.style.background = '#dc2626';
+      banner.style.color = '#fff';
+      banner.innerText = '⚠️ Sin internet — modo offline activo';
+    }
+  }
+
+  window.addEventListener('online',  () => _mostrarEstadoConexion(true));
+  window.addEventListener('offline', () => _mostrarEstadoConexion(false));
+
+  // Verificar al cargar
+  if (!navigator.onLine) _mostrarEstadoConexion(false);
 </script>
 
 </body>
