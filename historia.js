@@ -1081,4 +1081,4 @@ try{Swal.fire({title:'⏳ Inicializando...',allowOutsideClick:false,didOpen:()=>
 window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white":"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();};
 
 
-console.log("✅ historia.js v3 — stock bajo, notas internas, recordatorio vacunas");
+console.log("✅ historia.js v4 — limpiar espera, ajustes integrados");
