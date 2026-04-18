@@ -92,7 +92,233 @@ window.verMovimientosProducto=async()=>{const id=window._productoEditandoId;if(!
 window.descargarReporteProveedor=async()=>{try{const snap=await getDocs(collection(db,"inventario"));const filtroEl=document.getElementById('filtroProveedor');const filtro=filtroEl?.value||"";const datos=[];snap.forEach(d=>{const r=d.data();if(filtro&&r.proveedor!==filtro)return;datos.push({Nombre:r.nombre,Proveedor:r.proveedor||"---",Categoría:r.categoria||"---",Costo:r.costoCompra||0,PrecioVenta:r.precioVenta||0,Stock:r.cantidadStock||0,StockMínimo:r.stockMinimo||3,Unidad:r.unidad||"und",Vencimiento:r.fechaVencimiento||"---",Estado:(r.cantidadStock||0)<=(r.stockMinimo||3)?"BAJO":"OK"});});if(!datos.length){alert("No hay datos para el filtro.");return;}const hoja=XLSX.utils.json_to_sheet(datos);const libro=XLSX.utils.book_new();XLSX.utils.book_append_sheet(libro,hoja,filtro?`Proveedor_${filtro}`:"Inventario");XLSX.writeFile(libro,`Inventario_${(filtro||"Completo").replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.xlsx`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 
 // ─── PANEL CONFIG ───
-window.renderizarTablaMaestra=async()=>{const cont=document.getElementById('tablaServiciosMaestro');if(!cont)return;cont.innerHTML=`<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>`;try{const snap=await getDocs(collection(db,"servicios_maestro"));if(snap.empty){cont.innerHTML=`<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios.</p>`;return;}let html=`<table class="w-full text-left border-collapse"><thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black italic"><th class="p-2">Servicio</th><th class="p-2 text-center w-24">Precio ($)</th><th class="p-2 text-center w-20">% Doctor</th><th class="p-2 text-center w-16">OK</th></tr></thead><tbody class="text-[10px]">`;snap.forEach(d=>{const r=d.data();html+=`<tr class="border-b border-slate-100 hover:bg-blue-50"><td class="p-2 font-bold uppercase text-slate-700">${d.id}</td><td class="p-2 text-center"><input type="number" value="${r.precioVenta||0}" step="0.50" min="0" onblur="window.actualizarPrecioIndividual('${d.id}','precioVenta',this.value)" class="w-20 text-center border border-slate-300 rounded px-1 py-0.5 focus:border-blue-500 outline-none text-[10px]"></td><td class="p-2 text-center"><input type="number" value="${r.porcDoc||r.porcentajeDoc||30}" step="0.5" min="0" max="100" onblur="window.actualizarPrecioIndividual('${d.id}','porcDoc',this.value)" class="w-16 text-center border border-slate-300 rounded px-1 py-0.5 focus:border-blue-500 outline-none text-[10px]"></td><td class="p-2 text-center"><button onclick="window.actualizarPrecioIndividual('${d.id}','guardado',null,true)" class="text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black">✓</button></td></tr>`;});html+=`</tbody></table>`;cont.innerHTML=html;}catch(e){console.error(e);cont.innerHTML=`<p class="text-red-500 text-[9px] text-center italic py-4">❌ Error</p>`;}};
+// ─── CARGAR SELECTOR DE SERVICIOS DINÁMICAMENTE ──────────
+// Se llama al iniciar la app y después de crear/eliminar un servicio
+window.cargarSelectorServicios = async () => {
+  const sel = document.getElementById('selectorServicios');
+  if (!sel) return;
+
+  try {
+    const snap = await getDocs(collection(db, "servicios_maestro"));
+    if (snap.empty) return;
+
+    // Agrupar por categoría
+    const grupos = {};
+    snap.forEach(d => {
+      const r   = d.data();
+      const cat = r.categoria || 'OTROS';
+      if (!grupos[cat]) grupos[cat] = [];
+      grupos[cat].push({ id: d.id, ...r });
+    });
+
+    // Íconos por categoría
+    const iconos = {
+      'CONSULTAS':     '🩺',
+      'VACUNAS':       '💉',
+      'LABORATORIO':   '🔬',
+      'TESTS RÁPIDOS': '🧪',
+      'REFERIDOS':     '📋',
+      'OTROS':         '🐾',
+    };
+
+    // Reconstruir el selector
+    sel.innerHTML = '<option value="">-- SELECCIONE UN SERVICIO --</option>';
+    Object.entries(grupos).sort().forEach(([cat, servicios]) => {
+      const grp = document.createElement('optgroup');
+      grp.label = (iconos[cat] || '🔹') + ' ' + cat;
+      servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value       = s.id;
+        opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
+  } catch(e) {
+    console.warn('Error cargando selector servicios:', e);
+  }
+};
+
+// ─── ABRIR MODAL NUEVO SERVICIO ───────────────────────────
+window.abrirModalNuevoServicio = async () => {
+  const res = await Swal.fire({
+    title: '➕ Nuevo Servicio',
+    html: `
+      <div class="space-y-3 text-left">
+        <div>
+          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>
+          <input id="ns_nombre" type="text" placeholder="Ej: RADIOGRAFÍA SIMPLE"
+                 class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Precio ($)</label>
+            <input id="ns_precio" type="number" placeholder="0.00" step="0.50" min="0"
+                   class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">% Doctor</label>
+            <input id="ns_porc" type="number" placeholder="40" step="0.5" min="0" max="100" value="40"
+                   class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoría (grupo en el selector)</label>
+          <select id="ns_categoria" onchange="window._toggleCatPersonalizada(this.value)"
+                  class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+            <option value="CONSULTAS">🩺 CONSULTAS</option>
+            <option value="VACUNAS">💉 VACUNAS</option>
+            <option value="LABORATORIO">🔬 LABORATORIO</option>
+            <option value="TESTS RÁPIDOS">🧪 TESTS RÁPIDOS</option>
+            <option value="REFERIDOS">📋 REFERIDOS</option>
+            <option value="OTROS">🐾 OTROS</option>
+            <option value="__nueva__">✏️ Crear nueva categoría...</option>
+          </select>
+          <input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGÍAS, HOSPITALIZACIÓN..."
+                 style="display:none"
+                 class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500 mt-2">
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">¿Es una vacuna? (afecta combos de precios)</label>
+          <div class="flex gap-2">
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600">
+              <span class="text-[10px] font-bold">Sí</span>
+            </label>
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600">
+              <span class="text-[10px] font-bold">No</span>
+            </label>
+          </div>
+        </div>
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[9px] text-blue-600 font-bold">
+          💡 El % Doctor se aplica sobre <b>(Precio − Insumos)</b>, no sobre el precio bruto.
+        </div>
+      </div>`,
+    showCancelButton: true,
+    confirmButtonText: '✅ Crear Servicio',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#2563eb',
+    didOpen: () => {
+      window._toggleCatPersonalizada = (val) => {
+        const inp = document.getElementById('ns_categoria_nueva');
+        if (inp) inp.style.display = val === '__nueva__' ? 'block' : 'none';
+      };
+    },
+    preConfirm: () => {
+      const nombre    = document.getElementById('ns_nombre')?.value.trim().toUpperCase();
+      const precio    = parseFloat(document.getElementById('ns_precio')?.value) || 0;
+      const porc      = parseFloat(document.getElementById('ns_porc')?.value)   || 40;
+      const catSel    = document.getElementById('ns_categoria')?.value || 'OTROS';
+      const catNueva  = document.getElementById('ns_categoria_nueva')?.value.trim().toUpperCase();
+      const categoria = catSel === '__nueva__' ? catNueva : catSel;
+      const esVacuna  = document.getElementById('ns_vacuna_si')?.checked || false;
+      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('⚠️ Escribe el nombre de la nueva categoría'); return false; }
+      if (!nombre) { Swal.showValidationMessage('⚠️ El nombre es obligatorio'); return false; }
+      if (precio <= 0) { Swal.showValidationMessage('⚠️ El precio debe ser mayor a 0'); return false; }
+      return { nombre, precio, porc, categoria, esVacuna };
+    }
+  });
+
+  if (!res.isConfirmed) return;
+  const { nombre, precio, porc, categoria, esVacuna } = res.value;
+
+  try {
+    // Verificar si ya existe
+    const existe = await getDoc(doc(db, "servicios_maestro", nombre));
+    if (existe.exists()) {
+      Swal.fire({ icon:'warning', title:'Ya existe', text:'Un servicio con ese nombre ya está registrado.', timer:2500, showConfirmButton:false });
+      return;
+    }
+
+    // Guardar en Firebase
+    await setDoc(doc(db, "servicios_maestro", nombre), {
+      precioVenta: precio,
+      porcDoc:     porc,
+      categoria,
+      esVacuna,
+      creadoEn:    serverTimestamp(),
+      activo:      true
+    });
+
+    // Recargar tabla y selector
+    await window.renderizarTablaMaestra();
+    await window.cargarSelectorServicios();
+
+    await Swal.fire({
+      icon: 'success',
+      title: '✅ Servicio creado',
+      html: `<b>${nombre}</b><br>$${precio.toFixed(2)} · ${porc}% doctor · ${categoria}`,
+      timer: 2500,
+      showConfirmButton: false
+    });
+
+  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+};
+
+// ─── ELIMINAR SERVICIO ────────────────────────────────────
+window.eliminarServicioMaestro = async (nombreServicio) => {
+  const res = await Swal.fire({
+    title: '🗑 Eliminar Servicio',
+    html: `<p class="text-[11px] text-slate-600">¿Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecerá en el selector de Historia Clínica.</p>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#dc2626'
+  });
+  if (!res.isConfirmed) return;
+
+  try {
+    await deleteDoc(doc(db, "servicios_maestro", nombreServicio));
+    await window.renderizarTablaMaestra();
+    await window.cargarSelectorServicios();
+    Swal.fire({ icon:'success', title:'✅ Eliminado', timer:1500, showConfirmButton:false });
+  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+};
+
+// ─── FILTRAR TABLA DE SERVICIOS ───────────────────────────
+window.filtrarTablaServicios = () => {
+  const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase() || '';
+  document.querySelectorAll('#tablaServiciosMaestro tr[data-nombre]').forEach(tr => {
+    tr.style.display = tr.dataset.nombre.includes(filtro) ? '' : 'none';
+  });
+};
+
+window.renderizarTablaMaestra=async()=>{
+  const cont=document.getElementById('tablaServiciosMaestro');
+  if(!cont)return;
+  cont.innerHTML='<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
+  try{
+    const snap=await getDocs(collection(db,"servicios_maestro"));
+    if(snap.empty){cont.innerHTML='<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios. Usa el botón ➕ para agregar.</p>';return;}
+    let html='<table class="w-full text-left border-collapse">';
+    html+='<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">';
+    html+='<th class="p-2">Servicio</th>';
+    html+='<th class="p-2 text-center">Categoría</th>';
+    html+='<th class="p-2 text-center w-24">Precio ($)</th>';
+    html+='<th class="p-2 text-center w-20">% Doctor</th>';
+    html+='<th class="p-2 text-center w-16">Guardar</th>';
+    html+='<th class="p-2 text-center w-12">Eliminar</th>';
+    html+='</tr></thead><tbody class="text-[10px]">';
+    const servicios=[];snap.forEach(d=>servicios.push({id:d.id,...d.data()}));
+    servicios.sort((a,b)=>a.id.localeCompare(b.id));
+    servicios.forEach(r=>{
+      const esVacuna=r.esVacuna?'💉':''
+      html+='<tr class="border-b border-slate-100 hover:bg-blue-50" data-nombre="'+r.id+'">';
+      html+='<td class="p-2 font-bold uppercase text-slate-800">'+esVacuna+r.id+'</td>';
+      html+='<td class="p-2 text-center text-slate-500 text-[9px]">'+(r.categoria||'OTROS')+'</td>';
+      html+='<td class="p-2 text-center"><input type="number" value="'+(r.precioVenta||0)+'" step="0.50" min="0" onblur="window.actualizarPrecioIndividual(''+r.id+'','precioVenta',this.value)" class="w-20 text-center border border-slate-300 rounded px-1 py-0.5 focus:border-blue-500 outline-none text-[10px] font-bold"></td>';
+      html+='<td class="p-2 text-center"><input type="number" value="'+(r.porcDoc||r.porcentajeDoc||30)+'" step="0.5" min="0" max="100" onblur="window.actualizarPrecioIndividual(''+r.id+'','porcDoc',this.value)" class="w-16 text-center border border-slate-300 rounded px-1 py-0.5 focus:border-blue-500 outline-none text-[10px] font-bold"></td>';
+      html+='<td class="p-2 text-center"><button onclick="window.actualizarPrecioIndividual(''+r.id+'','guardado',null,true)" class="text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700">✅</button></td>';
+      html+='<td class="p-2 text-center"><button onclick="window.eliminarServicioMaestro(''+r.id+'')" class="text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white">🗑</button></td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    cont.innerHTML=html;
+  }catch(e){console.error(e);cont.innerHTML='<p class="text-red-500 text-[9px] text-center italic py-4">❌ Error</p>';}
+};
 
 window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});if(typeof window.porcGlobalCache!=='undefined')window.porcGlobalCache=undefined;}catch(e){console.error("Error actualizando precio:",e);}};
 
