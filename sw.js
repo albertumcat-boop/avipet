@@ -3,7 +3,7 @@
 // Estrategia: Cache First para estáticos, Network First para Firebase
 // =========================================================
 
-const CACHE_V = 'avipet-v1';
+const CACHE_V = 'avipet-v5'; // cambiar este número para limpiar cache
 
 const ESTATICOS = [
   '/index.html',
