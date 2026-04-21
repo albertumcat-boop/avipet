@@ -14,6 +14,9 @@ import {
 import { respaldarProgresoLocal } from './main.js';
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || 'AVIPET2026';
 
+// Normalizar cédula: quitar puntos, espacios, guiones — para buscar con o sin formato
+const normalizarCedula = (ci) => String(ci || '').replace(/[\.\-\s]/g, '').trim().toUpperCase();
+
 const normalizarNombre = (str) =>
   String(str).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
 
@@ -363,8 +366,13 @@ window.guardarFirebase = async (imp) => {
 // ─── AUTOCOMPLETAR POR CÉDULA + ALERTA VACUNA + NOTAS INTERNAS ───
 window.autocompletarPorCedula = async (ci) => {
   if(!ci||ci.length<3)return;
+  const ciNorm = normalizarCedula(ci);
   try{
-    const snap=await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim()),orderBy("fecha","desc"),limit(1)));
+    // Buscar con cédula normalizada (sin puntos) y también con la original
+    let snap = await getDocs(query(collection(db,"consultas"),where("cedula","==",ciNorm),orderBy("fecha","desc"),limit(1)));
+    if(snap.empty && ciNorm !== ci.trim()) {
+      snap = await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim()),orderBy("fecha","desc"),limit(1)));
+    }
     if(!snap.empty){
       const d=snap.docs[0].data();const set=(id,val)=>{const el=document.getElementById(id);if(el){el.value=val||"";el.classList.add('bg-blue-50');setTimeout(()=>el.classList.remove('bg-blue-50'),1000);}};
       set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hColor',d.color);set('hTlf',d.telefono);set('hMail',d.correo||d.email);set('hDir',d.direccion);set('hFechaNac',d.fechaNacimiento);
@@ -380,7 +388,7 @@ window.autocompletarPorCedula = async (ci) => {
       }
 
       // Notas internas
-      _mostrarNotasInternas(ci.trim(), d.observacionesPermanentes || "");
+      _mostrarNotasInternas(ciNorm, d.observacionesPermanentes || "");
     }
   }catch(e){console.error("Error autocompletar:",e);}
 };
