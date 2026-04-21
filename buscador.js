@@ -11,6 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
+const normalizarCedula = (ci) => String(ci || '').replace(/[.\-\s]/g, '').trim().toUpperCase();
 
 // ─── BUSCAR ───────────────────────────────────────────────
 window.buscarPorCedula = async () => {
@@ -31,8 +32,14 @@ window.buscarPorCedula = async () => {
       const snap = await getDocs(collection(db, "consultas"));
       snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
     } else if (ci) {
-      const snap = await getDocs(query(collection(db, "consultas"), where("cedula", "==", ci)));
-      snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
+      // Buscar con cédula normalizada (sin puntos/guiones) y también original
+      const ciNorm = normalizarCedula(ci);
+      const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ciNorm)));
+      snap1.forEach(d => registros.push({ id: d.id, ...d.data() }));
+      if (registros.length === 0 && ciNorm !== ci.trim()) {
+        const snap2 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ci.trim())));
+        snap2.forEach(d => registros.push({ id: d.id, ...d.data() }));
+      }
     } else {
       const snap = await getDocs(collection(db, "consultas"));
       snap.forEach(d => {
