@@ -152,12 +152,11 @@
           <button type="button" class="text-[9px] text-red-500 underline font-bold"
                   onclick="window.solicitarCambioPinDoctor()">Olvidé mi PIN</button>
         </div>
-        <!-- Datos del doctor para impresión — centrado -->
-        <div class="hidden print:block text-center mt-1 border-t border-slate-300 pt-1">
-          <p class="font-black text-[11px] text-slate-800 uppercase">Dr. Darwin Sandoval</p>
-          <p class="text-[9px] text-slate-600">Médico Veterinario</p>
-          <p class="text-[9px] text-slate-600">MPPS: 12073 &nbsp;·&nbsp; CMVMIR: 444</p>
-          <p class="text-[9px] text-slate-600">INSAI: 808119259834</p>
+        <!-- Datos del doctor para impresión — se llenan dinámicamente -->
+        <div id="datosDoctorPrint" class="hidden print:block text-center mt-1 border-t border-slate-300 pt-1">
+          <p id="dpNombre" class="font-black text-[11px] text-slate-800 uppercase"></p>
+          <p id="dpEspecialidad" class="text-[9px] text-slate-600">Médico Veterinario</p>
+          <p id="dpCredenciales" class="text-[9px] text-slate-600"></p>
         </div>
       </div>
     </div>
@@ -443,12 +442,12 @@
         <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">Tarjeta de Vacunación y Desparasitación</h2>
       </div>
       <div class="flex flex-col items-center justify-center text-center">
-        <!-- Datos del doctor — reemplaza el logo -->
-        <p class="font-black text-[10px] text-slate-800 uppercase">Dr. Darwin Sandoval</p>
-        <p class="text-[8px] text-slate-600">Médico Veterinario</p>
-        <p class="text-[8px] text-slate-600">MPPS: 12073 · CMVMIR: 444</p>
-        <p class="text-[8px] text-slate-600">INSAI: 808119259834</p>
-        <!-- Espaciador para pantalla (no imprime) -->
+        <!-- Datos del doctor — dinámicos según quién está autenticado -->
+        <div id="datosDoctorVacunas">
+          <p id="dvNombre" class="font-black text-[10px] text-slate-800 uppercase"></p>
+          <p id="dvEspecialidad" class="text-[8px] text-slate-600">Médico Veterinario</p>
+          <p id="dvCredenciales" class="text-[8px] text-slate-600"></p>
+        </div>
         <div class="w-28 no-print" id="spacerDerechoVacuna"></div>
       </div>
     </div>
