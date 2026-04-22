@@ -152,7 +152,13 @@
           <button type="button" class="text-[9px] text-red-500 underline font-bold"
                   onclick="window.solicitarCambioPinDoctor()">Olvidé mi PIN</button>
         </div>
-        <h2 id="doctorPrint" class="hidden print:block font-bold text-sm uppercase text-slate-700 mt-1">DOCTOR CARGO</h2>
+        <!-- Datos del doctor para impresión — centrado -->
+        <div class="hidden print:block text-center mt-1 border-t border-slate-300 pt-1">
+          <p class="font-black text-[11px] text-slate-800 uppercase">Dr. Darwin Sandoval</p>
+          <p class="text-[9px] text-slate-600">Médico Veterinario</p>
+          <p class="text-[9px] text-slate-600">MPPS: 12073 &nbsp;·&nbsp; CMVMIR: 444</p>
+          <p class="text-[9px] text-slate-600">INSAI: 808119259834</p>
+        </div>
       </div>
     </div>
 
@@ -436,8 +442,13 @@
       <div class="flex flex-col items-center flex-1 text-center">
         <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">Tarjeta de Vacunación y Desparasitación</h2>
       </div>
-      <div class="w-28 flex items-center justify-center">
-        <img id="logoDerechoVacuna" src="" class="hidden w-full h-20 object-contain">
+      <div class="flex flex-col items-center justify-center text-center">
+        <!-- Datos del doctor — reemplaza el logo -->
+        <p class="font-black text-[10px] text-slate-800 uppercase">Dr. Darwin Sandoval</p>
+        <p class="text-[8px] text-slate-600">Médico Veterinario</p>
+        <p class="text-[8px] text-slate-600">MPPS: 12073 · CMVMIR: 444</p>
+        <p class="text-[8px] text-slate-600">INSAI: 808119259834</p>
+        <!-- Espaciador para pantalla (no imprime) -->
         <div class="w-28 no-print" id="spacerDerechoVacuna"></div>
       </div>
     </div>
@@ -1415,14 +1426,14 @@
   } catch (e) { console.warn("Persistencia no disponible:", e); }
 </script>
 
-<script type="module" src="./main.js"></script>
-<script type="module" src="./seguridad.js"></script>
-<script type="module" src="./historia.js"></script>
-<script type="module" src="./buscador.js"></script>
-<script type="module" src="./peluqueria.js"></script>
-<script type="module" src="./finanzas.js"></script>
-<script type="module" src="./inventario.js"></script>
-<script type="module" src="./vacunas.js"></script>
+<script type="module" src="./main.js?v=6"></script>
+<script type="module" src="./seguridad.js?v=6"></script>
+<script type="module" src="./historia.js?v=6"></script>
+<script type="module" src="./buscador.js?v=6"></script>
+<script type="module" src="./peluqueria.js?v=6"></script>
+<script type="module" src="./finanzas.js?v=6"></script>
+<script type="module" src="./inventario.js?v=6"></script>
+<script type="module" src="./vacunas.js?v=6"></script>
 
 <!-- Wrapper de seguridad: si los módulos tardan en cargar, los botones esperan -->
 <script>
