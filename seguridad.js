@@ -354,8 +354,7 @@ window.validarAccesoDoctor = async (nombre) => {
     if (dPrint) dPrint.innerText = "DR. " + nombre.toUpperCase();
 
     if (nombre === "Darwin Sandoval") {
-      const urlDarwin = "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg";
-      if (logoD)  { logoD.src = urlDarwin; logoD.classList.remove("hidden"); }
+      // Logo Darwin eliminado — datos del doctor aparecen en el HTML imprimible
       if (spacer) spacer.classList.add("hidden");
       window.onDoctorAutenticado("DR_DARWIN");
     } else {
