@@ -447,7 +447,57 @@ window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamien
 window.abrirHojaVacunasDesdeHistoria=()=>{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};const f=new Date();set('hv_fecha',`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);const campos={'hv_propietario':'hProp','hv_cedula':'hCI','hv_telefono':'hTlf','hv_direccion':'hDir','hv_especie':'hEspecie','hv_raza':'hRaza','hv_paciente':'hNombre','hv_edad':'hEdad','hv_sexo':'hSexo','hv_color':'hColor','hv_peso':'hPeso'};Object.entries(campos).forEach(([d,o])=>set(d,dVal(o)));set('hv_fechaNacimiento',dVal('hFechaNac'));document.getElementById('sectionHistoria')?.classList.add('hidden');const v=document.getElementById('sectionHojaVacunas');if(v){v.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}};
 
 // ─── SALA DE ESPERA ───
-window.enviarAColaEspera=async()=>{try{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const doctorQueEnvia=document.getElementById('selectDoctor')?.value||'';const data={cedula:dVal('hCI'),propietario:dVal('hProp'),paciente:dVal('hNombre'),especie:dVal('hEspecie'),raza:dVal('hRaza'),edad:dVal('hEdad'),sexo:dVal('hSexo'),peso:dVal('hPeso'),telefono:dVal('hTlf'),correo:dVal('hMail'),direccion:dVal('hDir'),color:dVal('hColor'),doctorAsignado:doctorQueEnvia,fechaIngreso:serverTimestamp(),fechaSimple:`${new Date().getDate()}/${new Date().getMonth()+1}/${new Date().getFullYear()}`,estado:"en_espera"};if(!data.cedula||!data.paciente||!data.propietario){alert("⚠️ Cédula, Propietario y Paciente son obligatorios.");return;}await addDoc(collection(db,"espera"),data);localStorage.removeItem("respaldo_historia_activa");_limpiarFormularioHistoria();_limpiarNotasInternas();await Swal.fire({icon:"success",title:"✅ Enviado a Sala de Espera",text:data.paciente,timer:2000,showConfirmButton:false});}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.enviarAColaEspera=async()=>{
+  try{
+    const dVal=(id)=>document.getElementById(id)?.value.trim()||"";
+    if(!dVal('hCI')||!dVal('hNombre')||!dVal('hProp')){
+      alert("⚠️ Cédula, Propietario y Paciente son obligatorios.");return;
+    }
+
+    // Preguntar a qué doctor se asigna
+    const resDoc = await Swal.fire({
+      title: '🩺 Asignar Doctor',
+      html: '<p class="text-[11px] text-slate-500 mb-3">¿A qué doctor se asigna <b>'+dVal('hNombre')+'</b>?</p>' +
+            '<div class="flex flex-col gap-2">' +
+              '<button type="button" onclick="window._docEspera='Darwin Sandoval';Swal.clickConfirm()" ' +
+                'class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-sm text-blue-700 hover:bg-blue-600 hover:text-white transition-all">'+
+                '🩺 Dr. Darwin Sandoval</button>' +
+              '<button type="button" onclick="window._docEspera='Joan Silva';Swal.clickConfirm()" ' +
+                'class="w-full py-3 rounded-xl border-2 border-emerald-200 bg-emerald-50 font-black text-sm text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all">'+
+                '🩺 Dr. Joan Silva</button>' +
+            '</div>',
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar'
+    });
+    if (resDoc.isDismissed) return;
+    const doctorAsignado = window._docEspera || '';
+    window._docEspera = null;
+    if (!doctorAsignado) return;
+
+    const data={
+      cedula:dVal('hCI'),propietario:dVal('hProp'),paciente:dVal('hNombre'),
+      especie:dVal('hEspecie'),raza:dVal('hRaza'),edad:dVal('hEdad'),
+      sexo:dVal('hSexo'),peso:dVal('hPeso'),telefono:dVal('hTlf'),
+      correo:dVal('hMail'),direccion:dVal('hDir'),color:dVal('hColor'),
+      doctorAsignado,
+      fechaIngreso:serverTimestamp(),
+      fechaSimple:new Date().getDate()+'/'+(new Date().getMonth()+1)+'/'+new Date().getFullYear(),
+      estado:"en_espera"
+    };
+
+    await addDoc(collection(db,"espera"),data);
+    localStorage.removeItem("respaldo_historia_activa");
+    _limpiarFormularioHistoria();
+    _limpiarNotasInternas();
+    await Swal.fire({
+      icon:"success",
+      title:"✅ Enviado a Sala de Espera",
+      html:"<b>"+data.paciente+"</b><br><span class='text-[11px] text-slate-500'>Asignado al Dr. "+doctorAsignado+"</span>",
+      timer:2500,showConfirmButton:false
+    });
+  }catch(e){console.error(e);alert("❌ Error: "+e.message);}
+};
 window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} · CI: ${p.cedula}</p><p class="text-[8px] font-black ${colorDoc} uppercase">🩺 ${docAsig}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
 window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();
   // Verificar si el doctor activo es el correcto
