@@ -364,6 +364,7 @@ window.validarAccesoDoctor = async (nombre) => {
     }
 
     _actualizarBadgeSesion();
+    _actualizarDatosDoctor(nombre);
     if (typeof window.registrarLogAuditoria === 'function')
       await window.registrarLogAuditoria("ACCESO", `${nombre} inició sesión.`);
     alert(`✅ Bienvenido, DR. ${nombre}`);
@@ -403,6 +404,7 @@ window.cerrarSesion = async () => {
       await window.registrarLogAuditoria("CIERRE SESIÓN", `${window.doctorVerificado} cerró sesión.`);
     window.doctorVerificado = "";
     window.doctorActivoId   = null;
+    _actualizarDatosDoctor(null); // limpiar datos del doctor
     const sel = document.getElementById('selectDoctor');
     if (sel) sel.value = "";
     const logoD  = document.getElementById("logoDerechoVacuna");
@@ -415,6 +417,36 @@ window.cerrarSesion = async () => {
   window.ejecutarCambioDeTab('historia');
   await Swal.fire({ icon:'success', title:'Sesión cerrada', text:`Hasta luego, ${quien}`, timer:1800, showConfirmButton:false });
 };
+
+// ─── DATOS DOCTOR EN HOJAS IMPRIMIBLES ────────────────────
+const DATOS_DOCTORES = {
+  'Darwin Sandoval': {
+    nombre: 'DR. DARWIN SANDOVAL',
+    credenciales: 'MPPS: 12073 · CMVMIR: 444 · INSAI: 808119259834'
+  },
+  'Joan Silva': {
+    nombre: 'DR. JOAN SILVA',
+    credenciales: 'CMV: 830 · MSAS: 6567'
+  }
+};
+
+function _actualizarDatosDoctor(nombre) {
+  const datos = nombre ? DATOS_DOCTORES[nombre] : null;
+  // Historia clínica
+  const dpNombre = document.getElementById('dpNombre');
+  const dpCred   = document.getElementById('dpCredenciales');
+  const dpBlock  = document.getElementById('datosDoctorPrint');
+  if (dpNombre) dpNombre.textContent     = datos ? datos.nombre       : '';
+  if (dpCred)   dpCred.textContent       = datos ? datos.credenciales : '';
+  if (dpBlock)  dpBlock.style.display    = datos ? ''       : 'none';
+  // Hoja de vacunas
+  const dvNombre = document.getElementById('dvNombre');
+  const dvCred   = document.getElementById('dvCredenciales');
+  const dvBlock  = document.getElementById('datosDoctorVacunas');
+  if (dvNombre) dvNombre.textContent      = datos ? datos.nombre       : '';
+  if (dvCred)   dvCred.textContent        = datos ? datos.credenciales : '';
+  if (dvBlock)  dvBlock.style.visibility  = datos ? 'visible' : 'hidden';
+}
 
 // ─── BADGE DE SESIÓN ──────────────────────────────────────
 function _actualizarBadgeSesion() {
