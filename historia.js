@@ -455,20 +455,25 @@ window.enviarAColaEspera=async()=>{
     }
 
     // Preguntar a qué doctor se asigna
+    var htmlDocSel = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Asignar <b>' + dVal('hNombre') + '</b> a:</p>';
+    htmlDocSel += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">🩺 Dr. Darwin Sandoval</button>';
+    htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">🩺 Dr. Joan Silva</button>';
+    htmlDocSel += '</div>';
     const resDoc = await Swal.fire({
-      title: '🩺 Asignar Doctor',
-      html: '<p class="text-[11px] text-slate-500 mb-3">¿A qué doctor se asigna <b>'+dVal('hNombre')+'</b>?</p>' +
-            '<div class="flex flex-col gap-2">' +
-              '<button type="button" onclick="window._docEspera='Darwin Sandoval';Swal.clickConfirm()" ' +
-                'class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-sm text-blue-700 hover:bg-blue-600 hover:text-white transition-all">'+
-                '🩺 Dr. Darwin Sandoval</button>' +
-              '<button type="button" onclick="window._docEspera='Joan Silva';Swal.clickConfirm()" ' +
-                'class="w-full py-3 rounded-xl border-2 border-emerald-200 bg-emerald-50 font-black text-sm text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all">'+
-                '🩺 Dr. Joan Silva</button>' +
-            '</div>',
+      title: 'Asignar Doctor',
+      html: htmlDocSel,
       showConfirmButton: false,
       showCancelButton: true,
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      didOpen: function() {
+        document.getElementById('btnDocDarwin').addEventListener('click', function() {
+          window._docEspera = 'Darwin Sandoval'; Swal.clickConfirm();
+        });
+        document.getElementById('btnDocJoan').addEventListener('click', function() {
+          window._docEspera = 'Joan Silva'; Swal.clickConfirm();
+        });
+      }
     });
     if (resDoc.isDismissed) return;
     const doctorAsignado = window._docEspera || '';
