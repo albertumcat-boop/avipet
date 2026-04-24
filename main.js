@@ -32,6 +32,7 @@ const SECTION_IDS = {
   'reporte':       'sectionReporte',
   'inventario':    'sectionInventario',
   'config_precios':'sectionConfig_precios',
+  'almuerzo':      'sectionAlmuerzo',
   'espera':        'sectionEspera',
   'hojavacunas':   'sectionHojaVacunas',
 };
@@ -112,6 +113,7 @@ window.ejecutarCambioDeTab = (tabId) => {
       }, 100);
     }
     if (tabId === 'config_precios') _llamarFuncion('cambiarSubTabConfig', 'servicios');
+    if (tabId === 'almuerzo') _llamarFuncion('iniciarControlAlmuerzo');
   } catch (e) {
     console.warn('[AVIPET] Error en acción post-navegación:', e);
   }
