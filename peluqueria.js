@@ -265,8 +265,9 @@ async function _cargarBitacoraFecha(fechaSimple) {
           <p class="text-sm font-black text-slate-800 font-mono">$${parseFloat(d.precioTotal||0).toFixed(2)}</p>
           <div class="flex gap-1 flex-wrap justify-end">
             <button type="button" onclick="window.togglePagoPeluqueria('${d.id}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${pagado?'bg-slate-200 text-slate-600':'bg-emerald-600 text-white'}">${pagado?'↩ Revertir':'💰 Pagar'}</button>
-            <button type="button" onclick="window.imprimirReciboPelu('${d.id}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">🖨 Recibo</button>
-            <button type="button" onclick="window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
+            ${d.mensajeEnviado?'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:900;">✅ Mensaje enviado</span>':'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#94a3b8;font-weight:900;">Sin mensaje</span>'}
+            <button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
+            <button type="button" onclick="window.marcarEntregadoPelu('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.entregado?'bg-slate-200 text-slate-500':'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white'} transition-all">${d.entregado?'✅ Entregado':'🐕 Entregar'}</button>
             <button type="button" onclick="window.eliminarRegistroBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">🗑</button>
           </div>
         </div>`;
@@ -435,27 +436,24 @@ window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
   if (!tlf.startsWith('58') && tlf.length === 10) tlf = '58' + tlf;
 
   // Elegir tipo de mensaje
+  var htmlMsg = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Para: <b>' + duenio + '</b> · ' + mascota + '</p>';
+  htmlMsg += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  htmlMsg += '<button id="msgPelu1" type="button" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:11px;color:#15803d;cursor:pointer;">🐕 Lista para retirar</button>';
+  htmlMsg += '<button id="msgPelu2" type="button" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;">📅 Recordatorio próxima visita</button>';
+  htmlMsg += '<button id="msgPelu3" type="button" style="width:100%;padding:12px;border-radius:12px;border:2px solid #e9d5ff;background:#faf5ff;font-weight:900;font-size:11px;color:#7c3aed;cursor:pointer;">✏️ Mensaje personalizado</button>';
+  htmlMsg += '</div>';
+
   const res = await Swal.fire({
     title: '📲 Enviar Mensaje',
-    html: `
-      <p class="text-[11px] text-slate-500 mb-4">Para: <b>${duenio}</b> · ${mascota}</p>
-      <div class="flex flex-col gap-2">
-        <button type="button" onclick="window._tipoMsgPelu=1;Swal.clickConfirm()"
-                class="w-full py-3 rounded-xl border-2 border-green-200 bg-green-50 font-black text-[11px] text-green-700 hover:bg-green-600 hover:text-white transition-all">
-          🐾 Recordatorio de próxima visita
-        </button>
-        <button type="button" onclick="window._tipoMsgPelu=2;Swal.clickConfirm()"
-                class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-[11px] text-blue-700 hover:bg-blue-600 hover:text-white transition-all">
-          ✅ Confirmación de servicio realizado
-        </button>
-        <button type="button" onclick="window._tipoMsgPelu=3;Swal.clickConfirm()"
-                class="w-full py-3 rounded-xl border-2 border-purple-200 bg-purple-50 font-black text-[11px] text-purple-700 hover:bg-purple-600 hover:text-white transition-all">
-          ✏️ Mensaje personalizado
-        </button>
-      </div>`,
+    html: htmlMsg,
     showConfirmButton: false,
     showCancelButton: true,
-    cancelButtonText: 'Cancelar'
+    cancelButtonText: 'Cancelar',
+    didOpen: function() {
+      document.getElementById('msgPelu1').addEventListener('click', function() { window._tipoMsgPelu=1; Swal.clickConfirm(); });
+      document.getElementById('msgPelu2').addEventListener('click', function() { window._tipoMsgPelu=2; Swal.clickConfirm(); });
+      document.getElementById('msgPelu3').addEventListener('click', function() { window._tipoMsgPelu=3; Swal.clickConfirm(); });
+    }
   });
 
   if (res.isDismissed) return;
@@ -465,19 +463,12 @@ window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
   let mensaje = '';
 
   if (tipo === 1) {
-    // Recordatorio próxima visita
-    mensaje = `🐾 Hola ${duenio}, te recordamos que *${mascota}* ya está lista para su próxima visita de estética en *AVIPET*.
-
-✂️ ¡Escríbenos para agendar tu cita!
-
-📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.`;
+    // Lista para retirar
+    mensaje = "🐾 Hola " + duenio + ", te informamos que *" + mascota + "* ya está lista para ser retirada en *AVIPET*. \n\n✂️ ¡Te esperamos! 🐕\n\n📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.";
 
   } else if (tipo === 2) {
-    // Confirmación de servicio
-    mensaje = `🐾 Hola ${duenio}, te confirmamos que el servicio de estética de *${mascota}* fue completado exitosamente en *AVIPET*.
-
-¡Gracias por confiar en nosotros! 🙏
-Esperamos verte pronto. ✂️`;
+    // Recordatorio próxima visita
+    mensaje = "🐾 Hola " + duenio + ", te recordamos que *" + mascota + "* ya está próxima para su siguiente visita de estética en *AVIPET*. \n\n✂️ ¡Escríbenos para agendar tu cita! \n\n📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.";
 
   } else {
     // Mensaje personalizado
@@ -496,9 +487,58 @@ Esperamos verte pronto. ✂️`;
   }
 
   window.open('https://wa.me/' + tlf + '?text=' + encodeURIComponent(mensaje), '_blank');
+
+  // Si es mensaje de "lista para retirar", marcar en Firebase y actualizar card
+  if (tipo === 1 && window._idServicioPelu) {
+    try {
+      await updateDoc(doc(db, "servicios_estetica", window._idServicioPelu), {
+        mensajeEnviado: true,
+        fechaMensaje: serverTimestamp()
+      });
+      // Actualizar el badge en la card
+      const badge = document.getElementById('badge-msg-' + window._idServicioPelu);
+      if (badge) {
+        badge.textContent = '✅ Mensaje enviado';
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+        badge.style.border = '1px solid #86efac';
+      }
+    } catch(e) { console.warn(e); }
+  }
+  window._idServicioPelu = null;
 };
 
 // ─── 5. IMPRIMIR RECIBO DESDE BITÁCORA ───
+// ─── MARCAR ENTREGADO ────────────────────────────────────
+window.marcarEntregadoPelu = async (idServicio, mascota, estatusActual) => {
+  const yaEntregado = estatusActual === 'entregado' || document.querySelector('[data-id="'+idServicio+'"]')?.dataset.entregado === 'true';
+
+  if (yaEntregado) {
+    // Revertir entrega
+    const res = await Swal.fire({
+      title: '↩ Revertir entrega',
+      html: '<p style="font-size:11px;">¿Marcar <b>' + mascota + '</b> como NO entregado?</p>',
+      icon: 'question', showCancelButton: true,
+      confirmButtonText: 'Sí, revertir', cancelButtonText: 'Cancelar'
+    });
+    if (!res.isConfirmed) return;
+    await updateDoc(doc(db, "servicios_estetica", idServicio), { entregado: false, fechaEntrega: null });
+  } else {
+    // Marcar como entregado
+    await updateDoc(doc(db, "servicios_estetica", idServicio), {
+      entregado: true,
+      fechaEntrega: serverTimestamp()
+    });
+    await Swal.fire({
+      icon: 'success', title: '✅ Entregado',
+      html: '<b>' + mascota + '</b> marcada como entregada',
+      timer: 1800, showConfirmButton: false
+    });
+  }
+  // Recargar bitácora
+  window.cargarBitacoraHoy();
+};
+
 window.imprimirReciboPelu = async (idServicio) => {
   try{
     const snap=await getDoc(doc(db,"servicios_estetica",idServicio));if(!snap.exists())return;
