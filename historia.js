@@ -485,6 +485,7 @@ window.enviarAColaEspera=async()=>{
       especie:dVal('hEspecie'),raza:dVal('hRaza'),edad:dVal('hEdad'),
       sexo:dVal('hSexo'),peso:dVal('hPeso'),telefono:dVal('hTlf'),
       correo:dVal('hMail'),direccion:dVal('hDir'),color:dVal('hColor'),
+      fechaNacimiento:dVal('hFechaNac'),
       doctorAsignado,
       fechaIngreso:serverTimestamp(),
       fechaSimple:new Date().getDate()+'/'+(new Date().getMonth()+1)+'/'+new Date().getFullYear(),
@@ -519,7 +520,7 @@ window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap
       confirmButtonColor: "#f59e0b"
     });
     if (!res.isConfirmed) return;
-  }const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};set('hCI',d.cedula);set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hTlf',d.telefono);set('hMail',d.correo);set('hDir',d.direccion);set('hColor',d.color);await updateDoc(doc(db,"espera",idEspera),{estado:"atendiendo",fechaAtencion:serverTimestamp()});window.showTab('historia');alert(`✅ ${d.paciente} cargado.`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+  }const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};set('hCI',d.cedula);set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hTlf',d.telefono);set('hMail',d.correo);set('hDir',d.direccion);set('hColor',d.color);set('hFechaNac',d.fechaNacimiento);await updateDoc(doc(db,"espera",idEspera),{estado:"atendiendo",fechaAtencion:serverTimestamp()});window.showTab('historia');alert(`✅ ${d.paciente} cargado.`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 window.eliminarDeSalaEspera=async(idEspera)=>{if(!confirm("¿Eliminar de la sala de espera?"))return;try{await updateDoc(doc(db,"espera",idEspera),{estado:"eliminado",fechaEliminacion:serverTimestamp()});alert("✅ Eliminado.");window.cargarListaEspera();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 
 // ─── LIMPIAR FORMULARIO COMPLETO ───────────────────────────────────────────
