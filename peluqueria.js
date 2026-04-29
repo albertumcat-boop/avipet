@@ -150,6 +150,21 @@ window.guardarPeluqueriaPro = async () => {
         paciente:mascota,propietario:duenio,cedula,telefono,
         historialVisitas:arrayUnion({visita:nuevaVis,fecha:fechaSimple,creadoEn:new Date()})
       },{merge:true});
+
+      // Guardar datos del cliente para autorelleno futuro
+      if (cedula) {
+        const cedulaNorm = cedula.replace(/[.\-\s]/g,'').toUpperCase();
+        await setDoc(doc(db,"pacientes_peluqueria", cedulaNorm), {
+          cedula: cedulaNorm,
+          propietario: duenio,
+          telefono,
+          direccion,
+          paciente: mascota,
+          raza,
+          ultimaVisita: serverTimestamp(),
+          ultimaFechaSimple: fechaSimple
+        }, { merge: true });
+      }
     }
 
     // Mensaje de confirmación
@@ -653,14 +668,28 @@ window.recalcularTotalPelu = () => {
 
 // ─── 7. BUSCAR CLIENTE ───
 window.buscarClientePeluqueria = async (cedulaInput) => {
-  const valor = (cedulaInput || "").replace(/\./g,'').trim();
-  if (!valor || valor.length < 5) return;
+  const valor     = (cedulaInput || "").replace(/[.\-\s]/g,'').trim().toUpperCase();
+  const valorOrig = (cedulaInput || "").trim();
+  if (!valor || valor.length < 4) return;
   try {
-    // Buscar en consultas primero, luego en fidelidad
-    const qPac = query(collection(db,"consultas"), where("cedula","==",valor), limit(1));
-    const snap  = await getDocs(qPac);
-    let datos   = null;
-    if (!snap.empty) datos = snap.docs[0].data();
+    let datos = null;
+
+    // 1. Buscar en consultas veterinarias (con cédula normalizada y original)
+    const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",valor), limit(1)));
+    if (!snap1.empty) datos = snap1.docs[0].data();
+
+    if (!datos && valor !== valorOrig) {
+      const snap1b = await getDocs(query(collection(db,"consultas"), where("cedula","==",valorOrig), limit(1)));
+      if (!snap1b.empty) datos = snap1b.docs[0].data();
+    }
+
+    // 2. Buscar en pacientes_peluqueria (clientes solo de peluquería)
+    if (!datos) {
+      const pelSnap = await getDoc(doc(db,"pacientes_peluqueria", valor));
+      if (pelSnap.exists()) datos = pelSnap.data();
+    }
+
+    // 3. Buscar en fidelidad_peluqueria
     if (!datos) {
       const fidSnap = await getDoc(doc(db,"fidelidad_peluqueria", valor.toLowerCase()));
       if (fidSnap.exists()) datos = fidSnap.data();
