@@ -61,7 +61,7 @@ function _leerMascotasPelu() {
 // ─── 1. GUARDAR SERVICIO ───
 window.guardarPeluqueriaPro = async () => {
   const val=(id)=>document.getElementById(id)?.value.trim()||"";
-  const cedula=val('pCedula'),duenio=val('pDuenio'),telefono=val('pTelefono'),direccion=val('pDireccion'),condicion=val('pCondicion');
+  const cedula=val('pCedula'),duenio=val('pDuenio'),telefono=val('pTelefono'),telefono2=val('pTelefono2'),direccion=val('pDireccion'),condicion=val('pCondicion');
   const base=parseFloat(document.getElementById('pTamano')?.value)||0,ajuste=parseFloat(val('pAjuste'))||0;
   const tipoServ=document.getElementById('pTipoServicio')?.value||"completo";
   let precioUnas=parseFloat(document.getElementById('pPrecioUnas')?.value);if(isNaN(precioUnas)||precioUnas<0)precioUnas=0;
@@ -136,7 +136,7 @@ window.guardarPeluqueriaPro = async () => {
       if(esPremio) premios.push(mascota);
 
       await addDoc(collection(db,"servicios_estetica"),{
-        cedulaCliente:cedula,duenio,paciente:mascota,raza,telefono,direccion,condicion,
+        cedulaCliente:cedula,duenio,paciente:mascota,raza,telefono,telefono2,direccion,condicion,
         precioTotal:precioEsta,visitaNumero:nuevaVis,
         fecha:serverTimestamp(),fechaSimple,hora,tipo:"PELUQUERIA",servicio:tipoServ,
         pagoPeluquera:pagoPeluEsta,pagoAyudante1:pagoAyu1Esta,pagoAyudanteExtra:pagoAyuExtEsta,
@@ -147,7 +147,7 @@ window.guardarPeluqueriaPro = async () => {
 
       await setDoc(fidRef,{
         contador:nuevaVis,ultimaVisita:serverTimestamp(),ultimaFechaSimple:fechaSimple,
-        paciente:mascota,propietario:duenio,cedula,telefono,
+        paciente:mascota,propietario:duenio,cedula,telefono,telefono2,
         historialVisitas:arrayUnion({visita:nuevaVis,fecha:fechaSimple,creadoEn:new Date()})
       },{merge:true});
 
@@ -158,6 +158,7 @@ window.guardarPeluqueriaPro = async () => {
           cedula: cedulaNorm,
           propietario: duenio,
           telefono,
+          telefono2,
           direccion,
           paciente: mascota,
           raza,
@@ -699,8 +700,9 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
       // Llenar campos de texto del dueño
       const llenar = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||""; };
       llenar('pDuenio',   datos.propietario || datos.duenio);
-      llenar('pTelefono', datos.telefono);
-      llenar('pDireccion',datos.direccion);
+      llenar('pTelefono',  datos.telefono);
+      llenar('pTelefono2', datos.telefono2 || '');
+      llenar('pDireccion', datos.direccion);
 
       // Llenar la PRIMERA fila de mascotas con el nombre y raza del paciente
       const lista      = document.getElementById('listaMascotasPelu');
