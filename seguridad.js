@@ -422,30 +422,48 @@ window.cerrarSesion = async () => {
 const DATOS_DOCTORES = {
   'Darwin Sandoval': {
     nombre: 'DR. DARWIN SANDOVAL',
-    credenciales: 'MPPS: 12073 · CMVMIR: 444 · INSAI: 808119259834'
+    credenciales: 'MPPS: 12073 · CMVMIR: 444 · INSAI: 808119259834',
+    telefono: '+58 412-388-5533'
   },
   'Joan Silva': {
     nombre: 'DR. JOAN SILVA',
-    credenciales: 'CMV: 830 · MSAS: 6567'
+    credenciales: 'CMV: 830 · MSAS: 6567',
+    telefono: '+58 412-759-7195'
   }
 };
 
 function _actualizarDatosDoctor(nombre) {
   const datos = nombre ? DATOS_DOCTORES[nombre] : null;
-  // Historia clínica
+
+  // ── Historia clínica ──────────────────────────────────
   const dpNombre = document.getElementById('dpNombre');
   const dpCred   = document.getElementById('dpCredenciales');
+  const dpTlf    = document.getElementById('dpTelefono');
   const dpBlock  = document.getElementById('datosDoctorPrint');
-  if (dpNombre) dpNombre.textContent     = datos ? datos.nombre       : '';
-  if (dpCred)   dpCred.textContent       = datos ? datos.credenciales : '';
-  if (dpBlock)  dpBlock.style.display    = datos ? ''       : 'none';
-  // Hoja de vacunas
+  if (dpNombre) dpNombre.textContent  = datos ? datos.nombre       : '';
+  if (dpCred)   dpCred.textContent    = datos ? datos.credenciales : '';
+  if (dpTlf)    dpTlf.textContent     = datos ? datos.telefono     : '';
+  if (dpBlock)  dpBlock.style.display = datos ? '' : 'none';
+
+  // ── Hoja de vacunas ───────────────────────────────────
   const dvNombre = document.getElementById('dvNombre');
   const dvCred   = document.getElementById('dvCredenciales');
+  const dvTlf    = document.getElementById('dvTelefono');
   const dvBlock  = document.getElementById('datosDoctorVacunas');
-  if (dvNombre) dvNombre.textContent      = datos ? datos.nombre       : '';
-  if (dvCred)   dvCred.textContent        = datos ? datos.credenciales : '';
-  if (dvBlock)  dvBlock.style.visibility  = datos ? 'visible' : 'hidden';
+  if (dvNombre) dvNombre.textContent       = datos ? datos.nombre       : '';
+  if (dvCred)   dvCred.textContent         = datos ? datos.credenciales : '';
+  if (dvTlf)    dvTlf.textContent          = datos ? datos.telefono     : '';
+  if (dvBlock)  dvBlock.style.visibility   = datos ? 'visible' : 'hidden';
+
+  // ── Hoja de Tests Rápidos ─────────────────────────────
+  const dtNombre = document.getElementById('dtNombre');
+  const dtCred   = document.getElementById('dtCredenciales');
+  const dtTlf    = document.getElementById('dtTelefono');
+  const dtBlock  = document.getElementById('datosDoctorTest');
+  if (dtNombre) dtNombre.textContent  = datos ? datos.nombre       : '';
+  if (dtCred)   dtCred.textContent    = datos ? datos.credenciales : '';
+  if (dtTlf)    dtTlf.textContent     = datos ? datos.telefono     : '';
+  if (dtBlock)  dtBlock.style.display = datos ? '' : 'none';
 }
 
 // ─── BADGE DE SESIÓN ──────────────────────────────────────
