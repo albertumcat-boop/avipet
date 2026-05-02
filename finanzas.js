@@ -56,6 +56,34 @@ function _getFechasRango() {
   return [fmt(hoy)];
 }
 
+// ─── PESTAÑA ACTIVA EN FINANZAS ──────────────────────────
+let _tabFinanzas = 'veterinaria'; // 'veterinaria' | 'peluqueria' | 'maquinas'
+
+window.cambiarTabFinanzas = (tab) => {
+  _tabFinanzas = tab;
+  const tabs = ['veterinaria','peluqueria','maquinas'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('btnFinTab_' + t);
+    if (btn) btn.className = t === tab
+      ? 'text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-blue-600 text-white border-b-2 border-blue-600'
+      : 'text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-slate-100 text-slate-500 hover:bg-slate-200';
+  });
+  window.cargarReporte();
+};
+
+// ─── SERVICIOS CON MÁQUINA ────────────────────────────────
+const SERVICIOS_MAQUINA = {
+  'ECOGRAFÍA':             '🔊 Ecógrafo',
+  'HEMATOLOGÍA COMPLETA':  '🔬 Analizador Hematológico',
+  'QUÍMICA SANGUÍNEA':     '🧪 Analizador Bioquímico',
+  'DESCARTE HEMOPARASITO': '🧫 Microscopio',
+  'DISTEMPER':             '🧫 Microscopio',
+  'PARVOVIRUS - CORONAVIRUS': '🧫 Microscopio',
+  'FILARIASIS':            '🧫 Microscopio',
+  'SIDA - LEUCEMIA':       '🧫 Microscopio',
+  'TEST HELICOBACTER PYLORI AG': '🧫 Microscopio',
+};
+
 window.cargarReporte = async () => {
   const listaDiv = document.getElementById('listaReporte');
   const netoDiv  = document.getElementById('repNeto');
@@ -77,11 +105,17 @@ window.cargarReporte = async () => {
 
     listaDiv.innerHTML = '';
 
+    // ── FILTRAR POR TAB ──
+    if (_tabFinanzas === 'maquinas') {
+      _renderizarContadorMaquinas(consultas, fechas);
+      return;
+    }
+
     // ── VETERINARIA ──
     let brutoVet=0, insumosVet=0, pagoSandoval=0, pagoSilva=0;
     const serviciosConteo = {};
 
-    if (consultas.length > 0) {
+    if (consultas.length > 0 && _tabFinanzas === 'veterinaria') {
       listaDiv.innerHTML += "<p class='text-[8px] font-black text-blue-500 uppercase tracking-widest mt-2 mb-1 px-1'>🩺 VETERINARIA (" + consultas.length + " consulta" + (consultas.length>1?'s':'') + ")</p>";
       consultas.forEach(r => {
         const venta   = parseFloat(r.montoVenta   || 0);
@@ -113,7 +147,7 @@ window.cargarReporte = async () => {
     let brutoPelu=0, pagoPeluquera=0, pagoAyu1=0, pagoAyuExt=0, netoAviPelu=0;
     let peluUSD=0, peluBS=0, peluPendiente=0;
 
-    if (servicios.length > 0) {
+    if (servicios.length > 0 && _tabFinanzas === 'peluqueria') {
       listaDiv.innerHTML += "<p class='text-[8px] font-black text-purple-500 uppercase tracking-widest mt-3 mb-1 px-1'>✂️ PELUQUERÍA (" + servicios.length + " servicio" + (servicios.length>1?'s':'') + ")</p>";
       servicios.forEach(r => {
         const precio  = parseFloat(r.precioTotal       || 0);
@@ -568,5 +602,90 @@ window.verResumenSemanalPelu = async () => {
 
   } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
 };
+
+// ─── CONTADOR DE SERVICIOS POR MÁQUINA ───────────────────
+async function _renderizarContadorMaquinas(consultas, fechas) {
+  const listaDiv = document.getElementById('listaReporte');
+  const netoDiv  = document.getElementById('repNeto');
+  if (!listaDiv) return;
+
+  // Contar servicios por máquina
+  const conteo = {};
+  Object.keys(SERVICIOS_MAQUINA).forEach(s => { conteo[s] = { count: 0, total: 0, maquina: SERVICIOS_MAQUINA[s] }; });
+
+  consultas.forEach(r => {
+    // Buscar en los servicios de cada consulta
+    const listaInsumos = r.listaDetalladaInsumos || [];
+    const tratamiento  = (r.tratamiento || '').toUpperCase();
+
+    Object.keys(SERVICIOS_MAQUINA).forEach(serv => {
+      const servNorm = serv.toUpperCase();
+      // Verificar si el servicio aparece en el tratamiento o en los insumos
+      if (tratamiento.includes(servNorm.split(' ')[0])) {
+        conteo[serv].count++;
+        conteo[serv].total += parseFloat(r.montoVenta || 0);
+      }
+    });
+
+    // También verificar por nombre de paciente si tiene tests
+    if (r.testsRealizados && Array.isArray(r.testsRealizados)) {
+      r.testsRealizados.forEach(t => {
+        const nombre = (t.nombre || '').toUpperCase();
+        Object.keys(SERVICIOS_MAQUINA).forEach(serv => {
+          if (nombre.includes(serv.split(' ')[0])) {
+            conteo[serv].count++;
+          }
+        });
+      });
+    }
+  });
+
+  // También contar directamente del nombre del servicio guardado
+  consultas.forEach(r => {
+    const venta = parseFloat(r.montoVenta || 0);
+    Object.keys(SERVICIOS_MAQUINA).forEach(serv => {
+      const nombrePac = (r.paciente || '').toUpperCase();
+      const notas     = (r.tratamiento || '').toUpperCase();
+      if (notas.includes(serv) || nombrePac.includes(serv.split(' ')[0])) {
+        // ya contado arriba
+      }
+    });
+  });
+
+  const tituloP = { hoy:'Hoy', semana:'Semana actual', mes:'Este mes' };
+  listaDiv.innerHTML = '';
+
+  // Card por máquina
+  let totalServicios = 0;
+  Object.entries(conteo).forEach(([servicio, data]) => {
+    totalServicios += data.count;
+    const colorBg = data.count > 0 ? '#eff6ff' : '#f8fafc';
+    const colorBorder = data.count > 0 ? '#bfdbfe' : '#e2e8f0';
+    const colorText = data.count > 0 ? '#1d4ed8' : '#94a3b8';
+
+    const div = document.createElement('div');
+    div.style.cssText = 'background:' + colorBg + ';border:2px solid ' + colorBorder + ';border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;';
+    div.innerHTML =
+      '<div>' +
+        '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;">' + data.maquina + '</p>' +
+        '<p style="font-size:13px;font-weight:900;color:#1e293b;">' + servicio + '</p>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<p style="font-size:28px;font-weight:900;color:' + colorText + ';line-height:1;">' + data.count + '</p>' +
+        '<p style="font-size:9px;color:#94a3b8;">servicio' + (data.count !== 1 ? 's' : '') + '</p>' +
+      '</div>';
+    listaDiv.appendChild(div);
+  });
+
+  // Resumen total
+  const resumen = document.createElement('div');
+  resumen.style.cssText = 'background:#1e293b;border-radius:14px;padding:14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;';
+  resumen.innerHTML =
+    '<p style="font-size:12px;font-weight:900;color:#fff;text-transform:uppercase;">Total servicios con máquina</p>' +
+    '<p style="font-size:28px;font-weight:900;color:#60a5fa;">' + totalServicios + '</p>';
+  listaDiv.appendChild(resumen);
+
+  if (netoDiv) netoDiv.innerHTML = '';
+}
 
 console.log("✅ finanzas.js v2 — cálculos completos, períodos Hoy/Semana/Mes");
