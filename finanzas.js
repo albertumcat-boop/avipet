@@ -57,7 +57,7 @@ function _getFechasRango() {
 }
 
 // ─── PESTAÑA ACTIVA EN FINANZAS ──────────────────────────
-let _tabFinanzas = 'veterinaria'; // 'veterinaria' | 'peluqueria' | 'maquinas'
+let _tabFinanzas = null; // null = solo calculadora visible al abrir
 
 window.cambiarTabFinanzas = (tab) => {
   _tabFinanzas = tab;
@@ -68,6 +68,11 @@ window.cambiarTabFinanzas = (tab) => {
       ? 'text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-blue-600 text-white border-b-2 border-blue-600'
       : 'text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-slate-100 text-slate-500 hover:bg-slate-200';
   });
+  window.cargarReporte();
+};
+
+window.volverMenuFinanzas = () => {
+  _tabFinanzas = null;
   window.cargarReporte();
 };
 
@@ -104,6 +109,21 @@ window.cargarReporte = async () => {
     snapPeluAll.forEach(d => { const r=d.data(); if (fechas.includes(r.fechaSimple)) servicios.push(r); });
 
     listaDiv.innerHTML = '';
+
+    // ── Si no hay tab seleccionada, mostrar solo los botones ──
+    if (!_tabFinanzas) {
+      listaDiv.innerHTML =
+        '<div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">' +
+          '<button onclick="window.cambiarTabFinanzas('veterinaria')" style="width:100%;padding:16px;border-radius:14px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:13px;color:#1d4ed8;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">'+
+            '<span>🩺 Veterinaria</span><span style="font-size:18px;">→</span></button>' +
+          '<button onclick="window.cambiarTabFinanzas('peluqueria')" style="width:100%;padding:16px;border-radius:14px;border:2px solid #e9d5ff;background:#faf5ff;font-weight:900;font-size:13px;color:#7c3aed;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">'+
+            '<span>✂️ Peluquería</span><span style="font-size:18px;">→</span></button>' +
+          '<button onclick="window.cambiarTabFinanzas('maquinas')" style="width:100%;padding:16px;border-radius:14px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:13px;color:#15803d;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">'+
+            '<span>🔬 Contador de Máquinas</span><span style="font-size:18px;">→</span></button>' +
+        '</div>';
+      if (netoDiv) netoDiv.innerHTML = '';
+      return;
+    }
 
     // ── FILTRAR POR TAB ──
     if (_tabFinanzas === 'maquinas') {
