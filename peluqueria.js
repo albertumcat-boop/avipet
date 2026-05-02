@@ -125,9 +125,9 @@ window.guardarPeluqueriaPro = async () => {
       } else {
         pagoPeluEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
         if(aplicaAyu1){
-          pagoPeluEsta    -= 1;  // $1 descontado a peluquera
-          ingresoAvipetEsta -= 1; // $1 descontado a Avipet
-          pagoAyu1Esta     = 1;  // ayudante recibe $1
+          pagoPeluEsta      -= 1;  // $1 descontado a peluquera
+          ingresoAvipetEsta -= 1;  // $1 descontado a Avipet
+          pagoAyu1Esta       = 2;  // ayudante recibe $2 ($1 de pelu + $1 de Avipet)
         }
       }
 
@@ -639,8 +639,7 @@ window.recalcularTotalPelu = () => {
       // Ayudante solo aplica si precio >= $10
       if (ayu1Act && cobro >= 10) {
         pelu -= 1; // $1 descontado a peluquera
-        a1 = 1;   // ayudante recibe $1
-        // Avipet también pierde $1 (se refleja en ingresoAvipet al guardar)
+        a1 = 2;   // ayudante recibe $2 ($1 pelu + $1 Avipet)
       }
     }
 
@@ -660,7 +659,7 @@ window.recalcularTotalPelu = () => {
       totalAex  = precioBase / 3;
     } else {
       totalPelu = precioBase * 0.40;
-      if (ayu1Act && precioBase >= 10) { totalPelu -= 1; totalA1 = 1; }
+      if (ayu1Act && precioBase >= 10) { totalPelu -= 1; totalA1 = 2; }
     }
   }
 
