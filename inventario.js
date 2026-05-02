@@ -677,6 +677,24 @@ async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
   return usos > 0 ? usos : null;
 }
 
+// ─── AGREGAR INSUMO MAESTRO ──────────────────────────────
+window.agregarInsumoMaestro = async () => {
+  const nombre = document.getElementById('nuevoInsumoNombre')?.value.trim().toUpperCase();
+  const costo  = parseFloat(document.getElementById('nuevoInsumoCosto')?.value) || 0;
+  if (!nombre) { alert('Escribe el nombre del insumo.'); return; }
+  try {
+    const snap = await getDocs(query(collection(db, "insumos_maestro"), where("nombre", "==", nombre)));
+    if (!snap.empty) { alert('Ya existe un insumo con ese nombre.'); return; }
+    await addDoc(collection(db, "insumos_maestro"), { nombre, costo, creadoEn: serverTimestamp() });
+    const inpN = document.getElementById('nuevoInsumoNombre');
+    const inpC = document.getElementById('nuevoInsumoCosto');
+    if (inpN) inpN.value = '';
+    if (inpC) inpC.value = '';
+    await window.renderizarTablaInsumos();
+    Swal.fire({ icon:'success', title:'✅ Insumo agregado', text: nombre, timer:1800, showConfirmButton:false });
+  } catch(e) { console.error(e); alert('❌ Error: ' + e.message); }
+};
+
 window.actualizarCostoInsumo = async (idInsumo, valor) => {
   const valorIngresado = parseFloat(valor) || 0;
   if (valorIngresado <= 0) return;
