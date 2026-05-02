@@ -259,7 +259,8 @@ window.insertarServicio = async (v) => {
   const visual=document.getElementById('visualizacionServicios');
   const vLimpio=normalizarNombre(v);
   let nombreFinal=v,precioFinal=0,porcServ=30;
-  try{const snap=await getDoc(doc(db,"servicios_maestro",v));if(snap.exists()){precioFinal=parseFloat(snap.data().precioVenta)||0;porcServ=parseFloat(snap.data().porcDoc??snap.data().porcentajeDoc??30);}else{const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);precioFinal=lrec?recetas[lrec].precioVenta:0;porcServ=CONFIG_PORC[v]??30;}}
+  let insumosFirebase = null;
+  try{const snap=await getDoc(doc(db,"servicios_maestro",v));if(snap.exists()){precioFinal=parseFloat(snap.data().precioVenta)||0;porcServ=parseFloat(snap.data().porcDoc??snap.data().porcentajeDoc??30);if(snap.data().insumos&&snap.data().insumos.length>0)insumosFirebase=snap.data().insumos;}else{const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);precioFinal=lrec?recetas[lrec].precioVenta:0;porcServ=CONFIG_PORC[v]??30;}}
   catch{const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);precioFinal=lrec?recetas[lrec].precioVenta:0;porcServ=CONFIG_PORC[v]??30;}
 
   if(vLimpio.includes("kgadicional")){const kgs=prompt("KGs adicionales:");if(!kgs||isNaN(kgs)){document.getElementById('selectorServicios').value="";return;}nombreFinal=`KG ADICIONAL (${parseFloat(kgs)}kg)`;precioFinal=parseFloat(kgs)*7;porcServ=0;}
@@ -289,8 +290,13 @@ window.insertarServicio = async (v) => {
   let insNuevos=[];
   if(cuerpo.querySelectorAll('.servicio-principal').length===1)insNuevos=[...insumosFijosMedicos];
   if(vLimpio.includes("vacuna")){const yaHayVial=Array.from(cuerpo.querySelectorAll('td')).some(td=>td.innerText.includes("Vial"));if(!yaHayVial)insNuevos=[...insNuevos,...insumosBaseVacuna];}
-  const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
-  if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
+  // Usar insumos de Firebase (configurados en Ajustes) si existen, sino usar recetas
+  if (insumosFirebase) {
+    insNuevos = [...insNuevos, ...insumosFirebase];
+  } else {
+    const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
+    if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
+  }
 
   insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">✕</td>`;cuerpo.appendChild(tr);});
 
@@ -989,6 +995,136 @@ window.eliminarServicioMaestro = async (nombreServicio) => {
   } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
 };
 
+// ─── EDITAR INSUMOS DE UN SERVICIO ───────────────────────
+window.editarInsumosServicio = async (nombreServicio) => {
+  // Cargar insumos actuales del servicio desde Firebase
+  try {
+    const snap = await getDoc(doc(db, "servicios_maestro", nombreServicio));
+    if (!snap.exists()) { alert("Servicio no encontrado."); return; }
+
+    const data = snap.data();
+    // Insumos guardados en Firebase o los del objeto recetas como base
+    const normNombre = normalizarNombre(nombreServicio);
+    const recetaBase = Object.entries(recetas).find(([k]) => normalizarNombre(k) === normNombre);
+    let insumosActuales = data.insumos || (recetaBase ? recetaBase[1].insumos : []);
+
+    // Función para renderizar la lista de insumos en el modal
+    const renderLista = () => {
+      const cont = document.getElementById('listaInsumosModal');
+      if (!cont) return;
+      cont.innerHTML = '';
+      if (insumosActuales.length === 0) {
+        cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:8px;">Sin insumos. Agrega uno abajo.</p>';
+        return;
+      }
+      insumosActuales.forEach((ins, idx) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f1f5f9;';
+        row.innerHTML =
+          '<span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">' + ins.nombre + '</span>' +
+          '<span style="font-size:10px;color:#64748b;">$</span>' +
+          '<input type="number" value="' + (ins.costo||0).toFixed(4) + '" step="0.0001" min="0" ' +
+            'style="width:70px;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;text-align:center;" ' +
+            'data-idx="' + idx + '" class="inp-costo-ins">' +
+          '<button data-idx="' + idx + '" class="btn-del-ins" style="color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;">✕</button>';
+        cont.appendChild(row);
+      });
+
+      // Eventos
+      cont.querySelectorAll('.inp-costo-ins').forEach(inp => {
+        inp.addEventListener('change', function() {
+          insumosActuales[this.dataset.idx].costo = parseFloat(this.value) || 0;
+        });
+      });
+      cont.querySelectorAll('.btn-del-ins').forEach(btn => {
+        btn.addEventListener('click', function() {
+          insumosActuales.splice(parseInt(this.dataset.idx), 1);
+          renderLista();
+        });
+      });
+    };
+
+    // Cargar lista de insumos maestros para el selector
+    const snapIns = await getDocs(collection(db, "insumos_maestro"));
+    let optsInsumos = '<option value="">-- Seleccionar insumo --</option>';
+    snapIns.forEach(d => {
+      const r = d.data();
+      optsInsumos += '<option value="' + (r.nombre||d.id) + '" data-costo="' + (r.costo||0) + '">' +
+        (r.nombre||d.id) + ' ($' + parseFloat(r.costo||0).toFixed(4) + ')</option>';
+    });
+
+    var htmlModal =
+      '<div style="text-align:left;">' +
+      '<p style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:8px;">Insumos de: <b style="color:#1e293b;">' + nombreServicio + '</b></p>' +
+      '<div id="listaInsumosModal" style="max-height:200px;overflow-y:auto;margin-bottom:12px;"></div>' +
+      '<div style="border-top:1px solid #e2e8f0;padding-top:10px;">' +
+      '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Agregar insumo:</p>' +
+      '<div style="display:flex;gap:6px;align-items:center;">' +
+      '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;">' +
+        optsInsumos +
+      '</select>' +
+      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">➕</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:6px;">' +
+      '<input id="inpNombreNuevo" type="text" placeholder="O escribe el nombre..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
+      '<input id="inpCostoNuevo" type="number" placeholder="Costo $" step="0.0001" min="0" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
+      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">➕</button>' +
+      '</div>' +
+      '</div></div>';
+
+    const res = await Swal.fire({
+      title: '🧪 Insumos del Servicio',
+      html: htmlModal,
+      width: 520,
+      showCancelButton: true,
+      confirmButtonText: '💾 Guardar cambios',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#2563eb',
+      didOpen: function() {
+        // Renderizar lista inicial
+        renderLista();
+
+        // Botón agregar desde selector
+        document.getElementById('btnAgregarInsumo').addEventListener('click', function() {
+          const sel = document.getElementById('selInsumoAgregar');
+          const opt = sel?.options[sel.selectedIndex];
+          if (!opt || !opt.value) return;
+          const costo = parseFloat(opt.dataset.costo) || 0;
+          insumosActuales.push({ nombre: opt.value, costo });
+          sel.value = '';
+          renderLista();
+        });
+
+        // Botón agregar manual
+        document.getElementById('btnAgregarManual').addEventListener('click', function() {
+          const nombre = document.getElementById('inpNombreNuevo')?.value.trim().toUpperCase();
+          const costo  = parseFloat(document.getElementById('inpCostoNuevo')?.value) || 0;
+          if (!nombre) { alert('Escribe el nombre del insumo'); return; }
+          insumosActuales.push({ nombre, costo });
+          document.getElementById('inpNombreNuevo').value = '';
+          document.getElementById('inpCostoNuevo').value  = '';
+          renderLista();
+        });
+      }
+    });
+
+    if (!res.isConfirmed) return;
+
+    // Guardar en Firebase
+    await setDoc(doc(db, "servicios_maestro", nombreServicio), {
+      insumos: insumosActuales
+    }, { merge: true });
+
+    await Swal.fire({
+      icon: 'success',
+      title: '✅ Insumos guardados',
+      html: '<b>' + nombreServicio + '</b><br>' + insumosActuales.length + ' insumo(s) asignados',
+      timer: 2000, showConfirmButton: false
+    });
+
+  } catch(e) { console.error(e); alert('❌ Error: ' + e.message); }
+};
+
 // ─── FILTRAR TABLA DE SERVICIOS ───────────────────────────
 window.filtrarTablaServicios = () => {
   const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase() || '';
@@ -1022,6 +1158,7 @@ window.renderizarTablaMaestra = async () => {
       '<th class="p-2 text-center">Precio ($)</th>' +
       '<th class="p-2 text-center">% Doc</th>' +
       '<th class="p-2 text-center">OK</th>' +
+      '<th class="p-2 text-center">Insumos</th>' +
       '<th class="p-2 text-center">Del</th>' +
       '</tr></thead>';
 
@@ -1085,6 +1222,20 @@ window.renderizarTablaMaestra = async () => {
       });
       tdGuardar.appendChild(btnGuardar);
       tr.appendChild(tdGuardar);
+
+      // Botón insumos
+      const tdIns = document.createElement('td');
+      tdIns.className = 'p-2 text-center';
+      const btnIns = document.createElement('button');
+      btnIns.className = 'text-[8px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-black hover:bg-emerald-600 hover:text-white';
+      btnIns.textContent = '🧪';
+      btnIns.title = 'Editar insumos de este servicio';
+      btnIns.dataset.id = r.id;
+      btnIns.addEventListener('click', function() {
+        window.editarInsumosServicio(this.dataset.id);
+      });
+      tdIns.appendChild(btnIns);
+      tr.appendChild(tdIns);
 
       // Botón eliminar
       const tdElim = document.createElement('td');
