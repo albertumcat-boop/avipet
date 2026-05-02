@@ -1,48 +1,37 @@
 // =========================================================
-// AVIPET — Service Worker v6
-// IMPORTANTE: No cachea archivos JS para siempre tener la versión más reciente
+// AVIPET — Service Worker v8
+// Elimina TODO el cache anterior sin excepción
+// NUNCA cachea JS ni HTML — siempre frescos de Vercel
 // =========================================================
 
-const CACHE_V = 'avipet-v7';
+const CACHE_V = 'avipet-v8';
 
-// Solo cachear assets estáticos que NO cambian frecuentemente
-const ESTATICOS = [
-  '/avipet.png',
-  '/logo_darwin.jpg',
-  '/logo_joan.png',
-  '/manifest.json',
-];
-
-// ── INSTALAR ──────────────────────────────────────────────
 self.addEventListener('install', event => {
-  console.log('[SW v6] Instalando...');
-  event.waitUntil(
-    caches.open(CACHE_V).then(cache =>
-      Promise.allSettled(ESTATICOS.map(url =>
-        cache.add(url).catch(() => {})
-      ))
-    ).then(() => self.skipWaiting())
-  );
+  console.log('[SW v8] Instalando...');
+  // No cachear nada en la instalación — todo viene de la red
+  event.waitUntil(self.skipWaiting());
 });
 
-// ── ACTIVAR: limpiar TODOS los caches anteriores ─────────
 self.addEventListener('activate', event => {
-  console.log('[SW v6] Activando — limpiando caches viejos...');
+  console.log('[SW v8] Activando — eliminando TODOS los caches...');
   event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.map(k => {
-        console.log('[SW v6] Eliminando cache:', k);
+    caches.keys().then(keys => {
+      console.log('[SW v8] Caches encontrados:', keys);
+      return Promise.all(keys.map(k => {
+        console.log('[SW v8] Eliminando:', k);
         return caches.delete(k);
-      })))
-      .then(() => self.clients.claim())
+      }));
+    }).then(() => {
+      console.log('[SW v8] Todos los caches eliminados');
+      return self.clients.claim();
+    })
   );
 });
 
-// ── FETCH: Network First para JS/HTML, Cache para imágenes ──
 self.addEventListener('fetch', event => {
   const url = event.request.url;
 
-  // Firebase, APIs externas → dejar pasar sin interceptar
+  // Firebase, APIs externas, CDNs → dejar pasar sin interceptar
   if (url.includes('firestore.googleapis.com') ||
       url.includes('firebase') ||
       url.includes('googleapis.com') ||
@@ -51,29 +40,17 @@ self.addEventListener('fetch', event => {
       url.includes('cdn.') ||
       url.includes('jsdelivr') ||
       url.includes('cdnjs') ||
-      url.includes('tailwind')) {
-    return;
+      url.includes('tailwind') ||
+      url.includes('gstatic')) {
+    return; // no interceptar
   }
 
-  // Archivos JS y HTML → SIEMPRE de la red (nunca del cache)
-  if (url.endsWith('.js') || url.endsWith('.html') || url.includes('.js?') || url.includes('?v=') || url === self.registration.scope) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Imágenes y otros assets → Cache first
+  // JS, HTML y cualquier archivo del sitio → SIEMPRE de la red
+  // NUNCA del cache — así los cambios se reflejan inmediatamente
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_V).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => caches.match('/index.html'));
+    fetch(event.request).catch(() => {
+      // Sin red → intentar cache solo como último recurso
+      return caches.match(event.request);
     })
   );
 });
