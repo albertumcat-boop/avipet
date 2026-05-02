@@ -467,20 +467,53 @@ window.renderizarTablaInsumos = async () => {
 };
 
 window.actualizarCostoInsumo = async (idInsumo, valor) => {
-  const costoTotal = parseFloat(valor) || 0;
-  if (costoTotal <= 0) return;
+  const valorIngresado = parseFloat(valor) || 0;
+  if (valorIngresado <= 0) return;
 
-  const MARGEN = 0.20; // 20% de margen de seguridad
+  const MARGEN = 0.20;
+  const tasa   = window.tasaDolarHoy || 36;
 
-  // Mostrar calculadora de rendimiento
-  var htmlCalc = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Costo del producto: <b>$' + costoTotal.toFixed(2) + '</b></p>';
+  // Paso 1: preguntar si el precio está en USD o Bs
+  var htmlMoneda = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
+  htmlMoneda += '<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">💵 Dólares (USD)</button>';
+  htmlMoneda += '<button id="btnMonedaBS" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:12px;color:#92400e;cursor:pointer;">🟡 Bolívares (Bs ' + tasa.toFixed(2) + ')</button>';
+  htmlMoneda += '</div>';
+
+  const resMoneda = await Swal.fire({
+    title: '💰 ¿En qué moneda está el precio?',
+    html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;">Precio ingresado: <b>' + valorIngresado.toFixed(2) + '</b></p>' + htmlMoneda,
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+    didOpen: function() {
+      document.getElementById('btnMonedaUSD').addEventListener('click', function() {
+        window._monedaInsumo = 'usd'; Swal.clickConfirm();
+      });
+      document.getElementById('btnMonedaBS').addEventListener('click', function() {
+        window._monedaInsumo = 'bs'; Swal.clickConfirm();
+      });
+    }
+  });
+  if (resMoneda.isDismissed) return;
+
+  // Convertir a USD si está en Bs
+  const moneda = window._monedaInsumo || 'usd';
+  window._monedaInsumo = null;
+  const costoTotal = moneda === 'bs' ? valorIngresado / tasa : valorIngresado;
+
+  const costoMostrar = moneda === 'bs'
+    ? 'Bs ' + valorIngresado.toFixed(2) + ' = $' + costoTotal.toFixed(4)
+    : '$' + costoTotal.toFixed(2);
+
+  // Paso 2: calculadora de rendimiento
+  var htmlCalc = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Costo en USD: <b>$' + costoTotal.toFixed(4) + '</b>' + (moneda==='bs' ? ' (convertido de Bs '+valorIngresado.toFixed(2)+')' : '') + '</p>';
   htmlCalc += '<div style="display:flex;flex-direction:column;gap:10px;">';
   htmlCalc += '<div>';
   htmlCalc += '<label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos usos/servicios estimas que rinde?</label>';
   htmlCalc += '<input id="calc_usos" type="number" min="1" placeholder="Ej: 50 usos" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;">';
   htmlCalc += '</div>';
-  htmlCalc += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;" id="calc_resultado" style="display:none;">';
-  htmlCalc += '<p style="font-size:9px;color:#64748b;font-weight:700;">Vista previa del costo por servicio:</p>';
+  htmlCalc += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;" id="calc_resultado">';
+  htmlCalc += '<p style="font-size:9px;color:#64748b;font-weight:700;">Costo por servicio (con 20% margen):</p>';
   htmlCalc += '<p id="calc_preview" style="font-size:16px;font-weight:900;color:#16a34a;">---</p>';
   htmlCalc += '<p style="font-size:8px;color:#94a3b8;">Incluye 20% de margen de seguridad</p>';
   htmlCalc += '</div>';
@@ -494,15 +527,15 @@ window.actualizarCostoInsumo = async (idInsumo, valor) => {
     cancelButtonText: 'Solo guardar precio',
     confirmButtonColor: '#2563eb',
     didOpen: function() {
-      const inp = document.getElementById('calc_usos');
+      const inp  = document.getElementById('calc_usos');
       const prev = document.getElementById('calc_preview');
-      const box = document.getElementById('calc_resultado');
+      const box  = document.getElementById('calc_resultado');
       if (inp) {
         inp.addEventListener('input', function() {
           const usos = parseFloat(this.value) || 0;
           if (usos > 0) {
-            const costoPorUso = costoTotal / (usos * (1 - MARGEN));
-            prev.textContent = '$' + costoPorUso.toFixed(4) + ' por servicio';
+            const cpp = costoTotal / (usos * (1 - MARGEN));
+            prev.textContent = '$' + cpp.toFixed(4) + ' por servicio';
             box.style.display = 'block';
           } else {
             box.style.display = 'none';
