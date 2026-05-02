@@ -112,15 +112,25 @@ window.cargarReporte = async () => {
 
     // ── Si no hay tab seleccionada, mostrar solo los botones ──
     if (!_tabFinanzas) {
-      listaDiv.innerHTML =
-        '<div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">' +
-          '<button onclick="window.cambiarTabFinanzas('veterinaria')" style="width:100%;padding:16px;border-radius:14px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:13px;color:#1d4ed8;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">'+
-            '<span>🩺 Veterinaria</span><span style="font-size:18px;">→</span></button>' +
-          '<button onclick="window.cambiarTabFinanzas('peluqueria')" style="width:100%;padding:16px;border-radius:14px;border:2px solid #e9d5ff;background:#faf5ff;font-weight:900;font-size:13px;color:#7c3aed;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">'+
-            '<span>✂️ Peluquería</span><span style="font-size:18px;">→</span></button>' +
-          '<button onclick="window.cambiarTabFinanzas('maquinas')" style="width:100%;padding:16px;border-radius:14px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:13px;color:#15803d;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">'+
-            '<span>🔬 Contador de Máquinas</span><span style="font-size:18px;">→</span></button>' +
-        '</div>';
+      listaDiv.innerHTML = '';
+      const menuDiv = document.createElement('div');
+      menuDiv.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:8px 0;';
+
+      const botones = [
+        { tab:'veterinaria', label:'🩺 Veterinaria',          color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe' },
+        { tab:'peluqueria',  label:'✂️ Peluquería',           color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
+        { tab:'maquinas',    label:'🔬 Contador de Máquinas', color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0' },
+      ];
+
+      botones.forEach(function(b) {
+        const btn = document.createElement('button');
+        btn.style.cssText = 'width:100%;padding:16px;border-radius:14px;border:2px solid ' + b.border + ';background:' + b.bg + ';font-weight:900;font-size:13px;color:' + b.color + ';cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
+        btn.innerHTML = '<span>' + b.label + '</span><span style="font-size:18px;">→</span>';
+        btn.addEventListener('click', (function(tab){ return function(){ window.cambiarTabFinanzas(tab); }; })(b.tab));
+        menuDiv.appendChild(btn);
+      });
+
+      listaDiv.appendChild(menuDiv);
       if (netoDiv) netoDiv.innerHTML = '';
       return;
     }
