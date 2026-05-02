@@ -1505,8 +1505,19 @@
         </div>
         <div id="tablaServiciosMaestro" class="overflow-x-auto"></div>
       </div>
-      <div id="panel_subTabInsumos" class="hidden overflow-x-auto bg-slate-50 rounded-xl border border-slate-100 p-2">
-        <div id="tablaInsumosMaestro"></div>
+      <div id="panel_subTabInsumos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
+        <!-- Botón agregar insumo -->
+        <div class="flex gap-2 mb-3">
+          <input type="text" id="nuevoInsumoNombre" placeholder="Nombre del insumo..."
+                 class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+          <input type="number" id="nuevoInsumoCosto" placeholder="Costo $" step="0.0001" min="0"
+                 class="w-24 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+          <button onclick="_llamarFuncion('agregarInsumoMaestro')"
+                  class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-emerald-700 shadow">
+            ➕ Agregar
+          </button>
+        </div>
+        <div id="tablaInsumosMaestro" class="overflow-x-auto"></div>
       </div>
     </div>
   </section>
