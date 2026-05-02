@@ -73,7 +73,36 @@ window.cambiarTabFinanzas = (tab) => {
 
 window.volverMenuFinanzas = () => {
   _tabFinanzas = null;
-  window.cargarReporte();
+  window.mostrarMenuFinanzas();
+};
+
+// Mostrar solo el menú de botones sin consultar Firebase
+window.mostrarMenuFinanzas = () => {
+  _tabFinanzas = null;
+  const listaDiv = document.getElementById('listaReporte');
+  const netoDiv  = document.getElementById('repNeto');
+  if (!listaDiv) return;
+
+  listaDiv.innerHTML = '';
+  const menuDiv = document.createElement('div');
+  menuDiv.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:8px 0;';
+
+  const botones = [
+    { tab:'veterinaria', label:'🩺 Veterinaria',          color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe' },
+    { tab:'peluqueria',  label:'✂️ Peluquería',           color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
+    { tab:'maquinas',    label:'🔬 Contador de Máquinas', color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0' },
+  ];
+
+  botones.forEach(function(b) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'width:100%;padding:16px;border-radius:14px;border:2px solid ' + b.border + ';background:' + b.bg + ';font-weight:900;font-size:13px;color:' + b.color + ';cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
+    btn.innerHTML = '<span>' + b.label + '</span><span style="font-size:18px;">→</span>';
+    btn.addEventListener('click', (function(tab){ return function(){ window.cambiarTabFinanzas(tab); }; })(b.tab));
+    menuDiv.appendChild(btn);
+  });
+
+  listaDiv.appendChild(menuDiv);
+  if (netoDiv) netoDiv.innerHTML = '';
 };
 
 // ─── SERVICIOS CON MÁQUINA ────────────────────────────────
@@ -110,28 +139,9 @@ window.cargarReporte = async () => {
 
     listaDiv.innerHTML = '';
 
-    // ── Si no hay tab seleccionada, mostrar solo los botones ──
+    // ── Si no hay tab seleccionada → mostrar menú ──
     if (!_tabFinanzas) {
-      listaDiv.innerHTML = '';
-      const menuDiv = document.createElement('div');
-      menuDiv.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:8px 0;';
-
-      const botones = [
-        { tab:'veterinaria', label:'🩺 Veterinaria',          color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe' },
-        { tab:'peluqueria',  label:'✂️ Peluquería',           color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
-        { tab:'maquinas',    label:'🔬 Contador de Máquinas', color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0' },
-      ];
-
-      botones.forEach(function(b) {
-        const btn = document.createElement('button');
-        btn.style.cssText = 'width:100%;padding:16px;border-radius:14px;border:2px solid ' + b.border + ';background:' + b.bg + ';font-weight:900;font-size:13px;color:' + b.color + ';cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
-        btn.innerHTML = '<span>' + b.label + '</span><span style="font-size:18px;">→</span>';
-        btn.addEventListener('click', (function(tab){ return function(){ window.cambiarTabFinanzas(tab); }; })(b.tab));
-        menuDiv.appendChild(btn);
-      });
-
-      listaDiv.appendChild(menuDiv);
-      if (netoDiv) netoDiv.innerHTML = '';
+      window.mostrarMenuFinanzas();
       return;
     }
 
