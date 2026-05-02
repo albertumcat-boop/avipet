@@ -3,7 +3,7 @@
 // IMPORTANTE: No cachea archivos JS para siempre tener la versión más reciente
 // =========================================================
 
-const CACHE_V = 'avipet-v6';
+const CACHE_V = 'avipet-v7';
 
 // Solo cachear assets estáticos que NO cambian frecuentemente
 const ESTATICOS = [
@@ -56,7 +56,7 @@ self.addEventListener('fetch', event => {
   }
 
   // Archivos JS y HTML → SIEMPRE de la red (nunca del cache)
-  if (url.endsWith('.js') || url.endsWith('.html') || url.includes('.js?') || url === self.registration.scope) {
+  if (url.endsWith('.js') || url.endsWith('.html') || url.includes('.js?') || url.includes('?v=') || url === self.registration.scope) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
