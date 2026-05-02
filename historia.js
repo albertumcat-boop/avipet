@@ -11,7 +11,40 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { respaldarProgresoLocal } from './main.js';
+// respaldarProgresoLocal definida localmente para evitar doble carga de main.js
+const respaldarProgresoLocal = () => {
+  try {
+    const leer = (id) => document.getElementById(id)?.value || '';
+    const ci = leer('hCI');
+    if (!ci) return;
+    const servicios = [];
+    document.querySelectorAll('.servicio-principal').forEach(fila => {
+      servicios.push({
+        nombre: fila.querySelector('td')?.innerText || '',
+        precio: fila.getAttribute('data-precio') || 0,
+        porc:   fila.getAttribute('data-porc')   || 0
+      });
+    });
+    localStorage.setItem('respaldo_historia_activa', JSON.stringify({
+      cedula:      ci,
+      propietario: leer('hProp'),
+      paciente:    leer('hNombre'),
+      especie:     leer('hEspecie'),
+      raza:        leer('hRaza'),
+      edad:        leer('hEdad'),
+      sexo:        leer('hSexo'),
+      peso:        leer('hPeso'),
+      color:       leer('hColor'),
+      telefono:    leer('hTlf'),
+      correo:      leer('hMail'),
+      direccion:   leer('hDir'),
+      tratamiento: leer('hTratamiento'),
+      fechaNac:    leer('hFechaNac'),
+      servicios,
+      timestamp: Date.now()
+    }));
+  } catch(e) { console.warn('Error guardando respaldo:', e); }
+};
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || 'AVIPET2026';
 
 // Normalizar cédula: quitar puntos, espacios, guiones — para buscar con o sin formato
