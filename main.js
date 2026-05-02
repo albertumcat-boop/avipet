@@ -82,9 +82,10 @@ window.ejecutarCambioDeTab = (tabId) => {
   // Acciones post-navegación
   try {
     if (tabId === 'reporte') {
-      // Usar _llamarFuncion para esperar a que el módulo cargue
-      _llamarFuncion('cargarReporte');
+      // Solo inicializar calculadora — el reporte carga cuando el usuario elige una opción
       setTimeout(() => _llamarFuncion('inicializarCalculadora'), 300);
+      // Mostrar los botones del menú sin cargar datos
+      setTimeout(() => _llamarFuncion('mostrarMenuFinanzas'), 500);
     }
     if (tabId === 'peluqueria'    && typeof window.cargarBitacoraHoy  === 'function') {
       window.cargarBitacoraHoy();
