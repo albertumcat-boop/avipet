@@ -190,19 +190,19 @@ window.registrarLogAuditoria = registrarLogAuditoria;
 
 // ─── TASA DEL DÓLAR — múltiples APIs en cascada ───
 const _APIS_TASA = [
-  // API 1: ve.dolarapi.com — gratuita, sin registro, CORS ok
+  // API 1: ve.dolarapi.com — tasa BCV oficial
   async () => {
     const r = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
     const j = await r.json();
     return parseFloat(j?.promedio || j?.precio) || 0;
   },
-  // API 2: dolarapi.com alternativo
+  // API 2: dolarapi.com — tasa BCV oficial
   async () => {
     const r = await fetch("https://dolarapi.com/v1/dolares/oficial");
     const j = await r.json();
     return parseFloat(j?.promedio || j?.precio) || 0;
   },
-  // API 3: exchangerate-api (USD → VES)
+  // API 3: exchangerate-api (USD → VES oficial)
   async () => {
     const r = await fetch("https://open.er-api.com/v6/latest/USD");
     const j = await r.json();
