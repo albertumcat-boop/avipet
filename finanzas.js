@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET — finanzas.js  v2
+// AVIPET — finanzas.js  v3
 // CÁLCULOS COMPLETOS:
 //   Veterinaria: Venta - Insumos - Pago Doctor = Neto Avipet
 //   Peluquería:  Precio × 40% Peluquera, 60% Avipet
@@ -729,4 +729,4 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("✅ finanzas.js v2 — cálculos completos, períodos Hoy/Semana/Mes");
+console.log("✅ finanzas.js v3 — tabs Vet/Pelu/Maquinas, menu sin autocargar");
