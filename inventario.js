@@ -307,6 +307,7 @@ window.renderizarTablaMaestra = async () => {
       '<th class="p-2 text-center">Precio ($)</th>' +
       '<th class="p-2 text-center">% Doc</th>' +
       '<th class="p-2 text-center">OK</th>' +
+      '<th class="p-2 text-center">Insumos</th>' +
       '<th class="p-2 text-center">Del</th>' +
       '</tr></thead>';
 
@@ -370,6 +371,20 @@ window.renderizarTablaMaestra = async () => {
       });
       tdGuardar.appendChild(btnGuardar);
       tr.appendChild(tdGuardar);
+
+      // Botón insumos
+      const tdIns = document.createElement('td');
+      tdIns.className = 'p-2 text-center';
+      const btnIns = document.createElement('button');
+      btnIns.className = 'text-[8px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-black hover:bg-emerald-600 hover:text-white';
+      btnIns.textContent = '🧪';
+      btnIns.title = 'Editar insumos';
+      btnIns.dataset.id = r.id;
+      btnIns.addEventListener('click', function() {
+        window.editarInsumosServicio(this.dataset.id);
+      });
+      tdIns.appendChild(btnIns);
+      tr.appendChild(tdIns);
 
       // Botón eliminar
       const tdElim = document.createElement('td');
