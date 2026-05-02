@@ -620,51 +620,100 @@ window.verResumenSemanalPelu = async () => {
 
     // Desglose por modalidad de pago
     let totalPagadoUSD = 0, totalPagadoBS = 0, totalPendiente = 0;
+    // Pago peluquera desglosado
+    let peluUSD = 0, peluBS = 0;
+    // Pago ayudante desglosado
+    let ayuUSD = 0, ayuBS = 0;
+
     servicios.forEach(function(r) {
-      const precio = parseFloat(r.precioTotal||0);
-      if (r.estatusPago === 'pagado') {
-        if (r.modoPago === 'bs') totalPagadoBS += precio;
-        else if (r.modoPago === 'mixto') {
+      const precio  = parseFloat(r.precioTotal||0);
+      const pPelu   = parseFloat(r.pagoPeluquera||0);
+      const pA1     = parseFloat(r.pagoAyudante1||0);
+      const modo    = r.modoPago || '';
+      const pagado  = r.estatusPago === 'pagado';
+
+      if (pagado) {
+        if (modo === 'bs') {
+          totalPagadoBS += precio;
+          peluBS += pPelu;
+          ayuBS  += pA1;
+        } else if (modo === 'mixto') {
+          const fracUSD = precio > 0 ? parseFloat(r.montoPagadoUSD||0) / precio : 0.5;
+          const fracBS  = 1 - fracUSD;
           totalPagadoUSD += parseFloat(r.montoPagadoUSD||0);
           totalPagadoBS  += parseFloat(r.montoPagadoBS||0);
-        } else totalPagadoUSD += precio;
+          peluUSD += pPelu * fracUSD;
+          peluBS  += pPelu * fracBS;
+          ayuUSD  += pA1   * fracUSD;
+          ayuBS   += pA1   * fracBS;
+        } else {
+          totalPagadoUSD += precio;
+          peluUSD += pPelu;
+          ayuUSD  += pA1;
+        }
       } else {
         totalPendiente += precio;
       }
     });
 
+    // Pago ayudante real: $1 por perro con ayudante × 2
+    // Desglosado según proporción USD/BS de esos perros
+    const pagoAyu1Real = perrosConAyu * 2;
+
+    const tasa = window.tasaDolarHoy || 36;
     let htmlModal = '';
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:left;">';
-    htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Servicios semana</p>';
-    htmlModal += '<p style="font-size:20px;font-weight:900;color:#1e293b;">' + servicios.length + ' perros</p>';
-    htmlModal += '<p style="font-size:9px;color:#64748b;">Con ayudante: <b>' + perrosConAyu + '</b></p>';
-    htmlModal += '<p style="font-size:9px;color:#64748b;">Sin ayudante: <b>' + perrosSinAyu + '</b></p></div>';
-    htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;">Peluquera</p>';
-    htmlModal += '<p style="font-size:20px;font-weight:900;color:#7c3aed;">$' + totalPelu.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:9px;color:#94a3b8;">(-$1 por perro con ayu.)</p></div>';
-    htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante</p>';
-    htmlModal += '<p style="font-size:20px;font-weight:900;color:#2563eb;">$' + pagoAyu1Real.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' perros × $1 × 2</p></div></div>';
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
-    htmlModal += '<div style="background:#eff6ff;border-radius:10px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;">💵 Cobrado USD</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#1d4ed8;">$' + totalPagadoUSD.toFixed(2) + '</p></div>';
-    htmlModal += '<div style="background:#fffbeb;border-radius:10px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;">🟡 Cobrado Bs</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#92400e;">$' + totalPagadoBS.toFixed(2) + ' equiv.</p></div></div>';
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">';
-    htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p></div>';
-    htmlModal += '<div style="background:#fef2f2;border-radius:10px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;text-transform:uppercase;">Pendiente</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#dc2626;">$' + totalPendiente.toFixed(2) + '</p></div>';
-    htmlModal += '<div style="background:#1e293b;border-radius:10px;padding:8px;text-align:center;">';
+
+    // ── Resumen general ──────────────────────────────────
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">';
+    htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Servicios</p>';
+    htmlModal += '<p style="font-size:22px;font-weight:900;color:#1e293b;">' + servicios.length + '</p>';
+    htmlModal += '<p style="font-size:8px;color:#64748b;">Con ayu: <b>' + perrosConAyu + '</b> · Sin: <b>' + perrosSinAyu + '</b></p></div>';
+    htmlModal += '<div style="background:#1e293b;border-radius:12px;padding:10px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p></div></div>';
+    htmlModal += '<p style="font-size:18px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p></div>';
+    htmlModal += '<div style="background:#f0fdf4;border-radius:12px;padding:10px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
+    htmlModal += '<p style="font-size:18px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p></div></div>';
+
+    // ── Cobrado por moneda ───────────────────────────────
+    htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;margin-bottom:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:6px;">💰 Cobrado por moneda</p>';
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">';
+    htmlModal += '<div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#1d4ed8;">💵 USD</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#1d4ed8;">$' + totalPagadoUSD.toFixed(2) + '</p></div>';
+    htmlModal += '<div style="background:#fffbeb;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#92400e;">🟡 Bs equiv.</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#92400e;">$' + totalPagadoBS.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:7px;color:#b45309;">Bs ' + (totalPagadoBS * tasa).toFixed(0) + '</p></div>';
+    htmlModal += '<div style="background:#fef2f2;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;">⏳ Pendiente</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#dc2626;">$' + totalPendiente.toFixed(2) + '</p></div></div></div>';
+
+    // ── Pago Peluquera desglosado ────────────────────────
+    htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;margin-bottom:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin-bottom:6px;">✂️ Pago Peluquera — Total: $' + totalPelu.toFixed(2) + '</p>';
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+    htmlModal += '<div style="background:#ede9fe;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#6d28d9;">💵 En USD</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#6d28d9;">$' + peluUSD.toFixed(2) + '</p></div>';
+    htmlModal += '<div style="background:#fdf4ff;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;">🟡 En Bs</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#7c3aed;">$' + peluBS.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:7px;color:#a78bfa;">Bs ' + (peluBS * tasa).toFixed(0) + '</p></div></div></div>';
+
+    // ── Pago Ayudante desglosado ─────────────────────────
+    htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;margin-bottom:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin-bottom:6px;">🤝 Pago Ayudante (' + perrosConAyu + ' perros × $1 × 2) — Total: $' + pagoAyu1Real.toFixed(2) + '</p>';
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+    htmlModal += '<div style="background:#dbeafe;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#1d4ed8;">💵 En USD</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#1d4ed8;">$' + ayuUSD.toFixed(2) + '</p></div>';
+    htmlModal += '<div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;">🟡 En Bs</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#2563eb;">$' + ayuBS.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:7px;color:#60a5fa;">Bs ' + (ayuBS * tasa).toFixed(0) + '</p></div></div></div>';
     htmlModal += '<div style="max-height:260px;overflow-y:auto;">';
     htmlModal += '<table style="width:100%;border-collapse:collapse;">';
     htmlModal += '<thead><tr style="background:#1e293b;color:#fff;font-size:8px;text-transform:uppercase;">';
