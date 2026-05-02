@@ -615,8 +615,8 @@ window.verResumenSemanalPelu = async () => {
       rows += '</tr>';
     });
 
-    // Pago real ayudante: $1 × perros_con_ayudante × 2
-    const pagoAyu1Real = perrosConAyu * 2;
+    // pagoAyu1Real = suma de pagoAyudante1 de todos los servicios ($2 por perro)
+    const pagoAyu1Real = totalPelu > 0 ? perrosConAyu * 2 : 0;
 
     // Desglose por modalidad de pago
     let totalPagadoUSD = 0, totalPagadoBS = 0, totalPendiente = 0;
@@ -656,9 +656,7 @@ window.verResumenSemanalPelu = async () => {
       }
     });
 
-    // Pago ayudante real: $1 por perro con ayudante × 2
-    // Desglosado según proporción USD/BS de esos perros
-    const pagoAyu1Real = perrosConAyu * 2;
+    // pagoAyu1Real ya declarado arriba
 
     const tasa = window.tasaDolarHoy || 36;
     let htmlModal = '';
@@ -705,7 +703,7 @@ window.verResumenSemanalPelu = async () => {
 
     // ── Pago Ayudante desglosado ─────────────────────────
     htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;margin-bottom:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin-bottom:6px;">🤝 Pago Ayudante (' + perrosConAyu + ' perros × $1 × 2) — Total: $' + pagoAyu1Real.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin-bottom:6px;">🤝 Pago Ayudante (' + perrosConAyu + ' perros × $1) — Total: $' + pagoAyu1Real.toFixed(2) + '</p>';
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
     htmlModal += '<div style="background:#dbeafe;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#1d4ed8;">💵 En USD</p>';
