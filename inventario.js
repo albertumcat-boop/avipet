@@ -680,18 +680,75 @@ async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
 // ─── AGREGAR INSUMO MAESTRO ──────────────────────────────
 window.agregarInsumoMaestro = async () => {
   const nombre = document.getElementById('nuevoInsumoNombre')?.value.trim().toUpperCase();
-  const costo  = parseFloat(document.getElementById('nuevoInsumoCosto')?.value) || 0;
+  const costoIngresado = parseFloat(document.getElementById('nuevoInsumoCosto')?.value) || 0;
   if (!nombre) { alert('Escribe el nombre del insumo.'); return; }
+  if (costoIngresado <= 0) { alert('Escribe el costo del insumo.'); return; }
+
   try {
+    // Verificar si ya existe
     const snap = await getDocs(query(collection(db, "insumos_maestro"), where("nombre", "==", nombre)));
     if (!snap.empty) { alert('Ya existe un insumo con ese nombre.'); return; }
-    await addDoc(collection(db, "insumos_maestro"), { nombre, costo, creadoEn: serverTimestamp() });
+
+    // Pasar por la calculadora igual que al actualizar
+    const MARGEN = 0.20;
+    const tasa = window.tasaDolarHoy || 36;
+
+    // Paso 1: moneda
+    var htmlMoneda = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
+    htmlMoneda += '<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">💵 Dólares (USD)</button>';
+    htmlMoneda += '<button id="btnMonedaBS" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:12px;color:#92400e;cursor:pointer;">🟡 Bolívares (Bs ' + tasa.toFixed(2) + ')</button>';
+    htmlMoneda += '</div>';
+
+    const resMoneda = await Swal.fire({
+      title: '💰 ¿En qué moneda está el precio?',
+      html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;"><b>' + nombre + '</b><br>Precio: <b>' + costoIngresado.toFixed(2) + '</b></p>' + htmlMoneda,
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      didOpen: function() {
+        document.getElementById('btnMonedaUSD').addEventListener('click', function() { window._monedaInsumo='usd'; Swal.clickConfirm(); });
+        document.getElementById('btnMonedaBS').addEventListener('click', function() { window._monedaInsumo='bs'; Swal.clickConfirm(); });
+      }
+    });
+    if (resMoneda.isDismissed) return;
+
+    const moneda = window._monedaInsumo || 'usd';
+    window._monedaInsumo = null;
+    const costoUSD = moneda === 'bs' ? costoIngresado / tasa : costoIngresado;
+
+    // Paso 2: calcular usos según tipo
+    const usosEfectivos = await _calcularUsosInsumo(nombre, costoUSD);
+    if (!usosEfectivos) return;
+
+    const costoPorUso = costoUSD / usosEfectivos;
+
+    // Guardar en Firebase
+    await addDoc(collection(db, "insumos_maestro"), {
+      nombre,
+      costoTotal:      costoUSD,
+      costoOriginalBS: moneda === 'bs' ? costoIngresado : null,
+      costo:           parseFloat(costoPorUso.toFixed(4)),
+      usosEstimados:   usosEfectivos,
+      margenSeguridad: MARGEN,
+      creadoEn:        serverTimestamp()
+    });
+
+    // Limpiar campos
     const inpN = document.getElementById('nuevoInsumoNombre');
     const inpC = document.getElementById('nuevoInsumoCosto');
     if (inpN) inpN.value = '';
     if (inpC) inpC.value = '';
+
     await window.renderizarTablaInsumos();
-    Swal.fire({ icon:'success', title:'✅ Insumo agregado', text: nombre, timer:1800, showConfirmButton:false });
+
+    await Swal.fire({
+      icon: 'success',
+      title: '✅ Insumo agregado',
+      html: '<b>' + nombre + '</b><br>$' + costoPorUso.toFixed(4) + ' por servicio · ' + usosEfectivos + ' usos',
+      timer: 2500,
+      showConfirmButton: false
+    });
+
   } catch(e) { console.error(e); alert('❌ Error: ' + e.message); }
 };
 
