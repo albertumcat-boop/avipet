@@ -466,7 +466,86 @@ window.renderizarTablaInsumos = async () => {
   }
 };
 
-window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costo:parseFloat(valor)||0,actualizadoEn:serverTimestamp()});}catch(e){console.error(e);}};
+window.actualizarCostoInsumo = async (idInsumo, valor) => {
+  const costoTotal = parseFloat(valor) || 0;
+  if (costoTotal <= 0) return;
+
+  const MARGEN = 0.20; // 20% de margen de seguridad
+
+  // Mostrar calculadora de rendimiento
+  var htmlCalc = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Costo del producto: <b>$' + costoTotal.toFixed(2) + '</b></p>';
+  htmlCalc += '<div style="display:flex;flex-direction:column;gap:10px;">';
+  htmlCalc += '<div>';
+  htmlCalc += '<label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos usos/servicios estimas que rinde?</label>';
+  htmlCalc += '<input id="calc_usos" type="number" min="1" placeholder="Ej: 50 usos" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;">';
+  htmlCalc += '</div>';
+  htmlCalc += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;" id="calc_resultado" style="display:none;">';
+  htmlCalc += '<p style="font-size:9px;color:#64748b;font-weight:700;">Vista previa del costo por servicio:</p>';
+  htmlCalc += '<p id="calc_preview" style="font-size:16px;font-weight:900;color:#16a34a;">---</p>';
+  htmlCalc += '<p style="font-size:8px;color:#94a3b8;">Incluye 20% de margen de seguridad</p>';
+  htmlCalc += '</div>';
+  htmlCalc += '</div>';
+
+  const res = await Swal.fire({
+    title: '🧮 Calcular Costo por Uso',
+    html: htmlCalc,
+    showCancelButton: true,
+    confirmButtonText: '✅ Guardar',
+    cancelButtonText: 'Solo guardar precio',
+    confirmButtonColor: '#2563eb',
+    didOpen: function() {
+      const inp = document.getElementById('calc_usos');
+      const prev = document.getElementById('calc_preview');
+      const box = document.getElementById('calc_resultado');
+      if (inp) {
+        inp.addEventListener('input', function() {
+          const usos = parseFloat(this.value) || 0;
+          if (usos > 0) {
+            const costoPorUso = costoTotal / (usos * (1 - MARGEN));
+            prev.textContent = '$' + costoPorUso.toFixed(4) + ' por servicio';
+            box.style.display = 'block';
+          } else {
+            box.style.display = 'none';
+          }
+        });
+      }
+    },
+    preConfirm: () => {
+      const usos = parseFloat(document.getElementById('calc_usos')?.value) || 0;
+      if (usos <= 0) { Swal.showValidationMessage('Ingresa un número de usos mayor a 0'); return false; }
+      return usos;
+    }
+  });
+
+  let costoPorUso = costoTotal; // default: guardar el costo total si cancela
+  let usosEstimados = null;
+
+  if (res.isConfirmed && res.value) {
+    const usos = res.value;
+    costoPorUso = costoTotal / (usos * (1 - MARGEN));
+    usosEstimados = usos;
+
+    await Swal.fire({
+      icon: 'success',
+      title: '✅ Costo calculado',
+      html: '<p style="font-size:11px;">Costo total: <b>$' + costoTotal.toFixed(2) + '</b></p>' +
+            '<p style="font-size:11px;">Usos estimados: <b>' + usos + '</b> (margen 20%)</p>' +
+            '<p style="font-size:14px;font-weight:900;color:#2563eb;">Costo por servicio: $' + costoPorUso.toFixed(4) + '</p>',
+      timer: 3000, showConfirmButton: false
+    });
+  }
+
+  try {
+    await updateDoc(doc(db, "insumos_maestro", idInsumo), {
+      costoTotal,
+      costo: parseFloat(res.isConfirmed ? costoPorUso.toFixed(4) : costoTotal),
+      usosEstimados,
+      margenSeguridad: MARGEN,
+      actualizadoEn: serverTimestamp()
+    });
+    window.renderizarTablaInsumos();
+  } catch(e) { console.error(e); }
+};
 
 window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`🔐 Eliminar "${nombreInsumo}"\nCLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`⚠️ Eliminar "${nombreInsumo}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`✅ Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 
