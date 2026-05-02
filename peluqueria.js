@@ -672,16 +672,28 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
   const valor     = (cedulaInput || "").replace(/[.\-\s]/g,'').trim().toUpperCase();
   const valorOrig = (cedulaInput || "").trim();
   if (!valor || valor.length < 4) return;
+  console.log('[PELU] Buscando cédula:', valor, '| original:', valorOrig);
   try {
     let datos = null;
 
-    // 1. Buscar en consultas veterinarias (con cédula normalizada y original)
+    // 1. Buscar en consultas veterinarias (normalizada)
     const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",valor), limit(1)));
+    console.log('[PELU] Resultado normalizado:', snap1.size, 'docs');
     if (!snap1.empty) datos = snap1.docs[0].data();
 
-    if (!datos && valor !== valorOrig) {
+    // 2. Buscar con cédula original si no encontró
+    if (!datos) {
       const snap1b = await getDocs(query(collection(db,"consultas"), where("cedula","==",valorOrig), limit(1)));
+      console.log('[PELU] Resultado original:', snap1b.size, 'docs');
       if (!snap1b.empty) datos = snap1b.docs[0].data();
+    }
+
+    // 3. Buscar con V- al inicio si no tiene prefijo
+    if (!datos && !valor.startsWith('V') && !valor.startsWith('E') && !valor.startsWith('J')) {
+      const conV = 'V' + valor;
+      const snap1c = await getDocs(query(collection(db,"consultas"), where("cedula","==",conV), limit(1)));
+      console.log('[PELU] Resultado con V:', snap1c.size, 'docs');
+      if (!snap1c.empty) datos = snap1c.docs[0].data();
     }
 
     // 2. Buscar en pacientes_peluqueria (clientes solo de peluquería)
