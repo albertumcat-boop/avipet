@@ -101,10 +101,11 @@ window.guardarPeluqueriaPro = async () => {
     const premios = [];
 
     // ── Crear un registro independiente por cada mascota ──
-    // Calcular pago ayudante principal: $1 × perros_con_ayudante × 2
+    // Calcular pago ayudante: $1 por perro (descuenta $1 a peluquera y $1 a Avipet)
+    // Si precio < $10 (ej: corte de uñas) NO hay ayudante
     const cantConAyu = tieneAyu1 ? mascotas.length : 0;
-    const totalAyu1  = cantConAyu * 1 * 2; // $1 por perro × 2 = pago total ayudante
-    const descPeluPorPerro = tieneAyu1 ? 1 : 0; // $1 se descuenta por perro de la peluquera
+    const totalAyu1  = cantConAyu * 1; // $1 por perro — sin multiplicar
+    const descPeluPorPerro = tieneAyu1 ? 1 : 0; // $1 descontado a peluquera por perro
 
     for (const pet of mascotas) {
       const mascota = pet.nombre;
@@ -114,6 +115,8 @@ window.guardarPeluqueriaPro = async () => {
       const precioEsta = pet.precioIndividual !== null ? pet.precioIndividual : precioFinal;
 
       // Recalcular comisiones con el precio individual
+      // Si precio < $10 se quita al ayudante (ej: corte de uñas)
+      const aplicaAyu1 = tieneAyu1 && precioEsta >= 10;
       let pagoPeluEsta=0, pagoAyu1Esta=0, pagoAyuExtEsta=0, ingresoAvipetEsta=0;
       if(extraSolo){
         pagoAyuExtEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
@@ -121,9 +124,10 @@ window.guardarPeluqueriaPro = async () => {
         const p=precioEsta/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
       } else {
         pagoPeluEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
-        if(tieneAyu1){
-          pagoPeluEsta -= descPeluPorPerro;   // $1 por perro descontado a peluquera
-          pagoAyu1Esta  = descPeluPorPerro;   // guardado por perro para sumar en semana
+        if(aplicaAyu1){
+          pagoPeluEsta    -= 1;  // $1 descontado a peluquera
+          ingresoAvipetEsta -= 1; // $1 descontado a Avipet
+          pagoAyu1Esta     = 1;  // ayudante recibe $1
         }
       }
 
@@ -632,10 +636,12 @@ window.recalcularTotalPelu = () => {
     } else {
       if (chkA1) chkA1.disabled = false;
       pelu = cobro * 0.40;
-      if (ayu1Act) {
-          // $1 por perro descontado a la peluquera, pago ayudante = $1×perros×2 (mostrado al final)
-          pelu -= 1; a1 = 1; // por esta mascota individual
-        }
+      // Ayudante solo aplica si precio >= $10
+      if (ayu1Act && cobro >= 10) {
+        pelu -= 1; // $1 descontado a peluquera
+        a1 = 1;   // ayudante recibe $1
+        // Avipet también pierde $1 (se refleja en ingresoAvipet al guardar)
+      }
     }
 
     totalCobro += cobro;
@@ -654,7 +660,7 @@ window.recalcularTotalPelu = () => {
       totalAex  = precioBase / 3;
     } else {
       totalPelu = precioBase * 0.40;
-      if (ayu1Act) { totalPelu -= mAyu1; totalA1 = mAyu1; }
+      if (ayu1Act && precioBase >= 10) { totalPelu -= 1; totalA1 = 1; }
     }
   }
 
