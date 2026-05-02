@@ -30,7 +30,8 @@ window.cambiarPeriodoFinanzas = (periodo) => {
       ? 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-blue-600 text-white transition-all'
       : 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
   });
-  window.cargarReporte();
+  // Solo cargar si ya hay una tab seleccionada
+  if (_tabFinanzas) window.cargarReporte();
 };
 
 function _getFechasRango() {
