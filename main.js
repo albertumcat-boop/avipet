@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET — main.js  v4  CORREGIDO
+// AVIPET — main.js  v5  FINANZAS SIN AUTOCARGAR
 // FIXES:
 //   • ajustarTasaDolar NO bloquea al inicio (sin prompt)
 //   • ejecutarCambioDeTab usa mapa de IDs explícito
@@ -422,4 +422,4 @@ const _inicializarModo = () => {
 
 document.addEventListener('DOMContentLoaded', _inicializarModo);
 
-console.log("✅ main.js v4 cargado");
+console.log("✅ main.js v5 — finanzas sin autocargar");
