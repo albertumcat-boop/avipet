@@ -466,6 +466,202 @@ window.renderizarTablaInsumos = async () => {
   }
 };
 
+// ─── DETECCIÓN AUTOMÁTICA DE TIPO DE INSUMO ─────────────
+function _detectarTipoInsumo(nombre) {
+  const n = nombre.toLowerCase();
+  // Por unidad — paquetes contables
+  if (n.includes('guante') || n.includes('jeringa') || n.includes('tubo') ||
+      n.includes('hisopo') || n.includes('aguja') || n.includes('mariposa') ||
+      n.includes('jelco') || n.includes('compresa') || n.includes('gasa') ||
+      n.includes('hoja') || n.includes('bisturi') || n.includes('tira') ||
+      n.includes('kit') || n.includes('porta') || n.includes('obturador') ||
+      n.includes('adhesivo') || n.includes('cinta')) {
+    return 'unidad';
+  }
+  // Por volumen — frascos en ml
+  if (n.includes('alcohol') || n.includes('agua oxigenada') || n.includes('gel') ||
+      n.includes('solucion') || n.includes('solución') || n.includes('yodo') ||
+      n.includes('clorhex') || n.includes('tincion') || n.includes('tinción') ||
+      n.includes('reactivo') || n.includes('ml') || n.includes('frasco') ||
+      n.includes('shampoo') || n.includes('jabon') || n.includes('jabón')) {
+    return 'volumen';
+  }
+  // Por tiempo — materiales de uso continuo
+  if (n.includes('algodon') || n.includes('algodón') || n.includes('papel') ||
+      n.includes('rollo') || n.includes('bolsa') || n.includes('detergente') ||
+      n.includes('guarda') || n.includes('caja')) {
+    return 'tiempo';
+  }
+  return null; // desconocido — preguntar
+}
+
+// ─── PREGUNTAS SEGÚN TIPO ────────────────────────────────
+async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
+  const MARGEN = 0.20;
+  let tipo = _detectarTipoInsumo(nombreInsumo);
+
+  // Si no detectó el tipo, preguntar
+  if (!tipo) {
+    var htmlTipo = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
+    htmlTipo += '<button id="btnTipoUnidad" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;">📦 Por unidad (guantes, jeringas, tubos...)</button>';
+    htmlTipo += '<button id="btnTipoVolumen" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #d1fae5;background:#f0fdf4;font-weight:900;font-size:11px;color:#065f46;cursor:pointer;">🧴 Por volumen (alcohol, gel, soluciones...)</button>';
+    htmlTipo += '<button id="btnTipoTiempo" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:11px;color:#92400e;cursor:pointer;">📅 Por tiempo (algodón, papel, rollos...)</button>';
+    htmlTipo += '</div>';
+
+    const resTipo = await Swal.fire({
+      title: '¿Cómo se mide este insumo?',
+      html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;"><b>' + nombreInsumo + '</b></p>' + htmlTipo,
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      didOpen: function() {
+        document.getElementById('btnTipoUnidad').addEventListener('click', function() { window._tipoInsumo='unidad'; Swal.clickConfirm(); });
+        document.getElementById('btnTipoVolumen').addEventListener('click', function() { window._tipoInsumo='volumen'; Swal.clickConfirm(); });
+        document.getElementById('btnTipoTiempo').addEventListener('click', function() { window._tipoInsumo='tiempo'; Swal.clickConfirm(); });
+      }
+    });
+    if (resTipo.isDismissed) return null;
+    tipo = window._tipoInsumo || 'unidad';
+    window._tipoInsumo = null;
+  }
+
+  let usos = 0;
+
+  // ── UNIDAD ──────────────────────────────────────────────
+  if (tipo === 'unidad') {
+    const res = await Swal.fire({
+      title: '📦 ' + nombreInsumo,
+      html:
+        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
+        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántas unidades trae el paquete/caja?</label>' +
+        '<input id="q_unidades" type="number" min="1" placeholder="Ej: 100 guantes" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
+        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántas unidades usan por servicio?</label>' +
+        '<input id="q_porServicio" type="number" min="1" value="1" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
+        '<div id="prev_unidad" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;">' +
+        '<p id="prev_txt_unidad" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div>' +
+        '</div>',
+      showCancelButton: true,
+      confirmButtonText: '✅ Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#2563eb',
+      didOpen: function() {
+        const calcPrev = function() {
+          const u = parseFloat(document.getElementById('q_unidades')?.value) || 0;
+          const p = parseFloat(document.getElementById('q_porServicio')?.value) || 1;
+          const box = document.getElementById('prev_unidad');
+          const txt = document.getElementById('prev_txt_unidad');
+          if (u > 0 && p > 0) {
+            const usosEfect = Math.floor((u / p) * (1 - MARGEN));
+            const cpp = costoUSD / usosEfect;
+            txt.textContent = (u/p).toFixed(0) + ' usos → con 20% margen: ' + usosEfect + ' usos efectivos → $' + cpp.toFixed(4) + ' por servicio';
+            box.style.display = 'block';
+          }
+        };
+        document.getElementById('q_unidades')?.addEventListener('input', calcPrev);
+        document.getElementById('q_porServicio')?.addEventListener('input', calcPrev);
+      },
+      preConfirm: () => {
+        const u = parseFloat(document.getElementById('q_unidades')?.value) || 0;
+        const p = parseFloat(document.getElementById('q_porServicio')?.value) || 1;
+        if (u <= 0) { Swal.showValidationMessage('Ingresa las unidades del paquete'); return false; }
+        return Math.floor((u / p) * (1 - MARGEN));
+      }
+    });
+    if (!res.isConfirmed) return null;
+    usos = res.value;
+  }
+
+  // ── VOLUMEN ─────────────────────────────────────────────
+  else if (tipo === 'volumen') {
+    const res = await Swal.fire({
+      title: '🧴 ' + nombreInsumo,
+      html:
+        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
+        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos ml tiene el frasco?</label>' +
+        '<input id="q_ml" type="number" min="1" placeholder="Ej: 500 ml" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
+        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos ml usan por servicio?</label>' +
+        '<input id="q_mlServicio" type="number" min="0.1" step="0.5" value="5" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
+        '<div id="prev_vol" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;">' +
+        '<p id="prev_txt_vol" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div>' +
+        '</div>',
+      showCancelButton: true,
+      confirmButtonText: '✅ Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#2563eb',
+      didOpen: function() {
+        const calcPrev = function() {
+          const ml  = parseFloat(document.getElementById('q_ml')?.value) || 0;
+          const mls = parseFloat(document.getElementById('q_mlServicio')?.value) || 5;
+          const box = document.getElementById('prev_vol');
+          const txt = document.getElementById('prev_txt_vol');
+          if (ml > 0) {
+            const usosEfect = Math.floor((ml / mls) * (1 - MARGEN));
+            const cpp = costoUSD / usosEfect;
+            txt.textContent = (ml/mls).toFixed(0) + ' usos → con 20% margen: ' + usosEfect + ' usos efectivos → $' + cpp.toFixed(4) + ' por servicio';
+            box.style.display = 'block';
+          }
+        };
+        document.getElementById('q_ml')?.addEventListener('input', calcPrev);
+        document.getElementById('q_mlServicio')?.addEventListener('input', calcPrev);
+      },
+      preConfirm: () => {
+        const ml  = parseFloat(document.getElementById('q_ml')?.value) || 0;
+        const mls = parseFloat(document.getElementById('q_mlServicio')?.value) || 5;
+        if (ml <= 0) { Swal.showValidationMessage('Ingresa los ml del frasco'); return false; }
+        return Math.floor((ml / mls) * (1 - MARGEN));
+      }
+    });
+    if (!res.isConfirmed) return null;
+    usos = res.value;
+  }
+
+  // ── TIEMPO ──────────────────────────────────────────────
+  else if (tipo === 'tiempo') {
+    const res = await Swal.fire({
+      title: '📅 ' + nombreInsumo,
+      html:
+        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
+        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos meses dura aproximadamente?</label>' +
+        '<input id="q_meses" type="number" min="1" value="3" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
+        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos servicios hacen al mes en promedio?</label>' +
+        '<input id="q_serviciosMes" type="number" min="1" placeholder="Ej: 30 consultas/mes" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
+        '<div id="prev_tiempo" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;">' +
+        '<p id="prev_txt_tiempo" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div>' +
+        '</div>',
+      showCancelButton: true,
+      confirmButtonText: '✅ Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#2563eb',
+      didOpen: function() {
+        const calcPrev = function() {
+          const m  = parseFloat(document.getElementById('q_meses')?.value) || 0;
+          const sm = parseFloat(document.getElementById('q_serviciosMes')?.value) || 0;
+          const box = document.getElementById('prev_tiempo');
+          const txt = document.getElementById('prev_txt_tiempo');
+          if (m > 0 && sm > 0) {
+            const usosEfect = Math.floor(m * sm * (1 - MARGEN));
+            const cpp = costoUSD / usosEfect;
+            txt.textContent = (m*sm).toFixed(0) + ' usos → con 20% margen: ' + usosEfect + ' usos efectivos → $' + cpp.toFixed(4) + ' por servicio';
+            box.style.display = 'block';
+          }
+        };
+        document.getElementById('q_meses')?.addEventListener('input', calcPrev);
+        document.getElementById('q_serviciosMes')?.addEventListener('input', calcPrev);
+      },
+      preConfirm: () => {
+        const m  = parseFloat(document.getElementById('q_meses')?.value) || 0;
+        const sm = parseFloat(document.getElementById('q_serviciosMes')?.value) || 0;
+        if (m <= 0 || sm <= 0) { Swal.showValidationMessage('Completa los dos campos'); return false; }
+        return Math.floor(m * sm * (1 - MARGEN));
+      }
+    });
+    if (!res.isConfirmed) return null;
+    usos = res.value;
+  }
+
+  return usos > 0 ? usos : null;
+}
+
 window.actualizarCostoInsumo = async (idInsumo, valor) => {
   const valorIngresado = parseFloat(valor) || 0;
   if (valorIngresado <= 0) return;
@@ -473,7 +669,7 @@ window.actualizarCostoInsumo = async (idInsumo, valor) => {
   const MARGEN = 0.20;
   const tasa   = window.tasaDolarHoy || 36;
 
-  // Paso 1: preguntar si el precio está en USD o Bs
+  // Paso 1: preguntar moneda
   var htmlMoneda = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
   htmlMoneda += '<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">💵 Dólares (USD)</button>';
   htmlMoneda += '<button id="btnMonedaBS" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:12px;color:#92400e;cursor:pointer;">🟡 Bolívares (Bs ' + tasa.toFixed(2) + ')</button>';
@@ -486,95 +682,47 @@ window.actualizarCostoInsumo = async (idInsumo, valor) => {
     showCancelButton: true,
     cancelButtonText: 'Cancelar',
     didOpen: function() {
-      document.getElementById('btnMonedaUSD').addEventListener('click', function() {
-        window._monedaInsumo = 'usd'; Swal.clickConfirm();
-      });
-      document.getElementById('btnMonedaBS').addEventListener('click', function() {
-        window._monedaInsumo = 'bs'; Swal.clickConfirm();
-      });
+      document.getElementById('btnMonedaUSD').addEventListener('click', function() { window._monedaInsumo='usd'; Swal.clickConfirm(); });
+      document.getElementById('btnMonedaBS').addEventListener('click', function() { window._monedaInsumo='bs'; Swal.clickConfirm(); });
     }
   });
   if (resMoneda.isDismissed) return;
 
-  // Convertir a USD si está en Bs
   const moneda = window._monedaInsumo || 'usd';
   window._monedaInsumo = null;
-  const costoTotal = moneda === 'bs' ? valorIngresado / tasa : valorIngresado;
+  const costoUSD = moneda === 'bs' ? valorIngresado / tasa : valorIngresado;
 
-  const costoMostrar = moneda === 'bs'
-    ? 'Bs ' + valorIngresado.toFixed(2) + ' = $' + costoTotal.toFixed(4)
-    : '$' + costoTotal.toFixed(2);
+  // Paso 2: obtener nombre del insumo para detectar tipo
+  let nombreInsumo = idInsumo;
+  try {
+    const snap = await getDoc(doc(db, "insumos_maestro", idInsumo));
+    if (snap.exists()) nombreInsumo = snap.data().nombre || idInsumo;
+  } catch(e) {}
 
-  // Paso 2: calculadora de rendimiento
-  var htmlCalc = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Costo en USD: <b>$' + costoTotal.toFixed(4) + '</b>' + (moneda==='bs' ? ' (convertido de Bs '+valorIngresado.toFixed(2)+')' : '') + '</p>';
-  htmlCalc += '<div style="display:flex;flex-direction:column;gap:10px;">';
-  htmlCalc += '<div>';
-  htmlCalc += '<label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos usos/servicios estimas que rinde?</label>';
-  htmlCalc += '<input id="calc_usos" type="number" min="1" placeholder="Ej: 50 usos" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;">';
-  htmlCalc += '</div>';
-  htmlCalc += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;" id="calc_resultado">';
-  htmlCalc += '<p style="font-size:9px;color:#64748b;font-weight:700;">Costo por servicio (con 20% margen):</p>';
-  htmlCalc += '<p id="calc_preview" style="font-size:16px;font-weight:900;color:#16a34a;">---</p>';
-  htmlCalc += '<p style="font-size:8px;color:#94a3b8;">Incluye 20% de margen de seguridad</p>';
-  htmlCalc += '</div>';
-  htmlCalc += '</div>';
+  // Paso 3: calcular usos según tipo de insumo
+  const usosEfectivos = await _calcularUsosInsumo(nombreInsumo, costoUSD);
+  if (!usosEfectivos) return;
 
-  const res = await Swal.fire({
-    title: '🧮 Calcular Costo por Uso',
-    html: htmlCalc,
-    showCancelButton: true,
-    confirmButtonText: '✅ Guardar',
-    cancelButtonText: 'Solo guardar precio',
-    confirmButtonColor: '#2563eb',
-    didOpen: function() {
-      const inp  = document.getElementById('calc_usos');
-      const prev = document.getElementById('calc_preview');
-      const box  = document.getElementById('calc_resultado');
-      if (inp) {
-        inp.addEventListener('input', function() {
-          const usos = parseFloat(this.value) || 0;
-          if (usos > 0) {
-            const cpp = costoTotal / (usos * (1 - MARGEN));
-            prev.textContent = '$' + cpp.toFixed(4) + ' por servicio';
-            box.style.display = 'block';
-          } else {
-            box.style.display = 'none';
-          }
-        });
-      }
-    },
-    preConfirm: () => {
-      const usos = parseFloat(document.getElementById('calc_usos')?.value) || 0;
-      if (usos <= 0) { Swal.showValidationMessage('Ingresa un número de usos mayor a 0'); return false; }
-      return usos;
-    }
+  const costoPorUso = costoUSD / usosEfectivos;
+
+  await Swal.fire({
+    icon: 'success',
+    title: '✅ Costo calculado',
+    html: '<p style="font-size:11px;">Costo USD: <b>$' + costoUSD.toFixed(4) + '</b>' +
+          (moneda==='bs' ? ' (Bs '+valorIngresado.toFixed(2)+')' : '') + '</p>' +
+          '<p style="font-size:11px;">Usos efectivos: <b>' + usosEfectivos + '</b></p>' +
+          '<p style="font-size:16px;font-weight:900;color:#2563eb;">$' + costoPorUso.toFixed(4) + ' por servicio</p>',
+    timer: 3000, showConfirmButton: false
   });
-
-  let costoPorUso = costoTotal; // default: guardar el costo total si cancela
-  let usosEstimados = null;
-
-  if (res.isConfirmed && res.value) {
-    const usos = res.value;
-    costoPorUso = costoTotal / (usos * (1 - MARGEN));
-    usosEstimados = usos;
-
-    await Swal.fire({
-      icon: 'success',
-      title: '✅ Costo calculado',
-      html: '<p style="font-size:11px;">Costo total: <b>$' + costoTotal.toFixed(2) + '</b></p>' +
-            '<p style="font-size:11px;">Usos estimados: <b>' + usos + '</b> (margen 20%)</p>' +
-            '<p style="font-size:14px;font-weight:900;color:#2563eb;">Costo por servicio: $' + costoPorUso.toFixed(4) + '</p>',
-      timer: 3000, showConfirmButton: false
-    });
-  }
 
   try {
     await updateDoc(doc(db, "insumos_maestro", idInsumo), {
-      costoTotal,
-      costo: parseFloat(res.isConfirmed ? costoPorUso.toFixed(4) : costoTotal),
-      usosEstimados,
+      costoTotal:      costoUSD,
+      costoOriginalBS: moneda === 'bs' ? valorIngresado : null,
+      costo:           parseFloat(costoPorUso.toFixed(4)),
+      usosEstimados:   usosEfectivos,
       margenSeguridad: MARGEN,
-      actualizadoEn: serverTimestamp()
+      actualizadoEn:   serverTimestamp()
     });
     window.renderizarTablaInsumos();
   } catch(e) { console.error(e); }
