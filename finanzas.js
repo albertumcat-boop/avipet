@@ -600,7 +600,11 @@ window.verResumenSemanalPelu = async () => {
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
       const colorEst = pagado ? '#16a34a' : '#dc2626';
-      const iconPago = pagado ? '✅' : '⏳';
+      const modoPago  = r.modoPago || '';
+      const iconPago  = !pagado ? '⏳'
+                      : modoPago === 'bs'    ? '✅ 🟡Bs'
+                      : modoPago === 'mixto' ? '✅ 🔀Mix'
+                      : '✅ 💵USD';
       rows += '<tr style="border-bottom:1px solid #f1f5f9;font-size:9px;">';
       rows += '<td style="padding:4px 6px;color:#64748b;">' + (r.fechaSimple||'---') + '</td>';
       rows += '<td style="padding:4px 6px;font-weight:700;text-transform:uppercase;">' + (r.paciente||'---') + '</td>';
@@ -613,6 +617,21 @@ window.verResumenSemanalPelu = async () => {
 
     // Pago real ayudante: $1 × perros_con_ayudante × 2
     const pagoAyu1Real = perrosConAyu * 2;
+
+    // Desglose por modalidad de pago
+    let totalPagadoUSD = 0, totalPagadoBS = 0, totalPendiente = 0;
+    servicios.forEach(function(r) {
+      const precio = parseFloat(r.precioTotal||0);
+      if (r.estatusPago === 'pagado') {
+        if (r.modoPago === 'bs') totalPagadoBS += precio;
+        else if (r.modoPago === 'mixto') {
+          totalPagadoUSD += parseFloat(r.montoPagadoUSD||0);
+          totalPagadoBS  += parseFloat(r.montoPagadoBS||0);
+        } else totalPagadoUSD += precio;
+      } else {
+        totalPendiente += precio;
+      }
+    });
 
     let htmlModal = '';
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:left;">';
@@ -629,13 +648,20 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante</p>';
     htmlModal += '<p style="font-size:20px;font-weight:900;color:#2563eb;">$' + pagoAyu1Real.toFixed(2) + '</p>';
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' perros × $1 × 2</p></div></div>';
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
+    htmlModal += '<div style="background:#eff6ff;border-radius:10px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;">💵 Cobrado USD</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#1d4ed8;">$' + totalPagadoUSD.toFixed(2) + '</p></div>';
+    htmlModal += '<div style="background:#fffbeb;border-radius:10px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;">🟡 Cobrado Bs</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#92400e;">$' + totalPagadoBS.toFixed(2) + ' equiv.</p></div></div>';
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">';
     htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
     htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p></div>';
     htmlModal += '<div style="background:#fef2f2;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;text-transform:uppercase;">Pendiente</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#dc2626;">$' + pendiente.toFixed(2) + '</p></div>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#dc2626;">$' + totalPendiente.toFixed(2) + '</p></div>';
     htmlModal += '<div style="background:#1e293b;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
     htmlModal += '<p style="font-size:16px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p></div></div>';
