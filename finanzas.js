@@ -60,8 +60,24 @@ function _getFechasRango() {
 // ─── PESTAÑA ACTIVA EN FINANZAS ──────────────────────────
 let _tabFinanzas = null; // null = solo calculadora visible al abrir
 
+// Mostrar/ocultar bloques HTML según la tab seleccionada
+function _actualizarBloques(tab) {
+  const bloques = {
+    'bloqueFinVeterinaria': tab === 'veterinaria',
+    'bloqueFinPeluqueria':  tab === 'peluqueria',
+    'bloqueFinNeto':        tab === 'veterinaria' || tab === 'peluqueria',
+    'bloqueFinGraficas':    tab === 'veterinaria',
+    'selectorPeriodoFinanzas': tab !== null,
+  };
+  Object.entries(bloques).forEach(([id, visible]) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden', !visible);
+  });
+}
+
 window.cambiarTabFinanzas = (tab) => {
   _tabFinanzas = tab;
+  _actualizarBloques(tab);
   const tabs = ['veterinaria','peluqueria','maquinas'];
   tabs.forEach(t => {
     const btn = document.getElementById('btnFinTab_' + t);
@@ -80,6 +96,7 @@ window.volverMenuFinanzas = () => {
 // Mostrar solo el menú de botones sin consultar Firebase
 window.mostrarMenuFinanzas = () => {
   _tabFinanzas = null;
+  _actualizarBloques(null);
   const listaDiv = document.getElementById('listaReporte');
   const netoDiv  = document.getElementById('repNeto');
   if (!listaDiv) return;
@@ -729,4 +746,4 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("✅ finanzas.js v3 — tabs Vet/Pelu/Maquinas, menu sin autocargar");
+console.log("✅ AVIPET finanzas v3.1 " + new Date().toISOString().slice(0,10));
