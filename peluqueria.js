@@ -414,10 +414,34 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
       txtConfirm = `$${m1.toFixed(2)} USD + $${m2.toFixed(2)} en Bs`;
     }
 
+    // Calcular monto total real cobrado
+    const montoRealCobrado = (guardar.montoPagadoUSD || 0) + (guardar.montoPagadoBS || 0);
+
+    // Si el monto cobrado es diferente al precio original, recalcular comisiones
+    let actualizaciones = {};
+    if (Math.abs(montoRealCobrado - precioTotal) > 0.01) {
+      // Leer datos actuales del servicio para obtener los porcentajes
+      const snapActual = await getDoc(doc(db, "servicios_estetica", idServicio));
+      const datosActuales = snapActual.data() || {};
+      const porcPelu = datosActuales.pagoPeluquera > 0 ? datosActuales.pagoPeluquera / precioTotal : 0.40;
+      const tieneAyu = (datosActuales.pagoAyudante1 || 0) > 0;
+
+      const nuevoPagoPelu = montoRealCobrado * porcPelu - (tieneAyu && montoRealCobrado >= 10 ? 1 : 0);
+      const nuevoIngresoAvipet = montoRealCobrado - nuevoPagoPelu - (tieneAyu && montoRealCobrado >= 10 ? 1 : 0) - (datosActuales.pagoAyudanteExtra || 0);
+
+      actualizaciones = {
+        pagoPeluquera:  parseFloat(nuevoPagoPelu.toFixed(2)),
+        ingresoAvipet:  parseFloat(nuevoIngresoAvipet.toFixed(2)),
+      };
+    }
+
     try {
       await updateDoc(doc(db, "servicios_estetica", idServicio), {
         estatusPago: 'pagado',
+        precioTotalOriginal: precioTotal,
+        precioTotal: montoRealCobrado,
         ...guardar,
+        ...actualizaciones,
         actualizadoEn: serverTimestamp()
       });
       await window.cargarBitacoraHoy();
