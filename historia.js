@@ -312,10 +312,59 @@ window.insertarServicio = async (v) => {
 // --- AGREGAR MEDICAMENTO ---
 window.agregarMedicamento = async (nombreMed) => {
   if (!nombreMed) return;
-  if (nombreMed==="OTRO") {
-    const res=await Swal.fire({title:'? Agregar Medicamento',html:`<div class="space-y-3 text-left mt-2"><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">Nombre del medicamento</label><input type="text" id="swal_med_nombre" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-blue-500" placeholder="Ej: Clopidogrel..."></div><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">Costo para el cliente ($)</label><input type="number" id="swal_med_costo" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-blue-500" placeholder="0.00"></div></div>`,showCancelButton:true,confirmButtonText:'? Agregar',cancelButtonText:'Cancelar',confirmButtonColor:'#7c3aed',preConfirm:()=>{const nombre=document.getElementById('swal_med_nombre')?.value.trim();const costo=parseFloat(document.getElementById('swal_med_costo')?.value)||0;if(!nombre){Swal.showValidationMessage("(!) Escribe el nombre.");return false;}if(costo<0){Swal.showValidationMessage("(!) Costo no puede ser negativo.");return false;}return{nombre,costo};}});
-    if(!res.isConfirmed){document.getElementById('selectorMedicamentos').value="";return;}
-    _insertarMedicamentoEnTabla(res.value.nombre,res.value.costo);document.getElementById('selectorMedicamentos').value="";return;
+  if (nombreMed === "OTRO") {
+    // Construir modal sin template literals problemáticos
+    var htmlMed = '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:8px;">';
+    htmlMed += '<div><label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre del medicamento</label>';
+    htmlMed += '<input type="text" id="swal_med_nombre" placeholder="Ej: Clopidogrel..." style="width:100%;border:2px solid #e2e8f0;border-radius:12px;padding:8px 12px;font-size:12px;outline:none;"></div>';
+    htmlMed += '<div><label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Costo para el cliente ($)</label>';
+    htmlMed += '<input type="number" id="swal_med_costo" step="0.50" min="0" placeholder="0.00" style="width:100%;border:2px solid #e2e8f0;border-radius:12px;padding:8px 12px;font-size:12px;outline:none;"></div>';
+    htmlMed += '<div style="display:flex;align-items:center;gap:8px;background:#f5f3ff;border-radius:10px;padding:10px;">';
+    htmlMed += '<input type="checkbox" id="swal_med_guardar" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer;">';
+    htmlMed += '<label for="swal_med_guardar" style="font-size:10px;font-weight:900;color:#6d28d9;cursor:pointer;">Guardar permanentemente en el listado de medicamentos</label>';
+    htmlMed += '</div></div>';
+
+    const res = await Swal.fire({
+      title: 'Agregar Medicamento',
+      html: htmlMed,
+      showCancelButton: true,
+      confirmButtonText: 'Agregar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#7c3aed',
+      preConfirm: () => {
+        const nombre = document.getElementById('swal_med_nombre')?.value.trim();
+        const costo  = parseFloat(document.getElementById('swal_med_costo')?.value) || 0;
+        const guardar = document.getElementById('swal_med_guardar')?.checked || false;
+        if (!nombre) { Swal.showValidationMessage('Escribe el nombre.'); return false; }
+        if (costo < 0) { Swal.showValidationMessage('Costo no puede ser negativo.'); return false; }
+        return { nombre, costo, guardar };
+      }
+    });
+
+    if (!res.isConfirmed) { document.getElementById('selectorMedicamentos').value = ""; return; }
+
+    const { nombre, costo, guardar } = res.value;
+
+    // Guardar permanentemente si se marcó el checkbox
+    if (guardar) {
+      try {
+        await setDoc(doc(db, "medicamentos_maestro", nombre.toUpperCase()), {
+          nombre: nombre.toUpperCase(),
+          precioCliente: costo,
+          creadoEn: serverTimestamp(),
+          activo: true
+        }, { merge: true });
+        // Recargar selector
+        if (typeof window.cargarSelectorMedicamentos === 'function') {
+          window.cargarSelectorMedicamentos();
+        }
+        Swal.fire({ icon: 'success', title: 'Guardado en el listado', text: nombre, timer: 1500, showConfirmButton: false });
+      } catch(e) { console.warn('Error guardando medicamento:', e); }
+    }
+
+    _insertarMedicamentoEnTabla(nombre, costo);
+    document.getElementById('selectorMedicamentos').value = "";
+    return;
   }
   const cfg=CONFIG_MEDICAMENTOS[nombreMed];if(!cfg)return;
   let precioCliente=0,descripcion=nombreMed;
@@ -1246,6 +1295,31 @@ window.editarInsumosServicio = async (nombreServicio) => {
   } catch(e) { console.error(e); alert('? Error: ' + e.message); }
 };
 
+// --- CARGAR SELECTOR MEDICAMENTOS DESDE FIREBASE ----------
+window.cargarSelectorMedicamentos = async () => {
+  const sel = document.getElementById('selectorMedicamentos');
+  if (!sel) return;
+  try {
+    const snap = await getDocs(collection(db, "medicamentos_maestro"));
+    if (snap.empty) return;
+    const yaExisten = new Set(
+      Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase())
+    );
+    snap.forEach(d => {
+      const r = d.data();
+      const nombre = (r.nombre || d.id).toUpperCase();
+      if (!yaExisten.has(nombre)) {
+        const opt = document.createElement('option');
+        opt.value = nombre;
+        opt.textContent = nombre + ' ($' + parseFloat(r.precioCliente||0).toFixed(2) + ')';
+        const optOtro = sel.querySelector('option[value="OTRO"]');
+        if (optOtro) sel.insertBefore(opt, optOtro);
+        else sel.appendChild(opt);
+      }
+    });
+  } catch(e) { console.warn('Error cargando medicamentos:', e); }
+};
+
 // --- FILTRAR TABLA DE SERVICIOS ---------------------------
 window.filtrarTablaServicios = () => {
   const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase() || '';
@@ -1463,7 +1537,7 @@ const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULT
 try{Swal.fire({title:'? Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`? ${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("? Error: "+e.message);}};
 
 // --- CAMBIAR SUB-TAB CONFIG ---
-window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white":"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();};
+window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,medicamentos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-blue-600 text-white shadow-sm":"flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-slate-100 text-slate-600 hover:bg-white/50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();if(tab==='medicamentos')window.renderizarTablaMedicamentos();};
 
 
 console.log("? historia.js v5 -- selector mascotas, autorelleno mejorado");
