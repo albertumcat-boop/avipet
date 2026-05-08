@@ -798,6 +798,21 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
       }
     }
 
+    // Restaurar servicios realizados
+    if (Array.isArray(d.serviciosRealizados) && d.serviciosRealizados.length > 0) {
+      for (const serv of d.serviciosRealizados) {
+        if (serv.nombre) {
+          await window.insertarServicio(serv.nombre);
+        }
+      }
+    } else if (d.montoVenta > 0) {
+      // Si no hay serviciosRealizados pero hay monto, mostrar aviso
+      const visual = document.getElementById('visualizacionServicios');
+      if (visual) {
+        visual.innerHTML = '<p style="font-size:10px;color:#f59e0b;font-weight:700;">Esta consulta fue guardada sin detalle de servicios. Agrega los servicios manualmente.</p>';
+      }
+    }
+
     // Mostrar banner de edicion
     _mostrarBannerEdicion(d.paciente, d.fechaSimple);
 
