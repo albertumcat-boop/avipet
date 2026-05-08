@@ -497,11 +497,34 @@ window.autocompletarPorCedula = async (ci) => {
     set('hFechaNac', datosSeleccionados.fechaNacimiento);
 
     // Verificar vacunas vencidas de la mascota seleccionada
-    if(Array.isArray(datosSeleccionados.vacunasAplicadas)&&datosSeleccionados.vacunasAplicadas.length>0){
-      const hoy=new Date();const vencidas=[];
-      datosSeleccionados.vacunasAplicadas.forEach(vac=>{if(!vac.proxima)return;const partes=vac.proxima.split('/');if(partes.length===3){const fechaProx=new Date(partes[2],partes[1]-1,partes[0]);if(fechaProx<hoy)vencidas.push('• ' + (vac.vacuna||'Vacuna') + ': venció el ' + vac.proxima);}});
-      if(vencidas.length>0){await Swal.fire({icon:'warning',title:'⏰ VACUNAS VENCIDAS',html:'<p class="text-[11px] text-slate-600 mb-2">Este paciente tiene vacunas atrasadas:</p><div class="bg-red-50 border border-red-200 rounded-xl p-3 text-left"><pre class="text-[11px] text-red-700 font-bold whitespace-pre-wrap">'+vencidas.join('
-')+'</pre></div>',confirmButtonText:'Entendido',confirmButtonColor:'#dc2626',timer:8000,timerProgressBar:true});}
+    if (Array.isArray(datosSeleccionados.vacunasAplicadas) && datosSeleccionados.vacunasAplicadas.length > 0) {
+      const hoy = new Date();
+      const vencidas = [];
+      datosSeleccionados.vacunasAplicadas.forEach(function(vac) {
+        if (!vac.proxima) return;
+        const partes = vac.proxima.split('/');
+        if (partes.length === 3) {
+          const fechaProx = new Date(partes[2], partes[1]-1, partes[0]);
+          if (fechaProx < hoy) {
+            vencidas.push('- ' + (vac.vacuna || 'Vacuna') + ': vencio el ' + vac.proxima);
+          }
+        }
+      });
+      if (vencidas.length > 0) {
+        const txtVenc = vencidas.join(' | ');
+        await Swal.fire({
+          icon: 'warning',
+          title: 'VACUNAS VENCIDAS',
+          html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;">Este paciente tiene vacunas atrasadas:</p>' +
+                '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px;text-align:left;">' +
+                '<p style="font-size:11px;color:#dc2626;font-weight:700;">' + txtVenc + '</p>' +
+                '</div>',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#dc2626',
+          timer: 8000,
+          timerProgressBar: true
+        });
+      }
     }
 
     // Notas internas
