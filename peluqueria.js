@@ -738,26 +738,122 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
     }
 
     if (datos) {
-      // Llenar campos de texto del dueño
+      // Llenar campos del dueño
       const llenar = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||""; };
-      llenar('pDuenio',   datos.propietario || datos.duenio);
+      llenar('pDuenio',    datos.propietario || datos.duenio);
       llenar('pTelefono',  datos.telefono);
       llenar('pTelefono2', datos.telefono2 || '');
       llenar('pDireccion', datos.direccion);
 
-      // Llenar la PRIMERA fila de mascotas con el nombre y raza del paciente
-      const lista      = document.getElementById('listaMascotasPelu');
-      const primeraFila = lista?.querySelector('.mascota-pelu-row');
-      if (primeraFila) {
-        const inputNombre = primeraFila.querySelector('.pelu-nombre');
-        const inputRaza   = primeraFila.querySelector('.pelu-raza');
-        if (inputNombre) inputNombre.value = datos.paciente || "";
-        if (inputRaza)   inputRaza.value   = datos.raza     || "";
-      }
+      // Buscar todas las mascotas registradas para esta cédula
+      const mascotasSet = new Map(); // nombre → raza
 
-      // También actualizar campos hidden para compatibilidad
-      llenar('pNombre', datos.paciente);
-      llenar('pRaza',   datos.raza);
+      // Desde consultas veterinarias
+      try {
+        const snapTodas = await getDocs(query(
+          collection(db,"consultas"),
+          where("cedula","==",valor)
+        ));
+        snapTodas.forEach(d => {
+          const r = d.data();
+          if (r.paciente) mascotasSet.set(r.paciente.toUpperCase(), r.raza || "");
+        });
+      } catch(e) {}
+
+      // Desde servicios de peluquería
+      try {
+        const snapPelu = await getDocs(query(
+          collection(db,"servicios_estetica"),
+          where("cedulaCliente","==",valor)
+        ));
+        snapPelu.forEach(d => {
+          const r = d.data();
+          if (r.paciente) mascotasSet.set(r.paciente.toUpperCase(), r.raza || "");
+        });
+      } catch(e) {}
+
+      // Desde pacientes_peluqueria
+      try {
+        const pelSnap = await getDoc(doc(db,"pacientes_peluqueria", valor));
+        if (pelSnap.exists()) {
+          const r = pelSnap.data();
+          if (r.paciente) mascotasSet.set(r.paciente.toUpperCase(), r.raza || "");
+        }
+      } catch(e) {}
+
+      const mascotas = Array.from(mascotasSet.entries()); // [[nombre, raza], ...]
+
+      if (mascotas.length > 1) {
+        // Mostrar selector de mascota
+        var htmlSel = '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Propietario: <b>' + (datos.propietario||datos.duenio||'') + '</b></p>';
+        htmlSel += '<div style="display:flex;flex-direction:column;gap:6px;">';
+        mascotas.forEach(function(m) {
+          htmlSel += '<button class="btn-sel-mascota" data-nombre="' + m[0] + '" data-raza="' + m[1] + '" ' +
+            'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">' +
+            '<span>🐾 ' + m[0] + '</span>' +
+            '<span style="font-size:10px;color:#64748b;font-weight:600;">' + m[1] + '</span>' +
+            '</button>';
+        });
+        htmlSel += '<button class="btn-sel-mascota" data-nombre="" data-raza="" ' +
+          'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">✏️ Nueva mascota</button>';
+        htmlSel += '</div>';
+
+        const resSel = await Swal.fire({
+          title: '🐾 ¿Cuál mascota viene hoy?',
+          html: htmlSel,
+          showConfirmButton: false,
+          showCancelButton: true,
+          cancelButtonText: 'Cancelar',
+          didOpen: function() {
+            document.querySelectorAll('.btn-sel-mascota').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                window._mascotaSelPelu = { nombre: this.dataset.nombre, raza: this.dataset.raza };
+                Swal.clickConfirm();
+              });
+            });
+          }
+        });
+
+        if (resSel.isDismissed) return;
+
+        const sel = window._mascotaSelPelu || { nombre: '', raza: '' };
+        window._mascotaSelPelu = null;
+
+        // Llenar con la mascota seleccionada
+        const lista = document.getElementById('listaMascotasPelu');
+        const primeraFila = lista?.querySelector('.mascota-pelu-row');
+        if (primeraFila && sel.nombre) {
+          const inputNombre = primeraFila.querySelector('.pelu-nombre');
+          const inputRaza   = primeraFila.querySelector('.pelu-raza');
+          if (inputNombre) inputNombre.value = sel.nombre;
+          if (inputRaza)   inputRaza.value   = sel.raza;
+          llenar('pNombre', sel.nombre);
+          llenar('pRaza',   sel.raza);
+        } else if (primeraFila && !sel.nombre) {
+          // Nueva mascota — limpiar campos
+          const inputNombre = primeraFila.querySelector('.pelu-nombre');
+          const inputRaza   = primeraFila.querySelector('.pelu-raza');
+          if (inputNombre) inputNombre.value = '';
+          if (inputRaza)   inputRaza.value   = '';
+          llenar('pNombre', '');
+          llenar('pRaza',   '');
+        }
+
+      } else {
+        // Solo una mascota — llenar directamente
+        const nombreM = mascotas.length > 0 ? mascotas[0][0] : (datos.paciente || '');
+        const razaM   = mascotas.length > 0 ? mascotas[0][1] : (datos.raza     || '');
+        const lista = document.getElementById('listaMascotasPelu');
+        const primeraFila = lista?.querySelector('.mascota-pelu-row');
+        if (primeraFila) {
+          const inputNombre = primeraFila.querySelector('.pelu-nombre');
+          const inputRaza   = primeraFila.querySelector('.pelu-raza');
+          if (inputNombre) inputNombre.value = nombreM;
+          if (inputRaza)   inputRaza.value   = razaM;
+        }
+        llenar('pNombre', nombreM);
+        llenar('pRaza',   razaM);
+      }
     }
 
     // Cargar sellos de fidelidad (usando la primera mascota encontrada)
