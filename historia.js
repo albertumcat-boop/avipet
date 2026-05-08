@@ -1573,9 +1573,9 @@ window.cambiarSubTabConfig = (tab) => {
       btn.style.textOverflow = 'ellipsis';
     }
   });
-  if (tab === 'servicios')     window.renderizarTablaMaestra();
-  if (tab === 'insumos')       window.renderizarTablaInsumos();
-  if (tab === 'medicamentos')  window.renderizarTablaMedicamentos();
+  if (tab === 'servicios')    window.renderizarTablaMaestra();
+  if (tab === 'insumos')      _llamarFuncion('renderizarTablaInsumos');
+  if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
 };
 
 
