@@ -1186,4 +1186,4 @@ window.inicializarCalculadoraInventario = () => {
   _calcInvMoneda  = 'bs';
 };
 
-console.log("✅ inventario.js v2 cargado");
+console.log("✅ inventario.js v3 — medicamentos maestros, calculadora insumos");
