@@ -407,28 +407,106 @@ window.autocompletarPorCedula = async (ci) => {
   if(!ci||ci.length<3)return;
   const ciNorm = normalizarCedula(ci);
   try{
-    // Buscar con cédula normalizada (sin puntos) y también con la original
-    let snap = await getDocs(query(collection(db,"consultas"),where("cedula","==",ciNorm),orderBy("fecha","desc"),limit(1)));
-    if(snap.empty && ciNorm !== ci.trim()) {
-      snap = await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim()),orderBy("fecha","desc"),limit(1)));
+    // Buscar TODAS las consultas de esta cédula para encontrar todas las mascotas
+    let snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ciNorm),orderBy("fecha","desc")));
+    if(snapTodas.empty && ciNorm !== ci.trim()) {
+      snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim()),orderBy("fecha","desc")));
     }
-    if(!snap.empty){
-      const d=snap.docs[0].data();const set=(id,val)=>{const el=document.getElementById(id);if(el){el.value=val||"";el.classList.add('bg-blue-50');setTimeout(()=>el.classList.remove('bg-blue-50'),1000);}};
-      set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hColor',d.color);set('hTlf',d.telefono);set('hMail',d.correo||d.email);set('hDir',d.direccion);set('hFechaNac',d.fechaNacimiento);
+    if(snapTodas.empty) return;
 
-      // Alerta restricción
-      if(d.alerta){const el=document.getElementById('hProp');if(el){el.style.color="#b91c1c";el.style.fontWeight="bold";}alert("⚠️ ATENCIÓN: Este cliente tiene una RESTRICCIÓN ADMINISTRATIVA.");}
+    // Recopilar todas las mascotas únicas con sus datos más recientes
+    const mascotasMap = new Map();
+    snapTodas.forEach(docSnap => {
+      const r = docSnap.data();
+      if (r.paciente && !mascotasMap.has(r.paciente.toUpperCase())) {
+        mascotasMap.set(r.paciente.toUpperCase(), r); // guardar datos completos
+      }
+    });
 
-      // Verificar próximas vacunas vencidas
-      if(Array.isArray(d.vacunasAplicadas)&&d.vacunasAplicadas.length>0){
-        const hoy=new Date();const vencidas=[];
-        d.vacunasAplicadas.forEach(vac=>{if(!vac.proxima)return;const partes=vac.proxima.split('/');if(partes.length===3){const fechaProx=new Date(partes[2],partes[1]-1,partes[0]);if(fechaProx<hoy)vencidas.push(`• ${vac.vacuna||'Vacuna'}: venció el ${vac.proxima}`);}});
-        if(vencidas.length>0){await Swal.fire({icon:'warning',title:'⏰ VACUNAS VENCIDAS',html:`<p class="text-[11px] text-slate-600 mb-2">Este paciente tiene vacunas atrasadas:</p><div class="bg-red-50 border border-red-200 rounded-xl p-3 text-left"><pre class="text-[11px] text-red-700 font-bold whitespace-pre-wrap">${vencidas.join('\n')}</pre></div>`,confirmButtonText:'Entendido',confirmButtonColor:'#dc2626',timer:8000,timerProgressBar:true});}
+    // Datos del propietario (del registro más reciente)
+    const datosBase = snapTodas.docs[0].data();
+    const set=(id,val)=>{const el=document.getElementById(id);if(el){el.value=val||"";el.classList.add('bg-blue-50');setTimeout(()=>el.classList.remove('bg-blue-50'),1000);}};
+
+    // Llenar datos del propietario siempre
+    set('hProp', datosBase.propietario);
+    set('hTlf',  datosBase.telefono);
+    set('hMail', datosBase.correo||datosBase.email);
+    set('hDir',  datosBase.direccion);
+
+    // Alerta restricción
+    if(datosBase.alerta){const el=document.getElementById('hProp');if(el){el.style.color="#b91c1c";el.style.fontWeight="bold";}alert("⚠️ ATENCIÓN: Este cliente tiene una RESTRICCIÓN ADMINISTRATIVA.");}
+
+    let datosSeleccionados = datosBase;
+
+    if (mascotasMap.size > 1) {
+      // Mostrar selector de mascotas
+      const mascotas = Array.from(mascotasMap.entries());
+      var htmlSel = '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Propietario: <b>' + (datosBase.propietario||'') + '</b></p>';
+      htmlSel += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      mascotas.forEach(function(m) {
+        const r = m[1];
+        htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="' + m[0] + '" ' +
+          'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">' +
+          '<span>🐾 ' + m[0] + '</span>' +
+          '<span style="font-size:9px;color:#64748b;font-weight:600;">' + (r.especie||'') + ' · ' + (r.raza||'') + '</span>' +
+          '</button>';
+      });
+      htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="__nueva__" ' +
+        'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">✏️ Nuevo paciente</button>';
+      htmlSel += '</div>';
+
+      const resSel = await Swal.fire({
+        title: '🐾 ¿Cuál paciente viene hoy?',
+        html: htmlSel,
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar',
+        didOpen: function() {
+          document.querySelectorAll('.btn-sel-mascota-vet').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              window._mascotaSelVet = this.dataset.nombre;
+              Swal.clickConfirm();
+            });
+          });
+        }
+      });
+
+      if (resSel.isDismissed) return;
+      const nombreSel = window._mascotaSelVet;
+      window._mascotaSelVet = null;
+
+      if (nombreSel === '__nueva__') {
+        // Solo llenar datos del propietario, limpiar mascota
+        set('hNombre',''); set('hEspecie',''); set('hRaza','');
+        set('hEdad',''); set('hSexo',''); set('hPeso',''); set('hColor',''); set('hFechaNac','');
+        _mostrarNotasInternas(ciNorm, datosBase.observacionesPermanentes || "");
+        return;
       }
 
-      // Notas internas
-      _mostrarNotasInternas(ciNorm, d.observacionesPermanentes || "");
+      datosSeleccionados = mascotasMap.get(nombreSel) || datosBase;
     }
+
+    // Llenar datos de la mascota seleccionada
+    set('hNombre',   datosSeleccionados.paciente);
+    set('hEspecie',  datosSeleccionados.especie);
+    set('hRaza',     datosSeleccionados.raza);
+    set('hEdad',     datosSeleccionados.edad);
+    set('hSexo',     datosSeleccionados.sexo);
+    set('hPeso',     datosSeleccionados.peso);
+    set('hColor',    datosSeleccionados.color);
+    set('hFechaNac', datosSeleccionados.fechaNacimiento);
+
+    // Verificar vacunas vencidas de la mascota seleccionada
+    if(Array.isArray(datosSeleccionados.vacunasAplicadas)&&datosSeleccionados.vacunasAplicadas.length>0){
+      const hoy=new Date();const vencidas=[];
+      datosSeleccionados.vacunasAplicadas.forEach(vac=>{if(!vac.proxima)return;const partes=vac.proxima.split('/');if(partes.length===3){const fechaProx=new Date(partes[2],partes[1]-1,partes[0]);if(fechaProx<hoy)vencidas.push('• ' + (vac.vacuna||'Vacuna') + ': venció el ' + vac.proxima);}});
+      if(vencidas.length>0){await Swal.fire({icon:'warning',title:'⏰ VACUNAS VENCIDAS',html:'<p class="text-[11px] text-slate-600 mb-2">Este paciente tiene vacunas atrasadas:</p><div class="bg-red-50 border border-red-200 rounded-xl p-3 text-left"><pre class="text-[11px] text-red-700 font-bold whitespace-pre-wrap">'+vencidas.join('
+')+'</pre></div>',confirmButtonText:'Entendido',confirmButtonColor:'#dc2626',timer:8000,timerProgressBar:true});}
+    }
+
+    // Notas internas
+    _mostrarNotasInternas(ciNorm, datosBase.observacionesPermanentes || "");
+
   }catch(e){console.error("Error autocompletar:",e);}
 };
 
