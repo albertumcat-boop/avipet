@@ -93,17 +93,35 @@ function _renderResultados(registros, termino, resultDiv) {
     var urlFoto  = consulta.urlExamen       || "";
     var cid      = consulta.id;
 
-    // Servicios detallados
+    // Servicios realizados
     var serviciosHtml = "";
-    if (Array.isArray(consulta.listaDetalladaInsumos) && consulta.listaDetalladaInsumos.length > 0) {
-      var filas = consulta.listaDetalladaInsumos.map(function(ins) {
-        return '<tr><td style="padding:2px 6px;font-size:10px;">' + (ins.nombre || "") + '</td><td style="padding:2px 6px;text-align:center;font-size:10px;">' + (ins.cant || 1) + '</td><td style="padding:2px 6px;text-align:right;font-size:10px;">$' + parseFloat(ins.costo || 0).toFixed(2) + '</td></tr>';
+    if (Array.isArray(consulta.serviciosRealizados) && consulta.serviciosRealizados.length > 0) {
+      var filasServ = consulta.serviciosRealizados.map(function(s) {
+        return '<tr style="border-bottom:1px solid #f1f5f9;">' +
+          '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || "") + '</td>' +
+          '<td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:900;color:#2563eb;">$' + parseFloat(s.precio || 0).toFixed(2) + '</td>' +
+          '</tr>';
       }).join("");
-      serviciosHtml = '<div class="mt-2 border border-slate-100 rounded-xl overflow-hidden">' +
-        '<div class="bg-slate-100 px-3 py-1"><p class="text-[8px] font-black text-slate-500 uppercase">📦 Insumos y Servicios</p></div>' +
+      serviciosHtml += '<div style="margin-top:8px;border:1px solid #bfdbfe;border-radius:10px;overflow:hidden;">' +
+        '<div style="background:#eff6ff;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;">Servicios Realizados</p></div>' +
         '<table style="width:100%;border-collapse:collapse;">' +
-        '<thead><tr style="background:#f8fafc;"><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Insumo</th><th style="padding:2px 6px;text-align:center;font-size:9px;color:#94a3b8;">Cant</th><th style="padding:2px 6px;text-align:right;font-size:9px;color:#94a3b8;">Costo</th></tr></thead>' +
-        '<tbody>' + filas + '</tbody></table></div>';
+        '<tbody>' + filasServ + '</tbody></table></div>';
+    }
+
+    // Insumos utilizados
+    if (Array.isArray(consulta.listaDetalladaInsumos) && consulta.listaDetalladaInsumos.length > 0) {
+      var filasIns = consulta.listaDetalladaInsumos.map(function(ins) {
+        return '<tr><td style="padding:2px 6px;font-size:10px;">' + (ins.nombre || "") + '</td>' +
+          '<td style="padding:2px 6px;text-align:center;font-size:10px;">' + (ins.cant || 1) + '</td>' +
+          '<td style="padding:2px 6px;text-align:right;font-size:10px;">$' + parseFloat(ins.costo || 0).toFixed(2) + '</td></tr>';
+      }).join("");
+      serviciosHtml += '<div style="margin-top:6px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">' +
+        '<div style="background:#f8fafc;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;">Insumos Utilizados</p></div>' +
+        '<table style="width:100%;border-collapse:collapse;">' +
+        '<thead><tr style="background:#f8fafc;"><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Insumo</th>' +
+        '<th style="padding:2px 6px;text-align:center;font-size:9px;color:#94a3b8;">Cant</th>' +
+        '<th style="padding:2px 6px;text-align:right;font-size:9px;color:#94a3b8;">Costo</th></tr></thead>' +
+        '<tbody>' + filasIns + '</tbody></table></div>';
     }
 
     // Tests realizados
