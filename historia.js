@@ -1,8 +1,8 @@
 // =========================================================
-// AVIPET — historia.js  v3
-// NUEVO: alerta automática de stock bajo al agregar vacunas/meds
-//        recordatorio de próxima vacuna vencida al autocompletar
-//        notas internas por paciente (campo observacionesPermanentes)
+// AVIPET — historia.js  v5
+// NUEVO: selector de mascotas al autocompletar por cédula
+//        (veterinaria y peluquería)
+//        limpiar formulario al enviar a sala de espera
 // =========================================================
 
 import { db } from './firebase-config.js';
@@ -1423,4 +1423,4 @@ try{Swal.fire({title:'⏳ Inicializando...',allowOutsideClick:false,didOpen:()=>
 window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white":"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();};
 
 
-console.log("✅ historia.js v4 — limpiar espera, ajustes integrados");
+console.log("✅ historia.js v5 — selector mascotas, autorelleno mejorado");
