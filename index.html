@@ -1481,6 +1481,8 @@
                 class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-blue-600 text-white shadow-sm">💉 Servicios</button>
         <button onclick="_llamarFuncion('cambiarSubTabConfig','insumos')" id="btn_subTabInsumos"
                 class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-slate-100 text-slate-600 hover:bg-white/50">📦 Insumos</button>
+        <button onclick="_llamarFuncion('cambiarSubTabConfig','medicamentos')" id="btn_subTabMedicamentos"
+                class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-slate-100 text-slate-600 hover:bg-white/50">💊 Medicamentos</button>
       </div>
 
       <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
@@ -1518,6 +1520,21 @@
           </button>
         </div>
         <div id="tablaInsumosMaestro" class="overflow-x-auto"></div>
+      </div>
+
+      <!-- Panel Medicamentos -->
+      <div id="panel_subTabMedicamentos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
+        <div class="flex gap-2 mb-3">
+          <input type="text" id="nuevoMedNombre" placeholder="Nombre del medicamento..."
+                 class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+          <input type="number" id="nuevoMedPrecio" placeholder="Precio $" step="0.50" min="0"
+                 class="w-24 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+          <button onclick="_llamarFuncion('agregarMedicamentoMaestro')"
+                  class="bg-purple-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-purple-700 shadow">
+            ➕ Agregar
+          </button>
+        </div>
+        <div id="tablaMedicamentosMaestro" class="overflow-x-auto"></div>
       </div>
     </div>
   </section>
