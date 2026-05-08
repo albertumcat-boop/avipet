@@ -1551,7 +1551,22 @@ const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULT
 try{Swal.fire({title:'? Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`? ${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("? Error: "+e.message);}};
 
 // --- CAMBIAR SUB-TAB CONFIG ---
-window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,medicamentos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-blue-600 text-white shadow-sm":"flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition bg-slate-100 text-slate-600 hover:bg-white/50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();if(tab==='medicamentos')window.renderizarTablaMedicamentos();};
+window.cambiarSubTabConfig = (tab) => {
+  ['servicios','insumos','medicamentos','seguridad','tarifa'].forEach(t => {
+    const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
+    const activo = t === tab;
+    panel?.classList.toggle('hidden', !activo);
+    if (btn) {
+      btn.className = activo
+        ? 'flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition bg-blue-600 text-white shadow-sm'
+        : 'flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition bg-slate-100 text-slate-600 hover:bg-white/50';
+    }
+  });
+  if (tab === 'servicios')     window.renderizarTablaMaestra();
+  if (tab === 'insumos')       window.renderizarTablaInsumos();
+  if (tab === 'medicamentos')  window.renderizarTablaMedicamentos();
+};
 
 
 console.log("? historia.js v5 -- selector mascotas, autorelleno mejorado");
