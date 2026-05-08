@@ -791,23 +791,13 @@ window.agregarMedicamentoMaestro = async () => {
   const precio = parseFloat(document.getElementById('nuevoMedPrecio')?.value) || 0;
   if (!nombre) { alert('Escribe el nombre.'); return; }
 
-  // Verificar doctor activo
-  const doctorActivo = window.doctorVerificado || '';
-  if (!doctorActivo) {
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Doctor no autenticado',
-      text: 'Debes autenticar un doctor antes de agregar medicamentos.',
-      confirmButtonColor: '#7c3aed'
-    });
-    return;
-  }
-
   try {
+    // Registrar quién lo agrega (doctor activo o "Ajustes" si no hay doctor)
+    const agregadoPor = window.doctorVerificado || 'Ajustes';
     await setDoc(doc(db,"medicamentos_maestro",nombre), {
       nombre, precioCliente: precio,
       creadoEn: serverTimestamp(),
-      agregadoPor: doctorActivo,
+      agregadoPor,
       activo: true
     }, { merge: true });
     const n = document.getElementById('nuevoMedNombre');
