@@ -786,6 +786,70 @@ window.eliminarMedicamentoMaestro = async (id, nombre) => {
   } catch(e) { alert('Error: ' + e.message); }
 };
 
+// --- SINCRONIZAR MEDICAMENTOS BASE ------------------
+window.sincronizarMedicamentosBase = async () => {
+  const res = await Swal.fire({
+    title: 'Cargar medicamentos base',
+    html: '<p style="font-size:11px;color:#64748b;">Esto agrega al listado todos los medicamentos que vienen por defecto en el sistema.<br><br>Los que ya existen no se modifican.</p>',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Si, cargar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#7c3aed'
+  });
+  if (!res.isConfirmed) return;
+
+  const MEDS_BASE = [
+    { nombre: 'PIROYET',              precioCliente: 10 },
+    { nombre: 'ENROFLOXACINA',        precioCliente: 5  },
+    { nombre: 'SULFATRIM',            precioCliente: 5  },
+    { nombre: 'DEXAMETASONA',         precioCliente: 4  },
+    { nombre: 'CARPROFEN',            precioCliente: 10 },
+    { nombre: 'FLUNIXIN',             precioCliente: 5  },
+    { nombre: 'METADOL',              precioCliente: 5  },
+    { nombre: 'COMPLEJO B',           precioCliente: 5  },
+    { nombre: 'SUERO HIPERINMUNE',    precioCliente: 10 },
+    { nombre: 'BROMURO DE HIOSCINA',  precioCliente: 10 },
+    { nombre: 'FENOBARBITAL',         precioCliente: 5  },
+    { nombre: 'GASTRINE',             precioCliente: 7  },
+    { nombre: 'RANITIDINA',           precioCliente: 5  },
+    { nombre: 'METOCLOPRAMIDA',       precioCliente: 5  },
+    { nombre: 'FUROSEMIDA',           precioCliente: 5  },
+    { nombre: 'VIT K',                precioCliente: 5  },
+    { nombre: 'ERITROGEN',            precioCliente: 5  },
+    { nombre: 'AMINOVIT',             precioCliente: 10 },
+    { nombre: 'OXITETRACICLINA',      precioCliente: 5  },
+    { nombre: 'CEFTRIAXONA',          precioCliente: 12 },
+    { nombre: 'ADRENALINA',           precioCliente: 14 },
+    { nombre: 'ARTROSAN',             precioCliente: 20 },
+    { nombre: 'LISAVAC',              precioCliente: 5  },
+    { nombre: 'SOROGLOBULIN',         precioCliente: 25 },
+  ];
+
+  try {
+    Swal.fire({ title: 'Cargando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    let cnt = 0;
+    for (const m of MEDS_BASE) {
+      // Solo agregar si no existe
+      const snap = await getDocs(query(collection(db,"medicamentos_maestro"), where("nombre","==",m.nombre)));
+      if (snap.empty) {
+        await setDoc(doc(db,"medicamentos_maestro",m.nombre), {
+          nombre: m.nombre,
+          precioCliente: m.precioCliente,
+          creadoEn: serverTimestamp(),
+          agregadoPor: 'Base del sistema',
+          activo: true
+        });
+        cnt++;
+      }
+    }
+    Swal.close();
+    await window.renderizarTablaMedicamentos();
+    if (typeof window.cargarSelectorMedicamentos === 'function') window.cargarSelectorMedicamentos();
+    Swal.fire({ icon:'success', title: cnt + ' medicamentos cargados', text: 'Los que ya existian no fueron modificados.', timer:2500, showConfirmButton:false });
+  } catch(e) { Swal.close(); alert('Error: ' + e.message); }
+};
+
 window.agregarMedicamentoMaestro = async () => {
   const nombre = document.getElementById('nuevoMedNombre')?.value.trim().toUpperCase();
   const precio = parseFloat(document.getElementById('nuevoMedPrecio')?.value) || 0;
