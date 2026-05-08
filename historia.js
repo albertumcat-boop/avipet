@@ -403,6 +403,39 @@ window.guardarFirebase = async (imp) => {
 };
 
 // --- AUTOCOMPLETAR POR CEDULA + ALERTA VACUNA + NOTAS INTERNAS ---
+// Verificar vacunas vencidas - funcion separada sin caracteres especiales
+async function _verificarVacunasVencidas(datos) {
+  if (!Array.isArray(datos.vacunasAplicadas) || datos.vacunasAplicadas.length === 0) return;
+  try {
+    const hoy = new Date();
+    const vencidas = [];
+    datos.vacunasAplicadas.forEach(function(vac) {
+      if (!vac.proxima) return;
+      const p = vac.proxima.split('/');
+      if (p.length === 3) {
+        const fp = new Date(p[2], p[1]-1, p[0]);
+        if (fp < hoy) {
+          vencidas.push((vac.vacuna || 'Vacuna') + ' vencio el ' + vac.proxima);
+        }
+      }
+    });
+    if (vencidas.length === 0) return;
+    const lista = vencidas.map(function(v) { return '- ' + v; }).join('<br>');
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Vacunas Vencidas',
+      html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;">Este paciente tiene vacunas atrasadas:</p>' +
+            '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px;text-align:left;">' +
+            '<p style="font-size:11px;color:#dc2626;font-weight:700;">' + lista + '</p>' +
+            '</div>',
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#dc2626',
+      timer: 8000,
+      timerProgressBar: true
+    });
+  } catch(e) { console.warn('Error verificando vacunas:', e); }
+}
+
 window.autocompletarPorCedula = async (ci) => {
   if(!ci||ci.length<3)return;
   const ciNorm = normalizarCedula(ci);
@@ -496,36 +529,8 @@ window.autocompletarPorCedula = async (ci) => {
     set('hColor',    datosSeleccionados.color);
     set('hFechaNac', datosSeleccionados.fechaNacimiento);
 
-    // Verificar vacunas vencidas de la mascota seleccionada
-    if (Array.isArray(datosSeleccionados.vacunasAplicadas) && datosSeleccionados.vacunasAplicadas.length > 0) {
-      const hoy = new Date();
-      const vencidas = [];
-      datosSeleccionados.vacunasAplicadas.forEach(function(vac) {
-        if (!vac.proxima) return;
-        const partes = vac.proxima.split('/');
-        if (partes.length === 3) {
-          const fechaProx = new Date(partes[2], partes[1]-1, partes[0]);
-          if (fechaProx < hoy) {
-            vencidas.push('- ' + (vac.vacuna || 'Vacuna') + ': vencio el ' + vac.proxima);
-          }
-        }
-      });
-      if (vencidas.length > 0) {
-        const txtVenc = vencidas.join(' | ');
-        await Swal.fire({
-          icon: 'warning',
-          title: 'VACUNAS VENCIDAS',
-          html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;">Este paciente tiene vacunas atrasadas:</p>' +
-                '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px;text-align:left;">' +
-                '<p style="font-size:11px;color:#dc2626;font-weight:700;">' + txtVenc + '</p>' +
-                '</div>',
-          confirmButtonText: 'Entendido',
-          confirmButtonColor: '#dc2626',
-          timer: 8000,
-          timerProgressBar: true
-        });
-      }
-    }
+    // Verificar vacunas vencidas
+    await _verificarVacunasVencidas(datosSeleccionados);
 
     // Notas internas
     _mostrarNotasInternas(ciNorm, datosBase.observacionesPermanentes || "");
