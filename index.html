@@ -1524,7 +1524,8 @@
 
       <!-- Panel Medicamentos -->
       <div id="panel_subTabMedicamentos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
-        <div class="flex gap-2 mb-3">
+        <!-- Agregar nuevo -->
+        <div class="flex gap-2 mb-2">
           <input type="text" id="nuevoMedNombre" placeholder="Nombre del medicamento..."
                  class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
           <input type="number" id="nuevoMedPrecio" placeholder="Precio $" step="0.50" min="0"
@@ -1532,6 +1533,13 @@
           <button onclick="_llamarFuncion('agregarMedicamentoMaestro')"
                   class="bg-purple-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-purple-700 shadow">
             ➕ Agregar
+          </button>
+        </div>
+        <!-- Sincronizar medicamentos base -->
+        <div class="mb-3">
+          <button onclick="_llamarFuncion('sincronizarMedicamentosBase')"
+                  class="w-full py-2 border border-purple-200 bg-purple-50 text-purple-700 rounded-lg font-black text-[10px] uppercase hover:bg-purple-100">
+            🔄 Cargar medicamentos base al listado
           </button>
         </div>
         <div id="tablaMedicamentosMaestro" class="overflow-x-auto"></div>
