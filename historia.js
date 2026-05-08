@@ -1558,9 +1558,19 @@ window.cambiarSubTabConfig = (tab) => {
     const activo = t === tab;
     panel?.classList.toggle('hidden', !activo);
     if (btn) {
-      btn.className = activo
-        ? 'flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition bg-blue-600 text-white shadow-sm'
-        : 'flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition bg-slate-100 text-slate-600 hover:bg-white/50';
+      // Usar estilos inline para garantizar igualdad sin depender de Tailwind
+      btn.style.background  = activo ? '#2563eb' : 'transparent';
+      btn.style.color       = activo ? '#ffffff' : '#64748b';
+      btn.style.fontWeight  = '900';
+      btn.style.fontSize    = '10px';
+      btn.style.padding     = '8px 4px';
+      btn.style.borderRadius = '8px';
+      btn.style.border      = 'none';
+      btn.style.cursor      = 'pointer';
+      btn.style.textTransform = 'uppercase';
+      btn.style.whiteSpace  = 'nowrap';
+      btn.style.overflow    = 'hidden';
+      btn.style.textOverflow = 'ellipsis';
     }
   });
   if (tab === 'servicios')     window.renderizarTablaMaestra();
