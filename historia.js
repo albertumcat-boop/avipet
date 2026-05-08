@@ -347,11 +347,25 @@ window.agregarMedicamento = async (nombreMed) => {
 
     // Guardar permanentemente si se marcó el checkbox
     if (guardar) {
+      // Verificar que hay doctor activo
+      const doctorActivo = window.doctorVerificado || '';
+      if (!doctorActivo) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Doctor no autenticado',
+          text: 'Debes seleccionar y autenticar un doctor antes de guardar un medicamento permanentemente.',
+          confirmButtonColor: '#7c3aed'
+        });
+        _insertarMedicamentoEnTabla(nombre, costo);
+        document.getElementById('selectorMedicamentos').value = "";
+        return;
+      }
       try {
         await setDoc(doc(db, "medicamentos_maestro", nombre.toUpperCase()), {
           nombre: nombre.toUpperCase(),
           precioCliente: costo,
           creadoEn: serverTimestamp(),
+          agregadoPor: doctorActivo,
           activo: true
         }, { merge: true });
         // Recargar selector
