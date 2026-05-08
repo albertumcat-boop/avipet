@@ -1,7 +1,7 @@
 // =========================================================
-// AVIPET — historia.js  v5
-// NUEVO: selector de mascotas al autocompletar por cédula
-//        (veterinaria y peluquería)
+// AVIPET -- historia.js  v5
+// NUEVO: selector de mascotas al autocompletar por cedula
+//        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
 // =========================================================
 
@@ -47,7 +47,7 @@ const respaldarProgresoLocal = () => {
 };
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || 'AVIPET2026';
 
-// Normalizar cédula: quitar puntos, espacios, guiones — para buscar con o sin formato
+// Normalizar cedula: quitar puntos, espacios, guiones -- para buscar con o sin formato
 const normalizarCedula = (ci) => String(ci || '').replace(/[\.\-\s]/g, '').trim().toUpperCase();
 
 const normalizarNombre = (str) =>
@@ -55,37 +55,37 @@ const normalizarNombre = (str) =>
 
 const recetas = {
   "CONSULTA GENERAL":           { precioVenta:30,  insumos:[{nombre:"Crema",costo:0.50}] },
-  "CONSULTA OFTALMOLÓGICA":     { precioVenta:80,  insumos:[{nombre:"Tiras Fluoresceína",costo:2.50}] },
+  "CONSULTA OFTALMOLOGICA":     { precioVenta:80,  insumos:[{nombre:"Tiras Fluoresceina",costo:2.50}] },
   "CONSULTA CAMADA 3-4 CACHORROS":      { precioVenta:50,  insumos:[{nombre:"Insumos Camada",costo:2.00}] },
   "CONSULTA CAMADA HASTA 8 CACHORROS":  { precioVenta:80,  insumos:[{nombre:"Insumos Camada Grande",costo:4.00}] },
   "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta:100, insumos:[{nombre:"Insumos Camada XL",costo:6.00}] },
   "CONSULTA DE EMERGENCIA":     { precioVenta:40,  insumos:[{nombre:"Crema",costo:0.50}] },
   "ABSCESO":                    { precioVenta:25,  insumos:[{nombre:"Jelco",costo:4.50},{nombre:"Agua Oxigenada",costo:0.50},{nombre:"Compresa",costo:0.50},{nombre:"Antibiotico",costo:0.50},{nombre:"Antinflamatorio",costo:0.50},{nombre:"Sedacion",costo:0.50}] },
-  "ECOGRAFÍA":                  { precioVenta:30,  insumos:[{nombre:"Gel Ecográfico",costo:1.00},{nombre:"Papel Absorbente",costo:0.50}] },
+  "ECOGRAFIA":                  { precioVenta:30,  insumos:[{nombre:"Gel Ecografico",costo:1.00},{nombre:"Papel Absorbente",costo:0.50}] },
   "COLOCACION VIA":             { precioVenta:15,  insumos:[{nombre:"Jelco",costo:1.50},{nombre:"Jeringa 5cc",costo:0.50},{nombre:"Adhesivo",costo:0.30},{nombre:"Mariposa",costo:1.00},{nombre:"Obturador",costo:1.00}] },
   "ADMINISTRACION MEDICINA":    { precioVenta:10,  insumos:[{nombre:"Jeringa",costo:0.50}] },
   "TOMA DE MUESTRA SANGRE":     { precioVenta:10,  insumos:[{nombre:"Jeringa",costo:0.50},{nombre:"Mariposa",costo:1.00},{nombre:"Tubo",costo:1.20}] },
   "VACUNA SEXTUPLE":            { precioVenta:40,  insumos:[{nombre:"Vial Sextuple",costo:8.50}] },
   "VACUNA PUPPY":               { precioVenta:40,  insumos:[{nombre:"Vial Puppy",costo:7.00}] },
-  "VACUNA ANTIRRÁBICA":         { precioVenta:30,  insumos:[{nombre:"Vial Antirrábica",costo:4.00}] },
+  "VACUNA ANTIRRABICA":         { precioVenta:30,  insumos:[{nombre:"Vial Antirrabica",costo:4.00}] },
   "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta:45, insumos:[{nombre:"Vial KC",costo:9.00}] },
   "VACUNA TRIPLE FELINA":       { precioVenta:45,  insumos:[{nombre:"Vial Triple Felina",costo:10.00}] },
   "VACUNA QUINTUPLE FELINA":    { precioVenta:50,  insumos:[{nombre:"Vial Quintuple Felina",costo:15.00}] },
   "VACUNA BIOVETA":             { precioVenta:60,  insumos:[{nombre:"Vial Bioveta",costo:6.50}] },
-  "HEMATOLOGÍA COMPLETA":       { precioVenta:23,  insumos:[{nombre:"Tubo EDTA",costo:4.50}] },
-  "QUÍMICA SANGUÍNEA":          { precioVenta:60,  insumos:[{nombre:"Tubo Seco - Reactivos",costo:10.00}] },
-  "DESCARTE HEMOPARASITO":      { precioVenta:50,  insumos:[{nombre:"Test Hemoparásitos",costo:9.00}] },
+  "HEMATOLOGIA COMPLETA":       { precioVenta:23,  insumos:[{nombre:"Tubo EDTA",costo:4.50}] },
+  "QUIMICA SANGUINEA":          { precioVenta:60,  insumos:[{nombre:"Tubo Seco - Reactivos",costo:10.00}] },
+  "DESCARTE HEMOPARASITO":      { precioVenta:50,  insumos:[{nombre:"Test Hemoparasitos",costo:9.00}] },
   "DISTEMPER":                  { precioVenta:35,  insumos:[{nombre:"Kit Test Distemper",costo:11.00}] },
   "PARVOVIRUS - CORONAVIRUS":   { precioVenta:35,  insumos:[{nombre:"Kit Test Parvo",costo:12.00}] },
   "FILARIASIS":                 { precioVenta:40,  insumos:[{nombre:"Kit Filarias",costo:11.00}] },
   "SIDA - LEUCEMIA":            { precioVenta:40,  insumos:[{nombre:"Kit Sida-Leucemia",costo:15.00}] },
   "TEST HELICOBACTER PYLORI AG":{ precioVenta:40,  insumos:[{nombre:"Kit Helicobacter",costo:20.00}] },
   "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precioVenta:110,insumos:[{nombre:"Pack Lab Completo",costo:25.00}] },
-  "EXAMEN DE HECES":            { precioVenta:10,  insumos:[{nombre:"Portas - Solución",costo:1.50}] },
+  "EXAMEN DE HECES":            { precioVenta:10,  insumos:[{nombre:"Portas - Solucion",costo:1.50}] },
   "EXAMENES DE ORINA":          { precioVenta:10,  insumos:[{nombre:"Tira Reactiva",costo:2.00}] },
   "CITOLOGIA 1 OIDO":           { precioVenta:15,  insumos:[{nombre:"Hisopo - Tincion",costo:2.50}] },
   "CITOLOGIA 2 OIDOS":          { precioVenta:20,  insumos:[{nombre:"Hisopos - Tinciones",costo:4.00}] },
-  "RASPADO PIEL":               { precioVenta:10,  insumos:[{nombre:"Hoja Bisturí",costo:3.00}] },
+  "RASPADO PIEL":               { precioVenta:10,  insumos:[{nombre:"Hoja Bisturi",costo:3.00}] },
   "PERFIL ANEMICO":             { precioVenta:25,  insumos:[{nombre:"Kit Anemia",costo:8.00}] },
   "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}] },
   "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}] },
@@ -100,15 +100,15 @@ const recetas = {
 };
 
 const CONFIG_PORC = {
-  "CONSULTA GENERAL":40,"CONSULTA OFTALMOLÓGICA":12.5,
+  "CONSULTA GENERAL":40,"CONSULTA OFTALMOLOGICA":12.5,
   "CONSULTA CAMADA 3-4 CACHORROS":40,"CONSULTA CAMADA HASTA 8 CACHORROS":40,
   "CONSULTA CAMADA MAS DE 8 CACHORROS":40,"CONSULTA DE EMERGENCIA":40,
-  "ABSCESO":50,"ECOGRAFÍA":40,"COLOCACION VIA":50,
+  "ABSCESO":50,"ECOGRAFIA":40,"COLOCACION VIA":50,
   "ADMINISTRACION MEDICINA":50,"TOMA DE MUESTRA SANGRE":50,
-  "HEMATOLOGÍA COMPLETA":34.78,"PERFIL ANEMICO":17.5,
+  "HEMATOLOGIA COMPLETA":34.78,"PERFIL ANEMICO":17.5,
 };
 
-const insumosFijosMedicos = [{nombre:"Guantes de examen",costo:0.50},{nombre:"Alcohol",costo:0.10},{nombre:"Algodón",costo:0.10},{nombre:"Hojas - Papelería",costo:0.10}];
+const insumosFijosMedicos = [{nombre:"Guantes de examen",costo:0.50},{nombre:"Alcohol",costo:0.10},{nombre:"Algodon",costo:0.10},{nombre:"Hojas - Papeleria",costo:0.10}];
 const insumosBaseVacuna   = [{nombre:"Jeringa 3cc",costo:0.25},{nombre:"Xeruk",costo:0.10},{nombre:"Crema",costo:0.10}];
 
 const CONFIG_MEDICAMENTOS = {
@@ -126,7 +126,7 @@ const CONFIG_MEDICAMENTOS = {
 
 let insumosBaseMedAgregados = false;
 
-// ─── COMPRESOR ───
+// --- COMPRESOR ---
 const comprimirImagen = (b64, maxW=800, q=0.55) => new Promise(res=>{
   const img=new Image();img.src=b64;img.onload=()=>{
     const c=document.createElement('canvas');let w=img.width,h=img.height;
@@ -135,7 +135,7 @@ const comprimirImagen = (b64, maxW=800, q=0.55) => new Promise(res=>{
     res(c.toDataURL('image/jpeg',q));};img.onerror=()=>res(b64);
 });
 
-// ─── ALERTA STOCK BAJO ───
+// --- ALERTA STOCK BAJO ---
 async function _verificarStockServicio(nombreServicio) {
   try {
     const vLimpio = normalizarNombre(nombreServicio);
@@ -145,7 +145,7 @@ async function _verificarStockServicio(nombreServicio) {
     snap.forEach(d => {
       const r = d.data();
       const nomInv = normalizarNombre(r.nombre || "");
-      // Detectar si el producto del inventario está relacionado con el servicio
+      // Detectar si el producto del inventario esta relacionado con el servicio
       const esRelacionado =
         (vLimpio.includes("vacuna") && (nomInv.includes("vial") || nomInv.includes("vacuna"))) ||
         (vLimpio.includes("hematolo") && nomInv.includes("tubo")) ||
@@ -157,11 +157,11 @@ async function _verificarStockServicio(nombreServicio) {
       }
     });
     if (alertas.length > 0) {
-      const lista = alertas.map(a => `• ${a.nombre}: ${a.stock} unidades (mín: ${a.min})`).join('\n');
+      const lista = alertas.map(a => `* ${a.nombre}: ${a.stock} unidades (min: ${a.min})`).join('\n');
       await Swal.fire({
         icon: 'warning',
-        title: '⚠️ Stock Bajo en Inventario',
-        html: `<p class="text-[11px] text-slate-600 mb-2">El siguiente producto está bajo o agotado:</p>
+        title: '(!) Stock Bajo en Inventario',
+        html: `<p class="text-[11px] text-slate-600 mb-2">El siguiente producto esta bajo o agotado:</p>
                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left">
                  <pre class="text-[11px] text-amber-800 font-bold whitespace-pre-wrap">${lista}</pre>
                </div>
@@ -172,19 +172,19 @@ async function _verificarStockServicio(nombreServicio) {
         timerProgressBar: true
       });
     }
-  } catch { /* silencioso — no bloquear flujo */ }
+  } catch { /* silencioso -- no bloquear flujo */ }
 }
 
-// ─── INSERTAR SERVICIO ───
-// ─── RECALCULAR COMBOS ───────────────────────────────────────────────────────
-// Se llama SIEMPRE después de insertar o eliminar cualquier servicio.
-// Lee el DOM completo y ajusta precios según lo que realmente está en la lista.
+// --- INSERTAR SERVICIO ---
+// --- RECALCULAR COMBOS -------------------------------------------------------
+// Se llama SIEMPRE despues de insertar o eliminar cualquier servicio.
+// Lee el DOM completo y ajusta precios segun lo que realmente esta en la lista.
 //
 // REGLAS:
-//   KC sola        → $45  |  KC + otra vacuna      → $40
-//   Antirrábica sola → $30  |  Antirrábica + otra vacuna → $25
-//   Hematología sola → $23  |  Hematología + otro lab    → $20
-// ─────────────────────────────────────────────────────────────────────────────
+//   KC sola        -> $45  |  KC + otra vacuna      -> $40
+//   Antirrabica sola -> $30  |  Antirrabica + otra vacuna -> $25
+//   Hematologia sola -> $23  |  Hematologia + otro lab    -> $20
+// -----------------------------------------------------------------------------
 function _recalcularCombos() {
   const filas = Array.from(document.querySelectorAll('.servicio-principal'));
   const nombres = filas.map(f => normalizarNombre(f.querySelector('td')?.innerText || ""));
@@ -194,7 +194,7 @@ function _recalcularCombos() {
     const td  = fila.querySelector('td');
     if (!td) return;
 
-    // ── KC ──
+    // -- KC --
     if (n.includes("vacunakc")) {
       // hay otra vacuna en la lista (distinta de KC)?
       const hayOtraVacuna = nombres.some((o, i) => i !== idx && o.includes("vacuna") && !o.includes("vacunakc"));
@@ -216,7 +216,7 @@ function _recalcularCombos() {
       }
     }
 
-    // ── ANTIRRÁBICA ──
+    // -- ANTIRRABICA --
     if (n.includes("vacunaantirrabica")) {
       const hayOtraVacuna = nombres.some((o, i) => i !== idx && o.includes("vacuna") && !o.includes("antirrabica"));
       const precioNuevo   = hayOtraVacuna ? 25 : 30;
@@ -232,7 +232,7 @@ function _recalcularCombos() {
       }
     }
 
-    // ── HEMATOLOGÍA ──
+    // -- HEMATOLOGIA --
     if (n.includes("hematologiacompleta")) {
       const otrosLabs = ["quimica","hemoparasito","heces","orina","perfil","citologia"];
       const hayOtroLab = nombres.some((o, i) => i !== idx && otrosLabs.some(lab => o.includes(lab)));
@@ -250,7 +250,7 @@ function _recalcularCombos() {
     }
   });
 
-  // Recalcular totales después de ajustar precios
+  // Recalcular totales despues de ajustar precios
   window.calcularTodo();
 }
 
@@ -266,25 +266,25 @@ window.insertarServicio = async (v) => {
   if(vLimpio.includes("kgadicional")){const kgs=prompt("KGs adicionales:");if(!kgs||isNaN(kgs)){document.getElementById('selectorServicios').value="";return;}nombreFinal=`KG ADICIONAL (${parseFloat(kgs)}kg)`;precioFinal=parseFloat(kgs)*7;porcServ=0;}
   else if(vLimpio==="disposicion"||vLimpio==="cremacionconcenizas"){const m=prompt(`Precio pactado para ${v}:`);if(!m||isNaN(m)){document.getElementById('selectorServicios').value="";return;}precioFinal=parseFloat(m);porcServ=0;}
   else if(vLimpio.includes("vacunakc")){
-    // Precio base: solo → $45, en combo con otra vacuna → $40
+    // Precio base: solo -> $45, en combo con otra vacuna -> $40
     // Se inserta primero con precio base; _recalcularCombos lo ajusta al final
     precioFinal=45;
   }
   else if(vLimpio.includes("hematologiacompleta")){
-    // Precio base: solo → $23, en combo con otro lab → $20
+    // Precio base: solo -> $23, en combo con otro lab -> $20
     precioFinal=23;
   }
   else if(vLimpio.includes("vacunaantirrabica")){
-    // Precio base: solo → $30, en combo con otra vacuna → $25
+    // Precio base: solo -> $30, en combo con otra vacuna -> $25
     precioFinal=30;
   }
 
   const grupoID="srv-"+Date.now();
-  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span>🔹</span><span class="flex-1">${nombreFinal}</span>`;visual.appendChild(badge);}
+  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span>?</span><span class="flex-1">${nombreFinal}</span>`;visual.appendChild(badge);}
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo=document.getElementById('listaInsumosDinamica');
   const ft=document.createElement('tr');ft.className="bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioFinal);ft.setAttribute('data-porc',porcServ);
-  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">🔹 ${nombreFinal} ($${precioFinal.toFixed(2)})<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">${porcServ.toFixed(1)}% DOC</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioFinal},event)" class="text-red-500 font-bold text-lg">×</button></td>`;
+  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">? ${nombreFinal} ($${precioFinal.toFixed(2)})<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">${porcServ.toFixed(1)}% DOC</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioFinal},event)" class="text-red-500 font-bold text-lg">?</button></td>`;
   cuerpo.appendChild(ft);
 
   let insNuevos=[];
@@ -298,22 +298,22 @@ window.insertarServicio = async (v) => {
     if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
   }
 
-  insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">✕</td>`;cuerpo.appendChild(tr);});
+  insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">?</td>`;cuerpo.appendChild(tr);});
 
   await window.calcularTodo();
   document.getElementById('selectorServicios').value="";
   respaldarProgresoLocal();
-  // Recalcular precios de combos DESPUÉS de insertar (actualiza los ya existentes)
+  // Recalcular precios de combos DESPUES de insertar (actualiza los ya existentes)
   _recalcularCombos();
-  // Verificar stock DESPUÉS de insertar
+  // Verificar stock DESPUES de insertar
   _verificarStockServicio(v);
 };
 
-// ─── AGREGAR MEDICAMENTO ───
+// --- AGREGAR MEDICAMENTO ---
 window.agregarMedicamento = async (nombreMed) => {
   if (!nombreMed) return;
   if (nombreMed==="OTRO") {
-    const res=await Swal.fire({title:'💊 Agregar Medicamento',html:`<div class="space-y-3 text-left mt-2"><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">Nombre del medicamento</label><input type="text" id="swal_med_nombre" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-blue-500" placeholder="Ej: Clopidogrel..."></div><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">Costo para el cliente ($)</label><input type="number" id="swal_med_costo" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-blue-500" placeholder="0.00"></div></div>`,showCancelButton:true,confirmButtonText:'➕ Agregar',cancelButtonText:'Cancelar',confirmButtonColor:'#7c3aed',preConfirm:()=>{const nombre=document.getElementById('swal_med_nombre')?.value.trim();const costo=parseFloat(document.getElementById('swal_med_costo')?.value)||0;if(!nombre){Swal.showValidationMessage("⚠️ Escribe el nombre.");return false;}if(costo<0){Swal.showValidationMessage("⚠️ Costo no puede ser negativo.");return false;}return{nombre,costo};}});
+    const res=await Swal.fire({title:'? Agregar Medicamento',html:`<div class="space-y-3 text-left mt-2"><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">Nombre del medicamento</label><input type="text" id="swal_med_nombre" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-blue-500" placeholder="Ej: Clopidogrel..."></div><div><label class="text-[10px] font-black text-slate-600 uppercase block mb-1">Costo para el cliente ($)</label><input type="number" id="swal_med_costo" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-blue-500" placeholder="0.00"></div></div>`,showCancelButton:true,confirmButtonText:'? Agregar',cancelButtonText:'Cancelar',confirmButtonColor:'#7c3aed',preConfirm:()=>{const nombre=document.getElementById('swal_med_nombre')?.value.trim();const costo=parseFloat(document.getElementById('swal_med_costo')?.value)||0;if(!nombre){Swal.showValidationMessage("(!) Escribe el nombre.");return false;}if(costo<0){Swal.showValidationMessage("(!) Costo no puede ser negativo.");return false;}return{nombre,costo};}});
     if(!res.isConfirmed){document.getElementById('selectorMedicamentos').value="";return;}
     _insertarMedicamentoEnTabla(res.value.nombre,res.value.costo);document.getElementById('selectorMedicamentos').value="";return;
   }
@@ -332,17 +332,17 @@ window.agregarMedicamento = async (nombreMed) => {
 function _insertarMedicamentoEnTabla(descripcion,precioCliente) {
   const grupoID="med-"+Date.now();
   const visual=document.getElementById('visualizacionServicios');
-  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span>💊</span><span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;visual.appendChild(badge);}
+  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span>?</span><span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;visual.appendChild(badge);}
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo=document.getElementById('listaInsumosDinamica');
   const ft=document.createElement('tr');ft.className="bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioCliente);ft.setAttribute('data-porc',40);
-  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">💊 ${descripcion} ($${precioCliente.toFixed(2)})<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px]">MEDICAMENTO</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioCliente},event)" class="text-red-500 font-bold text-lg">×</button></td>`;
+  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">? ${descripcion} ($${precioCliente.toFixed(2)})<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px]">MEDICAMENTO</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioCliente},event)" class="text-red-500 font-bold text-lg">?</button></td>`;
   cuerpo.appendChild(ft);
-  if(!insumosBaseMedAgregados){[{nombre:"Jeringa para medicamento",costo:0.50},{nombre:"Algodón",costo:0.10},{nombre:"Alcohol",costo:0.10}].forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">➕ ${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">✕</td>`;cuerpo.appendChild(tr);});insumosBaseMedAgregados=true;}
+  if(!insumosBaseMedAgregados){[{nombre:"Jeringa para medicamento",costo:0.50},{nombre:"Algodon",costo:0.10},{nombre:"Alcohol",costo:0.10}].forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">? ${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">?</td>`;cuerpo.appendChild(tr);});insumosBaseMedAgregados=true;}
   window.calcularTodo();respaldarProgresoLocal();
 }
 
-// ─── MOTOR FINANCIERO ───
+// --- MOTOR FINANCIERO ---
 window.calcularTodo = async () => {
   let totalComision=0,totalGastos=0,totalVenta=0;
   if(window.porcGlobalCache===undefined){try{const snap=await getDoc(doc(db,"configuracion","tarifas"));window.porcGlobalCache=snap.exists()?(snap.data().porcDoc??snap.data().porcentajeDoc??null):null;}catch{window.porcGlobalCache=null;}}
@@ -352,9 +352,9 @@ window.calcularTodo = async () => {
   const id=document.getElementById('montoDoctor');if(id)id.innerText=`$ ${totalComision.toFixed(2)}`;
 };
 
-// ─── ELIMINAR SERVICIO ───
+// --- ELIMINAR SERVICIO ---
 window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
-  if(event)event.preventDefault();if(!confirm("¿Eliminar este servicio y sus insumos?"))return;
+  if(event)event.preventDefault();if(!confirm("?Eliminar este servicio y sus insumos?"))return;
   document.getElementById("badge-"+idGrupo)?.remove();
   const ft=document.querySelector(`[data-grupo="${idGrupo}"]`);if(ft)ft.remove();
   document.querySelectorAll('tr.insumo-fila').forEach(tr=>{if(tr.classList.contains(idGrupo))tr.remove();});
@@ -364,57 +364,57 @@ window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
   await window.calcularTodo();
 };
 
-// ─── INSUMO MANUAL ───
+// --- INSUMO MANUAL ---
 window.agregarInsumoManual = () => {
   const n=document.getElementById('nombreExtra');const c=document.getElementById('costoExtra');if(!n?.value)return alert("Ingrese nombre.");
   const filas=document.querySelectorAll('.servicio-principal');const ultimoGrp=filas.length>0?filas[filas.length-1].getAttribute('data-grupo'):"manual";
-  const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrp}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">➕ ${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c?.value||0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">✕</td>`;
+  const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrp}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">? ${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c?.value||0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">?</td>`;
   document.getElementById('listaInsumosDinamica').appendChild(tr);n.value="";if(c)c.value="";window.calcularTodo();
 };
 
-// ─── VACUNA YA PAGADA ───
+// --- VACUNA YA PAGADA ---
 window.toggleVacunaPagada = (marcado) => {
-  window.vacunaPagadaAnteriormente=marcado;const inputPrecio=document.getElementById('precioVenta');if(inputPrecio){inputPrecio.style.textDecoration=marcado?'line-through':'none';inputPrecio.style.color=marcado?'#f59e0b':'';}let aviso=document.getElementById('avisoVacunaPagada');if(!aviso){aviso=document.createElement('div');aviso.id='avisoVacunaPagada';aviso.className='no-print text-center text-[10px] font-black text-amber-600 uppercase mt-1';aviso.innerText='⚠️ La vacuna NO se sumará a la caja ni al doctor';document.getElementById('precioVenta')?.parentElement?.appendChild(aviso);}aviso.classList.toggle('hidden',!marcado);
+  window.vacunaPagadaAnteriormente=marcado;const inputPrecio=document.getElementById('precioVenta');if(inputPrecio){inputPrecio.style.textDecoration=marcado?'line-through':'none';inputPrecio.style.color=marcado?'#f59e0b':'';}let aviso=document.getElementById('avisoVacunaPagada');if(!aviso){aviso=document.createElement('div');aviso.id='avisoVacunaPagada';aviso.className='no-print text-center text-[10px] font-black text-amber-600 uppercase mt-1';aviso.innerText='(!) La vacuna NO se sumara a la caja ni al doctor';document.getElementById('precioVenta')?.parentElement?.appendChild(aviso);}aviso.classList.toggle('hidden',!marcado);
 };
 
-// ─── GUARDAR EN FIREBASE ───
+// --- GUARDAR EN FIREBASE ---
 window.guardarFirebase = async (imp) => {
-  const selectorDoc=document.getElementById('selectDoctor');const nombreDoctor=selectorDoc?selectorDoc.value:"";if(!nombreDoctor)return alert("⚠ Seleccione un doctor.");
-  const pinIngresado=prompt(`🔐 Firma Médica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);if(!pinIngresado)return;const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);if(!esValido)return alert("❌ PIN incorrecto.");
-  const btn=document.activeElement;const textoOrig=btn?.innerText||"Guardar";if(btn?.tagName==='BUTTON'){btn.disabled=true;btn.innerText="⏳ PROCESANDO...";}
+  const selectorDoc=document.getElementById('selectDoctor');const nombreDoctor=selectorDoc?selectorDoc.value:"";if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
+  const pinIngresado=prompt(`? Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);if(!pinIngresado)return;const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);if(!esValido)return alert("? PIN incorrecto.");
+  const btn=document.activeElement;const textoOrig=btn?.innerText||"Guardar";if(btn?.tagName==='BUTTON'){btn.disabled=true;btn.innerText="? PROCESANDO...";}
   try{
     const leerImg=(a)=>new Promise(res=>{const r=new FileReader();r.readAsDataURL(a);r.onload=e=>res(e.target.result);r.onerror=()=>res("");});
     const fileH=document.getElementById('inputFotoHistoria')?.files[0];const fileT=document.getElementById('inputFotoTest')?.files[0];
     let urlFoto=fileH?await comprimirImagen(await leerImg(fileH)):(document.getElementById('pUrlExamen')?.value||"");let urlTest=fileT?await comprimirImagen(await leerImg(fileT)):(document.getElementById('pUrlTest')?.value||"");
     const listaTests=[];document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila=>{const nombre=fila.cells[0]?.querySelector('input')?.value.trim()||fila.cells[0]?.querySelector('span')?.innerText?.trim()||"";const span=fila.cells[1]?.querySelector('.resultado-print');const sel=fila.cells[1]?.querySelector('select');const resultado=(span?.innerText?.trim()&&span.innerText.trim()!=="---")?span.innerText.trim():(sel?.value||"---");const nota=fila.cells[2]?.querySelector('input')?.value?.trim()||"";if(nombre)listaTests.push({nombre,resultado,nota});});
     const cfgSnap=await getDoc(doc(db,"configuracion","tarifas"));let porcGlobal=cfgSnap.exists()?(cfgSnap.data().porcentajeDoc||null):null;const montoVentaTotal=parseFloat(document.getElementById('precioVenta')?.value)||0;let totalGastos=0,pagoDoctorTotal=0;const detalleInsumos=[];
-    document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=porcGlobal||parseFloat(fila.getAttribute('data-porc'))||0;let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[➕🔹]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
+    document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=porcGlobal||parseFloat(fila.getAttribute('data-porc'))||0;let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[??]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
     let montoVacunaPendiente=0;if(window.vacunaPagadaAnteriormente){document.querySelectorAll('.servicio-principal').forEach(fila=>{if(normalizarNombre(fila.innerText).includes("vacuna"))montoVacunaPendiente+=parseFloat(fila.getAttribute('data-precio'))||0;});}
     const montoVentaFinal=window.vacunaPagadaAnteriormente?Math.max(0,montoVentaTotal-montoVacunaPendiente):montoVentaTotal;const gastosFinal=window.vacunaPagadaAnteriormente?Math.max(0,totalGastos-montoVacunaPendiente*0.3):totalGastos;const pagoDoctorFinal=window.vacunaPagadaAnteriormente?Math.max(0,pagoDoctorTotal-montoVacunaPendiente*0.5):pagoDoctorTotal;
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
     const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
     const data={cedula:dInput('hCI'),propietario:dInput('hProp'),paciente:dInput('hNombre'),especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:new Date().toLocaleDateString()};
-    await addDoc(collection(db,"consultas"),data);localStorage.removeItem('respaldoConsulta');localStorage.removeItem('respaldo_historia_activa');alert("✅ ¡Consulta guardada con éxito!");
+    await addDoc(collection(db,"consultas"),data);localStorage.removeItem('respaldoConsulta');localStorage.removeItem('respaldo_historia_activa');alert("? ?Consulta guardada con exito!");
     _limpiarFormularioHistoria();
     _limpiarNotasInternas();
     if(imp)window.imprimirDocumento();
-  }catch(e){console.error("Error guardando:",e);alert("❌ Error: "+e.message);}
+  }catch(e){console.error("Error guardando:",e);alert("? Error: "+e.message);}
   finally{if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}}
 };
 
-// ─── AUTOCOMPLETAR POR CÉDULA + ALERTA VACUNA + NOTAS INTERNAS ───
+// --- AUTOCOMPLETAR POR CEDULA + ALERTA VACUNA + NOTAS INTERNAS ---
 window.autocompletarPorCedula = async (ci) => {
   if(!ci||ci.length<3)return;
   const ciNorm = normalizarCedula(ci);
   try{
-    // Buscar TODAS las consultas de esta cédula para encontrar todas las mascotas
+    // Buscar TODAS las consultas de esta cedula para encontrar todas las mascotas
     let snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ciNorm),orderBy("fecha","desc")));
     if(snapTodas.empty && ciNorm !== ci.trim()) {
       snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim()),orderBy("fecha","desc")));
     }
     if(snapTodas.empty) return;
 
-    // Recopilar todas las mascotas únicas con sus datos más recientes
+    // Recopilar todas las mascotas unicas con sus datos mas recientes
     const mascotasMap = new Map();
     snapTodas.forEach(docSnap => {
       const r = docSnap.data();
@@ -423,7 +423,7 @@ window.autocompletarPorCedula = async (ci) => {
       }
     });
 
-    // Datos del propietario (del registro más reciente)
+    // Datos del propietario (del registro mas reciente)
     const datosBase = snapTodas.docs[0].data();
     const set=(id,val)=>{const el=document.getElementById(id);if(el){el.value=val||"";el.classList.add('bg-blue-50');setTimeout(()=>el.classList.remove('bg-blue-50'),1000);}};
 
@@ -433,8 +433,8 @@ window.autocompletarPorCedula = async (ci) => {
     set('hMail', datosBase.correo||datosBase.email);
     set('hDir',  datosBase.direccion);
 
-    // Alerta restricción
-    if(datosBase.alerta){const el=document.getElementById('hProp');if(el){el.style.color="#b91c1c";el.style.fontWeight="bold";}alert("⚠️ ATENCIÓN: Este cliente tiene una RESTRICCIÓN ADMINISTRATIVA.");}
+    // Alerta restriccion
+    if(datosBase.alerta){const el=document.getElementById('hProp');if(el){el.style.color="#b91c1c";el.style.fontWeight="bold";}alert("(!) ATENCION: Este cliente tiene una RESTRICCION ADMINISTRATIVA.");}
 
     let datosSeleccionados = datosBase;
 
@@ -447,16 +447,16 @@ window.autocompletarPorCedula = async (ci) => {
         const r = m[1];
         htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="' + m[0] + '" ' +
           'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">' +
-          '<span>🐾 ' + m[0] + '</span>' +
-          '<span style="font-size:9px;color:#64748b;font-weight:600;">' + (r.especie||'') + ' · ' + (r.raza||'') + '</span>' +
+          '<span>? ' + m[0] + '</span>' +
+          '<span style="font-size:9px;color:#64748b;font-weight:600;">' + (r.especie||'') + ' . ' + (r.raza||'') + '</span>' +
           '</button>';
       });
       htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="__nueva__" ' +
-        'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">✏️ Nuevo paciente</button>';
+        'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">? Nuevo paciente</button>';
       htmlSel += '</div>';
 
       const resSel = await Swal.fire({
-        title: '🐾 ¿Cuál paciente viene hoy?',
+        title: '? ?Cual paciente viene hoy?',
         html: htmlSel,
         showConfirmButton: false,
         showCancelButton: true,
@@ -533,7 +533,7 @@ window.autocompletarPorCedula = async (ci) => {
   }catch(e){console.error("Error autocompletar:",e);}
 };
 
-// ─── NOTAS INTERNAS POR PACIENTE ───
+// --- NOTAS INTERNAS POR PACIENTE ---
 function _mostrarNotasInternas(cedula, notasExistentes) {
   const cont = document.getElementById('contNotasInternas');
   const inp  = document.getElementById('inputNotasInternas');
@@ -562,43 +562,43 @@ window.guardarNotasInternas = async () => {
       await updateDoc(doc(db,"consultas",snap.docs[0].id),{observacionesPermanentes:notas});
       await Swal.fire({icon:'success',title:'Notas guardadas',timer:1400,showConfirmButton:false});
     }
-  } catch(e){console.error(e);alert("❌ Error: "+e.message);}
+  } catch(e){console.error(e);alert("? Error: "+e.message);}
 };
 
-// ─── FOTOS ───
+// --- FOTOS ---
 window.previsualizarFotoHistoria = (event) => {
   const files=event.target.files;const galeria=document.getElementById('previewHistoriaGallery');const cont=document.getElementById('previewHistoriaContainer');const hidden=document.getElementById('pUrlExamen');if(!files?.length||!galeria)return;
-  Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">✕</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";
+  Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">?</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";
 };
 window.sincronizarHiddenHistoria=()=>{const galeria=document.getElementById('previewHistoriaGallery');const hidden=document.getElementById('pUrlExamen');if(!galeria||!hidden)return;const imgs=galeria.querySelectorAll('img');if(imgs.length===0){hidden.value="";document.getElementById('previewHistoriaContainer')?.classList.add('hidden');}else hidden.value=imgs[imgs.length-1].src;};
-window.previsualizarFotoTest=(event)=>{const files=event.target.files;const galeria=document.getElementById('previewTestGallery');const cont=document.getElementById('previewTestContainer');const hidden=document.getElementById('pUrlTest');if(!files?.length||!galeria)return;Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenTest()">✕</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";};
+window.previsualizarFotoTest=(event)=>{const files=event.target.files;const galeria=document.getElementById('previewTestGallery');const cont=document.getElementById('previewTestContainer');const hidden=document.getElementById('pUrlTest');if(!files?.length||!galeria)return;Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenTest()">?</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";};
 window.sincronizarHiddenTest=()=>{const galeria=document.getElementById('previewTestGallery');const hidden=document.getElementById('pUrlTest');if(!galeria||!hidden)return;const imgs=galeria.querySelectorAll('img');if(imgs.length===0){hidden.value="";document.getElementById('previewTestContainer')?.classList.add('hidden');}else hidden.value=imgs[imgs.length-1].src;};
 
-// ─── QR MÓVIL ───
-window.generarEnlaceMovil=(tipo='historia')=>{const cedula=document.getElementById('hCI')?.value.trim();if(!cedula)return alert("⚠️ Escribe la Cédula primero.");const qrDivID=tipo==='test'?"qrcodeTest":"qrcode";const contID=tipo==='test'?"qrContainerTest":"qrContainer";const qrDiv=document.getElementById(qrDivID);if(qrDiv)qrDiv.innerHTML="";const url=`${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;new QRCode(qrDiv,{text:url,width:128,height:128});document.getElementById(contID)?.classList.remove('hidden');const ahora=new Date();if(tipo==='historia')window._ultimaSesionQRHistoria=ahora;if(tipo==='test')window._ultimaSesionQRTest=ahora;const q=query(collection(db,"transferencias_fotos"),where("ci","==",cedula),where("tipo","==",tipo));if(tipo==='historia'&&window._unsubHist)window._unsubHist();if(tipo==='test'&&window._unsubTest)window._unsubTest();const unsub=onSnapshot(q,snap=>{const galeriaId=tipo==='test'?'previewTestGallery':'previewHistoriaGallery';const contIdG=tipo==='test'?'previewTestContainer':'previewHistoriaContainer';const hiddenId=tipo==='test'?'pUrlTest':'pUrlExamen';const galeria=document.getElementById(galeriaId);const cont=document.getElementById(contIdG);const hidden=document.getElementById(hiddenId);if(!galeria||!cont)return;const urlsExist=new Set(Array.from(galeria.querySelectorAll('img')).map(img=>img.src));const inicio=tipo==='historia'?window._ultimaSesionQRHistoria:window._ultimaSesionQRTest;snap.forEach(docSnap=>{const d=docSnap.data();if(!d.url)return;if(d.fecha?.toDate&&d.fecha.toDate()<inicio)return;if(urlsExist.has(d.url))return;urlsExist.add(d.url);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${d.url}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHidden${tipo==='test'?'Test':'Historia'}()">✕</button>`;galeria.appendChild(wrapper);if(hidden)hidden.value=d.url;});if(urlsExist.size>0)cont.classList.remove('hidden');});if(tipo==='historia')window._unsubHist=unsub;if(tipo==='test')window._unsubTest=unsub;};
-window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emerald-600':'bg-blue-600';const colorTx=tipo==='test'?'text-emerald-400':'text-blue-400';document.body.innerHTML=`<div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center"><h1 class="text-xl font-black uppercase italic ${colorTx}">${tipo==='test'?'🧪 TEST':'📸 HISTORIA'}</h1><p class="text-slate-400 text-[10px] mb-6 uppercase">CI: <b>${ci}</b></p><input type="file" id="mobileFileCamera" accept="image/*" capture="environment" class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><input type="file" id="mobileFileGallery" accept="image/*" multiple class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><div class="flex flex-col gap-3"><button onclick="document.getElementById('mobileFileCamera').click()" class="w-full ${colorB} py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">📷 TOMAR FOTO</button><button onclick="document.getElementById('mobileFileGallery').click()" class="w-full bg-slate-600 py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">🖼️ GALERÍA</button></div><div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo...</div></div></div>`;};
-window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`⏳ Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`⏳ ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>✅ ${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="❌ "+e.message;}};
+// --- QR MOVIL ---
+window.generarEnlaceMovil=(tipo='historia')=>{const cedula=document.getElementById('hCI')?.value.trim();if(!cedula)return alert("(!) Escribe la Cedula primero.");const qrDivID=tipo==='test'?"qrcodeTest":"qrcode";const contID=tipo==='test'?"qrContainerTest":"qrContainer";const qrDiv=document.getElementById(qrDivID);if(qrDiv)qrDiv.innerHTML="";const url=`${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;new QRCode(qrDiv,{text:url,width:128,height:128});document.getElementById(contID)?.classList.remove('hidden');const ahora=new Date();if(tipo==='historia')window._ultimaSesionQRHistoria=ahora;if(tipo==='test')window._ultimaSesionQRTest=ahora;const q=query(collection(db,"transferencias_fotos"),where("ci","==",cedula),where("tipo","==",tipo));if(tipo==='historia'&&window._unsubHist)window._unsubHist();if(tipo==='test'&&window._unsubTest)window._unsubTest();const unsub=onSnapshot(q,snap=>{const galeriaId=tipo==='test'?'previewTestGallery':'previewHistoriaGallery';const contIdG=tipo==='test'?'previewTestContainer':'previewHistoriaContainer';const hiddenId=tipo==='test'?'pUrlTest':'pUrlExamen';const galeria=document.getElementById(galeriaId);const cont=document.getElementById(contIdG);const hidden=document.getElementById(hiddenId);if(!galeria||!cont)return;const urlsExist=new Set(Array.from(galeria.querySelectorAll('img')).map(img=>img.src));const inicio=tipo==='historia'?window._ultimaSesionQRHistoria:window._ultimaSesionQRTest;snap.forEach(docSnap=>{const d=docSnap.data();if(!d.url)return;if(d.fecha?.toDate&&d.fecha.toDate()<inicio)return;if(urlsExist.has(d.url))return;urlsExist.add(d.url);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${d.url}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHidden${tipo==='test'?'Test':'Historia'}()">?</button>`;galeria.appendChild(wrapper);if(hidden)hidden.value=d.url;});if(urlsExist.size>0)cont.classList.remove('hidden');});if(tipo==='historia')window._unsubHist=unsub;if(tipo==='test')window._unsubTest=unsub;};
+window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emerald-600':'bg-blue-600';const colorTx=tipo==='test'?'text-emerald-400':'text-blue-400';document.body.innerHTML=`<div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center"><h1 class="text-xl font-black uppercase italic ${colorTx}">${tipo==='test'?'? TEST':'? HISTORIA'}</h1><p class="text-slate-400 text-[10px] mb-6 uppercase">CI: <b>${ci}</b></p><input type="file" id="mobileFileCamera" accept="image/*" capture="environment" class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><input type="file" id="mobileFileGallery" accept="image/*" multiple class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><div class="flex flex-col gap-3"><button onclick="document.getElementById('mobileFileCamera').click()" class="w-full ${colorB} py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">? TOMAR FOTO</button><button onclick="document.getElementById('mobileFileGallery').click()" class="w-full bg-slate-600 py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">? GALERIA</button></div><div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo...</div></div></div>`;};
+window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>? ${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
 
-// ─── IMPRIMIR ───
+// --- IMPRIMIR ---
 window.imprimirDocumento=()=>{const doctor=document.getElementById('selectDoctor')?.value.toUpperCase()||"";const hTrat=document.getElementById('hTratamiento');const hPrint=document.getElementById('hTratamientoPrint');if(hTrat&&hPrint)hPrint.innerText=hTrat.value;try{const galPrev=document.getElementById('previewHistoriaGallery');const galPrint=document.getElementById('printHistoriaGallery');const contP=document.getElementById('printExamenCont');if(galPrev&&galPrint&&contP){galPrint.innerHTML="";const imgs=galPrev.querySelectorAll('img');imgs.forEach(img=>{const w=document.createElement('div');w.className="max-w-[45%] border border-slate-300 rounded-lg overflow-hidden";w.innerHTML=`<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;galPrint.appendChild(w);});contP.classList.toggle('hidden',imgs.length===0);}}catch(e){console.warn(e);}setTimeout(()=>window.print(),500);};
 window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamiento')?.value||"";const paciente=document.getElementById('hNombre')?.value||"";const prop=document.getElementById('hProp')?.value||"";const urlExamen=document.getElementById('pUrlExamen')?.value||"";const win=window.open("","_blank","width=800,height=600");if(!win)return;win.document.write(`<html><head><title>Receta - AVIPET</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;}.header{border-bottom:3px solid #3b82f6;padding-bottom:10px;margin-bottom:20px;}h1{font-size:24px;margin:0;color:#1e3a8a;}.content{background:#f8fafc;padding:20px;border-radius:8px;border:1px solid #e2e8f0;min-height:200px;}pre{white-space:pre-wrap;font-size:14px;line-height:1.6;margin:0;}</style></head><body><div class="header"><h1>AVIPET - Centro Veterinario</h1><h2 style="font-size:13px;color:#64748b;margin:5px 0;">Paciente: <b>${paciente}</b> | Propietario: ${prop}</h2></div><div class="content"><pre>${texto}</pre></div>${urlExamen?`<div style="margin-top:20px;text-align:center;"><img src="${urlExamen}" style="max-width:350px;border-radius:10px;border:1px solid #ddd;"></div>`:''}<div style="margin-top:30px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #eee;padding-top:10px;">Documento generado por AVIPET.</div></body></html>`);win.document.close();win.onload=()=>setTimeout(()=>{win.focus();win.print();},300);};
 
-// ─── HOJA DE VACUNAS ───
+// --- HOJA DE VACUNAS ---
 window.abrirHojaVacunasDesdeHistoria=()=>{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};const f=new Date();set('hv_fecha',`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);const campos={'hv_propietario':'hProp','hv_cedula':'hCI','hv_telefono':'hTlf','hv_direccion':'hDir','hv_especie':'hEspecie','hv_raza':'hRaza','hv_paciente':'hNombre','hv_edad':'hEdad','hv_sexo':'hSexo','hv_color':'hColor','hv_peso':'hPeso'};Object.entries(campos).forEach(([d,o])=>set(d,dVal(o)));set('hv_fechaNacimiento',dVal('hFechaNac'));document.getElementById('sectionHistoria')?.classList.add('hidden');const v=document.getElementById('sectionHojaVacunas');if(v){v.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}};
 
-// ─── SALA DE ESPERA ───
+// --- SALA DE ESPERA ---
 window.enviarAColaEspera=async()=>{
   try{
     const dVal=(id)=>document.getElementById(id)?.value.trim()||"";
     if(!dVal('hCI')||!dVal('hNombre')||!dVal('hProp')){
-      alert("⚠️ Cédula, Propietario y Paciente son obligatorios.");return;
+      alert("(!) Cedula, Propietario y Paciente son obligatorios.");return;
     }
 
-    // Preguntar a qué doctor se asigna
+    // Preguntar a que doctor se asigna
     var htmlDocSel = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Asignar <b>' + dVal('hNombre') + '</b> a:</p>';
     htmlDocSel += '<div style="display:flex;flex-direction:column;gap:8px;">';
-    htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">🩺 Dr. Darwin Sandoval</button>';
-    htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">🩺 Dr. Joan Silva</button>';
+    htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">? Dr. Darwin Sandoval</button>';
+    htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">? Dr. Joan Silva</button>';
     htmlDocSel += '</div>';
     const resDoc = await Swal.fire({
       title: 'Asignar Doctor',
@@ -638,13 +638,13 @@ window.enviarAColaEspera=async()=>{
     _limpiarNotasInternas();
     await Swal.fire({
       icon:"success",
-      title:"✅ Enviado a Sala de Espera",
+      title:"? Enviado a Sala de Espera",
       html:"<b>"+data.paciente+"</b><br><span class='text-[11px] text-slate-500'>Asignado al Dr. "+doctorAsignado+"</span>",
       timer:2500,showConfirmButton:false
     });
-  }catch(e){console.error(e);alert("❌ Error: "+e.message);}
+  }catch(e){console.error(e);alert("? Error: "+e.message);}
 };
-window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} · CI: ${p.cedula}</p><p class="text-[8px] font-black ${colorDoc} uppercase">🩺 ${docAsig}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
+window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} . CI: ${p.cedula}</p><p class="text-[8px] font-black ${colorDoc} uppercase">? ${docAsig}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
 window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();
   // Verificar si el doctor activo es el correcto
   const doctorActivo = window.doctorVerificado || "";
@@ -652,18 +652,18 @@ window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap
   if (docAsig && doctorActivo && !doctorActivo.includes(docAsig.split(" ")[0]) && !docAsig.includes(doctorActivo.split(" ")[0])) {
     const res = await Swal.fire({
       icon: "warning",
-      title: "⚠️ Paciente de otro doctor",
-      html: `<p class="text-[11px] text-slate-600">Este paciente fue asignado al <b>${docAsig}</b>.<br><br>Estás conectado como <b>${doctorActivo}</b>.<br><br>¿Deseas atenderlo de todas formas?</p>`,
+      title: "(!) Paciente de otro doctor",
+      html: `<p class="text-[11px] text-slate-600">Este paciente fue asignado al <b>${docAsig}</b>.<br><br>Estas conectado como <b>${doctorActivo}</b>.<br><br>?Deseas atenderlo de todas formas?</p>`,
       showCancelButton: true,
-      confirmButtonText: "Sí, atender",
+      confirmButtonText: "Si, atender",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#f59e0b"
     });
     if (!res.isConfirmed) return;
-  }const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};set('hCI',d.cedula);set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hTlf',d.telefono);set('hMail',d.correo);set('hDir',d.direccion);set('hColor',d.color);set('hFechaNac',d.fechaNacimiento);await updateDoc(doc(db,"espera",idEspera),{estado:"atendiendo",fechaAtencion:serverTimestamp()});window.showTab('historia');alert(`✅ ${d.paciente} cargado.`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
-window.eliminarDeSalaEspera=async(idEspera)=>{if(!confirm("¿Eliminar de la sala de espera?"))return;try{await updateDoc(doc(db,"espera",idEspera),{estado:"eliminado",fechaEliminacion:serverTimestamp()});alert("✅ Eliminado.");window.cargarListaEspera();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+  }const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};set('hCI',d.cedula);set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hTlf',d.telefono);set('hMail',d.correo);set('hDir',d.direccion);set('hColor',d.color);set('hFechaNac',d.fechaNacimiento);await updateDoc(doc(db,"espera",idEspera),{estado:"atendiendo",fechaAtencion:serverTimestamp()});window.showTab('historia');alert(`? ${d.paciente} cargado.`);}catch(e){console.error(e);alert("? Error: "+e.message);}};
+window.eliminarDeSalaEspera=async(idEspera)=>{if(!confirm("?Eliminar de la sala de espera?"))return;try{await updateDoc(doc(db,"espera",idEspera),{estado:"eliminado",fechaEliminacion:serverTimestamp()});alert("? Eliminado.");window.cargarListaEspera();}catch(e){console.error(e);alert("? Error: "+e.message);}};
 
-// ─── LIMPIAR FORMULARIO COMPLETO ───────────────────────────────────────────
+// --- LIMPIAR FORMULARIO COMPLETO -------------------------------------------
 function _limpiarFormularioHistoria() {
   // Campos de texto
   ['hCI','hProp','hNombre','hEspecie','hRaza','hSexo','hEdad',
@@ -674,14 +674,14 @@ function _limpiarFormularioHistoria() {
   const chkAlerta = document.getElementById('hAlerta');
   if (chkAlerta) { chkAlerta.checked = false; }
 
-  // Fotos galería historia
+  // Fotos galeria historia
   const galeriaH = document.getElementById('previewHistoriaGallery');
   if (galeriaH) galeriaH.innerHTML = "";
   document.getElementById('previewHistoriaContainer')?.classList.add('hidden');
   const pUrlExamen = document.getElementById('pUrlExamen');
   if (pUrlExamen) pUrlExamen.value = "";
 
-  // Fotos galería test
+  // Fotos galeria test
   const galeriaT = document.getElementById('previewTestGallery');
   if (galeriaT) galeriaT.innerHTML = "";
   document.getElementById('previewTestContainer')?.classList.add('hidden');
@@ -728,15 +728,15 @@ function _limpiarFormularioHistoria() {
 }
 window._limpiarFormularioHistoria = _limpiarFormularioHistoria;
 
-// ─── EDITAR CONSULTA DESDE BUSCADOR ────────────────────────────────────────
+// --- EDITAR CONSULTA DESDE BUSCADOR ----------------------------------------
 window.abrirConsultaParaEditar = async (idConsulta) => {
   // Confirmar con el usuario
   const res = await Swal.fire({
-    title: '✏️ Editar Consulta',
-    html: `<p class="text-[11px] text-slate-600">Se cargará esta consulta en el formulario de Historia Clínica para que puedas editarla y guardar los cambios.<br><br><b>¿Continuar?</b></p>`,
+    title: '? Editar Consulta',
+    html: `<p class="text-[11px] text-slate-600">Se cargara esta consulta en el formulario de Historia Clinica para que puedas editarla y guardar los cambios.<br><br><b>?Continuar?</b></p>`,
     icon: 'question',
     showCancelButton: true,
-    confirmButtonText: 'Sí, editar',
+    confirmButtonText: 'Si, editar',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#2563eb'
   });
@@ -744,13 +744,13 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
 
   try {
     const snap = await getDoc(doc(db, "consultas", idConsulta));
-    if (!snap.exists()) { alert("❌ Consulta no encontrada."); return; }
+    if (!snap.exists()) { alert("? Consulta no encontrada."); return; }
     const d = snap.data();
 
     // Guardar ID para actualizar en lugar de crear nuevo
     window._editandoConsultaId = idConsulta;
 
-    // Ir a Historia Clínica y limpiar primero
+    // Ir a Historia Clinica y limpiar primero
     window.showTab('historia');
     await new Promise(r => setTimeout(r, 300));
     _limpiarFormularioHistoria();
@@ -787,18 +787,18 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
         wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
         wrapper.innerHTML = `<img src="${d.urlExamen}" class="w-full h-full object-cover">
           <button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
-                  onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">✕</button>`;
+                  onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">?</button>`;
         galeriaH.appendChild(wrapper);
         contH?.classList.remove('hidden');
       }
     }
 
-    // Mostrar banner de edición
+    // Mostrar banner de edicion
     _mostrarBannerEdicion(d.paciente, d.fechaSimple);
 
     await Swal.fire({
       icon: 'info',
-      title: '✏️ Modo Edición',
+      title: '? Modo Edicion',
       html: `<p class="text-[11px]">Datos de <b>${d.paciente}</b> cargados.<br>Modifica lo que necesites y presiona <b>"Guardar Datos"</b>.</p>`,
       timer: 3000,
       showConfirmButton: false
@@ -806,7 +806,7 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
 
   } catch (e) {
     console.error(e);
-    alert("❌ Error al cargar: " + e.message);
+    alert("? Error al cargar: " + e.message);
   }
 };
 
@@ -823,15 +823,15 @@ function _mostrarBannerEdicion(paciente, fecha) {
   }
   banner.innerHTML = `
     <div class="flex items-center gap-2">
-      <span class="text-xl">✏️</span>
+      <span class="text-xl">?</span>
       <div>
-        <p class="text-[10px] font-black text-amber-700 uppercase">Modo Edición</p>
-        <p class="text-[9px] text-amber-600">Editando: <b>${paciente}</b> · ${fecha || ''}</p>
+        <p class="text-[10px] font-black text-amber-700 uppercase">Modo Edicion</p>
+        <p class="text-[9px] text-amber-600">Editando: <b>${paciente}</b> . ${fecha || ''}</p>
       </div>
     </div>
     <button type="button" onclick="window.cancelarEdicion()"
             class="text-[9px] font-black text-red-500 uppercase border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50">
-      ✕ Cancelar edición
+      ? Cancelar edicion
     </button>`;
   banner.classList.remove('hidden');
 }
@@ -842,28 +842,28 @@ window.cancelarEdicion = () => {
   _limpiarFormularioHistoria();
 };
 
-// Modificar guardarFirebase para que actualice si estamos en modo edición
+// Modificar guardarFirebase para que actualice si estamos en modo edicion
 const _guardarFirebaseOriginal = window.guardarFirebase;
 window.guardarFirebase = async (imp) => {
   if (!window._editandoConsultaId) {
-    // Flujo normal — crear nueva consulta
+    // Flujo normal -- crear nueva consulta
     return _guardarFirebaseOriginal(imp);
   }
 
-  // ── MODO EDICIÓN — actualizar consulta existente ──
+  // -- MODO EDICION -- actualizar consulta existente --
   const idEditar = window._editandoConsultaId;
   const selectorDoc  = document.getElementById('selectDoctor');
   const nombreDoctor = selectorDoc?.value || "";
-  if (!nombreDoctor) return alert("⚠ Seleccione un doctor.");
+  if (!nombreDoctor) return alert("(!) Seleccione un doctor.");
 
-  const pinIngresado = prompt(`🔐 Firma para actualizar. PIN de ${nombreDoctor}:`);
+  const pinIngresado = prompt(`? Firma para actualizar. PIN de ${nombreDoctor}:`);
   if (!pinIngresado) return;
   const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
-  if (!esValido) return alert("❌ PIN incorrecto.");
+  if (!esValido) return alert("? PIN incorrecto.");
 
   const btn = document.activeElement;
   const textoOrig = btn?.innerText || "Guardar";
-  if (btn?.tagName === 'BUTTON') { btn.disabled = true; btn.innerText = "⏳ ACTUALIZANDO..."; }
+  if (btn?.tagName === 'BUTTON') { btn.disabled = true; btn.innerText = "? ACTUALIZANDO..."; }
 
   try {
     const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
@@ -888,21 +888,21 @@ window.guardarFirebase = async (imp) => {
       editadoPor:      nombreDoctor,
     };
 
-    // Actualizar foto si cambió
+    // Actualizar foto si cambio
     const galeriaH = document.getElementById('previewHistoriaGallery');
     const imgs     = galeriaH ? Array.from(galeriaH.querySelectorAll('img')).map(i => i.src) : [];
     if (imgs.length > 0) dataActualizada.urlExamen = imgs[imgs.length - 1];
 
     await updateDoc(doc(db, "consultas", idEditar), dataActualizada);
 
-    // Limpiar modo edición
+    // Limpiar modo edicion
     window._editandoConsultaId = null;
     document.getElementById('bannerModoEdicion')?.classList.add('hidden');
     _limpiarFormularioHistoria();
     _limpiarNotasInternas();
 
     await Swal.fire({
-      icon: 'success', title: '✅ Consulta actualizada',
+      icon: 'success', title: '? Consulta actualizada',
       text: `Los datos de ${dataActualizada.paciente} fueron actualizados.`,
       timer: 2500, showConfirmButton: false
     });
@@ -911,13 +911,13 @@ window.guardarFirebase = async (imp) => {
 
   } catch (e) {
     console.error("Error actualizando:", e);
-    alert("❌ Error: " + e.message);
+    alert("? Error: " + e.message);
   } finally {
     if (btn?.tagName === 'BUTTON') { btn.disabled = false; btn.innerText = textoOrig; }
   }
 };
 
-// ─── FUNCIONES DE AJUSTES (movidas aquí para garantizar carga) ───
+// --- FUNCIONES DE AJUSTES (movidas aqui para garantizar carga) ---
 window.cargarSelectorServicios = async () => {
   const sel = document.getElementById('selectorServicios');
   if (!sel) return;
@@ -926,22 +926,22 @@ window.cargarSelectorServicios = async () => {
     const snap = await getDocs(collection(db, "servicios_maestro"));
     if (snap.empty) return;
 
-    // Recoger todos los valores que ya están en el selector (opciones estáticas)
+    // Recoger todos los valores que ya estan en el selector (opciones estaticas)
     const yaExisten = new Set(
       Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase())
     );
 
-    // Íconos por categoría
+    // Iconos por categoria
     const iconos = {
-      'CONSULTAS':     '🩺',
-      'VACUNAS':       '💉',
-      'LABORATORIO':   '🔬',
-      'TESTS RÁPIDOS': '🧪',
-      'REFERIDOS':     '📋',
-      'OTROS':         '🐾',
+      'CONSULTAS':     '?',
+      'VACUNAS':       '?',
+      'LABORATORIO':   '?',
+      'TESTS RAPIDOS': '?',
+      'REFERIDOS':     '?',
+      'OTROS':         '?',
     };
 
-    // Agrupar solo los NUEVOS (no están en el HTML estático)
+    // Agrupar solo los NUEVOS (no estan en el HTML estatico)
     const nuevos = {};
     snap.forEach(d => {
       const nombre = d.id.toUpperCase();
@@ -954,13 +954,13 @@ window.cargarSelectorServicios = async () => {
 
     // Agregar los nuevos al selector agrupados
     Object.entries(nuevos).sort().forEach(([cat, servicios]) => {
-      // Buscar si ya existe el optgroup de esa categoría
+      // Buscar si ya existe el optgroup de esa categoria
       let grp = Array.from(sel.querySelectorAll('optgroup'))
         .find(g => g.label.includes(cat));
 
       if (!grp) {
         grp = document.createElement('optgroup');
-        grp.label = (iconos[cat] || '🔹') + ' ' + cat;
+        grp.label = (iconos[cat] || '?') + ' ' + cat;
         sel.appendChild(grp);
       }
 
@@ -968,7 +968,7 @@ window.cargarSelectorServicios = async () => {
         const opt = document.createElement('option');
         opt.value       = s.id;
         opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
-        opt.dataset.nuevo = 'true'; // marcar como dinámico
+        opt.dataset.nuevo = 'true'; // marcar como dinamico
         grp.appendChild(opt);
       });
     });
@@ -978,7 +978,7 @@ window.cargarSelectorServicios = async () => {
   }
 };
 
-// ─── ABRIR MODAL NUEVO SERVICIO ───────────────────────────
+// --- ABRIR MODAL NUEVO SERVICIO ---------------------------
 window.abrirModalNuevoServicio = async () => {
   var htmlModal = '<div class="space-y-3 text-left">';
   htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>';
@@ -1011,11 +1011,11 @@ window.abrirModalNuevoServicio = async () => {
     title: 'Nuevo Servicio',
     html: htmlModal,
     showCancelButton: true,
-    confirmButtonText: '✅ Crear Servicio',
+    confirmButtonText: '? Crear Servicio',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#2563eb',
     didOpen: () => {
-      // Listener para mostrar/ocultar campo de categoría nueva
+      // Listener para mostrar/ocultar campo de categoria nueva
       const catSel = document.getElementById('ns_categoria');
       if (catSel) {
         catSel.addEventListener('change', function() {
@@ -1032,9 +1032,9 @@ window.abrirModalNuevoServicio = async () => {
       const catNueva  = document.getElementById('ns_categoria_nueva')?.value.trim().toUpperCase();
       const categoria = catSel === '__nueva__' ? catNueva : catSel;
       const esVacuna  = document.getElementById('ns_vacuna_si')?.checked || false;
-      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('⚠️ Escribe el nombre de la nueva categoría'); return false; }
-      if (!nombre) { Swal.showValidationMessage('⚠️ El nombre es obligatorio'); return false; }
-      if (precio <= 0) { Swal.showValidationMessage('⚠️ El precio debe ser mayor a 0'); return false; }
+      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('(!) Escribe el nombre de la nueva categoria'); return false; }
+      if (!nombre) { Swal.showValidationMessage('(!) El nombre es obligatorio'); return false; }
+      if (precio <= 0) { Swal.showValidationMessage('(!) El precio debe ser mayor a 0'); return false; }
       return { nombre, precio, porc, categoria, esVacuna };
     }
   });
@@ -1046,7 +1046,7 @@ window.abrirModalNuevoServicio = async () => {
     // Verificar si ya existe
     const existe = await getDoc(doc(db, "servicios_maestro", nombre));
     if (existe.exists()) {
-      Swal.fire({ icon:'warning', title:'Ya existe', text:'Un servicio con ese nombre ya está registrado.', timer:2500, showConfirmButton:false });
+      Swal.fire({ icon:'warning', title:'Ya existe', text:'Un servicio con ese nombre ya esta registrado.', timer:2500, showConfirmButton:false });
       return;
     }
 
@@ -1066,23 +1066,23 @@ window.abrirModalNuevoServicio = async () => {
 
     await Swal.fire({
       icon: 'success',
-      title: '✅ Servicio creado',
-      html: `<b>${nombre}</b><br>$${precio.toFixed(2)} · ${porc}% doctor · ${categoria}`,
+      title: '? Servicio creado',
+      html: `<b>${nombre}</b><br>$${precio.toFixed(2)} . ${porc}% doctor . ${categoria}`,
       timer: 2500,
       showConfirmButton: false
     });
 
-  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+  } catch(e) { console.error(e); alert('? Error: '+e.message); }
 };
 
-// ─── ELIMINAR SERVICIO ────────────────────────────────────
+// --- ELIMINAR SERVICIO ------------------------------------
 window.eliminarServicioMaestro = async (nombreServicio) => {
   const res = await Swal.fire({
-    title: '🗑 Eliminar Servicio',
-    html: `<p class="text-[11px] text-slate-600">¿Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecerá en el selector de Historia Clínica.</p>`,
+    title: '? Eliminar Servicio',
+    html: `<p class="text-[11px] text-slate-600">?Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecera en el selector de Historia Clinica.</p>`,
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar',
+    confirmButtonText: 'Si, eliminar',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#dc2626'
   });
@@ -1092,11 +1092,11 @@ window.eliminarServicioMaestro = async (nombreServicio) => {
     await deleteDoc(doc(db, "servicios_maestro", nombreServicio));
     await window.renderizarTablaMaestra();
     await window.cargarSelectorServicios();
-    Swal.fire({ icon:'success', title:'✅ Eliminado', timer:1500, showConfirmButton:false });
-  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+    Swal.fire({ icon:'success', title:'? Eliminado', timer:1500, showConfirmButton:false });
+  } catch(e) { console.error(e); alert('? Error: '+e.message); }
 };
 
-// ─── EDITAR INSUMOS DE UN SERVICIO ───────────────────────
+// --- EDITAR INSUMOS DE UN SERVICIO -----------------------
 window.editarInsumosServicio = async (nombreServicio) => {
   // Cargar insumos actuales del servicio desde Firebase
   try {
@@ -1109,7 +1109,7 @@ window.editarInsumosServicio = async (nombreServicio) => {
     const recetaBase = Object.entries(recetas).find(([k]) => normalizarNombre(k) === normNombre);
     let insumosActuales = data.insumos || (recetaBase ? recetaBase[1].insumos : []);
 
-    // Función para renderizar la lista de insumos en el modal
+    // Funcion para renderizar la lista de insumos en el modal
     const renderLista = () => {
       const cont = document.getElementById('listaInsumosModal');
       if (!cont) return;
@@ -1127,7 +1127,7 @@ window.editarInsumosServicio = async (nombreServicio) => {
           '<input type="number" value="' + (ins.costo||0).toFixed(4) + '" step="0.0001" min="0" ' +
             'style="width:70px;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;text-align:center;" ' +
             'data-idx="' + idx + '" class="inp-costo-ins">' +
-          '<button data-idx="' + idx + '" class="btn-del-ins" style="color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;">✕</button>';
+          '<button data-idx="' + idx + '" class="btn-del-ins" style="color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;">?</button>';
         cont.appendChild(row);
       });
 
@@ -1164,28 +1164,28 @@ window.editarInsumosServicio = async (nombreServicio) => {
       '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;">' +
         optsInsumos +
       '</select>' +
-      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">➕</button>' +
+      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">?</button>' +
       '</div>' +
       '<div style="display:flex;gap:6px;margin-top:6px;">' +
       '<input id="inpNombreNuevo" type="text" placeholder="O escribe el nombre..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
       '<input id="inpCostoNuevo" type="number" placeholder="Costo $" step="0.0001" min="0" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
-      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">➕</button>' +
+      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">?</button>' +
       '</div>' +
       '</div></div>';
 
     const res = await Swal.fire({
-      title: '🧪 Insumos del Servicio',
+      title: '? Insumos del Servicio',
       html: htmlModal,
       width: 520,
       showCancelButton: true,
-      confirmButtonText: '💾 Guardar cambios',
+      confirmButtonText: '? Guardar cambios',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#2563eb',
       didOpen: function() {
         // Renderizar lista inicial
         renderLista();
 
-        // Botón agregar desde selector
+        // Boton agregar desde selector
         document.getElementById('btnAgregarInsumo').addEventListener('click', function() {
           const sel = document.getElementById('selInsumoAgregar');
           const opt = sel?.options[sel.selectedIndex];
@@ -1196,7 +1196,7 @@ window.editarInsumosServicio = async (nombreServicio) => {
           renderLista();
         });
 
-        // Botón agregar manual
+        // Boton agregar manual
         document.getElementById('btnAgregarManual').addEventListener('click', function() {
           const nombre = document.getElementById('inpNombreNuevo')?.value.trim().toUpperCase();
           const costo  = parseFloat(document.getElementById('inpCostoNuevo')?.value) || 0;
@@ -1218,15 +1218,15 @@ window.editarInsumosServicio = async (nombreServicio) => {
 
     await Swal.fire({
       icon: 'success',
-      title: '✅ Insumos guardados',
+      title: '? Insumos guardados',
       html: '<b>' + nombreServicio + '</b><br>' + insumosActuales.length + ' insumo(s) asignados',
       timer: 2000, showConfirmButton: false
     });
 
-  } catch(e) { console.error(e); alert('❌ Error: ' + e.message); }
+  } catch(e) { console.error(e); alert('? Error: ' + e.message); }
 };
 
-// ─── FILTRAR TABLA DE SERVICIOS ───────────────────────────
+// --- FILTRAR TABLA DE SERVICIOS ---------------------------
 window.filtrarTablaServicios = () => {
   const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase() || '';
   document.querySelectorAll('#tablaServiciosMaestro tr[data-nombre]').forEach(tr => {
@@ -1274,10 +1274,10 @@ window.renderizarTablaMaestra = async () => {
       // Nombre
       const tdNom = document.createElement('td');
       tdNom.className = 'p-2 font-bold uppercase text-slate-800';
-      tdNom.textContent = (r.esVacuna ? '💉 ' : '') + r.id;
+      tdNom.textContent = (r.esVacuna ? '? ' : '') + r.id;
       tr.appendChild(tdNom);
 
-      // Categoría
+      // Categoria
       const tdCat = document.createElement('td');
       tdCat.className = 'p-2 text-center text-slate-500 text-[9px]';
       tdCat.textContent = r.categoria || 'OTROS';
@@ -1311,12 +1311,12 @@ window.renderizarTablaMaestra = async () => {
       tdPorc.appendChild(inpPorc);
       tr.appendChild(tdPorc);
 
-      // Botón guardar
+      // Boton guardar
       const tdGuardar = document.createElement('td');
       tdGuardar.className = 'p-2 text-center';
       const btnGuardar = document.createElement('button');
       btnGuardar.className = 'text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700';
-      btnGuardar.textContent = '✅';
+      btnGuardar.textContent = '?';
       btnGuardar.dataset.id = r.id;
       btnGuardar.addEventListener('click', function() {
         window.actualizarPrecioIndividual(this.dataset.id, 'guardado', null, true);
@@ -1324,12 +1324,12 @@ window.renderizarTablaMaestra = async () => {
       tdGuardar.appendChild(btnGuardar);
       tr.appendChild(tdGuardar);
 
-      // Botón insumos
+      // Boton insumos
       const tdIns = document.createElement('td');
       tdIns.className = 'p-2 text-center';
       const btnIns = document.createElement('button');
       btnIns.className = 'text-[8px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-black hover:bg-emerald-600 hover:text-white';
-      btnIns.textContent = '🧪';
+      btnIns.textContent = '?';
       btnIns.title = 'Editar insumos de este servicio';
       btnIns.dataset.id = r.id;
       btnIns.addEventListener('click', function() {
@@ -1338,12 +1338,12 @@ window.renderizarTablaMaestra = async () => {
       tdIns.appendChild(btnIns);
       tr.appendChild(tdIns);
 
-      // Botón eliminar
+      // Boton eliminar
       const tdElim = document.createElement('td');
       tdElim.className = 'p-2 text-center';
       const btnElim = document.createElement('button');
       btnElim.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
-      btnElim.textContent = '🗑';
+      btnElim.textContent = '?';
       btnElim.dataset.id = r.id;
       btnElim.addEventListener('click', function() {
         window.eliminarServicioMaestro(this.dataset.id);
@@ -1412,7 +1412,7 @@ window.renderizarTablaInsumos = async () => {
       tdDel.className = 'p-2 text-center';
       const btn = document.createElement('button');
       btn.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
-      btn.textContent = '✕';
+      btn.textContent = '?';
       btn.dataset.id = d.id;
       btn.dataset.nombre = nombreMostrar;
       btn.addEventListener('click', function() {
@@ -1435,15 +1435,15 @@ window.renderizarTablaInsumos = async () => {
 
 window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costo:parseFloat(valor)||0,actualizadoEn:serverTimestamp()});}catch(e){console.error(e);}};
 
-window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`🔐 Eliminar "${nombreInsumo}"\nCLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`⚠️ Eliminar "${nombreInsumo}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`✅ Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`? Eliminar "${nombreInsumo}"\nCLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("? Clave incorrecta.");return;}if(!confirm(`(!) Eliminar "${nombreInsumo}".\n?Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`? Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("? Error: "+e.message);}};
 
-// ─── INICIALIZAR BD ───
-window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("🔐 CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm("⚠️ ¿Inicializar catálogo de servicios en Firebase?"))return;
-const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULTA OFTALMOLÓGICA":{precioVenta:80,porcDoc:12.5},"CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40},"ABSCESO":{precioVenta:25,porcDoc:50},"ECOGRAFÍA":{precioVenta:30,porcDoc:40},"COLOCACION VIA":{precioVenta:15,porcDoc:50},"ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50},"TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50},"VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50},"VACUNA PUPPY":{precioVenta:40,porcDoc:50},"VACUNA ANTIRRÁBICA":{precioVenta:30,porcDoc:50},"VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50},"VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50},"VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50},"VACUNA BIOVETA":{precioVenta:60,porcDoc:50},"HEMATOLOGÍA COMPLETA":{precioVenta:23,porcDoc:34.78},"QUÍMICA SANGUÍNEA":{precioVenta:60,porcDoc:50},"DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50},"DISTEMPER":{precioVenta:35,porcDoc:50},"PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"FILARIASIS":{precioVenta:40,porcDoc:50},"SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50},"TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50},"HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50},"EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50},"CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50},"RASPADO PIEL":{precioVenta:10,porcDoc:50},"PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5},"EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50},"EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50},"EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50},"EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50},"REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50},"REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50},"REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50},"REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40},"CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40},"CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40}};
-try{Swal.fire({title:'⏳ Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`✅ ${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("❌ Error: "+e.message);}};
+// --- INICIALIZAR BD ---
+window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("? CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("? Clave incorrecta.");return;}if(!confirm("(!) ?Inicializar catalogo de servicios en Firebase?"))return;
+const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULTA OFTALMOLOGICA":{precioVenta:80,porcDoc:12.5},"CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40},"ABSCESO":{precioVenta:25,porcDoc:50},"ECOGRAFIA":{precioVenta:30,porcDoc:40},"COLOCACION VIA":{precioVenta:15,porcDoc:50},"ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50},"TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50},"VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50},"VACUNA PUPPY":{precioVenta:40,porcDoc:50},"VACUNA ANTIRRABICA":{precioVenta:30,porcDoc:50},"VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50},"VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50},"VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50},"VACUNA BIOVETA":{precioVenta:60,porcDoc:50},"HEMATOLOGIA COMPLETA":{precioVenta:23,porcDoc:34.78},"QUIMICA SANGUINEA":{precioVenta:60,porcDoc:50},"DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50},"DISTEMPER":{precioVenta:35,porcDoc:50},"PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"FILARIASIS":{precioVenta:40,porcDoc:50},"SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50},"TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50},"HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50},"EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50},"CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50},"RASPADO PIEL":{precioVenta:10,porcDoc:50},"PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5},"EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50},"EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50},"EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50},"EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50},"REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50},"REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50},"REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50},"REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40},"CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40},"CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40}};
+try{Swal.fire({title:'? Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`? ${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("? Error: "+e.message);}};
 
-// ─── CAMBIAR SUB-TAB CONFIG ───
+// --- CAMBIAR SUB-TAB CONFIG ---
 window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white":"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();};
 
 
-console.log("✅ historia.js v5 — selector mascotas, autorelleno mejorado");
+console.log("? historia.js v5 -- selector mascotas, autorelleno mejorado");
