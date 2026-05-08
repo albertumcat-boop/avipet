@@ -696,8 +696,11 @@ window.renderizarTablaMedicamentos = async () => {
     tabla.className = 'w-full text-left border-collapse';
     tabla.innerHTML =
       '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
-      '<th class="p-2">Medicamento</th><th class="p-2 text-center">Precio ($)</th>' +
-      '<th class="p-2 text-center">OK</th><th class="p-2 text-center">Del</th></tr></thead>';
+      '<th class="p-2">Medicamento</th>' +
+      '<th class="p-2 text-center">Precio ($)</th>' +
+      '<th class="p-2 text-center">Agregado por</th>' +
+      '<th class="p-2 text-center">OK</th>' +
+      '<th class="p-2 text-center">Del</th></tr></thead>';
 
     const tbody = document.createElement('tbody');
     meds.forEach(r => {
@@ -717,10 +720,22 @@ window.renderizarTablaMedicamentos = async () => {
       inp.className = 'w-24 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
       inp.dataset.id = r.id;
       inp.addEventListener('blur', function() {
-        updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{precioCliente:parseFloat(this.value)||0,actualizadoEn:serverTimestamp()});
+        // Al actualizar precio, registrar quién lo modificó
+        const doctor = window.doctorVerificado || 'Sistema';
+        updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{
+          precioCliente: parseFloat(this.value)||0,
+          actualizadoEn: serverTimestamp(),
+          modificadoPor: doctor
+        });
       });
       tdP.appendChild(inp);
       tr.appendChild(tdP);
+
+      // Celda: quién lo agregó
+      const tdDoc = document.createElement('td');
+      tdDoc.className = 'p-2 text-center text-[9px] text-slate-500 font-bold';
+      tdDoc.textContent = r.agregadoPor || r.modificadoPor || 'Sistema';
+      tr.appendChild(tdDoc);
 
       const tdOK = document.createElement('td');
       tdOK.className = 'p-2 text-center';
@@ -775,9 +790,25 @@ window.agregarMedicamentoMaestro = async () => {
   const nombre = document.getElementById('nuevoMedNombre')?.value.trim().toUpperCase();
   const precio = parseFloat(document.getElementById('nuevoMedPrecio')?.value) || 0;
   if (!nombre) { alert('Escribe el nombre.'); return; }
+
+  // Verificar doctor activo
+  const doctorActivo = window.doctorVerificado || '';
+  if (!doctorActivo) {
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Doctor no autenticado',
+      text: 'Debes autenticar un doctor antes de agregar medicamentos.',
+      confirmButtonColor: '#7c3aed'
+    });
+    return;
+  }
+
   try {
     await setDoc(doc(db,"medicamentos_maestro",nombre), {
-      nombre, precioCliente: precio, creadoEn: serverTimestamp(), activo: true
+      nombre, precioCliente: precio,
+      creadoEn: serverTimestamp(),
+      agregadoPor: doctorActivo,
+      activo: true
     }, { merge: true });
     const n = document.getElementById('nuevoMedNombre');
     const p = document.getElementById('nuevoMedPrecio');
