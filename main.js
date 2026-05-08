@@ -339,7 +339,10 @@ const _iniciarAppNormal = async () => {
   // 3. Mostrar tab inicial (pequeño delay para que todos los módulos carguen)
   setTimeout(() => window.ejecutarCambioDeTab('historia'), 300);
 
-  // 3b. Cargar servicios NUEVOS de Firebase en segundo plano (sin bloquear)
+  // 3b. Cargar servicios y medicamentos de Firebase en segundo plano
+  setTimeout(() => _llamarFuncion('cargarSelectorMedicamentos'), 2500);
+
+  // 3c. Cargar servicios NUEVOS de Firebase en segundo plano (sin bloquear)
   // El selector ya tiene los servicios base en el HTML — esto solo agrega los nuevos
   setTimeout(() => {
     if (typeof window.cargarSelectorServicios === 'function') {
