@@ -677,6 +677,117 @@ async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
   return usos > 0 ? usos : null;
 }
 
+// --- GESTION DE MEDICAMENTOS MAESTROS ----------------
+window.renderizarTablaMedicamentos = async () => {
+  const cont = document.getElementById('tablaMedicamentosMaestro');
+  if (!cont) return;
+  cont.innerHTML = '<p style="text-align:center;font-size:9px;color:#94a3b8;padding:8px;">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db, "medicamentos_maestro"));
+    if (snap.empty) {
+      cont.innerHTML = '<p style="text-align:center;font-size:9px;color:#94a3b8;padding:8px;">Sin medicamentos. Agrega uno.</p>';
+      return;
+    }
+    const meds = [];
+    snap.forEach(d => meds.push({ id: d.id, ...d.data() }));
+    meds.sort((a,b) => (a.nombre||a.id).localeCompare(b.nombre||b.id));
+
+    const tabla = document.createElement('table');
+    tabla.className = 'w-full text-left border-collapse';
+    tabla.innerHTML =
+      '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
+      '<th class="p-2">Medicamento</th><th class="p-2 text-center">Precio ($)</th>' +
+      '<th class="p-2 text-center">OK</th><th class="p-2 text-center">Del</th></tr></thead>';
+
+    const tbody = document.createElement('tbody');
+    meds.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-slate-100 hover:bg-purple-50';
+
+      const tdNom = document.createElement('td');
+      tdNom.className = 'p-2 font-bold uppercase text-slate-800 text-[10px]';
+      tdNom.textContent = r.nombre || r.id;
+      tr.appendChild(tdNom);
+
+      const tdP = document.createElement('td');
+      tdP.className = 'p-2 text-center';
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = '0.50'; inp.min = '0';
+      inp.value = r.precioCliente || 0;
+      inp.className = 'w-24 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
+      inp.dataset.id = r.id;
+      inp.addEventListener('blur', function() {
+        updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{precioCliente:parseFloat(this.value)||0,actualizadoEn:serverTimestamp()});
+      });
+      tdP.appendChild(inp);
+      tr.appendChild(tdP);
+
+      const tdOK = document.createElement('td');
+      tdOK.className = 'p-2 text-center';
+      const btnOK = document.createElement('button');
+      btnOK.className = 'text-[8px] px-2 py-1 bg-purple-600 text-white rounded font-black hover:bg-purple-700';
+      btnOK.textContent = 'OK';
+      btnOK.dataset.id = r.id;
+      btnOK.addEventListener('click', async function() {
+        const i = tr.querySelector('input');
+        await updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{precioCliente:parseFloat(i?.value)||0,actualizadoEn:serverTimestamp()});
+        Swal.fire({ icon:'success', title:'Guardado', timer:1000, showConfirmButton:false });
+      });
+      tdOK.appendChild(btnOK);
+      tr.appendChild(tdOK);
+
+      const tdDel = document.createElement('td');
+      tdDel.className = 'p-2 text-center';
+      const btnDel = document.createElement('button');
+      btnDel.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
+      btnDel.textContent = 'Del';
+      btnDel.dataset.id = r.id;
+      btnDel.dataset.nombre = r.nombre || r.id;
+      btnDel.addEventListener('click', function() { window.eliminarMedicamentoMaestro(this.dataset.id, this.dataset.nombre); });
+      tdDel.appendChild(btnDel);
+      tr.appendChild(tdDel);
+      tbody.appendChild(tr);
+    });
+
+    tabla.appendChild(tbody);
+    cont.innerHTML = '';
+    cont.appendChild(tabla);
+  } catch(e) { cont.innerHTML = '<p style="text-align:center;font-size:9px;color:#dc2626;">Error</p>'; }
+};
+
+window.eliminarMedicamentoMaestro = async (id, nombre) => {
+  const res = await Swal.fire({
+    title: 'Eliminar medicamento',
+    html: '<p style="font-size:11px;">Eliminar <b>' + nombre + '</b>?</p>',
+    icon: 'warning', showCancelButton: true,
+    confirmButtonText: 'Si, eliminar', cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626'
+  });
+  if (!res.isConfirmed) return;
+  try {
+    await deleteDoc(doc(db, "medicamentos_maestro", id));
+    window.renderizarTablaMedicamentos();
+    if (typeof window.cargarSelectorMedicamentos === 'function') window.cargarSelectorMedicamentos();
+    Swal.fire({ icon:'success', title:'Eliminado', timer:1200, showConfirmButton:false });
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.agregarMedicamentoMaestro = async () => {
+  const nombre = document.getElementById('nuevoMedNombre')?.value.trim().toUpperCase();
+  const precio = parseFloat(document.getElementById('nuevoMedPrecio')?.value) || 0;
+  if (!nombre) { alert('Escribe el nombre.'); return; }
+  try {
+    await setDoc(doc(db,"medicamentos_maestro",nombre), {
+      nombre, precioCliente: precio, creadoEn: serverTimestamp(), activo: true
+    }, { merge: true });
+    const n = document.getElementById('nuevoMedNombre');
+    const p = document.getElementById('nuevoMedPrecio');
+    if (n) n.value = ''; if (p) p.value = '';
+    await window.renderizarTablaMedicamentos();
+    if (typeof window.cargarSelectorMedicamentos === 'function') window.cargarSelectorMedicamentos();
+    Swal.fire({ icon:'success', title:'Medicamento agregado', text: nombre, timer:1500, showConfirmButton:false });
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
 // ─── AGREGAR INSUMO MAESTRO ──────────────────────────────
 window.agregarInsumoMaestro = async () => {
   const nombre = document.getElementById('nuevoInsumoNombre')?.value.trim().toUpperCase();
