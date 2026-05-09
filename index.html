@@ -630,26 +630,61 @@
         </div>
       </div>
       <div class="p-6">
-        <!-- Búsqueda por cédula -->
-        <div class="mb-3">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Cédula del Propietario</label>
-          <input type="text" id="buscadorCI" placeholder="V-00000000"
-                 class="w-full border-b-2 border-slate-200 p-2 outline-none focus:border-blue-600 font-bold text-slate-700 uppercase bg-transparent">
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Cedula del Propietario</label>
+            <input type="text" id="buscadorCI" placeholder="V-00000000"
+                   class="w-full border-b-2 border-slate-200 p-2 outline-none focus:border-blue-600 font-bold text-slate-700 uppercase bg-transparent">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nombre de la Mascota</label>
+            <input type="text" id="buscadorNombre" placeholder="Ej: Rocky, Luna..."
+                   class="w-full border-b-2 border-slate-200 p-2 outline-none focus:border-purple-500 font-bold text-slate-700 uppercase bg-transparent">
+          </div>
         </div>
-        <!-- Búsqueda por nombre de mascota -->
-        <div class="mb-4">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">— ó — Nombre de la Mascota</label>
-          <input type="text" id="buscadorNombre" placeholder="Ej: Rocky, Luna, Firulais..."
-                 class="w-full border-b-2 border-slate-200 p-2 outline-none focus:border-purple-500 font-bold text-slate-700 uppercase bg-transparent">
+        <div class="bg-slate-50 rounded-xl p-3 mb-3 border border-slate-100">
+          <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Filtros</p>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Periodo</label>
+              <select id="buscadorPeriodo" onchange="_llamarFuncion('toggleRangoBuscador')"
+                      class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none focus:border-blue-500">
+                <option value="hoy">Hoy</option>
+                <option value="semana">Ultima semana</option>
+                <option value="mes">Este mes</option>
+                <option value="todos">Todos</option>
+                <option value="rango">Rango de fechas</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Doctor</label>
+              <select id="buscadorDoctor"
+                      class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none focus:border-blue-500">
+                <option value="">Todos</option>
+                <option value="Darwin">Dr. Darwin</option>
+                <option value="Joan">Dr. Joan</option>
+              </select>
+            </div>
+          </div>
+          <div id="rangoBuscador" class="hidden grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Desde</label>
+              <input type="date" id="buscadorFechaDesde"
+                     class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none">
+            </div>
+            <div>
+              <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Hasta</label>
+              <input type="date" id="buscadorFechaHasta"
+                     class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none">
+            </div>
+          </div>
         </div>
-        <p class="text-[8px] text-slate-400 italic text-center mb-3">Deja ambos campos vacíos para ver <b>todo el historial</b></p>
         <button onclick="_llamarFuncion('buscarPorCedula')"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black italic shadow-sm uppercase text-xs mb-6">
-          🔍 Consultar
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black shadow-sm uppercase text-xs mb-4">
+          Buscar
         </button>
-        <div id="resultadoBusqueda" class="space-y-4"></div>
+        <div id="resultadoBusqueda" class="space-y-2"></div>
       </div>
-    </div>
   </section>
 
   <!-- ═══════════════════════════════════════════
