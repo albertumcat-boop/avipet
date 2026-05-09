@@ -1,7 +1,6 @@
 // =========================================================
-// AVIPET — inventario.js  v3 — 2026-04-18 SIN TEMPLATE LITERALS
-// NUEVO: función pública verificarStockProducto() para llamar
-//        desde historia.js al agregar servicios/meds
+// AVIPET — inventario.js  v4 — medicamentos en ajustes
+// NUEVO: gestion de medicamentos maestros desde Ajustes
 // =========================================================
 
 import { db } from './firebase-config.js';
@@ -15,9 +14,9 @@ const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
 // ─── CARGAR INVENTARIO ───
 window.cargarInventario = async () => {
   const lista=document.getElementById('listaInventario');if(!lista)return;
-  lista.innerHTML=`<p class="text-center text-blue-500 text-[9px] font-black uppercase italic animate-pulse py-8">⚙️ Cargando inventario...</p>`;
+  lista.innerHTML=`<p class="text-center text-blue-500 text-[9px] font-black uppercase italic animate-pulse py-8">Cargando inventario...</p>`;
   try{const snap=await getDocs(query(collection(db,"inventario"),orderBy("nombre")));window._inventarioCache=[];snap.forEach(d=>window._inventarioCache.push({id:d.id,...d.data()}));window.renderListaInventario(window._inventarioCache);window.actualizarSelectorProveedores();}
-  catch(e){console.error(e);lista.innerHTML=`<p class="text-center text-red-500 text-[9px] font-black uppercase italic py-8">❌ Error de conexión</p>`;}
+  catch(e){console.error(e);lista.innerHTML=`<p class="text-center text-red-500 text-[9px] font-black uppercase italic py-8">Error de conexion</p>`;}
 };
 
 window.renderListaInventario = (items) => {
@@ -26,7 +25,7 @@ window.renderListaInventario = (items) => {
   lista.innerHTML="";
   items.forEach(p=>{
     const stockBajo=p.cantidadStock<=(p.stockMinimo||3);const colorStock=stockBajo?"text-red-600":"text-emerald-600";
-    const badgeStock=stockBajo?`<span class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[7px] font-black animate-pulse">⚠️ BAJO</span>`:`<span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 text-[7px] font-black">OK</span>`;
+    const badgeStock=stockBajo?`<span class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[7px] font-black animate-pulse">BAJO</span>`:`<span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 text-[7px] font-black">OK</span>`;
     const div=document.createElement('div');div.className=`bg-white border rounded-xl p-3 cursor-pointer hover:border-blue-400 transition-all ${stockBajo?'border-red-200':'border-slate-200'}`;div.onclick=()=>window.seleccionarProductoInventario(p.id);
     div.innerHTML=`<div class="flex justify-between items-start"><p class="font-black text-slate-800 uppercase text-[11px] tracking-tight leading-none">${p.nombre}</p>${badgeStock}</div><p class="text-[9px] text-slate-400 italic mt-0.5">${p.proveedor||'---'} · ${p.categoria||'---'}</p><div class="flex justify-between items-center mt-2"><span class="text-[9px] font-black text-slate-500 uppercase">Stock: <span class="${colorStock} text-[12px]">${p.cantidadStock||0}</span> ${p.unidad||'und'}</span><span class="text-[10px] font-black text-blue-700">$${parseFloat(p.precioVenta||0).toFixed(2)}</span></div>`;
     lista.appendChild(div);
@@ -38,42 +37,32 @@ window.seleccionarProductoInventario = async (id) => {
   try{const snap=await getDoc(doc(db,"inventario",id));if(!snap.exists())return;const p=snap.data();window._productoEditandoId=id;
   const set=(elId,v)=>{const el=document.getElementById(elId);if(el)el.value=v??"";}
   set('invNombre',p.nombre);set('invProveedor',p.proveedor);set('invCategoria',p.categoria);set('invCostoCompra',p.costoCompra);set('invPrecioVenta',p.precioVenta);set('invStock',p.cantidadStock);set('invStockMinimo',p.stockMinimo);set('invUnidad',p.unidad);set('invDescripcion',p.descripcion);set('invFechaVence',p.fechaVencimiento);
-  window.actualizarEstadoInventarioVisual();const titulo=document.getElementById('tituloFormInventario');if(titulo)titulo.innerText=`✏️ Editando: ${p.nombre}`;document.getElementById('formInventarioPanel')?.classList.remove('hidden');document.getElementById('btnEliminarProducto')?.classList.remove('hidden');document.getElementById('btnNuevoProducto')?.classList.remove('hidden');}
-  catch(e){console.error(e);alert("❌ Error cargando producto.");}
+  window.actualizarEstadoInventarioVisual();const titulo=document.getElementById('tituloFormInventario');if(titulo)titulo.innerText=`Editando: ${p.nombre}`;document.getElementById('formInventarioPanel')?.classList.remove('hidden');document.getElementById('btnEliminarProducto')?.classList.remove('hidden');document.getElementById('btnNuevoProducto')?.classList.remove('hidden');}
+  catch(e){console.error(e);alert("Error cargando producto.");}
 };
 
 // ─── GUARDAR PRODUCTO ───
 window.guardarProductoInventario = async () => {
   const val=(id)=>document.getElementById(id)?.value.trim()||"";const num=(id)=>parseFloat(document.getElementById(id)?.value)||0;
-  const nombre=val('invNombre');if(!nombre){alert("⚠️ El nombre es obligatorio.");return;}
+  const nombre=val('invNombre');if(!nombre){alert("El nombre es obligatorio.");return;}
   const data={nombre,proveedor:val('invProveedor'),categoria:val('invCategoria'),costoCompra:num('invCostoCompra'),precioVenta:num('invPrecioVenta'),cantidadStock:num('invStock'),stockMinimo:num('invStockMinimo')||3,unidad:val('invUnidad')||"und",descripcion:val('invDescripcion'),fechaVencimiento:val('invFechaVence'),ultimaActualizacion:serverTimestamp()};
-  try{const id=window._productoEditandoId;if(id){await updateDoc(doc(db,"inventario",id),data);await addDoc(collection(db,"movimientos_inventario"),{productoId:id,productoNombre:nombre,tipo:"ACTUALIZACIÓN",cantidad:data.cantidadStock,fecha:serverTimestamp()});if(typeof window.registrarAuditoriaInventario==="function")await window.registrarAuditoriaInventario("EDICIÓN PRODUCTO",`Editó: ${nombre}`);alert("✅ Producto actualizado.");}
-  else{const ref=await addDoc(collection(db,"inventario"),{...data,fechaCreacion:serverTimestamp()});await addDoc(collection(db,"movimientos_inventario"),{productoId:ref.id,productoNombre:nombre,tipo:"INGRESO_INICIAL",cantidad:data.cantidadStock,fecha:serverTimestamp()});if(typeof window.registrarAuditoriaInventario==="function")await window.registrarAuditoriaInventario("NUEVO PRODUCTO",`Creó: ${nombre}`);alert("✅ Producto creado.");}
+  try{const id=window._productoEditandoId;if(id){await updateDoc(doc(db,"inventario",id),data);await addDoc(collection(db,"movimientos_inventario"),{productoId:id,productoNombre:nombre,tipo:"ACTUALIZACION",cantidad:data.cantidadStock,fecha:serverTimestamp()});if(typeof window.registrarAuditoriaInventario==="function")await window.registrarAuditoriaInventario("EDICION PRODUCTO",`Edito: ${nombre}`);alert("Producto actualizado.");}
+  else{const ref=await addDoc(collection(db,"inventario"),{...data,fechaCreacion:serverTimestamp()});await addDoc(collection(db,"movimientos_inventario"),{productoId:ref.id,productoNombre:nombre,tipo:"INGRESO_INICIAL",cantidad:data.cantidadStock,fecha:serverTimestamp()});if(typeof window.registrarAuditoriaInventario==="function")await window.registrarAuditoriaInventario("NUEVO PRODUCTO",`Creo: ${nombre}`);alert("Producto creado.");}
   await window.cargarInventario();window.nuevoProductoInventario();}
-  catch(e){console.error(e);alert("❌ Error: "+e.message);}
+  catch(e){console.error(e);alert("Error: "+e.message);}
 };
 
-window.nuevoProductoInventario=()=>{window._productoEditandoId=null;['invNombre','invProveedor','invCategoria','invCostoCompra','invPrecioVenta','invStock','invStockMinimo','invUnidad','invDescripcion','invFechaVence'].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});const titulo=document.getElementById('tituloFormInventario');if(titulo)titulo.innerText="➕ Nuevo Producto";document.getElementById('btnEliminarProducto')?.classList.add('hidden');};
+window.nuevoProductoInventario=()=>{window._productoEditandoId=null;['invNombre','invProveedor','invCategoria','invCostoCompra','invPrecioVenta','invStock','invStockMinimo','invUnidad','invDescripcion','invFechaVence'].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});const titulo=document.getElementById('tituloFormInventario');if(titulo)titulo.innerText="Nuevo Producto";document.getElementById('btnEliminarProducto')?.classList.add('hidden');};
 
-window.eliminarProductoInventario=async()=>{const id=window._productoEditandoId;if(!id){alert("⚠️ Selecciona un producto.");return;}const clave=prompt("🔐 CLAVE MAESTRA:");if(!clave)return;if(clave.trim()!==MASTER_KEY()){alert("🚫 Incorrecta.");return;}const nombre=document.getElementById('invNombre')?.value||"---";if(!confirm(`⚠️ Eliminar "${nombre}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"inventario",id));if(typeof window.registrarLogAuditoria==='function')await window.registrarLogAuditoria("ELIMINACIÓN INVENTARIO",`Eliminó: ${nombre}`);if(typeof window.registrarAuditoriaInventario==="function")await window.registrarAuditoriaInventario("ELIMINACIÓN PRODUCTO",`Eliminó: ${nombre}`);alert(`✅ "${nombre}" eliminado.`);await window.cargarInventario();window.nuevoProductoInventario();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.eliminarProductoInventario=async()=>{const id=window._productoEditandoId;if(!id){alert("Selecciona un producto.");return;}const clave=prompt("CLAVE MAESTRA:");if(!clave)return;if(clave.trim()!==MASTER_KEY()){alert("Incorrecta.");return;}const nombre=document.getElementById('invNombre')?.value||"---";if(!confirm(`Eliminar "${nombre}". Confirmas?`))return;try{await deleteDoc(doc(db,"inventario",id));if(typeof window.registrarAuditoriaInventario==="function")await window.registrarAuditoriaInventario("ELIMINACION PRODUCTO",`Elimino: ${nombre}`);alert(`"${nombre}" eliminado.`);await window.cargarInventario();window.nuevoProductoInventario();}catch(e){console.error(e);alert("Error: "+e.message);}};
 
 window.filtrarInventario=()=>{
   const filtroTexto=document.getElementById('filtroInventario')?.value.toLowerCase().trim()||"";
   const filtroProveedor=document.getElementById('filtroProveedor')?.value||"";
   if(!window._inventarioCache)return;
   let filtrados=window._inventarioCache;
-  // Filtrar por proveedor seleccionado
-  if(filtroProveedor){
-    filtrados=filtrados.filter(p=>(p.proveedor||"")===filtroProveedor);
-  }
-  // Filtrar por texto
-  if(filtroTexto){
-    filtrados=filtrados.filter(p=>
-      (p.nombre||"").toLowerCase().includes(filtroTexto)||
-      (p.proveedor||"").toLowerCase().includes(filtroTexto)||
-      (p.categoria||"").toLowerCase().includes(filtroTexto)
-    );
-  }
+  if(filtroProveedor){filtrados=filtrados.filter(p=>(p.proveedor||"")===filtroProveedor);}
+  if(filtroTexto){filtrados=filtrados.filter(p=>(p.nombre||"").toLowerCase().includes(filtroTexto)||(p.proveedor||"").toLowerCase().includes(filtroTexto)||(p.categoria||"").toLowerCase().includes(filtroTexto));}
   window.renderListaInventario(filtrados);
 };
 
@@ -85,41 +74,21 @@ window.actualizarEstadoInventarioVisual=()=>{const stock=parseFloat(document.get
 
 window.mostrarAjusteRapido=()=>{document.getElementById('panelAjusteRapido')?.classList.toggle('hidden');};
 
-window.aplicarAjusteRapido=async()=>{const id=window._productoEditandoId;if(!id){alert("⚠️ Selecciona un producto.");return;}const tipo=document.getElementById('tipoAjuste')?.value||"entrada";const cant=parseFloat(document.getElementById('cantAjuste')?.value)||0;const nota=document.getElementById('notaAjuste')?.value?.trim()||"";if(cant<=0){alert("Ingresa una cantidad válida.");return;}try{const snap=await getDoc(doc(db,"inventario",id));if(!snap.exists())return;const stockAct=parseFloat(snap.data().cantidadStock)||0;const nuevo=tipo==="entrada"?stockAct+cant:Math.max(0,stockAct-cant);await updateDoc(doc(db,"inventario",id),{cantidadStock:nuevo,ultimaActualizacion:serverTimestamp()});await addDoc(collection(db,"movimientos_inventario"),{productoId:id,productoNombre:snap.data().nombre,tipo:tipo==="entrada"?"ENTRADA":"SALIDA",cantidad:cant,stockAntes:stockAct,stockDespues:nuevo,nota,fecha:serverTimestamp()});const elStock=document.getElementById('invStock');if(elStock)elStock.value=nuevo;window.actualizarEstadoInventarioVisual();document.getElementById('panelAjusteRapido')?.classList.add('hidden');await window.cargarInventario();alert(`✅ Stock: ${nuevo} unidades.`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.aplicarAjusteRapido=async()=>{const id=window._productoEditandoId;if(!id){alert("Selecciona un producto.");return;}const tipo=document.getElementById('tipoAjuste')?.value||"entrada";const cant=parseFloat(document.getElementById('cantAjuste')?.value)||0;const nota=document.getElementById('notaAjuste')?.value?.trim()||"";if(cant<=0){alert("Ingresa una cantidad valida.");return;}try{const snap=await getDoc(doc(db,"inventario",id));if(!snap.exists())return;const stockAct=parseFloat(snap.data().cantidadStock)||0;const nuevo=tipo==="entrada"?stockAct+cant:Math.max(0,stockAct-cant);await updateDoc(doc(db,"inventario",id),{cantidadStock:nuevo,ultimaActualizacion:serverTimestamp()});await addDoc(collection(db,"movimientos_inventario"),{productoId:id,productoNombre:snap.data().nombre,tipo:tipo==="entrada"?"ENTRADA":"SALIDA",cantidad:cant,stockAntes:stockAct,stockDespues:nuevo,nota,fecha:serverTimestamp()});const elStock=document.getElementById('invStock');if(elStock)elStock.value=nuevo;window.actualizarEstadoInventarioVisual();document.getElementById('panelAjusteRapido')?.classList.add('hidden');await window.cargarInventario();alert(`Stock: ${nuevo} unidades.`);}catch(e){console.error(e);alert("Error: "+e.message);}};
 
-window.verMovimientosProducto=async()=>{const id=window._productoEditandoId;if(!id){alert("⚠️ Selecciona un producto.");return;}try{const snap=await getDocs(query(collection(db,"movimientos_inventario"),where("productoId","==",id),orderBy("fecha","desc")));if(snap.empty){alert("Sin movimientos registrados.");return;}let html=`<div style="max-height:320px;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#1e293b;color:#fff;"><th style="padding:6px 8px;text-align:left;">Fecha</th><th style="padding:6px 8px;text-align:center;">Tipo</th><th style="padding:6px 8px;text-align:center;">Cant</th><th style="padding:6px 8px;text-align:center;">Antes→Después</th><th style="padding:6px 8px;text-align:left;">Nota</th></tr></thead><tbody>`;snap.forEach(d=>{const r=d.data();const fecha=r.fecha?.toDate?r.fecha.toDate().toLocaleDateString():"---";const color=r.tipo?.includes("ENTRADA")?"#16a34a":"#dc2626";html+=`<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:5px 8px;">${fecha}</td><td style="padding:5px 8px;text-align:center;font-weight:900;color:${color};">${r.tipo}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;">${r.cantidad}</td><td style="padding:5px 8px;text-align:center;font-size:9px;">${r.stockAntes??'---'}→${r.stockDespues??'---'}</td><td style="padding:5px 8px;font-style:italic;color:#64748b;">${r.nota||'-'}</td></tr>`;});html+=`</tbody></table></div>`;Swal.fire({title:'📊 Movimientos',html,width:680,showConfirmButton:true,confirmButtonText:'Cerrar'});}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.verMovimientosProducto=async()=>{const id=window._productoEditandoId;if(!id){alert("Selecciona un producto.");return;}try{const snap=await getDocs(query(collection(db,"movimientos_inventario"),where("productoId","==",id),orderBy("fecha","desc")));if(snap.empty){alert("Sin movimientos registrados.");return;}let html=`<div style="max-height:320px;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#1e293b;color:#fff;"><th style="padding:6px 8px;text-align:left;">Fecha</th><th style="padding:6px 8px;text-align:center;">Tipo</th><th style="padding:6px 8px;text-align:center;">Cant</th><th style="padding:6px 8px;text-align:center;">Antes-Despues</th><th style="padding:6px 8px;text-align:left;">Nota</th></tr></thead><tbody>`;snap.forEach(d=>{const r=d.data();const fecha=r.fecha?.toDate?r.fecha.toDate().toLocaleDateString():"---";const color=r.tipo?.includes("ENTRADA")?"#16a34a":"#dc2626";html+=`<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:5px 8px;">${fecha}</td><td style="padding:5px 8px;text-align:center;font-weight:900;color:${color};">${r.tipo}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;">${r.cantidad}</td><td style="padding:5px 8px;text-align:center;font-size:9px;">${r.stockAntes??'---'}-${r.stockDespues??'---'}</td><td style="padding:5px 8px;font-style:italic;color:#64748b;">${r.nota||'-'}</td></tr>`;});html+=`</tbody></table></div>`;Swal.fire({title:'Movimientos',html,width:680,showConfirmButton:true,confirmButtonText:'Cerrar'});}catch(e){console.error(e);alert("Error: "+e.message);}};
 
-window.descargarReporteProveedor=async()=>{try{const snap=await getDocs(collection(db,"inventario"));const filtroEl=document.getElementById('filtroProveedor');const filtro=filtroEl?.value||"";const datos=[];snap.forEach(d=>{const r=d.data();if(filtro&&r.proveedor!==filtro)return;datos.push({Nombre:r.nombre,Proveedor:r.proveedor||"---",Categoría:r.categoria||"---",Costo:r.costoCompra||0,PrecioVenta:r.precioVenta||0,Stock:r.cantidadStock||0,StockMínimo:r.stockMinimo||3,Unidad:r.unidad||"und",Vencimiento:r.fechaVencimiento||"---",Estado:(r.cantidadStock||0)<=(r.stockMinimo||3)?"BAJO":"OK"});});if(!datos.length){alert("No hay datos para el filtro.");return;}const hoja=XLSX.utils.json_to_sheet(datos);const libro=XLSX.utils.book_new();XLSX.utils.book_append_sheet(libro,hoja,filtro?`Proveedor_${filtro}`:"Inventario");XLSX.writeFile(libro,`Inventario_${(filtro||"Completo").replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.xlsx`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.descargarReporteProveedor=async()=>{try{const snap=await getDocs(collection(db,"inventario"));const filtroEl=document.getElementById('filtroProveedor');const filtro=filtroEl?.value||"";const datos=[];snap.forEach(d=>{const r=d.data();if(filtro&&r.proveedor!==filtro)return;datos.push({Nombre:r.nombre,Proveedor:r.proveedor||"---",Categoria:r.categoria||"---",Costo:r.costoCompra||0,PrecioVenta:r.precioVenta||0,Stock:r.cantidadStock||0,StockMinimo:r.stockMinimo||3,Unidad:r.unidad||"und",Vencimiento:r.fechaVencimiento||"---",Estado:(r.cantidadStock||0)<=(r.stockMinimo||3)?"BAJO":"OK"});});if(!datos.length){alert("No hay datos para el filtro.");return;}const hoja=XLSX.utils.json_to_sheet(datos);const libro=XLSX.utils.book_new();XLSX.utils.book_append_sheet(libro,hoja,filtro?`Proveedor_${filtro}`:"Inventario");XLSX.writeFile(libro,`Inventario_${(filtro||"Completo").replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.xlsx`);}catch(e){console.error(e);alert("Error: "+e.message);}};
 
 // ─── PANEL CONFIG ───
-// ─── CARGAR SELECTOR DE SERVICIOS DINÁMICAMENTE ──────────
-// Estrategia: el HTML ya tiene los servicios base estáticos.
-// Esta función SOLO agrega los servicios NUEVOS de Firebase
-// que no estén ya en el selector — se ejecuta en segundo plano.
 window.cargarSelectorServicios = async () => {
   const sel = document.getElementById('selectorServicios');
   if (!sel) return;
-
   try {
     const snap = await getDocs(collection(db, "servicios_maestro"));
     if (snap.empty) return;
-
-    // Recoger todos los valores que ya están en el selector (opciones estáticas)
-    const yaExisten = new Set(
-      Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase())
-    );
-
-    // Íconos por categoría
-    const iconos = {
-      'CONSULTAS':     '🩺',
-      'VACUNAS':       '💉',
-      'LABORATORIO':   '🔬',
-      'TESTS RÁPIDOS': '🧪',
-      'REFERIDOS':     '📋',
-      'OTROS':         '🐾',
-    };
-
-    // Agrupar solo los NUEVOS (no están en el HTML estático)
+    const yaExisten = new Set(Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase()));
+    const iconos = {'CONSULTAS':'🩺','VACUNAS':'💉','LABORATORIO':'🔬','TESTS RAPIDOS':'🧪','REFERIDOS':'📋','OTROS':'🐾'};
     const nuevos = {};
     snap.forEach(d => {
       const nombre = d.id.toUpperCase();
@@ -129,34 +98,19 @@ window.cargarSelectorServicios = async () => {
         nuevos[cat].push({ id: d.id, ...d.data() });
       }
     });
-
-    // Agregar los nuevos al selector agrupados
     Object.entries(nuevos).sort().forEach(([cat, servicios]) => {
-      // Buscar si ya existe el optgroup de esa categoría
-      let grp = Array.from(sel.querySelectorAll('optgroup'))
-        .find(g => g.label.includes(cat));
-
-      if (!grp) {
-        grp = document.createElement('optgroup');
-        grp.label = (iconos[cat] || '🔹') + ' ' + cat;
-        sel.appendChild(grp);
-      }
-
-      servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
+      let grp = Array.from(sel.querySelectorAll('optgroup')).find(g => g.label.includes(cat));
+      if (!grp) { grp = document.createElement('optgroup'); grp.label = (iconos[cat]||'🔹')+' '+cat; sel.appendChild(grp); }
+      servicios.sort((a,b)=>a.id.localeCompare(b.id)).forEach(s => {
         const opt = document.createElement('option');
-        opt.value       = s.id;
-        opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
-        opt.dataset.nuevo = 'true'; // marcar como dinámico
+        opt.value = s.id; opt.textContent = s.id+' ($'+parseFloat(s.precioVenta||0).toFixed(2)+')';
+        opt.dataset.nuevo = 'true';
         grp.appendChild(opt);
       });
     });
-
-  } catch(e) {
-    console.warn('Error cargando selector servicios:', e);
-  }
+  } catch(e) { console.warn('Error cargando selector servicios:', e); }
 };
 
-// ─── ABRIR MODAL NUEVO SERVICIO ───────────────────────────
 window.abrirModalNuevoServicio = async () => {
   var htmlModal = '<div class="space-y-3 text-left">';
   htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>';
@@ -166,41 +120,29 @@ window.abrirModalNuevoServicio = async () => {
   htmlModal += '<input id="ns_precio" type="number" placeholder="0.00" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div>';
   htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">% Doctor</label>';
   htmlModal += '<input id="ns_porc" type="number" placeholder="40" step="0.5" min="0" max="100" value="40" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div></div>';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoria (grupo en el selector)</label>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoria</label>';
   htmlModal += '<select id="ns_categoria" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">';
-  htmlModal += '<option value="CONSULTAS">Consultas</option>';
-  htmlModal += '<option value="VACUNAS">Vacunas</option>';
-  htmlModal += '<option value="LABORATORIO">Laboratorio</option>';
-  htmlModal += '<option value="TESTS RAPIDOS">Tests Rapidos</option>';
-  htmlModal += '<option value="REFERIDOS">Referidos</option>';
-  htmlModal += '<option value="OTROS">Otros</option>';
-  htmlModal += '<option value="__nueva__">Crear nueva categoria...</option>';
-  htmlModal += '</select>';
-  htmlModal += '<input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGIAS, HOSPITALIZACION..." style="display:none" class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500 mt-2"></div>';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Es una vacuna? (afecta combos de precios)</label>';
+  htmlModal += '<option value="CONSULTAS">Consultas</option><option value="VACUNAS">Vacunas</option>';
+  htmlModal += '<option value="LABORATORIO">Laboratorio</option><option value="TESTS RAPIDOS">Tests Rapidos</option>';
+  htmlModal += '<option value="REFERIDOS">Referidos</option><option value="OTROS">Otros</option>';
+  htmlModal += '<option value="__nueva__">Crear nueva categoria...</option></select>';
+  htmlModal += '<input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGIAS..." style="display:none" class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none mt-2"></div>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Es una vacuna?</label>';
   htmlModal += '<div class="flex gap-3">';
   htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600"> <span class="text-[10px] font-bold">Si</span></label>';
   htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600"> <span class="text-[10px] font-bold">No</span></label>';
-  htmlModal += '</div></div>';
-  htmlModal += '<div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[9px] text-blue-700 font-bold">El % Doctor se aplica sobre (Precio - Insumos), no sobre el precio bruto.</div>';
-  htmlModal += '</div>';
+  htmlModal += '</div></div></div>';
 
   const res = await Swal.fire({
-    title: 'Nuevo Servicio',
-    html: htmlModal,
-    showCancelButton: true,
-    confirmButtonText: '✅ Crear Servicio',
-    cancelButtonText: 'Cancelar',
+    title: 'Nuevo Servicio', html: htmlModal,
+    showCancelButton: true, confirmButtonText: 'Crear Servicio', cancelButtonText: 'Cancelar',
     confirmButtonColor: '#2563eb',
     didOpen: () => {
-      // Listener para mostrar/ocultar campo de categoría nueva
       const catSel = document.getElementById('ns_categoria');
-      if (catSel) {
-        catSel.addEventListener('change', function() {
-          const inp = document.getElementById('ns_categoria_nueva');
-          if (inp) inp.style.display = this.value === '__nueva__' ? 'block' : 'none';
-        });
-      }
+      if (catSel) catSel.addEventListener('change', function() {
+        const inp = document.getElementById('ns_categoria_nueva');
+        if (inp) inp.style.display = this.value === '__nueva__' ? 'block' : 'none';
+      });
     },
     preConfirm: () => {
       const nombre    = document.getElementById('ns_nombre')?.value.trim().toUpperCase();
@@ -210,71 +152,40 @@ window.abrirModalNuevoServicio = async () => {
       const catNueva  = document.getElementById('ns_categoria_nueva')?.value.trim().toUpperCase();
       const categoria = catSel === '__nueva__' ? catNueva : catSel;
       const esVacuna  = document.getElementById('ns_vacuna_si')?.checked || false;
-      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('⚠️ Escribe el nombre de la nueva categoría'); return false; }
-      if (!nombre) { Swal.showValidationMessage('⚠️ El nombre es obligatorio'); return false; }
-      if (precio <= 0) { Swal.showValidationMessage('⚠️ El precio debe ser mayor a 0'); return false; }
+      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('Escribe el nombre de la nueva categoria'); return false; }
+      if (!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
+      if (precio <= 0) { Swal.showValidationMessage('El precio debe ser mayor a 0'); return false; }
       return { nombre, precio, porc, categoria, esVacuna };
     }
   });
-
   if (!res.isConfirmed) return;
   const { nombre, precio, porc, categoria, esVacuna } = res.value;
-
   try {
-    // Verificar si ya existe
     const existe = await getDoc(doc(db, "servicios_maestro", nombre));
-    if (existe.exists()) {
-      Swal.fire({ icon:'warning', title:'Ya existe', text:'Un servicio con ese nombre ya está registrado.', timer:2500, showConfirmButton:false });
-      return;
-    }
-
-    // Guardar en Firebase
-    await setDoc(doc(db, "servicios_maestro", nombre), {
-      precioVenta: precio,
-      porcDoc:     porc,
-      categoria,
-      esVacuna,
-      creadoEn:    serverTimestamp(),
-      activo:      true
-    });
-
-    // Recargar tabla y selector
+    if (existe.exists()) { Swal.fire({ icon:'warning', title:'Ya existe', timer:2500, showConfirmButton:false }); return; }
+    await setDoc(doc(db, "servicios_maestro", nombre), { precioVenta:precio, porcDoc:porc, categoria, esVacuna, creadoEn:serverTimestamp(), activo:true });
     await window.renderizarTablaMaestra();
     await window.cargarSelectorServicios();
-
-    await Swal.fire({
-      icon: 'success',
-      title: '✅ Servicio creado',
-      html: `<b>${nombre}</b><br>$${precio.toFixed(2)} · ${porc}% doctor · ${categoria}`,
-      timer: 2500,
-      showConfirmButton: false
-    });
-
-  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+    Swal.fire({ icon:'success', title:'Servicio creado', html:`<b>${nombre}</b><br>$${precio.toFixed(2)} · ${porc}% doctor`, timer:2500, showConfirmButton:false });
+  } catch(e) { console.error(e); alert('Error: '+e.message); }
 };
 
-// ─── ELIMINAR SERVICIO ────────────────────────────────────
 window.eliminarServicioMaestro = async (nombreServicio) => {
   const res = await Swal.fire({
-    title: '🗑 Eliminar Servicio',
-    html: `<p class="text-[11px] text-slate-600">¿Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecerá en el selector de Historia Clínica.</p>`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#dc2626'
+    title: 'Eliminar Servicio',
+    html: '<p style="font-size:11px;">Eliminar <b>' + nombreServicio + '</b>?</p>',
+    icon: 'warning', showCancelButton: true,
+    confirmButtonText: 'Si, eliminar', cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626'
   });
   if (!res.isConfirmed) return;
-
   try {
     await deleteDoc(doc(db, "servicios_maestro", nombreServicio));
     await window.renderizarTablaMaestra();
     await window.cargarSelectorServicios();
-    Swal.fire({ icon:'success', title:'✅ Eliminado', timer:1500, showConfirmButton:false });
-  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+    Swal.fire({ icon:'success', title:'Eliminado', timer:1500, showConfirmButton:false });
+  } catch(e) { console.error(e); alert('Error: '+e.message); }
 };
 
-// ─── FILTRAR TABLA DE SERVICIOS ───────────────────────────
 window.filtrarTablaServicios = () => {
   const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase() || '';
   document.querySelectorAll('#tablaServiciosMaestro tr[data-nombre]').forEach(tr => {
@@ -288,128 +199,50 @@ window.renderizarTablaMaestra = async () => {
   cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
   try {
     const snap = await getDocs(collection(db, "servicios_maestro"));
-    if (snap.empty) {
-      cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios. Usa el boton + para agregar.</p>';
-      return;
-    }
-
+    if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios.</p>'; return; }
     const servicios = [];
     snap.forEach(d => servicios.push({ id: d.id, ...d.data() }));
-    servicios.sort((a, b) => a.id.localeCompare(b.id));
-
-    // Construir tabla
+    servicios.sort((a,b) => a.id.localeCompare(b.id));
     const tabla = document.createElement('table');
     tabla.className = 'w-full text-left border-collapse';
     tabla.innerHTML =
       '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
-      '<th class="p-2">Servicio</th>' +
-      '<th class="p-2 text-center">Categoria</th>' +
-      '<th class="p-2 text-center">Precio ($)</th>' +
-      '<th class="p-2 text-center">% Doc</th>' +
-      '<th class="p-2 text-center">OK</th>' +
-      '<th class="p-2 text-center">Insumos</th>' +
-      '<th class="p-2 text-center">Del</th>' +
+      '<th class="p-2">Servicio</th><th class="p-2 text-center">Categoria</th>' +
+      '<th class="p-2 text-center">Precio ($)</th><th class="p-2 text-center">% Doc</th>' +
+      '<th class="p-2 text-center">OK</th><th class="p-2 text-center">Insumos</th><th class="p-2 text-center">Del</th>' +
       '</tr></thead>';
-
     const tbody = document.createElement('tbody');
     tbody.className = 'text-[10px]';
-
     servicios.forEach(r => {
       const tr = document.createElement('tr');
       tr.className = 'border-b border-slate-100 hover:bg-blue-50';
       tr.dataset.nombre = r.id;
-
-      // Nombre
-      const tdNom = document.createElement('td');
-      tdNom.className = 'p-2 font-bold uppercase text-slate-800';
-      tdNom.textContent = (r.esVacuna ? '💉 ' : '') + r.id;
-      tr.appendChild(tdNom);
-
-      // Categoría
-      const tdCat = document.createElement('td');
-      tdCat.className = 'p-2 text-center text-slate-500 text-[9px]';
-      tdCat.textContent = r.categoria || 'OTROS';
-      tr.appendChild(tdCat);
-
-      // Input precio
-      const tdPrecio = document.createElement('td');
-      tdPrecio.className = 'p-2 text-center';
-      const inpPrecio = document.createElement('input');
-      inpPrecio.type = 'number'; inpPrecio.step = '0.50'; inpPrecio.min = '0';
-      inpPrecio.value = r.precioVenta || 0;
-      inpPrecio.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
-      inpPrecio.dataset.id = r.id; inpPrecio.dataset.campo = 'precioVenta';
-      inpPrecio.addEventListener('blur', function() {
-        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
-      });
-      tdPrecio.appendChild(inpPrecio);
-      tr.appendChild(tdPrecio);
-
-      // Input % doctor
-      const tdPorc = document.createElement('td');
-      tdPorc.className = 'p-2 text-center';
-      const inpPorc = document.createElement('input');
-      inpPorc.type = 'number'; inpPorc.step = '0.5'; inpPorc.min = '0'; inpPorc.max = '100';
-      inpPorc.value = r.porcDoc || r.porcentajeDoc || 30;
-      inpPorc.className = 'w-16 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
-      inpPorc.dataset.id = r.id; inpPorc.dataset.campo = 'porcDoc';
-      inpPorc.addEventListener('blur', function() {
-        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
-      });
-      tdPorc.appendChild(inpPorc);
-      tr.appendChild(tdPorc);
-
-      // Botón guardar
-      const tdGuardar = document.createElement('td');
-      tdGuardar.className = 'p-2 text-center';
-      const btnGuardar = document.createElement('button');
-      btnGuardar.className = 'text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700';
-      btnGuardar.textContent = '✅';
-      btnGuardar.dataset.id = r.id;
-      btnGuardar.addEventListener('click', function() {
-        window.actualizarPrecioIndividual(this.dataset.id, 'guardado', null, true);
-      });
-      tdGuardar.appendChild(btnGuardar);
-      tr.appendChild(tdGuardar);
-
-      // Botón insumos
-      const tdIns = document.createElement('td');
-      tdIns.className = 'p-2 text-center';
-      const btnIns = document.createElement('button');
-      btnIns.className = 'text-[8px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-black hover:bg-emerald-600 hover:text-white';
-      btnIns.textContent = '🧪';
-      btnIns.title = 'Editar insumos';
-      btnIns.dataset.id = r.id;
-      btnIns.addEventListener('click', function() {
-        window.editarInsumosServicio(this.dataset.id);
-      });
-      tdIns.appendChild(btnIns);
-      tr.appendChild(tdIns);
-
-      // Botón eliminar
-      const tdElim = document.createElement('td');
-      tdElim.className = 'p-2 text-center';
-      const btnElim = document.createElement('button');
-      btnElim.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
-      btnElim.textContent = '🗑';
-      btnElim.dataset.id = r.id;
-      btnElim.addEventListener('click', function() {
-        window.eliminarServicioMaestro(this.dataset.id);
-      });
-      tdElim.appendChild(btnElim);
-      tr.appendChild(tdElim);
-
+      const tdNom = document.createElement('td'); tdNom.className='p-2 font-bold uppercase text-slate-800'; tdNom.textContent=(r.esVacuna?'💉 ':'')+r.id; tr.appendChild(tdNom);
+      const tdCat = document.createElement('td'); tdCat.className='p-2 text-center text-slate-500 text-[9px]'; tdCat.textContent=r.categoria||'OTROS'; tr.appendChild(tdCat);
+      const tdPrecio = document.createElement('td'); tdPrecio.className='p-2 text-center';
+      const inpPrecio = document.createElement('input'); inpPrecio.type='number'; inpPrecio.step='0.50'; inpPrecio.min='0'; inpPrecio.value=r.precioVenta||0; inpPrecio.className='w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold'; inpPrecio.dataset.id=r.id; inpPrecio.dataset.campo='precioVenta';
+      inpPrecio.addEventListener('blur', function() { window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value); });
+      tdPrecio.appendChild(inpPrecio); tr.appendChild(tdPrecio);
+      const tdPorc = document.createElement('td'); tdPorc.className='p-2 text-center';
+      const inpPorc = document.createElement('input'); inpPorc.type='number'; inpPorc.step='0.5'; inpPorc.min='0'; inpPorc.max='100'; inpPorc.value=r.porcDoc||r.porcentajeDoc||30; inpPorc.className='w-16 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold'; inpPorc.dataset.id=r.id; inpPorc.dataset.campo='porcDoc';
+      inpPorc.addEventListener('blur', function() { window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value); });
+      tdPorc.appendChild(inpPorc); tr.appendChild(tdPorc);
+      const tdGuardar = document.createElement('td'); tdGuardar.className='p-2 text-center';
+      const btnGuardar = document.createElement('button'); btnGuardar.className='text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700'; btnGuardar.textContent='✅'; btnGuardar.dataset.id=r.id;
+      btnGuardar.addEventListener('click', function() { window.actualizarPrecioIndividual(this.dataset.id,'guardado',null,true); });
+      tdGuardar.appendChild(btnGuardar); tr.appendChild(tdGuardar);
+      const tdIns = document.createElement('td'); tdIns.className='p-2 text-center';
+      const btnIns = document.createElement('button'); btnIns.className='text-[8px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-black hover:bg-emerald-600 hover:text-white'; btnIns.textContent='🧪'; btnIns.title='Editar insumos'; btnIns.dataset.id=r.id;
+      btnIns.addEventListener('click', function() { window.editarInsumosServicio(this.dataset.id); });
+      tdIns.appendChild(btnIns); tr.appendChild(tdIns);
+      const tdElim = document.createElement('td'); tdElim.className='p-2 text-center';
+      const btnElim = document.createElement('button'); btnElim.className='text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white'; btnElim.textContent='🗑'; btnElim.dataset.id=r.id;
+      btnElim.addEventListener('click', function() { window.eliminarServicioMaestro(this.dataset.id); });
+      tdElim.appendChild(btnElim); tr.appendChild(tdElim);
       tbody.appendChild(tr);
     });
-
-    tabla.appendChild(tbody);
-    cont.innerHTML = '';
-    cont.appendChild(tabla);
-
-  } catch(e) {
-    console.error(e);
-    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error al cargar</p>';
-  }
+    tabla.appendChild(tbody); cont.innerHTML=''; cont.appendChild(tabla);
+  } catch(e) { console.error(e); cont.innerHTML='<p class="text-red-500 text-[9px] text-center italic py-4">Error al cargar</p>'; }
 };
 
 window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});if(typeof window.porcGlobalCache!=='undefined')window.porcGlobalCache=undefined;}catch(e){console.error("Error actualizando precio:",e);}};
@@ -420,115 +253,49 @@ window.renderizarTablaInsumos = async () => {
   cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
   try {
     const snap = await getDocs(collection(db, "insumos_maestro"));
-    if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin insumos.</p>'; return; }
-
-    const tabla = document.createElement('table');
-    tabla.className = 'w-full text-left border-collapse';
-    tabla.innerHTML = '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
-      '<th class="p-2">Insumo</th><th class="p-2 text-center w-24">Costo ($)</th><th class="p-2 text-center w-16">Del</th>' +
-      '</tr></thead>';
-
-    const tbody = document.createElement('tbody');
-    tbody.className = 'text-[10px]';
-
+    if (snap.empty) { cont.innerHTML='<p class="text-center text-slate-400 text-[9px] italic py-4">Sin insumos.</p>'; return; }
+    const tabla = document.createElement('table'); tabla.className='w-full text-left border-collapse';
+    tabla.innerHTML='<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black"><th class="p-2">Insumo</th><th class="p-2 text-center w-24">Costo ($)</th><th class="p-2 text-center w-16">Del</th></tr></thead>';
+    const tbody = document.createElement('tbody'); tbody.className='text-[10px]';
     snap.forEach(d => {
-      const r = d.data();
-      const nombreMostrar = r.nombre || d.id;
-
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-100 hover:bg-emerald-50';
-
-      const tdNom = document.createElement('td');
-      tdNom.className = 'p-2 font-bold italic text-slate-700';
-      tdNom.textContent = nombreMostrar;
-      tr.appendChild(tdNom);
-
-      const tdCosto = document.createElement('td');
-      tdCosto.className = 'p-2 text-center';
-      const inp = document.createElement('input');
-      inp.type = 'number'; inp.step = '0.05'; inp.min = '0';
-      inp.value = r.costo || 0;
-      inp.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px]';
-      inp.dataset.id = d.id;
-      inp.addEventListener('blur', function() {
-        window.actualizarCostoInsumo(this.dataset.id, this.value);
-      });
-      tdCosto.appendChild(inp);
-      tr.appendChild(tdCosto);
-
-      const tdDel = document.createElement('td');
-      tdDel.className = 'p-2 text-center';
-      const btn = document.createElement('button');
-      btn.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
-      btn.textContent = '✕';
-      btn.dataset.id = d.id;
-      btn.dataset.nombre = nombreMostrar;
-      btn.addEventListener('click', function() {
-        window.eliminarInsumoIndividual(this.dataset.id, this.dataset.nombre);
-      });
-      tdDel.appendChild(btn);
-      tr.appendChild(tdDel);
-
-      tbody.appendChild(tr);
+      const r=d.data(); const nombreMostrar=r.nombre||d.id;
+      const tr=document.createElement('tr'); tr.className='border-b border-slate-100 hover:bg-emerald-50';
+      const tdNom=document.createElement('td'); tdNom.className='p-2 font-bold italic text-slate-700'; tdNom.textContent=nombreMostrar; tr.appendChild(tdNom);
+      const tdCosto=document.createElement('td'); tdCosto.className='p-2 text-center';
+      const inp=document.createElement('input'); inp.type='number'; inp.step='0.05'; inp.min='0'; inp.value=r.costo||0; inp.className='w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px]'; inp.dataset.id=d.id;
+      inp.addEventListener('blur', function() { window.actualizarCostoInsumo(this.dataset.id, this.value); });
+      tdCosto.appendChild(inp); tr.appendChild(tdCosto);
+      const tdDel=document.createElement('td'); tdDel.className='p-2 text-center';
+      const btn=document.createElement('button'); btn.className='text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white'; btn.textContent='✕'; btn.dataset.id=d.id; btn.dataset.nombre=nombreMostrar;
+      btn.addEventListener('click', function() { window.eliminarInsumoIndividual(this.dataset.id, this.dataset.nombre); });
+      tdDel.appendChild(btn); tr.appendChild(tdDel); tbody.appendChild(tr);
     });
-
-    tabla.appendChild(tbody);
-    cont.innerHTML = '';
-    cont.appendChild(tabla);
-  } catch(e) {
-    console.error(e);
-    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error</p>';
-  }
+    tabla.appendChild(tbody); cont.innerHTML=''; cont.appendChild(tabla);
+  } catch(e) { console.error(e); cont.innerHTML='<p class="text-red-500 text-[9px] text-center italic py-4">Error</p>'; }
 };
 
-// ─── DETECCIÓN AUTOMÁTICA DE TIPO DE INSUMO ─────────────
+// ─── DETECCION TIPO INSUMO ────────────────────────────────
 function _detectarTipoInsumo(nombre) {
   const n = nombre.toLowerCase();
-  // Por unidad — paquetes contables
-  if (n.includes('guante') || n.includes('jeringa') || n.includes('tubo') ||
-      n.includes('hisopo') || n.includes('aguja') || n.includes('mariposa') ||
-      n.includes('jelco') || n.includes('compresa') || n.includes('gasa') ||
-      n.includes('hoja') || n.includes('bisturi') || n.includes('tira') ||
-      n.includes('kit') || n.includes('porta') || n.includes('obturador') ||
-      n.includes('adhesivo') || n.includes('cinta')) {
-    return 'unidad';
-  }
-  // Por volumen — frascos en ml
-  if (n.includes('alcohol') || n.includes('agua oxigenada') || n.includes('gel') ||
-      n.includes('solucion') || n.includes('solución') || n.includes('yodo') ||
-      n.includes('clorhex') || n.includes('tincion') || n.includes('tinción') ||
-      n.includes('reactivo') || n.includes('ml') || n.includes('frasco') ||
-      n.includes('shampoo') || n.includes('jabon') || n.includes('jabón')) {
-    return 'volumen';
-  }
-  // Por tiempo — materiales de uso continuo
-  if (n.includes('algodon') || n.includes('algodón') || n.includes('papel') ||
-      n.includes('rollo') || n.includes('bolsa') || n.includes('detergente') ||
-      n.includes('guarda') || n.includes('caja')) {
-    return 'tiempo';
-  }
-  return null; // desconocido — preguntar
+  if (n.includes('guante')||n.includes('jeringa')||n.includes('tubo')||n.includes('hisopo')||n.includes('aguja')||n.includes('mariposa')||n.includes('jelco')||n.includes('compresa')||n.includes('gasa')||n.includes('hoja')||n.includes('bisturi')||n.includes('tira')||n.includes('kit')||n.includes('porta')||n.includes('obturador')||n.includes('adhesivo')||n.includes('cinta')) return 'unidad';
+  if (n.includes('alcohol')||n.includes('agua oxigenada')||n.includes('gel')||n.includes('solucion')||n.includes('yodo')||n.includes('clorhex')||n.includes('tincion')||n.includes('reactivo')||n.includes('ml')||n.includes('frasco')||n.includes('shampoo')||n.includes('jabon')) return 'volumen';
+  if (n.includes('algodon')||n.includes('papel')||n.includes('rollo')||n.includes('bolsa')||n.includes('detergente')||n.includes('guarda')||n.includes('caja')) return 'tiempo';
+  return null;
 }
 
-// ─── PREGUNTAS SEGÚN TIPO ────────────────────────────────
 async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
   const MARGEN = 0.20;
   let tipo = _detectarTipoInsumo(nombreInsumo);
-
-  // Si no detectó el tipo, preguntar
   if (!tipo) {
     var htmlTipo = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
-    htmlTipo += '<button id="btnTipoUnidad" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;">📦 Por unidad (guantes, jeringas, tubos...)</button>';
-    htmlTipo += '<button id="btnTipoVolumen" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #d1fae5;background:#f0fdf4;font-weight:900;font-size:11px;color:#065f46;cursor:pointer;">🧴 Por volumen (alcohol, gel, soluciones...)</button>';
-    htmlTipo += '<button id="btnTipoTiempo" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:11px;color:#92400e;cursor:pointer;">📅 Por tiempo (algodón, papel, rollos...)</button>';
+    htmlTipo += '<button id="btnTipoUnidad" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;">Por unidad (guantes, jeringas, tubos...)</button>';
+    htmlTipo += '<button id="btnTipoVolumen" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #d1fae5;background:#f0fdf4;font-weight:900;font-size:11px;color:#065f46;cursor:pointer;">Por volumen (alcohol, gel, soluciones...)</button>';
+    htmlTipo += '<button id="btnTipoTiempo" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:11px;color:#92400e;cursor:pointer;">Por tiempo (algodon, papel, rollos...)</button>';
     htmlTipo += '</div>';
-
     const resTipo = await Swal.fire({
-      title: '¿Cómo se mide este insumo?',
-      html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;"><b>' + nombreInsumo + '</b></p>' + htmlTipo,
-      showConfirmButton: false,
-      showCancelButton: true,
-      cancelButtonText: 'Cancelar',
+      title: 'Como se mide este insumo?',
+      html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;"><b>'+nombreInsumo+'</b></p>'+htmlTipo,
+      showConfirmButton: false, showCancelButton: true, cancelButtonText: 'Cancelar',
       didOpen: function() {
         document.getElementById('btnTipoUnidad').addEventListener('click', function() { window._tipoInsumo='unidad'; Swal.clickConfirm(); });
         document.getElementById('btnTipoVolumen').addEventListener('click', function() { window._tipoInsumo='volumen'; Swal.clickConfirm(); });
@@ -536,341 +303,128 @@ async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
       }
     });
     if (resTipo.isDismissed) return null;
-    tipo = window._tipoInsumo || 'unidad';
-    window._tipoInsumo = null;
+    tipo = window._tipoInsumo || 'unidad'; window._tipoInsumo = null;
   }
-
   let usos = 0;
-
-  // ── UNIDAD ──────────────────────────────────────────────
   if (tipo === 'unidad') {
     const res = await Swal.fire({
-      title: '📦 ' + nombreInsumo,
-      html:
-        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
-        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántas unidades trae el paquete/caja?</label>' +
-        '<input id="q_unidades" type="number" min="1" placeholder="Ej: 100 guantes" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
-        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántas unidades usan por servicio?</label>' +
-        '<input id="q_porServicio" type="number" min="1" value="1" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
-        '<div id="prev_unidad" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;">' +
-        '<p id="prev_txt_unidad" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div>' +
-        '</div>',
-      showCancelButton: true,
-      confirmButtonText: '✅ Guardar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#2563eb',
+      title: 'Unidades - '+nombreInsumo,
+      html: '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;"><div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Unidades en el paquete/caja</label><input id="q_unidades" type="number" min="1" placeholder="Ej: 100" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div><div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Unidades por servicio</label><input id="q_porServicio" type="number" min="1" value="1" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div><div id="prev_unidad" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;"><p id="prev_txt_unidad" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div></div>',
+      showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#2563eb',
       didOpen: function() {
-        const calcPrev = function() {
-          const u = parseFloat(document.getElementById('q_unidades')?.value) || 0;
-          const p = parseFloat(document.getElementById('q_porServicio')?.value) || 1;
-          const box = document.getElementById('prev_unidad');
-          const txt = document.getElementById('prev_txt_unidad');
-          if (u > 0 && p > 0) {
-            const usosEfect = Math.floor((u / p) * (1 - MARGEN));
-            const cpp = costoUSD / usosEfect;
-            txt.textContent = (u/p).toFixed(0) + ' usos → con 20% margen: ' + usosEfect + ' usos efectivos → $' + cpp.toFixed(4) + ' por servicio';
-            box.style.display = 'block';
-          }
-        };
-        document.getElementById('q_unidades')?.addEventListener('input', calcPrev);
-        document.getElementById('q_porServicio')?.addEventListener('input', calcPrev);
+        const calc = function() { const u=parseFloat(document.getElementById('q_unidades')?.value)||0; const p=parseFloat(document.getElementById('q_porServicio')?.value)||1; const box=document.getElementById('prev_unidad'); const txt=document.getElementById('prev_txt_unidad'); if(u>0&&p>0){const ef=Math.floor((u/p)*(1-MARGEN));txt.textContent=(u/p).toFixed(0)+' usos, margen 20%: '+ef+' efectivos, $'+(costoUSD/ef).toFixed(4)+'/servicio';box.style.display='block';} };
+        document.getElementById('q_unidades')?.addEventListener('input', calc); document.getElementById('q_porServicio')?.addEventListener('input', calc);
       },
-      preConfirm: () => {
-        const u = parseFloat(document.getElementById('q_unidades')?.value) || 0;
-        const p = parseFloat(document.getElementById('q_porServicio')?.value) || 1;
-        if (u <= 0) { Swal.showValidationMessage('Ingresa las unidades del paquete'); return false; }
-        return Math.floor((u / p) * (1 - MARGEN));
-      }
+      preConfirm: () => { const u=parseFloat(document.getElementById('q_unidades')?.value)||0; const p=parseFloat(document.getElementById('q_porServicio')?.value)||1; if(u<=0){Swal.showValidationMessage('Ingresa las unidades del paquete');return false;} return Math.floor((u/p)*(1-MARGEN)); }
     });
-    if (!res.isConfirmed) return null;
-    usos = res.value;
-  }
-
-  // ── VOLUMEN ─────────────────────────────────────────────
-  else if (tipo === 'volumen') {
+    if (!res.isConfirmed) return null; usos = res.value;
+  } else if (tipo === 'volumen') {
     const res = await Swal.fire({
-      title: '🧴 ' + nombreInsumo,
-      html:
-        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
-        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos ml tiene el frasco?</label>' +
-        '<input id="q_ml" type="number" min="1" placeholder="Ej: 500 ml" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
-        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos ml usan por servicio?</label>' +
-        '<input id="q_mlServicio" type="number" min="0.1" step="0.5" value="5" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
-        '<div id="prev_vol" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;">' +
-        '<p id="prev_txt_vol" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div>' +
-        '</div>',
-      showCancelButton: true,
-      confirmButtonText: '✅ Guardar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#2563eb',
+      title: 'Volumen - '+nombreInsumo,
+      html: '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;"><div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">ml del frasco</label><input id="q_ml" type="number" min="1" placeholder="Ej: 500 ml" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div><div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">ml por servicio</label><input id="q_mlServicio" type="number" min="0.1" step="0.5" value="5" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div><div id="prev_vol" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;"><p id="prev_txt_vol" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div></div>',
+      showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#2563eb',
       didOpen: function() {
-        const calcPrev = function() {
-          const ml  = parseFloat(document.getElementById('q_ml')?.value) || 0;
-          const mls = parseFloat(document.getElementById('q_mlServicio')?.value) || 5;
-          const box = document.getElementById('prev_vol');
-          const txt = document.getElementById('prev_txt_vol');
-          if (ml > 0) {
-            const usosEfect = Math.floor((ml / mls) * (1 - MARGEN));
-            const cpp = costoUSD / usosEfect;
-            txt.textContent = (ml/mls).toFixed(0) + ' usos → con 20% margen: ' + usosEfect + ' usos efectivos → $' + cpp.toFixed(4) + ' por servicio';
-            box.style.display = 'block';
-          }
-        };
-        document.getElementById('q_ml')?.addEventListener('input', calcPrev);
-        document.getElementById('q_mlServicio')?.addEventListener('input', calcPrev);
+        const calc = function() { const ml=parseFloat(document.getElementById('q_ml')?.value)||0; const mls=parseFloat(document.getElementById('q_mlServicio')?.value)||5; const box=document.getElementById('prev_vol'); const txt=document.getElementById('prev_txt_vol'); if(ml>0){const ef=Math.floor((ml/mls)*(1-MARGEN));txt.textContent=(ml/mls).toFixed(0)+' usos, margen 20%: '+ef+' efectivos, $'+(costoUSD/ef).toFixed(4)+'/servicio';box.style.display='block';} };
+        document.getElementById('q_ml')?.addEventListener('input', calc); document.getElementById('q_mlServicio')?.addEventListener('input', calc);
       },
-      preConfirm: () => {
-        const ml  = parseFloat(document.getElementById('q_ml')?.value) || 0;
-        const mls = parseFloat(document.getElementById('q_mlServicio')?.value) || 5;
-        if (ml <= 0) { Swal.showValidationMessage('Ingresa los ml del frasco'); return false; }
-        return Math.floor((ml / mls) * (1 - MARGEN));
-      }
+      preConfirm: () => { const ml=parseFloat(document.getElementById('q_ml')?.value)||0; const mls=parseFloat(document.getElementById('q_mlServicio')?.value)||5; if(ml<=0){Swal.showValidationMessage('Ingresa los ml del frasco');return false;} return Math.floor((ml/mls)*(1-MARGEN)); }
     });
-    if (!res.isConfirmed) return null;
-    usos = res.value;
-  }
-
-  // ── TIEMPO ──────────────────────────────────────────────
-  else if (tipo === 'tiempo') {
+    if (!res.isConfirmed) return null; usos = res.value;
+  } else if (tipo === 'tiempo') {
     const res = await Swal.fire({
-      title: '📅 ' + nombreInsumo,
-      html:
-        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
-        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos meses dura aproximadamente?</label>' +
-        '<input id="q_meses" type="number" min="1" value="3" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
-        '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">¿Cuántos servicios hacen al mes en promedio?</label>' +
-        '<input id="q_serviciosMes" type="number" min="1" placeholder="Ej: 30 consultas/mes" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div>' +
-        '<div id="prev_tiempo" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;">' +
-        '<p id="prev_txt_tiempo" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div>' +
-        '</div>',
-      showCancelButton: true,
-      confirmButtonText: '✅ Guardar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#2563eb',
+      title: 'Tiempo - '+nombreInsumo,
+      html: '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;"><div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Meses que dura aprox.</label><input id="q_meses" type="number" min="1" value="3" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div><div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Servicios al mes en promedio</label><input id="q_serviciosMes" type="number" min="1" placeholder="Ej: 30" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;"></div><div id="prev_tiempo" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;display:none;"><p id="prev_txt_tiempo" style="font-size:13px;font-weight:900;color:#16a34a;"></p></div></div>',
+      showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#2563eb',
       didOpen: function() {
-        const calcPrev = function() {
-          const m  = parseFloat(document.getElementById('q_meses')?.value) || 0;
-          const sm = parseFloat(document.getElementById('q_serviciosMes')?.value) || 0;
-          const box = document.getElementById('prev_tiempo');
-          const txt = document.getElementById('prev_txt_tiempo');
-          if (m > 0 && sm > 0) {
-            const usosEfect = Math.floor(m * sm * (1 - MARGEN));
-            const cpp = costoUSD / usosEfect;
-            txt.textContent = (m*sm).toFixed(0) + ' usos → con 20% margen: ' + usosEfect + ' usos efectivos → $' + cpp.toFixed(4) + ' por servicio';
-            box.style.display = 'block';
-          }
-        };
-        document.getElementById('q_meses')?.addEventListener('input', calcPrev);
-        document.getElementById('q_serviciosMes')?.addEventListener('input', calcPrev);
+        const calc = function() { const m=parseFloat(document.getElementById('q_meses')?.value)||0; const sm=parseFloat(document.getElementById('q_serviciosMes')?.value)||0; const box=document.getElementById('prev_tiempo'); const txt=document.getElementById('prev_txt_tiempo'); if(m>0&&sm>0){const ef=Math.floor(m*sm*(1-MARGEN));txt.textContent=(m*sm).toFixed(0)+' usos, margen 20%: '+ef+' efectivos, $'+(costoUSD/ef).toFixed(4)+'/servicio';box.style.display='block';} };
+        document.getElementById('q_meses')?.addEventListener('input', calc); document.getElementById('q_serviciosMes')?.addEventListener('input', calc);
       },
-      preConfirm: () => {
-        const m  = parseFloat(document.getElementById('q_meses')?.value) || 0;
-        const sm = parseFloat(document.getElementById('q_serviciosMes')?.value) || 0;
-        if (m <= 0 || sm <= 0) { Swal.showValidationMessage('Completa los dos campos'); return false; }
-        return Math.floor(m * sm * (1 - MARGEN));
-      }
+      preConfirm: () => { const m=parseFloat(document.getElementById('q_meses')?.value)||0; const sm=parseFloat(document.getElementById('q_serviciosMes')?.value)||0; if(m<=0||sm<=0){Swal.showValidationMessage('Completa los dos campos');return false;} return Math.floor(m*sm*(1-MARGEN)); }
     });
-    if (!res.isConfirmed) return null;
-    usos = res.value;
+    if (!res.isConfirmed) return null; usos = res.value;
   }
-
   return usos > 0 ? usos : null;
 }
 
-// --- GESTION DE MEDICAMENTOS MAESTROS ----------------
+// ─── GESTION DE MEDICAMENTOS MAESTROS ────────────────────
 window.renderizarTablaMedicamentos = async () => {
   const cont = document.getElementById('tablaMedicamentosMaestro');
   if (!cont) return;
   cont.innerHTML = '<p style="text-align:center;font-size:9px;color:#94a3b8;padding:8px;">Cargando...</p>';
   try {
     const snap = await getDocs(collection(db, "medicamentos_maestro"));
-    if (snap.empty) {
-      cont.innerHTML = '<p style="text-align:center;font-size:9px;color:#94a3b8;padding:8px;">Sin medicamentos. Agrega uno.</p>';
-      return;
-    }
-    const meds = [];
-    snap.forEach(d => meds.push({ id: d.id, ...d.data() }));
-    meds.sort((a,b) => (a.nombre||a.id).localeCompare(b.nombre||b.id));
-
-    const tabla = document.createElement('table');
-    tabla.className = 'w-full text-left border-collapse';
-    tabla.innerHTML =
-      '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
-      '<th class="p-2">Medicamento</th>' +
-      '<th class="p-2 text-center">Precio ($)</th>' +
-      '<th class="p-2 text-center">Agregado por</th>' +
-      '<th class="p-2 text-center">OK</th>' +
-      '<th class="p-2 text-center">Del</th></tr></thead>';
-
-    const tbody = document.createElement('tbody');
+    if (snap.empty) { cont.innerHTML='<p style="text-align:center;font-size:9px;color:#94a3b8;padding:12px;">Sin medicamentos. Agrega uno o carga los base.</p>'; return; }
+    const meds=[];snap.forEach(d=>meds.push({id:d.id,...d.data()}));meds.sort((a,b)=>(a.nombre||a.id).localeCompare(b.nombre||b.id));
+    const tabla=document.createElement('table');tabla.className='w-full text-left border-collapse';
+    tabla.innerHTML='<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black"><th class="p-2">Medicamento</th><th class="p-2 text-center">Precio ($)</th><th class="p-2 text-center">Agregado por</th><th class="p-2 text-center">OK</th><th class="p-2 text-center">Del</th></tr></thead>';
+    const tbody=document.createElement('tbody');
     meds.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-100 hover:bg-purple-50';
-
-      const tdNom = document.createElement('td');
-      tdNom.className = 'p-2 font-bold uppercase text-slate-800 text-[10px]';
-      tdNom.textContent = r.nombre || r.id;
-      tr.appendChild(tdNom);
-
-      const tdP = document.createElement('td');
-      tdP.className = 'p-2 text-center';
-      const inp = document.createElement('input');
-      inp.type = 'number'; inp.step = '0.50'; inp.min = '0';
-      inp.value = r.precioCliente || 0;
-      inp.className = 'w-24 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
-      inp.dataset.id = r.id;
-      inp.addEventListener('blur', function() {
-        // Al actualizar precio, registrar quién lo modificó
-        const doctor = window.doctorVerificado || 'Sistema';
-        updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{
-          precioCliente: parseFloat(this.value)||0,
-          actualizadoEn: serverTimestamp(),
-          modificadoPor: doctor
-        });
-      });
-      tdP.appendChild(inp);
-      tr.appendChild(tdP);
-
-      // Celda: quién lo agregó
-      const tdDoc = document.createElement('td');
-      tdDoc.className = 'p-2 text-center text-[9px] text-slate-500 font-bold';
-      tdDoc.textContent = r.agregadoPor || r.modificadoPor || 'Sistema';
-      tr.appendChild(tdDoc);
-
-      const tdOK = document.createElement('td');
-      tdOK.className = 'p-2 text-center';
-      const btnOK = document.createElement('button');
-      btnOK.className = 'text-[8px] px-2 py-1 bg-purple-600 text-white rounded font-black hover:bg-purple-700';
-      btnOK.textContent = 'OK';
-      btnOK.dataset.id = r.id;
-      btnOK.addEventListener('click', async function() {
-        const i = tr.querySelector('input');
-        await updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{precioCliente:parseFloat(i?.value)||0,actualizadoEn:serverTimestamp()});
-        Swal.fire({ icon:'success', title:'Guardado', timer:1000, showConfirmButton:false });
-      });
-      tdOK.appendChild(btnOK);
-      tr.appendChild(tdOK);
-
-      const tdDel = document.createElement('td');
-      tdDel.className = 'p-2 text-center';
-      const btnDel = document.createElement('button');
-      btnDel.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
-      btnDel.textContent = 'Del';
-      btnDel.dataset.id = r.id;
-      btnDel.dataset.nombre = r.nombre || r.id;
+      const tr=document.createElement('tr');tr.className='border-b border-slate-100 hover:bg-purple-50';
+      const tdNom=document.createElement('td');tdNom.className='p-2 font-bold uppercase text-slate-800 text-[10px]';tdNom.textContent=r.nombre||r.id;tr.appendChild(tdNom);
+      const tdP=document.createElement('td');tdP.className='p-2 text-center';
+      const inp=document.createElement('input');inp.type='number';inp.step='0.50';inp.min='0';inp.value=r.precioCliente||0;inp.className='w-24 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';inp.dataset.id=r.id;
+      inp.addEventListener('blur', function() { const doctor=window.doctorVerificado||'Sistema'; updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{precioCliente:parseFloat(this.value)||0,actualizadoEn:serverTimestamp(),modificadoPor:doctor}); });
+      tdP.appendChild(inp);tr.appendChild(tdP);
+      const tdDoc=document.createElement('td');tdDoc.className='p-2 text-center text-[9px] text-slate-500 font-bold';tdDoc.textContent=r.agregadoPor||r.modificadoPor||'Sistema';tr.appendChild(tdDoc);
+      const tdOK=document.createElement('td');tdOK.className='p-2 text-center';
+      const btnOK=document.createElement('button');btnOK.className='text-[8px] px-2 py-1 bg-purple-600 text-white rounded font-black hover:bg-purple-700';btnOK.textContent='OK';btnOK.dataset.id=r.id;
+      btnOK.addEventListener('click', async function() { const i=tr.querySelector('input'); await updateDoc(doc(db,"medicamentos_maestro",this.dataset.id),{precioCliente:parseFloat(i?.value)||0,actualizadoEn:serverTimestamp()}); Swal.fire({icon:'success',title:'Guardado',timer:1000,showConfirmButton:false}); });
+      tdOK.appendChild(btnOK);tr.appendChild(tdOK);
+      const tdDel=document.createElement('td');tdDel.className='p-2 text-center';
+      const btnDel=document.createElement('button');btnDel.className='text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';btnDel.textContent='Del';btnDel.dataset.id=r.id;btnDel.dataset.nombre=r.nombre||r.id;
       btnDel.addEventListener('click', function() { window.eliminarMedicamentoMaestro(this.dataset.id, this.dataset.nombre); });
-      tdDel.appendChild(btnDel);
-      tr.appendChild(tdDel);
-      tbody.appendChild(tr);
+      tdDel.appendChild(btnDel);tr.appendChild(tdDel);tbody.appendChild(tr);
     });
-
-    tabla.appendChild(tbody);
-    cont.innerHTML = '';
-    cont.appendChild(tabla);
-  } catch(e) { cont.innerHTML = '<p style="text-align:center;font-size:9px;color:#dc2626;">Error</p>'; }
+    tabla.appendChild(tbody);cont.innerHTML='';cont.appendChild(tabla);
+  } catch(e) { cont.innerHTML='<p style="text-align:center;font-size:9px;color:#dc2626;">Error: '+e.message+'</p>'; }
 };
 
 window.eliminarMedicamentoMaestro = async (id, nombre) => {
-  const res = await Swal.fire({
-    title: 'Eliminar medicamento',
-    html: '<p style="font-size:11px;">Eliminar <b>' + nombre + '</b>?</p>',
-    icon: 'warning', showCancelButton: true,
-    confirmButtonText: 'Si, eliminar', cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626'
-  });
+  const res = await Swal.fire({ title:'Eliminar medicamento', html:'<p style="font-size:11px;">Eliminar <b>'+nombre+'</b>?</p>', icon:'warning', showCancelButton:true, confirmButtonText:'Si, eliminar', cancelButtonText:'Cancelar', confirmButtonColor:'#dc2626' });
   if (!res.isConfirmed) return;
-  try {
-    await deleteDoc(doc(db, "medicamentos_maestro", id));
-    window.renderizarTablaMedicamentos();
-    if (typeof window.cargarSelectorMedicamentos === 'function') window.cargarSelectorMedicamentos();
-    Swal.fire({ icon:'success', title:'Eliminado', timer:1200, showConfirmButton:false });
-  } catch(e) { alert('Error: ' + e.message); }
-};
-
-// --- SINCRONIZAR MEDICAMENTOS BASE ------------------
-window.sincronizarMedicamentosBase = async () => {
-  const res = await Swal.fire({
-    title: 'Cargar medicamentos base',
-    html: '<p style="font-size:11px;color:#64748b;">Esto agrega al listado todos los medicamentos que vienen por defecto en el sistema.<br><br>Los que ya existen no se modifican.</p>',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Si, cargar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#7c3aed'
-  });
-  if (!res.isConfirmed) return;
-
-  const MEDS_BASE = [
-    { nombre: 'PIROYET',              precioCliente: 10 },
-    { nombre: 'ENROFLOXACINA',        precioCliente: 5  },
-    { nombre: 'SULFATRIM',            precioCliente: 5  },
-    { nombre: 'DEXAMETASONA',         precioCliente: 4  },
-    { nombre: 'CARPROFEN',            precioCliente: 10 },
-    { nombre: 'FLUNIXIN',             precioCliente: 5  },
-    { nombre: 'METADOL',              precioCliente: 5  },
-    { nombre: 'COMPLEJO B',           precioCliente: 5  },
-    { nombre: 'SUERO HIPERINMUNE',    precioCliente: 10 },
-    { nombre: 'BROMURO DE HIOSCINA',  precioCliente: 10 },
-    { nombre: 'FENOBARBITAL',         precioCliente: 5  },
-    { nombre: 'GASTRINE',             precioCliente: 7  },
-    { nombre: 'RANITIDINA',           precioCliente: 5  },
-    { nombre: 'METOCLOPRAMIDA',       precioCliente: 5  },
-    { nombre: 'FUROSEMIDA',           precioCliente: 5  },
-    { nombre: 'VIT K',                precioCliente: 5  },
-    { nombre: 'ERITROGEN',            precioCliente: 5  },
-    { nombre: 'AMINOVIT',             precioCliente: 10 },
-    { nombre: 'OXITETRACICLINA',      precioCliente: 5  },
-    { nombre: 'CEFTRIAXONA',          precioCliente: 12 },
-    { nombre: 'ADRENALINA',           precioCliente: 14 },
-    { nombre: 'ARTROSAN',             precioCliente: 20 },
-    { nombre: 'LISAVAC',              precioCliente: 5  },
-    { nombre: 'SOROGLOBULIN',         precioCliente: 25 },
-  ];
-
-  try {
-    Swal.fire({ title: 'Cargando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-    let cnt = 0;
-    for (const m of MEDS_BASE) {
-      // Solo agregar si no existe
-      const snap = await getDocs(query(collection(db,"medicamentos_maestro"), where("nombre","==",m.nombre)));
-      if (snap.empty) {
-        await setDoc(doc(db,"medicamentos_maestro",m.nombre), {
-          nombre: m.nombre,
-          precioCliente: m.precioCliente,
-          creadoEn: serverTimestamp(),
-          agregadoPor: 'Base del sistema',
-          activo: true
-        });
-        cnt++;
-      }
-    }
-    Swal.close();
-    await window.renderizarTablaMedicamentos();
-    if (typeof window.cargarSelectorMedicamentos === 'function') window.cargarSelectorMedicamentos();
-    Swal.fire({ icon:'success', title: cnt + ' medicamentos cargados', text: 'Los que ya existian no fueron modificados.', timer:2500, showConfirmButton:false });
-  } catch(e) { Swal.close(); alert('Error: ' + e.message); }
+  try { await deleteDoc(doc(db,"medicamentos_maestro",id)); window.renderizarTablaMedicamentos(); if(typeof window.cargarSelectorMedicamentos==='function')window.cargarSelectorMedicamentos(); Swal.fire({icon:'success',title:'Eliminado',timer:1200,showConfirmButton:false}); } catch(e) { alert('Error: '+e.message); }
 };
 
 window.agregarMedicamentoMaestro = async () => {
   const nombre = document.getElementById('nuevoMedNombre')?.value.trim().toUpperCase();
   const precio = parseFloat(document.getElementById('nuevoMedPrecio')?.value) || 0;
-  if (!nombre) { alert('Escribe el nombre.'); return; }
-
+  if (!nombre) { alert('Escribe el nombre del medicamento.'); return; }
   try {
-    // Registrar quién lo agrega (doctor activo o "Ajustes" si no hay doctor)
     const agregadoPor = window.doctorVerificado || 'Ajustes';
-    await setDoc(doc(db,"medicamentos_maestro",nombre), {
-      nombre, precioCliente: precio,
-      creadoEn: serverTimestamp(),
-      agregadoPor,
-      activo: true
-    }, { merge: true });
-    const n = document.getElementById('nuevoMedNombre');
-    const p = document.getElementById('nuevoMedPrecio');
-    if (n) n.value = ''; if (p) p.value = '';
+    await setDoc(doc(db,"medicamentos_maestro",nombre), { nombre, precioCliente:precio, creadoEn:serverTimestamp(), agregadoPor, activo:true }, { merge:true });
+    const n=document.getElementById('nuevoMedNombre'); const p=document.getElementById('nuevoMedPrecio');
+    if(n)n.value=''; if(p)p.value='';
     await window.renderizarTablaMedicamentos();
-    if (typeof window.cargarSelectorMedicamentos === 'function') window.cargarSelectorMedicamentos();
-    Swal.fire({ icon:'success', title:'Medicamento agregado', text: nombre, timer:1500, showConfirmButton:false });
-  } catch(e) { alert('Error: ' + e.message); }
+    if(typeof window.cargarSelectorMedicamentos==='function')window.cargarSelectorMedicamentos();
+    Swal.fire({icon:'success',title:'Medicamento agregado',text:nombre,timer:1500,showConfirmButton:false});
+  } catch(e) { alert('Error: '+e.message); }
+};
+
+window.sincronizarMedicamentosBase = async () => {
+  const res = await Swal.fire({ title:'Cargar medicamentos base', html:'<p style="font-size:11px;color:#64748b;">Agrega los medicamentos del sistema. Los que ya existen no se modifican.</p>', icon:'question', showCancelButton:true, confirmButtonText:'Si, cargar', cancelButtonText:'Cancelar', confirmButtonColor:'#7c3aed' });
+  if (!res.isConfirmed) return;
+  const MEDS_BASE = [
+    {nombre:'PIROYET',precioCliente:10},{nombre:'ENROFLOXACINA',precioCliente:5},{nombre:'SULFATRIM',precioCliente:5},
+    {nombre:'DEXAMETASONA',precioCliente:4},{nombre:'CARPROFEN',precioCliente:10},{nombre:'FLUNIXIN',precioCliente:5},
+    {nombre:'METADOL',precioCliente:5},{nombre:'COMPLEJO B',precioCliente:5},{nombre:'SUERO HIPERINMUNE',precioCliente:10},
+    {nombre:'BROMURO DE HIOSCINA',precioCliente:10},{nombre:'FENOBARBITAL',precioCliente:5},{nombre:'GASTRINE',precioCliente:7},
+    {nombre:'RANITIDINA',precioCliente:5},{nombre:'METOCLOPRAMIDA',precioCliente:5},{nombre:'FUROSEMIDA',precioCliente:5},
+    {nombre:'VIT K',precioCliente:5},{nombre:'ERITROGEN',precioCliente:5},{nombre:'AMINOVIT',precioCliente:10},
+    {nombre:'OXITETRACICLINA',precioCliente:5},{nombre:'CEFTRIAXONA',precioCliente:12},{nombre:'ADRENALINA',precioCliente:14},
+    {nombre:'ARTROSAN',precioCliente:20},{nombre:'LISAVAC',precioCliente:5},{nombre:'SOROGLOBULIN',precioCliente:25},
+  ];
+  try {
+    Swal.fire({title:'Cargando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    let cnt=0;
+    for (const m of MEDS_BASE) {
+      const snap=await getDocs(query(collection(db,"medicamentos_maestro"),where("nombre","==",m.nombre)));
+      if(snap.empty){await setDoc(doc(db,"medicamentos_maestro",m.nombre),{nombre:m.nombre,precioCliente:m.precioCliente,creadoEn:serverTimestamp(),agregadoPor:'Base del sistema',activo:true});cnt++;}
+    }
+    Swal.close();
+    await window.renderizarTablaMedicamentos();
+    if(typeof window.cargarSelectorMedicamentos==='function')window.cargarSelectorMedicamentos();
+    Swal.fire({icon:'success',title:cnt+' medicamentos cargados',text:'Los que ya existian no fueron modificados.',timer:2500,showConfirmButton:false});
+  } catch(e) { Swal.close(); alert('Error: '+e.message); }
 };
 
 // ─── AGREGAR INSUMO MAESTRO ──────────────────────────────
@@ -879,165 +433,97 @@ window.agregarInsumoMaestro = async () => {
   const costoIngresado = parseFloat(document.getElementById('nuevoInsumoCosto')?.value) || 0;
   if (!nombre) { alert('Escribe el nombre del insumo.'); return; }
   if (costoIngresado <= 0) { alert('Escribe el costo del insumo.'); return; }
-
   try {
-    // Verificar si ya existe
     const snap = await getDocs(query(collection(db, "insumos_maestro"), where("nombre", "==", nombre)));
     if (!snap.empty) { alert('Ya existe un insumo con ese nombre.'); return; }
-
-    // Pasar por la calculadora igual que al actualizar
-    const MARGEN = 0.20;
-    const tasa = window.tasaDolarHoy || 36;
-
-    // Paso 1: moneda
-    var htmlMoneda = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
-    htmlMoneda += '<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">💵 Dólares (USD)</button>';
-    htmlMoneda += '<button id="btnMonedaBS" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:12px;color:#92400e;cursor:pointer;">🟡 Bolívares (Bs ' + tasa.toFixed(2) + ')</button>';
-    htmlMoneda += '</div>';
-
+    const MARGEN=0.20; const tasa=window.tasaDolarHoy||36;
+    var htmlMoneda='<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
+    htmlMoneda+='<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">Dolares (USD)</button>';
+    htmlMoneda+='<button id="btnMonedaBS" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:12px;color:#92400e;cursor:pointer;">Bolivares (Bs '+tasa.toFixed(2)+')</button></div>';
     const resMoneda = await Swal.fire({
-      title: '💰 ¿En qué moneda está el precio?',
-      html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;"><b>' + nombre + '</b><br>Precio: <b>' + costoIngresado.toFixed(2) + '</b></p>' + htmlMoneda,
-      showConfirmButton: false,
-      showCancelButton: true,
-      cancelButtonText: 'Cancelar',
-      didOpen: function() {
-        document.getElementById('btnMonedaUSD').addEventListener('click', function() { window._monedaInsumo='usd'; Swal.clickConfirm(); });
-        document.getElementById('btnMonedaBS').addEventListener('click', function() { window._monedaInsumo='bs'; Swal.clickConfirm(); });
-      }
+      title:'En que moneda esta el precio?',
+      html:'<p style="font-size:11px;color:#64748b;margin-bottom:8px;"><b>'+nombre+'</b><br>Precio: <b>'+costoIngresado.toFixed(2)+'</b></p>'+htmlMoneda,
+      showConfirmButton:false, showCancelButton:true, cancelButtonText:'Cancelar',
+      didOpen:function(){document.getElementById('btnMonedaUSD').addEventListener('click',function(){window._monedaInsumo='usd';Swal.clickConfirm();});document.getElementById('btnMonedaBS').addEventListener('click',function(){window._monedaInsumo='bs';Swal.clickConfirm();});}
     });
-    if (resMoneda.isDismissed) return;
-
-    const moneda = window._monedaInsumo || 'usd';
-    window._monedaInsumo = null;
-    const costoUSD = moneda === 'bs' ? costoIngresado / tasa : costoIngresado;
-
-    // Paso 2: calcular usos según tipo
-    const usosEfectivos = await _calcularUsosInsumo(nombre, costoUSD);
-    if (!usosEfectivos) return;
-
-    const costoPorUso = costoUSD / usosEfectivos;
-
-    // Guardar en Firebase
-    await addDoc(collection(db, "insumos_maestro"), {
-      nombre,
-      costoTotal:      costoUSD,
-      costoOriginalBS: moneda === 'bs' ? costoIngresado : null,
-      costo:           parseFloat(costoPorUso.toFixed(4)),
-      usosEstimados:   usosEfectivos,
-      margenSeguridad: MARGEN,
-      creadoEn:        serverTimestamp()
-    });
-
-    // Limpiar campos
-    const inpN = document.getElementById('nuevoInsumoNombre');
-    const inpC = document.getElementById('nuevoInsumoCosto');
-    if (inpN) inpN.value = '';
-    if (inpC) inpC.value = '';
-
+    if(resMoneda.isDismissed)return;
+    const moneda=window._monedaInsumo||'usd';window._monedaInsumo=null;
+    const costoUSD=moneda==='bs'?costoIngresado/tasa:costoIngresado;
+    const usosEfectivos=await _calcularUsosInsumo(nombre,costoUSD);
+    if(!usosEfectivos)return;
+    const costoPorUso=costoUSD/usosEfectivos;
+    await addDoc(collection(db,"insumos_maestro"),{nombre,costoTotal:costoUSD,costoOriginalBS:moneda==='bs'?costoIngresado:null,costo:parseFloat(costoPorUso.toFixed(4)),usosEstimados:usosEfectivos,margenSeguridad:MARGEN,creadoEn:serverTimestamp()});
+    const inpN=document.getElementById('nuevoInsumoNombre');const inpC=document.getElementById('nuevoInsumoCosto');if(inpN)inpN.value='';if(inpC)inpC.value='';
     await window.renderizarTablaInsumos();
-
-    await Swal.fire({
-      icon: 'success',
-      title: '✅ Insumo agregado',
-      html: '<b>' + nombre + '</b><br>$' + costoPorUso.toFixed(4) + ' por servicio · ' + usosEfectivos + ' usos',
-      timer: 2500,
-      showConfirmButton: false
-    });
-
-  } catch(e) { console.error(e); alert('❌ Error: ' + e.message); }
+    await Swal.fire({icon:'success',title:'Insumo agregado',html:'<b>'+nombre+'</b><br>$'+costoPorUso.toFixed(4)+' por servicio, '+usosEfectivos+' usos',timer:2500,showConfirmButton:false});
+  } catch(e) { console.error(e); alert('Error: '+e.message); }
 };
 
 window.actualizarCostoInsumo = async (idInsumo, valor) => {
-  const valorIngresado = parseFloat(valor) || 0;
-  if (valorIngresado <= 0) return;
-
-  const MARGEN = 0.20;
-  const tasa   = window.tasaDolarHoy || 36;
-
-  // Paso 1: preguntar moneda
-  var htmlMoneda = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
-  htmlMoneda += '<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">💵 Dólares (USD)</button>';
-  htmlMoneda += '<button id="btnMonedaBS" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:12px;color:#92400e;cursor:pointer;">🟡 Bolívares (Bs ' + tasa.toFixed(2) + ')</button>';
-  htmlMoneda += '</div>';
-
-  const resMoneda = await Swal.fire({
-    title: '💰 ¿En qué moneda está el precio?',
-    html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;">Precio ingresado: <b>' + valorIngresado.toFixed(2) + '</b></p>' + htmlMoneda,
-    showConfirmButton: false,
-    showCancelButton: true,
-    cancelButtonText: 'Cancelar',
-    didOpen: function() {
-      document.getElementById('btnMonedaUSD').addEventListener('click', function() { window._monedaInsumo='usd'; Swal.clickConfirm(); });
-      document.getElementById('btnMonedaBS').addEventListener('click', function() { window._monedaInsumo='bs'; Swal.clickConfirm(); });
-    }
+  const valorIngresado=parseFloat(valor)||0; if(valorIngresado<=0)return;
+  const MARGEN=0.20; const tasa=window.tasaDolarHoy||36;
+  var htmlMoneda='<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
+  htmlMoneda+='<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">Dolares (USD)</button>';
+  htmlMoneda+='<button id="btnMonedaBS" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:12px;color:#92400e;cursor:pointer;">Bolivares (Bs '+tasa.toFixed(2)+')</button></div>';
+  const resMoneda=await Swal.fire({
+    title:'En que moneda esta el precio?',
+    html:'<p style="font-size:11px;color:#64748b;margin-bottom:8px;">Precio: <b>'+valorIngresado.toFixed(2)+'</b></p>'+htmlMoneda,
+    showConfirmButton:false,showCancelButton:true,cancelButtonText:'Cancelar',
+    didOpen:function(){document.getElementById('btnMonedaUSD').addEventListener('click',function(){window._monedaInsumo='usd';Swal.clickConfirm();});document.getElementById('btnMonedaBS').addEventListener('click',function(){window._monedaInsumo='bs';Swal.clickConfirm();});}
   });
-  if (resMoneda.isDismissed) return;
-
-  const moneda = window._monedaInsumo || 'usd';
-  window._monedaInsumo = null;
-  const costoUSD = moneda === 'bs' ? valorIngresado / tasa : valorIngresado;
-
-  // Paso 2: obtener nombre del insumo para detectar tipo
-  let nombreInsumo = idInsumo;
-  try {
-    const snap = await getDoc(doc(db, "insumos_maestro", idInsumo));
-    if (snap.exists()) nombreInsumo = snap.data().nombre || idInsumo;
-  } catch(e) {}
-
-  // Paso 3: calcular usos según tipo de insumo
-  const usosEfectivos = await _calcularUsosInsumo(nombreInsumo, costoUSD);
-  if (!usosEfectivos) return;
-
-  const costoPorUso = costoUSD / usosEfectivos;
-
-  await Swal.fire({
-    icon: 'success',
-    title: '✅ Costo calculado',
-    html: '<p style="font-size:11px;">Costo USD: <b>$' + costoUSD.toFixed(4) + '</b>' +
-          (moneda==='bs' ? ' (Bs '+valorIngresado.toFixed(2)+')' : '') + '</p>' +
-          '<p style="font-size:11px;">Usos efectivos: <b>' + usosEfectivos + '</b></p>' +
-          '<p style="font-size:16px;font-weight:900;color:#2563eb;">$' + costoPorUso.toFixed(4) + ' por servicio</p>',
-    timer: 3000, showConfirmButton: false
-  });
-
-  try {
-    await updateDoc(doc(db, "insumos_maestro", idInsumo), {
-      costoTotal:      costoUSD,
-      costoOriginalBS: moneda === 'bs' ? valorIngresado : null,
-      costo:           parseFloat(costoPorUso.toFixed(4)),
-      usosEstimados:   usosEfectivos,
-      margenSeguridad: MARGEN,
-      actualizadoEn:   serverTimestamp()
-    });
-    window.renderizarTablaInsumos();
-  } catch(e) { console.error(e); }
+  if(resMoneda.isDismissed)return;
+  const moneda=window._monedaInsumo||'usd';window._monedaInsumo=null;
+  const costoUSD=moneda==='bs'?valorIngresado/tasa:valorIngresado;
+  let nombreInsumo=idInsumo;
+  try{const snap=await getDoc(doc(db,"insumos_maestro",idInsumo));if(snap.exists())nombreInsumo=snap.data().nombre||idInsumo;}catch(e){}
+  const usosEfectivos=await _calcularUsosInsumo(nombreInsumo,costoUSD);if(!usosEfectivos)return;
+  const costoPorUso=costoUSD/usosEfectivos;
+  await Swal.fire({icon:'success',title:'Costo calculado',html:'<p style="font-size:11px;">USD: <b>$'+costoUSD.toFixed(4)+'</b>'+(moneda==='bs'?' (Bs '+valorIngresado.toFixed(2)+')')+'</p><p style="font-size:11px;">Usos: <b>'+usosEfectivos+'</b></p><p style="font-size:16px;font-weight:900;color:#2563eb;">$'+costoPorUso.toFixed(4)+' por servicio</p>',timer:3000,showConfirmButton:false});
+  try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costoTotal:costoUSD,costoOriginalBS:moneda==='bs'?valorIngresado:null,costo:parseFloat(costoPorUso.toFixed(4)),usosEstimados:usosEfectivos,margenSeguridad:MARGEN,actualizadoEn:serverTimestamp()});window.renderizarTablaInsumos();}catch(e){console.error(e);}
 };
 
-window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`🔐 Eliminar "${nombreInsumo}"\nCLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`⚠️ Eliminar "${nombreInsumo}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`✅ Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`Eliminar "${nombreInsumo}" - CLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("Clave incorrecta.");return;}if(!confirm(`Eliminar "${nombreInsumo}". Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("Error: "+e.message);}};
 
-// ─── INICIALIZAR BD ───
-window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("🔐 CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm("⚠️ ¿Inicializar catálogo de servicios en Firebase?"))return;
-const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULTA OFTALMOLÓGICA":{precioVenta:80,porcDoc:12.5},"CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40},"ABSCESO":{precioVenta:25,porcDoc:50},"ECOGRAFÍA":{precioVenta:30,porcDoc:40},"COLOCACION VIA":{precioVenta:15,porcDoc:50},"ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50},"TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50},"VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50},"VACUNA PUPPY":{precioVenta:40,porcDoc:50},"VACUNA ANTIRRÁBICA":{precioVenta:30,porcDoc:50},"VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50},"VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50},"VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50},"VACUNA BIOVETA":{precioVenta:60,porcDoc:50},"HEMATOLOGÍA COMPLETA":{precioVenta:23,porcDoc:34.78},"QUÍMICA SANGUÍNEA":{precioVenta:60,porcDoc:50},"DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50},"DISTEMPER":{precioVenta:35,porcDoc:50},"PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"FILARIASIS":{precioVenta:40,porcDoc:50},"SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50},"TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50},"HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50},"EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50},"CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50},"RASPADO PIEL":{precioVenta:10,porcDoc:50},"PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5},"EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50},"EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50},"EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50},"EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50},"REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50},"REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50},"REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50},"REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40},"CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40},"CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40}};
-try{Swal.fire({title:'⏳ Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`✅ ${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("❌ Error: "+e.message);}};
+// ─── INICIALIZAR BD ───────────────────────────────────────
+window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("Clave incorrecta.");return;}if(!confirm("Inicializar catalogo de servicios en Firebase?"))return;
+const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULTA OFTALMOLOGICA":{precioVenta:80,porcDoc:12.5},"CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40},"ABSCESO":{precioVenta:25,porcDoc:50},"ECOGRAFIA":{precioVenta:30,porcDoc:40},"COLOCACION VIA":{precioVenta:15,porcDoc:50},"ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50},"TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50},"VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50},"VACUNA PUPPY":{precioVenta:40,porcDoc:50},"VACUNA ANTIRRABICA":{precioVenta:30,porcDoc:50},"VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50},"VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50},"VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50},"VACUNA BIOVETA":{precioVenta:60,porcDoc:50},"HEMATOLOGIA COMPLETA":{precioVenta:23,porcDoc:34.78},"QUIMICA SANGUINEA":{precioVenta:60,porcDoc:50},"DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50},"DISTEMPER":{precioVenta:35,porcDoc:50},"PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"FILARIASIS":{precioVenta:40,porcDoc:50},"SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50},"TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50},"HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50},"EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50},"CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50},"RASPADO PIEL":{precioVenta:10,porcDoc:50},"PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5},"EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50},"EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50},"EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50},"EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50},"REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50},"REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50},"REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50},"REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40},"CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40},"CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40}};
+try{Swal.fire({title:'Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("Error: "+e.message);}};
 
-// ─── CAMBIAR SUB-TAB CONFIG ───
-window.cambiarSubTabConfig=(tab)=>{'servicios,insumos,seguridad,tarifa'.split(',').forEach(t=>{const panel=document.getElementById('panel_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const btn=document.getElementById('btn_subTab'+t.charAt(0).toUpperCase()+t.slice(1));const esActivo=t===tab;panel?.classList.toggle('hidden',!esActivo);if(btn){btn.className=esActivo?"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white":"text-[9px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50";}});if(tab==='servicios')window.renderizarTablaMaestra();if(tab==='insumos')window.renderizarTablaInsumos();};
+// ─── CAMBIAR SUB-TAB CONFIG ───────────────────────────────
+window.cambiarSubTabConfig = (tab) => {
+  ['servicios','insumos','medicamentos','seguridad','tarifa'].forEach(t => {
+    const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
+    const activo = t === tab;
+    panel?.classList.toggle('hidden', !activo);
+    if (btn) {
+      btn.style.background    = activo ? '#2563eb' : 'transparent';
+      btn.style.color         = activo ? '#ffffff' : '#64748b';
+      btn.style.fontWeight    = '900';
+      btn.style.fontSize      = '10px';
+      btn.style.padding       = '8px 4px';
+      btn.style.borderRadius  = '8px';
+      btn.style.border        = 'none';
+      btn.style.cursor        = 'pointer';
+      btn.style.textTransform = 'uppercase';
+      btn.style.whiteSpace    = 'nowrap';
+      btn.style.overflow      = 'hidden';
+      btn.style.textOverflow  = 'ellipsis';
+    }
+  });
+  if (tab === 'servicios')    window.renderizarTablaMaestra();
+  if (tab === 'insumos')      window.renderizarTablaInsumos();
+  if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
+};
 
 // ═══════════════════════════════════════════════════════
 // CALCULADORA DE COSTOS DE INVENTARIO
-//
-// MODO BCV — cobra en Bs:  Bs ÷ BCV = Costo USD
-// MODO BCV — cobra en USD: USD × BCV = Bs → Bs ÷ BCV = Costo USD (= precio USD directo)
-// MODO PROVEEDOR:          USD × TasaProv = Bs → Bs ÷ BCV = Costo USD real
-// MARGEN sobre venta:      Costo ÷ (1 - margen%) = Precio Venta
 // ═══════════════════════════════════════════════════════
 
-let _calcInvModo   = 'bcv';  // 'bcv' | 'proveedor'
-let _calcInvMoneda = 'bs';   // 'bs'  | 'usd'  (solo en modo BCV)
+let _calcInvModo   = 'bcv';
+let _calcInvMoneda = 'bs';
 let _calcInvAbierto = false;
 
-// ── Toggle desplegable ──
 window.calcInvToggle = () => {
   _calcInvAbierto = !_calcInvAbierto;
   const cuerpo  = document.getElementById('calcInvCuerpo');
@@ -1046,7 +532,6 @@ window.calcInvToggle = () => {
   if (chevron) chevron.innerText = _calcInvAbierto ? '▲ Cerrar' : '▼ Abrir';
 };
 
-// ── Cambiar modo: BCV o Proveedor con tasa propia ──
 window.calcInvSetModo = (modo) => {
   _calcInvModo = modo;
   const btnBCV  = document.getElementById('calcInvBtnBCV');
@@ -1054,14 +539,12 @@ window.calcInvSetModo = (modo) => {
   const filaBS  = document.getElementById('calcInvFilaBS');
   const filaUSD = document.getElementById('calcInvFilaUSD');
   const filaTasaProv = document.getElementById('calcInvFilaTasaProv');
-
   if (modo === 'bcv') {
     if (btnBCV)  btnBCV.className  = 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all bg-blue-600 text-white';
     if (btnProv) btnProv.className = 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all text-slate-400';
     if (filaBS)  filaBS.classList.remove('hidden');
     if (filaUSD) filaUSD.classList.add('hidden');
     if (filaTasaProv) filaTasaProv.classList.add('hidden');
-    // restaurar moneda actual
     window.calcInvSetMoneda(_calcInvMoneda);
   } else {
     if (btnProv) btnProv.className = 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all bg-amber-500 text-white';
@@ -1073,14 +556,12 @@ window.calcInvSetModo = (modo) => {
   window.calcularCostoInventario();
 };
 
-// ── Cambiar moneda del proveedor en modo BCV ──
 window.calcInvSetMoneda = (moneda) => {
   _calcInvMoneda = moneda;
   const btnBS  = document.getElementById('calcInvBtnMonedaBS');
   const btnUSD = document.getElementById('calcInvBtnMonedaUSD');
   const label  = document.getElementById('calcInvLabelPrecio');
   const input  = document.getElementById('calcInvPrecioBS');
-
   if (moneda === 'bs') {
     if (btnBS)  btnBS.className  = 'flex-1 py-1 rounded-md font-black text-[9px] uppercase transition-all bg-amber-500 text-white';
     if (btnUSD) btnUSD.className = 'flex-1 py-1 rounded-md font-black text-[9px] uppercase transition-all text-slate-400';
@@ -1096,94 +577,97 @@ window.calcInvSetMoneda = (moneda) => {
   window.calcularCostoInventario();
 };
 
-// ── Cálculo principal ──
 window.calcularCostoInventario = () => {
   const tasaBCV   = parseFloat(document.getElementById('calcInvTasaBCV')?.value) || window.tasaDolarHoy || 36;
   const margen    = parseFloat(document.getElementById('calcInvMargen')?.value)  || 30;
   const resultDiv = document.getElementById('calcInvResultado');
   const margenLbl = document.getElementById('calcInvMargenLabel');
   const divisor   = 1 - (margen / 100);
-
   if (margenLbl) margenLbl.innerText = `÷ ${divisor.toFixed(2)}`;
-
-  let costoUSD    = 0;
-  let detalle     = '';
-  let valido      = false;
-
+  let costoUSD=0, detalle='', valido=false;
   if (_calcInvModo === 'bcv') {
     const monto = parseFloat(document.getElementById('calcInvPrecioBS')?.value) || 0;
     if (monto > 0 && tasaBCV > 0) {
-      if (_calcInvMoneda === 'bs') {
-        // Proveedor cobra en Bs a tasa BCV
-        costoUSD = monto / tasaBCV;
-        detalle  = `Bs ${monto.toLocaleString('es-VE',{minimumFractionDigits:2})} ÷ Bs ${tasaBCV.toFixed(2)} = $${costoUSD.toFixed(4)}`;
-      } else {
-        // Proveedor cobra en USD directamente (tasa BCV solo para referencia de costo real)
-        costoUSD = monto; // ya es USD, no hay conversión
-        detalle  = `$${monto.toFixed(2)} USD directo`;
-      }
-      valido = true;
+      if (_calcInvMoneda === 'bs') { costoUSD=monto/tasaBCV; detalle=`Bs ${monto.toLocaleString('es-VE',{minimumFractionDigits:2})} ÷ ${tasaBCV.toFixed(2)} = $${costoUSD.toFixed(4)}`; }
+      else { costoUSD=monto; detalle=`$${monto.toFixed(2)} USD directo`; }
+      valido=true;
     }
-
   } else {
-    // MODO PROVEEDOR: cobra en USD a su propia tasa
-    const precioUSD  = parseFloat(document.getElementById('calcInvPrecioUSD')?.value)  || 0;
-    const tasaProv   = parseFloat(document.getElementById('calcInvTasaProv')?.value)   || 0;
-    if (precioUSD > 0 && tasaProv > 0 && tasaBCV > 0) {
-      const bsPagados = precioUSD * tasaProv;
-      costoUSD = bsPagados / tasaBCV;
-      detalle  = `$${precioUSD} × ${tasaProv} = Bs ${bsPagados.toLocaleString('es-VE',{minimumFractionDigits:2})} ÷ ${tasaBCV.toFixed(2)} = $${costoUSD.toFixed(4)}`;
-      valido = true;
-    }
+    const precioUSD=parseFloat(document.getElementById('calcInvPrecioUSD')?.value)||0;
+    const tasaProv=parseFloat(document.getElementById('calcInvTasaProv')?.value)||0;
+    if (precioUSD>0&&tasaProv>0&&tasaBCV>0) { const bsPagados=precioUSD*tasaProv; costoUSD=bsPagados/tasaBCV; detalle=`$${precioUSD}×${tasaProv}=Bs${bsPagados.toLocaleString('es-VE',{minimumFractionDigits:2})}÷${tasaBCV.toFixed(2)}=$${costoUSD.toFixed(4)}`; valido=true; }
   }
-
-  if (!valido) {
-    if (resultDiv) resultDiv.classList.add('hidden');
-    return;
-  }
-
-  // Aplicar IVA al costo si está marcado
-  const aplicaIVA  = document.getElementById('calcInvIVA')?.checked || false;
-  const costoConIVA = aplicaIVA ? costoUSD * 1.16 : costoUSD;
-  if (aplicaIVA) detalle += ` + IVA 16% = $${costoConIVA.toFixed(4)}`;
-
-  const precioVenta = divisor > 0 ? costoConIVA / divisor : 0;
-
-  if (resultDiv) resultDiv.classList.remove('hidden');
-  const elCosto   = document.getElementById('calcInvCostoUSD');
-  const elVenta   = document.getElementById('calcInvPrecioVentaCalc');
-  const elDetalle = document.getElementById('calcInvDetalle');
-  if (elCosto)   elCosto.innerText   = `$${costoConIVA.toFixed(2)}${aplicaIVA ? ' (c/IVA)' : ''}`;
-  if (elVenta)   elVenta.innerText   = `$${precioVenta.toFixed(2)}`;
-  if (elDetalle) elDetalle.innerText = `${detalle} ÷ ${divisor.toFixed(2)} = $${precioVenta.toFixed(2)}`;
-
-  window._calcInvResultado = { costoUSD: costoConIVA, precioVenta };
+  if (!valido) { if(resultDiv)resultDiv.classList.add('hidden'); return; }
+  const aplicaIVA=document.getElementById('calcInvIVA')?.checked||false;
+  const costoConIVA=aplicaIVA?costoUSD*1.16:costoUSD;
+  if(aplicaIVA)detalle+=` + IVA 16% = $${costoConIVA.toFixed(4)}`;
+  const precioVenta=divisor>0?costoConIVA/divisor:0;
+  if(resultDiv)resultDiv.classList.remove('hidden');
+  const elC=document.getElementById('calcInvCostoUSD');
+  const elV=document.getElementById('calcInvPrecioVentaCalc');
+  const elD=document.getElementById('calcInvDetalle');
+  if(elC)elC.innerText=`$${costoConIVA.toFixed(2)}${aplicaIVA?' (c/IVA)':''}`;
+  if(elV)elV.innerText=`$${precioVenta.toFixed(2)}`;
+  if(elD)elD.innerText=`${detalle} ÷ ${divisor.toFixed(2)} = $${precioVenta.toFixed(2)}`;
+  window._calcInvResultado={costoUSD:costoConIVA,precioVenta};
 };
 
-// ── Aplicar al formulario del producto ──
 window.calcInvAplicar = () => {
-  if (!window._calcInvResultado) return;
-  const { costoUSD, precioVenta } = window._calcInvResultado;
-  const elCosto = document.getElementById('invCostoCompra');
-  const elVenta = document.getElementById('invPrecioVenta');
-  if (elCosto) { elCosto.value = costoUSD.toFixed(2); elCosto.style.background='#d1fae5'; setTimeout(()=>elCosto.style.background='',1200); }
-  if (elVenta) { elVenta.value = precioVenta.toFixed(2); elVenta.style.background='#dbeafe'; setTimeout(()=>elVenta.style.background='',1200); }
-  // Cerrar calculadora
-  _calcInvAbierto = false;
+  if(!window._calcInvResultado)return;
+  const{costoUSD,precioVenta}=window._calcInvResultado;
+  const elCosto=document.getElementById('invCostoCompra');
+  const elVenta=document.getElementById('invPrecioVenta');
+  if(elCosto){elCosto.value=costoUSD.toFixed(2);elCosto.style.background='#d1fae5';setTimeout(()=>elCosto.style.background='',1200);}
+  if(elVenta){elVenta.value=precioVenta.toFixed(2);elVenta.style.background='#dbeafe';setTimeout(()=>elVenta.style.background='',1200);}
+  _calcInvAbierto=false;
   document.getElementById('calcInvCuerpo')?.classList.add('hidden');
-  document.getElementById('calcInvChevron').innerText = '▼ Abrir';
-  Swal.fire({ icon:'success', title:'✅ Valores aplicados', text:`Costo: $${costoUSD.toFixed(2)} · Venta: $${precioVenta.toFixed(2)}`, timer:2000, showConfirmButton:false });
+  const ch=document.getElementById('calcInvChevron');if(ch)ch.innerText='▼ Abrir';
+  Swal.fire({icon:'success',title:'Valores aplicados',text:`Costo: $${costoUSD.toFixed(2)} · Venta: $${precioVenta.toFixed(2)}`,timer:2000,showConfirmButton:false});
 };
 
-// ── Inicializar al abrir inventario ──
 window.inicializarCalculadoraInventario = () => {
-  const tasa = window.tasaDolarHoy || 36;
-  const el   = document.getElementById('calcInvTasaBCV');
-  if (el) el.value = tasa.toFixed(2);
-  // Asegurar estado inicial
-  _calcInvAbierto = false;
-  _calcInvModo    = 'bcv';
-  _calcInvMoneda  = 'bs';
+  const tasa=window.tasaDolarHoy||36;
+  const el=document.getElementById('calcInvTasaBCV');
+  if(el)el.value=tasa.toFixed(2);
+  _calcInvAbierto=false; _calcInvModo='bcv'; _calcInvMoneda='bs';
 };
 
-console.log("✅ inventario.js v3 — medicamentos maestros, calculadora insumos");
+// ─── AUDITORIA ────────────────────────────────────────────
+window.verAuditoriaInventario = async () => {
+  try {
+    const snap=await getDocs(query(collection(db,"auditoria_inventario"),orderBy("fecha","desc")));
+    if(snap.empty){alert("Sin registros de auditoría.");return;}
+    let html=`<div style="max-height:380px;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#1e293b;color:#fff;"><th style="padding:6px 8px;text-align:left;">Fecha</th><th style="padding:6px 8px;">Usuario</th><th style="padding:6px 8px;">Accion</th><th style="padding:6px 8px;">Detalle</th></tr></thead><tbody>`;
+    snap.forEach(d=>{const r=d.data();const fecha=r.fecha?.toDate?r.fecha.toDate().toLocaleString():"---";html+=`<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:5px 8px;font-size:9px;">${fecha}</td><td style="padding:5px 8px;font-weight:700;">${r.usuario||'---'}</td><td style="padding:5px 8px;color:#2563eb;font-weight:700;">${r.accion||'---'}</td><td style="padding:5px 8px;color:#64748b;">${r.detalle||''}</td></tr>`;});
+    html+=`</tbody></table></div>`;
+    Swal.fire({title:'Auditoria Inventario',html,width:700,showConfirmButton:true,confirmButtonText:'Cerrar'});
+  } catch(e){console.error(e);alert("Error: "+e.message);}
+};
+
+window.registrarAuditoriaInventario = async (accion, detalle) => {
+  try {
+    const usuario = window.doctorVerificado || window.usuarioActivo || 'Sistema';
+    await addDoc(collection(db,"auditoria_inventario"),{accion,detalle,usuario,fecha:serverTimestamp()});
+  } catch(e){console.warn("Error auditoria:",e);}
+};
+
+// ─── VERIFICAR STOCK ──────────────────────────────────────
+window.verificarStockProducto = async (nombreProducto) => {
+  try {
+    const snap=await getDocs(query(collection(db,"inventario"),where("nombre","==",nombreProducto.toUpperCase())));
+    if(snap.empty)return;
+    const p=snap.docs[0].data();
+    if((p.cantidadStock||0)<=(p.stockMinimo||3)){
+      Swal.fire({icon:'warning',title:'Stock Bajo',html:`<b>${p.nombre}</b><br>Stock actual: <b>${p.cantidadStock}</b> · Minimo: ${p.stockMinimo||3}`,timer:4000,timerProgressBar:true,showConfirmButton:false});
+    }
+  } catch(e){console.warn("Error verificando stock:",e);}
+};
+
+window._verificarStockServicio = async (nombreServicio) => {
+  try {
+    const snap=await getDocs(query(collection(db,"inventario"),where("nombre","==",nombreServicio.toUpperCase())));
+    if(!snap.empty){const p=snap.docs[0].data();if((p.cantidadStock||0)<=(p.stockMinimo||3))Swal.fire({icon:'warning',title:'Stock Bajo',html:`<b>${p.nombre}</b>: ${p.cantidadStock} unidades`,timer:3000,showConfirmButton:false});}
+  } catch(e){}
+};
+
+console.log("✅ inventario.js v4 — medicamentos maestros, cambiarSubTabConfig corregido");
