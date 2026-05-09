@@ -12,11 +12,20 @@ import {
 const normalizarCedula = (ci) =>
   String(ci || '').replace(/[.\-\s]/g, '').trim().toUpperCase();
 
+// ─── ESTADO DE PAGINACION ────────────────────────────────
+let _todosLosRegistros = [];
+let _pagActual = 0;
+const _POR_PAGINA = 20;
+
 // ─── BUSCAR POR CEDULA O NOMBRE ───────────────────────────
 window.buscarPorCedula = async () => {
-  const ci     = document.getElementById('buscadorCI')?.value.trim()    || '';
-  const nombre = document.getElementById('buscadorNombre')?.value.trim().toUpperCase() || '';
-  const cont   = document.getElementById('resultadoBusqueda');
+  const ci      = document.getElementById('buscadorCI')?.value.trim() || '';
+  const nombre  = document.getElementById('buscadorNombre')?.value.trim().toUpperCase() || '';
+  const doctor  = document.getElementById('buscadorDoctor')?.value || '';
+  const periodo = document.getElementById('buscadorPeriodo')?.value || 'hoy';
+  const fechaDesde = document.getElementById('buscadorFechaDesde')?.value || '';
+  const fechaHasta = document.getElementById('buscadorFechaHasta')?.value || '';
+  const cont = document.getElementById('resultadoBusqueda');
   if (!cont) return;
 
   cont.innerHTML = '<p class="text-center text-blue-500 text-[9px] font-black uppercase italic animate-pulse py-8">Buscando...</p>';
@@ -25,44 +34,119 @@ window.buscarPorCedula = async () => {
     let registros = [];
 
     if (ci) {
-      // Busqueda por cedula normalizada y original
+      // Busqueda especifica por cedula
       const ciNorm = normalizarCedula(ci);
-      const snap1  = await getDocs(query(collection(db, "consultas"), where("cedula", "==", ciNorm), orderBy("fecha", "desc")));
-      snap1.forEach(d => registros.push({ id: d.id, ...d.data() }));
+      const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ciNorm), orderBy("fecha","desc")));
+      snap1.forEach(d => registros.push({ id:d.id, ...d.data() }));
       if (registros.length === 0 && ciNorm !== ci.trim()) {
-        const snap2 = await getDocs(query(collection(db, "consultas"), where("cedula", "==", ci.trim()), orderBy("fecha", "desc")));
-        snap2.forEach(d => registros.push({ id: d.id, ...d.data() }));
+        const snap2 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ci.trim()), orderBy("fecha","desc")));
+        snap2.forEach(d => registros.push({ id:d.id, ...d.data() }));
       }
-    } else if (nombre) {
-      // Busqueda por nombre de mascota
-      const snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
-      snap.forEach(d => {
-        const r = d.data();
-        if ((r.paciente || '').toUpperCase().includes(nombre)) {
-          registros.push({ id: d.id, ...r });
-        }
-      });
     } else {
-      // Sin filtro: mostrar todo ordenado por fecha
-      const snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
-      snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
+      // Busqueda general con filtros
+      const snap = await getDocs(query(collection(db,"consultas"), orderBy("fecha","desc")));
+      snap.forEach(d => registros.push({ id:d.id, ...d.data() }));
+
+      // Filtro por nombre de mascota
+      if (nombre) {
+        registros = registros.filter(r => (r.paciente||'').toUpperCase().includes(nombre));
+      }
+    }
+
+    // Filtro por doctor
+    if (doctor) {
+      registros = registros.filter(r => (r.doctorNombre||r.doctor||'').includes(doctor));
+    }
+
+    // Filtro por fecha
+    if (!ci) {
+      const hoy = new Date();
+      const fmt = (d) => d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+
+      if (periodo === 'hoy') {
+        const fechaHoyStr = fmt(hoy);
+        registros = registros.filter(r => r.fechaSimple === fechaHoyStr);
+      } else if (periodo === 'semana') {
+        const hace7 = new Date(hoy); hace7.setDate(hoy.getDate() - 7);
+        registros = registros.filter(r => {
+          if (!r.fechaSimple) return false;
+          const p = r.fechaSimple.split('/');
+          if (p.length !== 3) return false;
+          const fd = new Date(p[2], p[1]-1, p[0]);
+          return fd >= hace7 && fd <= hoy;
+        });
+      } else if (periodo === 'mes') {
+        registros = registros.filter(r => {
+          if (!r.fechaSimple) return false;
+          const p = r.fechaSimple.split('/');
+          return p.length === 3 && parseInt(p[1]) === hoy.getMonth()+1 && parseInt(p[2]) === hoy.getFullYear();
+        });
+      } else if (periodo === 'rango' && fechaDesde && fechaHasta) {
+        const desde = new Date(fechaDesde);
+        const hasta = new Date(fechaHasta);
+        registros = registros.filter(r => {
+          if (!r.fechaSimple) return false;
+          const p = r.fechaSimple.split('/');
+          if (p.length !== 3) return false;
+          const fd = new Date(p[2], p[1]-1, p[0]);
+          return fd >= desde && fd <= hasta;
+        });
+      }
     }
 
     if (!registros.length) {
-      cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] font-black uppercase italic py-8">Sin resultados encontrados.</p>';
+      cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] font-black uppercase italic py-8">Sin resultados para los filtros seleccionados.</p>';
       return;
     }
 
-    cont.innerHTML = '';
-    registros.forEach(consulta => {
-      cont.appendChild(_renderizarTarjeta(consulta));
-    });
+    // Guardar todos y mostrar primera pagina
+    _todosLosRegistros = registros;
+    _pagActual = 0;
+    _mostrarPagina(cont);
 
   } catch(e) {
     console.error(e);
     cont.innerHTML = '<p class="text-center text-red-500 text-[9px] font-black uppercase italic py-4">Error: ' + e.message + '</p>';
   }
 };
+
+// ─── MOSTRAR PAGINA DE RESULTADOS ────────────────────────
+function _mostrarPagina(cont) {
+  const inicio = _pagActual * _POR_PAGINA;
+  const fin    = inicio + _POR_PAGINA;
+  const pagina = _todosLosRegistros.slice(inicio, fin);
+  const total  = _todosLosRegistros.length;
+
+  if (_pagActual === 0) cont.innerHTML = '';
+
+  // Contador de resultados
+  if (_pagActual === 0) {
+    const resumen = document.createElement('div');
+    resumen.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;';
+    resumen.innerHTML =
+      '<p style="font-size:10px;font-weight:900;color:#64748b;">' + total + ' consultas encontradas</p>' +
+      '<p style="font-size:9px;color:#94a3b8;">Mostrando ' + Math.min(_POR_PAGINA, total) + ' de ' + total + '</p>';
+    cont.appendChild(resumen);
+  }
+
+  pagina.forEach(consulta => cont.appendChild(_renderizarTarjeta(consulta)));
+
+  // Boton ver mas
+  const btnVerMas = document.getElementById('btnVerMasBuscador');
+  if (btnVerMas) btnVerMas.remove();
+
+  if (fin < total) {
+    const btn = document.createElement('button');
+    btn.id = 'btnVerMasBuscador';
+    btn.style.cssText = 'width:100%;padding:12px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;margin-top:8px;';
+    btn.textContent = 'Ver mas (' + (total - fin) + ' restantes)';
+    btn.addEventListener('click', function() {
+      _pagActual++;
+      _mostrarPagina(cont);
+    });
+    cont.appendChild(btn);
+  }
+}
 
 // ─── RENDERIZAR TARJETA DE CONSULTA ──────────────────────
 function _renderizarTarjeta(consulta) {
@@ -249,4 +333,11 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
   }, 400);
 };
 
-console.log("✅ buscador.js v5 — servicios e insumos separados");
+// ─── TOGGLE RANGO DE FECHAS ──────────────────────────────
+window.toggleRangoBuscador = () => {
+  const sel   = document.getElementById('buscadorPeriodo')?.value;
+  const rango = document.getElementById('rangoBuscador');
+  if (rango) rango.classList.toggle('hidden', sel !== 'rango');
+};
+
+console.log("✅ buscador.js v5 — filtros, paginacion, servicios e insumos separados");
