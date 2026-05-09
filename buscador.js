@@ -142,7 +142,7 @@ function _renderizarTarjeta(consulta) {
     consulta.serviciosRealizados.forEach(function(s) {
       htmlServ +=
         '<tr style="border-bottom:1px solid #f1f5f9;">' +
-        '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || '').replace(/[^\x20-\x7E\u00C0-\u024F\u4e00-\u9fff]/g, '').trim() + '</td>' +
+        '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || '').replace(/^[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}\s]+/u, '').trim() + '</td>' +
         '<td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:900;color:#2563eb;">$' + parseFloat(s.precio || 0).toFixed(2) + '</td>' +
         '</tr>';
     });
