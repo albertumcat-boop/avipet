@@ -478,11 +478,11 @@ window.actualizarCostoInsumo = async (idInsumo, valor) => {
   try{const snap=await getDoc(doc(db,"insumos_maestro",idInsumo));if(snap.exists())nombreInsumo=snap.data().nombre||idInsumo;}catch(e){}
   const usosEfectivos=await _calcularUsosInsumo(nombreInsumo,costoUSD);if(!usosEfectivos)return;
   const costoPorUso=costoUSD/usosEfectivos;
-  await Swal.fire({icon:'success',title:'Costo calculado',html:'<p style="font-size:11px;">USD: <b>$'+costoUSD.toFixed(4)+'</b>'+(moneda==='bs'?' (Bs '+valorIngresado.toFixed(2)+')')+'</p><p style="font-size:11px;">Usos: <b>'+usosEfectivos+'</b></p><p style="font-size:16px;font-weight:900;color:#2563eb;">$'+costoPorUso.toFixed(4)+' por servicio</p>',timer:3000,showConfirmButton:false});
+  await Swal.fire({icon:'success',title:'Costo calculado',html:'<p style="font-size:11px;">USD: <b>$'+costoUSD.toFixed(4)+'</b>'+(moneda==='bs'?' (Bs '+valorIngresado.toFixed(2)+')':'')+'</p><p style="font-size:11px;">Usos: <b>'+usosEfectivos+'</b></p><p style="font-size:16px;font-weight:900;color:#2563eb;">$'+costoPorUso.toFixed(4)+' por servicio</p>',timer:3000,showConfirmButton:false});
   try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costoTotal:costoUSD,costoOriginalBS:moneda==='bs'?valorIngresado:null,costo:parseFloat(costoPorUso.toFixed(4)),usosEstimados:usosEfectivos,margenSeguridad:MARGEN,actualizadoEn:serverTimestamp()});window.renderizarTablaInsumos();}catch(e){console.error(e);}
 };
 
-window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`Eliminar "${nombreInsumo}" - CLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("Clave incorrecta.");return;}if(!confirm(`Eliminar "${nombreInsumo}". Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("Error: "+e.message);}};
+window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt('Eliminar '+nombreInsumo+' - CLAVE MAESTRA:');if(!clave||clave.trim()!==MASTER_KEY()){alert('Clave incorrecta.');return;}if(!confirm('Eliminar '+nombreInsumo+'. Confirmas?'))return;try{await deleteDoc(doc(db,'insumos_maestro',idInsumo));alert('Eliminado.');window.renderizarTablaInsumos();}catch(e){console.error(e);alert('Error: '+e.message);}};
 
 // ─── INICIALIZAR BD ───────────────────────────────────────
 window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("Clave incorrecta.");return;}if(!confirm("Inicializar catalogo de servicios en Firebase?"))return;
