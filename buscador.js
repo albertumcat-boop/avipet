@@ -1,340 +1,221 @@
 // =========================================================
-// AVIPET — buscador.js  v4
-// Búsqueda por cédula, nombre de mascota o todo el historial
-// Botón Editar → carga en Historia Clínica
+// AVIPET — buscador.js  v5
+// Muestra Servicios Realizados e Insumos Utilizados separados
+// Busqueda por cedula (normalizada) y por nombre de mascota
 // =========================================================
 
 import { db } from './firebase-config.js';
 import {
-  collection, getDocs, query, where,
-  deleteDoc, doc
+  collection, getDocs, query, where, orderBy, doc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
-const normalizarCedula = (ci) => String(ci || '').replace(/[.\-\s]/g, '').trim().toUpperCase();
+const normalizarCedula = (ci) =>
+  String(ci || '').replace(/[.\-\s]/g, '').trim().toUpperCase();
 
-// ─── BUSCAR ───────────────────────────────────────────────
+// ─── BUSCAR POR CEDULA O NOMBRE ───────────────────────────
 window.buscarPorCedula = async () => {
-  const inputCI     = document.getElementById('buscadorCI');
-  const inputNombre = document.getElementById('buscadorNombre');
-  const resultDiv   = document.getElementById('resultadoBusqueda');
-  if (!resultDiv) return;
+  const ci     = document.getElementById('buscadorCI')?.value.trim()    || '';
+  const nombre = document.getElementById('buscadorNombre')?.value.trim().toUpperCase() || '';
+  const cont   = document.getElementById('resultadoBusqueda');
+  if (!cont) return;
 
-  const ci     = inputCI?.value.trim()     || "";
-  const nombre = inputNombre?.value.trim().toUpperCase() || "";
-
-  resultDiv.innerHTML = '<p class="text-blue-500 text-[10px] font-black uppercase italic text-center py-8 animate-pulse">🔍 Buscando...</p>';
+  cont.innerHTML = '<p class="text-center text-blue-500 text-[9px] font-black uppercase italic animate-pulse py-8">Buscando...</p>';
 
   try {
     let registros = [];
 
-    if (!ci && !nombre) {
-      const snap = await getDocs(collection(db, "consultas"));
-      snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
-    } else if (ci) {
-      // Buscar con cédula normalizada (sin puntos/guiones) y también original
+    if (ci) {
+      // Busqueda por cedula normalizada y original
       const ciNorm = normalizarCedula(ci);
-      const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ciNorm)));
+      const snap1  = await getDocs(query(collection(db, "consultas"), where("cedula", "==", ciNorm), orderBy("fecha", "desc")));
       snap1.forEach(d => registros.push({ id: d.id, ...d.data() }));
       if (registros.length === 0 && ciNorm !== ci.trim()) {
-        const snap2 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ci.trim())));
+        const snap2 = await getDocs(query(collection(db, "consultas"), where("cedula", "==", ci.trim()), orderBy("fecha", "desc")));
         snap2.forEach(d => registros.push({ id: d.id, ...d.data() }));
       }
-    } else {
-      const snap = await getDocs(collection(db, "consultas"));
+    } else if (nombre) {
+      // Busqueda por nombre de mascota
+      const snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
       snap.forEach(d => {
         const r = d.data();
-        if ((r.paciente || "").toUpperCase().includes(nombre)) {
+        if ((r.paciente || '').toUpperCase().includes(nombre)) {
           registros.push({ id: d.id, ...r });
         }
       });
+    } else {
+      // Sin filtro: mostrar todo ordenado por fecha
+      const snap = await getDocs(query(collection(db, "consultas"), orderBy("fecha", "desc")));
+      snap.forEach(d => registros.push({ id: d.id, ...d.data() }));
     }
 
-    registros.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
-    _renderResultados(registros, ci || nombre || "TODOS", resultDiv);
-
-  } catch (e) {
-    console.error("Error buscando:", e);
-    resultDiv.innerHTML = '<div class="text-center py-8 border-2 border-red-100 rounded-2xl bg-red-50"><p class="text-red-500 text-[9px] font-black uppercase">❌ Error de conexión</p></div>';
-  }
-};
-
-// ─── RENDERIZAR RESULTADOS ────────────────────────────────
-function _renderResultados(registros, termino, resultDiv) {
-  if (!registros.length) {
-    resultDiv.innerHTML = '<div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-white"><p class="text-5xl mb-3">🔍</p><p class="text-slate-400 text-[10px] font-black uppercase italic">Sin resultados para: <b>' + termino + '</b></p></div>';
-    return;
-  }
-
-  resultDiv.innerHTML = '<p class="text-[9px] font-black text-slate-400 uppercase italic mb-3 tracking-widest">' + registros.length + ' registro(s) — <b class="text-blue-600">' + termino + '</b></p>';
-
-  window._buscadorResultados = window._buscadorResultados || {};
-
-  registros.forEach(function(consulta) {
-    var fecha    = consulta.fechaSimple     || "---";
-    var paciente = consulta.paciente        || "---";
-    var prop     = consulta.propietario     || "---";
-    var doctor   = consulta.doctor          || "---";
-    var cedula   = consulta.cedula          || "---";
-    var telefono = consulta.telefono        || "---";
-    var correo   = consulta.correo          || consulta.email || "";
-    var direccion= consulta.direccion       || "";
-    var especie  = consulta.especie         || "";
-    var raza     = consulta.raza            || "";
-    var edad     = consulta.edad            || "";
-    var sexo     = consulta.sexo            || "";
-    var peso     = consulta.peso            || "";
-    var color    = consulta.color           || "";
-    var fechaNac = consulta.fechaNacimiento || "";
-    var trat     = consulta.tratamiento     || "";
-    var venta    = parseFloat(consulta.montoVenta   || 0).toFixed(2);
-    var insumos  = parseFloat(consulta.montoInsumos || 0).toFixed(2);
-    var pagoDoc  = parseFloat(consulta.pagoDoctor   || 0).toFixed(2);
-    var urlFoto  = consulta.urlExamen       || "";
-    var cid      = consulta.id;
-
-    // Servicios realizados
-    var serviciosHtml = "";
-    if (Array.isArray(consulta.serviciosRealizados) && consulta.serviciosRealizados.length > 0) {
-      var filasServ = consulta.serviciosRealizados.map(function(s) {
-        return '<tr style="border-bottom:1px solid #f1f5f9;">' +
-          '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || "") + '</td>' +
-          '<td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:900;color:#2563eb;">$' + parseFloat(s.precio || 0).toFixed(2) + '</td>' +
-          '</tr>';
-      }).join("");
-      serviciosHtml += '<div style="margin-top:8px;border:1px solid #bfdbfe;border-radius:10px;overflow:hidden;">' +
-        '<div style="background:#eff6ff;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;">Servicios Realizados</p></div>' +
-        '<table style="width:100%;border-collapse:collapse;">' +
-        '<tbody>' + filasServ + '</tbody></table></div>';
+    if (!registros.length) {
+      cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] font-black uppercase italic py-8">Sin resultados encontrados.</p>';
+      return;
     }
 
-    // Insumos utilizados
-    if (Array.isArray(consulta.listaDetalladaInsumos) && consulta.listaDetalladaInsumos.length > 0) {
-      var filasIns = consulta.listaDetalladaInsumos.map(function(ins) {
-        return '<tr><td style="padding:2px 6px;font-size:10px;">' + (ins.nombre || "") + '</td>' +
-          '<td style="padding:2px 6px;text-align:center;font-size:10px;">' + (ins.cant || 1) + '</td>' +
-          '<td style="padding:2px 6px;text-align:right;font-size:10px;">$' + parseFloat(ins.costo || 0).toFixed(2) + '</td></tr>';
-      }).join("");
-      serviciosHtml += '<div style="margin-top:6px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">' +
-        '<div style="background:#f8fafc;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;">Insumos Utilizados</p></div>' +
-        '<table style="width:100%;border-collapse:collapse;">' +
-        '<thead><tr style="background:#f8fafc;"><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Insumo</th>' +
-        '<th style="padding:2px 6px;text-align:center;font-size:9px;color:#94a3b8;">Cant</th>' +
-        '<th style="padding:2px 6px;text-align:right;font-size:9px;color:#94a3b8;">Costo</th></tr></thead>' +
-        '<tbody>' + filasIns + '</tbody></table></div>';
-    }
+    cont.innerHTML = '';
+    registros.forEach(consulta => {
+      cont.appendChild(_renderizarTarjeta(consulta));
+    });
 
-    // Tests realizados
-    var testsHtml = "";
-    if (Array.isArray(consulta.testsRealizados) && consulta.testsRealizados.length > 0) {
-      var testFilas = consulta.testsRealizados.map(function(t) {
-        var color = t.resultado === "POSITIVO" ? "color:#dc2626;font-weight:900;" : t.resultado === "NEGATIVO" ? "color:#16a34a;font-weight:900;" : "color:#64748b;";
-        return '<tr><td style="padding:2px 6px;font-size:10px;">' + (t.nombre || "") + '</td><td style="padding:2px 6px;font-size:10px;' + color + '">' + (t.resultado || "---") + '</td><td style="padding:2px 6px;font-size:9px;color:#94a3b8;">' + (t.nota || "") + '</td></tr>';
-      }).join("");
-      testsHtml = '<div class="mt-2 border border-slate-100 rounded-xl overflow-hidden">' +
-        '<div class="bg-purple-50 px-3 py-1"><p class="text-[8px] font-black text-purple-500 uppercase">🧪 Tests Realizados</p></div>' +
-        '<table style="width:100%;border-collapse:collapse;">' +
-        '<thead><tr style="background:#f8fafc;"><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Test</th><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Resultado</th><th style="padding:2px 6px;text-align:left;font-size:9px;color:#94a3b8;">Nota</th></tr></thead>' +
-        '<tbody>' + testFilas + '</tbody></table></div>';
-    }
-
-    // Fotos
-    var fotoHtml = "";
-    var todasFotos = [];
-    if (Array.isArray(consulta.fotosHistoria) && consulta.fotosHistoria.length > 0) todasFotos = todasFotos.concat(consulta.fotosHistoria);
-    else if (urlFoto) todasFotos.push(urlFoto);
-    if (Array.isArray(consulta.fotosTest) && consulta.fotosTest.length > 0) todasFotos = todasFotos.concat(consulta.fotosTest);
-    else if (consulta.urlFotoTest) todasFotos.push(consulta.urlFotoTest);
-    if (todasFotos.length > 0) {
-      var imgs = todasFotos.map(function(u) {
-        return '<img src="' + u + '" onclick="window.verFotoGrande(\'' + u + '\')" class="w-20 h-20 object-cover rounded-xl border-2 border-blue-200 cursor-pointer hover:scale-105 transition-transform shadow-sm">';
-      }).join("");
-      fotoHtml = '<div class="flex gap-2 flex-wrap mt-3">' + imgs + '</div>';
-    }
-
-    window._buscadorResultados[cid] = consulta;
-
-    var card = document.createElement('div');
-    card.className = "bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-4";
-    card.dataset.consultaId = cid;
-
-    // Cabecera siempre visible
-    card.innerHTML =
-      // ── HEADER ──
-      '<div class="flex justify-between items-start mb-3 border-b border-slate-100 pb-3">' +
-        '<div>' +
-          '<p class="font-black text-slate-800 uppercase text-sm tracking-tight">' + paciente + '</p>' +
-          '<p class="text-[10px] text-slate-500 font-bold mt-0.5">👤 ' + prop + ' &nbsp;·&nbsp; CI: ' + cedula + '</p>' +
-          (especie ? '<p class="text-[9px] text-slate-400">' + especie + (raza ? ' · ' + raza : '') + (sexo ? ' · ' + sexo : '') + (peso ? ' · ' + peso + 'kg' : '') + '</p>' : '') +
-          (fechaNac ? '<p class="text-[9px] text-slate-400">🎂 ' + fechaNac + '</p>' : '') +
-        '</div>' +
-        '<div class="text-right">' +
-          '<span class="text-[8px] font-bold text-slate-400 block">' + fecha + '</span>' +
-          '<span class="text-[9px] font-black text-blue-600 block mt-1">🩺 ' + doctor + '</span>' +
-        '</div>' +
-      '</div>' +
-
-      // ── DATOS CONTACTO ──
-      '<div class="grid grid-cols-2 gap-1 mb-3 text-[9px] text-slate-500 font-bold">' +
-        '<p>📞 ' + telefono + '</p>' +
-        (correo ? '<p>✉️ ' + correo + '</p>' : '') +
-        (direccion ? '<p class="col-span-2">📍 ' + direccion + '</p>' : '') +
-      '</div>' +
-
-      // ── DIAGNÓSTICO / TRATAMIENTO completo (sin truncar) ──
-      (trat ? '<div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-3">' +
-        '<p class="text-[8px] font-black text-blue-500 uppercase mb-1">✍️ Diagnóstico / Tratamiento</p>' +
-        '<pre class="text-[10px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed" style="font-family:inherit;">' + trat + '</pre>' +
-      '</div>' : '') +
-
-      // ── INSUMOS Y SERVICIOS ──
-      serviciosHtml +
-
-      // ── TESTS ──
-      testsHtml +
-
-      // ── FOTOS ──
-      fotoHtml +
-
-      // ── FINANZAS ──
-      '<div class="grid grid-cols-3 gap-1 mt-3 text-center">' +
-        '<div class="bg-slate-50 rounded-lg py-1.5">' +
-          '<p class="text-[7px] font-black text-slate-400 uppercase">Venta</p>' +
-          '<p class="text-[11px] font-black text-slate-700">$' + venta + '</p>' +
-        '</div>' +
-        '<div class="bg-slate-50 rounded-lg py-1.5">' +
-          '<p class="text-[7px] font-black text-slate-400 uppercase">Insumos</p>' +
-          '<p class="text-[11px] font-black text-slate-700">$' + insumos + '</p>' +
-        '</div>' +
-        '<div class="bg-blue-50 rounded-lg py-1.5">' +
-          '<p class="text-[7px] font-black text-blue-400 uppercase">Doctor</p>' +
-          '<p class="text-[11px] font-black text-blue-700">$' + pagoDoc + '</p>' +
-        '</div>' +
-      '</div>' +
-
-      // ── BOTONES ──
-      '<div class="flex gap-1.5 mt-3 flex-wrap border-t border-slate-100 pt-3">' +
-        '<button type="button" onclick="window.imprimirConsultaBuscador(\'' + cid + '\')" class="text-[8px] px-3 py-1.5 rounded-lg font-black uppercase bg-blue-600 text-white hover:bg-blue-700">🖨 Imprimir</button>' +
-        '<button type="button" onclick="window.abrirConsultaParaEditar(\'' + cid + '\')" class="text-[8px] px-3 py-1.5 rounded-lg font-black uppercase bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white">✏️ Editar</button>' +
-        '<button type="button" onclick="window.enviarEncuestaDesdeCard_buscador(\'' + telefono + '\',\'' + paciente + '\',\'' + cedula + '\',\'' + doctor + '\')" class="text-[8px] px-3 py-1.5 rounded-lg font-black uppercase bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white">📲 Encuesta</button>' +
-        '<button type="button" onclick="window.eliminarConsultaDesdeCard(\'' + cid + '\',\'' + paciente + '\')" class="text-[8px] px-3 py-1.5 rounded-lg font-black uppercase bg-red-100 text-red-600 hover:bg-red-600 hover:text-white">🗑 Eliminar</button>' +
-      '</div>';
-
-    resultDiv.appendChild(card);
-  });
-}
-
-// ─── IMPRIMIR ─────────────────────────────────────────────
-window.imprimirConsultaBuscador = function(idConsulta) {
-  var consulta = window._buscadorResultados && window._buscadorResultados[idConsulta];
-  if (!consulta) { alert("No se pudo recuperar los datos."); return; }
-
-  Swal.fire({
-    title: '🖨 Opciones de Impresión',
-    html: '<div class="flex flex-col gap-2 mt-2 text-left"><label class="flex items-center gap-2 text-[11px]"><input type="radio" name="tipoPrint" value="completa" checked><span class="font-bold">Historia Completa</span></label><label class="flex items-center gap-2 text-[11px]"><input type="radio" name="tipoPrint" value="receta"><span class="font-bold">Solo Receta</span></label></div>',
-    showCancelButton: true,
-    confirmButtonText: 'Imprimir',
-    cancelButtonText: 'Cancelar'
-  }).then(function(res) {
-    if (!res.isConfirmed) return;
-    var tipo = document.querySelector('input[name="tipoPrint"]:checked') ? document.querySelector('input[name="tipoPrint"]:checked').value : "completa";
-    _abrirVentanaImpresion(consulta, tipo);
-  });
-};
-
-function _abrirVentanaImpresion(c, tipo) {
-  var fecha    = c.fechaSimple    || new Date().toLocaleDateString();
-  var paciente = c.paciente       || "---";
-  var prop     = c.propietario    || "---";
-  var cedula   = c.cedula         || "---";
-  var especie  = c.especie        || "---";
-  var raza     = c.raza           || "---";
-  var edad     = c.edad           || "---";
-  var sexo     = c.sexo           || "---";
-  var peso     = c.peso           || "---";
-  var telefono = c.telefono       || "---";
-  var direccion= c.direccion      || "---";
-  var fechaNac = c.fechaNacimiento|| "---";
-  var doctor   = c.doctor         || "---";
-  var trat     = c.tratamiento    || "Sin tratamiento.";
-  var urlFoto  = c.urlExamen      || "";
-  var venta    = parseFloat(c.montoVenta   || 0).toFixed(2);
-  var insumos  = parseFloat(c.montoInsumos || 0).toFixed(2);
-  var pagoDoc  = parseFloat(c.pagoDoctor   || 0).toFixed(2);
-
-  var finHtml = tipo === "completa"
-    ? '<div style="margin-top:10px;border:1px solid #e2e8f0;border-radius:8px;padding:10px;background:#f8fafc;"><b style="font-size:10px;text-transform:uppercase;color:#64748b;">Resumen Financiero</b><br><span style="font-size:11px;">Venta: <b>$' + venta + '</b> &nbsp;·&nbsp; Insumos: <b>$' + insumos + '</b> &nbsp;·&nbsp; Doctor: <b>$' + pagoDoc + '</b></span></div>'
-    : "";
-
-  var fotoHtml = urlFoto
-    ? '<div style="margin-top:12px;text-align:center;"><img src="' + urlFoto + '" style="max-width:340px;border-radius:10px;border:1px solid #ddd;max-height:280px;object-fit:contain;"></div>'
-    : "";
-
-  var win = window.open("", "_blank");
-  if (!win) { alert("Habilita ventanas emergentes."); return; }
-
-  win.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>' + (tipo === "receta" ? "Receta" : "Historia") + ' - ' + paciente + '</title><style>@page{size:letter;margin:1.5cm 1cm;}body{font-family:"Segoe UI",Arial,sans-serif;color:#0f172a;font-size:12px;}h1{font-size:20px;margin:0 0 2px;color:#1d4ed8;}h2{font-size:12px;color:#64748b;margin:0 0 8px;}.bloque{border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-top:10px;background:#f9fafb;}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:4px;}.label{font-size:9px;font-weight:900;text-transform:uppercase;color:#94a3b8;}.value{font-size:11px;font-weight:700;color:#1e293b;}@media print{.no-print{display:none!important;}}</style></head><body>');
-  win.document.write('<div style="border-bottom:3px solid #2563eb;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;"><div><h1>AVIPET — Centro Veterinario</h1><h2>' + (tipo === "receta" ? "Receta / Tratamiento" : "Historia Clínica") + '</h2></div><div style="text-align:right;font-size:10px;color:#6b7280;"><b>' + fecha + '</b><br>Dr. ' + doctor + '</div></div>');
-  win.document.write('<div class="bloque"><b style="font-size:10px;text-transform:uppercase;color:#64748b;display:block;margin-bottom:6px;">Datos del Paciente</b><div class="grid-2"><div><span class="label">Nombre</span><p class="value" style="margin:0;">' + paciente + '</p></div><div><span class="label">Especie / Raza</span><p class="value" style="margin:0;">' + especie + ' · ' + raza + '</p></div><div><span class="label">Propietario</span><p class="value" style="margin:0;">' + prop + '</p></div><div><span class="label">Cédula</span><p class="value" style="margin:0;">' + cedula + '</p></div><div><span class="label">F. Nacimiento</span><p class="value" style="margin:0;">' + fechaNac + '</p></div><div><span class="label">Edad / Sexo / Peso</span><p class="value" style="margin:0;">' + edad + ' · ' + sexo + ' · ' + peso + ' kg</p></div><div><span class="label">Teléfono</span><p class="value" style="margin:0;">' + telefono + '</p></div><div><span class="label">Dirección</span><p class="value" style="margin:0;">' + direccion + '</p></div></div></div>');
-  win.document.write('<div class="bloque"><b style="font-size:10px;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">Tratamiento / Receta</b><pre style="white-space:pre-wrap;font-size:12px;line-height:1.6;margin:0;">' + trat + '</pre></div>');
-  win.document.write(finHtml + fotoHtml);
-  win.document.write('<div style="margin-top:30px;font-size:9px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px;">AVIPET · ' + fecha + '</div>');
-  win.document.write('<div class="no-print" style="text-align:center;margin-top:16px;"><button onclick="window.print()" style="padding:10px 24px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:900;">IMPRIMIR</button></div>');
-  win.document.write('</body></html>');
-  win.document.close();
-  win.onload = function() { setTimeout(function() { win.focus(); win.print(); }, 400); };
-}
-
-// ─── ELIMINAR ─────────────────────────────────────────────
-window.eliminarConsultaDesdeCard = async function(idConsulta, nombrePaciente) {
-  var clave = prompt('🔐 Eliminar historial de: "' + nombrePaciente + '"\nIngresa la CLAVE MAESTRA:');
-  if (!clave) return;
-  if (clave.trim() !== MASTER_KEY()) { alert("🚫 Clave incorrecta."); return; }
-  if (!confirm('⚠️ Eliminar permanentemente el historial de "' + nombrePaciente + '".\n¿Confirmas?')) return;
-  try {
-    await deleteDoc(doc(db, "consultas", idConsulta));
-    if (typeof window.registrarLogAuditoria === "function") {
-      await window.registrarLogAuditoria("ELIMINACIÓN", "Eliminó historial de " + nombrePaciente);
-    }
-    await Swal.fire({ icon: "success", title: "✅ Eliminado", timer: 1500, showConfirmButton: false });
-    var card = document.querySelector('[data-consulta-id="' + idConsulta + '"]');
-    if (card) card.remove();
-    if (window._buscadorResultados) delete window._buscadorResultados[idConsulta];
-  } catch (e) {
+  } catch(e) {
     console.error(e);
-    alert("❌ Error: " + e.message);
+    cont.innerHTML = '<p class="text-center text-red-500 text-[9px] font-black uppercase italic py-4">Error: ' + e.message + '</p>';
   }
 };
 
-// ─── ENCUESTA ─────────────────────────────────────────────
-window.enviarEncuestaDesdeCard_buscador = function(telefonoRaw, paciente, cedula, doctor) {
-  var telefono = (telefonoRaw || "").replace(/\D/g, "");
-  if (!telefono || telefono.length < 7) { alert("⚠️ Sin teléfono válido."); return; }
-  if (telefono.startsWith("0")) telefono = "58" + telefono.substring(1);
-  if (!telefono.startsWith("58") && telefono.length === 10) telefono = "58" + telefono;
-  var base = window.location.origin + window.location.pathname;
-  var url  = base + "?mode=encuesta&ci=" + encodeURIComponent(cedula) + "&paciente=" + encodeURIComponent(paciente) + "&doctor=" + encodeURIComponent(doctor);
-  var msg  = encodeURIComponent("🐾 Hola, propietario/a de *" + paciente + "*.\n\nGracias por confiar en *AVIPET*.\nResponde nuestra encuesta:\n👉 " + url + "\n\n¡Tu opinión nos ayuda! 🙏");
-  window.open("https://wa.me/" + telefono + "?text=" + msg, "_blank");
-};
+// ─── RENDERIZAR TARJETA DE CONSULTA ──────────────────────
+function _renderizarTarjeta(consulta) {
+  const fecha   = consulta.fechaSimple || consulta.fecha?.toDate?.().toLocaleDateString() || '---';
+  const venta   = parseFloat(consulta.montoVenta   || 0).toFixed(2);
+  const gastos  = parseFloat(consulta.montoInsumos || 0).toFixed(2);
+  const doctor  = consulta.doctorNombre || consulta.doctor || '---';
 
-// ─── VER FOTO GRANDE ──────────────────────────────────────
-window.verFotoGrande = function(url) {
-  var modal = document.getElementById("modalFotoGrande");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "modalFotoGrande";
-    modal.className = "fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4";
-    modal.onclick = function(e) { if (e.target === modal) window.cerrarModalFoto(); };
-    modal.innerHTML = '<div class="relative max-w-3xl w-full"><button onclick="window.cerrarModalFoto()" class="absolute -top-4 -right-4 bg-white text-slate-800 rounded-full w-9 h-9 font-black text-lg flex items-center justify-center shadow-lg hover:bg-red-100 z-10">✕</button><img id="fotoGrandeImg" src="" class="w-full rounded-2xl border-4 border-white shadow-2xl object-contain max-h-[80vh]"></div>';
-    document.body.appendChild(modal);
+  const card = document.createElement('div');
+  card.className = 'bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm mb-3';
+
+  // ── HEADER ──────────────────────────────────────────────
+  const header = document.createElement('div');
+  header.className = 'bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 flex justify-between items-center';
+  header.innerHTML =
+    '<div>' +
+      '<p class="font-black text-white uppercase text-[12px] leading-none">' + (consulta.paciente || '---') + '</p>' +
+      '<p class="text-blue-200 text-[9px] font-bold mt-0.5">' + (consulta.especie || '') + ' · ' + (consulta.raza || '') + '</p>' +
+    '</div>' +
+    '<div class="text-right">' +
+      '<p class="text-white font-black text-[11px]">' + fecha + '</p>' +
+      '<p class="text-blue-200 text-[9px]">' + (consulta.propietario || '---') + '</p>' +
+    '</div>';
+  card.appendChild(header);
+
+  // ── CUERPO ───────────────────────────────────────────────
+  const body = document.createElement('div');
+  body.className = 'p-3 space-y-2';
+
+  // Datos clínicos
+  if (consulta.tratamiento) {
+    const diagDiv = document.createElement('div');
+    diagDiv.className = 'bg-slate-50 rounded-xl p-2 border border-slate-100';
+    diagDiv.innerHTML =
+      '<p class="text-[8px] font-black text-slate-400 uppercase mb-1">Diagnostico / Tratamiento</p>' +
+      '<p class="text-[10px] text-slate-700 font-bold leading-snug">' + consulta.tratamiento + '</p>';
+    body.appendChild(diagDiv);
   }
-  document.getElementById("fotoGrandeImg").src = url;
-  modal.classList.remove("hidden");
+
+  // ── SERVICIOS REALIZADOS (azul) ──────────────────────────
+  if (Array.isArray(consulta.serviciosRealizados) && consulta.serviciosRealizados.length > 0) {
+    const servDiv = document.createElement('div');
+    servDiv.style.cssText = 'border:1px solid #bfdbfe;border-radius:10px;overflow:hidden;margin-top:6px;';
+    let htmlServ = '<div style="background:#eff6ff;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;">Servicios Realizados</p></div>';
+    htmlServ += '<table style="width:100%;border-collapse:collapse;">';
+    consulta.serviciosRealizados.forEach(function(s) {
+      htmlServ +=
+        '<tr style="border-bottom:1px solid #f1f5f9;">' +
+        '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || '') + '</td>' +
+        '<td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:900;color:#2563eb;">$' + parseFloat(s.precio || 0).toFixed(2) + '</td>' +
+        '</tr>';
+    });
+    htmlServ += '</table>';
+    servDiv.innerHTML = htmlServ;
+    body.appendChild(servDiv);
+  }
+
+  // ── INSUMOS UTILIZADOS (gris) ─────────────────────────────
+  if (Array.isArray(consulta.listaDetalladaInsumos) && consulta.listaDetalladaInsumos.length > 0) {
+    const insDiv = document.createElement('div');
+    insDiv.style.cssText = 'border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-top:6px;';
+    let htmlIns = '<div style="background:#f8fafc;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;">Insumos Utilizados</p></div>';
+    htmlIns += '<table style="width:100%;border-collapse:collapse;">';
+    htmlIns += '<thead><tr style="background:#f8fafc;"><th style="padding:2px 8px;text-align:left;font-size:8px;color:#94a3b8;">Insumo</th><th style="padding:2px 8px;text-align:center;font-size:8px;color:#94a3b8;">Cant</th><th style="padding:2px 8px;text-align:right;font-size:8px;color:#94a3b8;">Costo</th></tr></thead>';
+    consulta.listaDetalladaInsumos.forEach(function(ins) {
+      htmlIns +=
+        '<tr style="border-bottom:1px solid #f8fafc;">' +
+        '<td style="padding:3px 8px;font-size:10px;">' + (ins.nombre || '') + '</td>' +
+        '<td style="padding:3px 8px;text-align:center;font-size:10px;">' + (ins.cant || 1) + '</td>' +
+        '<td style="padding:3px 8px;text-align:right;font-size:10px;">$' + parseFloat(ins.costo || 0).toFixed(2) + '</td>' +
+        '</tr>';
+    });
+    htmlIns += '</table>';
+    insDiv.innerHTML = htmlIns;
+    body.appendChild(insDiv);
+  }
+
+  // ── FINANZAS ──────────────────────────────────────────────
+  const finDiv = document.createElement('div');
+  finDiv.className = 'grid grid-cols-3 gap-2 mt-2';
+  finDiv.innerHTML =
+    '<div class="bg-blue-50 rounded-lg p-2 text-center">' +
+      '<p class="text-[7px] font-black text-blue-400 uppercase">Cobrado</p>' +
+      '<p class="text-[13px] font-black text-blue-700 font-mono">$' + venta + '</p>' +
+    '</div>' +
+    '<div class="bg-amber-50 rounded-lg p-2 text-center">' +
+      '<p class="text-[7px] font-black text-amber-500 uppercase">Insumos</p>' +
+      '<p class="text-[13px] font-black text-amber-700 font-mono">$' + gastos + '</p>' +
+    '</div>' +
+    '<div class="bg-slate-50 rounded-lg p-2 text-center">' +
+      '<p class="text-[7px] font-black text-slate-400 uppercase">Doctor</p>' +
+      '<p class="text-[10px] font-black text-slate-600 leading-tight">' + doctor + '</p>' +
+    '</div>';
+  body.appendChild(finDiv);
+
+  // ── VACUNAS ───────────────────────────────────────────────
+  if (Array.isArray(consulta.vacunasAplicadas) && consulta.vacunasAplicadas.length > 0) {
+    const vacDiv = document.createElement('div');
+    vacDiv.className = 'mt-2';
+    let htmlVac = '<p class="text-[8px] font-black text-emerald-600 uppercase mb-1">Vacunas aplicadas</p>';
+    htmlVac += '<div class="flex flex-wrap gap-1">';
+    consulta.vacunasAplicadas.forEach(function(v) {
+      htmlVac += '<span style="background:#d1fae5;color:#065f46;border-radius:999px;padding:2px 8px;font-size:8px;font-weight:700;">' + (v.vacuna || '') + '</span>';
+    });
+    htmlVac += '</div>';
+    vacDiv.innerHTML = htmlVac;
+    body.appendChild(vacDiv);
+  }
+
+  // ── BOTONES ───────────────────────────────────────────────
+  const btnDiv = document.createElement('div');
+  btnDiv.className = 'flex gap-2 mt-3';
+
+  const btnEditar = document.createElement('button');
+  btnEditar.className = 'flex-1 bg-blue-600 text-white py-2 rounded-xl font-black text-[9px] uppercase hover:bg-blue-700 transition-all';
+  btnEditar.textContent = 'Editar Consulta';
+  btnEditar.addEventListener('click', function() {
+    if (typeof window.abrirConsultaParaEditar === 'function') {
+      window.abrirConsultaParaEditar(consulta.id);
+    } else {
+      alert('Sistema cargando, intenta en un momento.');
+    }
+  });
+  btnDiv.appendChild(btnEditar);
+
+  const btnVacunas = document.createElement('button');
+  btnVacunas.className = 'flex-1 bg-emerald-500 text-white py-2 rounded-xl font-black text-[9px] uppercase hover:bg-emerald-600 transition-all';
+  btnVacunas.textContent = 'Ver Vacunas';
+  btnVacunas.addEventListener('click', function() {
+    if (typeof window.abrirHojaVacunasDesdeBuscador === 'function') {
+      window.abrirHojaVacunasDesdeBuscador(consulta);
+    } else {
+      window.showTab('historia');
+      setTimeout(() => window.autocompletarPorCedula(consulta.cedula), 500);
+    }
+  });
+  btnDiv.appendChild(btnVacunas);
+
+  body.appendChild(btnDiv);
+  card.appendChild(body);
+  return card;
+}
+
+// ─── ABRIR CONSULTA PARA EDITAR DESDE BUSCADOR ───────────
+window.abrirConsultaParaEditar = async (idConsulta) => {
+  if (typeof window.showTab === 'function') window.showTab('historia');
+  setTimeout(() => {
+    if (typeof window._abrirConsultaParaEditar === 'function') {
+      window._abrirConsultaParaEditar(idConsulta);
+    } else {
+      _llamarFuncion('abrirConsultaParaEditar', idConsulta);
+    }
+  }, 400);
 };
 
-window.cerrarModalFoto = function() {
-  document.getElementById("modalFotoGrande") && document.getElementById("modalFotoGrande").classList.add("hidden");
-};
-
-console.log("✅ buscador.js v4 cargado — sintaxis limpia");
+console.log("✅ buscador.js v5 — servicios e insumos separados");
