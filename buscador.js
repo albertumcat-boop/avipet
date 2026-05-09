@@ -80,7 +80,7 @@ function _renderizarTarjeta(consulta) {
   header.innerHTML =
     '<div>' +
       '<p class="font-black text-white uppercase text-[12px] leading-none">' + (consulta.paciente || '---') + '</p>' +
-      '<p class="text-blue-200 text-[9px] font-bold mt-0.5">' + (consulta.especie || '') + ' · ' + (consulta.raza || '') + '</p>' +
+      '<p class="text-blue-200 text-[9px] font-bold mt-0.5">' + (consulta.especie || '') + (consulta.raza ? ' · ' + consulta.raza : '') + '</p>' +
     '</div>' +
     '<div class="text-right">' +
       '<p class="text-white font-black text-[11px]">' + fecha + '</p>' +
@@ -92,7 +92,38 @@ function _renderizarTarjeta(consulta) {
   const body = document.createElement('div');
   body.className = 'p-3 space-y-2';
 
-  // Datos clínicos
+  // ── DATOS DEL DUENIO Y MASCOTA ────────────────────────────
+  const infoDiv = document.createElement('div');
+  infoDiv.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;';
+
+  // Datos duenio
+  const duenioDiv = document.createElement('div');
+  duenioDiv.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;';
+  duenioDiv.innerHTML =
+    '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Propietario</p>' +
+    '<p style="font-size:11px;font-weight:900;color:#1e293b;">' + (consulta.propietario || '---') + '</p>' +
+    '<p style="font-size:9px;color:#64748b;">CI: <b>' + (consulta.cedula || '---') + '</b></p>' +
+    '<p style="font-size:9px;color:#64748b;">Tel: <b>' + (consulta.telefono || '---') + '</b></p>' +
+    (consulta.correo ? '<p style="font-size:9px;color:#64748b;">' + consulta.correo + '</p>' : '') +
+    (consulta.direccion ? '<p style="font-size:9px;color:#64748b;">' + consulta.direccion + '</p>' : '');
+  infoDiv.appendChild(duenioDiv);
+
+  // Datos mascota
+  const mascotaDiv = document.createElement('div');
+  mascotaDiv.style.cssText = 'background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px;';
+  mascotaDiv.innerHTML =
+    '<p style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;margin-bottom:4px;">Paciente</p>' +
+    '<p style="font-size:11px;font-weight:900;color:#1e293b;text-transform:uppercase;">' + (consulta.paciente || '---') + '</p>' +
+    '<p style="font-size:9px;color:#64748b;">' + (consulta.especie || '') + (consulta.raza ? ' · ' + consulta.raza : '') + '</p>' +
+    (consulta.edad  ? '<p style="font-size:9px;color:#64748b;">Edad: <b>' + consulta.edad + '</b></p>' : '') +
+    (consulta.peso  ? '<p style="font-size:9px;color:#64748b;">Peso: <b>' + consulta.peso + ' kg</b></p>' : '') +
+    (consulta.sexo  ? '<p style="font-size:9px;color:#64748b;">Sexo: <b>' + consulta.sexo + '</b></p>' : '') +
+    (consulta.color ? '<p style="font-size:9px;color:#64748b;">Color: <b>' + consulta.color + '</b></p>' : '');
+  infoDiv.appendChild(mascotaDiv);
+
+  body.appendChild(infoDiv);
+
+  // Datos clinicos
   if (consulta.tratamiento) {
     const diagDiv = document.createElement('div');
     diagDiv.className = 'bg-slate-50 rounded-xl p-2 border border-slate-100';
@@ -111,7 +142,7 @@ function _renderizarTarjeta(consulta) {
     consulta.serviciosRealizados.forEach(function(s) {
       htmlServ +=
         '<tr style="border-bottom:1px solid #f1f5f9;">' +
-        '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || '') + '</td>' +
+        '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || '').replace(/[^\x20-\x7E\u00C0-\u024F\u4e00-\u9fff]/g, '').trim() + '</td>' +
         '<td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:900;color:#2563eb;">$' + parseFloat(s.precio || 0).toFixed(2) + '</td>' +
         '</tr>';
     });
