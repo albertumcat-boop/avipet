@@ -1,10 +1,10 @@
 // =========================================================
-// AVIPET — finanzas.js  v3
-// CÁLCULOS COMPLETOS:
-//   Veterinaria: Venta - Insumos - Pago Doctor = Neto Avipet
-//   Peluquería:  Precio × 40% Peluquera, 60% Avipet
-//   Desglose individual por consulta y servicio
-//   Vista: Hoy / Semana / Mes
+// AVIPET — finanzas.js  v4
+// LOGICA PELUQUERIA CORREGIDA:
+//   Peluquera = precio x 40% - $1 por perro con ayudante
+//   Avipet    = precio x 60% - $1 por perro con ayudante
+//   Ayudante  = $2 total ($1 pelu + $1 Avipet)
+//   Precio < $10 = sin ayudante (corte de unas)
 // =========================================================
 
 import { db } from './firebase-config.js';
@@ -30,7 +30,6 @@ window.cambiarPeriodoFinanzas = (periodo) => {
       ? 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-blue-600 text-white transition-all'
       : 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
   });
-  // Solo cargar si ya hay una tab seleccionada
   if (_tabFinanzas) window.cargarReporte();
 };
 
@@ -39,10 +38,9 @@ function _getFechasRango() {
   const fmt  = d => d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
   if (_periodoActual === 'hoy') return [fmt(hoy)];
   if (_periodoActual === 'semana') {
-    // Semana actual: desde el lunes hasta hoy
     const fechas = [];
-    const diaSemana = hoy.getDay(); // 0=dom, 1=lun, ..., 6=sab
-    const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1; // lunes = inicio
+    const diaSemana = hoy.getDay();
+    const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1;
     for (let i = diasDesdeElLunes; i >= 0; i--) {
       const d = new Date(hoy); d.setDate(hoy.getDate()-i); fechas.push(fmt(d));
     }
@@ -57,33 +55,16 @@ function _getFechasRango() {
   return [fmt(hoy)];
 }
 
-// ─── PESTAÑA ACTIVA EN FINANZAS ──────────────────────────
-let _tabFinanzas = null; // null = solo calculadora visible al abrir
-
-// Mostrar/ocultar bloques HTML según la tab seleccionada
-function _actualizarBloques(tab) {
-  const bloques = {
-    'bloqueFinVeterinaria': tab === 'veterinaria',
-    'bloqueFinPeluqueria':  tab === 'peluqueria',
-    'bloqueFinNeto':        tab === 'veterinaria' || tab === 'peluqueria',
-    'bloqueFinGraficas':    tab === 'veterinaria',
-    'selectorPeriodoFinanzas': tab !== null,
-  };
-  Object.entries(bloques).forEach(([id, visible]) => {
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle('hidden', !visible);
-  });
-}
+let _tabFinanzas = null;
 
 window.cambiarTabFinanzas = (tab) => {
   _tabFinanzas = tab;
-  _actualizarBloques(tab);
   const tabs = ['veterinaria','peluqueria','maquinas'];
   tabs.forEach(t => {
     const btn = document.getElementById('btnFinTab_' + t);
     if (btn) btn.className = t === tab
-      ? 'text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-blue-600 text-white border-b-2 border-blue-600'
-      : 'text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-slate-100 text-slate-500 hover:bg-slate-200';
+      ? 'text-[10px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white'
+      : 'text-[10px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200';
   });
   window.cargarReporte();
 };
@@ -93,47 +74,40 @@ window.volverMenuFinanzas = () => {
   window.mostrarMenuFinanzas();
 };
 
-// Mostrar solo el menú de botones sin consultar Firebase
 window.mostrarMenuFinanzas = () => {
   _tabFinanzas = null;
-  _actualizarBloques(null);
   const listaDiv = document.getElementById('listaReporte');
   const netoDiv  = document.getElementById('repNeto');
   if (!listaDiv) return;
-
   listaDiv.innerHTML = '';
   const menuDiv = document.createElement('div');
   menuDiv.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:8px 0;';
-
   const botones = [
-    { tab:'veterinaria', label:'🩺 Veterinaria',          color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe' },
-    { tab:'peluqueria',  label:'✂️ Peluquería',           color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
-    { tab:'maquinas',    label:'🔬 Contador de Máquinas', color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0' },
+    { tab:'veterinaria', label:'Veterinaria',           color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe' },
+    { tab:'peluqueria',  label:'Peluqueria',            color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
+    { tab:'maquinas',    label:'Contador de Maquinas',  color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0' },
   ];
-
   botones.forEach(function(b) {
     const btn = document.createElement('button');
     btn.style.cssText = 'width:100%;padding:16px;border-radius:14px;border:2px solid ' + b.border + ';background:' + b.bg + ';font-weight:900;font-size:13px;color:' + b.color + ';cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
-    btn.innerHTML = '<span>' + b.label + '</span><span style="font-size:18px;">→</span>';
+    btn.innerHTML = '<span>' + b.label + '</span><span style="font-size:18px;">&rarr;</span>';
     btn.addEventListener('click', (function(tab){ return function(){ window.cambiarTabFinanzas(tab); }; })(b.tab));
     menuDiv.appendChild(btn);
   });
-
   listaDiv.appendChild(menuDiv);
   if (netoDiv) netoDiv.innerHTML = '';
 };
 
-// ─── SERVICIOS CON MÁQUINA ────────────────────────────────
 const SERVICIOS_MAQUINA = {
-  'ECOGRAFÍA':             '🔊 Ecógrafo',
-  'HEMATOLOGÍA COMPLETA':  '🔬 Analizador Hematológico',
-  'QUÍMICA SANGUÍNEA':     '🧪 Analizador Bioquímico',
-  'DESCARTE HEMOPARASITO': '🧫 Microscopio',
-  'DISTEMPER':             '🧫 Microscopio',
-  'PARVOVIRUS - CORONAVIRUS': '🧫 Microscopio',
-  'FILARIASIS':            '🧫 Microscopio',
-  'SIDA - LEUCEMIA':       '🧫 Microscopio',
-  'TEST HELICOBACTER PYLORI AG': '🧫 Microscopio',
+  'ECOGRAFIA':             'Ecografo',
+  'HEMATOLOGIA COMPLETA':  'Analizador Hematologico',
+  'QUIMICA SANGUINEA':     'Analizador Bioquimico',
+  'DESCARTE HEMOPARASITO': 'Microscopio',
+  'DISTEMPER':             'Microscopio',
+  'PARVOVIRUS - CORONAVIRUS': 'Microscopio',
+  'FILARIASIS':            'Microscopio',
+  'SIDA - LEUCEMIA':       'Microscopio',
+  'TEST HELICOBACTER PYLORI AG': 'Microscopio',
 };
 
 window.cargarReporte = async () => {
@@ -142,7 +116,7 @@ window.cargarReporte = async () => {
   if (!listaDiv) return;
 
   const tituloP = { hoy:'Hoy', semana:'Semana actual (Lun-Hoy)', mes:'Este mes' };
-  listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400 text-[10px] uppercase'>🔄 Cargando " + tituloP[_periodoActual] + "...</p>";
+  listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400 text-[10px] uppercase'>Cargando " + tituloP[_periodoActual] + "...</p>";
   _destroyCharts();
 
   try {
@@ -157,24 +131,15 @@ window.cargarReporte = async () => {
 
     listaDiv.innerHTML = '';
 
-    // ── Si no hay tab seleccionada → mostrar menú ──
-    if (!_tabFinanzas) {
-      window.mostrarMenuFinanzas();
-      return;
-    }
-
-    // ── FILTRAR POR TAB ──
-    if (_tabFinanzas === 'maquinas') {
-      _renderizarContadorMaquinas(consultas, fechas);
-      return;
-    }
+    if (!_tabFinanzas) { window.mostrarMenuFinanzas(); return; }
+    if (_tabFinanzas === 'maquinas') { _renderizarContadorMaquinas(consultas, fechas); return; }
 
     // ── VETERINARIA ──
     let brutoVet=0, insumosVet=0, pagoSandoval=0, pagoSilva=0;
     const serviciosConteo = {};
 
     if (consultas.length > 0 && _tabFinanzas === 'veterinaria') {
-      listaDiv.innerHTML += "<p class='text-[8px] font-black text-blue-500 uppercase tracking-widest mt-2 mb-1 px-1'>🩺 VETERINARIA (" + consultas.length + " consulta" + (consultas.length>1?'s':'') + ")</p>";
+      listaDiv.innerHTML += "<p class='text-[8px] font-black text-blue-500 uppercase tracking-widest mt-2 mb-1 px-1'>VETERINARIA (" + consultas.length + " consulta" + (consultas.length>1?'s':'') + ")</p>";
       consultas.forEach(r => {
         const venta   = parseFloat(r.montoVenta   || 0);
         const gasto   = parseFloat(r.montoInsumos || 0);
@@ -189,7 +154,7 @@ window.cargarReporte = async () => {
           "<div class='py-2 border-b bg-white px-3 mb-1 rounded-lg shadow-sm border-l-4 " + colorDoc + "'>" +
             "<div class='flex justify-between items-start'>" +
               "<div><p class='font-black text-[10px] uppercase text-slate-700'>" + (r.paciente||'---') + "</p>" +
-              "<p class='text-[8px] font-bold text-slate-400'>🩺 " + (r.doctor||'---') + " · " + (r.fechaSimple||'') + "</p></div>" +
+              "<p class='text-[8px] font-bold text-slate-400'>" + (r.doctor||'---') + " &middot; " + (r.fechaSimple||'') + "</p></div>" +
               "<div class='text-right'><p class='font-black text-[10px] text-slate-800'>$" + venta.toFixed(2) + "</p>" +
               "<p class='text-[8px] text-slate-400'>Insumos: $" + gasto.toFixed(2) + "</p></div>" +
             "</div>" +
@@ -201,12 +166,12 @@ window.cargarReporte = async () => {
       });
     }
 
-    // ── PELUQUERÍA ──
+    // ── PELUQUERIA ──
     let brutoPelu=0, pagoPeluquera=0, pagoAyu1=0, pagoAyuExt=0, netoAviPelu=0;
     let peluUSD=0, peluBS=0, peluPendiente=0;
 
     if (servicios.length > 0 && _tabFinanzas === 'peluqueria') {
-      listaDiv.innerHTML += "<p class='text-[8px] font-black text-purple-500 uppercase tracking-widest mt-3 mb-1 px-1'>✂️ PELUQUERÍA (" + servicios.length + " servicio" + (servicios.length>1?'s':'') + ")</p>";
+      listaDiv.innerHTML += "<p class='text-[8px] font-black text-purple-500 uppercase tracking-widest mt-3 mb-1 px-1'>PELUQUERIA (" + servicios.length + " servicio" + (servicios.length>1?'s':'') + ")</p>";
       servicios.forEach(r => {
         const precio  = parseFloat(r.precioTotal       || 0);
         const pagPelu = parseFloat(r.pagoPeluquera     || 0);
@@ -225,27 +190,38 @@ window.cargarReporte = async () => {
         } else peluPendiente += precio;
 
         const colorEst = estatus === 'pagado' ? 'text-emerald-600' : 'text-red-500';
-        const iconPago = modo==='bs' ? '🟡 Bs' : modo==='mixto' ? '🔀 Mixto' : '💵 USD';
-        const ayuStr = (pagA1+pagAx) > 0 ? " Ayudantes: $" + (pagA1+pagAx).toFixed(2) : '';
+        const iconPago = modo==='bs' ? 'Bs' : modo==='mixto' ? 'Mixto' : 'USD';
+
+        // Mostrar la resta explicita
+        const tieneAyu = pagA1 > 0;
+        let desglosePelu = '$' + pagPelu.toFixed(2);
+        if (tieneAyu) desglosePelu = '(' + (pagPelu + 1).toFixed(2) + ' - $1) = $' + pagPelu.toFixed(2);
+
+        let desgloseAvipet = '';
+        if (tieneAyu) {
+          const avipetBruto = precio * 0.60;
+          desgloseAvipet = ' | Avipet: (' + avipetBruto.toFixed(2) + ' - $1) = $' + neto.toFixed(2);
+        }
+
         listaDiv.innerHTML +=
           "<div class='py-2 border-b bg-slate-50 px-3 mb-1 rounded-lg border-l-4 border-l-purple-400'>" +
             "<div class='flex justify-between items-start'>" +
               "<div><p class='font-black text-[10px] uppercase text-slate-700'>" + (r.paciente||'---') + "</p>" +
-              "<p class='text-[8px] font-bold text-slate-400'>✂️ " + (r.duenio||'') + " · " + (r.fechaSimple||'') + "</p></div>" +
+              "<p class='text-[8px] font-bold text-slate-400'>" + (r.duenio||'') + " &middot; " + (r.fechaSimple||'') + "</p></div>" +
               "<div class='text-right'><p class='font-black text-[10px] text-slate-800'>$" + precio.toFixed(2) + "</p>" +
-              "<p class='text-[8px] font-bold " + colorEst + "'>" + (estatus==='pagado'?'✅ '+iconPago:'⏳ Pendiente') + "</p></div>" +
+              "<p class='text-[8px] font-bold " + colorEst + "'>" + (estatus==='pagado'?'PAGADO '+iconPago:'Pendiente') + "</p></div>" +
             "</div>" +
-            "<div class='flex gap-2 mt-1 text-[8px] flex-wrap'>" +
-              "<span class='text-purple-600 font-bold'>Peluquera: $" + pagPelu.toFixed(2) + "</span>" +
-              (pagA1+pagAx > 0 ? "<span class='text-blue-500 font-bold'>Ayudantes: $" + (pagA1+pagAx).toFixed(2) + "</span>" : '') +
-              "<span class='text-emerald-600 font-bold'>Avipet: $" + neto.toFixed(2) + "</span>" +
+            "<div class='mt-1 text-[8px] text-slate-500'>" +
+              "<span class='text-purple-600 font-bold'>Pelu: " + desglosePelu + "</span>" +
+              (tieneAyu ? "<span class='text-blue-500 font-bold ml-2'>Ayu: $" + pagA1.toFixed(2) + desgloseAvipet + "</span>" : '') +
+              (!tieneAyu ? "<span class='text-emerald-600 font-bold ml-2'>Avipet: $" + neto.toFixed(2) + "</span>" : '') +
             "</div>" +
           "</div>";
       });
     }
 
     if (consultas.length === 0 && servicios.length === 0) {
-      listaDiv.innerHTML = "<div class='text-center py-8 text-slate-400 text-[10px] font-black uppercase italic'>Sin registros para este período</div>";
+      listaDiv.innerHTML = "<div class='text-center py-8 text-slate-400 text-[10px] font-black uppercase italic'>Sin registros para este periodo</div>";
     }
 
     // ── TOTALES ──
@@ -283,14 +259,13 @@ window.cargarReporte = async () => {
 
   } catch(e) {
     console.error('Error reporte:', e);
-    listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold text-[10px]'>❌ ERROR: " + e.message + "</p>";
+    listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold text-[10px]'>ERROR: " + e.message + "</p>";
   }
 };
 
 function _renderCharts({ brutoVet, brutoPelu, insumosVet, pagoSandoval, pagoSilva,
                          netoAviVet, netoAviPelu, pagoPeluquera, pagoAyu1, pagoAyuExt, serviciosConteo }) {
   const opts = { responsive:true, plugins:{ legend:{ labels:{ font:{ family:"'Segoe UI',sans-serif", weight:'bold', size:10 }, color:'#334155' } } } };
-
   const c1 = document.getElementById('chartDistribucion');
   if (c1) _chartDist = new Chart(c1, {
     type: 'doughnut',
@@ -309,25 +284,23 @@ function _renderCharts({ brutoVet, brutoPelu, insumosVet, pagoSandoval, pagoSilv
     },
     options: { ...opts, cutout:'60%' }
   });
-
   const c2 = document.getElementById('chartDoctores');
   if (c2) _chartDoc = new Chart(c2, {
     type: 'bar',
     data: { labels:['Dr. Darwin','Dr. Joan'],
-      datasets:[{ label:'Comisión $', data:[parseFloat(pagoSandoval.toFixed(2)), parseFloat(pagoSilva.toFixed(2))],
+      datasets:[{ label:'Comision $', data:[parseFloat(pagoSandoval.toFixed(2)), parseFloat(pagoSilva.toFixed(2))],
       backgroundColor:['#2563eb','#10b981'], borderRadius:8 }] },
     options: { ...opts, scales:{
       y:{ beginAtZero:true, grid:{color:'#f1f5f9'}, ticks:{color:'#64748b',font:{size:9}} },
       x:{ grid:{display:false}, ticks:{color:'#334155',font:{weight:'bold',size:10}} }
     }, plugins:{ legend:{display:false} } }
   });
-
   const c3 = document.getElementById('chartServicios');
   if (c3 && Object.keys(serviciosConteo).length > 0) {
     const sorted = Object.entries(serviciosConteo).sort((a,b) => b[1]-a[1]).slice(0,6);
     _chartServ = new Chart(c3, {
       type: 'bar',
-      data: { labels: sorted.map(([k]) => k.length>14?k.substring(0,14)+'…':k),
+      data: { labels: sorted.map(([k]) => k.length>14?k.substring(0,14)+'...':k),
         datasets:[{ label:'Ingreso $', data: sorted.map(([,v]) => parseFloat(v.toFixed(2))),
         backgroundColor:'#2563eb', borderRadius:6 }] },
       options: { indexAxis:'y', ...opts,
@@ -354,8 +327,8 @@ window.guardarResumenDelDia = async () => {
       peluqueria:{servicios:cntPelu,bruto:brutoPelu,peluquera:pagoPelu,ayudantes:pagoAyus,netoAvipet:netoPelu},
       totales:{bruto:brutoVet+brutoPelu,netoAvipet:netoVet+netoPelu}
     });
-    await Swal.fire({icon:'success',title:'✅ Resumen guardado',text:fechaSimple,timer:2000,showConfirmButton:false});
-  } catch(e){console.error(e);alert("❌ Error: "+e.message);}
+    await Swal.fire({icon:'success',title:'Resumen guardado',text:fechaSimple,timer:2000,showConfirmButton:false});
+  } catch(e){console.error(e);alert("Error: "+e.message);}
 };
 
 window.descargarReporte = async () => {
@@ -364,86 +337,123 @@ window.descargarReporte = async () => {
     const fechaSimple = hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
     const snapV = await getDocs(query(collection(db,"consultas"),          where("fechaSimple","==",fechaSimple)));
     const snapP = await getDocs(query(collection(db,"servicios_estetica"), where("fechaSimple","==",fechaSimple)));
-    if (snapV.empty && snapP.empty){alert("📅 No hay registros para hoy: "+fechaSimple);return;}
+    if (snapV.empty && snapP.empty){alert("No hay registros para hoy: "+fechaSimple);return;}
     let lineas=[],brutoVet=0,insumosVet=0,pagoSandoval=0,pagoSilva=0,cntVet=0;
     let brutoPelu=0,pagoPelu=0,pagoA1=0,pagoAx=0,netoPelu=0,cntPelu=0,pendiente=0;
-    lineas.push("═══════════════════════════════════════════════════");
-    lineas.push("        AVIPET — RESUMEN DE CAJA");
+    lineas.push("===================================================");
+    lineas.push("        AVIPET - RESUMEN DE CAJA");
     lineas.push("        Fecha: "+fechaSimple);
-    lineas.push("        Por: "+(window.doctorVerificado||"Administrador"));
-    lineas.push("═══════════════════════════════════════════════════\n");
-    lineas.push("─── 🩺 VETERINARIA ─────────────────────────────────");
+    lineas.push("===================================================\n");
+    lineas.push("--- VETERINARIA -----------------------------------");
     snapV.forEach(d=>{
-      const r=d.data();const venta=parseFloat(r.montoVenta||0),gasto=parseFloat(r.montoInsumos||0),doc=parseFloat(r.pagoDoctor||0),neto=venta-gasto-doc;
+      const r=d.data();const venta=parseFloat(r.montoVenta||0),gasto=parseFloat(r.montoInsumos||0),docPag=parseFloat(r.pagoDoctor||0),neto=venta-gasto-docPag;
       brutoVet+=venta;insumosVet+=gasto;cntVet++;
-      if(r.doctor&&r.doctor.includes('Darwin'))pagoSandoval+=doc;else pagoSilva+=doc;
-      lineas.push("  "+( r.paciente||'---')+" | Dr. "+(r.doctor||'---'));
-      lineas.push("    Venta: $"+venta.toFixed(2)+"  Insumos: $"+gasto.toFixed(2)+"  Doc: $"+doc.toFixed(2)+"  Neto: $"+neto.toFixed(2));
+      if(r.doctor&&r.doctor.includes('Darwin'))pagoSandoval+=docPag;else pagoSilva+=docPag;
+      lineas.push("  "+(r.paciente||'---')+" | "+(r.doctor||'---'));
+      lineas.push("    Venta: $"+venta.toFixed(2)+"  Insumos: $"+gasto.toFixed(2)+"  Doc: $"+docPag.toFixed(2)+"  Neto: $"+neto.toFixed(2));
     });
     const netoVet=brutoVet-insumosVet-pagoSandoval-pagoSilva;
     lineas.push("\n  SUBTOTAL VETERINARIA:");
-    lineas.push("    Consultas:     "+cntVet);
-    lineas.push("    Bruto:         $"+brutoVet.toFixed(2));
-    lineas.push("    Insumos:       $"+insumosVet.toFixed(2));
-    lineas.push("    Dr. Darwin:    $"+pagoSandoval.toFixed(2));
-    lineas.push("    Dr. Joan:      $"+pagoSilva.toFixed(2));
-    lineas.push("    NETO AVIPET:   $"+netoVet.toFixed(2));
-    lineas.push("\n─── ✂️  PELUQUERÍA ──────────────────────────────────");
+    lineas.push("    Consultas:   "+cntVet);
+    lineas.push("    Bruto:       $"+brutoVet.toFixed(2));
+    lineas.push("    Insumos:     $"+insumosVet.toFixed(2));
+    lineas.push("    Dr. Darwin:  $"+pagoSandoval.toFixed(2));
+    lineas.push("    Dr. Joan:    $"+pagoSilva.toFixed(2));
+    lineas.push("    NETO AVIPET: $"+netoVet.toFixed(2));
+    lineas.push("\n--- PELUQUERIA ------------------------------------");
     snapP.forEach(d=>{
-      const r=d.data();const precio=parseFloat(r.precioTotal||0),pPelu=parseFloat(r.pagoPeluquera||0),pA1=parseFloat(r.pagoAyudante1||0),pAx=parseFloat(r.pagoAyudanteExtra||0),neto=parseFloat(r.ingresoAvipet||0);
-      const estatus=r.estatusPago||'pendiente',modo=r.modoPago||'usd';
+      const r=d.data();
+      const precio=parseFloat(r.precioTotal||0);
+      const pPelu=parseFloat(r.pagoPeluquera||0);
+      const pA1=parseFloat(r.pagoAyudante1||0);
+      const pAx=parseFloat(r.pagoAyudanteExtra||0);
+      const neto=parseFloat(r.ingresoAvipet||0);
+      const tieneAyu = pA1 > 0;
       brutoPelu+=precio;pagoPelu+=pPelu;pagoA1+=pA1;pagoAx+=pAx;netoPelu+=neto;cntPelu++;
-      if(estatus!=='pagado')pendiente+=precio;
-      const iconPago=modo==='bs'?'Bs':modo==='mixto'?'Mixto':'USD';
+      if((r.estatusPago||'pendiente')!=='pagado')pendiente+=precio;
       lineas.push("  "+(r.paciente||'---')+" | "+(r.duenio||''));
-      lineas.push("    Precio: $"+precio.toFixed(2)+"  Pelu: $"+pPelu.toFixed(2)+"  Ayu: $"+(pA1+pAx).toFixed(2)+"  Avipet: $"+neto.toFixed(2)+"  ["+(estatus==='pagado'?'PAGADO '+iconPago:'PENDIENTE')+"]");
+      if (tieneAyu) {
+        const peluBruto = parseFloat((precio * 0.40).toFixed(2));
+        const avipetBruto = parseFloat((precio * 0.60).toFixed(2));
+        lineas.push("    Precio: $"+precio.toFixed(2)+"  Pelu: ($"+peluBruto.toFixed(2)+" - $1) = $"+pPelu.toFixed(2));
+        lineas.push("    Avipet: ($"+avipetBruto.toFixed(2)+" - $1) = $"+neto.toFixed(2)+"  Ayu: $"+pA1.toFixed(2));
+      } else {
+        lineas.push("    Precio: $"+precio.toFixed(2)+"  Pelu: $"+pPelu.toFixed(2)+"  Avipet: $"+neto.toFixed(2)+"  (sin ayudante)");
+      }
+      lineas.push("    Estatus: "+((r.estatusPago==='pagado')?'PAGADO '+(r.modoPago||'').toUpperCase():'PENDIENTE'));
     });
-    lineas.push("\n  SUBTOTAL PELUQUERÍA:");
-    lineas.push("    Servicios:     "+cntPelu);
-    lineas.push("    Bruto:         $"+brutoPelu.toFixed(2));
-    lineas.push("    Peluquera:     $"+pagoPelu.toFixed(2));
-    lineas.push("    Ayudantes:     $"+(pagoA1+pagoAx).toFixed(2));
-    lineas.push("    Pendiente:     $"+pendiente.toFixed(2));
-    lineas.push("    NETO AVIPET:   $"+netoPelu.toFixed(2));
+    lineas.push("\n  SUBTOTAL PELUQUERIA:");
+    lineas.push("    Servicios:   "+cntPelu);
+    lineas.push("    Bruto:       $"+brutoPelu.toFixed(2));
+    lineas.push("    Peluquera:   $"+pagoPelu.toFixed(2));
+    lineas.push("    Ayudantes:   $"+(pagoA1+pagoAx).toFixed(2));
+    lineas.push("    Pendiente:   $"+pendiente.toFixed(2));
+    lineas.push("    NETO AVIPET: $"+netoPelu.toFixed(2));
     const netoTotal=netoVet+netoPelu;
-    lineas.push("\n═══════════════════════════════════════════════════");
+    lineas.push("\n===================================================");
     lineas.push("  RESUMEN GENERAL");
-    lineas.push("  Bruto total:    $"+(brutoVet+brutoPelu).toFixed(2));
-    lineas.push("  Insumos vet:    $"+insumosVet.toFixed(2));
-    lineas.push("  Dr. Darwin:     $"+pagoSandoval.toFixed(2));
-    lineas.push("  Dr. Joan:       $"+pagoSilva.toFixed(2));
-    lineas.push("  Peluquera:      $"+pagoPelu.toFixed(2));
-    lineas.push("  Ayudantes:      $"+(pagoA1+pagoAx).toFixed(2));
-    lineas.push("  ─────────────────────────────────────────────");
-    lineas.push("  NETO AVIPET:    $"+netoTotal.toFixed(2));
-    lineas.push("═══════════════════════════════════════════════════");
+    lineas.push("  Bruto total:  $"+(brutoVet+brutoPelu).toFixed(2));
+    lineas.push("  Dr. Darwin:   $"+pagoSandoval.toFixed(2));
+    lineas.push("  Dr. Joan:     $"+pagoSilva.toFixed(2));
+    lineas.push("  Peluquera:    $"+pagoPelu.toFixed(2));
+    lineas.push("  Ayudantes:    $"+(pagoA1+pagoAx).toFixed(2));
+    lineas.push("  ---------------------------------------------");
+    lineas.push("  NETO AVIPET:  $"+netoTotal.toFixed(2));
+    lineas.push("===================================================");
     const blob=new Blob([lineas.join("\n")],{type:"text/plain;charset=utf-8"});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
     a.download="Caja_Avipet_"+fechaSimple.replace(/\//g,"-")+".txt";
     document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  }catch(e){console.error(e);alert("❌ Error: "+e.message);}
+  }catch(e){console.error(e);alert("Error: "+e.message);}
 };
 
-window.enviarEncuestaWhatsapp=()=>{let telefono=document.getElementById('hTlf')?.value.replace(/\D/g,'')||"";const paciente=document.getElementById('hNombre')?.value||"",cedula=document.getElementById('hCI')?.value||"",doctor=document.getElementById('selectDoctor')?.value||"";if(!telefono||telefono.length<7){alert("⚠️ No hay teléfono registrado.");return;}if(telefono.startsWith('0'))telefono='58'+telefono.substring(1);if(!telefono.startsWith('58')&&telefono.length===10)telefono='58'+telefono;const base=window.location.origin+window.location.pathname;const url=base+"?mode=encuesta&ci="+encodeURIComponent(cedula)+"&paciente="+encodeURIComponent(paciente)+"&doctor="+encodeURIComponent(doctor);const msg=encodeURIComponent("🐾 Hola, estimado/a propietario/a de *"+paciente+"*.\n\nGracias por confiar en *AVIPET*.\n\nResponde nuestra encuesta:\n👉 "+url+"\n\n¡Tu opinión nos ayuda! 🙏");window.open("https://wa.me/"+telefono+"?text="+msg,'_blank');};
-window.mostrarEncuesta=(ci,paciente,doctor)=>{document.body.innerHTML=`<div class="min-h-screen bg-gradient-to-br from-blue-900 to-slate-900 p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"><div class="bg-blue-600 p-6 text-center"><img src="avipet.png" class="h-16 object-contain mx-auto mb-2"><h1 class="text-white font-black text-lg uppercase">Encuesta de Satisfacción</h1></div><div class="p-6 space-y-6"><div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100"><p class="text-[10px] font-bold text-slate-500 uppercase">Paciente</p><p class="font-black text-blue-700 uppercase">${paciente}</p><p class="text-[10px] text-slate-400">Dr. ${doctor}</p></div><div><label class="block text-[11px] font-black text-slate-700 uppercase mb-2">1. ¿Cómo calificarías el servicio?</label><div class="flex justify-around text-3xl" id="estrellasContainer">${[1,2,3,4,5].map(n=>`<span class="cursor-pointer hover:scale-125 estrella transition-transform" data-val="${n}" onclick="window.seleccionarEstrella(${n})">⭐</span>`).join('')}</div><p id="textoEstrella" class="text-center text-[10px] font-bold text-blue-600 mt-1 h-4"></p><input type="hidden" id="encCalificacion" value=""></div><div><label class="block text-[11px] font-black text-slate-700 uppercase mb-2">2. ¿Atención del Dr. ${doctor}?</label><div class="grid grid-cols-3 gap-2">${['Excelente 🌟','Buena 👍','Mejorable 💬'].map(op=>`<button type="button" onclick="window.seleccionarOpcion('encDoctor',this)" data-val="${op}" class="opcion-btn border-2 border-slate-200 rounded-xl py-2 text-[10px] font-black text-slate-600 hover:border-blue-500 transition-all">${op}</button>`).join('')}</div><input type="hidden" id="encDoctor" value=""></div><div><label class="block text-[11px] font-black text-slate-700 uppercase mb-2">3. ¿Volvería a visitarnos?</label><div class="grid grid-cols-3 gap-2">${['Sí, seguro ✅','Tal vez 🤔','No por ahora ❌'].map(op=>`<button type="button" onclick="window.seleccionarOpcion('encVolveria',this)" data-val="${op}" class="opcion-btn border-2 border-slate-200 rounded-xl py-2 text-[10px] font-black text-slate-600 hover:border-blue-500 transition-all">${op}</button>`).join('')}</div><input type="hidden" id="encVolveria" value=""></div><div><label class="block text-[11px] font-black text-slate-700 uppercase mb-2">4. ¿Cómo nos conociste?</label><div class="grid grid-cols-2 gap-2">${['Recomendación 🗣️','Redes Sociales 📱','Pasé por aquí 🚶','Ya era cliente ⭐'].map(op=>`<button type="button" onclick="window.seleccionarOpcion('encConocio',this)" data-val="${op}" class="opcion-btn border-2 border-slate-200 rounded-xl py-2 text-[10px] font-black text-slate-600 hover:border-blue-500 transition-all">${op}</button>`).join('')}</div><input type="hidden" id="encConocio" value=""></div><div><label class="block text-[11px] font-black text-slate-700 uppercase mb-2">5. Comentario:</label><textarea id="encComentario" rows="3" class="w-full border-2 border-slate-200 rounded-xl p-3 text-[11px] outline-none focus:border-blue-500 bg-slate-50" placeholder="Escribe aquí..."></textarea></div><button onclick="window.enviarEncuesta('${ci}','${paciente}','${doctor}')" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-sm shadow-lg active:scale-95">Enviar mi Opinión 🚀</button></div></div></div>`;};
-window.seleccionarEstrella=(n)=>{const textos=['','Muy malo 😞','Malo 😕','Regular 😐','Bueno 😊','Excelente 🤩'];document.getElementById('encCalificacion').value=n;document.getElementById('textoEstrella').innerText=textos[n];document.querySelectorAll('.estrella').forEach(s=>{s.style.filter=Number(s.dataset.val)<=n?'none':'grayscale(1)';s.style.opacity=Number(s.dataset.val)<=n?'1':'0.4';});};
-window.seleccionarOpcion=(campoId,btn)=>{btn.closest('div').querySelectorAll('.opcion-btn').forEach(b=>{b.classList.remove('border-blue-500','bg-blue-50','text-blue-700');b.classList.add('border-slate-200','text-slate-600');});btn.classList.add('border-blue-500','bg-blue-50','text-blue-700');document.getElementById(campoId).value=btn.dataset.val;};
-window.enviarEncuesta=async(ci,paciente,doctor)=>{const cal=document.getElementById('encCalificacion').value;if(!cal){alert("⭐ Selecciona una calificación.");return;}const btn=document.querySelector('button[onclick^="window.enviarEncuesta"]');if(btn){btn.disabled=true;btn.innerText="⏳ Enviando...";}try{await addDoc(collection(db,"encuestas"),{ci,paciente,doctor,calificacion:Number(cal),atencionDoctor:document.getElementById('encDoctor')?.value||"",volveria:document.getElementById('encVolveria')?.value||"",comoNosConocio:document.getElementById('encConocio')?.value||"",comentario:document.getElementById('encComentario')?.value.trim()||"",fecha:new Date().toLocaleDateString(),timestamp:serverTimestamp()});document.body.innerHTML=`<div class="min-h-screen bg-gradient-to-br from-blue-900 to-slate-900 flex items-center justify-center p-6"><div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"><div class="text-6xl mb-4">🎉</div><h2 class="text-2xl font-black text-blue-700 uppercase mb-2">¡Gracias!</h2><p class="text-slate-600 font-bold text-sm">Tu opinión fue registrada.</p><img src="avipet.png" class="h-16 object-contain mx-auto mt-6"></div></div>`;}catch(e){if(btn){btn.disabled=false;btn.innerText="Enviar mi Opinión 🚀";}alert("❌ Error: "+e.message);}};
-
+// ─── CALCULADORA BS <-> USD ───────────────────────────────
 window._calcModoActual='usdToBS';
-window.setCalcModo=(modo)=>{window._calcModoActual=modo;const btnUsd=document.getElementById('btnUsdToBS'),btnBs=document.getElementById('btnBsToUSD'),simbolo=document.getElementById('calcSimbolo'),modoEl=document.getElementById('calcModo');if(modoEl)modoEl.value=modo;if(btnUsd&&btnBs){if(modo==='usdToBS'){btnUsd.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all bg-blue-600 text-white shadow-sm';btnBs.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all text-slate-500';if(simbolo)simbolo.innerText='$';}else{btnBs.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all bg-amber-500 text-white shadow-sm';btnUsd.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all text-slate-500';if(simbolo)simbolo.innerText='Bs';}}const inputEl=document.getElementById('calcInput');if(inputEl?.value)window.calcularConversor();};
-window.calcularConversor=()=>{const tasa=window.tasaDolarHoy||36,modo=document.getElementById('calcModo')?.value||window._calcModoActual||'usdToBS',inputEl=document.getElementById('calcInput'),resultEl=document.getElementById('calcResultado'),tasaEl=document.getElementById('calcTasaMostrar');if(!inputEl||!resultEl)return;const monto=parseFloat(inputEl.value)||0;if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";if(monto<=0){resultEl.innerHTML=`<p class="text-[10px] text-slate-400 italic font-bold uppercase">Ingresa un monto arriba</p>`;return;}if(modo==='usdToBS'){const r=monto*tasa;resultEl.innerHTML=`<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">$${monto.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})} equivale a:</p><p class="text-4xl font-black text-amber-600 font-mono">Bs ${r.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</p><p class="text-[9px] text-slate-400 mt-2 italic">Tasa BCV: ${tasa.toFixed(2)}</p>`;}else{const r=monto/tasa;resultEl.innerHTML=`<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Bs ${monto.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})} equivale a:</p><p class="text-4xl font-black text-emerald-600 font-mono">$ ${r.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</p><p class="text-[9px] text-slate-400 mt-2 italic">Tasa BCV: ${tasa.toFixed(2)}</p>`;}};
-window.aplicarTasaManualCalc=()=>{const inp=document.getElementById('calcTasaManual'),tasa=parseFloat(inp?.value);if(!tasa||tasa<1){alert('⚠️ Ingresa una tasa válida');return;}window.tasaDolarHoy=tasa;const tasaEl=document.getElementById('calcTasaMostrar');if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";if(inp)inp.value='';window.calcularConversor();};
-window.inicializarCalculadora=()=>{const tasa=window.tasaDolarHoy||36,tasaEl=document.getElementById('calcTasaMostrar');if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";window.setCalcModo('usdToBS');};
-
-// ─── AJUSTAR PAGO DESDE FINANZAS ─────────────────────────
-// Permite marcar como pagado servicios de días anteriores
+window.setCalcModo=(modo)=>{
+  window._calcModoActual=modo;
+  const btnUsd=document.getElementById('btnUsdToBS'),btnBs=document.getElementById('btnBsToUSD'),simbolo=document.getElementById('calcSimbolo'),modoEl=document.getElementById('calcModo');
+  if(modoEl)modoEl.value=modo;
+  if(btnUsd&&btnBs){
+    if(modo==='usdToBS'){
+      btnUsd.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all bg-blue-600 text-white shadow-sm';
+      btnBs.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all text-slate-500';
+      if(simbolo)simbolo.innerText='$';
+    }else{
+      btnBs.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all bg-amber-500 text-white shadow-sm';
+      btnUsd.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all text-slate-500';
+      if(simbolo)simbolo.innerText='Bs';
+    }
+  }
+  const inputEl=document.getElementById('calcInput');if(inputEl?.value)window.calcularConversor();
+};
+window.calcularConversor=()=>{
+  const tasa=window.tasaDolarHoy||36,modo=document.getElementById('calcModo')?.value||window._calcModoActual||'usdToBS',inputEl=document.getElementById('calcInput'),resultEl=document.getElementById('calcResultado'),tasaEl=document.getElementById('calcTasaMostrar');
+  if(!inputEl||!resultEl)return;
+  const monto=parseFloat(inputEl.value)||0;
+  if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";
+  if(monto<=0){resultEl.innerHTML='<p class="text-[10px] text-slate-400 italic font-bold uppercase">Ingresa un monto arriba</p>';return;}
+  if(modo==='usdToBS'){const r=monto*tasa;resultEl.innerHTML='<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">$'+monto.toFixed(2)+' equivale a:</p><p class="text-4xl font-black text-amber-600 font-mono">Bs '+r.toFixed(2)+'</p><p class="text-[9px] text-slate-400 mt-2 italic">Tasa BCV: '+tasa.toFixed(2)+'</p>';}
+  else{const r=monto/tasa;resultEl.innerHTML='<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Bs '+monto.toFixed(2)+' equivale a:</p><p class="text-4xl font-black text-emerald-600 font-mono">$ '+r.toFixed(2)+'</p><p class="text-[9px] text-slate-400 mt-2 italic">Tasa BCV: '+tasa.toFixed(2)+'</p>';}
+};
+window.aplicarTasaManualCalc=()=>{
+  const inp=document.getElementById('calcTasaManual'),tasa=parseFloat(inp?.value);
+  if(!tasa||tasa<1){alert('Ingresa una tasa valida');return;}
+  window.tasaDolarHoy=tasa;
+  const tasaEl=document.getElementById('calcTasaMostrar');
+  if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";
+  if(inp)inp.value='';
+  window.calcularConversor();
+};
+window.inicializarCalculadora=()=>{
+  const tasa=window.tasaDolarHoy||36,tasaEl=document.getElementById('calcTasaMostrar');
+  if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";
+  window.setCalcModo('usdToBS');
+};
 
 // ─── AJUSTAR PAGO DESDE FINANZAS ─────────────────────────
 window.ajustarPagoPeluqueria = async () => {
-  // Paso 1: pedir fecha
   const resFecha = await Swal.fire({
-    title: '📅 Ajustar Pago — Seleccionar Fecha',
+    title: 'Ajustar Pago - Seleccionar Fecha',
     html: '<p class="text-[11px] text-slate-500 mb-3">Fecha de los servicios a ajustar:</p>' +
           '<input type="date" id="swal_fecha_ajuste" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500">',
     showCancelButton: true,
@@ -465,7 +475,6 @@ window.ajustarPagoPeluqueria = async () => {
       Swal.fire({ icon:'info', title:'Sin registros', text:'No hay servicios para: '+fechaSimple, timer:2000, showConfirmButton:false });
       return;
     }
-
     const todos = [];
     const pendientes = [];
     snap.forEach(d => {
@@ -473,20 +482,17 @@ window.ajustarPagoPeluqueria = async () => {
       todos.push({ id:d.id, ...r });
       if ((r.estatusPago||'pendiente') !== 'pagado') pendientes.push({ id:d.id, ...r });
     });
-
     if (pendientes.length === 0) {
       Swal.fire({ icon:'info', title:'Todo pagado', text:'No hay pendientes para '+fechaSimple, timer:2000, showConfirmButton:false });
       return;
     }
-
-    // Paso 2: mostrar lista para marcar
-    let htmlLista = '<p class="text-[10px] text-slate-500 mb-2">Marca los que SÍ fueron pagados:</p>';
+    let htmlLista = '<p class="text-[10px] text-slate-500 mb-2">Marca los que SI fueron pagados:</p>';
     htmlLista += '<div class="max-h-60 overflow-y-auto border border-slate-200 rounded-xl p-2">';
     pendientes.forEach(r => {
       const precio = parseFloat(r.precioTotal||0).toFixed(2);
       htmlLista += '<label class="flex items-center gap-2 py-1.5 border-b border-slate-100 cursor-pointer">';
       htmlLista += '<input type="checkbox" class="chk-ajuste w-4 h-4 accent-blue-600" value="' + r.id + '">';
-      htmlLista += '<span class="text-[10px] font-bold text-slate-700 flex-1">' + (r.paciente||'---') + ' · ' + (r.duenio||'') + '</span>';
+      htmlLista += '<span class="text-[10px] font-bold text-slate-700 flex-1">' + (r.paciente||'---') + ' &middot; ' + (r.duenio||'') + '</span>';
       htmlLista += '<span class="text-[10px] font-black">$' + precio + '</span>';
       htmlLista += '</label>';
     });
@@ -497,7 +503,7 @@ window.ajustarPagoPeluqueria = async () => {
     htmlLista += '</label>';
 
     const resServ = await Swal.fire({
-      title: 'Ajustar — ' + fechaSimple,
+      title: 'Ajustar - ' + fechaSimple,
       html: htmlLista,
       showCancelButton: true,
       confirmButtonText: 'Continuar',
@@ -511,11 +517,10 @@ window.ajustarPagoPeluqueria = async () => {
     if (!resServ.isConfirmed) return;
     const idsAjustar = resServ.value;
 
-    // Paso 3: modalidad de pago
     let htmlModo = '<div class="flex flex-col gap-2 mt-2">';
-    htmlModo += '<button type="button" onclick="window._modoAjuste=\'usd\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-sm text-blue-700 hover:bg-blue-600 hover:text-white">💵 Dólares (USD)</button>';
-    htmlModo += '<button type="button" onclick="window._modoAjuste=\'bs\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-amber-200 bg-amber-50 font-black text-sm text-amber-700 hover:bg-amber-500 hover:text-white">🟡 Bolívares (Bs)</button>';
-    htmlModo += '<button type="button" onclick="window._modoAjuste=\'mixto\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-slate-200 bg-slate-50 font-black text-sm text-slate-600 hover:bg-slate-600 hover:text-white">🔀 Mixto</button>';
+    htmlModo += '<button type="button" onclick="window._modoAjuste=\'usd\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-blue-200 bg-blue-50 font-black text-sm text-blue-700 hover:bg-blue-600 hover:text-white">Dolares (USD)</button>';
+    htmlModo += '<button type="button" onclick="window._modoAjuste=\'bs\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-amber-200 bg-amber-50 font-black text-sm text-amber-700 hover:bg-amber-500 hover:text-white">Bolivares (Bs)</button>';
+    htmlModo += '<button type="button" onclick="window._modoAjuste=\'mixto\';Swal.clickConfirm()" class="w-full py-3 rounded-xl border-2 border-slate-200 bg-slate-50 font-black text-sm text-slate-600 hover:bg-slate-600 hover:text-white">Mixto</button>';
     htmlModo += '</div>';
 
     await Swal.fire({
@@ -529,7 +534,6 @@ window.ajustarPagoPeluqueria = async () => {
     const modo = window._modoAjuste || 'usd';
     window._modoAjuste = null;
 
-    // Actualizar en Firebase
     let actualizados = 0;
     for (let i = 0; i < idsAjustar.length; i++) {
       const id = idsAjustar[i];
@@ -548,20 +552,17 @@ window.ajustarPagoPeluqueria = async () => {
       });
       actualizados++;
     }
-
-    await Swal.fire({ icon:'success', title:'✅ ' + actualizados + ' ajustado(s)', text:fechaSimple + ' · ' + modo.toUpperCase(), timer:2000, showConfirmButton:false });
+    await Swal.fire({ icon:'success', title:actualizados + ' ajustado(s)', text:fechaSimple + ' - ' + modo.toUpperCase(), timer:2000, showConfirmButton:false });
     window.cargarReporte();
-
-  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+  } catch(e) { console.error(e); alert('Error: '+e.message); }
 };
 
-// ─── RESUMEN SEMANAL PELUQUERÍA ───────────────────────────
+// ─── RESUMEN SEMANAL PELUQUERIA ───────────────────────────
 window.verResumenSemanalPelu = async () => {
   try {
     const hoy = new Date();
     const fechas = [];
-    // Semana actual: desde el lunes hasta hoy (no los últimos 7 días)
-    const diaSemana = hoy.getDay(); // 0=dom, 1=lun...6=sab
+    const diaSemana = hoy.getDay();
     const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1;
     for (let i = diasDesdeElLunes; i >= 0; i--) {
       const d = new Date(hoy); d.setDate(hoy.getDate()-i);
@@ -583,7 +584,7 @@ window.verResumenSemanalPelu = async () => {
     let perrosConAyu=0, perrosSinAyu=0;
     let rows = '';
 
-    servicios.forEach(function(r, i) {
+    servicios.forEach(function(r) {
       const precio  = parseFloat(r.precioTotal||0);
       const pagPelu = parseFloat(r.pagoPeluquera||0);
       const pagA1   = parseFloat(r.pagoAyudante1||0);
@@ -599,120 +600,74 @@ window.verResumenSemanalPelu = async () => {
       if (!pagado) pendiente += precio;
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
+      // Desglose de la resta
+      const peluBruto   = parseFloat((precio * 0.40).toFixed(2));
+      const avipetBruto = parseFloat((precio * 0.60).toFixed(2));
+
       const colorEst = pagado ? '#16a34a' : '#dc2626';
-      const modoPago  = r.modoPago || '';
-      const iconPago  = !pagado ? '⏳'
-                      : modoPago === 'bs'    ? '✅ 🟡Bs'
-                      : modoPago === 'mixto' ? '✅ 🔀Mix'
-                      : '✅ 💵USD';
+      const iconPago = pagado ? 'PAGADO' : 'PENDIENTE';
+
       rows += '<tr style="border-bottom:1px solid #f1f5f9;font-size:9px;">';
       rows += '<td style="padding:4px 6px;color:#64748b;">' + (r.fechaSimple||'---') + '</td>';
       rows += '<td style="padding:4px 6px;font-weight:700;text-transform:uppercase;">' + (r.paciente||'---') + '</td>';
       rows += '<td style="padding:4px 6px;text-align:center;font-weight:700;">$' + precio.toFixed(2) + '</td>';
-      rows += '<td style="padding:4px 6px;text-align:center;color:#7c3aed;font-weight:700;">$' + pagPelu.toFixed(2) + '</td>';
-      rows += '<td style="padding:4px 6px;text-align:center;color:#2563eb;font-weight:700;">' + (tieneA1 ? '$'+pagA1.toFixed(2) : '—') + '</td>';
+      // Columna peluquera con resta visible
+      if (tieneA1) {
+        rows += '<td style="padding:4px 6px;text-align:center;color:#7c3aed;font-weight:700;">$' + peluBruto.toFixed(2) + ' - $1 = <b>$' + pagPelu.toFixed(2) + '</b></td>';
+      } else {
+        rows += '<td style="padding:4px 6px;text-align:center;color:#7c3aed;font-weight:700;">$' + pagPelu.toFixed(2) + '</td>';
+      }
+      rows += '<td style="padding:4px 6px;text-align:center;color:#2563eb;font-weight:700;">' + (tieneA1 ? '$'+pagA1.toFixed(2) : '&mdash;') + '</td>';
+      // Columna Avipet con resta visible
+      if (tieneA1) {
+        rows += '<td style="padding:4px 6px;text-align:center;color:#16a34a;font-weight:700;font-size:8px;">$' + avipetBruto.toFixed(2) + ' - $1 = <b>$' + neto.toFixed(2) + '</b></td>';
+      } else {
+        rows += '<td style="padding:4px 6px;text-align:center;color:#16a34a;font-weight:700;">$' + neto.toFixed(2) + '</td>';
+      }
       rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;">' + iconPago + '</td>';
       rows += '</tr>';
     });
 
-    // pagoAyu1Real = suma de pagoAyudante1 de todos los servicios ($2 por perro)
-    const pagoAyu1Real = totalPelu > 0 ? perrosConAyu * 2 : 0;
+    // Pago real ayudante: $1 x perros x 2 (uno de pelu + uno de Avipet)
+    const pagoAyu1Real = perrosConAyu * 2;
 
-    // Desglose por modalidad de pago
-    let totalPagadoUSD = 0, totalPagadoBS = 0, totalPendiente = 0;
-    // Pago peluquera desglosado
-    let peluUSD = 0, peluBS = 0;
-    // Pago ayudante desglosado
-    let ayuUSD = 0, ayuBS = 0;
-
-    servicios.forEach(function(r) {
-      const precio  = parseFloat(r.precioTotal||0);
-      const pPelu   = parseFloat(r.pagoPeluquera||0);
-      const pA1     = parseFloat(r.pagoAyudante1||0);
-      const modo    = r.modoPago || '';
-      const pagado  = r.estatusPago === 'pagado';
-
-      if (pagado) {
-        if (modo === 'bs') {
-          totalPagadoBS += precio;
-          peluBS += pPelu;
-          ayuBS  += pA1;
-        } else if (modo === 'mixto') {
-          const fracUSD = precio > 0 ? parseFloat(r.montoPagadoUSD||0) / precio : 0.5;
-          const fracBS  = 1 - fracUSD;
-          totalPagadoUSD += parseFloat(r.montoPagadoUSD||0);
-          totalPagadoBS  += parseFloat(r.montoPagadoBS||0);
-          peluUSD += pPelu * fracUSD;
-          peluBS  += pPelu * fracBS;
-          ayuUSD  += pA1   * fracUSD;
-          ayuBS   += pA1   * fracBS;
-        } else {
-          totalPagadoUSD += precio;
-          peluUSD += pPelu;
-          ayuUSD  += pA1;
-        }
-      } else {
-        totalPendiente += precio;
-      }
-    });
-
-    // pagoAyu1Real ya declarado arriba
-
-    const tasa = window.tasaDolarHoy || 36;
     let htmlModal = '';
+    // Cards resumen
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:left;">';
 
-    // ── Resumen general ──────────────────────────────────
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">';
-    htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Servicios</p>';
-    htmlModal += '<p style="font-size:22px;font-weight:900;color:#1e293b;">' + servicios.length + '</p>';
-    htmlModal += '<p style="font-size:8px;color:#64748b;">Con ayu: <b>' + perrosConAyu + '</b> · Sin: <b>' + perrosSinAyu + '</b></p></div>';
-    htmlModal += '<div style="background:#1e293b;border-radius:12px;padding:10px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
-    htmlModal += '<p style="font-size:18px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p></div>';
-    htmlModal += '<div style="background:#f0fdf4;border-radius:12px;padding:10px;text-align:center;">';
+    htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Servicios semana</p>';
+    htmlModal += '<p style="font-size:20px;font-weight:900;color:#1e293b;">' + servicios.length + ' perros</p>';
+    htmlModal += '<p style="font-size:9px;color:#64748b;">Con ayudante: <b>' + perrosConAyu + '</b></p>';
+    htmlModal += '<p style="font-size:9px;color:#64748b;">Sin ayudante: <b>' + perrosSinAyu + '</b></p></div>';
+
+    htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;">Peluquera</p>';
+    htmlModal += '<p style="font-size:20px;font-weight:900;color:#7c3aed;">$' + totalPelu.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% precio - $1/perro con ayu</p></div>';
+
+    htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante</p>';
+    htmlModal += '<p style="font-size:20px;font-weight:900;color:#2563eb;">$' + pagoAyu1Real.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' perros x $1 pelu + $1 Avipet</p></div></div>';
+
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">';
+
+    htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
-    htmlModal += '<p style="font-size:18px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p></div></div>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:8px;color:#94a3b8;">60% precio - $1/perro con ayu</p></div>';
 
-    // ── Cobrado por moneda ───────────────────────────────
-    htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;margin-bottom:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:6px;">💰 Cobrado por moneda</p>';
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">';
-    htmlModal += '<div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#1d4ed8;">💵 USD</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#1d4ed8;">$' + totalPagadoUSD.toFixed(2) + '</p></div>';
-    htmlModal += '<div style="background:#fffbeb;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#92400e;">🟡 Bs equiv.</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#92400e;">$' + totalPagadoBS.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:7px;color:#b45309;">Bs ' + (totalPagadoBS * tasa).toFixed(0) + '</p></div>';
-    htmlModal += '<div style="background:#fef2f2;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;">⏳ Pendiente</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#dc2626;">$' + totalPendiente.toFixed(2) + '</p></div></div></div>';
+    htmlModal += '<div style="background:#fef2f2;border-radius:10px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;text-transform:uppercase;">Pendiente</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#dc2626;">$' + pendiente.toFixed(2) + '</p></div>';
 
-    // ── Pago Peluquera desglosado ────────────────────────
-    htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;margin-bottom:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin-bottom:6px;">✂️ Pago Peluquera — Total: $' + totalPelu.toFixed(2) + '</p>';
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
-    htmlModal += '<div style="background:#ede9fe;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#6d28d9;">💵 En USD</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#6d28d9;">$' + peluUSD.toFixed(2) + '</p></div>';
-    htmlModal += '<div style="background:#fdf4ff;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;">🟡 En Bs</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#7c3aed;">$' + peluBS.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:7px;color:#a78bfa;">Bs ' + (peluBS * tasa).toFixed(0) + '</p></div></div></div>';
+    htmlModal += '<div style="background:#1e293b;border-radius:10px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p></div></div>';
 
-    // ── Pago Ayudante desglosado ─────────────────────────
-    htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;margin-bottom:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin-bottom:6px;">🤝 Pago Ayudante (' + perrosConAyu + ' perros × $1) — Total: $' + pagoAyu1Real.toFixed(2) + '</p>';
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
-    htmlModal += '<div style="background:#dbeafe;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#1d4ed8;">💵 En USD</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#1d4ed8;">$' + ayuUSD.toFixed(2) + '</p></div>';
-    htmlModal += '<div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;">🟡 En Bs</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#2563eb;">$' + ayuBS.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:7px;color:#60a5fa;">Bs ' + (ayuBS * tasa).toFixed(0) + '</p></div></div></div>';
-    htmlModal += '<div style="max-height:260px;overflow-y:auto;">';
+    // Tabla detallada
+    htmlModal += '<div style="max-height:280px;overflow-y:auto;">';
     htmlModal += '<table style="width:100%;border-collapse:collapse;">';
     htmlModal += '<thead><tr style="background:#1e293b;color:#fff;font-size:8px;text-transform:uppercase;">';
     htmlModal += '<th style="padding:5px 6px;text-align:left;">Fecha</th>';
@@ -720,103 +675,64 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Precio</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Peluquera</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Ayu.</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;">Avipet</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Pago</th></tr></thead>';
     htmlModal += '<tbody>' + rows + '</tbody></table></div>';
 
     Swal.fire({
-      title: '📊 Resumen Semanal Peluquería',
-      width: 700,
+      title: 'Resumen Semanal Peluqueria',
+      width: 800,
       html: htmlModal,
       confirmButtonText: 'Cerrar',
       confirmButtonColor: '#1d4ed8'
     });
 
-  } catch(e) { console.error(e); alert('❌ Error: '+e.message); }
+  } catch(e) { console.error(e); alert('Error: '+e.message); }
 };
 
-// ─── CONTADOR DE SERVICIOS POR MÁQUINA ───────────────────
+// ─── CONTADOR DE MAQUINAS ─────────────────────────────────
 async function _renderizarContadorMaquinas(consultas, fechas) {
   const listaDiv = document.getElementById('listaReporte');
   const netoDiv  = document.getElementById('repNeto');
   if (!listaDiv) return;
-
-  // Contar servicios por máquina
   const conteo = {};
   Object.keys(SERVICIOS_MAQUINA).forEach(s => { conteo[s] = { count: 0, total: 0, maquina: SERVICIOS_MAQUINA[s] }; });
-
   consultas.forEach(r => {
-    // Buscar en los servicios de cada consulta
-    const listaInsumos = r.listaDetalladaInsumos || [];
-    const tratamiento  = (r.tratamiento || '').toUpperCase();
-
+    const tratamiento = (r.tratamiento || '').toUpperCase();
     Object.keys(SERVICIOS_MAQUINA).forEach(serv => {
-      const servNorm = serv.toUpperCase();
-      // Verificar si el servicio aparece en el tratamiento o en los insumos
-      if (tratamiento.includes(servNorm.split(' ')[0])) {
+      if (tratamiento.includes(serv.split(' ')[0])) {
         conteo[serv].count++;
         conteo[serv].total += parseFloat(r.montoVenta || 0);
       }
     });
-
-    // También verificar por nombre de paciente si tiene tests
-    if (r.testsRealizados && Array.isArray(r.testsRealizados)) {
-      r.testsRealizados.forEach(t => {
-        const nombre = (t.nombre || '').toUpperCase();
-        Object.keys(SERVICIOS_MAQUINA).forEach(serv => {
-          if (nombre.includes(serv.split(' ')[0])) {
-            conteo[serv].count++;
-          }
-        });
-      });
-    }
   });
-
-  // También contar directamente del nombre del servicio guardado
-  consultas.forEach(r => {
-    const venta = parseFloat(r.montoVenta || 0);
-    Object.keys(SERVICIOS_MAQUINA).forEach(serv => {
-      const nombrePac = (r.paciente || '').toUpperCase();
-      const notas     = (r.tratamiento || '').toUpperCase();
-      if (notas.includes(serv) || nombrePac.includes(serv.split(' ')[0])) {
-        // ya contado arriba
-      }
-    });
-  });
-
-  const tituloP = { hoy:'Hoy', semana:'Semana actual', mes:'Este mes' };
   listaDiv.innerHTML = '';
-
-  // Card por máquina
   let totalServicios = 0;
   Object.entries(conteo).forEach(([servicio, data]) => {
     totalServicios += data.count;
-    const colorBg = data.count > 0 ? '#eff6ff' : '#f8fafc';
+    const colorBg     = data.count > 0 ? '#eff6ff' : '#f8fafc';
     const colorBorder = data.count > 0 ? '#bfdbfe' : '#e2e8f0';
-    const colorText = data.count > 0 ? '#1d4ed8' : '#94a3b8';
-
+    const colorText   = data.count > 0 ? '#1d4ed8' : '#94a3b8';
     const div = document.createElement('div');
-    div.style.cssText = 'background:' + colorBg + ';border:2px solid ' + colorBorder + ';border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;';
+    div.style.cssText = 'background:'+colorBg+';border:2px solid '+colorBorder+';border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;';
     div.innerHTML =
       '<div>' +
         '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;">' + data.maquina + '</p>' +
         '<p style="font-size:13px;font-weight:900;color:#1e293b;">' + servicio + '</p>' +
       '</div>' +
       '<div style="text-align:right;">' +
-        '<p style="font-size:28px;font-weight:900;color:' + colorText + ';line-height:1;">' + data.count + '</p>' +
+        '<p style="font-size:28px;font-weight:900;color:'+colorText+';line-height:1;">' + data.count + '</p>' +
         '<p style="font-size:9px;color:#94a3b8;">servicio' + (data.count !== 1 ? 's' : '') + '</p>' +
       '</div>';
     listaDiv.appendChild(div);
   });
-
-  // Resumen total
   const resumen = document.createElement('div');
   resumen.style.cssText = 'background:#1e293b;border-radius:14px;padding:14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;';
   resumen.innerHTML =
-    '<p style="font-size:12px;font-weight:900;color:#fff;text-transform:uppercase;">Total servicios con máquina</p>' +
+    '<p style="font-size:12px;font-weight:900;color:#fff;text-transform:uppercase;">Total servicios con maquina</p>' +
     '<p style="font-size:28px;font-weight:900;color:#60a5fa;">' + totalServicios + '</p>';
   listaDiv.appendChild(resumen);
-
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("✅ AVIPET finanzas v3.1 " + new Date().toISOString().slice(0,10));
+console.log("finanzas.js v4 — logica peluqueria corregida con resta explicita");
