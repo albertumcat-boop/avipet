@@ -191,16 +191,19 @@ window.cargarReporte = async () => {
 
         const colorEst = estatus === 'pagado' ? 'text-emerald-600' : 'text-red-500';
         const iconPago = modo==='bs' ? 'Bs' : modo==='mixto' ? 'Mixto' : 'USD';
+        const iconPagoLabel = modo==='bs' ? 'PAGADO Bs' : modo==='mixto' ? 'PAGADO Mixto' : 'PAGADO USD';
 
         // Mostrar la resta explicita
-        const tieneAyu = pagA1 > 0;
+        const tieneAyu  = pagA1 > 0;   // ayudante principal
+        const tieneExtra = pagAx > 0;   // ayudante extra (hizo todo solo)
+
         let desglosePelu = '$' + pagPelu.toFixed(2);
-        if (tieneAyu) desglosePelu = '(' + (pagPelu + 1).toFixed(2) + ' - $1) = $' + pagPelu.toFixed(2);
+        if (tieneAyu) desglosePelu = '($' + (pagPelu + 1).toFixed(2) + ' - $1) = $' + pagPelu.toFixed(2);
 
         let desgloseAvipet = '';
         if (tieneAyu) {
-          const avipetBruto = precio * 0.60;
-          desgloseAvipet = ' | Avipet: (' + avipetBruto.toFixed(2) + ' - $1) = $' + neto.toFixed(2);
+          const avipetBruto = parseFloat((precio * 0.60).toFixed(2));
+          desgloseAvipet = ' | Avipet: ($' + avipetBruto.toFixed(2) + ' - $1) = $' + neto.toFixed(2);
         }
 
         listaDiv.innerHTML +=
@@ -209,12 +212,13 @@ window.cargarReporte = async () => {
               "<div><p class='font-black text-[10px] uppercase text-slate-700'>" + (r.paciente||'---') + "</p>" +
               "<p class='text-[8px] font-bold text-slate-400'>" + (r.duenio||'') + " &middot; " + (r.fechaSimple||'') + "</p></div>" +
               "<div class='text-right'><p class='font-black text-[10px] text-slate-800'>$" + precio.toFixed(2) + "</p>" +
-              "<p class='text-[8px] font-bold " + colorEst + "'>" + (estatus==='pagado'?'PAGADO '+iconPago:'Pendiente') + "</p></div>" +
+              "<p class='text-[8px] font-bold " + colorEst + "'>" + (estatus==='pagado' ? iconPagoLabel : 'Pendiente') + "</p></div>" +
             "</div>" +
-            "<div class='mt-1 text-[8px] text-slate-500'>" +
+            "<div class='mt-1 text-[8px] flex flex-wrap gap-2'>" +
               "<span class='text-purple-600 font-bold'>Pelu: " + desglosePelu + "</span>" +
-              (tieneAyu ? "<span class='text-blue-500 font-bold ml-2'>Ayu: $" + pagA1.toFixed(2) + desgloseAvipet + "</span>" : '') +
-              (!tieneAyu ? "<span class='text-emerald-600 font-bold ml-2'>Avipet: $" + neto.toFixed(2) + "</span>" : '') +
+              (tieneAyu  ? "<span class='text-blue-500 font-bold'>Ayu1: $" + pagA1.toFixed(2) + desgloseAvipet + "</span>" : '') +
+              (tieneExtra ? "<span class='text-orange-500 font-bold'>Extra: $" + pagAx.toFixed(2) + "</span>" : '') +
+              "<span class='text-emerald-600 font-bold'>Avipet: $" + neto.toFixed(2) + "</span>" +
             "</div>" +
           "</div>";
       });
@@ -618,13 +622,18 @@ window.verResumenSemanalPelu = async () => {
         rows += '<td style="padding:4px 6px;text-align:center;color:#7c3aed;font-weight:700;">$' + pagPelu.toFixed(2) + '</td>';
       }
       rows += '<td style="padding:4px 6px;text-align:center;color:#2563eb;font-weight:700;">' + (tieneA1 ? '$'+pagA1.toFixed(2) : '&mdash;') + '</td>';
+      // Columna Extra
+      rows += '<td style="padding:4px 6px;text-align:center;color:#ea580c;font-weight:700;">' + (pagAx > 0 ? '$'+pagAx.toFixed(2) : '&mdash;') + '</td>';
       // Columna Avipet con resta visible
       if (tieneA1) {
         rows += '<td style="padding:4px 6px;text-align:center;color:#16a34a;font-weight:700;font-size:8px;">$' + avipetBruto.toFixed(2) + ' - $1 = <b>$' + neto.toFixed(2) + '</b></td>';
       } else {
         rows += '<td style="padding:4px 6px;text-align:center;color:#16a34a;font-weight:700;">$' + neto.toFixed(2) + '</td>';
       }
-      rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;">' + iconPago + '</td>';
+      // Columna pago con USD/Bs
+      var modoPago = r.modoPago || '';
+      var iconoPago = modoPago === 'bs' ? 'Bs' : modoPago === 'mixto' ? 'Mixto' : 'USD';
+      rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;font-size:8px;">' + (r.estatusPago === 'pagado' ? iconoPago : 'PEND') + '</td>';
       rows += '</tr>';
     });
 
@@ -632,31 +641,36 @@ window.verResumenSemanalPelu = async () => {
     const pagoAyu1Real = perrosConAyu * 2;
 
     let htmlModal = '';
-    // Cards resumen
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:left;">';
+    // Fila 1 de cards — 3 columnas
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;text-align:left;">';
 
     htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Servicios semana</p>';
     htmlModal += '<p style="font-size:20px;font-weight:900;color:#1e293b;">' + servicios.length + ' perros</p>';
-    htmlModal += '<p style="font-size:9px;color:#64748b;">Con ayudante: <b>' + perrosConAyu + '</b></p>';
-    htmlModal += '<p style="font-size:9px;color:#64748b;">Sin ayudante: <b>' + perrosSinAyu + '</b></p></div>';
+    htmlModal += '<p style="font-size:9px;color:#64748b;">Con ayu1: <b>' + perrosConAyu + '</b></p>';
+    htmlModal += '<p style="font-size:9px;color:#64748b;">Sin ayu: <b>' + perrosSinAyu + '</b></p></div>';
 
     htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;">Peluquera</p>';
     htmlModal += '<p style="font-size:20px;font-weight:900;color:#7c3aed;">$' + totalPelu.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% precio - $1/perro con ayu</p></div>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p></div>';
 
     htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante</p>';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante 1</p>';
     htmlModal += '<p style="font-size:20px;font-weight:900;color:#2563eb;">$' + pagoAyu1Real.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' perros x $1 pelu + $1 Avipet</p></div></div>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' x $1 pelu + $1 Avipet</p></div></div>';
 
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">';
+    // Fila 2 de cards — 4 columnas (con Extra separado)
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">';
+
+    htmlModal += '<div style="background:#fff7ed;border-radius:10px;padding:8px;text-align:center;border:2px solid #fed7aa;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#ea580c;text-transform:uppercase;">Ayud. Extra</p>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;">$' + totalAyuExt.toFixed(2) + '</p>';
+    htmlModal += '<p style="font-size:8px;color:#94a3b8;">hizo todo solo</p></div>';
 
     htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:8px;color:#94a3b8;">60% precio - $1/perro con ayu</p></div>';
+    htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p></div>';
 
     htmlModal += '<div style="background:#fef2f2;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;text-transform:uppercase;">Pendiente</p>';
@@ -667,14 +681,15 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:16px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p></div></div>';
 
     // Tabla detallada
-    htmlModal += '<div style="max-height:280px;overflow-y:auto;">';
+    htmlModal += '<div style="max-height:240px;overflow-y:auto;">';
     htmlModal += '<table style="width:100%;border-collapse:collapse;">';
     htmlModal += '<thead><tr style="background:#1e293b;color:#fff;font-size:8px;text-transform:uppercase;">';
     htmlModal += '<th style="padding:5px 6px;text-align:left;">Fecha</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:left;">Mascota</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Precio</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Peluquera</th>';
-    htmlModal += '<th style="padding:5px 6px;text-align:center;">Ayu.</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;">Ayu1</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;color:#fed7aa;">Extra</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Avipet</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Pago</th></tr></thead>';
     htmlModal += '<tbody>' + rows + '</tbody></table></div>';
