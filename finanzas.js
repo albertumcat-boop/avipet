@@ -1,46 +1,25 @@
 // =========================================================
-// AVIPET — finanzas.js  v4
-// LOGICA PELUQUERIA CORREGIDA:
-//   Peluquera = precio x 40% - $1 por perro con ayudante
-//   Avipet    = precio x 60% - $1 por perro con ayudante
-//   Ayudante  = $2 total ($1 pelu + $1 Avipet)
-//   Precio < $10 = sin ayudante (corte de unas)
+// AVIPET — finanzas.js  v5
+// Dashboard completo por area con boton volver al menu
 // =========================================================
 
 import { db } from './firebase-config.js';
 import {
   collection, addDoc, getDocs, query, where,
-  updateDoc, doc, serverTimestamp
+  updateDoc, doc, getDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let _chartDist = null, _chartDoc = null, _chartServ = null;
+let _tabFinanzas  = null;
 let _periodoActual = 'hoy';
 
-function _destroyCharts() {
-  if (_chartDist) { _chartDist.destroy(); _chartDist = null; }
-  if (_chartDoc)  { _chartDoc.destroy();  _chartDoc  = null; }
-  if (_chartServ) { _chartServ.destroy(); _chartServ = null; }
-}
-
-window.cambiarPeriodoFinanzas = (periodo) => {
-  _periodoActual = periodo;
-  ['hoy','semana','mes'].forEach(p => {
-    const btn = document.getElementById('btnPeriodo_' + p);
-    if (btn) btn.className = p === periodo
-      ? 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-blue-600 text-white transition-all'
-      : 'flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
-  });
-  if (_tabFinanzas) window.cargarReporte();
-};
-
+// ─── PERIODO ──────────────────────────────────────────────
 function _getFechasRango() {
   const hoy = new Date();
-  const fmt  = d => d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+  const fmt  = function(d){ return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear(); };
   if (_periodoActual === 'hoy') return [fmt(hoy)];
   if (_periodoActual === 'semana') {
     const fechas = [];
-    const diaSemana = hoy.getDay();
-    const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1;
+    const diasDesdeElLunes = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
     for (let i = diasDesdeElLunes; i >= 0; i--) {
       const d = new Date(hoy); d.setDate(hoy.getDate()-i); fechas.push(fmt(d));
     }
@@ -49,374 +28,352 @@ function _getFechasRango() {
   if (_periodoActual === 'mes') {
     const fechas = [];
     const diasMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate();
-    for (let i = 1; i <= diasMes; i++) fechas.push(i + '/' + (hoy.getMonth()+1) + '/' + hoy.getFullYear());
+    for (let i = 1; i <= diasMes; i++) fechas.push(i+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear());
     return fechas;
   }
   return [fmt(hoy)];
 }
 
-let _tabFinanzas = null;
+function _labelPeriodo() {
+  return { hoy:'Hoy', semana:'Esta semana', mes:'Este mes' }[_periodoActual] || 'Hoy';
+}
 
-window.cambiarTabFinanzas = (tab) => {
-  _tabFinanzas = tab;
-  const tabs = ['veterinaria','peluqueria','maquinas'];
-  tabs.forEach(t => {
-    const btn = document.getElementById('btnFinTab_' + t);
-    if (btn) btn.className = t === tab
-      ? 'text-[10px] px-3 py-1.5 font-black uppercase rounded-lg bg-blue-600 text-white'
-      : 'text-[10px] px-3 py-1.5 font-black uppercase rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200';
+// ─── RENDERIZAR: cabecera con volver + selector periodo ───
+function _renderCabecera(contenedor, titulo, colorBtn) {
+  const cab = document.createElement('div');
+  cab.style.cssText = 'margin-bottom:12px;';
+  // Botón volver
+  const btnV = document.createElement('button');
+  btnV.textContent = '← Volver';
+  btnV.style.cssText = 'font-size:10px;font-weight:900;text-transform:uppercase;padding:6px 14px;border-radius:8px;border:none;background:#f1f5f9;color:#64748b;cursor:pointer;margin-bottom:10px;';
+  btnV.onclick = function(){ window.mostrarMenuFinanzas(); };
+  cab.appendChild(btnV);
+
+  // Titulo
+  const tit = document.createElement('p');
+  tit.textContent = titulo;
+  tit.style.cssText = 'font-size:16px;font-weight:900;color:#1e293b;margin:0 0 8px 0;text-transform:uppercase;';
+  cab.appendChild(tit);
+
+  // Selector periodo
+  const sel = document.createElement('div');
+  sel.style.cssText = 'display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:12px;';
+  ['hoy','semana','mes'].forEach(function(p) {
+    const b = document.createElement('button');
+    b.textContent = { hoy:'Hoy', semana:'Semana', mes:'Mes' }[p];
+    b.dataset.p = p;
+    b.style.cssText = 'flex:1;padding:6px;border-radius:8px;border:none;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;transition:all .15s;';
+    b.style.background = p === _periodoActual ? colorBtn : 'transparent';
+    b.style.color      = p === _periodoActual ? '#fff' : '#64748b';
+    b.onclick = function() {
+      _periodoActual = p;
+      if (_tabFinanzas === 'veterinaria') window.mostrarDashboardVet();
+      else if (_tabFinanzas === 'peluqueria') window.mostrarDashboardPelu();
+    };
+    sel.appendChild(b);
   });
+  cab.appendChild(sel);
+  contenedor.appendChild(cab);
+}
+
+// ─── TARJETA RESUMEN ──────────────────────────────────────
+function _tarjeta(label, valor, bg, colorVal, sub) {
+  return '<div style="background:' + bg + ';border-radius:12px;padding:10px;text-align:center;">' +
+    '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 2px 0;">' + label + '</p>' +
+    '<p style="font-size:20px;font-weight:900;color:' + colorVal + ';margin:0;font-family:monospace;">' + valor + '</p>' +
+    (sub ? '<p style="font-size:8px;color:#94a3b8;margin:2px 0 0 0;">' + sub + '</p>' : '') +
+  '</div>';
+}
+
+// ─── MENU PRINCIPAL ───────────────────────────────────────
+window.mostrarMenuFinanzas = () => {
+  _tabFinanzas = null;
+  const listaDiv = document.getElementById('listaReporte');
+  if (!listaDiv) return;
+  listaDiv.innerHTML = '';
+
+  const botones = [
+    { tab:'veterinaria', label:'Veterinaria',        color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe', desc:'Consultas, doctores, insumos' },
+    { tab:'peluqueria',  label:'Peluqueria',          color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff', desc:'Servicios, ayudantes, cobros'  },
+    { tab:'deudas',      label:'Deudas y Prestamos',  color:'#dc2626', bg:'#fef2f2', border:'#fca5a5', desc:'Prestamos pendientes'           },
+  ];
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:4px 0;';
+
+  botones.forEach(function(b) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'width:100%;padding:16px;border-radius:14px;border:2px solid '+b.border+';background:'+b.bg+
+      ';cursor:pointer;display:flex;align-items:center;justify-content:space-between;text-align:left;';
+    btn.innerHTML =
+      '<div>' +
+        '<p style="font-size:14px;font-weight:900;color:'+b.color+';margin:0;">'+b.label+'</p>' +
+        '<p style="font-size:10px;color:#94a3b8;margin:2px 0 0 0;">'+b.desc+'</p>' +
+      '</div>' +
+      '<span style="font-size:20px;color:'+b.color+';">&rarr;</span>';
+    btn.onclick = (function(tab){
+      return function(){
+        if (tab === 'veterinaria') { _tabFinanzas='veterinaria'; window.mostrarDashboardVet(); }
+        else if (tab === 'peluqueria') { _tabFinanzas='peluqueria'; window.mostrarDashboardPelu(); }
+        else if (tab === 'deudas') { window.abrirModuloDeudas(); }
+      };
+    })(b.tab);
+    wrap.appendChild(btn);
+  });
+
+  listaDiv.appendChild(wrap);
+};
+
+// ─── DASHBOARD VETERINARIA ────────────────────────────────
+window.mostrarDashboardVet = async () => {
+  _tabFinanzas = 'veterinaria';
+  const listaDiv = document.getElementById('listaReporte');
+  if (!listaDiv) return;
+  listaDiv.innerHTML = '<p style="text-align:center;padding:16px;font-size:10px;font-weight:900;color:#94a3b8;">Cargando '+_labelPeriodo()+'...</p>';
+
+  try {
+    const fechas = _getFechasRango();
+    const snap = await getDocs(collection(db, "consultas"));
+    const consultas = [];
+    snap.forEach(function(d){ const r=d.data(); if(fechas.includes(r.fechaSimple)) consultas.push({id:d.id,...r}); });
+    consultas.sort(function(a,b){ return (b.fecha&&a.fecha)?(b.fecha.seconds||0)-(a.fecha.seconds||0):0; });
+
+    listaDiv.innerHTML = '';
+    const contenedor = document.createElement('div');
+
+    _renderCabecera(contenedor, 'Veterinaria', '#1d4ed8');
+
+    // Calcular totales
+    let bruto=0, insumos=0, pDarwin=0, pJoan=0;
+    consultas.forEach(function(r){
+      const v=parseFloat(r.montoVenta||0), g=parseFloat(r.montoInsumos||0), p=parseFloat(r.pagoDoctor||0);
+      bruto+=v; insumos+=g;
+      if(r.doctor&&r.doctor.includes('Darwin')) pDarwin+=p; else pJoan+=p;
+    });
+    const netoAvipet = bruto - insumos - pDarwin - pJoan;
+
+    // Tarjetas fila 1
+    const fila1 = document.createElement('div');
+    fila1.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;';
+    fila1.innerHTML =
+      _tarjeta('Bruto cobrado', '$'+bruto.toFixed(2), '#f8fafc', '#1e293b', consultas.length+' consulta'+(consultas.length!==1?'s':'')) +
+      _tarjeta('Insumos gastados', '$'+insumos.toFixed(2), '#fffbeb', '#92400e', 'costo materiales');
+    contenedor.appendChild(fila1);
+
+    // Tarjetas fila 2 doctores
+    const fila2 = document.createElement('div');
+    fila2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;';
+    fila2.innerHTML =
+      _tarjeta('Dr. Darwin', '$'+pDarwin.toFixed(2), '#eff6ff', '#1d4ed8', 'comision') +
+      _tarjeta('Dr. Joan', '$'+pJoan.toFixed(2), '#f0fdf4', '#15803d', 'comision');
+    contenedor.appendChild(fila2);
+
+    // Neto Avipet grande
+    const netoCard = document.createElement('div');
+    netoCard.style.cssText = 'background:'+(netoAvipet>=0?'#1d4ed8':'#dc2626')+';border-radius:14px;padding:14px;text-align:center;margin-bottom:12px;';
+    netoCard.innerHTML =
+      '<p style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;margin:0;">Neto Avipet — '+_labelPeriodo()+'</p>' +
+      '<p style="font-size:32px;font-weight:900;color:#fff;margin:4px 0;font-family:monospace;">$'+netoAvipet.toFixed(2)+'</p>' +
+      '<p style="font-size:9px;color:rgba(255,255,255,0.6);margin:0;">Bruto − Insumos − Doctores</p>';
+    contenedor.appendChild(netoCard);
+
+    // Botones accion
+    const acciones = document.createElement('div');
+    acciones.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;';
+    acciones.innerHTML =
+      '<button onclick="window.descargarReporte()" style="background:#f1f5f9;color:#64748b;border:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">Descargar TXT</button>' +
+      '<button onclick="window.guardarResumenDelDia()" style="background:#1d4ed8;color:#fff;border:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">Guardar en Nube</button>';
+    contenedor.appendChild(acciones);
+
+    // Lista detalle
+    if (consultas.length === 0) {
+      const vacio = document.createElement('p');
+      vacio.style.cssText = 'text-align:center;color:#94a3b8;font-size:10px;font-weight:900;text-transform:uppercase;padding:20px;';
+      vacio.textContent = 'Sin consultas para este periodo';
+      contenedor.appendChild(vacio);
+    } else {
+      const tit = document.createElement('p');
+      tit.style.cssText = 'font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;';
+      tit.textContent = 'Detalle — ' + consultas.length + ' consulta' + (consultas.length!==1?'s':'');
+      contenedor.appendChild(tit);
+
+      consultas.forEach(function(r) {
+        const v=parseFloat(r.montoVenta||0), g=parseFloat(r.montoInsumos||0), p=parseFloat(r.pagoDoctor||0);
+        const neto=v-g-p;
+        const esDarwin = r.doctor&&r.doctor.includes('Darwin');
+        const card = document.createElement('div');
+        card.style.cssText = 'background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:6px;border-left:4px solid '+(esDarwin?'#2563eb':'#10b981')+';';
+        card.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+            '<div>' +
+              '<p style="font-size:11px;font-weight:900;color:#1e293b;margin:0;text-transform:uppercase;">'+(r.paciente||'---')+(r.esMuestra?' (Muestra)':'')+'</p>' +
+              '<p style="font-size:9px;color:#64748b;margin:2px 0;">'+(r.doctor||'---')+' &middot; '+(r.fechaSimple||'')+'</p>' +
+            '</div>' +
+            '<p style="font-size:13px;font-weight:900;color:#1e293b;margin:0;font-family:monospace;">$'+v.toFixed(2)+'</p>' +
+          '</div>' +
+          '<div style="display:flex;gap:10px;margin-top:5px;font-size:9px;">' +
+            '<span style="color:#92400e;font-weight:700;">Ins: $'+g.toFixed(2)+'</span>' +
+            '<span style="color:'+(esDarwin?'#1d4ed8':'#15803d')+';font-weight:700;">Doc: $'+p.toFixed(2)+'</span>' +
+            '<span style="color:#16a34a;font-weight:900;">Avipet: $'+neto.toFixed(2)+'</span>' +
+          '</div>';
+        contenedor.appendChild(card);
+      });
+    }
+
+    listaDiv.appendChild(contenedor);
+  } catch(e) {
+    listaDiv.innerHTML = '<p style="color:#dc2626;font-weight:900;text-align:center;padding:16px;">Error: '+e.message+'</p>';
+  }
+};
+
+// ─── DASHBOARD PELUQUERIA ─────────────────────────────────
+window.mostrarDashboardPelu = async () => {
+  _tabFinanzas = 'peluqueria';
+  const listaDiv = document.getElementById('listaReporte');
+  if (!listaDiv) return;
+  listaDiv.innerHTML = '<p style="text-align:center;padding:16px;font-size:10px;font-weight:900;color:#94a3b8;">Cargando '+_labelPeriodo()+'...</p>';
+
+  try {
+    const fechas = _getFechasRango();
+    const snap = await getDocs(collection(db, "servicios_estetica"));
+    const servicios = [];
+    snap.forEach(function(d){ const r=d.data(); if(fechas.includes(r.fechaSimple)) servicios.push({id:d.id,...r}); });
+    servicios.sort(function(a,b){ return (b.fecha&&a.fecha)?(b.fecha.seconds||0)-(a.fecha.seconds||0):0; });
+
+    listaDiv.innerHTML = '';
+    const contenedor = document.createElement('div');
+
+    _renderCabecera(contenedor, 'Peluqueria', '#7c3aed');
+
+    // Calcular totales
+    let bruto=0, pPelu=0, pAyu1=0, pAyuExt=0, neto=0, pendiente=0, cobradoUSD=0, cobradoBS=0;
+    let perrosConAyu=0;
+    servicios.forEach(function(r){
+      const precio=parseFloat(r.precioTotal||0);
+      const pa=parseFloat(r.pagoPeluquera||0);
+      const a1=parseFloat(r.pagoAyudante1||0);
+      const ax=parseFloat(r.pagoAyudanteExtra||0);
+      const n=parseFloat(r.ingresoAvipet||0);
+      bruto+=precio; pPelu+=pa; pAyu1+=a1; pAyuExt+=ax; neto+=n;
+      if(r.estatusPago==='pagado'){
+        if(r.modoPago==='bs') cobradoBS+=parseFloat(r.montoPagadoBS||0);
+        else if(r.modoPago==='mixto'){ cobradoUSD+=parseFloat(r.montoPagadoUSD||0); cobradoBS+=parseFloat(r.montoPagadoBS||0); }
+        else cobradoUSD+=parseFloat(r.montoPagadoUSD||precio);
+      } else { pendiente+=precio; }
+      if(a1>0) perrosConAyu++;
+    });
+    const pagoAyu1Real = perrosConAyu * 2;
+
+    // Fila 1 — 3 tarjetas
+    const fila1 = document.createElement('div');
+    fila1.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;';
+    fila1.innerHTML =
+      _tarjeta('Bruto', '$'+bruto.toFixed(2), '#f8fafc', '#1e293b', servicios.length+' servicio'+(servicios.length!==1?'s':'')) +
+      _tarjeta('Pendiente', '$'+pendiente.toFixed(2), '#fef2f2', '#dc2626', 'sin cobrar') +
+      _tarjeta('Neto Avipet', '$'+neto.toFixed(2), '#f0fdf4', '#16a34a', '60% - $1/perro c/ayu');
+    contenedor.appendChild(fila1);
+
+    // Fila 2 — pagos
+    const fila2 = document.createElement('div');
+    fila2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;';
+    fila2.innerHTML =
+      _tarjeta('Cobrado USD', '$'+cobradoUSD.toFixed(2), '#f0fdf4', '#16a34a', 'efectivo dolares') +
+      _tarjeta('Cobrado Bs', 'Bs '+cobradoBS.toFixed(2), '#fffbeb', '#92400e', 'bolivares');
+    contenedor.appendChild(fila2);
+
+    // Fila 3 — equipo
+    const fila3 = document.createElement('div');
+    fila3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;';
+    fila3.innerHTML =
+      _tarjeta('Peluquera', '$'+pPelu.toFixed(2), '#faf5ff', '#7c3aed', '40% - $1/perro c/ayu') +
+      _tarjeta('Ayudante 1', '$'+pagoAyu1Real.toFixed(2), '#eff6ff', '#2563eb', perrosConAyu+' x $1 x 2') +
+      _tarjeta('Ayu. Extra', '$'+pAyuExt.toFixed(2), '#fff7ed', '#ea580c', 'hizo todo solo');
+    contenedor.appendChild(fila3);
+
+    // Botones
+    const acciones = document.createElement('div');
+    acciones.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;';
+    acciones.innerHTML =
+      '<button onclick="_llamarFuncion(\'verResumenSemanalPelu\')" style="background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">Resumen Semanal</button>' +
+      '<button onclick="_llamarFuncion(\'ajustarPagoPeluqueria\')" style="background:#f59e0b;color:#fff;border:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">Ajustar Pagos</button>';
+    contenedor.appendChild(acciones);
+
+    // Lista detalle
+    if (servicios.length === 0) {
+      const vacio = document.createElement('p');
+      vacio.style.cssText = 'text-align:center;color:#94a3b8;font-size:10px;font-weight:900;text-transform:uppercase;padding:20px;';
+      vacio.textContent = 'Sin servicios para este periodo';
+      contenedor.appendChild(vacio);
+    } else {
+      const tit = document.createElement('p');
+      tit.style.cssText = 'font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;';
+      tit.textContent = 'Detalle — ' + servicios.length + ' servicio' + (servicios.length!==1?'s':'');
+      contenedor.appendChild(tit);
+
+      servicios.forEach(function(r) {
+        const precio=parseFloat(r.precioTotal||0);
+        const pa=parseFloat(r.pagoPeluquera||0);
+        const a1=parseFloat(r.pagoAyudante1||0);
+        const ax=parseFloat(r.pagoAyudanteExtra||0);
+        const n=parseFloat(r.ingresoAvipet||0);
+        const pagado=r.estatusPago==='pagado';
+        const tieneA1=a1>0, tieneAx=ax>0;
+
+        const modoLabel = r.modoPago==='bs'?'Bs':r.modoPago==='mixto'?'Mixto':'USD';
+        const peluBruto=(precio*0.40).toFixed(2);
+        const avBruto=(precio*0.60).toFixed(2);
+
+        const card = document.createElement('div');
+        card.style.cssText = 'background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:6px;border-left:4px solid #7c3aed;';
+        card.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+            '<div>' +
+              '<p style="font-size:11px;font-weight:900;color:#1e293b;margin:0;text-transform:uppercase;">'+(r.paciente||'---')+'</p>' +
+              '<p style="font-size:9px;color:#64748b;margin:2px 0;">'+(r.duenio||'')+(r.duenio?' &middot; ':'')+''+(r.fechaSimple||'')+'</p>' +
+            '</div>' +
+            '<div style="text-align:right;">' +
+              '<p style="font-size:13px;font-weight:900;color:#1e293b;margin:0;font-family:monospace;">$'+precio.toFixed(2)+'</p>' +
+              '<p style="font-size:9px;font-weight:900;color:'+(pagado?'#16a34a':'#dc2626')+';margin:0;">'+(pagado?'PAGADO '+modoLabel:'PENDIENTE')+'</p>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px;font-size:9px;">' +
+            '<span style="color:#7c3aed;font-weight:700;">Pelu: '+(tieneA1?'($'+peluBruto+' - $1) = ':'')+'$'+pa.toFixed(2)+'</span>' +
+            (tieneA1?'<span style="color:#2563eb;font-weight:700;">Ayu1: $'+a1.toFixed(2)+'</span>':'') +
+            (tieneAx?'<span style="color:#ea580c;font-weight:700;">Extra: $'+ax.toFixed(2)+'</span>':'') +
+            '<span style="color:#16a34a;font-weight:900;">Avipet: '+(tieneA1?'($'+avBruto+' - $1) = ':'')+'$'+n.toFixed(2)+'</span>' +
+          '</div>';
+        contenedor.appendChild(card);
+      });
+    }
+
+    listaDiv.appendChild(contenedor);
+  } catch(e) {
+    listaDiv.innerHTML = '<p style="color:#dc2626;font-weight:900;text-align:center;padding:16px;">Error: '+e.message+'</p>';
+  }
+};
+
+// ─── COMPATIBILIDAD: cargarReporte sigue funcionando ─────
+window.cargarReporte = async () => {
+  if (!_tabFinanzas) { window.mostrarMenuFinanzas(); return; }
+  if (_tabFinanzas === 'veterinaria') { window.mostrarDashboardVet(); return; }
+  if (_tabFinanzas === 'peluqueria')  { window.mostrarDashboardPelu(); return; }
+};
+
+window.cambiarPeriodoFinanzas = function(p) {
+  _periodoActual = p;
   window.cargarReporte();
 };
 
-window.volverMenuFinanzas = () => {
+window.volverMenuFinanzas = function() {
   _tabFinanzas = null;
   window.mostrarMenuFinanzas();
 };
 
-window.mostrarMenuFinanzas = () => {
-  _tabFinanzas = null;
-  const listaDiv = document.getElementById('listaReporte');
-  const netoDiv  = document.getElementById('repNeto');
-  if (!listaDiv) return;
-  listaDiv.innerHTML = '';
-  const menuDiv = document.createElement('div');
-  menuDiv.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:8px 0;';
-  const botones = [
-    { tab:'veterinaria', label:'Veterinaria',           color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe' },
-    { tab:'peluqueria',  label:'Peluqueria',            color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
-    { tab:'maquinas',    label:'Contador de Maquinas',  color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0' },
-    { tab:'deudas',      label:'Deudas y Prestamos',    color:'#dc2626', bg:'#fef2f2', border:'#fca5a5' },
-  ];
-  botones.forEach(function(b) {
-    const btn = document.createElement('button');
-    btn.style.cssText = 'width:100%;padding:16px;border-radius:14px;border:2px solid ' + b.border + ';background:' + b.bg + ';font-weight:900;font-size:13px;color:' + b.color + ';cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
-    btn.innerHTML = '<span>' + b.label + '</span><span style="font-size:18px;">&rarr;</span>';
-    btn.addEventListener('click', (function(tab){ return function(){
-      if (tab === 'deudas') { window.abrirModuloDeudas(); }
-      else { window.cambiarTabFinanzas(tab); }
-    }; })(b.tab));
-    menuDiv.appendChild(btn);
-  });
-  listaDiv.appendChild(menuDiv);
-  if (netoDiv) netoDiv.innerHTML = '';
+window.cambiarTabFinanzas = function(tab) {
+  _tabFinanzas = tab;
+  window.cargarReporte();
 };
 
-const SERVICIOS_MAQUINA = {
-  'ECOGRAFIA':             'Ecografo',
-  'HEMATOLOGIA COMPLETA':  'Analizador Hematologico',
-  'QUIMICA SANGUINEA':     'Analizador Bioquimico',
-  'DESCARTE HEMOPARASITO': 'Microscopio',
-  'DISTEMPER':             'Microscopio',
-  'PARVOVIRUS - CORONAVIRUS': 'Microscopio',
-  'FILARIASIS':            'Microscopio',
-  'SIDA - LEUCEMIA':       'Microscopio',
-  'TEST HELICOBACTER PYLORI AG': 'Microscopio',
-};
-
-window.cargarReporte = async () => {
-  const listaDiv = document.getElementById('listaReporte');
-  const netoDiv  = document.getElementById('repNeto');
-  if (!listaDiv) return;
-
-  const tituloP = { hoy:'Hoy', semana:'Semana actual (Lun-Hoy)', mes:'Este mes' };
-  listaDiv.innerHTML = "<p class='text-center animate-pulse py-4 font-bold text-slate-400 text-[10px] uppercase'>Cargando " + tituloP[_periodoActual] + "...</p>";
-  _destroyCharts();
-
-  try {
-    const fechas = _getFechasRango();
-    const snapMedAll  = await getDocs(collection(db, "consultas"));
-    const snapPeluAll = await getDocs(collection(db, "servicios_estetica"));
-
-    const consultas = [];
-    const servicios = [];
-    snapMedAll.forEach(d  => { const r=d.data(); if (fechas.includes(r.fechaSimple)) consultas.push(r); });
-    snapPeluAll.forEach(d => { const r=d.data(); if (fechas.includes(r.fechaSimple)) servicios.push(r); });
-
-    listaDiv.innerHTML = '';
-
-    if (!_tabFinanzas) { window.mostrarMenuFinanzas(); return; }
-    if (_tabFinanzas === 'maquinas') { _renderizarContadorMaquinas(consultas, fechas); return; }
-
-    // ── VETERINARIA ──
-    let brutoVet=0, insumosVet=0, pagoSandoval=0, pagoSilva=0;
-    const serviciosConteo = {};
-
-    if (consultas.length > 0 && _tabFinanzas === 'veterinaria') {
-      listaDiv.innerHTML += "<p class='text-[8px] font-black text-blue-500 uppercase tracking-widest mt-2 mb-1 px-1'>VETERINARIA (" + consultas.length + " consulta" + (consultas.length>1?'s':'') + ")</p>";
-      consultas.forEach(r => {
-        const venta   = parseFloat(r.montoVenta   || 0);
-        const gasto   = parseFloat(r.montoInsumos || 0);
-        const docPago = parseFloat(r.pagoDoctor   || 0);
-        const neto    = venta - gasto - docPago;
-        brutoVet += venta; insumosVet += gasto;
-        if (r.doctor && r.doctor.includes('Darwin')) pagoSandoval += docPago;
-        else pagoSilva += docPago;
-        if (r.paciente) serviciosConteo[r.paciente] = (serviciosConteo[r.paciente]||0) + venta;
-        const colorDoc = r.doctor && r.doctor.includes('Darwin') ? 'border-l-blue-500' : 'border-l-emerald-500';
-        listaDiv.innerHTML +=
-          "<div class='py-2 border-b bg-white px-3 mb-1 rounded-lg shadow-sm border-l-4 " + colorDoc + "'>" +
-            "<div class='flex justify-between items-start'>" +
-              "<div><p class='font-black text-[10px] uppercase text-slate-700'>" + (r.paciente||'---') + "</p>" +
-              "<p class='text-[8px] font-bold text-slate-400'>" + (r.doctor||'---') + " &middot; " + (r.fechaSimple||'') + "</p></div>" +
-              "<div class='text-right'><p class='font-black text-[10px] text-slate-800'>$" + venta.toFixed(2) + "</p>" +
-              "<p class='text-[8px] text-slate-400'>Insumos: $" + gasto.toFixed(2) + "</p></div>" +
-            "</div>" +
-            "<div class='flex gap-3 mt-1 text-[8px]'>" +
-              "<span class='text-blue-600 font-bold'>Doc: $" + docPago.toFixed(2) + "</span>" +
-              "<span class='text-emerald-600 font-bold'>Neto Avipet: $" + neto.toFixed(2) + "</span>" +
-            "</div>" +
-          "</div>";
-      });
-    }
-
-    // ── PELUQUERIA ──
-    let brutoPelu=0, pagoPeluquera=0, pagoAyu1=0, pagoAyuExt=0, netoAviPelu=0;
-    let peluUSD=0, peluBS=0, peluPendiente=0;
-
-    if (servicios.length > 0 && _tabFinanzas === 'peluqueria') {
-      listaDiv.innerHTML += "<p class='text-[8px] font-black text-purple-500 uppercase tracking-widest mt-3 mb-1 px-1'>PELUQUERIA (" + servicios.length + " servicio" + (servicios.length>1?'s':'') + ")</p>";
-      servicios.forEach(r => {
-        const precio  = parseFloat(r.precioTotal       || 0);
-        const pagPelu = parseFloat(r.pagoPeluquera     || 0);
-        const pagA1   = parseFloat(r.pagoAyudante1     || 0);
-        const pagAx   = parseFloat(r.pagoAyudanteExtra || 0);
-        const neto    = parseFloat(r.ingresoAvipet     || 0);
-        const estatus = r.estatusPago || 'pendiente';
-        const modo    = r.modoPago    || '';
-        const usd     = parseFloat(r.montoPagadoUSD || 0);
-        const bs      = parseFloat(r.montoPagadoBS  || 0);
-        brutoPelu += precio; pagoPeluquera += pagPelu; pagoAyu1 += pagA1; pagoAyuExt += pagAx; netoAviPelu += neto;
-        if (estatus === 'pagado') {
-          if (modo === 'bs') peluBS += bs;
-          else if (modo === 'mixto') { peluUSD += usd; peluBS += bs; }
-          else peluUSD += usd;
-        } else peluPendiente += precio;
-
-        const colorEst = estatus === 'pagado' ? 'text-emerald-600' : 'text-red-500';
-        const iconPago = modo==='bs' ? 'Bs' : modo==='mixto' ? 'Mixto' : 'USD';
-        const iconPagoLabel = modo==='bs' ? 'PAGADO Bs' : modo==='mixto' ? 'PAGADO Mixto' : 'PAGADO USD';
-
-        // Mostrar la resta explicita
-        const tieneAyu  = pagA1 > 0;   // ayudante principal
-        const tieneExtra = pagAx > 0;   // ayudante extra (hizo todo solo)
-
-        let desglosePelu = '$' + pagPelu.toFixed(2);
-        if (tieneAyu) desglosePelu = '($' + (pagPelu + 1).toFixed(2) + ' - $1) = $' + pagPelu.toFixed(2);
-
-        let desgloseAvipet = '';
-        if (tieneAyu) {
-          const avipetBruto = parseFloat((precio * 0.60).toFixed(2));
-          desgloseAvipet = ' | Avipet: ($' + avipetBruto.toFixed(2) + ' - $1) = $' + neto.toFixed(2);
-        }
-
-        listaDiv.innerHTML +=
-          "<div class='py-2 border-b bg-slate-50 px-3 mb-1 rounded-lg border-l-4 border-l-purple-400'>" +
-            "<div class='flex justify-between items-start'>" +
-              "<div><p class='font-black text-[10px] uppercase text-slate-700'>" + (r.paciente||'---') + "</p>" +
-              "<p class='text-[8px] font-bold text-slate-400'>" + (r.duenio||'') + " &middot; " + (r.fechaSimple||'') + "</p></div>" +
-              "<div class='text-right'><p class='font-black text-[10px] text-slate-800'>$" + precio.toFixed(2) + "</p>" +
-              "<p class='text-[8px] font-bold " + colorEst + "'>" + (estatus==='pagado' ? iconPagoLabel : 'Pendiente') + "</p></div>" +
-            "</div>" +
-            "<div class='mt-1 text-[8px] flex flex-wrap gap-2'>" +
-              "<span class='text-purple-600 font-bold'>Pelu: " + desglosePelu + "</span>" +
-              (tieneAyu  ? "<span class='text-blue-500 font-bold'>Ayu1: $" + pagA1.toFixed(2) + desgloseAvipet + "</span>" : '') +
-              (tieneExtra ? "<span class='text-orange-500 font-bold'>Extra: $" + pagAx.toFixed(2) + "</span>" : '') +
-              "<span class='text-emerald-600 font-bold'>Avipet: $" + neto.toFixed(2) + "</span>" +
-            "</div>" +
-          "</div>";
-      });
-    }
-
-    if (consultas.length === 0 && servicios.length === 0) {
-      listaDiv.innerHTML = "<div class='text-center py-8 text-slate-400 text-[10px] font-black uppercase italic'>Sin registros para este periodo</div>";
-    }
-
-    // ── TOTALES ──
-    const totalDoctores = pagoSandoval + pagoSilva;
-    const netoAviVet    = brutoVet - insumosVet - totalDoctores;
-    const totalBruto    = brutoVet + brutoPelu;
-    const netoTotal     = netoAviVet + netoAviPelu;
-
-    const set = (id, v) => { const el=document.getElementById(id); if(el) el.innerText=v; };
-    set('repBruto',           '$' + totalBruto.toFixed(2));
-    set('repBrutoVet',        '$' + brutoVet.toFixed(2));
-    set('repBrutoPelu',       '$' + brutoPelu.toFixed(2));
-    set('repGastos',          '$' + insumosVet.toFixed(2));
-    set('repDocSandoval',     '$' + pagoSandoval.toFixed(2));
-    set('repDocSilva',        '$' + pagoSilva.toFixed(2));
-    set('fPeluTotal',         '$' + brutoPelu.toFixed(2));
-    set('fPeluPagos',         '$' + pagoPeluquera.toFixed(2));
-    set('fPeluAyudantes',     '$' + pagoAyu1.toFixed(2));
-    set('fPeluAyudantesExtra','$' + pagoAyuExt.toFixed(2));
-    set('fPeluCajaUsd',       '$' + peluUSD.toFixed(2));
-    set('fPeluCajaBs',        '$' + peluBS.toFixed(2) + ' (en Bs)');
-    set('fPeluPendiente',     '$' + peluPendiente.toFixed(2));
-    set('fNetoVet',           '$' + netoAviVet.toFixed(2));
-    set('fNetoPelu',          '$' + netoAviPelu.toFixed(2));
-
-    if (netoDiv) {
-      netoDiv.innerText = '$' + netoTotal.toFixed(2);
-      netoDiv.className = netoTotal >= 0
-        ? 'text-4xl font-black text-emerald-700 font-mono'
-        : 'text-4xl font-black text-red-600 font-mono';
-    }
-
-    _renderCharts({ brutoVet, brutoPelu, insumosVet, pagoSandoval, pagoSilva,
-                    netoAviVet, netoAviPelu, pagoPeluquera, pagoAyu1, pagoAyuExt, serviciosConteo });
-
-  } catch(e) {
-    console.error('Error reporte:', e);
-    listaDiv.innerHTML = "<p class='text-center text-red-500 font-bold text-[10px]'>ERROR: " + e.message + "</p>";
-  }
-};
-
-function _renderCharts({ brutoVet, brutoPelu, insumosVet, pagoSandoval, pagoSilva,
-                         netoAviVet, netoAviPelu, pagoPeluquera, pagoAyu1, pagoAyuExt, serviciosConteo }) {
-  const opts = { responsive:true, plugins:{ legend:{ labels:{ font:{ family:"'Segoe UI',sans-serif", weight:'bold', size:10 }, color:'#334155' } } } };
-  const c1 = document.getElementById('chartDistribucion');
-  if (c1) _chartDist = new Chart(c1, {
-    type: 'doughnut',
-    data: {
-      labels: ['Avipet Vet','Avipet Pelu','Insumos','Dr. Darwin','Dr. Joan','Peluquera','Ayudantes'],
-      datasets: [{ data: [
-        Math.max(0, parseFloat(netoAviVet.toFixed(2))),
-        Math.max(0, parseFloat(netoAviPelu.toFixed(2))),
-        parseFloat(insumosVet.toFixed(2)),
-        parseFloat(pagoSandoval.toFixed(2)),
-        parseFloat(pagoSilva.toFixed(2)),
-        parseFloat(pagoPeluquera.toFixed(2)),
-        parseFloat((pagoAyu1+pagoAyuExt).toFixed(2))
-      ], backgroundColor:['#1d4ed8','#7c3aed','#f59e0b','#0ea5e9','#10b981','#ec4899','#94a3b8'],
-      borderWidth:2, borderColor:'#fff' }]
-    },
-    options: { ...opts, cutout:'60%' }
-  });
-  const c2 = document.getElementById('chartDoctores');
-  if (c2) _chartDoc = new Chart(c2, {
-    type: 'bar',
-    data: { labels:['Dr. Darwin','Dr. Joan'],
-      datasets:[{ label:'Comision $', data:[parseFloat(pagoSandoval.toFixed(2)), parseFloat(pagoSilva.toFixed(2))],
-      backgroundColor:['#2563eb','#10b981'], borderRadius:8 }] },
-    options: { ...opts, scales:{
-      y:{ beginAtZero:true, grid:{color:'#f1f5f9'}, ticks:{color:'#64748b',font:{size:9}} },
-      x:{ grid:{display:false}, ticks:{color:'#334155',font:{weight:'bold',size:10}} }
-    }, plugins:{ legend:{display:false} } }
-  });
-  const c3 = document.getElementById('chartServicios');
-  if (c3 && Object.keys(serviciosConteo).length > 0) {
-    const sorted = Object.entries(serviciosConteo).sort((a,b) => b[1]-a[1]).slice(0,6);
-    _chartServ = new Chart(c3, {
-      type: 'bar',
-      data: { labels: sorted.map(([k]) => k.length>14?k.substring(0,14)+'...':k),
-        datasets:[{ label:'Ingreso $', data: sorted.map(([,v]) => parseFloat(v.toFixed(2))),
-        backgroundColor:'#2563eb', borderRadius:6 }] },
-      options: { indexAxis:'y', ...opts,
-        scales:{ x:{ beginAtZero:true, grid:{color:'#f1f5f9'}, ticks:{color:'#64748b',font:{size:9}} },
-                 y:{ grid:{display:false}, ticks:{color:'#334155',font:{weight:'bold',size:9}} } },
-        plugins:{ legend:{display:false} } }
-    });
-  }
-}
-
-window.guardarResumenDelDia = async () => {
-  try {
-    const hoy = new Date();
-    const fechaSimple = hoy.getDate() + '/' + (hoy.getMonth()+1) + '/' + hoy.getFullYear();
-    const snapV = await getDocs(query(collection(db,"consultas"),          where("fechaSimple","==",fechaSimple)));
-    const snapP = await getDocs(query(collection(db,"servicios_estetica"), where("fechaSimple","==",fechaSimple)));
-    let brutoVet=0,insumosVet=0,pagoDoc=0,netoVet=0,cntVet=0;
-    let brutoPelu=0,pagoPelu=0,pagoAyus=0,netoPelu=0,cntPelu=0;
-    snapV.forEach(d=>{ const r=d.data(); const b=parseFloat(r.montoVenta||0),g=parseFloat(r.montoInsumos||0),p=parseFloat(r.pagoDoctor||0); brutoVet+=b;insumosVet+=g;pagoDoc+=p;netoVet+=(b-g-p);cntVet++; });
-    snapP.forEach(d=>{ const r=d.data(); brutoPelu+=parseFloat(r.precioTotal||0);pagoPelu+=parseFloat(r.pagoPeluquera||0);pagoAyus+=(parseFloat(r.pagoAyudante1||0)+parseFloat(r.pagoAyudanteExtra||0));netoPelu+=parseFloat(r.ingresoAvipet||0);cntPelu++; });
-    await addDoc(collection(db,"resumen_caja"),{
-      fecha:serverTimestamp(),fechaSimple,
-      veterinaria:{pacientes:cntVet,bruto:brutoVet,insumos:insumosVet,doctores:pagoDoc,netoAvipet:netoVet},
-      peluqueria:{servicios:cntPelu,bruto:brutoPelu,peluquera:pagoPelu,ayudantes:pagoAyus,netoAvipet:netoPelu},
-      totales:{bruto:brutoVet+brutoPelu,netoAvipet:netoVet+netoPelu}
-    });
-    await Swal.fire({icon:'success',title:'Resumen guardado',text:fechaSimple,timer:2000,showConfirmButton:false});
-  } catch(e){console.error(e);alert("Error: "+e.message);}
-};
-
-window.descargarReporte = async () => {
-  try {
-    const hoy = new Date();
-    const fechaSimple = hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
-    const snapV = await getDocs(query(collection(db,"consultas"),          where("fechaSimple","==",fechaSimple)));
-    const snapP = await getDocs(query(collection(db,"servicios_estetica"), where("fechaSimple","==",fechaSimple)));
-    if (snapV.empty && snapP.empty){alert("No hay registros para hoy: "+fechaSimple);return;}
-    let lineas=[],brutoVet=0,insumosVet=0,pagoSandoval=0,pagoSilva=0,cntVet=0;
-    let brutoPelu=0,pagoPelu=0,pagoA1=0,pagoAx=0,netoPelu=0,cntPelu=0,pendiente=0;
-    lineas.push("===================================================");
-    lineas.push("        AVIPET - RESUMEN DE CAJA");
-    lineas.push("        Fecha: "+fechaSimple);
-    lineas.push("===================================================\n");
-    lineas.push("--- VETERINARIA -----------------------------------");
-    snapV.forEach(d=>{
-      const r=d.data();const venta=parseFloat(r.montoVenta||0),gasto=parseFloat(r.montoInsumos||0),docPag=parseFloat(r.pagoDoctor||0),neto=venta-gasto-docPag;
-      brutoVet+=venta;insumosVet+=gasto;cntVet++;
-      if(r.doctor&&r.doctor.includes('Darwin'))pagoSandoval+=docPag;else pagoSilva+=docPag;
-      lineas.push("  "+(r.paciente||'---')+" | "+(r.doctor||'---'));
-      lineas.push("    Venta: $"+venta.toFixed(2)+"  Insumos: $"+gasto.toFixed(2)+"  Doc: $"+docPag.toFixed(2)+"  Neto: $"+neto.toFixed(2));
-    });
-    const netoVet=brutoVet-insumosVet-pagoSandoval-pagoSilva;
-    lineas.push("\n  SUBTOTAL VETERINARIA:");
-    lineas.push("    Consultas:   "+cntVet);
-    lineas.push("    Bruto:       $"+brutoVet.toFixed(2));
-    lineas.push("    Insumos:     $"+insumosVet.toFixed(2));
-    lineas.push("    Dr. Darwin:  $"+pagoSandoval.toFixed(2));
-    lineas.push("    Dr. Joan:    $"+pagoSilva.toFixed(2));
-    lineas.push("    NETO AVIPET: $"+netoVet.toFixed(2));
-    lineas.push("\n--- PELUQUERIA ------------------------------------");
-    snapP.forEach(d=>{
-      const r=d.data();
-      const precio=parseFloat(r.precioTotal||0);
-      const pPelu=parseFloat(r.pagoPeluquera||0);
-      const pA1=parseFloat(r.pagoAyudante1||0);
-      const pAx=parseFloat(r.pagoAyudanteExtra||0);
-      const neto=parseFloat(r.ingresoAvipet||0);
-      const tieneAyu = pA1 > 0;
-      brutoPelu+=precio;pagoPelu+=pPelu;pagoA1+=pA1;pagoAx+=pAx;netoPelu+=neto;cntPelu++;
-      if((r.estatusPago||'pendiente')!=='pagado')pendiente+=precio;
-      lineas.push("  "+(r.paciente||'---')+" | "+(r.duenio||''));
-      if (tieneAyu) {
-        const peluBruto = parseFloat((precio * 0.40).toFixed(2));
-        const avipetBruto = parseFloat((precio * 0.60).toFixed(2));
-        lineas.push("    Precio: $"+precio.toFixed(2)+"  Pelu: ($"+peluBruto.toFixed(2)+" - $1) = $"+pPelu.toFixed(2));
-        lineas.push("    Avipet: ($"+avipetBruto.toFixed(2)+" - $1) = $"+neto.toFixed(2)+"  Ayu: $"+pA1.toFixed(2));
-      } else {
-        lineas.push("    Precio: $"+precio.toFixed(2)+"  Pelu: $"+pPelu.toFixed(2)+"  Avipet: $"+neto.toFixed(2)+"  (sin ayudante)");
-      }
-      lineas.push("    Estatus: "+((r.estatusPago==='pagado')?'PAGADO '+(r.modoPago||'').toUpperCase():'PENDIENTE'));
-    });
-    lineas.push("\n  SUBTOTAL PELUQUERIA:");
-    lineas.push("    Servicios:   "+cntPelu);
-    lineas.push("    Bruto:       $"+brutoPelu.toFixed(2));
-    lineas.push("    Peluquera:   $"+pagoPelu.toFixed(2));
-    lineas.push("    Ayudantes:   $"+(pagoA1+pagoAx).toFixed(2));
-    lineas.push("    Pendiente:   $"+pendiente.toFixed(2));
-    lineas.push("    NETO AVIPET: $"+netoPelu.toFixed(2));
-    const netoTotal=netoVet+netoPelu;
-    lineas.push("\n===================================================");
-    lineas.push("  RESUMEN GENERAL");
-    lineas.push("  Bruto total:  $"+(brutoVet+brutoPelu).toFixed(2));
-    lineas.push("  Dr. Darwin:   $"+pagoSandoval.toFixed(2));
-    lineas.push("  Dr. Joan:     $"+pagoSilva.toFixed(2));
-    lineas.push("  Peluquera:    $"+pagoPelu.toFixed(2));
-    lineas.push("  Ayudantes:    $"+(pagoA1+pagoAx).toFixed(2));
-    lineas.push("  ---------------------------------------------");
-    lineas.push("  NETO AVIPET:  $"+netoTotal.toFixed(2));
-    lineas.push("===================================================");
-    const blob=new Blob([lineas.join("\n")],{type:"text/plain;charset=utf-8"});
-    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
-    a.download="Caja_Avipet_"+fechaSimple.replace(/\//g,"-")+".txt";
-    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  }catch(e){console.error(e);alert("Error: "+e.message);}
-};
-
-// ─── CALCULADORA BS <-> USD ───────────────────────────────
-window._calcModoActual='usdToBS';
 window.setCalcModo=(modo)=>{
   window._calcModoActual=modo;
   const btnUsd=document.getElementById('btnUsdToBS'),btnBs=document.getElementById('btnBsToUSD'),simbolo=document.getElementById('calcSimbolo'),modoEl=document.getElementById('calcModo');
