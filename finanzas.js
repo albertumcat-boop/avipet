@@ -86,12 +86,16 @@ window.mostrarMenuFinanzas = () => {
     { tab:'veterinaria', label:'Veterinaria',           color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe' },
     { tab:'peluqueria',  label:'Peluqueria',            color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
     { tab:'maquinas',    label:'Contador de Maquinas',  color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0' },
+    { tab:'deudas',      label:'Deudas y Prestamos',    color:'#dc2626', bg:'#fef2f2', border:'#fca5a5' },
   ];
   botones.forEach(function(b) {
     const btn = document.createElement('button');
     btn.style.cssText = 'width:100%;padding:16px;border-radius:14px;border:2px solid ' + b.border + ';background:' + b.bg + ';font-weight:900;font-size:13px;color:' + b.color + ';cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
     btn.innerHTML = '<span>' + b.label + '</span><span style="font-size:18px;">&rarr;</span>';
-    btn.addEventListener('click', (function(tab){ return function(){ window.cambiarTabFinanzas(tab); }; })(b.tab));
+    btn.addEventListener('click', (function(tab){ return function(){
+      if (tab === 'deudas') { window.abrirModuloDeudas(); }
+      else { window.cambiarTabFinanzas(tab); }
+    }; })(b.tab));
     menuDiv.appendChild(btn);
   });
   listaDiv.appendChild(menuDiv);
@@ -751,3 +755,202 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
 }
 
 console.log("finanzas.js v4 — logica peluqueria corregida con resta explicita");
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULO DEUDAS / PRESTAMOS
+// Coleccion Firebase: "deudas"
+// Campos: persona, categoria, monto, descripcion, fecha, fechaSimple, estado
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Personas predefinidas (quick-select)
+const _PERSONAS_DEUDA = [
+  { id:'darwin',   label:'Dr. Darwin',       color:'#2563eb', bg:'#eff6ff' },
+  { id:'joan',     label:'Dr. Joan',          color:'#059669', bg:'#f0fdf4' },
+  { id:'peluquera',label:'Peluquera',         color:'#7c3aed', bg:'#faf5ff' },
+  { id:'ayu1',     label:'Ayudante Principal',color:'#0891b2', bg:'#ecfeff' },
+  { id:'ayuext',   label:'Ayudante Extra',    color:'#ea580c', bg:'#fff7ed' },
+  { id:'otro',     label:'Otra persona',      color:'#64748b', bg:'#f8fafc' },
+];
+
+window.abrirModuloDeudas = async () => {
+  try {
+    const snap = await getDocs(collection(db, "deudas"));
+    const todas = [];
+    snap.forEach(function(d){ todas.push({ id: d.id, ...d.data() }); });
+    todas.sort(function(a,b){ return (b.fecha && a.fecha) ? (b.fecha.seconds||0)-(a.fecha.seconds||0) : 0; });
+
+    // Calcular totales por estado
+    let totalPendiente = 0, totalPagado = 0;
+    todas.forEach(function(d){
+      if (d.estado === 'pagado') totalPagado += parseFloat(d.monto||0);
+      else totalPendiente += parseFloat(d.monto||0);
+    });
+
+    // Construir HTML de la lista
+    let rowsHtml = '';
+    if (todas.length === 0) {
+      rowsHtml = '<p style="text-align:center;color:#94a3b8;font-size:11px;padding:20px;font-weight:700;">Sin deudas registradas</p>';
+    } else {
+      todas.forEach(function(d) {
+        const monto = parseFloat(d.monto||0);
+        const pagado = d.estado === 'pagado';
+        const colorBg = pagado ? '#f0fdf4' : '#fef2f2';
+        const colorBorder = pagado ? '#86efac' : '#fca5a5';
+        const colorMonto = pagado ? '#16a34a' : '#dc2626';
+        rowsHtml +=
+          '<div style="background:' + colorBg + ';border:1px solid ' + colorBorder + ';border-radius:12px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">' +
+            '<div>' +
+              '<p style="font-size:11px;font-weight:900;color:#1e293b;margin:0;">' + (d.persona||'---') + '</p>' +
+              '<p style="font-size:9px;color:#64748b;margin:2px 0;">' + (d.descripcion||'---') + '</p>' +
+              '<p style="font-size:8px;color:#94a3b8;margin:0;">' + (d.fechaSimple||'') + '</p>' +
+            '</div>' +
+            '<div style="text-align:right;">' +
+              '<p style="font-size:14px;font-weight:900;color:' + colorMonto + ';margin:0;">$' + monto.toFixed(2) + '</p>' +
+              '<p style="font-size:8px;font-weight:900;color:' + colorMonto + ';margin:0;">' + (pagado ? 'PAGADA' : 'PENDIENTE') + '</p>' +
+              (!pagado ?
+                '<button onclick="window._marcarDeudaPagada(\'' + d.id + '\')" ' +
+                  'style="margin-top:4px;background:#16a34a;color:#fff;border:none;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;text-transform:uppercase;">' +
+                  'Marcar pagada</button>' : '') +
+            '</div>' +
+          '</div>';
+      });
+    }
+
+    const htmlModal =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">' +
+        '<div style="background:#fef2f2;border-radius:10px;padding:10px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0;">Deuda pendiente</p>' +
+          '<p style="font-size:20px;font-weight:900;color:#dc2626;margin:4px 0;">$' + totalPendiente.toFixed(2) + '</p>' +
+        '</div>' +
+        '<div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;margin:0;">Ya pagado</p>' +
+          '<p style="font-size:20px;font-weight:900;color:#16a34a;margin:4px 0;">$' + totalPagado.toFixed(2) + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div style="max-height:320px;overflow-y:auto;">' + rowsHtml + '</div>';
+
+    Swal.fire({
+      title: 'Deudas y Prestamos',
+      width: 600,
+      html: htmlModal,
+      showCancelButton: true,
+      confirmButtonText: '+ Nueva Deuda',
+      cancelButtonText: 'Cerrar',
+      confirmButtonColor: '#1d4ed8'
+    }).then(function(res) {
+      if (res.isConfirmed) window.registrarNuevaDeuda();
+    });
+
+  } catch(e) { console.error(e); alert('Error: ' + e.message); }
+};
+
+window._marcarDeudaPagada = async (idDeuda) => {
+  try {
+    await updateDoc(doc(db, "deudas", idDeuda), {
+      estado: 'pagado',
+      fechaPago: serverTimestamp()
+    });
+    Swal.fire({ icon:'success', title:'Marcada como pagada', timer:1500, showConfirmButton:false });
+    setTimeout(function(){ window.abrirModuloDeudas(); }, 1600);
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.registrarNuevaDeuda = async () => {
+  // Paso 1: elegir persona
+  let htmlPersonas = '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Quien debe?</p>';
+  htmlPersonas += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">';
+  _PERSONAS_DEUDA.forEach(function(p) {
+    htmlPersonas +=
+      '<button type="button" ' +
+        'onclick="window._personaDeudaSeleccionada=\'' + p.id + '\';\'' + p.label + '\';window._personaDeudaLabel=\'' + p.label + '\';document.querySelectorAll(\'.btn-pers-deuda\').forEach(function(b){b.style.opacity=\'0.4\';});this.style.opacity=\'1\';this.style.fontWeight=\'900\';" ' +
+        'class="btn-pers-deuda" ' +
+        'style="background:' + p.bg + ';color:' + p.color + ';border:2px solid ' + p.color + ';border-radius:10px;padding:8px 4px;font-size:10px;font-weight:700;cursor:pointer;text-transform:uppercase;">' +
+        p.label +
+      '</button>';
+  });
+  htmlPersonas += '</div>';
+  htmlPersonas += '<div id="inputOtroNombre" style="display:none;margin-top:8px;">' +
+    '<input type="text" id="nombreOtroDeuda" placeholder="Nombre de la persona..." ' +
+    'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:11px;font-weight:700;outline:none;box-sizing:border-box;">' +
+  '</div>';
+
+  const res1 = await Swal.fire({
+    title: 'Nueva Deuda',
+    html: htmlPersonas,
+    showCancelButton: true,
+    confirmButtonText: 'Siguiente',
+    cancelButtonText: 'Cancelar',
+    preConfirm: function() {
+      const pid = window._personaDeudaSeleccionada;
+      if (!pid) { Swal.showValidationMessage('Selecciona una persona'); return false; }
+      if (pid === 'otro') {
+        const nombre = document.getElementById('nombreOtroDeuda')?.value.trim();
+        if (!nombre) { Swal.showValidationMessage('Escribe el nombre'); return false; }
+        window._personaDeudaLabel = nombre;
+      }
+      return window._personaDeudaLabel || pid;
+    },
+    didOpen: function() {
+      // Mostrar input de nombre cuando elige "otro"
+      document.querySelectorAll('.btn-pers-deuda').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          const pid2 = window._personaDeudaSeleccionada;
+          const inp = document.getElementById('inputOtroNombre');
+          if (inp) inp.style.display = pid2 === 'otro' ? 'block' : 'none';
+        });
+      });
+    }
+  });
+  if (!res1.isConfirmed) return;
+  const personaLabel = res1.value;
+
+  // Paso 2: monto y descripcion
+  const res2 = await Swal.fire({
+    title: 'Deuda de: ' + personaLabel,
+    html:
+      '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
+        '<div>' +
+          '<label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Monto ($)</label>' +
+          '<input type="number" id="montoDeuda" step="0.01" min="0" placeholder="0.00" ' +
+            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:18px;font-weight:900;outline:none;box-sizing:border-box;margin-top:4px;color:#1e293b;">' +
+        '</div>' +
+        '<div>' +
+          '<label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Descripcion</label>' +
+          '<input type="text" id="descDeuda" placeholder="Ej: Prestamo efectivo, avance salario..." ' +
+            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:11px;font-weight:700;outline:none;box-sizing:border-box;margin-top:4px;">' +
+        '</div>' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Guardar Deuda',
+    cancelButtonText: 'Atras',
+    confirmButtonColor: '#dc2626',
+    preConfirm: function() {
+      const monto = parseFloat(document.getElementById('montoDeuda')?.value);
+      if (!monto || monto <= 0) { Swal.showValidationMessage('Ingresa un monto valido'); return false; }
+      return {
+        monto: monto,
+        descripcion: document.getElementById('descDeuda')?.value.trim() || ''
+      };
+    }
+  });
+  if (!res2.isConfirmed) return;
+
+  const hoy = new Date();
+  try {
+    await addDoc(collection(db, "deudas"), {
+      persona:      personaLabel,
+      personaId:    window._personaDeudaSeleccionada || 'otro',
+      monto:        res2.value.monto,
+      descripcion:  res2.value.descripcion,
+      estado:       'pendiente',
+      fecha:        serverTimestamp(),
+      fechaSimple:  hoy.getDate() + '/' + (hoy.getMonth()+1) + '/' + hoy.getFullYear()
+    });
+    window._personaDeudaSeleccionada = null;
+    window._personaDeudaLabel = null;
+    await Swal.fire({ icon:'success', title:'Deuda registrada', text: personaLabel + ': $' + res2.value.monto.toFixed(2), timer:2000, showConfirmButton:false });
+    window.abrirModuloDeudas();
+  } catch(e) { alert('Error guardando: ' + e.message); }
+};
+
+console.log("finanzas.js v4 — modulo deudas incluido");
