@@ -1580,3 +1580,308 @@ window.cambiarSubTabConfig = (tab) => {
 
 
 console.log("? historia.js v5 -- selector mascotas, autorelleno mejorado");
+
+// ─── ABRIR CONSULTA PARA EDITAR DESDE BUSCADOR ───────────────────────────────
+// Esta funcion es llamada por buscador.js cuando el usuario hace click en "Editar Consulta"
+window._abrirConsultaParaEditar = async (idConsulta) => {
+  try {
+    const snap = await getDoc(doc(db, "consultas", idConsulta));
+    if (!snap.exists()) {
+      Swal.fire({ icon:'error', title:'No encontrado', text:'La consulta no existe en Firebase.', timer:2500, showConfirmButton:false });
+      return;
+    }
+    const r = snap.data();
+
+    // Navegar a historia primero
+    if (typeof window.showTab === 'function') window.showTab('historia');
+
+    // Esperar a que la section este visible, luego llenar
+    setTimeout(function() {
+      const set = function(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      const setCheck = function(id, val) { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+      // Datos del paciente
+      set('hCI',       r.cedula);
+      set('hProp',     r.propietario);
+      set('hNombre',   r.paciente);
+      set('hEspecie',  r.especie);
+      set('hRaza',     r.raza);
+      set('hSexo',     r.sexo);
+      set('hEdad',     r.edad);
+      set('hPeso',     r.peso);
+      set('hColor',    r.color);
+      set('hTlf',      r.telefono);
+      set('hMail',     r.correo);
+      set('hDir',      r.direccion);
+      set('hFechaNac', r.fechaNacimiento);
+      setCheck('hAlerta', r.alerta);
+
+      // Datos clinicos
+      set('hTratamiento', r.tratamiento);
+      set('precioVenta',  r.montoVenta);
+
+      // Guardar el ID para que al guardar actualice en vez de crear
+      window._idConsultaEditando = idConsulta;
+
+      // Seleccionar el doctor
+      if (r.doctor) {
+        const selDoc = document.getElementById('selectorDoctor');
+        if (selDoc) {
+          const opciones = selDoc.querySelectorAll('button');
+          opciones.forEach(function(btn) {
+            if (btn.dataset && btn.dataset.doctor && r.doctor.includes(btn.dataset.doctor)) {
+              btn.click();
+            }
+          });
+        }
+      }
+
+      // Mostrar aviso
+      Swal.fire({
+        icon: 'info',
+        title: 'Consulta cargada para editar',
+        html: '<p style="font-size:11px;color:#64748b;">Paciente: <b>' + (r.paciente||'---') + '</b><br>' +
+              'Fecha original: ' + (r.fechaSimple||'---') + '<br><br>' +
+              '<span style="color:#dc2626;font-weight:900;">Al guardar se actualizara el registro existente.</span></p>',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#1d4ed8'
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 600);
+
+  } catch(e) {
+    console.error('Error cargando consulta:', e);
+    Swal.fire({ icon:'error', title:'Error', text: e.message, timer:3000, showConfirmButton:false });
+  }
+};
+
+// ─── SERVICIO SIN MASCOTA (MUESTRAS: SANGRE, ORINA, HECES, ETC.) ─────────────
+// Permite registrar un servicio veterinario donde solo traen la muestra,
+// sin que el paciente este fisicamente presente.
+// Se guarda en la misma coleccion "consultas" con flag muestra:true
+window.registrarServicioSinMascota = async () => {
+  try {
+    // Paso 1 — datos del propietario y tipo de muestra
+    const res1 = await Swal.fire({
+      title: 'Servicio sin Mascota',
+      width: 500,
+      html:
+        '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
+          '<div><label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Propietario / Cliente</label>' +
+          '<input type="text" id="sm_prop" placeholder="Nombre del propietario..." ' +
+            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:4px;"></div>' +
+          '<div><label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Cedula (opcional)</label>' +
+          '<input type="text" id="sm_ci" placeholder="CI del propietario..." ' +
+            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:4px;"></div>' +
+          '<div><label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Tipo de muestra / Paciente referencia</label>' +
+          '<input type="text" id="sm_paciente" placeholder="Ej: Muestra sangre Max, Heces Coco..." ' +
+            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:4px;"></div>' +
+        '</div>',
+      showCancelButton: true,
+      confirmButtonText: 'Siguiente: Servicios',
+      cancelButtonText: 'Cancelar',
+      preConfirm: function() {
+        const prop = document.getElementById('sm_prop')?.value.trim();
+        if (!prop) { Swal.showValidationMessage('Escribe el nombre del propietario'); return false; }
+        const pac = document.getElementById('sm_paciente')?.value.trim();
+        if (!pac) { Swal.showValidationMessage('Escribe el tipo de muestra o nombre del paciente'); return false; }
+        return {
+          propietario: prop,
+          cedula: document.getElementById('sm_ci')?.value.trim() || 'SIN-CI',
+          paciente: pac
+        };
+      }
+    });
+    if (!res1.isConfirmed) return;
+    const datosBase = res1.value;
+
+    // Paso 2 — elegir doctor
+    const res2 = await Swal.fire({
+      title: 'Asignar Doctor',
+      html:
+        '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' +
+          '<button type="button" onclick="window._smDoctor=\'Darwin\';document.querySelectorAll(\'.btn-sm-doc\').forEach(function(b){b.style.opacity=\'0.4\';});this.style.opacity=\'1\';" ' +
+            'class="btn-sm-doc" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">Dr. Darwin Sandoval</button>' +
+          '<button type="button" onclick="window._smDoctor=\'Joan\';document.querySelectorAll(\'.btn-sm-doc\').forEach(function(b){b.style.opacity=\'0.4\';});this.style.opacity=\'1\';" ' +
+            'class="btn-sm-doc" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:12px;color:#15803d;cursor:pointer;">Dr. Joan Silva</button>' +
+        '</div>',
+      showCancelButton: true,
+      confirmButtonText: 'Siguiente: Servicios',
+      cancelButtonText: 'Cancelar',
+      preConfirm: function() {
+        if (!window._smDoctor) { Swal.showValidationMessage('Selecciona un doctor'); return false; }
+        return window._smDoctor;
+      }
+    });
+    if (!res2.isConfirmed) return;
+    const doctorSel = res2.value === 'Darwin' ? 'Dr. Darwin Sandoval' : 'Dr. Joan Silva';
+    window._smDoctor = null;
+
+    // Paso 3 — seleccionar servicios desde servicios_maestro (igual que en historia)
+    const snapServ = await getDocs(collection(db, "servicios_maestro"));
+    const listaServ = [];
+    snapServ.forEach(function(d){ listaServ.push({ id:d.id, ...d.data() }); });
+    listaServ.sort(function(a,b){ return (a.nombre||'').localeCompare(b.nombre||''); });
+
+    let htmlServ = '<p style="font-size:9px;color:#64748b;margin-bottom:8px;">Selecciona los servicios realizados:</p>';
+    htmlServ += '<div style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">';
+    listaServ.forEach(function(s) {
+      const precio = parseFloat(s.precioVenta||0).toFixed(2);
+      const porc   = parseFloat(s.porcDoc||s.porcentajeDoc||30);
+      htmlServ +=
+        '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;background:#f8fafc;">' +
+          '<input type="checkbox" class="chk-sm-serv" value="' + s.id + '" data-nombre="' + (s.nombre||'') + '" data-precio="' + precio + '" data-porc="' + porc + '" style="width:16px;height:16px;accent-color:#2563eb;">' +
+          '<span style="flex:1;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre||'---') + '</span>' +
+          '<span style="font-size:11px;font-weight:900;color:#16a34a;">$' + precio + '</span>' +
+          '<span style="font-size:9px;color:#64748b;">' + porc + '%</span>' +
+        '</label>';
+    });
+    htmlServ += '</div>';
+
+    const res3 = await Swal.fire({
+      title: 'Servicios para: ' + datosBase.paciente,
+      width: 550,
+      html: htmlServ,
+      showCancelButton: true,
+      confirmButtonText: 'Calcular y Guardar',
+      cancelButtonText: 'Cancelar',
+      preConfirm: function() {
+        const seleccionados = Array.from(document.querySelectorAll('.chk-sm-serv:checked'));
+        if (seleccionados.length === 0) { Swal.showValidationMessage('Selecciona al menos un servicio'); return false; }
+        return seleccionados.map(function(el) {
+          return {
+            id:     el.value,
+            nombre: el.dataset.nombre,
+            precio: parseFloat(el.dataset.precio),
+            porc:   parseFloat(el.dataset.porc)
+          };
+        });
+      }
+    });
+    if (!res3.isConfirmed) return;
+    const serviciosSeleccionados = res3.value;
+
+    // Calcular totales con logica de insumos igual que en guardarFirebase
+    let montoVenta = 0, montoInsumos = 0, pagoDoctor = 0;
+    const serviciosRealizados = [];
+    const detalleInsumos = [];
+
+    // Porccentaje global de configuracion
+    let porcGlobal = null;
+    try {
+      const cfgSnap = await getDoc(doc(db, "configuracion", "tarifas"));
+      if (cfgSnap.exists()) porcGlobal = cfgSnap.data().porcentajeDoc || null;
+    } catch(e) {}
+
+    for (let i = 0; i < serviciosSeleccionados.length; i++) {
+      const s = serviciosSeleccionados[i];
+      const snapS = await getDoc(doc(db, "servicios_maestro", s.id));
+      let insumosServicio = [];
+      let porcFinal = porcGlobal || s.porc || 30;
+
+      if (snapS.exists()) {
+        const sd = snapS.data();
+        insumosServicio = sd.insumos || [];
+        if (!porcGlobal) porcFinal = parseFloat(sd.porcDoc || sd.porcentajeDoc || s.porc || 30);
+      }
+
+      // Calcular costo insumos de este servicio
+      let costoServicio = 0;
+      for (let j = 0; j < insumosServicio.length; j++) {
+        const ins = insumosServicio[j];
+        const costoIns = parseFloat(ins.costoUso || ins.costo || 0);
+        costoServicio += costoIns;
+        if (costoIns > 0) {
+          detalleInsumos.push({ nombre: ins.nombre||'---', costo: costoIns, servicio: s.nombre });
+        }
+      }
+
+      const utilidad = s.precio - costoServicio;
+      const docPago  = utilidad > 0 ? parseFloat((utilidad * porcFinal / 100).toFixed(4)) : 0;
+
+      montoVenta   += s.precio;
+      montoInsumos += costoServicio;
+      pagoDoctor   += docPago;
+
+      serviciosRealizados.push({
+        nombre: s.nombre,
+        precio: s.precio,
+        insumos: costoServicio,
+        pagoDoc: docPago,
+        porcentaje: porcFinal
+      });
+    }
+
+    const pagoAvipet = montoVenta - montoInsumos - pagoDoctor;
+
+    // Mostrar resumen antes de guardar
+    let resHtml = '<div style="background:#f8fafc;border-radius:12px;padding:12px;text-align:left;">';
+    serviciosRealizados.forEach(function(s) {
+      resHtml += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid #f1f5f9;">' +
+        '<span style="font-weight:700;">' + s.nombre + '</span>' +
+        '<span style="font-weight:900;color:#16a34a;">$' + s.precio.toFixed(2) + '</span></div>';
+    });
+    resHtml += '</div>';
+    resHtml +=
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px;">' +
+        '<div style="background:#eff6ff;border-radius:10px;padding:8px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Venta</p>' +
+          '<p style="font-size:16px;font-weight:900;color:#1d4ed8;margin:2px 0;">$' + montoVenta.toFixed(2) + '</p></div>' +
+        '<div style="background:#fef3c7;border-radius:10px;padding:8px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;margin:0;">Insumos</p>' +
+          '<p style="font-size:16px;font-weight:900;color:#92400e;margin:2px 0;">$' + montoInsumos.toFixed(4) + '</p></div>' +
+        '<div style="background:#eff6ff;border-radius:10px;padding:8px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Doctor</p>' +
+          '<p style="font-size:16px;font-weight:900;color:#1d4ed8;margin:2px 0;">$' + pagoDoctor.toFixed(4) + '</p></div>' +
+      '</div>' +
+      '<div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center;margin-top:8px;">' +
+        '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;margin:0;">Neto Avipet</p>' +
+        '<p style="font-size:22px;font-weight:900;color:#16a34a;margin:4px 0;">$' + pagoAvipet.toFixed(2) + '</p></div>';
+
+    const resConf = await Swal.fire({
+      title: 'Confirmar y Guardar',
+      width: 520,
+      html: resHtml,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar en Firebase',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#16a34a'
+    });
+    if (!resConf.isConfirmed) return;
+
+    // Guardar en Firebase en coleccion "consultas"
+    const hoy = new Date();
+    await addDoc(collection(db, "consultas"), {
+      cedula:          datosBase.cedula,
+      propietario:     datosBase.propietario,
+      paciente:        datosBase.paciente,
+      especie:         'Muestra',
+      raza:            '',
+      doctor:          doctorSel,
+      montoVenta:      parseFloat(montoVenta.toFixed(2)),
+      montoInsumos:    parseFloat(montoInsumos.toFixed(4)),
+      pagoDoctor:      parseFloat(pagoDoctor.toFixed(4)),
+      pagoAvipet:      parseFloat(pagoAvipet.toFixed(2)),
+      serviciosRealizados: serviciosRealizados,
+      listaDetalladaInsumos: detalleInsumos,
+      tratamiento:     serviciosRealizados.map(function(s){ return s.nombre; }).join(', '),
+      esMuestra:       true,
+      fecha:           serverTimestamp(),
+      fechaSimple:     hoy.getDate() + '/' + (hoy.getMonth()+1) + '/' + hoy.getFullYear()
+    });
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Servicio guardado',
+      html: '<p style="font-size:12px;color:#64748b;">' + datosBase.paciente + '<br>' +
+            '<b style="color:#16a34a;">$' + montoVenta.toFixed(2) + '</b> — ' + doctorSel + '</p>',
+      timer: 2500,
+      showConfirmButton: false
+    });
+
+  } catch(e) {
+    console.error('Error servicio sin mascota:', e);
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};
