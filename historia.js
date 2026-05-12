@@ -1431,15 +1431,45 @@ window.renderizarTablaMaestra = async () => {
       tdPorc.appendChild(inpPorc);
       tr.appendChild(tdPorc);
 
-      // Boton guardar
+      // Boton guardar — guarda precio Y porcentaje con feedback
       const tdGuardar = document.createElement('td');
       tdGuardar.className = 'p-2 text-center';
       const btnGuardar = document.createElement('button');
-      btnGuardar.className = 'text-[8px] px-2 py-1 bg-blue-600 text-white rounded font-black hover:bg-blue-700';
-      btnGuardar.textContent = '?';
+      btnGuardar.className = 'text-[8px] px-2 py-1.5 bg-blue-600 text-white rounded-lg font-black hover:bg-blue-700 transition-all uppercase';
+      btnGuardar.textContent = 'Guardar';
       btnGuardar.dataset.id = r.id;
-      btnGuardar.addEventListener('click', function() {
-        window.actualizarPrecioIndividual(this.dataset.id, 'guardado', null, true);
+      btnGuardar.addEventListener('click', async function() {
+        const fila = this.closest('tr');
+        const inpP = fila.querySelector('input[data-campo="precioVenta"]');
+        const inpPc = fila.querySelector('input[data-campo="porcDoc"]');
+        const btn = this;
+        const precio = parseFloat(inpP?.value || 0);
+        const porc   = parseFloat(inpPc?.value || 30);
+        btn.textContent = '...'; btn.disabled = true; btn.style.background = '#94a3b8';
+        try {
+          const snap = await getDoc(doc(db, "servicios_maestro", btn.dataset.id));
+          const data = snap.exists() ? snap.data() : {};
+          data.precioVenta = precio;
+          data.porcDoc = porc;
+          await setDoc(doc(db, "servicios_maestro", btn.dataset.id), data, { merge: true });
+          // Feedback exito
+          btn.textContent = 'OK'; btn.style.background = '#16a34a';
+          if (inpP)  { inpP.style.borderColor  = '#16a34a'; inpP.style.background  = '#f0fdf4'; }
+          if (inpPc) { inpPc.style.borderColor = '#16a34a'; inpPc.style.background = '#f0fdf4'; }
+          setTimeout(function() {
+            btn.textContent = 'Guardar'; btn.disabled = false; btn.style.background = '';
+            btn.className = 'text-[8px] px-2 py-1.5 bg-blue-600 text-white rounded-lg font-black hover:bg-blue-700 transition-all uppercase';
+            if (inpP)  { inpP.style.borderColor  = ''; inpP.style.background  = ''; }
+            if (inpPc) { inpPc.style.borderColor = ''; inpPc.style.background = ''; }
+          }, 1800);
+        } catch(e) {
+          console.error('Error guardando servicio:', e);
+          btn.textContent = 'Error'; btn.style.background = '#dc2626'; btn.disabled = false;
+          setTimeout(function() {
+            btn.textContent = 'Guardar'; btn.style.background = '';
+            btn.className = 'text-[8px] px-2 py-1.5 bg-blue-600 text-white rounded-lg font-black hover:bg-blue-700 transition-all uppercase';
+          }, 2500);
+        }
       });
       tdGuardar.appendChild(btnGuardar);
       tr.appendChild(tdGuardar);
