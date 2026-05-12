@@ -442,6 +442,18 @@ window.toggleVacunaPagada = (marcado) => {
 
 // --- GUARDAR EN FIREBASE ---
 window.guardarFirebase = async (imp) => {
+  // Validaciones obligatorias ANTES del PIN
+  const _dv = (id) => document.getElementById(id)?.value?.trim() || "";
+  if (!_dv('hCI')) {
+    await Swal.fire({ icon:'warning', title:'Cedula obligatoria', text:'Debes ingresar la cedula del propietario antes de guardar.', confirmButtonColor:'#1d4ed8' });
+    document.getElementById('hCI')?.focus();
+    return;
+  }
+  if (!_dv('hNombre')) {
+    await Swal.fire({ icon:'warning', title:'Nombre del paciente obligatorio', text:'Debes ingresar el nombre de la mascota antes de guardar.', confirmButtonColor:'#1d4ed8' });
+    document.getElementById('hNombre')?.focus();
+    return;
+  }
   const selectorDoc=document.getElementById('selectDoctor');const nombreDoctor=selectorDoc?selectorDoc.value:"";if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
   const pinIngresado=prompt(`? Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);if(!pinIngresado)return;const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);if(!esValido)return alert("? PIN incorrecto.");
   const btn=document.activeElement;const textoOrig=btn?.innerText||"Guardar";if(btn?.tagName==='BUTTON'){btn.disabled=true;btn.innerText="? PROCESANDO...";}
@@ -1485,7 +1497,10 @@ window.renderizarTablaInsumos = async () => {
     const tabla = document.createElement('table');
     tabla.className = 'w-full text-left border-collapse';
     tabla.innerHTML = '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
-      '<th class="p-2">Insumo</th><th class="p-2 text-center w-24">Costo ($)</th><th class="p-2 text-center w-16">Del</th>' +
+      '<th class="p-2">Insumo</th>' +
+      '<th class="p-2 text-center w-24">Costo ($)</th>' +
+      '<th class="p-2 text-center w-16">Guardar</th>' +
+      '<th class="p-2 text-center w-14">Elim.</th>' +
       '</tr></thead>';
 
     const tbody = document.createElement('tbody');
@@ -1498,35 +1513,54 @@ window.renderizarTablaInsumos = async () => {
       const tr = document.createElement('tr');
       tr.className = 'border-b border-slate-100 hover:bg-emerald-50';
 
+      // Nombre
       const tdNom = document.createElement('td');
       tdNom.className = 'p-2 font-bold italic text-slate-700';
       tdNom.textContent = nombreMostrar;
       tr.appendChild(tdNom);
 
+      // Input costo
       const tdCosto = document.createElement('td');
       tdCosto.className = 'p-2 text-center';
       const inp = document.createElement('input');
-      inp.type = 'number'; inp.step = '0.05'; inp.min = '0';
-      inp.value = r.costo || 0;
-      inp.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px]';
+      inp.type = 'number'; inp.step = '0.01'; inp.min = '0';
+      inp.value = parseFloat(r.costo || 0).toFixed(2);
+      inp.className = 'w-20 text-center border-2 border-slate-200 rounded-lg px-1 py-1 outline-none text-[10px] font-bold focus:border-blue-400 transition-all';
       inp.dataset.id = d.id;
-      inp.addEventListener('blur', function() {
-        window.actualizarCostoInsumo(this.dataset.id, this.value);
+      // Al presionar Enter también guarda
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); _guardarCostoInsumoFila(this); }
       });
       tdCosto.appendChild(inp);
       tr.appendChild(tdCosto);
 
+      // Botón guardar
+      const tdGuardar = document.createElement('td');
+      tdGuardar.className = 'p-2 text-center';
+      const btnGuardar = document.createElement('button');
+      btnGuardar.className = 'text-[8px] px-2 py-1.5 bg-emerald-500 text-white rounded-lg font-black hover:bg-emerald-600 transition-all uppercase';
+      btnGuardar.textContent = 'Guardar';
+      btnGuardar.dataset.id = d.id;
+      btnGuardar.addEventListener('click', function() {
+        const fila = this.closest('tr');
+        const inputCosto = fila.querySelector('input[type=number]');
+        _guardarCostoInsumoFila(inputCosto, this);
+      });
+      tdGuardar.appendChild(btnGuardar);
+      tr.appendChild(tdGuardar);
+
+      // Botón eliminar
       const tdDel = document.createElement('td');
       tdDel.className = 'p-2 text-center';
-      const btn = document.createElement('button');
-      btn.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
-      btn.textContent = '?';
-      btn.dataset.id = d.id;
-      btn.dataset.nombre = nombreMostrar;
-      btn.addEventListener('click', function() {
+      const btnDel = document.createElement('button');
+      btnDel.className = 'text-[8px] px-2 py-1.5 bg-red-100 text-red-600 rounded-lg font-black hover:bg-red-600 hover:text-white transition-all';
+      btnDel.textContent = 'Elim.';
+      btnDel.dataset.id = d.id;
+      btnDel.dataset.nombre = nombreMostrar;
+      btnDel.addEventListener('click', function() {
         window.eliminarInsumoIndividual(this.dataset.id, this.dataset.nombre);
       });
-      tdDel.appendChild(btn);
+      tdDel.appendChild(btnDel);
       tr.appendChild(tdDel);
 
       tbody.appendChild(tr);
@@ -1537,9 +1571,46 @@ window.renderizarTablaInsumos = async () => {
     cont.appendChild(tabla);
   } catch(e) {
     console.error(e);
-    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error</p>';
+    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error: ' + e.message + '</p>';
   }
 };
+
+// Función interna para guardar costo con feedback visual
+async function _guardarCostoInsumoFila(inputEl, btnEl) {
+  if (!inputEl) return;
+  const idInsumo = inputEl.dataset.id;
+  const valor = parseFloat(inputEl.value);
+  if (isNaN(valor) || valor < 0) {
+    inputEl.style.borderColor = '#dc2626';
+    setTimeout(function(){ inputEl.style.borderColor = ''; }, 1500);
+    return;
+  }
+  // Feedback visual en botón
+  if (btnEl) { btnEl.textContent = '...'; btnEl.disabled = true; btnEl.style.background = '#94a3b8'; }
+  try {
+    await updateDoc(doc(db, "insumos_maestro", idInsumo), {
+      costo: valor,
+      actualizadoEn: serverTimestamp()
+    });
+    // Exito: input verde + botón verde
+    inputEl.style.borderColor = '#16a34a';
+    inputEl.style.background = '#f0fdf4';
+    if (btnEl) { btnEl.textContent = 'OK'; btnEl.style.background = '#16a34a'; }
+    setTimeout(function(){
+      inputEl.style.borderColor = '';
+      inputEl.style.background = '';
+      if (btnEl) { btnEl.textContent = 'Guardar'; btnEl.style.background = ''; btnEl.disabled = false; btnEl.className = 'text-[8px] px-2 py-1.5 bg-emerald-500 text-white rounded-lg font-black hover:bg-emerald-600 transition-all uppercase'; }
+    }, 1800);
+  } catch(e) {
+    console.error('Error guardando insumo:', e);
+    inputEl.style.borderColor = '#dc2626';
+    if (btnEl) { btnEl.textContent = 'Error'; btnEl.style.background = '#dc2626'; btnEl.disabled = false; }
+    setTimeout(function(){
+      inputEl.style.borderColor = '';
+      if (btnEl) { btnEl.textContent = 'Guardar'; btnEl.style.background = ''; btnEl.className = 'text-[8px] px-2 py-1.5 bg-emerald-500 text-white rounded-lg font-black hover:bg-emerald-600 transition-all uppercase'; }
+    }, 2500);
+  }
+}
 
 window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costo:parseFloat(valor)||0,actualizadoEn:serverTimestamp()});}catch(e){console.error(e);}};
 
