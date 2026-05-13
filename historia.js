@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v21
+// AVIPET -- historia.js  v23
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v21 -- candado insumos, fix Firebase");
+console.log("✅ historia.js v23 -- PIN Aiby 2222");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -1773,6 +1773,7 @@ window.cambiarSubTabConfig = (tab) => {
   if (tab === 'servicios')    window.renderizarTablaMaestra();
   if (tab === 'insumos')      _llamarFuncion('renderizarTablaInsumos');
   if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
+  if (tab === 'compras')      _llamarFuncion('cargarRegistroCompras');
 };
 
 
@@ -2082,3 +2083,304 @@ window.registrarServicioSinMascota = async () => {
     Swal.fire({ icon:'error', title:'Error', text: e.message });
   }
 };
+
+
+
+// =========================================================
+// MODULO COMPRAS / FACTURAS DE INSUMOS
+// Coleccion Firebase: "compras_insumos"
+// Campos: insumo, cantidad, precioUnitario, precioTotal,
+//         proveedor, notas, fotoFactura, fecha, fechaSimple,
+//         registradoPor, moneda
+// =========================================================
+
+window.abrirModalNuevaCompra = async () => {
+  // Verificar clave maestra o PIN de Aiby (2222)
+  const clave = prompt('Clave maestra o PIN:');
+  if (!clave) return;
+  const claveValida =
+    clave.trim() === window.MASTER_KEY_SISTEMA ||  // Clave maestra AVIPET2026
+    clave.trim() === 'AVIPET2026' ||               // Clave maestra directa
+    clave.trim() === '2222';                        // PIN de Aiby
+  if (!claveValida) {
+    await Swal.fire({ icon:'error', title:'Acceso denegado', text:'Clave o PIN incorrecto.', timer:2000, showConfirmButton:false });
+    return;
+  }
+  const registradoPor = clave.trim() === '2222' ? 'Aiby' : 'Administrador';
+
+  // Cargar lista de insumos para el selector
+  let optsInsumos = '<option value="">-- Seleccionar insumo --</option><option value="__otro__">Otro (escribir)</option>';
+  try {
+    const snapIns = await getDocs(collection(db, "insumos_maestro"));
+    const insLista = [];
+    snapIns.forEach(d => insLista.push(d.data().nombre || d.id));
+    insLista.sort();
+    insLista.forEach(n => { optsInsumos += '<option value="'+n+'">'+n+'</option>'; });
+  } catch(e) {}
+
+  const htmlModal =
+    '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
+    // Insumo
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Insumo</label>' +
+    '<select id="cmp_insumo_sel" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;background:#fff;outline:none;box-sizing:border-box;" onchange="document.getElementById(\'cmp_insumo_otro\').style.display=this.value===\'__otro__\'?\'block\':\'none\'">' + optsInsumos + '</select>' +
+    '<input id="cmp_insumo_otro" type="text" placeholder="Nombre del insumo..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:6px;text-transform:uppercase;"></div>' +
+    // Cantidad y precio
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Cantidad</label>' +
+    '<input id="cmp_cantidad" type="number" step="1" min="1" value="1" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Precio unitario ($)</label>' +
+    '<input id="cmp_precio_unit" type="number" step="0.01" min="0" placeholder="0.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;" oninput="const t=parseFloat(document.getElementById(\'cmp_cantidad\').value||1)*parseFloat(this.value||0);document.getElementById(\'cmp_total_show\').textContent=\'$\'+t.toFixed(2)"></div>' +
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Total</label>' +
+    '<div id="cmp_total_show" style="border:2px solid #bbf7d0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;color:#16a34a;background:#f0fdf4;text-align:center;">$0.00</div></div>' +
+    '</div>' +
+    // Proveedor
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Proveedor / Farmacia</label>' +
+    '<input id="cmp_proveedor" type="text" placeholder="Nombre del proveedor..." style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div>' +
+    // Fecha
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Fecha de compra</label>' +
+    '<input id="cmp_fecha" type="date" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div>' +
+    // Notas
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Notas</label>' +
+    '<textarea id="cmp_notas" rows="2" placeholder="Observaciones, lote, vencimiento..." style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;resize:vertical;"></textarea></div>' +
+    // Foto factura
+    '<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:10px;padding:10px;text-align:center;">' +
+    '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;">Foto de factura (opcional)</p>' +
+    '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">' +
+    '<button type="button" onclick="document.getElementById(\'cmp_foto_cam\').click()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:10px;font-weight:900;cursor:pointer;">Camara</button>' +
+    '<button type="button" onclick="document.getElementById(\'cmp_foto_gal\').click()" style="background:#64748b;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:10px;font-weight:900;cursor:pointer;">Galeria</button>' +
+    '</div>' +
+    '<input type="file" id="cmp_foto_cam" accept="image/*" capture="environment" style="display:none" onchange="window._previewFactura(this)">' +
+    '<input type="file" id="cmp_foto_gal" accept="image/*" style="display:none" onchange="window._previewFactura(this)">' +
+    '<div id="cmp_foto_preview" style="display:none;margin-top:6px;">' +
+    '<img id="cmp_foto_img" style="max-width:100%;max-height:120px;border-radius:8px;border:2px solid #bfdbfe;object-fit:contain;" src="">' +
+    '<button type="button" onclick="window._limpiarFotoFactura()" style="display:block;margin:4px auto 0;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:3px 10px;font-size:9px;font-weight:900;cursor:pointer;">Quitar foto</button>' +
+    '</div>' +
+    '<p id="cmp_foto_status" style="font-size:9px;color:#94a3b8;margin:0;"></p>' +
+    '</div>' +
+    '</div>';
+
+  // Poner fecha de hoy por defecto
+  const hoy = new Date();
+  const fechaHoy = hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+
+  window._fotoFacturaB64 = null;
+
+  const res = await Swal.fire({
+    title: 'Nueva Compra de Insumo',
+    html: htmlModal,
+    width: 520,
+    showCancelButton: true,
+    confirmButtonText: 'Guardar Compra',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#16a34a',
+    didOpen: function() {
+      document.getElementById('cmp_fecha').value = fechaHoy;
+    },
+    preConfirm: function() {
+      const selInsumo  = document.getElementById('cmp_insumo_sel').value;
+      const otroInsumo = document.getElementById('cmp_insumo_otro').value.trim().toUpperCase();
+      const insumo     = selInsumo === '__otro__' ? otroInsumo : selInsumo;
+      const cantidad   = parseFloat(document.getElementById('cmp_cantidad').value) || 0;
+      const precioUnit = parseFloat(document.getElementById('cmp_precio_unit').value) || 0;
+      const proveedor  = document.getElementById('cmp_proveedor').value.trim();
+      const fechaVal   = document.getElementById('cmp_fecha').value;
+      const notas      = document.getElementById('cmp_notas').value.trim();
+
+      if (!insumo) { Swal.showValidationMessage('Selecciona o escribe el nombre del insumo'); return false; }
+      if (cantidad <= 0) { Swal.showValidationMessage('La cantidad debe ser mayor a 0'); return false; }
+      if (precioUnit <= 0) { Swal.showValidationMessage('El precio debe ser mayor a 0'); return false; }
+      if (!fechaVal) { Swal.showValidationMessage('Ingresa la fecha de compra'); return false; }
+
+      const partes = fechaVal.split('-');
+      const fechaSimple = partes[2]+'/'+partes[1]+'/'+partes[0];
+
+      return { insumo, cantidad, precioUnit, total: cantidad * precioUnit, proveedor, fechaSimple, notas };
+    }
+  });
+
+  if (!res.isConfirmed) { window._fotoFacturaB64 = null; return; }
+
+  const datos = res.value;
+
+  try {
+    await Swal.fire({ title:'Guardando...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+
+    await addDoc(collection(db, "compras_insumos"), {
+      insumo:        datos.insumo,
+      cantidad:      datos.cantidad,
+      precioUnitario: datos.precioUnit,
+      precioTotal:   datos.total,
+      proveedor:     datos.proveedor || 'Sin especificar',
+      notas:         datos.notas,
+      fotoFactura:   window._fotoFacturaB64 || null,
+      fechaSimple:   datos.fechaSimple,
+      registradoPor,
+      fecha:         serverTimestamp()
+    });
+
+    window._fotoFacturaB64 = null;
+    Swal.close();
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Compra registrada',
+      html: '<b>'+datos.insumo+'</b><br>'+datos.cantidad+' unidades × $'+datos.precioUnit.toFixed(2)+' = <b style="color:#16a34a;">$'+datos.total.toFixed(2)+'</b>',
+      timer: 2500,
+      showConfirmButton: false
+    });
+
+    // Recargar la tabla de compras
+    if (typeof window.cargarRegistroCompras === 'function') window.cargarRegistroCompras();
+
+  } catch(e) {
+    Swal.close();
+    console.error(e);
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};
+
+// Preview foto factura
+window._previewFactura = async (input) => {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('cmp_foto_status');
+  if (status) status.textContent = 'Procesando...';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      // Comprimir igual que en historia clínica
+      const comprimida = await comprimirImagen(e.target.result, 1000, 0.7);
+      window._fotoFacturaB64 = comprimida;
+      const img = document.getElementById('cmp_foto_img');
+      const prev = document.getElementById('cmp_foto_preview');
+      if (img) img.src = comprimida;
+      if (prev) prev.style.display = 'block';
+      if (status) status.textContent = '';
+    } catch(err) {
+      if (status) status.textContent = 'Error procesando imagen';
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+};
+
+window._limpiarFotoFactura = () => {
+  window._fotoFacturaB64 = null;
+  const img  = document.getElementById('cmp_foto_img');
+  const prev = document.getElementById('cmp_foto_preview');
+  if (img)  img.src = '';
+  if (prev) prev.style.display = 'none';
+};
+
+// Cargar y mostrar el registro de compras
+window.cargarRegistroCompras = async () => {
+  const tablaDiv   = document.getElementById('tablaCompras');
+  const resumenDiv = document.getElementById('resumenCompras');
+  if (!tablaDiv) return;
+
+  tablaDiv.innerHTML = '<p style="text-align:center;padding:16px;font-size:10px;color:#94a3b8;font-weight:700;">Cargando...</p>';
+
+  try {
+    const snap = await getDocs(collection(db, "compras_insumos"));
+    let compras = [];
+    snap.forEach(d => compras.push({ id: d.id, ...d.data() }));
+
+    // Filtrar por mes si está seleccionado
+    const filtroMes = document.getElementById('filtroComprasMes')?.value; // "2025-05"
+    if (filtroMes) {
+      const [anio, mes] = filtroMes.split('-');
+      compras = compras.filter(c => {
+        if (!c.fechaSimple) return false;
+        const p = c.fechaSimple.split('/');
+        return p[2] === anio && p[1] === mes.replace(/^0/,'');
+      });
+    }
+
+    // Filtrar por insumo si está seleccionado
+    const filtroIns = document.getElementById('filtroComprasInsumo')?.value;
+    if (filtroIns) {
+      compras = compras.filter(c => c.insumo === filtroIns);
+    }
+
+    // Ordenar por fecha más reciente
+    compras.sort((a,b) => (b.fecha?.seconds||0) - (a.fecha?.seconds||0));
+
+    // Actualizar selector de insumos con los únicos
+    const selIns = document.getElementById('filtroComprasInsumo');
+    if (selIns && selIns.children.length <= 1) {
+      const todosSnap = await getDocs(collection(db, "compras_insumos"));
+      const insUnicos = new Set();
+      todosSnap.forEach(d => { if (d.data().insumo) insUnicos.add(d.data().insumo); });
+      Array.from(insUnicos).sort().forEach(n => {
+        if (!selIns.querySelector('option[value="'+n+'"]')) {
+          const opt = document.createElement('option');
+          opt.value = n; opt.textContent = n;
+          selIns.appendChild(opt);
+        }
+      });
+    }
+
+    // Resumen
+    const totalGastado  = compras.reduce((s,c) => s + parseFloat(c.precioTotal||0), 0);
+    const totalUnidades = compras.reduce((s,c) => s + parseFloat(c.cantidad||0), 0);
+    const proveedores   = new Set(compras.map(c => c.proveedor).filter(Boolean));
+
+    if (resumenDiv) {
+      resumenDiv.innerHTML =
+        '<div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 2px 0;">Total gastado</p>' +
+          '<p style="font-size:20px;font-weight:900;color:#16a34a;margin:0;font-family:monospace;">$'+totalGastado.toFixed(2)+'</p>' +
+        '</div>' +
+        '<div style="background:#eff6ff;border-radius:10px;padding:10px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 2px 0;">Registros</p>' +
+          '<p style="font-size:20px;font-weight:900;color:#2563eb;margin:0;">'+compras.length+'</p>' +
+        '</div>' +
+        '<div style="background:#faf5ff;border-radius:10px;padding:10px;text-align:center;">' +
+          '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 2px 0;">Proveedores</p>' +
+          '<p style="font-size:20px;font-weight:900;color:#7c3aed;margin:0;">'+proveedores.size+'</p>' +
+        '</div>';
+    }
+
+    if (compras.length === 0) {
+      tablaDiv.innerHTML = '<p style="text-align:center;padding:24px;font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;">Sin compras registradas para este filtro</p>';
+      return;
+    }
+
+    tablaDiv.innerHTML = '';
+    compras.forEach(c => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;';
+
+      const tieneNotas = c.notas && c.notas.trim();
+      const tieneFoto  = c.fotoFactura;
+
+      card.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">' +
+          '<div>' +
+            '<p style="font-size:12px;font-weight:900;color:#1e293b;margin:0;text-transform:uppercase;">'+c.insumo+'</p>' +
+            '<p style="font-size:9px;color:#64748b;margin:2px 0;">'+c.fechaSimple+' &middot; '+( c.proveedor||'Sin proveedor')+'</p>' +
+            (tieneNotas ? '<p style="font-size:9px;color:#94a3b8;margin:2px 0;font-style:italic;">'+c.notas+'</p>' : '') +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<p style="font-size:14px;font-weight:900;color:#16a34a;margin:0;font-family:monospace;">$'+parseFloat(c.precioTotal||0).toFixed(2)+'</p>' +
+            '<p style="font-size:9px;color:#64748b;margin:2px 0;">'+c.cantidad+' × $'+parseFloat(c.precioUnitario||0).toFixed(2)+'</p>' +
+            '<p style="font-size:8px;color:#94a3b8;margin:0;">Por: '+( c.registradoPor||'---')+'</p>' +
+          '</div>' +
+        '</div>' +
+        (tieneFoto ?
+          '<div style="margin-top:6px;">' +
+            '<img src="'+c.fotoFactura+'" style="max-height:80px;border-radius:8px;border:2px solid #bfdbfe;cursor:pointer;object-fit:cover;" ' +
+            'onclick="Swal.fire({imageUrl:\''+c.fotoFactura+'\',imageAlt:\'Factura\',showCloseButton:true,showConfirmButton:false,width:400})" ' +
+            'title="Ver factura">' +
+          '</div>' : '');
+
+      tablaDiv.appendChild(card);
+    });
+
+  } catch(e) {
+    console.error(e);
+    tablaDiv.innerHTML = '<p style="color:#dc2626;text-align:center;padding:16px;font-size:10px;font-weight:900;">Error: '+e.message+'</p>';
+  }
+};
+
+console.log("compras.js integrado en historia.js v21");
