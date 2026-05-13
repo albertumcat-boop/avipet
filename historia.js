@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v15 -- CARDS SERVICIOS E INSUMOS");
+console.log("✅ historia.js v16 -- CANDADO INSUMOS HISTORIA, BUSQUEDA, BOTONES");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -355,7 +355,17 @@ window.insertarServicio = async (v) => {
     if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
   }
 
-  insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>`;cuerpo.appendChild(tr);});
+  insNuevos.forEach(ins=>{
+    const tr=document.createElement('tr');
+    tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;
+    const bloq = ins.bloqueado === true;
+    const lockIcon = bloq ? ' &#128274;' : '';
+    const btnStyle = bloq
+      ? 'color:#f59e0b;font-weight:900;cursor:not-allowed;font-size:11px;'
+      : 'color:#dc2626;font-weight:900;cursor:pointer;font-size:11px;';
+    tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic" data-nombre="${ins.nombre.toUpperCase()}">${ins.nombre.toUpperCase()}${lockIcon}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center ${btnStyle}" onclick="window.intentarEliminarInsumoFila(this)">${bloq?'&#128274;':'X'}</td>`;
+    cuerpo.appendChild(tr);
+  });
 
   await window.calcularTodo();
   document.getElementById('selectorServicios').value="";
@@ -467,28 +477,41 @@ function _insertarMedicamentoEnTabla(descripcion,precioCliente) {
 window.intentarEliminarInsumoFila = async (btnEl) => {
   const tr = btnEl.closest('tr');
   if (!tr) return;
-  // Obtener nombre del insumo desde la primera celda
   const tdNom = tr.querySelector('td');
-  const nombreInsumo = tdNom ? (tdNom.dataset.nombre || tdNom.textContent.trim().toUpperCase()) : '';
+  const nombreInsumo = tdNom ? (tdNom.dataset.nombre || tdNom.textContent.replace('🔒','').trim().toUpperCase()) : '';
 
-  // Verificar si el insumo está bloqueado en Firebase
-  try {
-    const snapIns = await getDoc(doc(db, "insumos_maestro", nombreInsumo));
-    if (snapIns.exists() && snapIns.data().bloqueado === true) {
-      // Bloqueado — no se puede eliminar sin clave
-      await Swal.fire({
-        icon: 'warning',
-        title: 'Insumo bloqueado',
-        html: '<p style="font-size:11px;">El insumo <b>' + nombreInsumo + '</b> esta bloqueado por el administrador y no puede ser eliminado del historial.</p>',
-        confirmButtonColor: '#f59e0b',
-        confirmButtonText: 'Entendido'
-      });
-      return;
-    }
-  } catch(e) {
-    // Si no existe en Firebase o hay error, permitir eliminar normalmente
+  // Buscar en qué servicio está este insumo (por el grupo al que pertenece la fila)
+  const grupoClass = Array.from(tr.classList).find(c => c.startsWith('srv-'));
+  let estaBloqueado = false;
+
+  if (grupoClass && nombreInsumo) {
+    try {
+      // Buscar el servicio cuyo grupoID corresponde — está en la fila encabezado del grupo
+      const filaServicio = document.querySelector('tr.servicio-principal[data-grupo="'+grupoClass+'"]');
+      if (filaServicio) {
+        const nombreServicio = filaServicio.querySelector('td')?.textContent?.split('(')[0]?.trim().toUpperCase();
+        if (nombreServicio) {
+          const snapServ = await getDoc(doc(db, "servicios_maestro", nombreServicio));
+          if (snapServ.exists()) {
+            const insumos = snapServ.data().insumos || [];
+            const ins = insumos.find(i => i.nombre?.toUpperCase() === nombreInsumo);
+            if (ins && ins.bloqueado === true) estaBloqueado = true;
+          }
+        }
+      }
+    } catch(e) { /* si falla, permitir eliminar */ }
   }
-  // No bloqueado — eliminar normalmente
+
+  if (estaBloqueado) {
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Insumo bloqueado',
+      html: '<p style="font-size:11px;">El insumo <b>' + nombreInsumo + '</b> es obligatorio y no puede ser eliminado del historial.<br><br>Si realmente no se usó, contacta al administrador.</p>',
+      confirmButtonColor: '#f59e0b',
+      confirmButtonText: 'Entendido'
+    });
+    return;
+  }
   tr.remove();
   window.calcularTodo();
 };
@@ -1292,110 +1315,103 @@ window.eliminarServicioMaestro = async (nombreServicio) => {
 
 // --- EDITAR INSUMOS DE UN SERVICIO -----------------------
 window.editarInsumosServicio = async (nombreServicio) => {
-  // Cargar insumos actuales del servicio desde Firebase
   try {
     const snap = await getDoc(doc(db, "servicios_maestro", nombreServicio));
     if (!snap.exists()) { alert("Servicio no encontrado."); return; }
-
     const data = snap.data();
-    // Insumos guardados en Firebase o los del objeto recetas como base
     const normNombre = normalizarNombre(nombreServicio);
     const recetaBase = Object.entries(recetas).find(([k]) => normalizarNombre(k) === normNombre);
-    let insumosActuales = data.insumos || (recetaBase ? recetaBase[1].insumos : []);
+    let insumosActuales = (data.insumos || (recetaBase ? recetaBase[1].insumos : [])).map(ins => ({
+      nombre: ins.nombre,
+      costo: ins.costo || 0,
+      bloqueado: ins.bloqueado === true
+    }));
 
-    // Funcion para renderizar la lista de insumos en el modal
     const renderLista = () => {
       const cont = document.getElementById('listaInsumosModal');
       if (!cont) return;
       cont.innerHTML = '';
       if (insumosActuales.length === 0) {
-        cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:8px;">Sin insumos. Agrega uno abajo.</p>';
+        cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:8px;">Sin insumos.</p>';
         return;
       }
       insumosActuales.forEach((ins, idx) => {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f1f5f9;';
-        row.innerHTML =
-          '<span style="flex:1;font-size:10px;font-weight:700;color:#1e293b;">' + ins.nombre + '</span>' +
-          '<span style="font-size:10px;color:#64748b;">$</span>' +
-          '<input type="number" value="' + (ins.costo||0).toFixed(4) + '" step="0.0001" min="0" ' +
-            'style="width:70px;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;text-align:center;" ' +
-            'data-idx="' + idx + '" class="inp-costo-ins">' +
-          '<button data-idx="' + idx + '" class="btn-del-ins" style="color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;">X</button>';
-        cont.appendChild(row);
-      });
-
-      // Eventos
-      cont.querySelectorAll('.inp-costo-ins').forEach(inp => {
-        inp.addEventListener('change', function() {
-          insumosActuales[this.dataset.idx].costo = parseFloat(this.value) || 0;
-        });
-      });
-      cont.querySelectorAll('.btn-del-ins').forEach(btn => {
-        btn.addEventListener('click', function() {
-          insumosActuales.splice(parseInt(this.dataset.idx), 1);
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f1f5f9;background:' + (ins.bloqueado?'#fffbeb':'#fff') + ';border-radius:4px;padding:5px;';
+        // Candado toggle
+        const btnLock = document.createElement('button');
+        btnLock.innerHTML = ins.bloqueado ? '&#128274;' : '&#128275;';
+        btnLock.title = ins.bloqueado ? 'Bloqueado — click para desbloquear' : 'Libre — click para bloquear';
+        btnLock.style.cssText = 'background:' + (ins.bloqueado?'#f59e0b':'#e2e8f0') + ';border:none;border-radius:6px;padding:3px 6px;cursor:pointer;font-size:13px;';
+        btnLock.addEventListener('click', function() {
+          insumosActuales[idx].bloqueado = !insumosActuales[idx].bloqueado;
           renderLista();
         });
+        // Nombre
+        const nomSpan = document.createElement('span');
+        nomSpan.style.cssText = 'flex:1;font-size:10px;font-weight:' + (ins.bloqueado?'900':'700') + ';color:#1e293b;';
+        nomSpan.textContent = ins.nombre + (ins.bloqueado ? ' 🔒' : '');
+        // Input costo
+        const inpCosto = document.createElement('input');
+        inpCosto.type = 'number'; inpCosto.step = '0.0001'; inpCosto.min = '0';
+        inpCosto.value = parseFloat(ins.costo||0).toFixed(4);
+        inpCosto.style.cssText = 'width:70px;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;text-align:center;';
+        inpCosto.addEventListener('change', function() { insumosActuales[idx].costo = parseFloat(this.value)||0; });
+        // Btn eliminar
+        const btnDel = document.createElement('button');
+        btnDel.textContent = 'X';
+        btnDel.style.cssText = 'color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;';
+        btnDel.addEventListener('click', function() { insumosActuales.splice(idx, 1); renderLista(); });
+        row.appendChild(btnLock); row.appendChild(nomSpan); row.appendChild(inpCosto); row.appendChild(btnDel);
+        cont.appendChild(row);
       });
     };
 
-    // Cargar lista de insumos maestros para el selector
     const snapIns = await getDocs(collection(db, "insumos_maestro"));
     let optsInsumos = '<option value="">-- Seleccionar insumo --</option>';
     snapIns.forEach(d => {
       const r = d.data();
-      optsInsumos += '<option value="' + (r.nombre||d.id) + '" data-costo="' + (r.costo||0) + '">' +
-        (r.nombre||d.id) + ' ($' + parseFloat(r.costo||0).toFixed(4) + ')</option>';
+      optsInsumos += '<option value="'+(r.nombre||d.id)+'" data-costo="'+(r.costo||0)+'">'+(r.nombre||d.id)+' ($'+parseFloat(r.costo||0).toFixed(4)+')</option>';
     });
 
-    var htmlModal =
+    const htmlModal =
       '<div style="text-align:left;">' +
-      '<p style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:8px;">Insumos de: <b style="color:#1e293b;">' + nombreServicio + '</b></p>' +
-      '<div id="listaInsumosModal" style="max-height:200px;overflow-y:auto;margin-bottom:12px;"></div>' +
+      '<p style="font-size:9px;color:#64748b;margin-bottom:4px;">Toca <b>&#128274;</b> para bloquear un insumo — el doctor NO podra eliminarlo de la historia.</p>' +
+      '<div id="listaInsumosModal" style="max-height:240px;overflow-y:auto;margin-bottom:12px;border:1px solid #f1f5f9;border-radius:8px;padding:4px;"></div>' +
       '<div style="border-top:1px solid #e2e8f0;padding-top:10px;">' +
       '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Agregar insumo:</p>' +
-      '<div style="display:flex;gap:6px;align-items:center;">' +
-      '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;">' +
-        optsInsumos +
-      '</select>' +
-      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">X</button>' +
+      '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">' +
+      '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;">' + optsInsumos + '</select>' +
+      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;border:none;">+ Agregar</button>' +
       '</div>' +
-      '<div style="display:flex;gap:6px;margin-top:6px;">' +
+      '<div style="display:flex;gap:6px;">' +
       '<input id="inpNombreNuevo" type="text" placeholder="O escribe el nombre..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
       '<input id="inpCostoNuevo" type="number" placeholder="Costo $" step="0.0001" min="0" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
-      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">X</button>' +
-      '</div>' +
-      '</div></div>';
+      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;border:none;">+ Agregar</button>' +
+      '</div></div></div>';
 
     const res = await Swal.fire({
-      title: '? Insumos del Servicio',
-      html: htmlModal,
-      width: 520,
+      title: 'Insumos: ' + nombreServicio,
+      html: htmlModal, width: 540,
       showCancelButton: true,
-      confirmButtonText: '? Guardar cambios',
+      confirmButtonText: 'Guardar cambios',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#2563eb',
       didOpen: function() {
-        // Renderizar lista inicial
         renderLista();
-
-        // Boton agregar desde selector
         document.getElementById('btnAgregarInsumo').addEventListener('click', function() {
           const sel = document.getElementById('selInsumoAgregar');
           const opt = sel?.options[sel.selectedIndex];
           if (!opt || !opt.value) return;
-          const costo = parseFloat(opt.dataset.costo) || 0;
-          insumosActuales.push({ nombre: opt.value, costo });
+          insumosActuales.push({ nombre: opt.value, costo: parseFloat(opt.dataset.costo)||0, bloqueado: false });
           sel.value = '';
           renderLista();
         });
-
-        // Boton agregar manual
         document.getElementById('btnAgregarManual').addEventListener('click', function() {
           const nombre = document.getElementById('inpNombreNuevo')?.value.trim().toUpperCase();
           const costo  = parseFloat(document.getElementById('inpCostoNuevo')?.value) || 0;
           if (!nombre) { alert('Escribe el nombre del insumo'); return; }
-          insumosActuales.push({ nombre, costo });
+          insumosActuales.push({ nombre, costo, bloqueado: false });
           document.getElementById('inpNombreNuevo').value = '';
           document.getElementById('inpCostoNuevo').value  = '';
           renderLista();
@@ -1405,19 +1421,12 @@ window.editarInsumosServicio = async (nombreServicio) => {
 
     if (!res.isConfirmed) return;
 
-    // Guardar en Firebase
-    await setDoc(doc(db, "servicios_maestro", nombreServicio), {
-      insumos: insumosActuales
-    }, { merge: true });
+    await setDoc(doc(db, "servicios_maestro", nombreServicio), { insumos: insumosActuales }, { merge: true });
+    await Swal.fire({ icon:'success', title:'Insumos guardados', html:'<b>'+nombreServicio+'</b><br>'+insumosActuales.length+' insumo(s)', timer:2000, showConfirmButton:false });
 
-    await Swal.fire({
-      icon: 'success',
-      title: '? Insumos guardados',
-      html: '<b>' + nombreServicio + '</b><br>' + insumosActuales.length + ' insumo(s) asignados',
-      timer: 2000, showConfirmButton: false
-    });
+  } catch(e) { console.error(e); alert('Error: ' + e.message); }
 
-  } catch(e) { console.error(e); alert('? Error: ' + e.message); }
+
 };
 
 // --- CARGAR SELECTOR MEDICAMENTOS DESDE FIREBASE ----------
@@ -1447,9 +1456,21 @@ window.cargarSelectorMedicamentos = async () => {
 
 // --- FILTRAR TABLA DE SERVICIOS ---------------------------
 window.filtrarTablaServicios = () => {
-  const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase() || '';
+  const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase().trim() || '';
+  // Buscar en cards (nuevo diseño) y en filas tr (por si acaso)
+  document.querySelectorAll('#tablaServiciosMaestro [data-card-id]').forEach(card => {
+    const nombre = (card.dataset.nombre || card.dataset.cardId || '').toUpperCase();
+    card.style.display = (!filtro || nombre.includes(filtro)) ? '' : 'none';
+  });
+  // También ocultar/mostrar los títulos de categoría si todos los cards están ocultos
+  document.querySelectorAll('#tablaServiciosMaestro > div').forEach(grpDiv => {
+    const cards = grpDiv.querySelectorAll('[data-card-id]');
+    const alguno = Array.from(cards).some(c => c.style.display !== 'none');
+    grpDiv.style.display = alguno ? '' : 'none';
+  });
+  // Compatibilidad con tabla antigua si existe
   document.querySelectorAll('#tablaServiciosMaestro tr[data-nombre]').forEach(tr => {
-    tr.style.display = tr.dataset.nombre.includes(filtro) ? '' : 'none';
+    tr.style.display = (!filtro || tr.dataset.nombre.toUpperCase().includes(filtro)) ? '' : 'none';
   });
 };
 
@@ -1473,6 +1494,8 @@ window.renderizarTablaMaestra = async () => {
       catDiv.innerHTML = '<p style="font-size:9px;font-weight:900;color:#fff;background:#1e293b;padding:4px 8px;border-radius:6px;text-transform:uppercase;margin-bottom:4px;">'+cat+'</p>';
       items.forEach(r => {
         const card = document.createElement('div');
+        card.dataset.cardId = r.id;
+        card.dataset.nombre = r.id.toUpperCase();
         card.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;margin-bottom:6px;';
         // Fila 1: nombre + categoria actual
         const f1 = document.createElement('div');
@@ -1490,19 +1513,21 @@ window.renderizarTablaMaestra = async () => {
         card.appendChild(f2);
         // Fila 3: botones
         const f3 = document.createElement('div');
-        f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;';
+        f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px;';
+        const f3b = document.createElement('div');
+        f3b.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;';
         // Btn Guardar
         const btnG = document.createElement('button');
-        btnG.textContent = 'Guardar'; btnG.dataset.id = r.id;
-        btnG.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnG.textContent = 'Guardar precio'; btnG.dataset.id = r.id;
+        btnG.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
         btnG.addEventListener('click', async function() {
-          const c = this.closest('div[style]');
-          const inpP = c.querySelector('input[data-campo="precioVenta"]');
-          const inpPc = c.querySelector('input[data-campo="porcDoc"]');
+          const cardEl = document.querySelector('#tablaServiciosMaestro [data-card-id="'+this.dataset.id+'"]');
+          const inpP = cardEl?.querySelector('input[data-campo="precioVenta"]');
+          const inpPc = cardEl?.querySelector('input[data-campo="porcDoc"]');
           this.textContent = '...'; this.disabled = true; this.style.background = '#94a3b8';
           const btn = this;
           try {
-            await updateDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:parseFloat(inpP.value)||0, porcDoc:parseFloat(inpPc.value)||30, actualizadoEn:serverTimestamp() });
+            await setDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:parseFloat(inpP?.value)||0, porcDoc:parseFloat(inpPc?.value)||30, actualizadoEn:serverTimestamp() },{merge:true});
             btn.textContent = 'OK'; btn.style.background = '#16a34a';
             inpP.style.borderColor = '#16a34a'; inpPc.style.borderColor = '#16a34a';
             setTimeout(()=>{ btn.textContent='Guardar'; btn.disabled=false; btn.style.background='#2563eb'; inpP.style.borderColor=''; inpPc.style.borderColor=''; }, 2000);
@@ -1511,8 +1536,8 @@ window.renderizarTablaMaestra = async () => {
         f3.appendChild(btnG);
         // Btn Editar nombre/categoria
         const btnE = document.createElement('button');
-        btnE.textContent = 'Editar'; btnE.dataset.id = r.id; btnE.dataset.cat = r.categoria||'OTROS';
-        btnE.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnE.textContent = 'Editar nombre'; btnE.dataset.id = r.id; btnE.dataset.cat = r.categoria||'OTROS';
+        btnE.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
         btnE.addEventListener('click', async function() {
           const idActual = this.dataset.id;
           const catActual = this.dataset.cat;
@@ -1559,17 +1584,18 @@ window.renderizarTablaMaestra = async () => {
         f3.appendChild(btnE);
         // Btn Insumos
         const btnI = document.createElement('button');
-        btnI.textContent = 'Ins.'; btnI.dataset.id = r.id;
-        btnI.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnI.textContent = 'Editar Insumos'; btnI.dataset.id = r.id;
+        btnI.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
         btnI.addEventListener('click', function(){ window.editarInsumosServicio(this.dataset.id); });
-        f3.appendChild(btnI);
+        f3b.appendChild(btnI);
         // Btn Eliminar
         const btnD = document.createElement('button');
-        btnD.textContent = 'Del'; btnD.dataset.id = r.id;
-        btnD.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#fee2e2;color:#dc2626;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnD.textContent = 'Eliminar servicio'; btnD.dataset.id = r.id;
+        btnD.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#fee2e2;color:#dc2626;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
         btnD.addEventListener('click', function(){ window.eliminarServicioMaestro(this.dataset.id); });
-        f3.appendChild(btnD);
+        f3b.appendChild(btnD);
         card.appendChild(f3);
+        card.appendChild(f3b);
         catDiv.appendChild(card);
       });
       cont.appendChild(catDiv);
