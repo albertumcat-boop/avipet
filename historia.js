@@ -319,7 +319,7 @@ window.insertarServicio = async (v) => {
     window._absT = null;
     if (!resAbs.isConfirmed) { document.getElementById('selectorServicios').value=""; return; }
     precioFinal = resAbs.value.total;
-    nombreFinal = 'ABSCESO '+resAbs.value.tipo+(resAbs.value.extras.length?' ('+resAbs.value.extras.join('+')+')':\'\');
+    nombreFinal = 'ABSCESO '+resAbs.value.tipo+(resAbs.value.extras.length?' ('+resAbs.value.extras.join('+')+')':"");
   }
   else if(vLimpio.includes("vacunakc")){
     // Precio base: solo -> $45, en combo con otra vacuna -> $40
