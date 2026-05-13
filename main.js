@@ -261,7 +261,7 @@ window.recuperarPin = () => {
 if (typeof window.tabPendiente === 'undefined') window.tabPendiente = '';
 
 window.validarAcceso = async () => {
-  const pass = document.getElementById('inputPass').value;
+  const pass = document.getElementById('modalPinInput').value;
   const clavesPersonal = { "AVIPET2026": "Albert Peña (Master)", "2021": "daniel", "2022": "carlos" };
   let responsable = clavesPersonal[pass] || null;
 
@@ -288,20 +288,20 @@ window.validarAcceso = async () => {
       alert("🚫 PIN incorrecto o sin conexión.");
     }
   }
-  document.getElementById('inputPass').value = "";
+  document.getElementById('modalPinInput').value = "";
 };
 
 window.cerrarModalLogin = () => {
-  document.getElementById('modalLogin')?.classList.add('hidden');
-  const i = document.getElementById('inputPass');
+  document.getElementById('modalLoginAcceso')?.classList.add('hidden');
+  const i = document.getElementById('modalPinInput');
   if (i) i.value = "";
 };
 
 window.showTab = async (t) => {
   if (['config_precios', 'reporte', 'inventario'].includes(t)) {
     window.tabPendiente = t;
-    const m = document.getElementById('modalLogin');
-    if (m) { m.classList.remove('hidden'); document.getElementById('inputPass')?.focus(); }
+    const m = document.getElementById('modalLoginAcceso');
+    if (m) { m.classList.remove('hidden'); document.getElementById('modalPinInput')?.focus(); }
     else window.ejecutarCambioDeTab(t);
     return;
   }
@@ -540,4 +540,4 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch(_) { localStorage.removeItem('respaldo_historia_activa'); }
 });
 
-console.log("✅ main.js v9 — permisos doctores");
+console.log("✅ main.js v10 — IDs modal corregidos");
