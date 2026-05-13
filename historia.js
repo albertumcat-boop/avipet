@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v14
+// AVIPET -- historia.js  v15
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v14 -- EDITAR SERVICIOS, INSUMOS, CANDADO");
+console.log("✅ historia.js v15 -- CARDS SERVICIOS E INSUMOS");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
