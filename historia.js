@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v17 -- CANDADO v2 DATA-BLOQUEADO EN TR");
+console.log("✅ historia.js v18 -- CANDADO FIX INSUMOS FIREBASE");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -345,12 +345,20 @@ window.insertarServicio = async (v) => {
   cuerpo.appendChild(ft);
 
   let insNuevos=[];
-  if(cuerpo.querySelectorAll('.servicio-principal').length===1)insNuevos=[...insumosFijosMedicos];
-  if(vLimpio.includes("vacuna")){const yaHayVial=Array.from(cuerpo.querySelectorAll('td')).some(td=>td.innerText.includes("Vial"));if(!yaHayVial)insNuevos=[...insNuevos,...insumosBaseVacuna];}
-  // Usar insumos de Firebase (configurados en Ajustes) si existen, sino usar recetas
-  if (insumosFirebase) {
-    insNuevos = [...insNuevos, ...insumosFirebase];
+  // Si el servicio tiene insumos configurados en Firebase, usarlos como fuente principal
+  // (incluyen el campo bloqueado). Los fijos solo se agregan si NO hay insumos en Firebase.
+  if (insumosFirebase && insumosFirebase.length > 0) {
+    // Usar SOLO los de Firebase — ya contienen bloqueado:true/false configurado por el admin
+    insNuevos = [...insumosFirebase];
+    // Agregar insumos de vacuna base si aplica y no están ya
+    if(vLimpio.includes("vacuna")){
+      const yaHayVial=Array.from(cuerpo.querySelectorAll('td')).some(td=>td.innerText.includes("Vial"));
+      if(!yaHayVial) insNuevos=[...insNuevos,...insumosBaseVacuna];
+    }
   } else {
+    // Sin Firebase: usar insumos fijos + recetas como antes
+    if(cuerpo.querySelectorAll('.servicio-principal').length===1) insNuevos=[...insumosFijosMedicos];
+    if(vLimpio.includes("vacuna")){const yaHayVial=Array.from(cuerpo.querySelectorAll('td')).some(td=>td.innerText.includes("Vial"));if(!yaHayVial)insNuevos=[...insNuevos,...insumosBaseVacuna];}
     const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
     if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
   }
