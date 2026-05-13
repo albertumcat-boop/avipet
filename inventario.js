@@ -1,6 +1,5 @@
 // =========================================================
-// AVIPET — inventario.js v4 — medicamentos en ajustes
-// NUEVO: gestion de medicamentos maestros desde Ajustes
+// AVIPET — inventario.js v10 — fix ajustes, cambiarSubTabConfig
 // =========================================================
 
 import { db } from './firebase-config.js';
@@ -434,8 +433,8 @@ window.cambiarSubTabConfig = (tab) => {
  btn.style.textOverflow = 'ellipsis';
  }
  });
- if (tab === 'servicios') window.renderizarTablaMaestra();
- if (tab === 'insumos') window.renderizarTablaInsumos();
+ if (tab === 'servicios') { if(typeof window.renderizarTablaMaestra==='function') window.renderizarTablaMaestra(); else _llamarFuncion('renderizarTablaMaestra'); }
+ if (tab === 'insumos') { if(typeof window.renderizarTablaInsumos==='function') window.renderizarTablaInsumos(); else _llamarFuncion('renderizarTablaInsumos'); }
  if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
 };
 
@@ -593,4 +592,4 @@ window._verificarStockServicio = async (nombreServicio) => {
  } catch(e){}
 };
 
-console.log(" inventario.js v4 — medicamentos maestros, cambiarSubTabConfig corregido");
+console.log(" inventario.js v10 — cambiarSubTabConfig fix ajustes");
