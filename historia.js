@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v18 -- CANDADO FIX INSUMOS FIREBASE");
+console.log("✅ historia.js v19 -- PIN unico doctor");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -553,7 +553,13 @@ window.guardarFirebase = async (imp) => {
     return;
   }
   const selectorDoc=document.getElementById('selectDoctor');const nombreDoctor=selectorDoc?selectorDoc.value:"";if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
-  const pinIngresado=prompt(`? Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);if(!pinIngresado)return;const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);if(!esValido)return alert("? PIN incorrecto.");
+  // Si el doctor ya se autenticó con su PIN al seleccionarlo, no pedir PIN de nuevo
+  if (!window.doctorVerificado || window.doctorVerificado !== nombreDoctor) {
+    const pinIngresado=prompt(`Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);
+    if(!pinIngresado)return;
+    const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);
+    if(!esValido)return alert("PIN incorrecto.");
+  }
   const btn=document.activeElement;const textoOrig=btn?.innerText||"Guardar";if(btn?.tagName==='BUTTON'){btn.disabled=true;btn.innerText="? PROCESANDO...";}
   try{
     const leerImg=(a)=>new Promise(res=>{const r=new FileReader();r.readAsDataURL(a);r.onload=e=>res(e.target.result);r.onerror=()=>res("");});
