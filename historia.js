@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v23
+// AVIPET -- historia.js  v24
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v23 -- PIN Aiby 2222");
+console.log("✅ historia.js v24 -- modal compras fix");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -2099,16 +2099,16 @@ window.abrirModalNuevaCompra = async () => {
   const clave = prompt('Clave maestra o PIN:');
   if (!clave) return;
   const claveValida =
-    clave.trim() === window.MASTER_KEY_SISTEMA ||  // Clave maestra AVIPET2026
-    clave.trim() === 'AVIPET2026' ||               // Clave maestra directa
-    clave.trim() === '2222';                        // PIN de Aiby
+    clave.trim() === (window.MASTER_KEY_SISTEMA || 'AVIPET2026') ||
+    clave.trim() === 'AVIPET2026' ||
+    clave.trim() === '2222';
   if (!claveValida) {
     await Swal.fire({ icon:'error', title:'Acceso denegado', text:'Clave o PIN incorrecto.', timer:2000, showConfirmButton:false });
     return;
   }
   const registradoPor = clave.trim() === '2222' ? 'Aiby' : 'Administrador';
 
-  // Cargar lista de insumos para el selector
+  // Cargar lista de insumos
   let optsInsumos = '<option value="">-- Seleccionar insumo --</option><option value="__otro__">Otro (escribir)</option>';
   try {
     const snapIns = await getDocs(collection(db, "insumos_maestro"));
@@ -2119,50 +2119,48 @@ window.abrirModalNuevaCompra = async () => {
   } catch(e) {}
 
   const htmlModal =
-    '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
-    // Insumo
-    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Insumo</label>' +
-    '<select id="cmp_insumo_sel" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;background:#fff;outline:none;box-sizing:border-box;" onchange="document.getElementById(\'cmp_insumo_otro\').style.display=this.value===\'__otro__\'?\'block\':\'none\'">' + optsInsumos + '</select>' +
+    '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
+
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Insumo</label>' +
+    '<select id="cmp_insumo_sel" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;background:#fff;outline:none;box-sizing:border-box;">' + optsInsumos + '</select>' +
     '<input id="cmp_insumo_otro" type="text" placeholder="Nombre del insumo..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:6px;text-transform:uppercase;"></div>' +
-    // Cantidad y precio
+
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
-    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Cantidad</label>' +
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Cantidad</label>' +
     '<input id="cmp_cantidad" type="number" step="1" min="1" value="1" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
-    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Precio unitario ($)</label>' +
-    '<input id="cmp_precio_unit" type="number" step="0.01" min="0" placeholder="0.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;" oninput="const t=parseFloat(document.getElementById(\'cmp_cantidad\').value||1)*parseFloat(this.value||0);document.getElementById(\'cmp_total_show\').textContent=\'$\'+t.toFixed(2)"></div>' +
-    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Total</label>' +
-    '<div id="cmp_total_show" style="border:2px solid #bbf7d0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;color:#16a34a;background:#f0fdf4;text-align:center;">$0.00</div></div>' +
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Precio unitario ($)</label>' +
+    '<input id="cmp_precio_unit" type="number" step="0.01" min="0" placeholder="0.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Total</label>' +
+    '<div id="cmp_total_show" style="border:2px solid #bbf7d0;border-radius:10px;padding:9px 8px;font-size:14px;font-weight:900;color:#16a34a;background:#f0fdf4;text-align:center;">$0.00</div></div>' +
     '</div>' +
-    // Proveedor
-    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Proveedor / Farmacia</label>' +
+
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Proveedor / Farmacia</label>' +
     '<input id="cmp_proveedor" type="text" placeholder="Nombre del proveedor..." style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div>' +
-    // Fecha
-    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Fecha de compra</label>' +
+
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de compra</label>' +
     '<input id="cmp_fecha" type="date" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div>' +
-    // Notas
-    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Notas</label>' +
+
+    '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Notas (lote, vencimiento...)</label>' +
     '<textarea id="cmp_notas" rows="2" placeholder="Observaciones, lote, vencimiento..." style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;resize:vertical;"></textarea></div>' +
-    // Foto factura
-    '<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:10px;padding:10px;text-align:center;">' +
-    '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;">Foto de factura (opcional)</p>' +
+
+    '<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:10px;padding:12px;text-align:center;">' +
+    '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 8px 0;">Foto de factura (opcional)</p>' +
     '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">' +
-    '<button type="button" onclick="document.getElementById(\'cmp_foto_cam\').click()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:10px;font-weight:900;cursor:pointer;">Camara</button>' +
-    '<button type="button" onclick="document.getElementById(\'cmp_foto_gal\').click()" style="background:#64748b;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:10px;font-weight:900;cursor:pointer;">Galeria</button>' +
+    '<button type="button" id="btn_cmp_camara" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:11px;font-weight:900;cursor:pointer;">Camara</button>' +
+    '<button type="button" id="btn_cmp_galeria" style="background:#64748b;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:11px;font-weight:900;cursor:pointer;">Galeria</button>' +
     '</div>' +
-    '<input type="file" id="cmp_foto_cam" accept="image/*" capture="environment" style="display:none" onchange="window._previewFactura(this)">' +
-    '<input type="file" id="cmp_foto_gal" accept="image/*" style="display:none" onchange="window._previewFactura(this)">' +
-    '<div id="cmp_foto_preview" style="display:none;margin-top:6px;">' +
-    '<img id="cmp_foto_img" style="max-width:100%;max-height:120px;border-radius:8px;border:2px solid #bfdbfe;object-fit:contain;" src="">' +
-    '<button type="button" onclick="window._limpiarFotoFactura()" style="display:block;margin:4px auto 0;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:3px 10px;font-size:9px;font-weight:900;cursor:pointer;">Quitar foto</button>' +
+    '<input type="file" id="cmp_foto_cam" accept="image/*" capture="environment" style="display:none">' +
+    '<input type="file" id="cmp_foto_gal" accept="image/*" style="display:none">' +
+    '<div id="cmp_foto_preview" style="display:none;margin-top:8px;">' +
+    '<img id="cmp_foto_img" style="max-width:100%;max-height:150px;border-radius:8px;border:2px solid #bfdbfe;object-fit:contain;" src="">' +
+    '<button type="button" id="btn_cmp_quitar" style="display:block;margin:6px auto 0;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:4px 12px;font-size:9px;font-weight:900;cursor:pointer;">Quitar foto</button>' +
     '</div>' +
-    '<p id="cmp_foto_status" style="font-size:9px;color:#94a3b8;margin:0;"></p>' +
+    '<p id="cmp_foto_status" style="font-size:9px;color:#94a3b8;margin:4px 0 0 0;"></p>' +
     '</div>' +
     '</div>';
 
-  // Poner fecha de hoy por defecto
   const hoy = new Date();
   const fechaHoy = hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
-
   window._fotoFacturaB64 = null;
 
   const res = await Swal.fire({
@@ -2174,7 +2172,64 @@ window.abrirModalNuevaCompra = async () => {
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#16a34a',
     didOpen: function() {
+      // Fecha de hoy
       document.getElementById('cmp_fecha').value = fechaHoy;
+
+      // Selector insumo → mostrar/ocultar campo libre
+      document.getElementById('cmp_insumo_sel').addEventListener('change', function() {
+        document.getElementById('cmp_insumo_otro').style.display = this.value === '__otro__' ? 'block' : 'none';
+      });
+
+      // Calcular total en tiempo real
+      const calcTotal = () => {
+        const cant  = parseFloat(document.getElementById('cmp_cantidad').value) || 0;
+        const precio = parseFloat(document.getElementById('cmp_precio_unit').value) || 0;
+        const tot = document.getElementById('cmp_total_show');
+        if (tot) tot.textContent = '$' + (cant * precio).toFixed(2);
+      };
+      document.getElementById('cmp_cantidad').addEventListener('input', calcTotal);
+      document.getElementById('cmp_precio_unit').addEventListener('input', calcTotal);
+
+      // Botones de foto — usar event listeners en lugar de onclick
+      document.getElementById('btn_cmp_camara').addEventListener('click', function() {
+        document.getElementById('cmp_foto_cam').click();
+      });
+      document.getElementById('btn_cmp_galeria').addEventListener('click', function() {
+        document.getElementById('cmp_foto_gal').click();
+      });
+
+      // Procesar foto al seleccionar
+      const procesarFoto = async (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        const status = document.getElementById('cmp_foto_status');
+        if (status) status.textContent = 'Procesando...';
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const comprimida = await comprimirImagen(e.target.result, 1000, 0.7);
+            window._fotoFacturaB64 = comprimida;
+            document.getElementById('cmp_foto_img').src = comprimida;
+            document.getElementById('cmp_foto_preview').style.display = 'block';
+            if (status) status.textContent = 'Foto lista';
+          } catch(err) {
+            if (status) status.textContent = 'Error procesando imagen';
+          }
+        };
+        reader.readAsDataURL(file);
+        input.value = '';
+      };
+
+      document.getElementById('cmp_foto_cam').addEventListener('change', function() { procesarFoto(this); });
+      document.getElementById('cmp_foto_gal').addEventListener('change', function() { procesarFoto(this); });
+
+      document.getElementById('btn_cmp_quitar').addEventListener('click', function() {
+        window._fotoFacturaB64 = null;
+        document.getElementById('cmp_foto_img').src = '';
+        document.getElementById('cmp_foto_preview').style.display = 'none';
+        const status = document.getElementById('cmp_foto_status');
+        if (status) status.textContent = '';
+      });
     },
     preConfirm: function() {
       const selInsumo  = document.getElementById('cmp_insumo_sel').value;
@@ -2186,58 +2241,50 @@ window.abrirModalNuevaCompra = async () => {
       const fechaVal   = document.getElementById('cmp_fecha').value;
       const notas      = document.getElementById('cmp_notas').value.trim();
 
-      if (!insumo) { Swal.showValidationMessage('Selecciona o escribe el nombre del insumo'); return false; }
-      if (cantidad <= 0) { Swal.showValidationMessage('La cantidad debe ser mayor a 0'); return false; }
-      if (precioUnit <= 0) { Swal.showValidationMessage('El precio debe ser mayor a 0'); return false; }
-      if (!fechaVal) { Swal.showValidationMessage('Ingresa la fecha de compra'); return false; }
+      if (!insumo)          { Swal.showValidationMessage('Selecciona o escribe el insumo'); return false; }
+      if (cantidad <= 0)    { Swal.showValidationMessage('La cantidad debe ser mayor a 0'); return false; }
+      if (precioUnit <= 0)  { Swal.showValidationMessage('El precio debe ser mayor a 0'); return false; }
+      if (!fechaVal)        { Swal.showValidationMessage('Ingresa la fecha de compra'); return false; }
 
       const partes = fechaVal.split('-');
       const fechaSimple = partes[2]+'/'+partes[1]+'/'+partes[0];
-
       return { insumo, cantidad, precioUnit, total: cantidad * precioUnit, proveedor, fechaSimple, notas };
     }
   });
 
   if (!res.isConfirmed) { window._fotoFacturaB64 = null; return; }
-
   const datos = res.value;
 
   try {
     await Swal.fire({ title:'Guardando...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
-
     await addDoc(collection(db, "compras_insumos"), {
-      insumo:        datos.insumo,
-      cantidad:      datos.cantidad,
+      insumo:         datos.insumo,
+      cantidad:       datos.cantidad,
       precioUnitario: datos.precioUnit,
-      precioTotal:   datos.total,
-      proveedor:     datos.proveedor || 'Sin especificar',
-      notas:         datos.notas,
-      fotoFactura:   window._fotoFacturaB64 || null,
-      fechaSimple:   datos.fechaSimple,
+      precioTotal:    datos.total,
+      proveedor:      datos.proveedor || 'Sin especificar',
+      notas:          datos.notas,
+      fotoFactura:    window._fotoFacturaB64 || null,
+      fechaSimple:    datos.fechaSimple,
       registradoPor,
-      fecha:         serverTimestamp()
+      fecha:          serverTimestamp()
     });
-
     window._fotoFacturaB64 = null;
     Swal.close();
-
     await Swal.fire({
       icon: 'success',
       title: 'Compra registrada',
-      html: '<b>'+datos.insumo+'</b><br>'+datos.cantidad+' unidades × $'+datos.precioUnit.toFixed(2)+' = <b style="color:#16a34a;">$'+datos.total.toFixed(2)+'</b>',
+      html: '<b>'+datos.insumo+'</b><br>'+datos.cantidad+' × $'+datos.precioUnit.toFixed(2)+' = <b style="color:#16a34a;">$'+datos.total.toFixed(2)+'</b>',
       timer: 2500,
       showConfirmButton: false
     });
-
-    // Recargar la tabla de compras
     if (typeof window.cargarRegistroCompras === 'function') window.cargarRegistroCompras();
-
   } catch(e) {
     Swal.close();
-    console.error(e);
     Swal.fire({ icon:'error', title:'Error', text: e.message });
   }
 };
+
 
 // Preview foto factura
 window._previewFactura = async (input) => {
