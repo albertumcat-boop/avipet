@@ -354,7 +354,7 @@ window.insertarServicio = async (v) => {
     if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
   }
 
-  insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="this.parentElement.remove();window.calcularTodo()">X</td>`;cuerpo.appendChild(tr);});
+  insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>`;cuerpo.appendChild(tr);});
 
   await window.calcularTodo();
   document.getElementById('selectorServicios').value="";
@@ -457,11 +457,41 @@ function _insertarMedicamentoEnTabla(descripcion,precioCliente) {
   const ft=document.createElement('tr');ft.className="bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioCliente);ft.setAttribute('data-porc',40);
   ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">${descripcion} ($${precioCliente.toFixed(2)})<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px]">MEDICAMENTO</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioCliente},event)" class="text-red-500 font-bold text-[11px]">X</button></td>`;
   cuerpo.appendChild(ft);
-  if(!insumosBaseMedAgregados){[{nombre:"Jeringa para medicamento",costo:0.50},{nombre:"Algodon",costo:0.10},{nombre:"Alcohol",costo:0.10}].forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="this.parentElement.remove();window.calcularTodo()">X</td>`;cuerpo.appendChild(tr);});insumosBaseMedAgregados=true;}
+  if(!insumosBaseMedAgregados){[{nombre:"Jeringa para medicamento",costo:0.50},{nombre:"Algodon",costo:0.10},{nombre:"Alcohol",costo:0.10}].forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>`;cuerpo.appendChild(tr);});insumosBaseMedAgregados=true;}
   window.calcularTodo();respaldarProgresoLocal();
 }
 
 // --- MOTOR FINANCIERO ---
+// ── ELIMINAR INSUMO DEL HISTORIAL CON VERIFICACION DE CANDADO ────────────────
+window.intentarEliminarInsumoFila = async (btnEl) => {
+  const tr = btnEl.closest('tr');
+  if (!tr) return;
+  // Obtener nombre del insumo desde la primera celda
+  const tdNom = tr.querySelector('td');
+  const nombreInsumo = tdNom ? (tdNom.dataset.nombre || tdNom.textContent.trim().toUpperCase()) : '';
+
+  // Verificar si el insumo está bloqueado en Firebase
+  try {
+    const snapIns = await getDoc(doc(db, "insumos_maestro", nombreInsumo));
+    if (snapIns.exists() && snapIns.data().bloqueado === true) {
+      // Bloqueado — no se puede eliminar sin clave
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Insumo bloqueado',
+        html: '<p style="font-size:11px;">El insumo <b>' + nombreInsumo + '</b> esta bloqueado por el administrador y no puede ser eliminado del historial.</p>',
+        confirmButtonColor: '#f59e0b',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+  } catch(e) {
+    // Si no existe en Firebase o hay error, permitir eliminar normalmente
+  }
+  // No bloqueado — eliminar normalmente
+  tr.remove();
+  window.calcularTodo();
+};
+
 window.calcularTodo = async () => {
   let totalComision=0,totalGastos=0,totalVenta=0;
   if(window.porcGlobalCache===undefined){try{const snap=await getDoc(doc(db,"configuracion","tarifas"));window.porcGlobalCache=snap.exists()?(snap.data().porcDoc??snap.data().porcentajeDoc??null):null;}catch{window.porcGlobalCache=null;}}
@@ -487,7 +517,7 @@ window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
 window.agregarInsumoManual = () => {
   const n=document.getElementById('nombreExtra');const c=document.getElementById('costoExtra');if(!n?.value)return alert("Ingrese nombre.");
   const filas=document.querySelectorAll('.servicio-principal');const ultimoGrp=filas.length>0?filas[filas.length-1].getAttribute('data-grupo'):"manual";
-  const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrp}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c?.value||0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="this.parentElement.remove();window.calcularTodo()">X</td>`;
+  const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrp}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c?.value||0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>`;
   document.getElementById('listaInsumosDinamica').appendChild(tr);n.value="";if(c)c.value="";window.calcularTodo();
 };
 
@@ -1446,9 +1476,10 @@ window.renderizarTablaMaestra = async () => {
       '<th class="p-2 text-center">Categoria</th>' +
       '<th class="p-2 text-center">Precio ($)</th>' +
       '<th class="p-2 text-center">% Doc</th>' +
-      '<th class="p-2 text-center">OK</th>' +
-      '<th class="p-2 text-center">Insumos</th>' +
-      '<th class="p-2 text-center">Del</th>' +
+      '<th class="p-2 text-center w-16">Guardar</th>' +
+      '<th class="p-2 text-center w-14">Editar</th>' +
+      '<th class="p-2 text-center w-14">Ins.</th>' +
+      '<th class="p-2 text-center w-14">Del</th>' +
       '</tr></thead>';
 
     const tbody = document.createElement('tbody');
@@ -1462,7 +1493,7 @@ window.renderizarTablaMaestra = async () => {
       // Nombre
       const tdNom = document.createElement('td');
       tdNom.className = 'p-2 font-bold uppercase text-slate-800';
-      tdNom.textContent = (r.esVacuna ? '? ' : '') + r.id;
+      tdNom.textContent = r.id;
       tr.appendChild(tdNom);
 
       // Categoria
@@ -1542,12 +1573,83 @@ window.renderizarTablaMaestra = async () => {
       tdGuardar.appendChild(btnGuardar);
       tr.appendChild(tdGuardar);
 
+      // Boton EDITAR nombre y categoria
+      const tdEdit = document.createElement('td');
+      tdEdit.className = 'p-2 text-center';
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'text-[8px] px-2 py-1.5 bg-amber-500 text-white rounded-lg font-black hover:bg-amber-600 transition-all uppercase';
+      btnEdit.textContent = 'Editar';
+      btnEdit.dataset.id = r.id;
+      btnEdit.dataset.cat = r.categoria || 'OTROS';
+      btnEdit.addEventListener('click', async function() {
+        const idActual  = this.dataset.id;
+        const catActual = this.dataset.cat;
+        // Recoger categorias existentes
+        const snapCats = await getDocs(collection(db, "servicios_maestro"));
+        const catsSet = new Set(['CONSULTAS','VACUNAS','LABORATORIO','TESTS RAPIDOS','REFERIDOS','OTROS PROCEDIMIENTOS','OTROS']);
+        snapCats.forEach(d => { const c=(d.data().categoria||'').trim().toUpperCase(); if(c) catsSet.add(c); });
+        const catsOrd = Array.from(catsSet).sort();
+        let optsHtml = catsOrd.map(c => '<option value="'+c+'"'+(c===catActual.toUpperCase()?' selected':'')+'>'+c+'</option>').join('');
+        optsHtml += '<option value="__nueva__">+ Nueva categoria...</option>';
+
+        const res = await Swal.fire({
+          title: 'Editar Servicio',
+          width: 480,
+          html:
+            '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre del servicio</label>' +
+              '<input id="edit_serv_nombre" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>' +
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Categoria</label>' +
+              '<select id="edit_serv_cat" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">' + optsHtml + '</select>' +
+              '<input id="edit_serv_cat_nueva" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div>' +
+            '</div>',
+          showCancelButton: true,
+          confirmButtonText: 'Guardar cambios',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#f59e0b',
+          didOpen: function() {
+            document.getElementById('edit_serv_cat').addEventListener('change', function() {
+              const inp = document.getElementById('edit_serv_cat_nueva');
+              if (inp) inp.style.display = this.value === '__nueva__' ? 'block' : 'none';
+            });
+          },
+          preConfirm: function() {
+            const nuevoNombre = document.getElementById('edit_serv_nombre')?.value.trim().toUpperCase();
+            const catSel = document.getElementById('edit_serv_cat')?.value;
+            const catNueva = document.getElementById('edit_serv_cat_nueva')?.value.trim().toUpperCase();
+            const nuevaCat = catSel === '__nueva__' ? catNueva : catSel;
+            if (!nuevoNombre) { Swal.showValidationMessage('El nombre no puede estar vacio'); return false; }
+            if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('Escribe el nombre de la nueva categoria'); return false; }
+            return { nuevoNombre, nuevaCat };
+          }
+        });
+        if (!res.isConfirmed) return;
+        const { nuevoNombre, nuevaCat } = res.value;
+        try {
+          // Obtener datos actuales
+          const snapOld = await getDoc(doc(db, "servicios_maestro", idActual));
+          const dataOld = snapOld.exists() ? snapOld.data() : {};
+          // Si cambio el nombre: crear nuevo doc, eliminar el viejo
+          if (nuevoNombre !== idActual) {
+            await setDoc(doc(db, "servicios_maestro", nuevoNombre), { ...dataOld, categoria: nuevaCat, actualizadoEn: serverTimestamp() });
+            await deleteDoc(doc(db, "servicios_maestro", idActual));
+          } else {
+            await updateDoc(doc(db, "servicios_maestro", idActual), { categoria: nuevaCat, actualizadoEn: serverTimestamp() });
+          }
+          await Swal.fire({ icon:'success', title:'Guardado', html:'<b>'+nuevoNombre+'</b><br>Categoria: '+nuevaCat, timer:2000, showConfirmButton:false });
+          window.renderizarTablaMaestra();
+          window.cargarSelectorServicios();
+        } catch(e) { Swal.fire({ icon:'error', title:'Error', text:e.message }); }
+      });
+      tdEdit.appendChild(btnEdit);
+      tr.appendChild(tdEdit);
+
       // Boton insumos
       const tdIns = document.createElement('td');
       tdIns.className = 'p-2 text-center';
       const btnIns = document.createElement('button');
-      btnIns.className = 'text-[8px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-black hover:bg-emerald-600 hover:text-white';
-      btnIns.textContent = '?';
+      btnIns.className = 'text-[8px] px-2 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg font-black hover:bg-emerald-600 hover:text-white transition-all';
+      btnIns.textContent = 'Ins.';
       btnIns.title = 'Editar insumos de este servicio';
       btnIns.dataset.id = r.id;
       btnIns.addEventListener('click', function() {
@@ -1560,8 +1662,8 @@ window.renderizarTablaMaestra = async () => {
       const tdElim = document.createElement('td');
       tdElim.className = 'p-2 text-center';
       const btnElim = document.createElement('button');
-      btnElim.className = 'text-[8px] px-2 py-1 bg-red-100 text-red-600 rounded font-black hover:bg-red-600 hover:text-white';
-      btnElim.textContent = '?';
+      btnElim.className = 'text-[8px] px-2 py-1.5 bg-red-100 text-red-600 rounded-lg font-black hover:bg-red-600 hover:text-white transition-all';
+      btnElim.textContent = 'Del';
       btnElim.dataset.id = r.id;
       btnElim.addEventListener('click', function() {
         window.eliminarServicioMaestro(this.dataset.id);
@@ -1598,7 +1700,9 @@ window.renderizarTablaInsumos = async () => {
       '<th class="p-2">Insumo</th>' +
       '<th class="p-2 text-center w-24">Costo ($)</th>' +
       '<th class="p-2 text-center w-16">Guardar</th>' +
-      '<th class="p-2 text-center w-14">Elim.</th>' +
+      '<th class="p-2 text-center w-14">Editar</th>' +
+      '<th class="p-2 text-center w-14">Candado</th>' +
+      '<th class="p-2 text-center w-14">Del</th>' +
       '</tr></thead>';
 
     const tbody = document.createElement('tbody');
@@ -1607,14 +1711,15 @@ window.renderizarTablaInsumos = async () => {
     snap.forEach(d => {
       const r = d.data();
       const nombreMostrar = r.nombre || d.id;
+      const bloqueado = r.bloqueado === true;
 
       const tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-100 hover:bg-emerald-50';
+      tr.className = 'border-b border-slate-100 ' + (bloqueado ? 'bg-amber-50' : 'hover:bg-emerald-50');
 
-      // Nombre
+      // Nombre con icono candado si está bloqueado
       const tdNom = document.createElement('td');
       tdNom.className = 'p-2 font-bold italic text-slate-700';
-      tdNom.textContent = nombreMostrar;
+      tdNom.innerHTML = (bloqueado ? '<span style="color:#f59e0b;margin-right:4px;" title="Bloqueado">&#128274;</span>' : '') + nombreMostrar;
       tr.appendChild(tdNom);
 
       // Input costo
@@ -1625,14 +1730,13 @@ window.renderizarTablaInsumos = async () => {
       inp.value = parseFloat(r.costo || 0).toFixed(2);
       inp.className = 'w-20 text-center border-2 border-slate-200 rounded-lg px-1 py-1 outline-none text-[10px] font-bold focus:border-blue-400 transition-all';
       inp.dataset.id = d.id;
-      // Al presionar Enter también guarda
       inp.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') { e.preventDefault(); _guardarCostoInsumoFila(this); }
       });
       tdCosto.appendChild(inp);
       tr.appendChild(tdCosto);
 
-      // Botón guardar
+      // Botón guardar costo
       const tdGuardar = document.createElement('td');
       tdGuardar.className = 'p-2 text-center';
       const btnGuardar = document.createElement('button');
@@ -1647,12 +1751,94 @@ window.renderizarTablaInsumos = async () => {
       tdGuardar.appendChild(btnGuardar);
       tr.appendChild(tdGuardar);
 
-      // Botón eliminar
+      // Botón editar nombre
+      const tdEdit = document.createElement('td');
+      tdEdit.className = 'p-2 text-center';
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'text-[8px] px-2 py-1.5 bg-amber-500 text-white rounded-lg font-black hover:bg-amber-600 transition-all uppercase';
+      btnEdit.textContent = 'Editar';
+      btnEdit.dataset.id = d.id;
+      btnEdit.dataset.nombre = nombreMostrar;
+      btnEdit.addEventListener('click', async function() {
+        const idActual = this.dataset.id;
+        const nomActual = this.dataset.nombre;
+        const resEdit = await Swal.fire({
+          title: 'Editar nombre del insumo',
+          input: 'text',
+          inputValue: nomActual,
+          inputAttributes: { style: 'text-transform:uppercase;font-weight:700;' },
+          showCancelButton: true,
+          confirmButtonText: 'Guardar',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#f59e0b',
+          preConfirm: function(val) {
+            if (!val || !val.trim()) { Swal.showValidationMessage('El nombre no puede estar vacio'); return false; }
+            return val.trim().toUpperCase();
+          }
+        });
+        if (!resEdit.isConfirmed) return;
+        const nuevoNombre = resEdit.value;
+        try {
+          const snapOld = await getDoc(doc(db, "insumos_maestro", idActual));
+          const dataOld = snapOld.exists() ? snapOld.data() : {};
+          if (nuevoNombre !== nomActual) {
+            // Crear nuevo con nuevo nombre como ID, eliminar el viejo
+            await setDoc(doc(db, "insumos_maestro", nuevoNombre), { ...dataOld, nombre: nuevoNombre, actualizadoEn: serverTimestamp() });
+            await deleteDoc(doc(db, "insumos_maestro", idActual));
+          } else {
+            await updateDoc(doc(db, "insumos_maestro", idActual), { nombre: nuevoNombre, actualizadoEn: serverTimestamp() });
+          }
+          await Swal.fire({ icon:'success', title:'Nombre actualizado', text: nuevoNombre, timer:1500, showConfirmButton:false });
+          window.renderizarTablaInsumos();
+        } catch(e) { Swal.fire({ icon:'error', title:'Error', text: e.message }); }
+      });
+      tdEdit.appendChild(btnEdit);
+      tr.appendChild(tdEdit);
+
+      // Botón candado — bloquear/desbloquear
+      const tdLock = document.createElement('td');
+      tdLock.className = 'p-2 text-center';
+      const btnLock = document.createElement('button');
+      btnLock.className = bloqueado
+        ? 'text-[8px] px-2 py-1.5 bg-amber-500 text-white rounded-lg font-black hover:bg-amber-600 transition-all'
+        : 'text-[8px] px-2 py-1.5 bg-slate-200 text-slate-600 rounded-lg font-black hover:bg-amber-500 hover:text-white transition-all';
+      btnLock.title = bloqueado ? 'Desbloquear (los doctores podran eliminarlo)' : 'Bloquear (los doctores NO podran eliminarlo)';
+      btnLock.innerHTML = bloqueado ? '&#128274;' : '&#128275;';
+      btnLock.dataset.id = d.id;
+      btnLock.dataset.bloqueado = bloqueado ? '1' : '0';
+      btnLock.addEventListener('click', async function() {
+        const esBloqueado = this.dataset.bloqueado === '1';
+        const accion = esBloqueado ? 'desbloquear' : 'bloquear';
+        const conf = await Swal.fire({
+          icon: esBloqueado ? 'question' : 'warning',
+          title: (esBloqueado ? 'Desbloquear' : 'Bloquear') + ' insumo',
+          html: '<p style="font-size:11px;">Insumo: <b>' + nombreMostrar + '</b><br>' +
+            (esBloqueado
+              ? 'Los doctores podran eliminarlo del historial.'
+              : 'Los doctores <b>NO</b> podran eliminarlo del historial de consultas.') + '</p>',
+          showCancelButton: true,
+          confirmButtonText: accion.charAt(0).toUpperCase() + accion.slice(1),
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: esBloqueado ? '#64748b' : '#f59e0b'
+        });
+        if (!conf.isConfirmed) return;
+        try {
+          await updateDoc(doc(db, "insumos_maestro", this.dataset.id), {
+            bloqueado: !esBloqueado,
+            actualizadoEn: serverTimestamp()
+          });
+          window.renderizarTablaInsumos();
+        } catch(e) { alert('Error: ' + e.message); }
+      });
+      tdLock.appendChild(btnLock);
+      tr.appendChild(tdLock);
+
+      // Botón eliminar (solo admin con clave)
       const tdDel = document.createElement('td');
       tdDel.className = 'p-2 text-center';
       const btnDel = document.createElement('button');
       btnDel.className = 'text-[8px] px-2 py-1.5 bg-red-100 text-red-600 rounded-lg font-black hover:bg-red-600 hover:text-white transition-all';
-      btnDel.textContent = 'Elim.';
+      btnDel.textContent = 'Del';
       btnDel.dataset.id = d.id;
       btnDel.dataset.nombre = nombreMostrar;
       btnDel.addEventListener('click', function() {
@@ -2054,3 +2240,5 @@ window.registrarServicioSinMascota = async () => {
     Swal.fire({ icon:'error', title:'Error', text: e.message });
   }
 };
+
+console.log("historia.js v13 -- editar servicios/insumos, candado bloqueado");
