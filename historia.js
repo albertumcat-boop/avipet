@@ -1459,233 +1459,123 @@ window.renderizarTablaMaestra = async () => {
   cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
   try {
     const snap = await getDocs(collection(db, "servicios_maestro"));
-    if (snap.empty) {
-      cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios. Usa el boton + para agregar.</p>';
-      return;
-    }
-
+    if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios.</p>'; return; }
     const servicios = [];
     snap.forEach(d => servicios.push({ id: d.id, ...d.data() }));
-    servicios.sort((a, b) => a.id.localeCompare(b.id));
-
-    // Construir tabla
-    const tabla = document.createElement('table');
-    tabla.className = 'w-full text-left border-collapse';
-    tabla.innerHTML =
-      '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
-      '<th class="p-2">Servicio</th>' +
-      '<th class="p-2 text-center">Categoria</th>' +
-      '<th class="p-2 text-center">Precio ($)</th>' +
-      '<th class="p-2 text-center">% Doc</th>' +
-      '<th class="p-2 text-center w-16">Guardar</th>' +
-      '<th class="p-2 text-center w-14">Editar</th>' +
-      '<th class="p-2 text-center w-14">Ins.</th>' +
-      '<th class="p-2 text-center w-14">Del</th>' +
-      '</tr></thead>';
-
-    const tbody = document.createElement('tbody');
-    tbody.className = 'text-[10px]';
-
-    servicios.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-100 hover:bg-blue-50';
-      tr.dataset.nombre = r.id;
-
-      // Nombre
-      const tdNom = document.createElement('td');
-      tdNom.className = 'p-2 font-bold uppercase text-slate-800';
-      tdNom.textContent = r.id;
-      tr.appendChild(tdNom);
-
-      // Categoria
-      const tdCat = document.createElement('td');
-      tdCat.className = 'p-2 text-center text-slate-500 text-[9px]';
-      tdCat.textContent = r.categoria || 'OTROS';
-      tr.appendChild(tdCat);
-
-      // Input precio
-      const tdPrecio = document.createElement('td');
-      tdPrecio.className = 'p-2 text-center';
-      const inpPrecio = document.createElement('input');
-      inpPrecio.type = 'number'; inpPrecio.step = '0.50'; inpPrecio.min = '0';
-      inpPrecio.value = r.precioVenta || 0;
-      inpPrecio.className = 'w-20 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
-      inpPrecio.dataset.id = r.id; inpPrecio.dataset.campo = 'precioVenta';
-      inpPrecio.addEventListener('blur', function() {
-        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
-      });
-      tdPrecio.appendChild(inpPrecio);
-      tr.appendChild(tdPrecio);
-
-      // Input % doctor
-      const tdPorc = document.createElement('td');
-      tdPorc.className = 'p-2 text-center';
-      const inpPorc = document.createElement('input');
-      inpPorc.type = 'number'; inpPorc.step = '0.5'; inpPorc.min = '0'; inpPorc.max = '100';
-      inpPorc.value = r.porcDoc || r.porcentajeDoc || 30;
-      inpPorc.className = 'w-16 text-center border border-slate-300 rounded px-1 py-0.5 outline-none text-[10px] font-bold';
-      inpPorc.dataset.id = r.id; inpPorc.dataset.campo = 'porcDoc';
-      inpPorc.addEventListener('blur', function() {
-        window.actualizarPrecioIndividual(this.dataset.id, this.dataset.campo, this.value);
-      });
-      tdPorc.appendChild(inpPorc);
-      tr.appendChild(tdPorc);
-
-      // Boton guardar — guarda precio Y porcentaje con feedback
-      const tdGuardar = document.createElement('td');
-      tdGuardar.className = 'p-2 text-center';
-      const btnGuardar = document.createElement('button');
-      btnGuardar.className = 'text-[8px] px-2 py-1.5 bg-blue-600 text-white rounded-lg font-black hover:bg-blue-700 transition-all uppercase';
-      btnGuardar.textContent = 'Guardar';
-      btnGuardar.dataset.id = r.id;
-      btnGuardar.addEventListener('click', async function() {
-        const fila = this.closest('tr');
-        const inpP = fila.querySelector('input[data-campo="precioVenta"]');
-        const inpPc = fila.querySelector('input[data-campo="porcDoc"]');
-        const btn = this;
-        const precio = parseFloat(inpP?.value || 0);
-        const porc   = parseFloat(inpPc?.value || 30);
-        btn.textContent = '...'; btn.disabled = true; btn.style.background = '#94a3b8';
-        try {
-          const snap = await getDoc(doc(db, "servicios_maestro", btn.dataset.id));
-          const data = snap.exists() ? snap.data() : {};
-          data.precioVenta = precio;
-          data.porcDoc = porc;
-          await setDoc(doc(db, "servicios_maestro", btn.dataset.id), data, { merge: true });
-          // Feedback exito
-          btn.textContent = 'OK'; btn.style.background = '#16a34a';
-          if (inpP)  { inpP.style.borderColor  = '#16a34a'; inpP.style.background  = '#f0fdf4'; }
-          if (inpPc) { inpPc.style.borderColor = '#16a34a'; inpPc.style.background = '#f0fdf4'; }
-          setTimeout(function() {
-            btn.textContent = 'Guardar'; btn.disabled = false; btn.style.background = '';
-            btn.className = 'text-[8px] px-2 py-1.5 bg-blue-600 text-white rounded-lg font-black hover:bg-blue-700 transition-all uppercase';
-            if (inpP)  { inpP.style.borderColor  = ''; inpP.style.background  = ''; }
-            if (inpPc) { inpPc.style.borderColor = ''; inpPc.style.background = ''; }
-          }, 1800);
-        } catch(e) {
-          console.error('Error guardando servicio:', e);
-          btn.textContent = 'Error'; btn.style.background = '#dc2626'; btn.disabled = false;
-          setTimeout(function() {
-            btn.textContent = 'Guardar'; btn.style.background = '';
-            btn.className = 'text-[8px] px-2 py-1.5 bg-blue-600 text-white rounded-lg font-black hover:bg-blue-700 transition-all uppercase';
-          }, 2500);
-        }
-      });
-      tdGuardar.appendChild(btnGuardar);
-      tr.appendChild(tdGuardar);
-
-      // Boton EDITAR nombre y categoria
-      const tdEdit = document.createElement('td');
-      tdEdit.className = 'p-2 text-center';
-      const btnEdit = document.createElement('button');
-      btnEdit.className = 'text-[8px] px-2 py-1.5 bg-amber-500 text-white rounded-lg font-black hover:bg-amber-600 transition-all uppercase';
-      btnEdit.textContent = 'Editar';
-      btnEdit.dataset.id = r.id;
-      btnEdit.dataset.cat = r.categoria || 'OTROS';
-      btnEdit.addEventListener('click', async function() {
-        const idActual  = this.dataset.id;
-        const catActual = this.dataset.cat;
-        // Recoger categorias existentes
-        const snapCats = await getDocs(collection(db, "servicios_maestro"));
-        const catsSet = new Set(['CONSULTAS','VACUNAS','LABORATORIO','TESTS RAPIDOS','REFERIDOS','OTROS PROCEDIMIENTOS','OTROS']);
-        snapCats.forEach(d => { const c=(d.data().categoria||'').trim().toUpperCase(); if(c) catsSet.add(c); });
-        const catsOrd = Array.from(catsSet).sort();
-        let optsHtml = catsOrd.map(c => '<option value="'+c+'"'+(c===catActual.toUpperCase()?' selected':'')+'>'+c+'</option>').join('');
-        optsHtml += '<option value="__nueva__">+ Nueva categoria...</option>';
-
-        const res = await Swal.fire({
-          title: 'Editar Servicio',
-          width: 480,
-          html:
-            '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre del servicio</label>' +
-              '<input id="edit_serv_nombre" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>' +
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Categoria</label>' +
-              '<select id="edit_serv_cat" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">' + optsHtml + '</select>' +
-              '<input id="edit_serv_cat_nueva" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div>' +
-            '</div>',
-          showCancelButton: true,
-          confirmButtonText: 'Guardar cambios',
-          cancelButtonText: 'Cancelar',
-          confirmButtonColor: '#f59e0b',
-          didOpen: function() {
-            document.getElementById('edit_serv_cat').addEventListener('change', function() {
-              const inp = document.getElementById('edit_serv_cat_nueva');
-              if (inp) inp.style.display = this.value === '__nueva__' ? 'block' : 'none';
-            });
-          },
-          preConfirm: function() {
-            const nuevoNombre = document.getElementById('edit_serv_nombre')?.value.trim().toUpperCase();
-            const catSel = document.getElementById('edit_serv_cat')?.value;
-            const catNueva = document.getElementById('edit_serv_cat_nueva')?.value.trim().toUpperCase();
-            const nuevaCat = catSel === '__nueva__' ? catNueva : catSel;
-            if (!nuevoNombre) { Swal.showValidationMessage('El nombre no puede estar vacio'); return false; }
-            if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('Escribe el nombre de la nueva categoria'); return false; }
-            return { nuevoNombre, nuevaCat };
-          }
-        });
-        if (!res.isConfirmed) return;
-        const { nuevoNombre, nuevaCat } = res.value;
-        try {
-          // Obtener datos actuales
-          const snapOld = await getDoc(doc(db, "servicios_maestro", idActual));
-          const dataOld = snapOld.exists() ? snapOld.data() : {};
-          // Si cambio el nombre: crear nuevo doc, eliminar el viejo
-          if (nuevoNombre !== idActual) {
-            await setDoc(doc(db, "servicios_maestro", nuevoNombre), { ...dataOld, categoria: nuevaCat, actualizadoEn: serverTimestamp() });
-            await deleteDoc(doc(db, "servicios_maestro", idActual));
-          } else {
-            await updateDoc(doc(db, "servicios_maestro", idActual), { categoria: nuevaCat, actualizadoEn: serverTimestamp() });
-          }
-          await Swal.fire({ icon:'success', title:'Guardado', html:'<b>'+nuevoNombre+'</b><br>Categoria: '+nuevaCat, timer:2000, showConfirmButton:false });
-          window.renderizarTablaMaestra();
-          window.cargarSelectorServicios();
-        } catch(e) { Swal.fire({ icon:'error', title:'Error', text:e.message }); }
-      });
-      tdEdit.appendChild(btnEdit);
-      tr.appendChild(tdEdit);
-
-      // Boton insumos
-      const tdIns = document.createElement('td');
-      tdIns.className = 'p-2 text-center';
-      const btnIns = document.createElement('button');
-      btnIns.className = 'text-[8px] px-2 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg font-black hover:bg-emerald-600 hover:text-white transition-all';
-      btnIns.textContent = 'Ins.';
-      btnIns.title = 'Editar insumos de este servicio';
-      btnIns.dataset.id = r.id;
-      btnIns.addEventListener('click', function() {
-        window.editarInsumosServicio(this.dataset.id);
-      });
-      tdIns.appendChild(btnIns);
-      tr.appendChild(tdIns);
-
-      // Boton eliminar
-      const tdElim = document.createElement('td');
-      tdElim.className = 'p-2 text-center';
-      const btnElim = document.createElement('button');
-      btnElim.className = 'text-[8px] px-2 py-1.5 bg-red-100 text-red-600 rounded-lg font-black hover:bg-red-600 hover:text-white transition-all';
-      btnElim.textContent = 'Del';
-      btnElim.dataset.id = r.id;
-      btnElim.addEventListener('click', function() {
-        window.eliminarServicioMaestro(this.dataset.id);
-      });
-      tdElim.appendChild(btnElim);
-      tr.appendChild(tdElim);
-
-      tbody.appendChild(tr);
-    });
-
-    tabla.appendChild(tbody);
+    servicios.sort((a,b) => (a.categoria||'').localeCompare(b.categoria||'') || a.id.localeCompare(b.id));
     cont.innerHTML = '';
-    cont.appendChild(tabla);
-
-  } catch(e) {
-    console.error(e);
-    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error al cargar</p>';
-  }
+    // Agrupar por categoria
+    const grupos = {};
+    servicios.forEach(r => { const c = r.categoria||'OTROS'; if(!grupos[c]) grupos[c]=[]; grupos[c].push(r); });
+    Object.entries(grupos).forEach(([cat, items]) => {
+      const catDiv = document.createElement('div');
+      catDiv.style.cssText = 'margin-bottom:12px;';
+      catDiv.innerHTML = '<p style="font-size:9px;font-weight:900;color:#fff;background:#1e293b;padding:4px 8px;border-radius:6px;text-transform:uppercase;margin-bottom:4px;">'+cat+'</p>';
+      items.forEach(r => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;margin-bottom:6px;';
+        // Fila 1: nombre + categoria actual
+        const f1 = document.createElement('div');
+        f1.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
+        f1.innerHTML = '<p style="font-size:11px;font-weight:900;color:#1e293b;text-transform:uppercase;flex:1;">'+r.id+'</p>';
+        card.appendChild(f1);
+        // Fila 2: precio + % doc editables
+        const f2 = document.createElement('div');
+        f2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;';
+        f2.innerHTML =
+          '<div><label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;">Precio $</label>'+
+          '<input type="number" step="0.50" min="0" value="'+(r.precioVenta||0)+'" data-campo="precioVenta" data-id="'+r.id+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+          '<div><label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;">% Doctor</label>'+
+          '<input type="number" step="0.5" min="0" max="100" value="'+(r.porcDoc||r.porcentajeDoc||30)+'" data-campo="porcDoc" data-id="'+r.id+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:900;outline:none;box-sizing:border.box;"></div>';
+        card.appendChild(f2);
+        // Fila 3: botones
+        const f3 = document.createElement('div');
+        f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;';
+        // Btn Guardar
+        const btnG = document.createElement('button');
+        btnG.textContent = 'Guardar'; btnG.dataset.id = r.id;
+        btnG.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnG.addEventListener('click', async function() {
+          const c = this.closest('div[style]');
+          const inpP = c.querySelector('input[data-campo="precioVenta"]');
+          const inpPc = c.querySelector('input[data-campo="porcDoc"]');
+          this.textContent = '...'; this.disabled = true; this.style.background = '#94a3b8';
+          const btn = this;
+          try {
+            await updateDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:parseFloat(inpP.value)||0, porcDoc:parseFloat(inpPc.value)||30, actualizadoEn:serverTimestamp() });
+            btn.textContent = 'OK'; btn.style.background = '#16a34a';
+            inpP.style.borderColor = '#16a34a'; inpPc.style.borderColor = '#16a34a';
+            setTimeout(()=>{ btn.textContent='Guardar'; btn.disabled=false; btn.style.background='#2563eb'; inpP.style.borderColor=''; inpPc.style.borderColor=''; }, 2000);
+          } catch(e) { btn.textContent='Error'; btn.style.background='#dc2626'; btn.disabled=false; setTimeout(()=>{ btn.textContent='Guardar'; btn.style.background='#2563eb'; },2500); }
+        });
+        f3.appendChild(btnG);
+        // Btn Editar nombre/categoria
+        const btnE = document.createElement('button');
+        btnE.textContent = 'Editar'; btnE.dataset.id = r.id; btnE.dataset.cat = r.categoria||'OTROS';
+        btnE.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnE.addEventListener('click', async function() {
+          const idActual = this.dataset.id;
+          const catActual = this.dataset.cat;
+          const snapCats = await getDocs(collection(db,"servicios_maestro"));
+          const catsSet = new Set(['CONSULTAS','VACUNAS','LABORATORIO','TESTS RAPIDOS','REFERIDOS','OTROS PROCEDIMIENTOS','OTROS']);
+          snapCats.forEach(d => { const c=(d.data().categoria||'').trim().toUpperCase(); if(c) catsSet.add(c); });
+          let optsHtml = Array.from(catsSet).sort().map(c => '<option value="'+c+'"'+(c===catActual.toUpperCase()?' selected':'')+'>'+c+'</option>').join('');
+          optsHtml += '<option value="__nueva__">+ Nueva categoria...</option>';
+          const res = await Swal.fire({
+            title: 'Editar: '+idActual, width:420,
+            html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre</label>'+
+              '<input id="esn" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Categoria</label>'+
+              '<select id="esc" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsHtml+'</select>'+
+              '<input id="escn" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div></div>',
+            showCancelButton:true, confirmButtonText:'Guardar', confirmButtonColor:'#f59e0b',
+            didOpen:()=>{ document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; }); },
+            preConfirm:()=>{
+              const n=document.getElementById('esn').value.trim().toUpperCase();
+              const cs=document.getElementById('esc').value;
+              const cn=document.getElementById('escn').value.trim().toUpperCase();
+              const c=cs==='__nueva__'?cn:cs;
+              if(!n){Swal.showValidationMessage('Nombre requerido');return false;}
+              if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
+              return {n,c};
+            }
+          });
+          if(!res.isConfirmed) return;
+          const {n:nuevoNom, c:nuevaCat} = res.value;
+          try {
+            const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
+            const dataOld = snapOld.exists()?snapOld.data():{};
+            if(nuevoNom !== idActual) {
+              await setDoc(doc(db,"servicios_maestro",nuevoNom),{...dataOld,categoria:nuevaCat,actualizadoEn:serverTimestamp()});
+              await deleteDoc(doc(db,"servicios_maestro",idActual));
+            } else {
+              await updateDoc(doc(db,"servicios_maestro",idActual),{categoria:nuevaCat,actualizadoEn:serverTimestamp()});
+            }
+            await Swal.fire({icon:'success',title:'Guardado',text:nuevoNom+' → '+nuevaCat,timer:1800,showConfirmButton:false});
+            window.renderizarTablaMaestra(); window.cargarSelectorServicios();
+          } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
+        });
+        f3.appendChild(btnE);
+        // Btn Insumos
+        const btnI = document.createElement('button');
+        btnI.textContent = 'Ins.'; btnI.dataset.id = r.id;
+        btnI.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnI.addEventListener('click', function(){ window.editarInsumosServicio(this.dataset.id); });
+        f3.appendChild(btnI);
+        // Btn Eliminar
+        const btnD = document.createElement('button');
+        btnD.textContent = 'Del'; btnD.dataset.id = r.id;
+        btnD.style.cssText = 'padding:6px 4px;border-radius:8px;border:none;background:#fee2e2;color:#dc2626;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnD.addEventListener('click', function(){ window.eliminarServicioMaestro(this.dataset.id); });
+        f3.appendChild(btnD);
+        card.appendChild(f3);
+        catDiv.appendChild(card);
+      });
+      cont.appendChild(catDiv);
+    });
+  } catch(e) { cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error: '+e.message+'</p>'; }
 };
-
-window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});if(typeof window.porcGlobalCache!=='undefined')window.porcGlobalCache=undefined;}catch(e){console.error("Error actualizando precio:",e);}};
 
 window.renderizarTablaInsumos = async () => {
   const cont = document.getElementById('tablaInsumosMaestro');
@@ -1694,171 +1584,77 @@ window.renderizarTablaInsumos = async () => {
   try {
     const snap = await getDocs(collection(db, "insumos_maestro"));
     if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin insumos.</p>'; return; }
-
-    const tabla = document.createElement('table');
-    tabla.className = 'w-full text-left border-collapse';
-    tabla.innerHTML = '<thead><tr class="bg-slate-800 text-white text-[8px] uppercase font-black">' +
-      '<th class="p-2">Insumo</th>' +
-      '<th class="p-2 text-center w-24">Costo ($)</th>' +
-      '<th class="p-2 text-center w-16">Guardar</th>' +
-      '<th class="p-2 text-center w-14">Editar</th>' +
-      '<th class="p-2 text-center w-14">Candado</th>' +
-      '<th class="p-2 text-center w-14">Del</th>' +
-      '</tr></thead>';
-
-    const tbody = document.createElement('tbody');
-    tbody.className = 'text-[10px]';
-
-    snap.forEach(d => {
-      const r = d.data();
-      const nombreMostrar = r.nombre || d.id;
-      const bloqueado = r.bloqueado === true;
-
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-100 ' + (bloqueado ? 'bg-amber-50' : 'hover:bg-emerald-50');
-
-      // Nombre con icono candado si está bloqueado
-      const tdNom = document.createElement('td');
-      tdNom.className = 'p-2 font-bold italic text-slate-700';
-      tdNom.innerHTML = (bloqueado ? '<span style="color:#f59e0b;margin-right:4px;" title="Bloqueado">&#128274;</span>' : '') + nombreMostrar;
-      tr.appendChild(tdNom);
-
-      // Input costo
-      const tdCosto = document.createElement('td');
-      tdCosto.className = 'p-2 text-center';
-      const inp = document.createElement('input');
-      inp.type = 'number'; inp.step = '0.01'; inp.min = '0';
-      inp.value = parseFloat(r.costo || 0).toFixed(2);
-      inp.className = 'w-20 text-center border-2 border-slate-200 rounded-lg px-1 py-1 outline-none text-[10px] font-bold focus:border-blue-400 transition-all';
-      inp.dataset.id = d.id;
-      inp.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') { e.preventDefault(); _guardarCostoInsumoFila(this); }
-      });
-      tdCosto.appendChild(inp);
-      tr.appendChild(tdCosto);
-
-      // Botón guardar costo
-      const tdGuardar = document.createElement('td');
-      tdGuardar.className = 'p-2 text-center';
-      const btnGuardar = document.createElement('button');
-      btnGuardar.className = 'text-[8px] px-2 py-1.5 bg-emerald-500 text-white rounded-lg font-black hover:bg-emerald-600 transition-all uppercase';
-      btnGuardar.textContent = 'Guardar';
-      btnGuardar.dataset.id = d.id;
-      btnGuardar.addEventListener('click', function() {
-        const fila = this.closest('tr');
-        const inputCosto = fila.querySelector('input[type=number]');
-        _guardarCostoInsumoFila(inputCosto, this);
-      });
-      tdGuardar.appendChild(btnGuardar);
-      tr.appendChild(tdGuardar);
-
-      // Botón editar nombre
-      const tdEdit = document.createElement('td');
-      tdEdit.className = 'p-2 text-center';
-      const btnEdit = document.createElement('button');
-      btnEdit.className = 'text-[8px] px-2 py-1.5 bg-amber-500 text-white rounded-lg font-black hover:bg-amber-600 transition-all uppercase';
-      btnEdit.textContent = 'Editar';
-      btnEdit.dataset.id = d.id;
-      btnEdit.dataset.nombre = nombreMostrar;
-      btnEdit.addEventListener('click', async function() {
-        const idActual = this.dataset.id;
-        const nomActual = this.dataset.nombre;
-        const resEdit = await Swal.fire({
-          title: 'Editar nombre del insumo',
-          input: 'text',
-          inputValue: nomActual,
-          inputAttributes: { style: 'text-transform:uppercase;font-weight:700;' },
-          showCancelButton: true,
-          confirmButtonText: 'Guardar',
-          cancelButtonText: 'Cancelar',
-          confirmButtonColor: '#f59e0b',
-          preConfirm: function(val) {
-            if (!val || !val.trim()) { Swal.showValidationMessage('El nombre no puede estar vacio'); return false; }
-            return val.trim().toUpperCase();
-          }
-        });
-        if (!resEdit.isConfirmed) return;
-        const nuevoNombre = resEdit.value;
-        try {
-          const snapOld = await getDoc(doc(db, "insumos_maestro", idActual));
-          const dataOld = snapOld.exists() ? snapOld.data() : {};
-          if (nuevoNombre !== nomActual) {
-            // Crear nuevo con nuevo nombre como ID, eliminar el viejo
-            await setDoc(doc(db, "insumos_maestro", nuevoNombre), { ...dataOld, nombre: nuevoNombre, actualizadoEn: serverTimestamp() });
-            await deleteDoc(doc(db, "insumos_maestro", idActual));
-          } else {
-            await updateDoc(doc(db, "insumos_maestro", idActual), { nombre: nuevoNombre, actualizadoEn: serverTimestamp() });
-          }
-          await Swal.fire({ icon:'success', title:'Nombre actualizado', text: nuevoNombre, timer:1500, showConfirmButton:false });
-          window.renderizarTablaInsumos();
-        } catch(e) { Swal.fire({ icon:'error', title:'Error', text: e.message }); }
-      });
-      tdEdit.appendChild(btnEdit);
-      tr.appendChild(tdEdit);
-
-      // Botón candado — bloquear/desbloquear
-      const tdLock = document.createElement('td');
-      tdLock.className = 'p-2 text-center';
-      const btnLock = document.createElement('button');
-      btnLock.className = bloqueado
-        ? 'text-[8px] px-2 py-1.5 bg-amber-500 text-white rounded-lg font-black hover:bg-amber-600 transition-all'
-        : 'text-[8px] px-2 py-1.5 bg-slate-200 text-slate-600 rounded-lg font-black hover:bg-amber-500 hover:text-white transition-all';
-      btnLock.title = bloqueado ? 'Desbloquear (los doctores podran eliminarlo)' : 'Bloquear (los doctores NO podran eliminarlo)';
-      btnLock.innerHTML = bloqueado ? '&#128274;' : '&#128275;';
-      btnLock.dataset.id = d.id;
-      btnLock.dataset.bloqueado = bloqueado ? '1' : '0';
-      btnLock.addEventListener('click', async function() {
-        const esBloqueado = this.dataset.bloqueado === '1';
-        const accion = esBloqueado ? 'desbloquear' : 'bloquear';
-        const conf = await Swal.fire({
-          icon: esBloqueado ? 'question' : 'warning',
-          title: (esBloqueado ? 'Desbloquear' : 'Bloquear') + ' insumo',
-          html: '<p style="font-size:11px;">Insumo: <b>' + nombreMostrar + '</b><br>' +
-            (esBloqueado
-              ? 'Los doctores podran eliminarlo del historial.'
-              : 'Los doctores <b>NO</b> podran eliminarlo del historial de consultas.') + '</p>',
-          showCancelButton: true,
-          confirmButtonText: accion.charAt(0).toUpperCase() + accion.slice(1),
-          cancelButtonText: 'Cancelar',
-          confirmButtonColor: esBloqueado ? '#64748b' : '#f59e0b'
-        });
-        if (!conf.isConfirmed) return;
-        try {
-          await updateDoc(doc(db, "insumos_maestro", this.dataset.id), {
-            bloqueado: !esBloqueado,
-            actualizadoEn: serverTimestamp()
-          });
-          window.renderizarTablaInsumos();
-        } catch(e) { alert('Error: ' + e.message); }
-      });
-      tdLock.appendChild(btnLock);
-      tr.appendChild(tdLock);
-
-      // Botón eliminar (solo admin con clave)
-      const tdDel = document.createElement('td');
-      tdDel.className = 'p-2 text-center';
-      const btnDel = document.createElement('button');
-      btnDel.className = 'text-[8px] px-2 py-1.5 bg-red-100 text-red-600 rounded-lg font-black hover:bg-red-600 hover:text-white transition-all';
-      btnDel.textContent = 'Del';
-      btnDel.dataset.id = d.id;
-      btnDel.dataset.nombre = nombreMostrar;
-      btnDel.addEventListener('click', function() {
-        window.eliminarInsumoIndividual(this.dataset.id, this.dataset.nombre);
-      });
-      tdDel.appendChild(btnDel);
-      tr.appendChild(tdDel);
-
-      tbody.appendChild(tr);
-    });
-
-    tabla.appendChild(tbody);
+    const lista = []; snap.forEach(d => lista.push({id:d.id,...d.data()}));
+    lista.sort((a,b) => (a.nombre||a.id).localeCompare(b.nombre||b.id));
     cont.innerHTML = '';
-    cont.appendChild(tabla);
-  } catch(e) {
-    console.error(e);
-    cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error: ' + e.message + '</p>';
-  }
+    lista.forEach(r => {
+      const nombreMostrar = r.nombre || r.id;
+      const bloqueado = r.bloqueado === true;
+      const card = document.createElement('div');
+      card.style.cssText = 'background:'+(bloqueado?'#fffbeb':'#f8fafc')+';border:2px solid '+(bloqueado?'#fde68a':'#e2e8f0')+';border-radius:10px;padding:8px 10px;margin-bottom:6px;';
+      // Fila 1: nombre + icono candado
+      const f1 = document.createElement('div');
+      f1.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
+      f1.innerHTML = '<p style="font-size:11px;font-weight:900;color:#1e293b;">'+(bloqueado?'&#128274; ':'')+nombreMostrar+'</p>';
+      card.appendChild(f1);
+      // Input costo
+      const f2 = document.createElement('div');
+      f2.style.cssText = 'margin-bottom:6px;';
+      f2.innerHTML = '<label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:3px;">Costo ($)</label>';
+      const inp = document.createElement('input');
+      inp.type='number'; inp.step='0.01'; inp.min='0';
+      inp.value=parseFloat(r.costo||0).toFixed(2);
+      inp.dataset.id=r.id;
+      inp.style.cssText='width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;';
+      inp.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();_guardarCostoInsumoFila(inp,null);} });
+      f2.appendChild(inp); card.appendChild(f2);
+      // Botones
+      const f3 = document.createElement('div');
+      f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;';
+      const mkBtn = (txt,bg,cb) => {
+        const b=document.createElement('button');
+        b.textContent=txt;
+        b.style.cssText='padding:7px 4px;border-radius:8px;border:none;background:'+bg+';color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        b.addEventListener('click',cb); return b;
+      };
+      // Guardar
+      const btnG = mkBtn('Guardar','#10b981', function(){
+        const btn=this; btn.textContent='...'; btn.disabled=true; btn.style.background='#94a3b8';
+        _guardarCostoInsumoFila(inp, btn);
+      });
+      f3.appendChild(btnG);
+      // Editar nombre
+      f3.appendChild(mkBtn('Editar','#f59e0b', async function(){
+        const idActual=r.id; const nomActual=nombreMostrar;
+        const res=await Swal.fire({title:'Editar nombre',input:'text',inputValue:nomActual,inputAttributes:{style:'text-transform:uppercase;font-weight:700;'},showCancelButton:true,confirmButtonText:'Guardar',confirmButtonColor:'#f59e0b',preConfirm:v=>{if(!v||!v.trim()){Swal.showValidationMessage('Nombre requerido');return false;}return v.trim().toUpperCase();}});
+        if(!res.isConfirmed) return;
+        const nuevoNom=res.value;
+        try {
+          const snapOld=await getDoc(doc(db,"insumos_maestro",idActual));
+          const dataOld=snapOld.exists()?snapOld.data():{};
+          if(nuevoNom!==idActual){ await setDoc(doc(db,"insumos_maestro",nuevoNom),{...dataOld,nombre:nuevoNom,actualizadoEn:serverTimestamp()}); await deleteDoc(doc(db,"insumos_maestro",idActual)); }
+          else { await updateDoc(doc(db,"insumos_maestro",idActual),{nombre:nuevoNom,actualizadoEn:serverTimestamp()}); }
+          await Swal.fire({icon:'success',title:'OK',text:nuevoNom,timer:1500,showConfirmButton:false});
+          window.renderizarTablaInsumos();
+        } catch(e){Swal.fire({icon:'error',title:'Error',text:e.message});}
+      }));
+      // Candado
+      f3.appendChild(mkBtn(bloqueado?'Desbloquear':'Bloquear', bloqueado?'#f59e0b':'#64748b', async function(){
+        const conf=await Swal.fire({icon:bloqueado?'question':'warning',title:(bloqueado?'Desbloquear':'Bloquear')+': '+nombreMostrar,html:'<p style="font-size:11px;">'+(bloqueado?'Los doctores podran eliminarlo del historial.':'Los doctores NO podran eliminarlo.')+'</p>',showCancelButton:true,confirmButtonColor:bloqueado?'#64748b':'#f59e0b',confirmButtonText:bloqueado?'Desbloquear':'Bloquear'});
+        if(!conf.isConfirmed) return;
+        try { await updateDoc(doc(db,"insumos_maestro",r.id),{bloqueado:!bloqueado,actualizadoEn:serverTimestamp()}); window.renderizarTablaInsumos(); }
+        catch(e){alert('Error: '+e.message);}
+      }));
+      // Eliminar
+      f3.appendChild(mkBtn('Del','#fca5a5', function(){
+        this.style.color='#dc2626'; window.eliminarInsumoIndividual(r.id,nombreMostrar);
+      }));
+      card.appendChild(f3);
+      cont.appendChild(card);
+    });
+  } catch(e){ cont.innerHTML='<p class="text-red-500 text-[9px] text-center italic py-4">Error: '+e.message+'</p>'; }
 };
+
 
 // Función interna para guardar costo con feedback visual
 async function _guardarCostoInsumoFila(inputEl, btnEl) {
