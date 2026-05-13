@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v17
+// AVIPET -- historia.js  v20
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
