@@ -20,14 +20,7 @@ import {
   orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { enableIndexedDbPersistence }
-  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// ─── PERSISTENCIA OFFLINE ────────────────────────────────────
-enableIndexedDbPersistence(db).catch(err => {
-  if (err.code === 'failed-precondition')
-    console.warn("Persistencia: múltiples pestañas abiertas.");
-});
+// Persistencia manejada por firebase-config.js
 
 // ============================================================
 // ESTADO GLOBAL
