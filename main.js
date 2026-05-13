@@ -262,7 +262,7 @@ if (typeof window.tabPendiente === 'undefined') window.tabPendiente = '';
 
 window.validarAcceso = async () => {
   const pass = document.getElementById('modalPinInput').value;
-  const clavesPersonal = { "AVIPET2026": "Albert Peña (Master)", "2021": "daniel", "2022": "carlos" };
+  const clavesPersonal = { "AVIPET2026": "Albert Peña (Master)", "2021": "daniel", "2022": "carlos", "2222": "Aiby" };
   let responsable = clavesPersonal[pass] || null;
 
   try {
@@ -540,4 +540,4 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch(_) { localStorage.removeItem('respaldo_historia_activa'); }
 });
 
-console.log("✅ main.js v11 — fix sectionConfig_precios");
+console.log("✅ main.js v12 — PIN Aiby 2222");
