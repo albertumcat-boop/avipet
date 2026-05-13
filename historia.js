@@ -1,2045 +1,1221 @@
-// =========================================================
-// AVIPET -- historia.js  v15
-// NUEVO: selector de mascotas al autocompletar por cedula
-//        (veterinaria y peluqueria)
-//        limpiar formulario al enviar a sala de espera
-// =========================================================
-
-import { db } from './firebase-config.js';
-import {
-  collection, addDoc, doc, getDoc, updateDoc, setDoc, deleteDoc,
-  getDocs, query, where, orderBy, limit,
-  onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v16 -- CANDADO v2 DATA-BLOQUEADO EN TR");
-// respaldarProgresoLocal definida localmente para evitar doble carga de main.js
-const respaldarProgresoLocal = () => {
-  try {
-    const leer = (id) => document.getElementById(id)?.value || '';
-    const ci = leer('hCI');
-    if (!ci) return;
-    const servicios = [];
-    document.querySelectorAll('.servicio-principal').forEach(fila => {
-      servicios.push({
-        nombre: fila.querySelector('td')?.innerText || '',
-        precio: fila.getAttribute('data-precio') || 0,
-        porc:   fila.getAttribute('data-porc')   || 0
-      });
-    });
-    localStorage.setItem('respaldo_historia_activa', JSON.stringify({
-      cedula:      ci,
-      propietario: leer('hProp'),
-      paciente:    leer('hNombre'),
-      especie:     leer('hEspecie'),
-      raza:        leer('hRaza'),
-      edad:        leer('hEdad'),
-      sexo:        leer('hSexo'),
-      peso:        leer('hPeso'),
-      color:       leer('hColor'),
-      telefono:    leer('hTlf'),
-      correo:      leer('hMail'),
-      direccion:   leer('hDir'),
-      tratamiento: leer('hTratamiento'),
-      fechaNac:    leer('hFechaNac'),
-      servicios,
-      timestamp: Date.now()
-    }));
-  } catch(e) { console.warn('Error guardando respaldo:', e); }
-};
-const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || 'AVIPET2026';
-
-// Normalizar cedula: quitar puntos, espacios, guiones -- para buscar con o sin formato
-const normalizarCedula = (ci) => String(ci || '').replace(/[\.\-\s]/g, '').trim().toUpperCase();
-
-const normalizarNombre = (str) =>
-  String(str).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
-
-const recetas = {
-  "CONSULTA GENERAL":           { precioVenta:30,  insumos:[{nombre:"Crema",costo:0.50}] },
-  "CONSULTA OFTALMOLOGICA":     { precioVenta:80,  insumos:[{nombre:"Tiras Fluoresceina",costo:2.50}] },
-  "CONSULTA CAMADA 3-4 CACHORROS":      { precioVenta:50,  insumos:[{nombre:"Insumos Camada",costo:2.00}] },
-  "CONSULTA CAMADA HASTA 8 CACHORROS":  { precioVenta:80,  insumos:[{nombre:"Insumos Camada Grande",costo:4.00}] },
-  "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta:100, insumos:[{nombre:"Insumos Camada XL",costo:6.00}] },
-  "CONSULTA DE EMERGENCIA":     { precioVenta:40,  insumos:[{nombre:"Crema",costo:0.50}] },
-  "ABSCESO":                    { precioVenta:25,  insumos:[{nombre:"Jelco",costo:4.50},{nombre:"Agua Oxigenada",costo:0.50},{nombre:"Compresa",costo:0.50},{nombre:"Antibiotico",costo:0.50},{nombre:"Antinflamatorio",costo:0.50},{nombre:"Sedacion",costo:0.50}] },
-  "ECOGRAFIA":                  { precioVenta:30,  insumos:[{nombre:"Gel Ecografico",costo:1.00},{nombre:"Papel Absorbente",costo:0.50}] },
-  "COLOCACION VIA":             { precioVenta:15,  insumos:[{nombre:"Jelco",costo:1.50},{nombre:"Jeringa 5cc",costo:0.50},{nombre:"Adhesivo",costo:0.30},{nombre:"Mariposa",costo:1.00},{nombre:"Obturador",costo:1.00}] },
-  "ADMINISTRACION MEDICINA":    { precioVenta:10,  insumos:[{nombre:"Jeringa",costo:0.50}] },
-  "TOMA DE MUESTRA SANGRE":     { precioVenta:10,  insumos:[{nombre:"Jeringa",costo:0.50},{nombre:"Mariposa",costo:1.00},{nombre:"Tubo",costo:1.20}] },
-  "VACUNA SEXTUPLE":            { precioVenta:40,  insumos:[{nombre:"Vial Sextuple",costo:8.50}] },
-  "VACUNA PUPPY":               { precioVenta:40,  insumos:[{nombre:"Vial Puppy",costo:7.00}] },
-  "VACUNA ANTIRRABICA":         { precioVenta:30,  insumos:[{nombre:"Vial Antirrabica",costo:4.00}] },
-  "VACUNA KC (TOS DE LAS PERRERAS)": { precioVenta:45, insumos:[{nombre:"Vial KC",costo:9.00}] },
-  "VACUNA TRIPLE FELINA":       { precioVenta:45,  insumos:[{nombre:"Vial Triple Felina",costo:10.00}] },
-  "VACUNA QUINTUPLE FELINA":    { precioVenta:50,  insumos:[{nombre:"Vial Quintuple Felina",costo:15.00}] },
-  "VACUNA BIOVETA":             { precioVenta:60,  insumos:[{nombre:"Vial Bioveta",costo:6.50}] },
-  "HEMATOLOGIA COMPLETA":       { precioVenta:23,  insumos:[{nombre:"Tubo EDTA",costo:4.50}] },
-  "QUIMICA SANGUINEA":          { precioVenta:60,  insumos:[{nombre:"Tubo Seco - Reactivos",costo:10.00}] },
-  "DESCARTE HEMOPARASITO":      { precioVenta:50,  insumos:[{nombre:"Test Hemoparasitos",costo:9.00}] },
-  "DISTEMPER":                  { precioVenta:35,  insumos:[{nombre:"Kit Test Distemper",costo:11.00}] },
-  "PARVOVIRUS - CORONAVIRUS":   { precioVenta:35,  insumos:[{nombre:"Kit Test Parvo",costo:12.00}] },
-  "FILARIASIS":                 { precioVenta:40,  insumos:[{nombre:"Kit Filarias",costo:11.00}] },
-  "SIDA - LEUCEMIA":            { precioVenta:40,  insumos:[{nombre:"Kit Sida-Leucemia",costo:15.00}] },
-  "TEST HELICOBACTER PYLORI AG":{ precioVenta:40,  insumos:[{nombre:"Kit Helicobacter",costo:20.00}] },
-  "HEMATOLOGIA + QUIMICA + HEMOPARASITOS": { precioVenta:110,insumos:[{nombre:"Pack Lab Completo",costo:25.00}] },
-  "EXAMEN DE HECES":            { precioVenta:10,  insumos:[{nombre:"Portas - Solucion",costo:1.50}] },
-  "EXAMENES DE ORINA":          { precioVenta:10,  insumos:[{nombre:"Tira Reactiva",costo:2.00}] },
-  "CITOLOGIA 1 OIDO":           { precioVenta:15,  insumos:[{nombre:"Hisopo - Tincion",costo:2.50}] },
-  "CITOLOGIA 2 OIDOS":          { precioVenta:20,  insumos:[{nombre:"Hisopos - Tinciones",costo:4.00}] },
-  "RASPADO PIEL":               { precioVenta:10,  insumos:[{nombre:"Hoja Bisturi",costo:3.00}] },
-  "PERFIL ANEMICO":             { precioVenta:25,  insumos:[{nombre:"Kit Anemia",costo:8.00}] },
-  "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}] },
-  "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}] },
-  "EUTANASIA HASTA 25KG":       { precioVenta:140, insumos:[{nombre:"Propofol",costo:10.00},{nombre:"Xilacina",costo:3.00}] },
-  "EUTANASIA HASTA 35KG":       { precioVenta:170, insumos:[{nombre:"Propofol",costo:15.00},{nombre:"Xilacina",costo:4.00}] },
-  "REFERIDO: EXAMEN DE HECES":  { precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
-  "REFERIDO: EXAMENES DE ORINA":{ precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
-  "REFERIDO: CULTIVOS":         { precioVenta:30,  insumos:[{nombre:"Pago Lab Externo",costo:15.00}] },
-  "REFERIDO: DESCARTE HEMOPARASITO": { precioVenta:40, insumos:[{nombre:"Pago Lab Externo",costo:20.00}] },
-  "REFERIDO: DISTEMPER":        { precioVenta:35,  insumos:[{nombre:"Pago Lab Externo",costo:17.50}] },
-  "REFERIDO: PARVOVIRUS - CORONAVIRUS": { precioVenta:35, insumos:[{nombre:"Pago Lab Externo",costo:17.50}] },
-};
-
-const CONFIG_PORC = {
-  "CONSULTA GENERAL":40,"CONSULTA OFTALMOLOGICA":12.5,
-  "CONSULTA CAMADA 3-4 CACHORROS":40,"CONSULTA CAMADA HASTA 8 CACHORROS":40,
-  "CONSULTA CAMADA MAS DE 8 CACHORROS":40,"CONSULTA DE EMERGENCIA":40,
-  "ABSCESO":50,"ECOGRAFIA":40,"COLOCACION VIA":50,
-  "ADMINISTRACION MEDICINA":50,"TOMA DE MUESTRA SANGRE":50,
-  "HEMATOLOGIA COMPLETA":34.78,"PERFIL ANEMICO":17.5,
-};
-
-const insumosFijosMedicos = [{nombre:"Guantes de examen",costo:0.50},{nombre:"Alcohol",costo:0.10},{nombre:"Algodon",costo:0.10},{nombre:"Hojas - Papeleria",costo:0.10}];
-const insumosBaseVacuna   = [{nombre:"Jeringa 3cc",costo:0.25},{nombre:"Xeruk",costo:0.10},{nombre:"Crema",costo:0.10}];
-
-const CONFIG_MEDICAMENTOS = {
-  "Piroyet":{precioCliente:10},"Enrofloxacina":{precioCliente:5},"Sulfatrim":{precioCliente:5},
-  "Dexametasona":{precioCliente:4},"Carprofen":{precioCliente:10},"Flunixin":{precioCliente:5},
-  "Metadol":{precioCliente:5},"Complejo B":{precioCliente:5},"Suero hiperinmune":{precioClientePorMl:10},
-  "Bromuro de hioscina":{precioCliente:10},"Fenobarbital":{precioCliente:5},"Gastrine":{precioCliente:7},
-  "Ranitidina":{precioCliente:5},"Metoclopramida":{precioCliente:5},"Furosemina":{precioCliente:5},
-  "Vit K":{precioCliente:5},"Eritrogen":{precioCliente:5},"Aminovit":{precioCliente:10},
-  "Oxitetraciclina":{precioCliente:5},"Pimobendan":{precioCliente:0},"Ceftriaxona":{precioCliente:12},
-  "Adrenalina / Epin":{precioCliente:14},"Artrosan":{precioCliente:20},"Lisavac":{precioCliente:5},
-  "Soroglobulin":{precioCliente:25},"Infervac":{precioCliente:0},
-  "OTRO":{precioCliente:0}
-};
-
-let insumosBaseMedAgregados = false;
-
-// --- COMPRESOR ---
-const comprimirImagen = (b64, maxW=800, q=0.55) => new Promise(res=>{
-  const img=new Image();img.src=b64;img.onload=()=>{
-    const c=document.createElement('canvas');let w=img.width,h=img.height;
-    if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}c.width=w;c.height=h;
-    const ctx=c.getContext('2d');ctx.fillStyle="#FFF";ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
-    res(c.toDataURL('image/jpeg',q));};img.onerror=()=>res(b64);
-});
-
-// --- ALERTA STOCK BAJO ---
-async function _verificarStockServicio(nombreServicio) {
-  try {
-    const vLimpio = normalizarNombre(nombreServicio);
-    // Buscar en inventario productos relacionados con el servicio
-    const snap = await getDocs(collection(db, "inventario"));
-    const alertas = [];
-    snap.forEach(d => {
-      const r = d.data();
-      const nomInv = normalizarNombre(r.nombre || "");
-      // Detectar si el producto del inventario esta relacionado con el servicio
-      const esRelacionado =
-        (vLimpio.includes("vacuna") && (nomInv.includes("vial") || nomInv.includes("vacuna"))) ||
-        (vLimpio.includes("hematolo") && nomInv.includes("tubo")) ||
-        (vLimpio.includes("quimica") && (nomInv.includes("tubo") || nomInv.includes("reactivo")));
-      if (esRelacionado) {
-        const stock = parseFloat(r.cantidadStock || 0);
-        const min   = parseFloat(r.stockMinimo   || 3);
-        if (stock <= min) alertas.push({ nombre: r.nombre, stock, min });
-      }
-    });
-    if (alertas.length > 0) {
-      const lista = alertas.map(a => `* ${a.nombre}: ${a.stock} unidades (min: ${a.min})`).join('\n');
-      await Swal.fire({
-        icon: 'warning',
-        title: '(!) Stock Bajo en Inventario',
-        html: `<p class="text-[11px] text-slate-600 mb-2">El siguiente producto esta bajo o agotado:</p>
-               <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left">
-                 <pre class="text-[11px] text-amber-800 font-bold whitespace-pre-wrap">${lista}</pre>
-               </div>
-               <p class="text-[10px] text-slate-400 mt-2 italic">Recuerda actualizar el inventario.</p>`,
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#f59e0b',
-        timer: 6000,
-        timerProgressBar: true
-      });
-    }
-  } catch { /* silencioso -- no bloquear flujo */ }
-}
-
-// --- INSERTAR SERVICIO ---
-// --- RECALCULAR COMBOS -------------------------------------------------------
-// Se llama SIEMPRE despues de insertar o eliminar cualquier servicio.
-// Lee el DOM completo y ajusta precios segun lo que realmente esta en la lista.
-//
-// REGLAS:
-//   KC sola        -> $45  |  KC + otra vacuna      -> $40
-//   Antirrabica sola -> $30  |  Antirrabica + otra vacuna -> $25
-//   Hematologia sola -> $23  |  Hematologia + otro lab    -> $20
-// -----------------------------------------------------------------------------
-function _recalcularCombos() {
-  const filas = Array.from(document.querySelectorAll('.servicio-principal'));
-  const nombres = filas.map(f => normalizarNombre(f.querySelector('td')?.innerText || ""));
-
-  filas.forEach((fila, idx) => {
-    const n   = nombres[idx];
-    const td  = fila.querySelector('td');
-    if (!td) return;
-
-    // -- KC --
-    if (n.includes("vacunakc")) {
-      // hay otra vacuna en la lista (distinta de KC)?
-      const hayOtraVacuna = nombres.some((o, i) => i !== idx && o.includes("vacuna") && !o.includes("vacunakc"));
-      const precioNuevo   = hayOtraVacuna ? 40 : 45;
-      const textoCombo    = hayOtraVacuna ? " (Combo)" : "";
-      const precioActual  = parseFloat(fila.getAttribute('data-precio')) || 0;
-
-      if (precioActual !== precioNuevo) {
-        fila.setAttribute('data-precio', precioNuevo);
-        // Actualizar texto visible en la celda
-        td.innerHTML = td.innerHTML
-          .replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)}`)
-          .replace(/\s*\(Combo\)/gi, "") + (hayOtraVacuna ? "" : "");
-        // Limpiar y poner (Combo) solo si aplica
-        td.innerHTML = td.innerHTML.replace(/\(Combo\)/gi, "");
-        if (hayOtraVacuna) {
-          td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)} (Combo)`);
-        }
-      }
-    }
-
-    // -- ANTIRRABICA --
-    if (n.includes("vacunaantirrabica")) {
-      const hayOtraVacuna = nombres.some((o, i) => i !== idx && o.includes("vacuna") && !o.includes("antirrabica"));
-      const precioNuevo   = hayOtraVacuna ? 25 : 30;
-      const precioActual  = parseFloat(fila.getAttribute('data-precio')) || 0;
-
-      if (precioActual !== precioNuevo) {
-        fila.setAttribute('data-precio', precioNuevo);
-        td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)}`);
-        td.innerHTML = td.innerHTML.replace(/\(Combo\)/gi, "");
-        if (hayOtraVacuna) {
-          td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)} (Combo)`);
-        }
-      }
-    }
-
-    // -- HEMATOLOGIA --
-    if (n.includes("hematologiacompleta")) {
-      const otrosLabs = ["quimica","hemoparasito","heces","orina","perfil","citologia"];
-      const hayOtroLab = nombres.some((o, i) => i !== idx && otrosLabs.some(lab => o.includes(lab)));
-      const precioNuevo  = hayOtroLab ? 20 : 23;
-      const precioActual = parseFloat(fila.getAttribute('data-precio')) || 0;
-
-      if (precioActual !== precioNuevo) {
-        fila.setAttribute('data-precio', precioNuevo);
-        td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)}`);
-        td.innerHTML = td.innerHTML.replace(/\(Combo\)/gi, "");
-        if (hayOtroLab) {
-          td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}/, `$${precioNuevo.toFixed(2)} (Combo)`);
-        }
-      }
-    }
-  });
-
-  // Recalcular totales despues de ajustar precios
-  window.calcularTodo();
-}
-
-window.insertarServicio = async (v) => {
-  if (!v) return;
-  const visual=document.getElementById('visualizacionServicios');
-  const vLimpio=normalizarNombre(v);
-  let nombreFinal=v,precioFinal=0,porcServ=30;
-  let insumosFirebase = null;
-  try{const snap=await getDoc(doc(db,"servicios_maestro",v));if(snap.exists()){precioFinal=parseFloat(snap.data().precioVenta)||0;porcServ=parseFloat(snap.data().porcDoc??snap.data().porcentajeDoc??30);if(snap.data().insumos&&snap.data().insumos.length>0)insumosFirebase=snap.data().insumos;}else{const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);precioFinal=lrec?recetas[lrec].precioVenta:0;porcServ=CONFIG_PORC[v]??30;}}
-  catch{const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);precioFinal=lrec?recetas[lrec].precioVenta:0;porcServ=CONFIG_PORC[v]??30;}
-
-  if(vLimpio.includes("kgadicional")){const kgs=prompt("KGs adicionales:");if(!kgs||isNaN(kgs)){document.getElementById('selectorServicios').value="";return;}nombreFinal=`KG ADICIONAL (${parseFloat(kgs)}kg)`;precioFinal=parseFloat(kgs)*7;porcServ=0;}
-  else if(vLimpio==="disposicion"||vLimpio==="cremacionconcenizas"){const m=prompt(`Precio pactado para ${v}:`);if(!m||isNaN(m)){document.getElementById('selectorServicios').value="";return;}precioFinal=parseFloat(m);porcServ=0;}
-  else if(vLimpio.includes("gusanera")||v.toUpperCase().includes("GUSANERA")) {
-    const resGus = await Swal.fire({
-      title: 'Gusanera — Gravedad',
-      html:
-        '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' +
-          '<button type="button" onclick="window._gusGrav=\'LEVE\';window._gusPrecio=25;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:13px;color:#15803d;cursor:pointer;">LEVE — $25</button>' +
-          '<button type="button" onclick="window._gusGrav=\'MEDIA\';window._gusPrecio=35;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:13px;color:#92400e;cursor:pointer;">MEDIA — $35</button>' +
-          '<button type="button" onclick="window._gusGrav=\'GRAVE\';window._gusPrecio=50;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #fca5a5;background:#fef2f2;font-weight:900;font-size:13px;color:#dc2626;cursor:pointer;">GRAVE — $50</button>' +
-          '<button type="button" onclick="window._gusGrav=\'PERSONALIZADO\';window._gusPrecio=0;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:13px;color:#64748b;cursor:pointer;">Precio personalizado...</button>' +
-        '</div>',
-      showConfirmButton: false, showCancelButton: true, cancelButtonText: 'Cancelar'
-    });
-    if (resGus.isDismissed) { document.getElementById('selectorServicios').value=""; return; }
-    if (window._gusGrav === 'PERSONALIZADO') {
-      const custom = await Swal.fire({ title:'Precio gusanera ($)', input:'number', inputPlaceholder:'0.00', showCancelButton:true, confirmButtonColor:'#1d4ed8' });
-      if (!custom.isConfirmed || !custom.value) { document.getElementById('selectorServicios').value=""; return; }
-      window._gusPrecio = parseFloat(custom.value);
-    }
-    precioFinal = window._gusPrecio || precioFinal;
-    nombreFinal = 'GUSANERA ' + (window._gusGrav||'');
-    window._gusGrav = null; window._gusPrecio = null;
-  }
-  else if(vLimpio.includes("absceso")||v.toUpperCase().includes("ABSCESO")) {
-    const resAbs = await Swal.fire({
-      title: 'Absceso — Detalles',
-      width: 460,
-      html:
-        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:8px;">' +
-          '<div><p style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;">Tipo de absceso</p>' +
-          '<div style="display:flex;gap:6px;">' +
-            '<button type="button" onclick="window._absT=\'ABIERTO\';document.querySelectorAll(\'.btn-abs-t\').forEach(b=>b.style.opacity=\'0.4\');this.style.opacity=\'1\';" class="btn-abs-t" style="flex:1;padding:10px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;">Abierto</button>' +
-            '<button type="button" onclick="window._absT=\'CERRADO\';document.querySelectorAll(\'.btn-abs-t\').forEach(b=>b.style.opacity=\'0.4\');this.style.opacity=\'1\';" class="btn-abs-t" style="flex:1;padding:10px;border-radius:10px;border:2px solid #e9d5ff;background:#faf5ff;font-weight:900;font-size:11px;color:#7c3aed;cursor:pointer;">Cerrado</button>' +
-          '</div></div>' +
-          '<div style="display:flex;gap:16px;">' +
-            '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="abs_anest" style="width:16px;height:16px;accent-color:#2563eb;"><span style="font-size:11px;font-weight:700;">Con Anestesia <b>(+$10)</b></span></label>' +
-            '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="abs_sutura" style="width:16px;height:16px;accent-color:#2563eb;"><span style="font-size:11px;font-weight:700;">Con Sutura <b>(+$15)</b></span></label>' +
-          '</div>' +
-          '<div><label style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Precio base ($)</label>' +
-          '<input type="number" id="abs_precio_base" value="' + (precioFinal||25) + '" step="1" min="0" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
-        '</div>',
-      showCancelButton: true, confirmButtonText: 'Agregar', confirmButtonColor: '#1d4ed8',
-      preConfirm: function() {
-        const tipo   = window._absT || 'ABIERTO';
-        const anest  = document.getElementById('abs_anest')?.checked||false;
-        const sutura = document.getElementById('abs_sutura')?.checked||false;
-        const base   = parseFloat(document.getElementById('abs_precio_base')?.value)||25;
-        const total  = base+(anest?10:0)+(sutura?15:0);
-        const extras = []; if(anest)extras.push('anest'); if(sutura)extras.push('sutura');
-        return {tipo,total,extras};
-      }
-    });
-    window._absT = null;
-    if (!resAbs.isConfirmed) { document.getElementById('selectorServicios').value=""; return; }
-    precioFinal = resAbs.value.total;
-    nombreFinal = 'ABSCESO '+resAbs.value.tipo+(resAbs.value.extras.length?' ('+resAbs.value.extras.join('+')+')':"");
-  }
-  else if(vLimpio.includes("vacunakc")){
-    // Precio base: solo -> $45, en combo con otra vacuna -> $40
-    // Se inserta primero con precio base; _recalcularCombos lo ajusta al final
-    precioFinal=45;
-  }
-  else if(vLimpio.includes("hematologiacompleta")){
-    // Precio base: solo -> $23, en combo con otro lab -> $20
-    precioFinal=23;
-  }
-  else if(vLimpio.includes("vacunaantirrabica")){
-    // Precio base: solo -> $30, en combo con otra vacuna -> $25
-    precioFinal=30;
-  }
-
-  const grupoID="srv-"+Date.now();
-  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span></span><span class="flex-1">${nombreFinal}</span>`;visual.appendChild(badge);}
-  document.getElementById('contenedorInsumos').classList.remove('hidden');
-  const cuerpo=document.getElementById('listaInsumosDinamica');
-  const ft=document.createElement('tr');ft.className="bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioFinal);ft.setAttribute('data-porc',porcServ);
-  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">${nombreFinal} ($${precioFinal.toFixed(2)})<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">${porcServ.toFixed(1)}% DOC</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioFinal},event)" class="text-red-500 font-bold text-[11px]">X</button></td>`;
-  cuerpo.appendChild(ft);
-
-  let insNuevos=[];
-  if(cuerpo.querySelectorAll('.servicio-principal').length===1)insNuevos=[...insumosFijosMedicos];
-  if(vLimpio.includes("vacuna")){const yaHayVial=Array.from(cuerpo.querySelectorAll('td')).some(td=>td.innerText.includes("Vial"));if(!yaHayVial)insNuevos=[...insNuevos,...insumosBaseVacuna];}
-  // Usar insumos de Firebase (configurados en Ajustes) si existen, sino usar recetas
-  if (insumosFirebase) {
-    insNuevos = [...insNuevos, ...insumosFirebase];
-  } else {
-    const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
-    if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
-  }
-
-  insNuevos.forEach(ins=>{
-    const tr=document.createElement('tr');
-    const bloq = ins.bloqueado === true;
-    tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;
-    tr.dataset.bloqueado = bloq ? 'true' : 'false';
-    const lockIcon = bloq ? ' &#128274;' : '';
-    const bgColor = bloq ? 'background:#fffbeb;' : '';
-    const btnHtml = bloq
-      ? '<td class="p-2 text-center" style="color:#f59e0b;font-size:13px;cursor:not-allowed;" title="Insumo obligatorio">&#128274;</td>'
-      : '<td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>';
-    tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic" data-nombre="${ins.nombre.toUpperCase()}" style="${bgColor}">${ins.nombre.toUpperCase()}${lockIcon}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>${btnHtml}`;
-    cuerpo.appendChild(tr);
-  });
-
-  await window.calcularTodo();
-  document.getElementById('selectorServicios').value="";
-  respaldarProgresoLocal();
-  // Recalcular precios de combos DESPUES de insertar (actualiza los ya existentes)
-  _recalcularCombos();
-  // Verificar stock DESPUES de insertar
-  _verificarStockServicio(v);
-};
-
-// --- AGREGAR MEDICAMENTO ---
-window.agregarMedicamento = async (nombreMed) => {
-  if (!nombreMed) return;
-  if (nombreMed === "OTRO") {
-    // Construir modal sin template literals problemáticos
-    var htmlMed = '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:8px;">';
-    htmlMed += '<div><label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre del medicamento</label>';
-    htmlMed += '<input type="text" id="swal_med_nombre" placeholder="Ej: Clopidogrel..." style="width:100%;border:2px solid #e2e8f0;border-radius:12px;padding:8px 12px;font-size:12px;outline:none;"></div>';
-    htmlMed += '<div><label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Costo para el cliente ($)</label>';
-    htmlMed += '<input type="number" id="swal_med_costo" step="0.50" min="0" placeholder="0.00" style="width:100%;border:2px solid #e2e8f0;border-radius:12px;padding:8px 12px;font-size:12px;outline:none;"></div>';
-    htmlMed += '<div style="display:flex;align-items:center;gap:8px;background:#f5f3ff;border-radius:10px;padding:10px;">';
-    htmlMed += '<input type="checkbox" id="swal_med_guardar" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer;">';
-    htmlMed += '<label for="swal_med_guardar" style="font-size:10px;font-weight:900;color:#6d28d9;cursor:pointer;">Guardar permanentemente en el listado de medicamentos</label>';
-    htmlMed += '</div></div>';
-
-    const res = await Swal.fire({
-      title: 'Agregar Medicamento',
-      html: htmlMed,
-      showCancelButton: true,
-      confirmButtonText: 'Agregar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#7c3aed',
-      preConfirm: () => {
-        const nombre = document.getElementById('swal_med_nombre')?.value.trim();
-        const costo  = parseFloat(document.getElementById('swal_med_costo')?.value) || 0;
-        const guardar = document.getElementById('swal_med_guardar')?.checked || false;
-        if (!nombre) { Swal.showValidationMessage('Escribe el nombre.'); return false; }
-        if (costo < 0) { Swal.showValidationMessage('Costo no puede ser negativo.'); return false; }
-        return { nombre, costo, guardar };
-      }
-    });
-
-    if (!res.isConfirmed) { document.getElementById('selectorMedicamentos').value = ""; return; }
-
-    const { nombre, costo, guardar } = res.value;
-
-    // Guardar permanentemente si se marcó el checkbox
-    if (guardar) {
-      // Verificar que hay doctor activo
-      const doctorActivo = window.doctorVerificado || '';
-      if (!doctorActivo) {
-        await Swal.fire({
-          icon: 'warning',
-          title: 'Doctor no autenticado',
-          text: 'Debes seleccionar y autenticar un doctor antes de guardar un medicamento permanentemente.',
-          confirmButtonColor: '#7c3aed'
-        });
-        _insertarMedicamentoEnTabla(nombre, costo);
-        document.getElementById('selectorMedicamentos').value = "";
-        return;
-      }
-      try {
-        await setDoc(doc(db, "medicamentos_maestro", nombre.toUpperCase()), {
-          nombre: nombre.toUpperCase(),
-          precioCliente: costo,
-          creadoEn: serverTimestamp(),
-          agregadoPor: doctorActivo,
-          activo: true
-        }, { merge: true });
-        // Recargar selector
-        if (typeof window.cargarSelectorMedicamentos === 'function') {
-          window.cargarSelectorMedicamentos();
-        }
-        Swal.fire({ icon: 'success', title: 'Guardado en el listado', text: nombre, timer: 1500, showConfirmButton: false });
-      } catch(e) { console.warn('Error guardando medicamento:', e); }
-    }
-
-    _insertarMedicamentoEnTabla(nombre, costo);
-    document.getElementById('selectorMedicamentos').value = "";
-    return;
-  }
-  const cfg=CONFIG_MEDICAMENTOS[nombreMed];if(!cfg)return;
-  let precioCliente=0,descripcion=nombreMed;
-  if(nombreMed==="Suero hiperinmune"){const ml=prompt("Cantidad (ml):");if(!ml||isNaN(ml)||parseFloat(ml)<=0){document.getElementById('selectorMedicamentos').value="";return;}precioCliente=(cfg.precioClientePorMl||0)*parseFloat(ml);descripcion+=` (${parseFloat(ml)} ml)`;}
-  else if(nombreMed==="Artrosan"){const kg=prompt("Peso paciente (kg):");if(!kg||isNaN(kg)||parseFloat(kg)<=0){document.getElementById('selectorMedicamentos').value="";return;}const ml=parseFloat(kg)/20;precioCliente=(cfg.precioCliente||0)*ml;descripcion+=` (${ml.toFixed(2)} ml)`;}
-  else if(nombreMed==="Lisavac"){const kg=prompt("Peso paciente (kg):");if(!kg||isNaN(kg)||parseFloat(kg)<=0){document.getElementById('selectorMedicamentos').value="";return;}precioCliente=(cfg.precioCliente||0)*parseFloat(kg);descripcion+=` (${parseFloat(kg).toFixed(2)} ml)`;}
-  else precioCliente=cfg.precioCliente||0;
-  _insertarMedicamentoEnTabla(descripcion,precioCliente);
-  document.getElementById('selectorMedicamentos').value="";
-  // Stock de medicamentos
-  _verificarStockServicio(nombreMed);
-};
-
-function _insertarMedicamentoEnTabla(descripcion,precioCliente) {
-  const grupoID="med-"+Date.now();
-  const visual=document.getElementById('visualizacionServicios');
-  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span></span><span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;visual.appendChild(badge);}
-  document.getElementById('contenedorInsumos').classList.remove('hidden');
-  const cuerpo=document.getElementById('listaInsumosDinamica');
-  const ft=document.createElement('tr');ft.className="bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioCliente);ft.setAttribute('data-porc',40);
-  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">${descripcion} ($${precioCliente.toFixed(2)})<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px]">MEDICAMENTO</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioCliente},event)" class="text-red-500 font-bold text-[11px]">X</button></td>`;
-  cuerpo.appendChild(ft);
-  if(!insumosBaseMedAgregados){[{nombre:"Jeringa para medicamento",costo:0.50},{nombre:"Algodon",costo:0.10},{nombre:"Alcohol",costo:0.10}].forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>`;cuerpo.appendChild(tr);});insumosBaseMedAgregados=true;}
-  window.calcularTodo();respaldarProgresoLocal();
-}
-
-// --- MOTOR FINANCIERO ---
-// ── ELIMINAR INSUMO DEL HISTORIAL CON VERIFICACION DE CANDADO ────────────────
-window.intentarEliminarInsumoFila = async (btnEl) => {
-  const tr = btnEl.closest('tr');
-  if (!tr) return;
-  // Leer bloqueado directamente del data attribute del TR (guardado al renderizar)
-  if (tr.dataset.bloqueado === 'true') {
-    const tdNom = tr.querySelector('td');
-    const nombreInsumo = tdNom ? (tdNom.dataset.nombre || tdNom.textContent.replace('\u{1F512}','').trim()) : 'este insumo';
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Insumo obligatorio',
-      html: '<p style="font-size:11px;">&#128274; <b>' + nombreInsumo + '</b> es un insumo obligatorio y no puede ser eliminado.<br><br>Si no se uso, avisa al administrador.</p>',
-      confirmButtonColor: '#f59e0b',
-      confirmButtonText: 'Entendido'
-    });
-    return;
-  }
-  tr.remove();
-  window.calcularTodo();
-};
-
-window.calcularTodo = async () => {
-  let totalComision=0,totalGastos=0,totalVenta=0;
-  if(window.porcGlobalCache===undefined){try{const snap=await getDoc(doc(db,"configuracion","tarifas"));window.porcGlobalCache=snap.exists()?(snap.data().porcDoc??snap.data().porcentajeDoc??null):null;}catch{window.porcGlobalCache=null;}}
-  document.querySelectorAll('.servicio-principal').forEach(fila=>{const precio=parseFloat(fila.getAttribute('data-precio'))||0;const porcDef=parseFloat(fila.getAttribute('data-porc'))||0;const porc=(window.porcGlobalCache!==null&&window.porcGlobalCache!==undefined)?window.porcGlobalCache:porcDef;const grupoID=fila.getAttribute('data-grupo');let gastos=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{gastos+=(parseFloat(ins.querySelector('.i-cant')?.value)||0)*(parseFloat(ins.querySelector('.i-cost')?.value)||0);});totalVenta+=precio;totalGastos+=gastos;const util=precio-gastos;if(util>0)totalComision+=util*(porc/100);});
-  const iv=document.getElementById('precioVenta');if(iv)iv.value=totalVenta.toFixed(2);
-  const ig=document.getElementById('gastoInsumos');if(ig)ig.value=totalGastos.toFixed(2);
-  const id=document.getElementById('montoDoctor');if(id)id.innerText=`$ ${totalComision.toFixed(2)}`;
-};
-
-// --- ELIMINAR SERVICIO ---
-window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
-  if(event)event.preventDefault();if(!confirm("?Eliminar este servicio y sus insumos?"))return;
-  document.getElementById("badge-"+idGrupo)?.remove();
-  const ft=document.querySelector(`[data-grupo="${idGrupo}"]`);if(ft)ft.remove();
-  document.querySelectorAll('tr.insumo-fila').forEach(tr=>{if(tr.classList.contains(idGrupo))tr.remove();});
-  const filasRest=document.querySelectorAll('.servicio-principal');
-  if(filasRest.length===0){document.getElementById('contenedorInsumos')?.classList.add('hidden');const visual=document.getElementById('visualizacionServicios');if(visual)visual.innerHTML='<p class="text-slate-400 font-normal italic text-[11px]">Sin servicios registrados...</p>';insumosBaseMedAgregados=false;}
-  _recalcularCombos();
-  await window.calcularTodo();
-};
-
-// --- INSUMO MANUAL ---
-window.agregarInsumoManual = () => {
-  const n=document.getElementById('nombreExtra');const c=document.getElementById('costoExtra');if(!n?.value)return alert("Ingrese nombre.");
-  const filas=document.querySelectorAll('.servicio-principal');const ultimoGrp=filas.length>0?filas[filas.length-1].getAttribute('data-grupo'):"manual";
-  const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrp}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c?.value||0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>`;
-  document.getElementById('listaInsumosDinamica').appendChild(tr);n.value="";if(c)c.value="";window.calcularTodo();
-};
-
-// --- VACUNA YA PAGADA ---
-window.toggleVacunaPagada = (marcado) => {
-  window.vacunaPagadaAnteriormente=marcado;const inputPrecio=document.getElementById('precioVenta');if(inputPrecio){inputPrecio.style.textDecoration=marcado?'line-through':'none';inputPrecio.style.color=marcado?'#f59e0b':'';}let aviso=document.getElementById('avisoVacunaPagada');if(!aviso){aviso=document.createElement('div');aviso.id='avisoVacunaPagada';aviso.className='no-print text-center text-[10px] font-black text-amber-600 uppercase mt-1';aviso.innerText='(!) La vacuna NO se sumara a la caja ni al doctor';document.getElementById('precioVenta')?.parentElement?.appendChild(aviso);}aviso.classList.toggle('hidden',!marcado);
-};
-
-// --- GUARDAR EN FIREBASE ---
-window.guardarFirebase = async (imp) => {
-  // Validaciones obligatorias ANTES del PIN
-  const _dv = (id) => document.getElementById(id)?.value?.trim() || "";
-  if (!_dv('hCI')) {
-    await Swal.fire({ icon:'warning', title:'Cedula obligatoria', text:'Debes ingresar la cedula del propietario antes de guardar.', confirmButtonColor:'#1d4ed8' });
-    document.getElementById('hCI')?.focus();
-    return;
-  }
-  if (!_dv('hNombre')) {
-    await Swal.fire({ icon:'warning', title:'Nombre del paciente obligatorio', text:'Debes ingresar el nombre de la mascota antes de guardar.', confirmButtonColor:'#1d4ed8' });
-    document.getElementById('hNombre')?.focus();
-    return;
-  }
-  const selectorDoc=document.getElementById('selectDoctor');const nombreDoctor=selectorDoc?selectorDoc.value:"";if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
-  const pinIngresado=prompt(`? Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);if(!pinIngresado)return;const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);if(!esValido)return alert("? PIN incorrecto.");
-  const btn=document.activeElement;const textoOrig=btn?.innerText||"Guardar";if(btn?.tagName==='BUTTON'){btn.disabled=true;btn.innerText="? PROCESANDO...";}
-  try{
-    const leerImg=(a)=>new Promise(res=>{const r=new FileReader();r.readAsDataURL(a);r.onload=e=>res(e.target.result);r.onerror=()=>res("");});
-    const fileH=document.getElementById('inputFotoHistoria')?.files[0];const fileT=document.getElementById('inputFotoTest')?.files[0];
-    let urlFoto=fileH?await comprimirImagen(await leerImg(fileH)):(document.getElementById('pUrlExamen')?.value||"");let urlTest=fileT?await comprimirImagen(await leerImg(fileT)):(document.getElementById('pUrlTest')?.value||"");
-    const listaTests=[];document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila=>{const nombre=fila.cells[0]?.querySelector('input')?.value.trim()||fila.cells[0]?.querySelector('span')?.innerText?.trim()||"";const span=fila.cells[1]?.querySelector('.resultado-print');const sel=fila.cells[1]?.querySelector('select');const resultado=(span?.innerText?.trim()&&span.innerText.trim()!=="---")?span.innerText.trim():(sel?.value||"---");const nota=fila.cells[2]?.querySelector('input')?.value?.trim()||"";if(nombre)listaTests.push({nombre,resultado,nota});});
-    const cfgSnap=await getDoc(doc(db,"configuracion","tarifas"));let porcGlobal=cfgSnap.exists()?(cfgSnap.data().porcentajeDoc||null):null;const montoVentaTotal=parseFloat(document.getElementById('precioVenta')?.value)||0;let totalGastos=0,pagoDoctorTotal=0;const detalleInsumos=[];const serviciosRealizados=[];
-    document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=porcGlobal||parseFloat(fila.getAttribute('data-porc'))||0;const nomServ=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();serviciosRealizados.push({nombre:nomServ,precio:precioServ});let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[??]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
-    let montoVacunaPendiente=0;if(window.vacunaPagadaAnteriormente){document.querySelectorAll('.servicio-principal').forEach(fila=>{if(normalizarNombre(fila.innerText).includes("vacuna"))montoVacunaPendiente+=parseFloat(fila.getAttribute('data-precio'))||0;});}
-    const montoVentaFinal=window.vacunaPagadaAnteriormente?Math.max(0,montoVentaTotal-montoVacunaPendiente):montoVentaTotal;const gastosFinal=window.vacunaPagadaAnteriormente?Math.max(0,totalGastos-montoVacunaPendiente*0.3):totalGastos;const pagoDoctorFinal=window.vacunaPagadaAnteriormente?Math.max(0,pagoDoctorTotal-montoVacunaPendiente*0.5):pagoDoctorTotal;
-    const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
-    const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
-    const data={cedula:dInput('hCI'),propietario:dInput('hProp'),paciente:dInput('hNombre'),especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:new Date().toLocaleDateString()};
-    await addDoc(collection(db,"consultas"),data);localStorage.removeItem('respaldoConsulta');localStorage.removeItem('respaldo_historia_activa');alert("? ?Consulta guardada con exito!");
-    _limpiarFormularioHistoria();
-    _limpiarNotasInternas();
-    if(imp)window.imprimirDocumento();
-  }catch(e){console.error("Error guardando:",e);alert("? Error: "+e.message);}
-  finally{if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}}
-};
-
-// --- AUTOCOMPLETAR POR CEDULA + ALERTA VACUNA + NOTAS INTERNAS ---
-// Verificar vacunas vencidas - funcion separada sin caracteres especiales
-async function _verificarVacunasVencidas(datos) {
-  if (!Array.isArray(datos.vacunasAplicadas) || datos.vacunasAplicadas.length === 0) return;
-  try {
-    const hoy = new Date();
-    const vencidas = [];
-    datos.vacunasAplicadas.forEach(function(vac) {
-      if (!vac.proxima) return;
-      const p = vac.proxima.split('/');
-      if (p.length === 3) {
-        const fp = new Date(p[2], p[1]-1, p[0]);
-        if (fp < hoy) {
-          vencidas.push((vac.vacuna || 'Vacuna') + ' vencio el ' + vac.proxima);
-        }
-      }
-    });
-    if (vencidas.length === 0) return;
-    const lista = vencidas.map(function(v) { return '- ' + v; }).join('<br>');
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Vacunas Vencidas',
-      html: '<p style="font-size:11px;color:#64748b;margin-bottom:8px;">Este paciente tiene vacunas atrasadas:</p>' +
-            '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px;text-align:left;">' +
-            '<p style="font-size:11px;color:#dc2626;font-weight:700;">' + lista + '</p>' +
-            '</div>',
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#dc2626',
-      timer: 8000,
-      timerProgressBar: true
-    });
-  } catch(e) { console.warn('Error verificando vacunas:', e); }
-}
-
-window.autocompletarPorCedula = async (ci) => {
-  if(!ci||ci.length<3)return;
-  const ciNorm = normalizarCedula(ci);
-  try{
-    // Buscar TODAS las consultas de esta cedula para encontrar todas las mascotas
-    let snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ciNorm),orderBy("fecha","desc")));
-    if(snapTodas.empty && ciNorm !== ci.trim()) {
-      snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim()),orderBy("fecha","desc")));
-    }
-    if(snapTodas.empty) return;
-
-    // Recopilar todas las mascotas unicas con sus datos mas recientes
-    const mascotasMap = new Map();
-    snapTodas.forEach(docSnap => {
-      const r = docSnap.data();
-      if (r.paciente && !mascotasMap.has(r.paciente.toUpperCase())) {
-        mascotasMap.set(r.paciente.toUpperCase(), r); // guardar datos completos
-      }
-    });
-
-    // Datos del propietario (del registro mas reciente)
-    const datosBase = snapTodas.docs[0].data();
-    const set=(id,val)=>{const el=document.getElementById(id);if(el){el.value=val||"";el.classList.add('bg-blue-50');setTimeout(()=>el.classList.remove('bg-blue-50'),1000);}};
-
-    // Llenar datos del propietario siempre
-    set('hProp', datosBase.propietario);
-    set('hTlf',  datosBase.telefono);
-    set('hMail', datosBase.correo||datosBase.email);
-    set('hDir',  datosBase.direccion);
-
-    // Alerta restriccion
-    if(datosBase.alerta){const el=document.getElementById('hProp');if(el){el.style.color="#b91c1c";el.style.fontWeight="bold";}alert("(!) ATENCION: Este cliente tiene una RESTRICCION ADMINISTRATIVA.");}
-
-    let datosSeleccionados = datosBase;
-
-    if (mascotasMap.size > 1) {
-      // Mostrar selector de mascotas
-      const mascotas = Array.from(mascotasMap.entries());
-      var htmlSel = '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Propietario: <b>' + (datosBase.propietario||'') + '</b></p>';
-      htmlSel += '<div style="display:flex;flex-direction:column;gap:6px;">';
-      mascotas.forEach(function(m) {
-        const r = m[1];
-        htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="' + m[0] + '" ' +
-          'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">' +
-          '<span>' + m[0] + '</span>' +
-          '<span style="font-size:9px;color:#64748b;font-weight:600;">' + (r.especie||'') + ' . ' + (r.raza||'') + '</span>' +
-          '</button>';
-      });
-      htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="__nueva__" ' +
-        'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">Nuevo paciente</button>';
-      htmlSel += '</div>';
-
-      const resSel = await Swal.fire({
-        title: '? ?Cual paciente viene hoy?',
-        html: htmlSel,
-        showConfirmButton: false,
-        showCancelButton: true,
-        cancelButtonText: 'Cancelar',
-        didOpen: function() {
-          document.querySelectorAll('.btn-sel-mascota-vet').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-              window._mascotaSelVet = this.dataset.nombre;
-              Swal.clickConfirm();
-            });
-          });
-        }
-      });
-
-      if (resSel.isDismissed) return;
-      const nombreSel = window._mascotaSelVet;
-      window._mascotaSelVet = null;
-
-      if (nombreSel === '__nueva__') {
-        // Solo llenar datos del propietario, limpiar mascota
-        set('hNombre',''); set('hEspecie',''); set('hRaza','');
-        set('hEdad',''); set('hSexo',''); set('hPeso',''); set('hColor',''); set('hFechaNac','');
-        _mostrarNotasInternas(ciNorm, datosBase.observacionesPermanentes || "");
-        return;
-      }
-
-      datosSeleccionados = mascotasMap.get(nombreSel) || datosBase;
-    }
-
-    // Llenar datos de la mascota seleccionada
-    set('hNombre',   datosSeleccionados.paciente);
-    set('hEspecie',  datosSeleccionados.especie);
-    set('hRaza',     datosSeleccionados.raza);
-    set('hEdad',     datosSeleccionados.edad);
-    set('hSexo',     datosSeleccionados.sexo);
-    set('hPeso',     datosSeleccionados.peso);
-    set('hColor',    datosSeleccionados.color);
-    set('hFechaNac', datosSeleccionados.fechaNacimiento);
-
-    // Verificar vacunas vencidas
-    await _verificarVacunasVencidas(datosSeleccionados);
-
-    // Notas internas
-    _mostrarNotasInternas(ciNorm, datosBase.observacionesPermanentes || "");
-
-  }catch(e){console.error("Error autocompletar:",e);}
-};
-
-// --- NOTAS INTERNAS POR PACIENTE ---
-function _mostrarNotasInternas(cedula, notasExistentes) {
-  const cont = document.getElementById('contNotasInternas');
-  const inp  = document.getElementById('inputNotasInternas');
-  if (!cont || !inp) return;
-  cont.classList.remove('hidden');
-  inp.value = notasExistentes || "";
-  inp.dataset.cedula = cedula;
-}
-
-function _limpiarNotasInternas() {
-  const cont = document.getElementById('contNotasInternas');
-  const inp  = document.getElementById('inputNotasInternas');
-  if (cont) cont.classList.add('hidden');
-  if (inp)  { inp.value = ""; inp.dataset.cedula = ""; }
-}
-
-window.guardarNotasInternas = async () => {
-  const inp    = document.getElementById('inputNotasInternas');
-  const cedula = inp?.dataset.cedula;
-  const notas  = inp?.value.trim() || "";
-  if (!cedula) { alert("No hay paciente cargado."); return; }
-  try {
-    // Actualizar todas las consultas de este CI con las notas
-    const snap = await getDocs(query(collection(db,"consultas"),where("cedula","==",cedula),orderBy("fecha","desc"),limit(1)));
-    if (!snap.empty) {
-      await updateDoc(doc(db,"consultas",snap.docs[0].id),{observacionesPermanentes:notas});
-      await Swal.fire({icon:'success',title:'Notas guardadas',timer:1400,showConfirmButton:false});
-    }
-  } catch(e){console.error(e);alert("? Error: "+e.message);}
-};
-
-// --- FOTOS ---
-window.previsualizarFotoHistoria = (event) => {
-  const files=event.target.files;const galeria=document.getElementById('previewHistoriaGallery');const cont=document.getElementById('previewHistoriaContainer');const hidden=document.getElementById('pUrlExamen');if(!files?.length||!galeria)return;
-  Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">X</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";
-};
-window.sincronizarHiddenHistoria=()=>{const galeria=document.getElementById('previewHistoriaGallery');const hidden=document.getElementById('pUrlExamen');if(!galeria||!hidden)return;const imgs=galeria.querySelectorAll('img');if(imgs.length===0){hidden.value="";document.getElementById('previewHistoriaContainer')?.classList.add('hidden');}else hidden.value=imgs[imgs.length-1].src;};
-window.previsualizarFotoTest=(event)=>{const files=event.target.files;const galeria=document.getElementById('previewTestGallery');const cont=document.getElementById('previewTestContainer');const hidden=document.getElementById('pUrlTest');if(!files?.length||!galeria)return;Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenTest()">X</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";};
-window.sincronizarHiddenTest=()=>{const galeria=document.getElementById('previewTestGallery');const hidden=document.getElementById('pUrlTest');if(!galeria||!hidden)return;const imgs=galeria.querySelectorAll('img');if(imgs.length===0){hidden.value="";document.getElementById('previewTestContainer')?.classList.add('hidden');}else hidden.value=imgs[imgs.length-1].src;};
-
-// --- QR MOVIL ---
-window.generarEnlaceMovil=(tipo='historia')=>{const cedula=document.getElementById('hCI')?.value.trim();if(!cedula)return alert("(!) Escribe la Cedula primero.");const qrDivID=tipo==='test'?"qrcodeTest":"qrcode";const contID=tipo==='test'?"qrContainerTest":"qrContainer";const qrDiv=document.getElementById(qrDivID);if(qrDiv)qrDiv.innerHTML="";const url=`${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;new QRCode(qrDiv,{text:url,width:128,height:128});document.getElementById(contID)?.classList.remove('hidden');const ahora=new Date();if(tipo==='historia')window._ultimaSesionQRHistoria=ahora;if(tipo==='test')window._ultimaSesionQRTest=ahora;const q=query(collection(db,"transferencias_fotos"),where("ci","==",cedula),where("tipo","==",tipo));if(tipo==='historia'&&window._unsubHist)window._unsubHist();if(tipo==='test'&&window._unsubTest)window._unsubTest();const unsub=onSnapshot(q,snap=>{const galeriaId=tipo==='test'?'previewTestGallery':'previewHistoriaGallery';const contIdG=tipo==='test'?'previewTestContainer':'previewHistoriaContainer';const hiddenId=tipo==='test'?'pUrlTest':'pUrlExamen';const galeria=document.getElementById(galeriaId);const cont=document.getElementById(contIdG);const hidden=document.getElementById(hiddenId);if(!galeria||!cont)return;const urlsExist=new Set(Array.from(galeria.querySelectorAll('img')).map(img=>img.src));const inicio=tipo==='historia'?window._ultimaSesionQRHistoria:window._ultimaSesionQRTest;snap.forEach(docSnap=>{const d=docSnap.data();if(!d.url)return;if(d.fecha?.toDate&&d.fecha.toDate()<inicio)return;if(urlsExist.has(d.url))return;urlsExist.add(d.url);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${d.url}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHidden${tipo==='test'?'Test':'Historia'}()">X</button>`;galeria.appendChild(wrapper);if(hidden)hidden.value=d.url;});if(urlsExist.size>0)cont.classList.remove('hidden');});if(tipo==='historia')window._unsubHist=unsub;if(tipo==='test')window._unsubTest=unsub;};
-window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emerald-600':'bg-blue-600';const colorTx=tipo==='test'?'text-emerald-400':'text-blue-400';document.body.innerHTML=`<div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center"><h1 class="text-xl font-black uppercase italic ${colorTx}">${tipo==='test'?'? TEST':'? HISTORIA'}</h1><p class="text-slate-400 text-[10px] mb-6 uppercase">CI: <b>${ci}</b></p><input type="file" id="mobileFileCamera" accept="image/*" capture="environment" class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><input type="file" id="mobileFileGallery" accept="image/*" multiple class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><div class="flex flex-col gap-3"><button onclick="document.getElementById('mobileFileCamera').click()" class="w-full ${colorB} py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">TOMAR FOTO</button><button onclick="document.getElementById('mobileFileGallery').click()" class="w-full bg-slate-600 py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">GALERIA</button></div><div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo...</div></div></div>`;};
-window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
-
-// --- IMPRIMIR ---
-window.imprimirDocumento=()=>{const doctor=document.getElementById('selectDoctor')?.value.toUpperCase()||"";const hTrat=document.getElementById('hTratamiento');const hPrint=document.getElementById('hTratamientoPrint');if(hTrat&&hPrint)hPrint.innerText=hTrat.value;try{const galPrev=document.getElementById('previewHistoriaGallery');const galPrint=document.getElementById('printHistoriaGallery');const contP=document.getElementById('printExamenCont');if(galPrev&&galPrint&&contP){galPrint.innerHTML="";const imgs=galPrev.querySelectorAll('img');imgs.forEach(img=>{const w=document.createElement('div');w.className="max-w-[45%] border border-slate-300 rounded-lg overflow-hidden";w.innerHTML=`<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;galPrint.appendChild(w);});contP.classList.toggle('hidden',imgs.length===0);}}catch(e){console.warn(e);}setTimeout(()=>window.print(),500);};
-window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamiento')?.value||"";const paciente=document.getElementById('hNombre')?.value||"";const prop=document.getElementById('hProp')?.value||"";const urlExamen=document.getElementById('pUrlExamen')?.value||"";const win=window.open("","_blank","width=800,height=600");if(!win)return;win.document.write(`<html><head><title>Receta - AVIPET</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;}.header{border-bottom:3px solid #3b82f6;padding-bottom:10px;margin-bottom:20px;}h1{font-size:24px;margin:0;color:#1e3a8a;}.content{background:#f8fafc;padding:20px;border-radius:8px;border:1px solid #e2e8f0;min-height:200px;}pre{white-space:pre-wrap;font-size:14px;line-height:1.6;margin:0;}</style></head><body><div class="header"><h1>AVIPET - Centro Veterinario</h1><h2 style="font-size:13px;color:#64748b;margin:5px 0;">Paciente: <b>${paciente}</b> | Propietario: ${prop}</h2></div><div class="content"><pre>${texto}</pre></div>${urlExamen?`<div style="margin-top:20px;text-align:center;"><img src="${urlExamen}" style="max-width:350px;border-radius:10px;border:1px solid #ddd;"></div>`:''}<div style="margin-top:30px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #eee;padding-top:10px;">Documento generado por AVIPET.</div></body></html>`);win.document.close();win.onload=()=>setTimeout(()=>{win.focus();win.print();},300);};
-
-// --- HOJA DE VACUNAS ---
-window.abrirHojaVacunasDesdeHistoria=()=>{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};const f=new Date();set('hv_fecha',`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);const campos={'hv_propietario':'hProp','hv_cedula':'hCI','hv_telefono':'hTlf','hv_direccion':'hDir','hv_especie':'hEspecie','hv_raza':'hRaza','hv_paciente':'hNombre','hv_edad':'hEdad','hv_sexo':'hSexo','hv_color':'hColor','hv_peso':'hPeso'};Object.entries(campos).forEach(([d,o])=>set(d,dVal(o)));set('hv_fechaNacimiento',dVal('hFechaNac'));document.getElementById('sectionHistoria')?.classList.add('hidden');const v=document.getElementById('sectionHojaVacunas');if(v){v.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}};
-
-// --- SALA DE ESPERA ---
-window.enviarAColaEspera=async()=>{
-  try{
-    const dVal=(id)=>document.getElementById(id)?.value.trim()||"";
-    if(!dVal('hCI')||!dVal('hNombre')||!dVal('hProp')){
-      alert("(!) Cedula, Propietario y Paciente son obligatorios.");return;
-    }
-
-    // Preguntar a que doctor se asigna
-    var htmlDocSel = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Asignar <b>' + dVal('hNombre') + '</b> a:</p>';
-    htmlDocSel += '<div style="display:flex;flex-direction:column;gap:8px;">';
-    htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">Dr. Darwin Sandoval</button>';
-    htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">Dr. Joan Silva</button>';
-    htmlDocSel += '</div>';
-    const resDoc = await Swal.fire({
-      title: 'Asignar Doctor',
-      html: htmlDocSel,
-      showConfirmButton: false,
-      showCancelButton: true,
-      cancelButtonText: 'Cancelar',
-      didOpen: function() {
-        document.getElementById('btnDocDarwin').addEventListener('click', function() {
-          window._docEspera = 'Darwin Sandoval'; Swal.clickConfirm();
-        });
-        document.getElementById('btnDocJoan').addEventListener('click', function() {
-          window._docEspera = 'Joan Silva'; Swal.clickConfirm();
-        });
-      }
-    });
-    if (resDoc.isDismissed) return;
-    const doctorAsignado = window._docEspera || '';
-    window._docEspera = null;
-    if (!doctorAsignado) return;
-
-    const data={
-      cedula:dVal('hCI'),propietario:dVal('hProp'),paciente:dVal('hNombre'),
-      especie:dVal('hEspecie'),raza:dVal('hRaza'),edad:dVal('hEdad'),
-      sexo:dVal('hSexo'),peso:dVal('hPeso'),telefono:dVal('hTlf'),
-      correo:dVal('hMail'),direccion:dVal('hDir'),color:dVal('hColor'),
-      fechaNacimiento:dVal('hFechaNac'),
-      doctorAsignado,
-      fechaIngreso:serverTimestamp(),
-      fechaSimple:new Date().getDate()+'/'+(new Date().getMonth()+1)+'/'+new Date().getFullYear(),
-      estado:"en_espera"
-    };
-
-    await addDoc(collection(db,"espera"),data);
-    localStorage.removeItem("respaldo_historia_activa");
-    _limpiarFormularioHistoria();
-    _limpiarNotasInternas();
-    await Swal.fire({
-      icon:"success",
-      title:"? Enviado a Sala de Espera",
-      html:"<b>"+data.paciente+"</b><br><span class='text-[11px] text-slate-500'>Asignado al Dr. "+doctorAsignado+"</span>",
-      timer:2500,showConfirmButton:false
-    });
-  }catch(e){console.error(e);alert("? Error: "+e.message);}
-};
-window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} . CI: ${p.cedula}</p><p class="text-[8px] font-black ${colorDoc} uppercase">${docAsig}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
-window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();
-  // Verificar si el doctor activo es el correcto
-  const doctorActivo = window.doctorVerificado || "";
-  const docAsig = doctorAsignado || d.doctorAsignado || "";
-  if (docAsig && doctorActivo && !doctorActivo.includes(docAsig.split(" ")[0]) && !docAsig.includes(doctorActivo.split(" ")[0])) {
-    const res = await Swal.fire({
-      icon: "warning",
-      title: "(!) Paciente de otro doctor",
-      html: `<p class="text-[11px] text-slate-600">Este paciente fue asignado al <b>${docAsig}</b>.<br><br>Estas conectado como <b>${doctorActivo}</b>.<br><br>?Deseas atenderlo de todas formas?</p>`,
-      showCancelButton: true,
-      confirmButtonText: "Si, atender",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#f59e0b"
-    });
-    if (!res.isConfirmed) return;
-  }const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};set('hCI',d.cedula);set('hProp',d.propietario);set('hNombre',d.paciente);set('hEspecie',d.especie);set('hRaza',d.raza);set('hEdad',d.edad);set('hSexo',d.sexo);set('hPeso',d.peso);set('hTlf',d.telefono);set('hMail',d.correo);set('hDir',d.direccion);set('hColor',d.color);set('hFechaNac',d.fechaNacimiento);await updateDoc(doc(db,"espera",idEspera),{estado:"atendiendo",fechaAtencion:serverTimestamp()});window.showTab('historia');alert(`? ${d.paciente} cargado.`);}catch(e){console.error(e);alert("? Error: "+e.message);}};
-window.eliminarDeSalaEspera=async(idEspera)=>{if(!confirm("?Eliminar de la sala de espera?"))return;try{await updateDoc(doc(db,"espera",idEspera),{estado:"eliminado",fechaEliminacion:serverTimestamp()});alert("? Eliminado.");window.cargarListaEspera();}catch(e){console.error(e);alert("? Error: "+e.message);}};
-
-// --- LIMPIAR FORMULARIO COMPLETO -------------------------------------------
-function _limpiarFormularioHistoria() {
-  // Campos de texto
-  ['hCI','hProp','hNombre','hEspecie','hRaza','hSexo','hEdad',
-   'hPeso','hColor','hTlf','hMail','hDir','hTratamiento','hFechaNac']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
-
-  // Checkbox alerta
-  const chkAlerta = document.getElementById('hAlerta');
-  if (chkAlerta) { chkAlerta.checked = false; }
-
-  // Fotos galeria historia
-  const galeriaH = document.getElementById('previewHistoriaGallery');
-  if (galeriaH) galeriaH.innerHTML = "";
-  document.getElementById('previewHistoriaContainer')?.classList.add('hidden');
-  const pUrlExamen = document.getElementById('pUrlExamen');
-  if (pUrlExamen) pUrlExamen.value = "";
-
-  // Fotos galeria test
-  const galeriaT = document.getElementById('previewTestGallery');
-  if (galeriaT) galeriaT.innerHTML = "";
-  document.getElementById('previewTestContainer')?.classList.add('hidden');
-  const pUrlTest = document.getElementById('pUrlTest');
-  if (pUrlTest) pUrlTest.value = "";
-
-  // QR containers
-  document.getElementById('qrContainer')?.classList.add('hidden');
-  document.getElementById('qrContainerTest')?.classList.add('hidden');
-
-  // Servicios y tabla de insumos
-  const visual = document.getElementById('visualizacionServicios');
-  if (visual) visual.innerHTML = '<p class="text-[10px] text-slate-400 italic">Sin servicios registrados</p>';
-  const cuerpo = document.getElementById('listaInsumosDinamica');
-  if (cuerpo) cuerpo.innerHTML = "";
-  document.getElementById('contenedorInsumos')?.classList.add('hidden');
-  insumosBaseMedAgregados = false;
-
-  // Montos
-  const pv = document.getElementById('precioVenta');
-  if (pv) pv.value = "0.00";
-  const md = document.getElementById('montoDoctor');
-  if (md) md.innerText = "$ 0.00";
-
-  // Vacuna pagada
-  const chkVac = document.getElementById('chkVacunaPagada');
-  if (chkVac) chkVac.checked = false;
-  window.vacunaPagadaAnteriormente = false;
-  window.toggleVacunaPagada(false);
-
-  // Color de advertencia en propietario
-  const hProp = document.getElementById('hProp');
-  if (hProp) { hProp.style.color = ""; hProp.style.fontWeight = ""; }
-
-  // Selector de medicamentos y servicios
-  const selServ = document.getElementById('selectorServicios');
-  if (selServ) selServ.value = "";
-  const selMed = document.getElementById('selectorMedicamentos');
-  if (selMed) selMed.value = "";
-
-  // Tratamiento print
-  const hTratPrint = document.getElementById('hTratamientoPrint');
-  if (hTratPrint) hTratPrint.innerText = "";
-}
-window._limpiarFormularioHistoria = _limpiarFormularioHistoria;
-
-// --- EDITAR CONSULTA DESDE BUSCADOR ----------------------------------------
-window.abrirConsultaParaEditar = async (idConsulta) => {
-  // Confirmar con el usuario
-  const res = await Swal.fire({
-    title: '? Editar Consulta',
-    html: `<p class="text-[11px] text-slate-600">Se cargara esta consulta en el formulario de Historia Clinica para que puedas editarla y guardar los cambios.<br><br><b>?Continuar?</b></p>`,
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Si, editar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#2563eb'
-  });
-  if (!res.isConfirmed) return;
-
-  try {
-    const snap = await getDoc(doc(db, "consultas", idConsulta));
-    if (!snap.exists()) { alert("? Consulta no encontrada."); return; }
-    const d = snap.data();
-
-    // Guardar ID para actualizar en lugar de crear nuevo
-    window._editandoConsultaId = idConsulta;
-
-    // Ir a Historia Clinica y limpiar primero
-    window.showTab('historia');
-    await new Promise(r => setTimeout(r, 300));
-    _limpiarFormularioHistoria();
-
-    // Llenar los campos con los datos existentes
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
-    set('hCI',       d.cedula);
-    set('hProp',     d.propietario);
-    set('hNombre',   d.paciente);
-    set('hEspecie',  d.especie);
-    set('hRaza',     d.raza);
-    set('hSexo',     d.sexo);
-    set('hEdad',     d.edad);
-    set('hPeso',     d.peso);
-    set('hColor',    d.color);
-    set('hTlf',      d.telefono);
-    set('hMail',     d.correo || d.email);
-    set('hDir',      d.direccion);
-    set('hFechaNac', d.fechaNacimiento);
-    set('hTratamiento', d.tratamiento);
-
-    // Checkbox alerta
-    const chkAlerta = document.getElementById('hAlerta');
-    if (chkAlerta) chkAlerta.checked = d.alerta || false;
-
-    // Foto principal (si existe)
-    if (d.urlExamen) {
-      const pUrlExamen = document.getElementById('pUrlExamen');
-      if (pUrlExamen) pUrlExamen.value = d.urlExamen;
-      const galeriaH = document.getElementById('previewHistoriaGallery');
-      const contH    = document.getElementById('previewHistoriaContainer');
-      if (galeriaH && d.urlExamen) {
-        const wrapper = document.createElement('div');
-        wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
-        wrapper.innerHTML = `<img src="${d.urlExamen}" class="w-full h-full object-cover">
-          <button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
-                  onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">X</button>`;
-        galeriaH.appendChild(wrapper);
-        contH?.classList.remove('hidden');
-      }
-    }
-
-    // Restaurar servicios realizados
-    if (Array.isArray(d.serviciosRealizados) && d.serviciosRealizados.length > 0) {
-      for (const serv of d.serviciosRealizados) {
-        if (serv.nombre) {
-          await window.insertarServicio(serv.nombre);
-        }
-      }
-    } else if (d.montoVenta > 0) {
-      // Si no hay serviciosRealizados pero hay monto, mostrar aviso
-      const visual = document.getElementById('visualizacionServicios');
-      if (visual) {
-        visual.innerHTML = '<p style="font-size:10px;color:#f59e0b;font-weight:700;">Esta consulta fue guardada sin detalle de servicios. Agrega los servicios manualmente.</p>';
-      }
-    }
-
-    // Mostrar banner de edicion
-    _mostrarBannerEdicion(d.paciente, d.fechaSimple);
-
-    await Swal.fire({
-      icon: 'info',
-      title: '? Modo Edicion',
-      html: `<p class="text-[11px]">Datos de <b>${d.paciente}</b> cargados.<br>Modifica lo que necesites y presiona <b>"Guardar Datos"</b>.</p>`,
-      timer: 3000,
-      showConfirmButton: false
-    });
-
-  } catch (e) {
-    console.error(e);
-    alert("? Error al cargar: " + e.message);
-  }
-};
-
-function _mostrarBannerEdicion(paciente, fecha) {
-  let banner = document.getElementById('bannerModoEdicion');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'bannerModoEdicion';
-    banner.className = "no-print mb-3 bg-amber-50 border-2 border-amber-400 rounded-xl p-3 flex items-center justify-between";
-    // Insertar antes del primer campo del formulario
-    const section = document.getElementById('sectionHistoria');
-    const firstChild = section?.querySelector('.grid');
-    if (firstChild) section.insertBefore(banner, firstChild);
-  }
-  banner.innerHTML = `
-    <div class="flex items-center gap-2">
-      <span class="text-xl font-black text-slate-400">!</span>
-      <div>
-        <p class="text-[10px] font-black text-amber-700 uppercase">Modo Edicion</p>
-        <p class="text-[9px] text-amber-600">Editando: <b>${paciente}</b> . ${fecha || ''}</p>
-      </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+ <meta charset="UTF-8">
+ <!-- AVIPET build 20260508205540 -->
+ <link rel="manifest" href="/manifest.json">
+ <meta name="theme-color" content="#1d4ed8">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="default">
+ <meta name="apple-mobile-web-app-title" content="AVIPET">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>AVIPET - SISTEMA INTEGRAL PROFESIONAL</title>
+
+ <!-- CDN -->
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+ <style>
+ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; color:#0f172a; }
+ .text-slate-400 { color: #475569 !important; }
+ .text-slate-300 { color: #64748b !important; }
+ .text-gray-400 { color: #475569 !important; }
+ .text-gray-300 { color: #64748b !important; }
+ .text-slate-500 { color: #334155 !important; }
+ .text-gray-500 { color: #374151 !important; }
+ .text-slate-600 { color: #1e293b !important; }
+ .text-slate-700 { color: #0f172a !important; }
+ .text-gray-600 { color: #1f2937 !important; }
+ .text-gray-700 { color: #111827 !important; }
+ input, select, textarea { color: #0f172a !important; }
+ input::placeholder { color: #64748b !important; }
+ textarea::placeholder { color: #64748b !important; }
+ label { color: #1e293b; }
+ .italic { color: inherit; }
+ .swal2-title { color: #0f172a !important; }
+ .swal2-html-container { color: #1e293b !important; }
+ .swal2-content { color: #1e293b !important; }
+ .print-area { background:#fff; border-radius:28px; box-shadow:0 10px 25px -5px rgba(0,0,0,.05); transition:all .3s ease; border:1px solid rgba(226,232,240,.8); }
+ .header-box { border:1px solid #cbd5e1; padding:4px; text-align:center; font-weight:bold; font-size:10px; background:#f8fafc; text-transform:uppercase; margin-bottom:8px; }
+ input,textarea { outline:none; background:transparent; width:100%; transition:all .2s; }
+ input:focus { border-bottom:2px solid #2563eb !important; }
+ button { transition:all .2s cubic-bezier(.4,0,.2,1); box-shadow:0 4px 6px -1px rgba(0,0,0,.1); }
+ button:active { transform:scale(.95); }
+ button:hover { filter:brightness(1.1); }
+ .menu-desplegable { width:100%; padding:14px; border:2px solid #3b82f6; border-radius:10px; background-color:#eff6ff; font-weight:bold; color:#1e40af; font-size:13px; margin-bottom:10px; cursor:pointer; appearance:none; background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat:no-repeat; background-position:right 1rem center; background-size:1em; }
+ @media screen { #doctorPrint { display:none; } #hTratamientoPrint { display:none; } }
+ @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+ .animate-fadeIn { animation:fadeIn .3s ease-out; }
+ @media print {
+ * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+ .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print),#hTratamiento,.no-imprimir { display:none !important; }
+ span.resultado-print { display:inline !important; visibility:visible !important; }
+ img,.print-area img { display:block !important; max-width:100%; opacity:1 !important; }
+ #sectionHojaVacunas:not(.hidden),#sectionHojaTest:not(.hidden) { display:block !important; height:auto !important; min-height:0 !important; padding-top:4px !important; }
+ #sectionHojaVacunas { min-height:0 !important; height:auto !important; overflow:visible !important; }
+ #sectionHojaVacunas footer { position:static !important; margin-top:2px !important; }
+ #bloqueVacunas { page-break-inside:avoid !important; }
+ input,textarea,select { border:none !important; box-shadow:none !important; background:transparent !important; color:black !important; font-weight:bold !important; }
+ .print\:hidden { display:none !important; }
+ .resultado-print { display:inline !important; }
+ #printExamenCont,#printTestCont { display:block !important; page-break-inside:avoid; margin-top:8px; text-align:center; }
+ .foto-anexo { max-width:100% !important; max-height:350px !important; object-fit:contain; border:1px solid #e2e8f0; border-radius:12px; }
+ body { background-color:white !important; margin:0.3cm !important; }
+ }
+ @page { size:letter; margin:0.5cm 0.5cm 0.4cm 0.5cm; }
+ @media screen and (max-width:640px) {
+ #sectionHojaVacunas header,.print-area header { flex-direction:column !important; text-align:center !important; gap:10px !important; }
+ #sectionHojaVacunas img,.print-area img { margin:0 auto !important; display:block !important; }
+ }
+ </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800">
+
+<main id="adminSection" class="max-w-5xl mx-auto p-2 md:p-4">
+
+ <!-- NAVEGACIÓN + BADGE SESIÓN -->
+ <nav class="no-print bg-white sticky top-0 z-40 border-b-2 border-gray-200 mb-4">
+ <div class="flex justify-between items-center px-3 pt-2 pb-1">
+ <div id="badgeSesionActiva">
+ <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-full px-3 py-1">
+ <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+ <span class="text-[9px] font-black text-slate-500 uppercase">Sin sesión</span>
+ </div>
+ </div>
+ <button id="btnCerrarSesion" onclick="window.cerrarSesion()" class="hidden text-[9px] font-black text-red-500 uppercase border border-red-200 bg-red-50 px-3 py-1 rounded-full hover:bg-red-500 hover:text-white transition-all"> Cerrar Sesión</button>
+ </div>
+ <div class="hidden sm:flex justify-around py-1">
+ <button onclick="window.showTab('historia')" data-tab="historia" class="py-2 text-[11px] px-2 uppercase font-bold">Historia Clínica</button>
+ <button onclick="window.showTab('espera')" data-tab="espera" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Sala Espera</button>
+ <button onclick="window.showTab('buscador')" data-tab="buscador" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Buscador</button>
+ <button onclick="window.showTab('peluqueria')" data-tab="peluqueria" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Peluquería</button>
+ <button onclick="window.showTab('reporte')" data-tab="reporte" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Finanzas</button>
+ <button onclick="window.showTab('inventario')" data-tab="inventario" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Inventario</button>
+ <button onclick="window.showTab('config_precios')" data-tab="config_precios" class="px-4 py-2 font-black text-[10px] uppercase bg-slate-100 rounded-lg shadow-sm border border-slate-200"> Ajustes</button>
+ </div>
+ <div class="sm:hidden px-2 py-2">
+ <select class="w-full border border-slate-300 rounded-lg px-2 py-2 text-[11px] font-bold uppercase text-slate-700 bg-white" onchange="if(typeof window.showTab==='function')window.showTab(this.value)">
+ <option value="historia">Historia Clínica</option>
+ <option value="espera">Sala de Espera</option>
+ <option value="buscador">Buscador</option>
+ <option value="peluqueria">Peluquería</option>
+ <option value="reporte">Finanzas / Caja</option>
+ <option value="inventario">Inventario</option>
+ <option value="config_precios">Ajustes de Precios</option>
+ </select>
+ </div>
+ </nav>
+
+ <!-- HISTORIA CLÍNICA -->
+ <section id="sectionHistoria" class="hidden bg-white p-4 shadow-sm border border-slate-200 rounded-xl print-area">
+
+ <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 pb-4 mb-4" style="min-height:100px;">
+ <div class="flex items-center">
+ <div class="relative w-48 flex flex-col items-center sm:items-start">
+ <img src="avipet.png" alt="Logo Avipet" class="w-full h-24 object-contain">
+ <p class="text-[10px] font-bold text-slate-700 mt-[-14px] uppercase tracking-wider">RIF: J-00068577-0</p>
+ </div>
+ </div>
+ <div class="flex flex-col items-end text-right z-10">
+ <select id="selectDoctor" onchange="if(typeof window.validarAccesoDoctor==='function'){window.validarAccesoDoctor(this.value);}else{alert('Sistema cargando, intenta en un momento.');this.value='';}"
+ class="no-print text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 outline-none mb-1">
+ <option value="">-- SELECCIONE DOCTOR --</option>
+ <option value="Darwin Sandoval">DR. DARWIN SANDOVAL</option>
+ <option value="Joan Silva">DR. JOAN SILVA</option>
+ </select>
+ <div class="no-print mt-1 flex gap-2 justify-end">
+ <button type="button" class="text-[9px] text-blue-500 underline font-bold"
+ onclick="window.cambiarPinDoctor(document.getElementById('selectDoctor').value||'')">Cambiar mi PIN</button>
+ <button type="button" class="text-[9px] text-red-500 underline font-bold"
+ onclick="window.solicitarCambioPinDoctor()">Olvidé mi PIN</button>
+ </div>
+ <div id="datosDoctorPrint" class="hidden print:block text-center mt-1 border-t border-slate-300 pt-1">
+ <p id="dpNombre" class="font-black text-[11px] text-slate-800 uppercase"></p>
+ <p id="dpEspecialidad" class="text-[9px] text-slate-600">Médico Veterinario</p>
+ <p id="dpCredenciales" class="text-[9px] text-slate-600"></p>
+ <p id="dpTelefono" class="text-[9px] text-slate-600"></p>
+ </div>
+ </div>
+ </div>
+
+ <div class="grid grid-cols-1 md:grid-cols-2 border border-slate-400 text-[11px] mb-4">
+ <div class="p-3 border-b md:border-b-0 md:border-r border-slate-400 space-y-2">
+ <div class="header-box italic">Ficha Técnica de Mascota</div>
+ <div class="grid grid-cols-2 gap-2">
+ <div class="col-span-2">
+ <label class="text-[9px] font-bold text-slate-400">MASCOTA</label>
+ <input id="hNombre" class="border-b w-full font-bold uppercase text-blue-700">
+ </div>
+ <div><label class="text-[9px] font-bold text-slate-400">ESPECIE</label><input id="hEspecie" class="border-b w-full uppercase"></div>
+ <div><label class="text-[9px] font-bold text-slate-400">RAZA</label><input id="hRaza" class="border-b w-full uppercase"></div>
+ </div>
+ <div class="grid grid-cols-2 gap-2">
+ <div><label class="text-[9px] font-bold text-slate-400">PESO (KG)</label><input id="hPeso" class="border-b w-full text-[11px]" placeholder="0.00"></div>
+ <div><label class="text-[9px] font-bold text-slate-400">F. NACIMIENTO</label><input id="hFechaNac" type="date" class="border-b w-full text-[10px]"></div>
+ </div>
+ <div class="grid grid-cols-3 gap-1">
+ <div><label class="text-[9px] font-bold text-slate-400">EDAD</label><input id="hEdad" class="border-b w-full uppercase"></div>
+ <div><label class="text-[9px] font-bold text-slate-400">SEXO</label><input id="hSexo" class="border-b w-full uppercase"></div>
+ <div><label class="text-[9px] font-bold text-slate-400">COLOR</label><input id="hColor" class="border-b w-full uppercase"></div>
+ </div>
+ </div>
+ <div class="p-3 space-y-2">
+ <div class="header-box italic">Datos del Propietario</div>
+ <div>
+ <div class="flex justify-between items-center">
+ <label class="text-[9px] font-bold text-slate-400">NOMBRE Y APELLIDO</label>
+ <label class="flex items-center gap-1 cursor-pointer no-print opacity-60">
+ <input type="checkbox" id="hAlerta" class="w-3 h-3 accent-red-600">
+ <span class="text-[8px] font-bold text-slate-400 italic">Ref. Interna</span>
+ </label>
+ </div>
+ <input id="hProp" class="border-b w-full uppercase">
+ </div>
+ <div class="grid grid-cols-2 gap-2">
+ <div><label class="text-[9px] font-bold text-slate-400">CÉDULA</label>
+ <input id="hCI" onblur="window.autocompletarPorCedula(this.value); if(typeof respaldarProgresoLocal==='function') respaldarProgresoLocal();" oninput="if(typeof respaldarProgresoLocal==='function') respaldarProgresoLocal();" class="border-b w-full font-bold text-blue-700"></div>
+ <div><label class="text-[9px] font-bold text-slate-400">TELÉFONO</label><input id="hTlf" class="border-b w-full"></div>
+ </div>
+ <div><label class="text-[9px] font-bold text-slate-400">CORREO ELECTRÓNICO</label><input id="hMail" class="border-b w-full"></div>
+ <div><label class="text-[9px] font-bold text-slate-400">DIRECCIÓN</label><input id="hDir" class="border-b w-full uppercase text-[10px]"></div>
+ </div>
+ </div>
+
+ <div id="contNotasInternas" class="no-print hidden mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
+ <div class="flex justify-between items-center mb-1">
+ <label class="text-[9px] font-black text-amber-700 uppercase tracking-widest">Observaciones Permanentes del Paciente</label>
+ <button type="button" onclick="window.guardarNotasInternas()"
+ class="text-[8px] font-black bg-amber-500 text-white px-3 py-1 rounded-lg uppercase hover:bg-amber-600 transition-all">Guardar Notas</button>
+ </div>
+ <textarea id="inputNotasInternas" rows="2"
+ class="w-full border border-amber-200 rounded-lg p-2 text-[10px] font-bold text-amber-800 bg-white outline-none focus:border-amber-400"
+ placeholder="Ej: Paciente agresivo. Propietario moroso. Alérgico a penicilina..."></textarea>
+ </div>
+
+ <div class="border border-slate-400 mb-6 rounded-lg overflow-hidden bg-white shadow-sm">
+ <div class="bg-slate-100 p-3 no-print border-b border-slate-300">
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+ <div>
+ <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">Añadir Servicios:</label>
+ <select id="selectorServicios" class="menu-desplegable w-full p-2 border border-slate-400 rounded bg-white text-xs font-bold"
+ onchange="window.insertarServicio(this.value)">
+ <option value="">-- SELECCIONE UN SERVICIO --</option>
+ <optgroup label=" CONSULTAS">
+ <option value="CONSULTA GENERAL">CONSULTA GENERAL ($30.00)</option>
+ <option value="CONSULTA OFTALMOLÓGICA">CONSULTA OFTALMOLÓGICA</option>
+ <option value="CONSULTA CAMADA 3-4 CACHORROS">CONSULTA CAMADA 3-4 CACHORROS</option>
+ <option value="CONSULTA CAMADA HASTA 8 CACHORROS">CONSULTA CAMADA HASTA 8 CACHORROS</option>
+ <option value="CONSULTA CAMADA MAS DE 8 CACHORROS">CONSULTA CAMADA MAS DE 8 CACHORROS</option>
+ <option value="CONSULTA DE EMERGENCIA">CONSULTA DE EMERGENCIA</option>
+ </optgroup>
+ <optgroup label=" VACUNAS">
+ <option value="VACUNA SEXTUPLE">VACUNA SEXTUPLE</option>
+ <option value="VACUNA PUPPY">VACUNA PUPPY</option>
+ <option value="VACUNA ANTIRRÁBICA">VACUNA ANTIRRÁBICA</option>
+ <option value="VACUNA KC (TOS DE LAS PERRERAS)">VACUNA KC (TOS DE LAS PERRERAS)</option>
+ <option value="VACUNA TRIPLE FELINA">VACUNA TRIPLE FELINA</option>
+ <option value="VACUNA QUINTUPLE FELINA">VACUNA QUINTUPLE FELINA</option>
+ <option value="VACUNA BIOVETA">VACUNA BIOVETA</option>
+ </optgroup>
+ <optgroup label=" LABORATORIO">
+ <option value="HEMATOLOGÍA COMPLETA">HEMATOLOGÍA COMPLETA</option>
+ <option value="QUÍMICA SANGUÍNEA">QUÍMICA SANGUÍNEA</option>
+ <option value="HEMATOLOGIA + QUIMICA + HEMOPARASITOS">COMBO LAB COMPLETO</option>
+ <option value="EXAMEN DE HECES">EXAMEN DE HECES</option>
+ <option value="EXAMENES DE ORINA">EXAMENES DE ORINA</option>
+ <option value="CITOLOGIA 1 OIDO">CITOLOGÍA 1 OÍDO</option>
+ <option value="CITOLOGIA 2 OIDOS">CITOLOGÍA 2 OÍDOS</option>
+ <option value="RASPADO PIEL">RASPADO PIEL</option>
+ <option value="PERFIL ANEMICO">PERFIL ANÉMICO</option>
+ </optgroup>
+ <optgroup label=" TESTS RÁPIDOS">
+ <option value="DESCARTE HEMOPARASITO">TEST HEMOPARÁSITO</option>
+ <option value="DISTEMPER">TEST DISTEMPER</option>
+ <option value="PARVOVIRUS - CORONAVIRUS">TEST PARVOVIRUS</option>
+ <option value="FILARIASIS">TEST FILARIASIS</option>
+ <option value="SIDA - LEUCEMIA">TEST SIDA - LEUCEMIA</option>
+ <option value="TEST HELICOBACTER PYLORI AG">TEST HELICOBACTER</option>
+ </optgroup>
+ <optgroup label=" REFERIDOS">
+ <option value="REFERIDO: EXAMEN DE HECES">REFERIDO: HECES</option>
+ <option value="REFERIDO: EXAMENES DE ORINA">REFERIDO: ORINA</option>
+ <option value="REFERIDO: CULTIVOS">REFERIDO: CULTIVOS</option>
+ <option value="REFERIDO: DESCARTE HEMOPARASITO">REFERIDO: HEMOPARÁSITO</option>
+ <option value="REFERIDO: DISTEMPER">REFERIDO: DISTEMPER</option>
+ <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS</option>
+ </optgroup>
+ <optgroup label=" OTROS PROCEDIMIENTOS">
+ <option value="ABSCESO">ABSCESO</option>
+ <option value="ECOGRAFÍA">ECOGRAFÍA</option>
+ <option value="COLOCACION VIA">COLOCACIÓN DE VÍA</option>
+ <option value="ADMINISTRACION MEDICINA">ADMINISTRACIÓN MEDICINA</option>
+ <option value="TOMA DE MUESTRA SANGRE">TOMA DE MUESTRA SANGRE</option>
+ <option value="EUTANASIA HASTA 5KG">EUTANASIA HASTA 5KG</option>
+ <option value="EUTANASIA HASTA 15KG">EUTANASIA HASTA 15KG</option>
+ <option value="EUTANASIA HASTA 25KG">EUTANASIA HASTA 25KG</option>
+ <option value="EUTANASIA HASTA 35KG">EUTANASIA HASTA 35KG</option>
+ <option value="KG ADICIONAL">KG ADICIONAL</option>
+ <option value="DISPOSICION">DISPOSICIÓN</option>
+ <option value="CREMACION CON CENIZAS">CREMACIÓN CON CENIZAS</option>
+ </optgroup>
+ </select>
+ </div>
+ <div>
+ <label class="block text-blue-900 text-[10px] font-black uppercase mb-1">Añadir Medicamentos:</label>
+ <select id="selectorMedicamentos" class="menu-desplegable w-full p-2 border border-slate-400 rounded bg-white text-xs font-bold"
+ onchange="window.agregarMedicamento(this.value)">
+ <option value="">-- SELECCIONE MEDICAMENTO --</option>
+ <option value="Piroyet">Piroyet</option>
+ <option value="Enrofloxacina">Enrofloxacina</option>
+ <option value="Sulfatrim">Sulfatrim</option>
+ <option value="Dexametasona">Dexametasona</option>
+ <option value="Carprofen">Carprofen</option>
+ <option value="Flunixin">Flunixin</option>
+ <option value="Metadol">Metadol</option>
+ <option value="Complejo B">Complejo B</option>
+ <option value="Suero hiperinmune">Suero hiperinmune (ml)</option>
+ <option value="Bromuro de hioscina">Bromuro de hioscina</option>
+ <option value="Fenobarbital">Fenobarbital</option>
+ <option value="Gastrine">Gastrine</option>
+ <option value="Ranitidina">Ranitidina</option>
+ <option value="Metoclopramida">Metoclopramida</option>
+ <option value="Furosemina">Furosemina</option>
+ <option value="Vit K">Vit K</option>
+ <option value="Eritrogen">Eritrogen</option>
+ <option value="Aminovit">Aminovit</option>
+ <option value="Oxitetraciclina">Oxitetraciclina</option>
+ <option value="Pimobendan">Pimobendan</option>
+ <option value="Ceftriaxona">Ceftriaxona</option>
+ <option value="Adrenalina / Epin">Adrenalina / Epin</option>
+ <option value="Artrosan">Artrosan (1ml/20kg)</option>
+ <option value="Lisavac">Lisavac (1ml/kg)</option>
+ <option value="Soroglobulin">Soroglobulin</option>
+ <option value="Infervac">Infervac</option>
+ <option value="OTRO" style="font-weight:900;color:#7c3aed;"> OTRO (personalizado)</option>
+ </select>
+ </div>
+ </div>
+ </div>
+
+ <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-400 min-h-[250px]">
+ <div class="p-3 bg-slate-50">
+ <label class="block text-[9px] font-bold text-blue-600 uppercase mb-2 italic tracking-wider"> Servicios y Medicación:</label>
+ <div id="visualizacionServicios" class="text-[11px] font-bold text-slate-700 space-y-1">
+ <p class="text-slate-400 font-normal italic">Sin servicios registrados...</p>
+ </div>
+ </div>
+ <div class="flex flex-col">
+ <label class="p-3 pb-0 text-[9px] font-bold text-blue-600 uppercase italic tracking-wider"> Diagnóstico y Tratamiento:</label>
+ <textarea id="hTratamiento" oninput="if(typeof respaldarProgresoLocal==='function') respaldarProgresoLocal()" class="w-full flex-grow p-3 text-sm font-medium leading-relaxed bg-white outline-none"
+ placeholder="Escriba aquí hallazgos clínicos, diagnóstico y tratamiento..."></textarea>
+ </div>
+ </div>
+ <div id="hTratamientoPrint" class="hidden print:block p-4 whitespace-pre-wrap text-[12px] leading-relaxed border-t border-slate-400"></div>
+ </div>
+
+ <div id="printExamenCont" class="hidden print:block mt-4 text-center">
+ <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Anexos</p>
+ <div id="printHistoriaGallery" class="flex flex-wrap gap-3 justify-center"></div>
+ </div>
+
+ <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
+ <label class="block text-[10px] font-black text-slate-500 uppercase mb-2 italic tracking-widest"> Adjuntar Examen o Foto</label>
+ <div class="flex flex-wrap items-center gap-4">
+ <input type="file" id="inputFotoHistoria" accept="image/*" multiple class="hidden" onchange="window.previsualizarFotoHistoria(event)">
+ <button type="button" onclick="document.getElementById('inputFotoHistoria').click()"
+ class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md flex items-center gap-2"> PC / Galería</button>
+ <button type="button" onclick="window.generarEnlaceMovil('historia')"
+ class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md flex items-center gap-2"> Usar Teléfono (QR)</button>
+ <div id="qrContainer" class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center">
+ <div id="qrcode"></div>
+ <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">Escanea con la cámara</p>
+ </div>
+ <div id="previewHistoriaContainer" class="hidden w-full border-2 border-blue-500 rounded-lg bg-white p-2 mt-2">
+ <div id="previewHistoriaGallery" class="flex gap-2 flex-wrap"></div>
+ </div>
+ <input type="hidden" id="pUrlExamen">
+ </div>
+ </div>
+
+ <div id="contenedorInsumos" class="no-print mt-4 mb-6 border-2 border-blue-100 rounded-xl overflow-hidden hidden">
+ <div class="bg-amber-50 border-b border-amber-200 p-2 flex items-center gap-3">
+ <label class="flex items-center gap-2 cursor-pointer">
+ <input type="checkbox" id="chkVacunaPagada" class="w-4 h-4 accent-amber-500"
+ onchange="window.toggleVacunaPagada(this.checked)">
+ <span class="text-[10px] font-black text-amber-700 uppercase"> Vacuna ya pagada — no sumar a caja ni al doctor</span>
+ </label>
+ </div>
+ <table class="w-full text-[11px] text-left">
+ <thead class="bg-blue-600 text-white uppercase italic">
+ <tr>
+ <th class="p-2">Insumo</th>
+ <th class="p-2 w-16 text-center">Cant.</th>
+ <th class="p-2 w-16 text-center">Precio $</th>
+ <th class="p-2 w-10"></th>
+ </tr>
+ </thead>
+ <tbody id="listaInsumosDinamica" class="bg-white"></tbody>
+ </table>
+ <div class="bg-slate-50 p-2 border-t border-blue-100 flex gap-2 items-center">
+ <input type="text" id="nombreExtra" placeholder="Añadir insumo extra..." class="flex-1 text-[10px] p-2 border rounded bg-white">
+ <input type="number" id="costoExtra" placeholder="0.00" class="w-14 text-[10px] p-2 border rounded bg-white">
+ <button onclick="window.agregarInsumoManual()" class="bg-blue-600 text-white px-4 py-2 rounded text-[10px] font-black">+ AGREGAR</button>
+ </div>
+ </div>
+
+ <div class="no-print flex justify-center mb-6">
+ <div class="w-full md:w-2/3 lg:w-1/2 bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center shadow-inner">
+ <label class="text-[10px] text-blue-600 font-bold uppercase block mb-1 tracking-widest">Monto Total a Cobrar ($)</label>
+ <input type="number" id="precioVenta" value="0" oninput="window.calcularTodo()"
+ class="text-5xl font-black w-full bg-transparent text-center text-blue-700 outline-none">
+ <p id="montoDoctor" class="text-[10px] font-black text-blue-400 mt-2">$ 0.00</p>
+ </div>
+ </div>
+ <input type="number" id="gastoInsumos" value="0" class="hidden" readonly>
+
+ <div class="grid grid-cols-2 gap-3 no-print">
+ <button type="button" onclick="window.guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">Guardar Datos</button>
+ <button type="button" onclick="window.guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">Guardar e Imprimir</button>
+ </div>
+ <button type="button" onclick="window.imprimirRecetaLimpia()" class="no-print w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3"> Receta Sin Costos</button>
+ <button type="button" onclick="window.abrirHojaVacunasDesdeHistoria()" class="no-print w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3"> Hoja de Vacunas del Paciente</button>
+ <button type="button" onclick="window.enviarAColaEspera()" class="no-print w-full bg-indigo-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3"> Enviar a Sala de Espera</button>
+ <button type="button" onclick="_llamarFuncion('registrarServicioSinMascota')" class="no-print w-full bg-orange-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3"> Servicio sin Mascota (Muestra)</button>
+ <button type="button" onclick="_llamarFuncion('_limpiarFormularioHistoria');_llamarFuncion('_limpiarNotasInternas');localStorage.removeItem('respaldo_historia_activa')" class="no-print w-full bg-slate-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-2"> Limpiar Formulario (Nuevo Paciente)</button>
+
+ </section>
+
+ <!-- HOJA DE VACUNACIÓN / TEST -->
+ <section id="sectionHojaVacunas" class="hidden bg-white p-2 shadow-sm border border-slate-200 rounded-xl max-w-3xl mx-auto mt-2 print-area text-[11px] relative flex flex-col">
+ <button type="button" onclick="window.volverAHistoriaDesdeVacunas()" class="no-print absolute top-4 left-4 bg-slate-200 text-slate-600 px-3 py-1 rounded-lg font-black text-[9px] uppercase">← Volver</button>
+ <button type="button" onclick="window.imprimirHojaVacunas()" class="no-print absolute top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md"> Imprimir</button>
+ <div class="no-print mb-3 mt-10">
+ <label class="font-black text-slate-700 text-[10px] uppercase"> Tipo de Documento:</label>
+ <select id="selectorTipoFormato" onchange="window.cambiarTipoFormato(this.value)"
+ class="flex-1 p-1 border border-slate-400 rounded font-bold text-xs bg-white ml-2">
+ <option value="vacunas">Tarjeta de Vacunación y Desparasitación</option>
+ <option value="test_rapido">Certificado de Tests Rápidos</option>
+ </select>
+ </div>
+
+ <div class="border-b-2 border-slate-800 pb-1 mb-2 flex flex-col sm:flex-row items-center justify-between gap-2" style="min-height:70px;">
+ <div class="w-28 flex flex-col items-center">
+ <img src="avipet.png" alt="Logo Avipet" class="w-full h-20 object-contain">
+ <p class="text-[9px] font-bold text-slate-700 mt-[-10px] uppercase">RIF: J-00068577-0</p>
+ </div>
+ <div class="flex flex-col items-center flex-1 text-center">
+ <h2 id="tituloDocumentoDinámico" class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">Tarjeta de Vacunación y Desparasitación</h2>
+ </div>
+ <div class="flex flex-col items-center justify-center text-center">
+ <div id="datosDoctorVacunas">
+ <p id="dvNombre" class="font-black text-[10px] text-slate-800 uppercase"></p>
+ <p id="dvEspecialidad" class="text-[8px] text-slate-600">Médico Veterinario</p>
+ <p id="dvCredenciales" class="text-[8px] text-slate-600"></p>
+ <p id="dvTelefono" class="text-[8px] text-slate-600"></p>
+ </div>
+ <div class="w-28 no-print" id="spacerDerechoVacuna"></div>
+ </div>
+ </div>
+
+ <div class="flex items-end mb-1">
+ <div class="flex-1 flex flex-col items-center text-center mx-auto">
+ <p id="tituloFormatoDinamico" class="text-[12px] font-black text-blue-800 uppercase mt-1">CONTROL DE VACUNAS</p>
+ </div>
+ <div class="text-right">
+ <p class="text-[8px] font-bold text-slate-500 uppercase">Fecha Emisión</p>
+ <input type="text" id="hv_fecha" class="w-24 text-right font-black text-xs text-slate-800 bg-transparent border-b border-slate-400" readonly>
+ </div>
+ </div>
+
+ <div class="grid grid-cols-2 gap-2 mb-2">
+ <div class="border border-slate-400 rounded p-1.5 space-y-1">
+ <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">PACIENTE:</span><input id="hv_paciente" class="flex-1 font-black text-emerald-800 uppercase text-[10px]"></div>
+ <div class="grid grid-cols-2 gap-1">
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">ESPECIE:</span><input id="hv_especie" class="flex-1 text-[9px] uppercase"></div>
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">RAZA:</span><input id="hv_raza" class="flex-1 text-[9px] uppercase"></div>
+ </div>
+ <div class="grid grid-cols-4 gap-1">
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">EDAD:</span><input id="hv_edad" class="w-full text-[9px]"></div>
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">SEXO:</span><input id="hv_sexo" class="w-full text-[9px]"></div>
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">COLOR:</span><input id="hv_color" class="w-full text-[9px]"></div>
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500">PESO:</span><input id="hv_peso" class="w-full text-[9px]" placeholder="kg"></div>
+ </div>
+ <div class="flex items-center gap-1 border-b border-slate-200">
+ <span class="text-[8px] font-bold text-slate-500 w-20 flex-shrink-0">F. NAC.:</span>
+ <input id="hv_fechaNacimiento" type="date" class="flex-1 text-[9px]">
+ <button type="button" onclick="_llamarFuncion('borrarFechaNacVacuna')"
+ class="no-print text-red-400 hover:text-red-600 font-black text-sm flex-shrink-0 px-1 leading-none"
+ title="Borrar fecha de nacimiento"></button>
+ </div>
+ </div>
+ <div class="border border-slate-400 rounded p-1.5 space-y-1">
+ <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">DUEÑO:</span><input id="hv_propietario" class="flex-1 font-bold text-[10px] uppercase"></div>
+ <div class="grid grid-cols-2 gap-1">
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">CÉDULA:</span><input id="hv_cedula" class="flex-1 text-[9px]"></div>
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">TLF:</span><input id="hv_telefono" class="flex-1 text-[9px]"></div>
+ </div>
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-16">DIRECCIÓN:</span><input id="hv_direccion" class="flex-1 text-[8px] uppercase"></div>
+ </div>
+ </div>
+
+ <div id="bloqueVacunas">
+ <div class="border border-slate-800 rounded mb-2 overflow-hidden">
+ <div class="bg-slate-800 text-white px-2 py-0.5 font-black text-[9px] text-center uppercase tracking-widest">Control de Vacunación</div>
+ <table class="w-full text-[10px]">
+ <thead class="bg-slate-100 border-b border-slate-400">
+ <tr class="text-center font-bold">
+ <th class="py-1 border-r border-slate-300 w-20">Fecha</th>
+ <th class="py-1 border-r border-slate-300">Vacuna / Lote</th>
+ <th class="py-1 border-r border-slate-300 w-14">Peso</th>
+ <th class="py-1 border-r border-slate-300 w-20">Próxima</th>
+ <th class="py-1">Firma/Sello</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr class="h-14 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+ <tr class="h-14 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ <tr class="h-14 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ <tr class="h-14 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ <tr class="h-14 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ <tr class="h-14"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ </tbody>
+ </table>
+ </div>
+ <div class="border border-slate-800 rounded overflow-hidden">
+ <div class="bg-slate-800 text-white px-2 py-0.5 font-black text-[9px] text-center uppercase tracking-widest">Desparasitaciones Internas / Externas</div>
+ <table class="w-full text-[9px]">
+ <thead class="bg-slate-100 border-b border-slate-400">
+ <tr class="text-center font-bold">
+ <th class="py-1 border-r border-slate-300 w-20">Fecha</th>
+ <th class="py-1 border-r border-slate-300">Producto</th>
+ <th class="py-1 border-r border-slate-300 w-14">Peso</th>
+ <th class="py-1 border-r border-slate-300 w-20">Próxima</th>
+ <th class="py-1">Firma/Sello</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr class="h-12 border-b border-slate-300"><td><input class="w-full text-center"></td><td><input class="w-full px-1"></td><td><input class="w-full text-center"></td><td><input class="w-full text-center"></td><td><input class="w-full"></td></tr>
+ <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ <tr class="h-12 border-b border-slate-300"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ <tr class="h-10"><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td><td><input class="w-full"></td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+
+ <div id="bloqueTests" class="hidden">
+ <div class="no-print mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-300">
+ <label class="block text-[10px] font-black text-blue-700 uppercase mb-2 italic"> Evidencia de Test / Cassette</label>
+ <div class="flex flex-wrap items-center gap-4">
+ <input type="file" id="inputFotoTest" accept="image/*" multiple class="hidden" onchange="window.previsualizarFotoTest(event)">
+ <button type="button" onclick="document.getElementById('inputFotoTest').click()"
+ class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md"> PC / Galería</button>
+ <button type="button" onclick="window.generarEnlaceMovil('test')"
+ class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md"> Teléfono (QR)</button>
+ <div id="qrContainerTest" class="hidden bg-white p-2 border-2 border-blue-400 rounded-lg shadow-xl flex flex-col items-center">
+ <div id="qrcodeTest"></div>
+ <p class="text-[7px] font-black text-blue-600 mt-1 uppercase">Escanea con la cámara</p>
+ </div>
+ <div id="previewTestContainer" class="hidden w-full border-2 border-blue-500 rounded-lg bg-white p-2 mt-2">
+ <div id="previewTestGallery" class="flex gap-2 flex-wrap"></div>
+ </div>
+ <input type="hidden" id="pUrlTest">
+ </div>
+ </div>
+ <div id="datosDoctorTest" class="hidden print:flex justify-between items-start border border-slate-300 rounded-lg p-3 mb-2 bg-slate-50">
+ <div>
+ <p class="text-[9px] font-black text-slate-500 uppercase">Médico Responsable</p>
+ <p id="dtNombre" class="font-black text-[11px] text-slate-800 uppercase"></p>
+ <p class="text-[9px] text-slate-600">Médico Veterinario</p>
+ </div>
+ <div class="text-right">
+ <p id="dtCredenciales" class="text-[9px] text-slate-600"></p>
+ <p id="dtTelefono" class="text-[9px] text-slate-600"></p>
+ </div>
+ </div>
+
+ <div class="border-2 border-slate-800 rounded-lg overflow-hidden bg-white">
+ <div class="bg-slate-800 text-white px-2 py-1 font-black text-[10px] text-center uppercase">Certificado de Diagnóstico Rápido</div>
+ <table class="w-full text-[11px]">
+ <thead class="bg-slate-200 border-b-2 border-slate-800">
+ <tr>
+ <th class="p-3 text-left">Antígeno / Prueba</th>
+ <th class="p-3 text-center w-40">Resultado</th>
+ <th class="p-3 text-left">Observaciones</th>
+ <th class="no-print p-1 w-8"></th>
+ </tr>
+ </thead>
+ <tbody id="cuerpoTablaCertificado"></tbody>
+ </table>
+ <div class="no-print p-2 bg-slate-50 border-t border-slate-200">
+ <select onchange="window.agregarFilaTest(this.value);this.value=''"
+ class="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold uppercase bg-white">
+ <option value="">+ Agregar test...</option>
+ <option value="DESCARTE HEMOPARASITO">HEMOPARÁSITO (4DX/ERL)</option>
+ <option value="DISTEMPER">DISTEMPER</option>
+ <option value="PARVOVIRUS - CORONAVIRUS">PARVOVIRUS / CORONAVIRUS</option>
+ <option value="FILARIASIS">FILARIASIS</option>
+ <option value="SIDA - LEUCEMIA">SIDA / LEUCEMIA (FELINO)</option>
+ <option value="TEST HELICOBACTER PYLORI AG">HELICOBACTER PYLORI AG</option>
+ <option value="OTRO">OTRO (personalizado)</option>
+ </select>
+ </div>
+ </div>
+ <div class="no-print mt-3 flex gap-2">
+ <button onclick="window.guardarFirebase(false)" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase"> Guardar Test</button>
+ <button onclick="window.imprimirHojaTest()" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-black text-xs uppercase"> Imprimir Certificado</button>
+ </div>
+ </div>
+
+ <footer class="pt-2">
+ <div class="border-t border-slate-800 text-[8px] text-slate-600 text-center pt-1 leading-tight">
+ <strong>CENTRO VETERINARIO - TIENDA AVÍCOLA PETARE</strong><br>
+ Av. Fco. de Miranda, Sector Buena Vista, a 600m Metro La California. Tel: (0212) 271-0435
+ </div>
+ </footer>
+ </section>
+
+ <!-- BUSCADOR -->
+ <section id="sectionBuscador" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
+ <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
+ <div class="flex justify-between items-center border-b-2 border-blue-600 p-4">
+ <div class="flex items-center gap-3">
+ <img src="avipet.png" alt="Logo" class="h-10 object-contain">
+ <h2 class="text-lg font-black text-slate-800 uppercase italic">Buscador Global</h2>
+ </div>
+ </div>
+ <div class="p-6">
+ <div class="grid grid-cols-2 gap-3 mb-3">
+ <div>
+ <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Cedula del Propietario</label>
+ <input type="text" id="buscadorCI" placeholder="V-00000000"
+ class="w-full border-b-2 border-slate-200 p-2 outline-none focus:border-blue-600 font-bold text-slate-700 uppercase bg-transparent">
+ </div>
+ <div>
+ <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nombre de la Mascota</label>
+ <input type="text" id="buscadorNombre" placeholder="Ej: Rocky, Luna..."
+ class="w-full border-b-2 border-slate-200 p-2 outline-none focus:border-purple-500 font-bold text-slate-700 uppercase bg-transparent">
+ </div>
+ </div>
+ <div class="bg-slate-50 rounded-xl p-3 mb-3 border border-slate-100">
+ <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Filtros</p>
+ <div class="grid grid-cols-2 gap-2 mb-2">
+ <div>
+ <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Periodo</label>
+ <select id="buscadorPeriodo" onchange="_llamarFuncion('toggleRangoBuscador')"
+ class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none focus:border-blue-500">
+ <option value="hoy">Hoy</option>
+ <option value="semana">Ultima semana</option>
+ <option value="mes">Este mes</option>
+ <option value="todos">Todos</option>
+ <option value="rango">Rango de fechas</option>
+ </select>
+ </div>
+ <div>
+ <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Doctor</label>
+ <select id="buscadorDoctor"
+ class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none focus:border-blue-500">
+ <option value="">Todos</option>
+ <option value="Darwin">Dr. Darwin</option>
+ <option value="Joan">Dr. Joan</option>
+ </select>
+ </div>
+ </div>
+ <div id="rangoBuscador" class="hidden grid grid-cols-2 gap-2">
+ <div>
+ <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Desde</label>
+ <input type="date" id="buscadorFechaDesde"
+ class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none">
+ </div>
+ <div>
+ <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Hasta</label>
+ <input type="date" id="buscadorFechaHasta"
+ class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold bg-white outline-none">
+ </div>
+ </div>
+ </div>
+ <button onclick="_llamarFuncion('buscarPorCedula')"
+ class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black shadow-sm uppercase text-xs mb-4">
+ Buscar
+ </button>
+ <div id="resultadoBusqueda" class="space-y-2"></div>
+ </div>
+ </div>
+ </section>
+
+ <!-- FINANZAS / CAJA -->
+ <section id="sectionReporte" class="hidden p-4 animate-fadeIn bg-slate-50 min-h-screen">
+ <div class="max-w-xl mx-auto bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center border-b-2 border-blue-600 p-4">
+   <div class="flex items-center gap-3">
+    <img src="avipet.png" alt="Logo" class="h-10 object-contain">
+    <div>
+     <h2 class="text-lg font-black text-slate-800 uppercase italic leading-none">Finanzas</h2>
+     <p class="text-[8px] font-bold text-slate-400 uppercase">Avipet</p>
     </div>
-    <button type="button" onclick="window.cancelarEdicion()"
-            class="text-[9px] font-black text-red-500 uppercase border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50">
-      ? Cancelar edicion
-    </button>`;
-  banner.classList.remove('hidden');
-}
-
-window.cancelarEdicion = () => {
-  window._editandoConsultaId = null;
-  document.getElementById('bannerModoEdicion')?.classList.add('hidden');
-  _limpiarFormularioHistoria();
-};
-
-// Modificar guardarFirebase para que actualice si estamos en modo edicion
-const _guardarFirebaseOriginal = window.guardarFirebase;
-window.guardarFirebase = async (imp) => {
-  if (!window._editandoConsultaId) {
-    // Flujo normal -- crear nueva consulta
-    return _guardarFirebaseOriginal(imp);
-  }
-
-  // -- MODO EDICION -- actualizar consulta existente --
-  const idEditar = window._editandoConsultaId;
-  const selectorDoc  = document.getElementById('selectDoctor');
-  const nombreDoctor = selectorDoc?.value || "";
-  if (!nombreDoctor) return alert("(!) Seleccione un doctor.");
-
-  const pinIngresado = prompt(`? Firma para actualizar. PIN de ${nombreDoctor}:`);
-  if (!pinIngresado) return;
-  const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
-  if (!esValido) return alert("? PIN incorrecto.");
-
-  const btn = document.activeElement;
-  const textoOrig = btn?.innerText || "Guardar";
-  if (btn?.tagName === 'BUTTON') { btn.disabled = true; btn.innerText = "? ACTUALIZANDO..."; }
-
-  try {
-    const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
-    const dataActualizada = {
-      cedula:          dInput('hCI'),
-      propietario:     dInput('hProp'),
-      paciente:        dInput('hNombre'),
-      especie:         dInput('hEspecie'),
-      raza:            dInput('hRaza'),
-      sexo:            dInput('hSexo'),
-      edad:            dInput('hEdad'),
-      peso:            dInput('hPeso'),
-      color:           dInput('hColor'),
-      telefono:        dInput('hTlf'),
-      correo:          dInput('hMail'),
-      direccion:       dInput('hDir'),
-      fechaNacimiento: dInput('hFechaNac'),
-      tratamiento:     dInput('hTratamiento'),
-      alerta:          document.getElementById('hAlerta')?.checked || false,
-      doctor:          nombreDoctor,
-      ultimaEdicion:   serverTimestamp(),
-      editadoPor:      nombreDoctor,
-    };
-
-    // Actualizar foto si cambio
-    const galeriaH = document.getElementById('previewHistoriaGallery');
-    const imgs     = galeriaH ? Array.from(galeriaH.querySelectorAll('img')).map(i => i.src) : [];
-    if (imgs.length > 0) dataActualizada.urlExamen = imgs[imgs.length - 1];
-
-    await updateDoc(doc(db, "consultas", idEditar), dataActualizada);
-
-    // Limpiar modo edicion
-    window._editandoConsultaId = null;
-    document.getElementById('bannerModoEdicion')?.classList.add('hidden');
-    _limpiarFormularioHistoria();
-    _limpiarNotasInternas();
-
-    await Swal.fire({
-      icon: 'success', title: '? Consulta actualizada',
-      text: `Los datos de ${dataActualizada.paciente} fueron actualizados.`,
-      timer: 2500, showConfirmButton: false
-    });
-
-    if (imp) window.imprimirDocumento();
-
-  } catch (e) {
-    console.error("Error actualizando:", e);
-    alert("? Error: " + e.message);
-  } finally {
-    if (btn?.tagName === 'BUTTON') { btn.disabled = false; btn.innerText = textoOrig; }
-  }
-};
-
-// --- FUNCIONES DE AJUSTES (movidas aqui para garantizar carga) ---
-window.cargarSelectorServicios = async () => {
-  const sel = document.getElementById('selectorServicios');
-  if (!sel) return;
-
-  try {
-    const snap = await getDocs(collection(db, "servicios_maestro"));
-    if (snap.empty) return;
-
-    // Recoger servicios de Firebase agrupados por categoria
-    const porCategoria = {};
-    snap.forEach(d => {
-      const data = d.data();
-      if (data.activo === false) return; // skip inactivos
-      const cat = (data.categoria || 'OTROS').toUpperCase();
-      if (!porCategoria[cat]) porCategoria[cat] = [];
-      porCategoria[cat].push({ id: d.id, ...data });
-    });
-
-    // Para cada categoria en Firebase, verificar si ya existe optgroup en el selector
-    // Si existe, agregar solo los servicios nuevos que no esten ya como option
-    // Si no existe (categoria nueva), crear el optgroup y agregar todos
-    Object.entries(porCategoria).sort().forEach(([cat, servicios]) => {
-      // Buscar optgroup existente (buscar por label que contenga el nombre de la cat)
-      // Limpiar label del optgroup (quitar emojis, espacios, chars especiales) para comparar exacto
-      function _limpiarLabel(s) {
-        return s.replace(/[^\x00-\x7F]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
-      }
-
-      let grp = Array.from(sel.querySelectorAll('optgroup'))
-        .find(g => _limpiarLabel(g.label) === cat || _limpiarLabel(g.label) === _limpiarLabel(cat));
-
-      if (!grp) {
-        // Categoria nueva — crear optgroup
-        grp = document.createElement('optgroup');
-        grp.label = cat;
-        sel.appendChild(grp);
-      }
-
-      // Agregar servicios que no existan ya en el optgroup
-      const yaEnGrp = new Set(
-        Array.from(grp.querySelectorAll('option')).map(o => o.value.toUpperCase())
-      );
-
-      servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
-        if (yaEnGrp.has(s.id.toUpperCase())) return; // ya esta
-        const opt = document.createElement('option');
-        opt.value       = s.id;
-        opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
-        opt.dataset.firebase = 'true';
-        grp.appendChild(opt);
-      });
-    });
-
-  } catch(e) {
-    console.warn('Error cargando selector servicios:', e);
-  }
-};
-
-// --- ABRIR MODAL NUEVO SERVICIO ---------------------------
-window.abrirModalNuevoServicio = async () => {
-  // Recoger categorias existentes del selector HTML + Firebase
-  const sel = document.getElementById('selectorServicios');
-  const catsExistentes = new Set();
-  if (sel) {
-    Array.from(sel.querySelectorAll('optgroup')).forEach(g => {
-      // Limpiar el label: quitar caracteres especiales/emojis y espacios extra
-      const limpio = g.label.replace(/[^\x20-\x7E\u00C0-\u024F]/g,'').trim().toUpperCase();
-      if (limpio) catsExistentes.add(limpio);
-    });
-  }
-  // Tambien traer categorias de Firebase
-  try {
-    const snapF = await getDocs(collection(db, "servicios_maestro"));
-    snapF.forEach(d => {
-      const cat = (d.data().categoria||'').toUpperCase().trim();
-      if (cat) catsExistentes.add(cat);
-    });
-  } catch(e) {}
-
-  const catsOrdenadas = Array.from(catsExistentes).sort();
-
-  var htmlModal = '<div class="space-y-3 text-left">';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>';
-  htmlModal += '<input id="ns_nombre" type="text" placeholder="Ej: RADIOGRAFIA SIMPLE" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500"></div>';
-  htmlModal += '<div class="grid grid-cols-2 gap-2">';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Precio ($)</label>';
-  htmlModal += '<input id="ns_precio" type="number" placeholder="0.00" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div>';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">% Doctor</label>';
-  htmlModal += '<input id="ns_porc" type="number" placeholder="40" step="0.5" min="0" max="100" value="40" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div></div>';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoria</label>';
-  htmlModal += '<select id="ns_categoria" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">';
-  catsOrdenadas.forEach(cat => {
-    htmlModal += '<option value="' + cat + '">' + cat + '</option>';
-  });
-  htmlModal += '<option value="__nueva__">+ Crear nueva categoria...</option>';
-  htmlModal += '</select>';
-  htmlModal += '<input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGIAS, HOSPITALIZACION..." style="display:none" class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500 mt-2"></div>';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Es una vacuna?</label>';
-  htmlModal += '<div class="flex gap-3">';
-  htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600"> <span class="text-[10px] font-bold">Si</span></label>';
-  htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600"> <span class="text-[10px] font-bold">No</span></label>';
-  htmlModal += '</div></div>';
-  htmlModal += '<div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[9px] text-blue-700 font-bold">El % Doctor se aplica sobre (Precio - Insumos), no sobre el precio bruto.</div>';
-  htmlModal += '</div>';
-
-  const res = await Swal.fire({
-    title: 'Nuevo Servicio',
-    html: htmlModal,
-    showCancelButton: true,
-    confirmButtonText: 'Crear Servicio',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#2563eb',
-    didOpen: () => {
-      const catSel = document.getElementById('ns_categoria');
-      if (catSel) {
-        catSel.addEventListener('change', function() {
-          const inp = document.getElementById('ns_categoria_nueva');
-          if (inp) inp.style.display = this.value === '__nueva__' ? 'block' : 'none';
-        });
-      }
-    },
-    preConfirm: () => {
-      const nombre    = document.getElementById('ns_nombre')?.value.trim().toUpperCase();
-      const precio    = parseFloat(document.getElementById('ns_precio')?.value) || 0;
-      const porc      = parseFloat(document.getElementById('ns_porc')?.value)   || 40;
-      const catSel    = document.getElementById('ns_categoria')?.value || 'OTROS';
-      const catNueva  = document.getElementById('ns_categoria_nueva')?.value.trim().toUpperCase();
-      const categoria = catSel === '__nueva__' ? catNueva : catSel;
-      const esVacuna  = document.getElementById('ns_vacuna_si')?.checked || false;
-      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('Escribe el nombre de la nueva categoria'); return false; }
-      if (!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
-      if (precio <= 0) { Swal.showValidationMessage('El precio debe ser mayor a 0'); return false; }
-      return { nombre, precio, porc, categoria, esVacuna };
-    }
-  });
-
-  if (!res.isConfirmed) return;
-  const { nombre, precio, porc, categoria, esVacuna } = res.value;
-
-  try {
-    const existe = await getDoc(doc(db, "servicios_maestro", nombre));
-    if (existe.exists()) {
-      Swal.fire({ icon:'warning', title:'Ya existe', text:'Un servicio con ese nombre ya esta registrado.', timer:2500, showConfirmButton:false });
-      return;
-    }
-
-    await setDoc(doc(db, "servicios_maestro", nombre), {
-      precioVenta: precio,
-      porcDoc:     porc,
-      categoria,
-      esVacuna,
-      creadoEn:    serverTimestamp(),
-      activo:      true
-    });
-
-    await window.renderizarTablaMaestra();
-    await window.cargarSelectorServicios();
-
-    await Swal.fire({
-      icon: 'success',
-      title: 'Servicio creado',
-      html: '<b>' + nombre + '</b><br>$' + precio.toFixed(2) + ' &middot; ' + porc + '% doctor &middot; ' + categoria,
-      timer: 2500,
-      showConfirmButton: false
-    });
-
-  } catch(e) { console.error(e); alert('Error: '+e.message); }
-};
-
-// --- ELIMINAR SERVICIO ------------------------------------
-window.eliminarServicioMaestro = async (nombreServicio) => {
-  const res = await Swal.fire({
-    title: '? Eliminar Servicio',
-    html: `<p class="text-[11px] text-slate-600">Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecera en el selector de Historia Clinica.</p>`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Si, eliminar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#dc2626'
-  });
-  if (!res.isConfirmed) return;
-
-  try {
-    await deleteDoc(doc(db, "servicios_maestro", nombreServicio));
-    await window.renderizarTablaMaestra();
-    await window.cargarSelectorServicios();
-    Swal.fire({ icon:'success', title:'? Eliminado', timer:1500, showConfirmButton:false });
-  } catch(e) { console.error(e); alert('? Error: '+e.message); }
-};
-
-// --- EDITAR INSUMOS DE UN SERVICIO -----------------------
-window.editarInsumosServicio = async (nombreServicio) => {
-  try {
-    const snap = await getDoc(doc(db, "servicios_maestro", nombreServicio));
-    if (!snap.exists()) { alert("Servicio no encontrado."); return; }
-    const data = snap.data();
-    const normNombre = normalizarNombre(nombreServicio);
-    const recetaBase = Object.entries(recetas).find(([k]) => normalizarNombre(k) === normNombre);
-    let insumosActuales = (data.insumos || (recetaBase ? recetaBase[1].insumos : [])).map(ins => ({
-      nombre: ins.nombre,
-      costo: ins.costo || 0,
-      bloqueado: ins.bloqueado === true
-    }));
-
-    const renderLista = () => {
-      const cont = document.getElementById('listaInsumosModal');
-      if (!cont) return;
-      cont.innerHTML = '';
-      if (insumosActuales.length === 0) {
-        cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:8px;">Sin insumos.</p>';
-        return;
-      }
-      insumosActuales.forEach((ins, idx) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f1f5f9;background:' + (ins.bloqueado?'#fffbeb':'#fff') + ';border-radius:4px;padding:5px;';
-        // Candado toggle
-        const btnLock = document.createElement('button');
-        btnLock.innerHTML = ins.bloqueado ? '&#128274;' : '&#128275;';
-        btnLock.title = ins.bloqueado ? 'Bloqueado — click para desbloquear' : 'Libre — click para bloquear';
-        btnLock.style.cssText = 'background:' + (ins.bloqueado?'#f59e0b':'#e2e8f0') + ';border:none;border-radius:6px;padding:3px 6px;cursor:pointer;font-size:13px;';
-        btnLock.addEventListener('click', function() {
-          insumosActuales[idx].bloqueado = !insumosActuales[idx].bloqueado;
-          renderLista();
-        });
-        // Nombre
-        const nomSpan = document.createElement('span');
-        nomSpan.style.cssText = 'flex:1;font-size:10px;font-weight:' + (ins.bloqueado?'900':'700') + ';color:#1e293b;';
-        nomSpan.textContent = ins.nombre + (ins.bloqueado ? ' 🔒' : '');
-        // Input costo
-        const inpCosto = document.createElement('input');
-        inpCosto.type = 'number'; inpCosto.step = '0.0001'; inpCosto.min = '0';
-        inpCosto.value = parseFloat(ins.costo||0).toFixed(4);
-        inpCosto.style.cssText = 'width:70px;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;text-align:center;';
-        inpCosto.addEventListener('change', function() { insumosActuales[idx].costo = parseFloat(this.value)||0; });
-        // Btn eliminar
-        const btnDel = document.createElement('button');
-        btnDel.textContent = 'X';
-        btnDel.style.cssText = 'color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;';
-        btnDel.addEventListener('click', function() { insumosActuales.splice(idx, 1); renderLista(); });
-        row.appendChild(btnLock); row.appendChild(nomSpan); row.appendChild(inpCosto); row.appendChild(btnDel);
-        cont.appendChild(row);
-      });
-    };
-
-    const snapIns = await getDocs(collection(db, "insumos_maestro"));
-    let optsInsumos = '<option value="">-- Seleccionar insumo --</option>';
-    snapIns.forEach(d => {
-      const r = d.data();
-      optsInsumos += '<option value="'+(r.nombre||d.id)+'" data-costo="'+(r.costo||0)+'">'+(r.nombre||d.id)+' ($'+parseFloat(r.costo||0).toFixed(4)+')</option>';
-    });
-
-    const htmlModal =
-      '<div style="text-align:left;">' +
-      '<p style="font-size:9px;color:#64748b;margin-bottom:4px;">Toca <b>&#128274;</b> para bloquear un insumo — el doctor NO podra eliminarlo de la historia.</p>' +
-      '<div id="listaInsumosModal" style="max-height:240px;overflow-y:auto;margin-bottom:12px;border:1px solid #f1f5f9;border-radius:8px;padding:4px;"></div>' +
-      '<div style="border-top:1px solid #e2e8f0;padding-top:10px;">' +
-      '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Agregar insumo:</p>' +
-      '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">' +
-      '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;">' + optsInsumos + '</select>' +
-      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;border:none;">+ Agregar</button>' +
-      '</div>' +
-      '<div style="display:flex;gap:6px;">' +
-      '<input id="inpNombreNuevo" type="text" placeholder="O escribe el nombre..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
-      '<input id="inpCostoNuevo" type="number" placeholder="Costo $" step="0.0001" min="0" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
-      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;border:none;">+ Agregar</button>' +
-      '</div></div></div>';
-
-    const res = await Swal.fire({
-      title: 'Insumos: ' + nombreServicio,
-      html: htmlModal, width: 540,
-      showCancelButton: true,
-      confirmButtonText: 'Guardar cambios',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#2563eb',
-      didOpen: function() {
-        renderLista();
-        document.getElementById('btnAgregarInsumo').addEventListener('click', function() {
-          const sel = document.getElementById('selInsumoAgregar');
-          const opt = sel?.options[sel.selectedIndex];
-          if (!opt || !opt.value) return;
-          insumosActuales.push({ nombre: opt.value, costo: parseFloat(opt.dataset.costo)||0, bloqueado: false });
-          sel.value = '';
-          renderLista();
-        });
-        document.getElementById('btnAgregarManual').addEventListener('click', function() {
-          const nombre = document.getElementById('inpNombreNuevo')?.value.trim().toUpperCase();
-          const costo  = parseFloat(document.getElementById('inpCostoNuevo')?.value) || 0;
-          if (!nombre) { alert('Escribe el nombre del insumo'); return; }
-          insumosActuales.push({ nombre, costo, bloqueado: false });
-          document.getElementById('inpNombreNuevo').value = '';
-          document.getElementById('inpCostoNuevo').value  = '';
-          renderLista();
-        });
-      }
-    });
-
-    if (!res.isConfirmed) return;
-
-    await setDoc(doc(db, "servicios_maestro", nombreServicio), { insumos: insumosActuales }, { merge: true });
-    await Swal.fire({ icon:'success', title:'Insumos guardados', html:'<b>'+nombreServicio+'</b><br>'+insumosActuales.length+' insumo(s)', timer:2000, showConfirmButton:false });
-
-  } catch(e) { console.error(e); alert('Error: ' + e.message); }
-
-
-};
-
-// --- CARGAR SELECTOR MEDICAMENTOS DESDE FIREBASE ----------
-window.cargarSelectorMedicamentos = async () => {
-  const sel = document.getElementById('selectorMedicamentos');
-  if (!sel) return;
-  try {
-    const snap = await getDocs(collection(db, "medicamentos_maestro"));
-    if (snap.empty) return;
-    const yaExisten = new Set(
-      Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase())
-    );
-    snap.forEach(d => {
-      const r = d.data();
-      const nombre = (r.nombre || d.id).toUpperCase();
-      if (!yaExisten.has(nombre)) {
-        const opt = document.createElement('option');
-        opt.value = nombre;
-        opt.textContent = nombre + ' ($' + parseFloat(r.precioCliente||0).toFixed(2) + ')';
-        const optOtro = sel.querySelector('option[value="OTRO"]');
-        if (optOtro) sel.insertBefore(opt, optOtro);
-        else sel.appendChild(opt);
-      }
-    });
-  } catch(e) { console.warn('Error cargando medicamentos:', e); }
-};
-
-// --- FILTRAR TABLA DE SERVICIOS ---------------------------
-window.filtrarTablaServicios = () => {
-  const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase().trim() || '';
-  // Buscar en cards (nuevo diseño) y en filas tr (por si acaso)
-  document.querySelectorAll('#tablaServiciosMaestro [data-card-id]').forEach(card => {
-    const nombre = (card.dataset.nombre || card.dataset.cardId || '').toUpperCase();
-    card.style.display = (!filtro || nombre.includes(filtro)) ? '' : 'none';
-  });
-  // También ocultar/mostrar los títulos de categoría si todos los cards están ocultos
-  document.querySelectorAll('#tablaServiciosMaestro > div').forEach(grpDiv => {
-    const cards = grpDiv.querySelectorAll('[data-card-id]');
-    const alguno = Array.from(cards).some(c => c.style.display !== 'none');
-    grpDiv.style.display = alguno ? '' : 'none';
-  });
-  // Compatibilidad con tabla antigua si existe
-  document.querySelectorAll('#tablaServiciosMaestro tr[data-nombre]').forEach(tr => {
-    tr.style.display = (!filtro || tr.dataset.nombre.toUpperCase().includes(filtro)) ? '' : 'none';
-  });
-};
-
-window.renderizarTablaMaestra = async () => {
-  const cont = document.getElementById('tablaServiciosMaestro');
-  if (!cont) return;
-  cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
-  try {
-    const snap = await getDocs(collection(db, "servicios_maestro"));
-    if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin servicios.</p>'; return; }
-    const servicios = [];
-    snap.forEach(d => servicios.push({ id: d.id, ...d.data() }));
-    servicios.sort((a,b) => (a.categoria||'').localeCompare(b.categoria||'') || a.id.localeCompare(b.id));
-    cont.innerHTML = '';
-    // Agrupar por categoria
-    const grupos = {};
-    servicios.forEach(r => { const c = r.categoria||'OTROS'; if(!grupos[c]) grupos[c]=[]; grupos[c].push(r); });
-    Object.entries(grupos).forEach(([cat, items]) => {
-      const catDiv = document.createElement('div');
-      catDiv.style.cssText = 'margin-bottom:12px;';
-      catDiv.innerHTML = '<p style="font-size:9px;font-weight:900;color:#fff;background:#1e293b;padding:4px 8px;border-radius:6px;text-transform:uppercase;margin-bottom:4px;">'+cat+'</p>';
-      items.forEach(r => {
-        const card = document.createElement('div');
-        card.dataset.cardId = r.id;
-        card.dataset.nombre = r.id.toUpperCase();
-        card.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;margin-bottom:6px;';
-        // Fila 1: nombre + categoria actual
-        const f1 = document.createElement('div');
-        f1.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
-        f1.innerHTML = '<p style="font-size:11px;font-weight:900;color:#1e293b;text-transform:uppercase;flex:1;">'+r.id+'</p>';
-        card.appendChild(f1);
-        // Fila 2: precio + % doc editables
-        const f2 = document.createElement('div');
-        f2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;';
-        f2.innerHTML =
-          '<div><label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;">Precio $</label>'+
-          '<input type="number" step="0.50" min="0" value="'+(r.precioVenta||0)+'" data-campo="precioVenta" data-id="'+r.id+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
-          '<div><label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;">% Doctor</label>'+
-          '<input type="number" step="0.5" min="0" max="100" value="'+(r.porcDoc||r.porcentajeDoc||30)+'" data-campo="porcDoc" data-id="'+r.id+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:900;outline:none;box-sizing:border.box;"></div>';
-        card.appendChild(f2);
-        // Fila 3: botones
-        const f3 = document.createElement('div');
-        f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px;';
-        const f3b = document.createElement('div');
-        f3b.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;';
-        // Btn Guardar
-        const btnG = document.createElement('button');
-        btnG.textContent = 'Guardar precio'; btnG.dataset.id = r.id;
-        btnG.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        btnG.addEventListener('click', async function() {
-          const cardEl = document.querySelector('#tablaServiciosMaestro [data-card-id="'+this.dataset.id+'"]');
-          const inpP = cardEl?.querySelector('input[data-campo="precioVenta"]');
-          const inpPc = cardEl?.querySelector('input[data-campo="porcDoc"]');
-          this.textContent = '...'; this.disabled = true; this.style.background = '#94a3b8';
-          const btn = this;
-          try {
-            await setDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:parseFloat(inpP?.value)||0, porcDoc:parseFloat(inpPc?.value)||30, actualizadoEn:serverTimestamp() },{merge:true});
-            btn.textContent = 'OK'; btn.style.background = '#16a34a';
-            inpP.style.borderColor = '#16a34a'; inpPc.style.borderColor = '#16a34a';
-            setTimeout(()=>{ btn.textContent='Guardar'; btn.disabled=false; btn.style.background='#2563eb'; inpP.style.borderColor=''; inpPc.style.borderColor=''; }, 2000);
-          } catch(e) { btn.textContent='Error'; btn.style.background='#dc2626'; btn.disabled=false; setTimeout(()=>{ btn.textContent='Guardar'; btn.style.background='#2563eb'; },2500); }
-        });
-        f3.appendChild(btnG);
-        // Btn Editar nombre/categoria
-        const btnE = document.createElement('button');
-        btnE.textContent = 'Editar nombre'; btnE.dataset.id = r.id; btnE.dataset.cat = r.categoria||'OTROS';
-        btnE.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        btnE.addEventListener('click', async function() {
-          const idActual = this.dataset.id;
-          const catActual = this.dataset.cat;
-          const snapCats = await getDocs(collection(db,"servicios_maestro"));
-          const catsSet = new Set(['CONSULTAS','VACUNAS','LABORATORIO','TESTS RAPIDOS','REFERIDOS','OTROS PROCEDIMIENTOS','OTROS']);
-          snapCats.forEach(d => { const c=(d.data().categoria||'').trim().toUpperCase(); if(c) catsSet.add(c); });
-          let optsHtml = Array.from(catsSet).sort().map(c => '<option value="'+c+'"'+(c===catActual.toUpperCase()?' selected':'')+'>'+c+'</option>').join('');
-          optsHtml += '<option value="__nueva__">+ Nueva categoria...</option>';
-          const res = await Swal.fire({
-            title: 'Editar: '+idActual, width:420,
-            html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre</label>'+
-              '<input id="esn" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>'+
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Categoria</label>'+
-              '<select id="esc" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsHtml+'</select>'+
-              '<input id="escn" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div></div>',
-            showCancelButton:true, confirmButtonText:'Guardar', confirmButtonColor:'#f59e0b',
-            didOpen:()=>{ document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; }); },
-            preConfirm:()=>{
-              const n=document.getElementById('esn').value.trim().toUpperCase();
-              const cs=document.getElementById('esc').value;
-              const cn=document.getElementById('escn').value.trim().toUpperCase();
-              const c=cs==='__nueva__'?cn:cs;
-              if(!n){Swal.showValidationMessage('Nombre requerido');return false;}
-              if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
-              return {n,c};
-            }
-          });
-          if(!res.isConfirmed) return;
-          const {n:nuevoNom, c:nuevaCat} = res.value;
-          try {
-            const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
-            const dataOld = snapOld.exists()?snapOld.data():{};
-            if(nuevoNom !== idActual) {
-              await setDoc(doc(db,"servicios_maestro",nuevoNom),{...dataOld,categoria:nuevaCat,actualizadoEn:serverTimestamp()});
-              await deleteDoc(doc(db,"servicios_maestro",idActual));
-            } else {
-              await updateDoc(doc(db,"servicios_maestro",idActual),{categoria:nuevaCat,actualizadoEn:serverTimestamp()});
-            }
-            await Swal.fire({icon:'success',title:'Guardado',text:nuevoNom+' → '+nuevaCat,timer:1800,showConfirmButton:false});
-            window.renderizarTablaMaestra(); window.cargarSelectorServicios();
-          } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
-        });
-        f3.appendChild(btnE);
-        // Btn Insumos
-        const btnI = document.createElement('button');
-        btnI.textContent = 'Editar Insumos'; btnI.dataset.id = r.id;
-        btnI.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        btnI.addEventListener('click', function(){ window.editarInsumosServicio(this.dataset.id); });
-        f3b.appendChild(btnI);
-        // Btn Eliminar
-        const btnD = document.createElement('button');
-        btnD.textContent = 'Eliminar servicio'; btnD.dataset.id = r.id;
-        btnD.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#fee2e2;color:#dc2626;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        btnD.addEventListener('click', function(){ window.eliminarServicioMaestro(this.dataset.id); });
-        f3b.appendChild(btnD);
-        card.appendChild(f3);
-        card.appendChild(f3b);
-        catDiv.appendChild(card);
-      });
-      cont.appendChild(catDiv);
-    });
-  } catch(e) { cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error: '+e.message+'</p>'; }
-};
-
-window.renderizarTablaInsumos = async () => {
-  const cont = document.getElementById('tablaInsumosMaestro');
-  if (!cont) return;
-  cont.innerHTML = '<p class="text-center text-[9px] animate-pulse text-blue-500 font-black uppercase italic py-4">Cargando...</p>';
-  try {
-    const snap = await getDocs(collection(db, "insumos_maestro"));
-    if (snap.empty) { cont.innerHTML = '<p class="text-center text-slate-400 text-[9px] italic py-4">Sin insumos.</p>'; return; }
-    const lista = []; snap.forEach(d => lista.push({id:d.id,...d.data()}));
-    lista.sort((a,b) => (a.nombre||a.id).localeCompare(b.nombre||b.id));
-    cont.innerHTML = '';
-    lista.forEach(r => {
-      const nombreMostrar = r.nombre || r.id;
-      const bloqueado = r.bloqueado === true;
-      const card = document.createElement('div');
-      card.style.cssText = 'background:'+(bloqueado?'#fffbeb':'#f8fafc')+';border:2px solid '+(bloqueado?'#fde68a':'#e2e8f0')+';border-radius:10px;padding:8px 10px;margin-bottom:6px;';
-      // Fila 1: nombre + icono candado
-      const f1 = document.createElement('div');
-      f1.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
-      f1.innerHTML = '<p style="font-size:11px;font-weight:900;color:#1e293b;">'+(bloqueado?'&#128274; ':'')+nombreMostrar+'</p>';
-      card.appendChild(f1);
-      // Input costo
-      const f2 = document.createElement('div');
-      f2.style.cssText = 'margin-bottom:6px;';
-      f2.innerHTML = '<label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:3px;">Costo ($)</label>';
-      const inp = document.createElement('input');
-      inp.type='number'; inp.step='0.01'; inp.min='0';
-      inp.value=parseFloat(r.costo||0).toFixed(2);
-      inp.dataset.id=r.id;
-      inp.style.cssText='width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;';
-      inp.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();_guardarCostoInsumoFila(inp,null);} });
-      f2.appendChild(inp); card.appendChild(f2);
-      // Botones
-      const f3 = document.createElement('div');
-      f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;';
-      const mkBtn = (txt,bg,cb) => {
-        const b=document.createElement('button');
-        b.textContent=txt;
-        b.style.cssText='padding:7px 4px;border-radius:8px;border:none;background:'+bg+';color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        b.addEventListener('click',cb); return b;
-      };
-      // Guardar
-      const btnG = mkBtn('Guardar','#10b981', function(){
-        const btn=this; btn.textContent='...'; btn.disabled=true; btn.style.background='#94a3b8';
-        _guardarCostoInsumoFila(inp, btn);
-      });
-      f3.appendChild(btnG);
-      // Editar nombre
-      f3.appendChild(mkBtn('Editar','#f59e0b', async function(){
-        const idActual=r.id; const nomActual=nombreMostrar;
-        const res=await Swal.fire({title:'Editar nombre',input:'text',inputValue:nomActual,inputAttributes:{style:'text-transform:uppercase;font-weight:700;'},showCancelButton:true,confirmButtonText:'Guardar',confirmButtonColor:'#f59e0b',preConfirm:v=>{if(!v||!v.trim()){Swal.showValidationMessage('Nombre requerido');return false;}return v.trim().toUpperCase();}});
-        if(!res.isConfirmed) return;
-        const nuevoNom=res.value;
-        try {
-          const snapOld=await getDoc(doc(db,"insumos_maestro",idActual));
-          const dataOld=snapOld.exists()?snapOld.data():{};
-          if(nuevoNom!==idActual){ await setDoc(doc(db,"insumos_maestro",nuevoNom),{...dataOld,nombre:nuevoNom,actualizadoEn:serverTimestamp()}); await deleteDoc(doc(db,"insumos_maestro",idActual)); }
-          else { await updateDoc(doc(db,"insumos_maestro",idActual),{nombre:nuevoNom,actualizadoEn:serverTimestamp()}); }
-          await Swal.fire({icon:'success',title:'OK',text:nuevoNom,timer:1500,showConfirmButton:false});
-          window.renderizarTablaInsumos();
-        } catch(e){Swal.fire({icon:'error',title:'Error',text:e.message});}
-      }));
-      // Candado
-      f3.appendChild(mkBtn(bloqueado?'Desbloquear':'Bloquear', bloqueado?'#f59e0b':'#64748b', async function(){
-        const conf=await Swal.fire({icon:bloqueado?'question':'warning',title:(bloqueado?'Desbloquear':'Bloquear')+': '+nombreMostrar,html:'<p style="font-size:11px;">'+(bloqueado?'Los doctores podran eliminarlo del historial.':'Los doctores NO podran eliminarlo.')+'</p>',showCancelButton:true,confirmButtonColor:bloqueado?'#64748b':'#f59e0b',confirmButtonText:bloqueado?'Desbloquear':'Bloquear'});
-        if(!conf.isConfirmed) return;
-        try { await updateDoc(doc(db,"insumos_maestro",r.id),{bloqueado:!bloqueado,actualizadoEn:serverTimestamp()}); window.renderizarTablaInsumos(); }
-        catch(e){alert('Error: '+e.message);}
-      }));
-      // Eliminar
-      f3.appendChild(mkBtn('Del','#fca5a5', function(){
-        this.style.color='#dc2626'; window.eliminarInsumoIndividual(r.id,nombreMostrar);
-      }));
-      card.appendChild(f3);
-      cont.appendChild(card);
-    });
-  } catch(e){ cont.innerHTML='<p class="text-red-500 text-[9px] text-center italic py-4">Error: '+e.message+'</p>'; }
-};
-
-
-// Función interna para guardar costo con feedback visual
-async function _guardarCostoInsumoFila(inputEl, btnEl) {
-  if (!inputEl) return;
-  const idInsumo = inputEl.dataset.id;
-  const valor = parseFloat(inputEl.value);
-  if (isNaN(valor) || valor < 0) {
-    inputEl.style.borderColor = '#dc2626';
-    setTimeout(function(){ inputEl.style.borderColor = ''; }, 1500);
-    return;
-  }
-  // Feedback visual en botón
-  if (btnEl) { btnEl.textContent = '...'; btnEl.disabled = true; btnEl.style.background = '#94a3b8'; }
-  try {
-    await updateDoc(doc(db, "insumos_maestro", idInsumo), {
-      costo: valor,
-      actualizadoEn: serverTimestamp()
-    });
-    // Exito: input verde + botón verde
-    inputEl.style.borderColor = '#16a34a';
-    inputEl.style.background = '#f0fdf4';
-    if (btnEl) { btnEl.textContent = 'OK'; btnEl.style.background = '#16a34a'; }
-    setTimeout(function(){
-      inputEl.style.borderColor = '';
-      inputEl.style.background = '';
-      if (btnEl) { btnEl.textContent = 'Guardar'; btnEl.style.background = ''; btnEl.disabled = false; btnEl.className = 'text-[8px] px-2 py-1.5 bg-emerald-500 text-white rounded-lg font-black hover:bg-emerald-600 transition-all uppercase'; }
-    }, 1800);
-  } catch(e) {
-    console.error('Error guardando insumo:', e);
-    inputEl.style.borderColor = '#dc2626';
-    if (btnEl) { btnEl.textContent = 'Error'; btnEl.style.background = '#dc2626'; btnEl.disabled = false; }
-    setTimeout(function(){
-      inputEl.style.borderColor = '';
-      if (btnEl) { btnEl.textContent = 'Guardar'; btnEl.style.background = ''; btnEl.className = 'text-[8px] px-2 py-1.5 bg-emerald-500 text-white rounded-lg font-black hover:bg-emerald-600 transition-all uppercase'; }
-    }, 2500);
-  }
-}
-
-window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costo:parseFloat(valor)||0,actualizadoEn:serverTimestamp()});}catch(e){console.error(e);}};
-
-window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`? Eliminar "${nombreInsumo}"\nCLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("? Clave incorrecta.");return;}if(!confirm(`(!) Eliminar "${nombreInsumo}".\n?Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`? Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("? Error: "+e.message);}};
-
-// --- INICIALIZAR BD ---
-window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("? CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("? Clave incorrecta.");return;}if(!confirm("(!) ?Inicializar catalogo de servicios en Firebase?"))return;
-const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULTA OFTALMOLOGICA":{precioVenta:80,porcDoc:12.5},"CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40},"ABSCESO":{precioVenta:25,porcDoc:50},"ECOGRAFIA":{precioVenta:30,porcDoc:40},"COLOCACION VIA":{precioVenta:15,porcDoc:50},"ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50},"TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50},"VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50},"VACUNA PUPPY":{precioVenta:40,porcDoc:50},"VACUNA ANTIRRABICA":{precioVenta:30,porcDoc:50},"VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50},"VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50},"VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50},"VACUNA BIOVETA":{precioVenta:60,porcDoc:50},"HEMATOLOGIA COMPLETA":{precioVenta:23,porcDoc:34.78},"QUIMICA SANGUINEA":{precioVenta:60,porcDoc:50},"DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50},"DISTEMPER":{precioVenta:35,porcDoc:50},"PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"FILARIASIS":{precioVenta:40,porcDoc:50},"SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50},"TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50},"HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50},"EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50},"CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50},"RASPADO PIEL":{precioVenta:10,porcDoc:50},"PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5},"EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50},"EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50},"EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50},"EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50},"REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50},"REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50},"REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50},"REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40},"CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40},"CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40}};
-try{Swal.fire({title:'? Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`? ${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("? Error: "+e.message);}};
-
-// --- CAMBIAR SUB-TAB CONFIG ---
-window.cambiarSubTabConfig = (tab) => {
-  ['servicios','insumos','medicamentos','seguridad','tarifa'].forEach(t => {
-    const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
-    const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
-    const activo = t === tab;
-    panel?.classList.toggle('hidden', !activo);
-    if (btn) {
-      // Usar estilos inline para garantizar igualdad sin depender de Tailwind
-      btn.style.background  = activo ? '#2563eb' : 'transparent';
-      btn.style.color       = activo ? '#ffffff' : '#64748b';
-      btn.style.fontWeight  = '900';
-      btn.style.fontSize    = '10px';
-      btn.style.padding     = '8px 4px';
-      btn.style.borderRadius = '8px';
-      btn.style.border      = 'none';
-      btn.style.cursor      = 'pointer';
-      btn.style.textTransform = 'uppercase';
-      btn.style.whiteSpace  = 'nowrap';
-      btn.style.overflow    = 'hidden';
-      btn.style.textOverflow = 'ellipsis';
-    }
-  });
-  if (tab === 'servicios')    window.renderizarTablaMaestra();
-  if (tab === 'insumos')      _llamarFuncion('renderizarTablaInsumos');
-  if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
-};
-
-
-
-
-// ─── ABRIR CONSULTA PARA EDITAR DESDE BUSCADOR ───────────────────────────────
-// Esta funcion es llamada por buscador.js cuando el usuario hace click en "Editar Consulta"
-window._abrirConsultaParaEditar = async (idConsulta) => {
-  try {
-    const snap = await getDoc(doc(db, "consultas", idConsulta));
-    if (!snap.exists()) {
-      Swal.fire({ icon:'error', title:'No encontrado', text:'La consulta no existe en Firebase.', timer:2500, showConfirmButton:false });
-      return;
-    }
-    const r = snap.data();
-
-    // Navegar a historia primero
-    if (typeof window.showTab === 'function') window.showTab('historia');
-
-    // Esperar a que la section este visible, luego llenar
-    setTimeout(function() {
-      const set = function(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; };
-      const setCheck = function(id, val) { const el = document.getElementById(id); if (el) el.checked = !!val; };
-
-      // Datos del paciente
-      set('hCI',       r.cedula);
-      set('hProp',     r.propietario);
-      set('hNombre',   r.paciente);
-      set('hEspecie',  r.especie);
-      set('hRaza',     r.raza);
-      set('hSexo',     r.sexo);
-      set('hEdad',     r.edad);
-      set('hPeso',     r.peso);
-      set('hColor',    r.color);
-      set('hTlf',      r.telefono);
-      set('hMail',     r.correo);
-      set('hDir',      r.direccion);
-      set('hFechaNac', r.fechaNacimiento);
-      setCheck('hAlerta', r.alerta);
-
-      // Datos clinicos
-      set('hTratamiento', r.tratamiento);
-      set('precioVenta',  r.montoVenta);
-
-      // Guardar el ID para que al guardar actualice en vez de crear
-      window._idConsultaEditando = idConsulta;
-
-      // Seleccionar el doctor
-      if (r.doctor) {
-        const selDoc = document.getElementById('selectorDoctor');
-        if (selDoc) {
-          const opciones = selDoc.querySelectorAll('button');
-          opciones.forEach(function(btn) {
-            if (btn.dataset && btn.dataset.doctor && r.doctor.includes(btn.dataset.doctor)) {
-              btn.click();
-            }
-          });
-        }
-      }
-
-      // Mostrar aviso
-      Swal.fire({
-        icon: 'info',
-        title: 'Consulta cargada para editar',
-        html: '<p style="font-size:11px;color:#64748b;">Paciente: <b>' + (r.paciente||'---') + '</b><br>' +
-              'Fecha original: ' + (r.fechaSimple||'---') + '<br><br>' +
-              '<span style="color:#dc2626;font-weight:900;">Al guardar se actualizara el registro existente.</span></p>',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#1d4ed8'
-      });
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 600);
-
-  } catch(e) {
-    console.error('Error cargando consulta:', e);
-    Swal.fire({ icon:'error', title:'Error', text: e.message, timer:3000, showConfirmButton:false });
-  }
-};
-
-// ─── SERVICIO SIN MASCOTA (MUESTRAS: SANGRE, ORINA, HECES, ETC.) ─────────────
-// Permite registrar un servicio veterinario donde solo traen la muestra,
-// sin que el paciente este fisicamente presente.
-// Se guarda en la misma coleccion "consultas" con flag muestra:true
-window.registrarServicioSinMascota = async () => {
-  try {
-    // Paso 1 — datos del propietario y tipo de muestra
-    const res1 = await Swal.fire({
-      title: 'Servicio sin Mascota',
-      width: 500,
-      html:
-        '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
-          '<div><label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Propietario / Cliente</label>' +
-          '<input type="text" id="sm_prop" placeholder="Nombre del propietario..." ' +
-            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:4px;"></div>' +
-          '<div><label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Cedula (opcional)</label>' +
-          '<input type="text" id="sm_ci" placeholder="CI del propietario..." ' +
-            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:4px;"></div>' +
-          '<div><label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Tipo de muestra / Paciente referencia</label>' +
-          '<input type="text" id="sm_paciente" placeholder="Ej: Muestra sangre Max, Heces Coco..." ' +
-            'style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;margin-top:4px;"></div>' +
-        '</div>',
-      showCancelButton: true,
-      confirmButtonText: 'Siguiente: Servicios',
-      cancelButtonText: 'Cancelar',
-      preConfirm: function() {
-        const prop = document.getElementById('sm_prop')?.value.trim();
-        if (!prop) { Swal.showValidationMessage('Escribe el nombre del propietario'); return false; }
-        const pac = document.getElementById('sm_paciente')?.value.trim();
-        if (!pac) { Swal.showValidationMessage('Escribe el tipo de muestra o nombre del paciente'); return false; }
-        return {
-          propietario: prop,
-          cedula: document.getElementById('sm_ci')?.value.trim() || 'SIN-CI',
-          paciente: pac
-        };
-      }
-    });
-    if (!res1.isConfirmed) return;
-    const datosBase = res1.value;
-
-    // Paso 2 — elegir doctor
-    const res2 = await Swal.fire({
-      title: 'Asignar Doctor',
-      html:
-        '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' +
-          '<button type="button" onclick="window._smDoctor=\'Darwin\';document.querySelectorAll(\'.btn-sm-doc\').forEach(function(b){b.style.opacity=\'0.4\';});this.style.opacity=\'1\';" ' +
-            'class="btn-sm-doc" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">Dr. Darwin Sandoval</button>' +
-          '<button type="button" onclick="window._smDoctor=\'Joan\';document.querySelectorAll(\'.btn-sm-doc\').forEach(function(b){b.style.opacity=\'0.4\';});this.style.opacity=\'1\';" ' +
-            'class="btn-sm-doc" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:12px;color:#15803d;cursor:pointer;">Dr. Joan Silva</button>' +
-        '</div>',
-      showCancelButton: true,
-      confirmButtonText: 'Siguiente: Servicios',
-      cancelButtonText: 'Cancelar',
-      preConfirm: function() {
-        if (!window._smDoctor) { Swal.showValidationMessage('Selecciona un doctor'); return false; }
-        return window._smDoctor;
-      }
-    });
-    if (!res2.isConfirmed) return;
-    const doctorSel = res2.value === 'Darwin' ? 'Dr. Darwin Sandoval' : 'Dr. Joan Silva';
-    window._smDoctor = null;
-
-    // Paso 3 — seleccionar servicios desde servicios_maestro (igual que en historia)
-    const snapServ = await getDocs(collection(db, "servicios_maestro"));
-    const listaServ = [];
-    snapServ.forEach(function(d){ listaServ.push({ id:d.id, ...d.data() }); });
-    listaServ.sort(function(a,b){ return (a.nombre||'').localeCompare(b.nombre||''); });
-
-    let htmlServ = '<p style="font-size:9px;color:#64748b;margin-bottom:8px;">Selecciona los servicios realizados:</p>';
-    htmlServ += '<div style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">';
-    listaServ.forEach(function(s) {
-      const precio = parseFloat(s.precioVenta||0).toFixed(2);
-      const porc   = parseFloat(s.porcDoc||s.porcentajeDoc||30);
-      htmlServ +=
-        '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;background:#f8fafc;">' +
-          '<input type="checkbox" class="chk-sm-serv" value="' + s.id + '" data-nombre="' + (s.nombre||'') + '" data-precio="' + precio + '" data-porc="' + porc + '" style="width:16px;height:16px;accent-color:#2563eb;">' +
-          '<span style="flex:1;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre||'---') + '</span>' +
-          '<span style="font-size:11px;font-weight:900;color:#16a34a;">$' + precio + '</span>' +
-          '<span style="font-size:9px;color:#64748b;">' + porc + '%</span>' +
-        '</label>';
-    });
-    htmlServ += '</div>';
-
-    const res3 = await Swal.fire({
-      title: 'Servicios para: ' + datosBase.paciente,
-      width: 550,
-      html: htmlServ,
-      showCancelButton: true,
-      confirmButtonText: 'Calcular y Guardar',
-      cancelButtonText: 'Cancelar',
-      preConfirm: function() {
-        const seleccionados = Array.from(document.querySelectorAll('.chk-sm-serv:checked'));
-        if (seleccionados.length === 0) { Swal.showValidationMessage('Selecciona al menos un servicio'); return false; }
-        return seleccionados.map(function(el) {
-          return {
-            id:     el.value,
-            nombre: el.dataset.nombre,
-            precio: parseFloat(el.dataset.precio),
-            porc:   parseFloat(el.dataset.porc)
-          };
-        });
-      }
-    });
-    if (!res3.isConfirmed) return;
-    const serviciosSeleccionados = res3.value;
-
-    // Calcular totales con logica de insumos igual que en guardarFirebase
-    let montoVenta = 0, montoInsumos = 0, pagoDoctor = 0;
-    const serviciosRealizados = [];
-    const detalleInsumos = [];
-
-    // Porccentaje global de configuracion
-    let porcGlobal = null;
-    try {
-      const cfgSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-      if (cfgSnap.exists()) porcGlobal = cfgSnap.data().porcentajeDoc || null;
-    } catch(e) {}
-
-    for (let i = 0; i < serviciosSeleccionados.length; i++) {
-      const s = serviciosSeleccionados[i];
-      const snapS = await getDoc(doc(db, "servicios_maestro", s.id));
-      let insumosServicio = [];
-      let porcFinal = porcGlobal || s.porc || 30;
-
-      if (snapS.exists()) {
-        const sd = snapS.data();
-        insumosServicio = sd.insumos || [];
-        if (!porcGlobal) porcFinal = parseFloat(sd.porcDoc || sd.porcentajeDoc || s.porc || 30);
-      }
-
-      // Calcular costo insumos de este servicio
-      let costoServicio = 0;
-      for (let j = 0; j < insumosServicio.length; j++) {
-        const ins = insumosServicio[j];
-        const costoIns = parseFloat(ins.costoUso || ins.costo || 0);
-        costoServicio += costoIns;
-        if (costoIns > 0) {
-          detalleInsumos.push({ nombre: ins.nombre||'---', costo: costoIns, servicio: s.nombre });
-        }
-      }
-
-      const utilidad = s.precio - costoServicio;
-      const docPago  = utilidad > 0 ? parseFloat((utilidad * porcFinal / 100).toFixed(4)) : 0;
-
-      montoVenta   += s.precio;
-      montoInsumos += costoServicio;
-      pagoDoctor   += docPago;
-
-      serviciosRealizados.push({
-        nombre: s.nombre,
-        precio: s.precio,
-        insumos: costoServicio,
-        pagoDoc: docPago,
-        porcentaje: porcFinal
-      });
-    }
-
-    const pagoAvipet = montoVenta - montoInsumos - pagoDoctor;
-
-    // Mostrar resumen antes de guardar
-    let resHtml = '<div style="background:#f8fafc;border-radius:12px;padding:12px;text-align:left;">';
-    serviciosRealizados.forEach(function(s) {
-      resHtml += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid #f1f5f9;">' +
-        '<span style="font-weight:700;">' + s.nombre + '</span>' +
-        '<span style="font-weight:900;color:#16a34a;">$' + s.precio.toFixed(2) + '</span></div>';
-    });
-    resHtml += '</div>';
-    resHtml +=
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px;">' +
-        '<div style="background:#eff6ff;border-radius:10px;padding:8px;text-align:center;">' +
-          '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Venta</p>' +
-          '<p style="font-size:16px;font-weight:900;color:#1d4ed8;margin:2px 0;">$' + montoVenta.toFixed(2) + '</p></div>' +
-        '<div style="background:#fef3c7;border-radius:10px;padding:8px;text-align:center;">' +
-          '<p style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;margin:0;">Insumos</p>' +
-          '<p style="font-size:16px;font-weight:900;color:#92400e;margin:2px 0;">$' + montoInsumos.toFixed(4) + '</p></div>' +
-        '<div style="background:#eff6ff;border-radius:10px;padding:8px;text-align:center;">' +
-          '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Doctor</p>' +
-          '<p style="font-size:16px;font-weight:900;color:#1d4ed8;margin:2px 0;">$' + pagoDoctor.toFixed(4) + '</p></div>' +
-      '</div>' +
-      '<div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center;margin-top:8px;">' +
-        '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;margin:0;">Neto Avipet</p>' +
-        '<p style="font-size:22px;font-weight:900;color:#16a34a;margin:4px 0;">$' + pagoAvipet.toFixed(2) + '</p></div>';
-
-    const resConf = await Swal.fire({
-      title: 'Confirmar y Guardar',
-      width: 520,
-      html: resHtml,
-      showCancelButton: true,
-      confirmButtonText: 'Guardar en Firebase',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#16a34a'
-    });
-    if (!resConf.isConfirmed) return;
-
-    // Guardar en Firebase en coleccion "consultas"
-    const hoy = new Date();
-    await addDoc(collection(db, "consultas"), {
-      cedula:          datosBase.cedula,
-      propietario:     datosBase.propietario,
-      paciente:        datosBase.paciente,
-      especie:         'Muestra',
-      raza:            '',
-      doctor:          doctorSel,
-      montoVenta:      parseFloat(montoVenta.toFixed(2)),
-      montoInsumos:    parseFloat(montoInsumos.toFixed(4)),
-      pagoDoctor:      parseFloat(pagoDoctor.toFixed(4)),
-      pagoAvipet:      parseFloat(pagoAvipet.toFixed(2)),
-      serviciosRealizados: serviciosRealizados,
-      listaDetalladaInsumos: detalleInsumos,
-      tratamiento:     serviciosRealizados.map(function(s){ return s.nombre; }).join(', '),
-      esMuestra:       true,
-      fecha:           serverTimestamp(),
-      fechaSimple:     hoy.getDate() + '/' + (hoy.getMonth()+1) + '/' + hoy.getFullYear()
-    });
-
-    await Swal.fire({
-      icon: 'success',
-      title: 'Servicio guardado',
-      html: '<p style="font-size:12px;color:#64748b;">' + datosBase.paciente + '<br>' +
-            '<b style="color:#16a34a;">$' + montoVenta.toFixed(2) + '</b> — ' + doctorSel + '</p>',
-      timer: 2500,
-      showConfirmButton: false
-    });
-
-  } catch(e) {
-    console.error('Error servicio sin mascota:', e);
-    Swal.fire({ icon:'error', title:'Error', text: e.message });
-  }
-};
+   </div>
+   <span id="calcTasaMostrar" class="text-[10px] font-bold text-amber-600 italic bg-amber-50 px-3 py-1 rounded-full">Tasa: cargando...</span>
+  </div>
+
+  <div class="p-4 space-y-4">
+
+   <!-- Calculadora BS <-> USD -->
+   <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+    <div class="bg-slate-800 px-4 py-2.5 flex items-center justify-between">
+     <h3 class="text-[11px] font-black text-white uppercase tracking-widest">Calculadora BS / USD</h3>
+    </div>
+    <div class="bg-white p-4">
+     <div class="flex bg-slate-100 rounded-xl p-1 mb-3">
+      <button id="btnUsdToBS" onclick="window.setCalcModo('usdToBS')"
+              class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all bg-blue-600 text-white shadow-sm">USD a Bs</button>
+      <button id="btnBsToUSD" onclick="window.setCalcModo('bsToUSD')"
+              class="flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all text-slate-500">Bs a USD</button>
+     </div>
+     <input type="hidden" id="calcModo" value="usdToBS">
+     <div class="relative mb-1">
+      <span id="calcSimbolo" class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">$</span>
+      <input type="number" id="calcInput" placeholder="0.00" step="0.01" min="0" oninput="window.calcularConversor()"
+             class="w-full border-2 border-slate-200 rounded-xl pl-10 pr-4 py-4 text-2xl font-black text-slate-800 outline-none focus:border-blue-500 bg-slate-50 transition-all">
+     </div>
+     <div id="calcResultado" class="mt-3 rounded-xl bg-slate-50 border border-slate-200 p-4 text-center min-h-[80px] flex flex-col items-center justify-center">
+      <p class="text-[10px] text-slate-400 italic font-bold uppercase">Ingresa un monto arriba</p>
+     </div>
+     <div class="mt-3 flex items-center gap-2">
+      <label class="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">Tasa manual:</label>
+      <input type="number" id="calcTasaManual" placeholder="Bs por $1" step="0.01" min="1"
+             class="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 outline-none focus:border-blue-400 bg-white">
+      <button onclick="window.aplicarTasaManualCalc()" class="bg-slate-700 text-white px-3 py-1 rounded-lg font-black text-[9px] uppercase hover:bg-blue-600 transition-all">OK</button>
+     </div>
+    </div>
+   </div>
+
+   <!-- Menu principal: 3 botones -->
+   <div id="listaReporte"></div>
+
+   <!-- IDs ocultos que finanzas.js necesita para set() -->
+   <div class="hidden">
+    <span id="repBruto"></span><span id="repBrutoVet"></span><span id="repBrutoPelu"></span>
+    <span id="repGastos"></span><span id="repDocSandoval"></span><span id="repDocSilva"></span>
+    <span id="fNetoVet"></span><span id="fNetoPelu"></span><span id="repNeto"></span>
+    <span id="fPeluTotal"></span><span id="fPeluPagos"></span><span id="fPeluAyudantes"></span>
+    <span id="fPeluAyudantesExtra"></span><span id="fPeluCajaUsd"></span><span id="fPeluCajaBs"></span>
+    <span id="fPeluPendiente"></span>
+   </div>
+
+  </div>
+ </div>
+</section>
+
+ <!-- PELUQUERÍA CANINA -->
+ <div id="sectionPeluqueria" class="hidden p-4 bg-slate-50 min-h-screen animate-fadeIn">
+ <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden print-area">
+ <div class="flex flex-wrap sm:flex-nowrap justify-between items-start border-b-2 border-blue-600 p-4 mb-2">
+ <div class="flex items-center">
+ <div class="relative w-48 flex flex-col items-center sm:items-start">
+ <img src="avipet.png" alt="Logo Avipet" class="w-full h-20 object-contain">
+ <p class="text-[10px] font-bold text-slate-500 mt-[-12px] uppercase">RIF: J-00068577-0</p>
+ </div>
+ </div>
+ <div class="text-right">
+ <h2 class="text-xl font-black text-slate-800 uppercase italic leading-none">Estética Canina</h2>
+ <p class="text-[10px] font-bold text-blue-600 uppercase mt-1 tracking-widest italic">Control Maestro de Servicios</p>
+ <div id="badgeFidelidad" class="hidden mt-2 bg-yellow-400 text-blue-900 px-3 py-1 rounded-full font-black text-[10px] animate-bounce shadow-sm"> ¡PRÓXIMA VISITA GRATIS!</div>
+ </div>
+ </div>
+ <div class="no-print flex gap-2 px-4 pt-3 border-b border-slate-100 bg-white">
+ <button id="btnPeluTab_servicio" onclick="window.cambiarTabPeluqueria('servicio')" class="text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-blue-600 text-white border-b-2 border-blue-600"> Servicio</button>
+ <button id="btnPeluTab_descanso" onclick="window.cambiarTabPeluqueria('descanso')" class="text-[10px] px-4 py-2 font-black uppercase rounded-t-lg bg-slate-100 text-slate-500 hover:bg-slate-200"> Descansos</button>
+ </div>
+ <div id="panelPeluServicio">
+ <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+ <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
+ <div class="flex items-center gap-2 mb-2"><div class="w-1 h-4 bg-blue-600"></div><h3 class="font-black text-slate-800 uppercase text-xs italic"> Ficha del Paciente</h3></div>
+ <div class="grid grid-cols-1 gap-3 border border-slate-200 p-4 rounded-xl bg-slate-50/30">
+ <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Cédula del Dueño</label>
+ <input type="text" id="pCedula" onchange="window.buscarClientePeluqueria(this.value)"
+ class="w-full border-b border-slate-300 focus:border-blue-600 outline-none p-1 font-bold text-slate-700 bg-transparent uppercase" placeholder="V-00000000"></div>
+ <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nombre del Propietario</label>
+ <input type="text" id="pDuenio" class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 uppercase outline-none focus:border-blue-600 bg-transparent"></div>
+ <div class="grid grid-cols-2 gap-3">
+ <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Teléfono 1</label><input type="text" id="pTelefono" placeholder="04XX-XXXXXXX" class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 outline-none bg-transparent"></div>
+ <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Teléfono 2</label><input type="text" id="pTelefono2" placeholder="04XX-XXXXXXX" class="w-full border-b border-slate-300 p-1 text-xs font-bold text-slate-700 outline-none bg-transparent"></div>
+ </div>
+ <div>
+ <div class="flex items-center justify-between mb-1">
+ <label class="text-[9px] font-bold text-slate-400 uppercase">Mascotas</label>
+ <button type="button" onclick="window.agregarMascotaPelu()" class="text-[8px] font-black text-blue-600 border border-blue-200 bg-blue-50 px-2 py-0.5 rounded-lg hover:bg-blue-600 hover:text-white transition-all">+ Agregar otra</button>
+ </div>
+ <input type="hidden" id="pNombre">
+ <input type="hidden" id="pRaza">
+ <div id="listaMascotasPelu" class="space-y-2">
+ <div class="mascota-pelu-row flex gap-2 items-center">
+ <div class="flex-1"><input type="text" placeholder="Nombre mascota" class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent"></div>
+ <div class="w-20"><input type="text" placeholder="Raza" class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent"></div>
+ <div class="w-16"><input type="number" placeholder="$0" step="0.50" min="0" class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right" oninput="_llamarFuncion('recalcularTotalPelu')" title="Precio individual (deja vacío para usar el precio general)"></div>
+ </div>
+ </div>
+ </div>
+ <div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Dirección</label><input type="text" id="pDireccion" placeholder="Ubicación" class="w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent"></div>
+ </div>
+ <div class="pt-2">
+ <h3 class="text-[10px] font-black text-slate-400 uppercase mb-1 italic tracking-widest"> Notas de Salud / Conducta</h3>
+ <textarea id="pCondicion" rows="3" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 text-[11px] font-bold text-slate-600 focus:border-blue-600 outline-none leading-tight" placeholder="¿Es agresivo? ¿Verrugas? ¿Soplos?"></textarea>
+ </div>
+ </div>
+ <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">
+ <div class="flex items-center gap-2 mb-2"><div class="w-1 h-4 bg-blue-600"></div><h3 class="font-black text-slate-800 uppercase text-xs italic"> Detalles del Servicio</h3></div>
+ <div class="space-y-4 p-4 border border-slate-200 rounded-xl bg-slate-50/30">
+ <div>
+ <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tipo de Trabajo</label>
+ <select id="pTipoServicio" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-full border-b border-slate-300 p-1 font-black text-xs uppercase bg-transparent outline-none text-slate-700">
+ <option value="completo">Baño y Corte Completo</option>
+ <option value="solo_unas">Corte de Uñas</option>
+ </select>
+ <div class="mt-2">
+ <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Precio Corte de Uñas ($)</label>
+ <input type="number" id="pPrecioUnas" value="0" step="0.5" oninput="_llamarFuncion('recalcularTotalPelu')" class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 outline-none bg-transparent">
+ </div>
+ </div>
+ <div class="grid grid-cols-2 gap-4">
+ <div>
+ <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tamaño (Base)</label>
+ <select id="pTamano" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-full border-b border-slate-300 p-1 text-xs font-black bg-transparent outline-none text-slate-700">
+ <option value="30">Pequeño ($30)</option>
+ <option value="40">Mediano ($40)</option>
+ <option value="50">Grande ($50)</option>
+ <option value="60">Extra G. ($60)</option>
+ </select>
+ </div>
+ <div>
+ <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Ajuste +/-</label>
+ <input type="number" id="pAjuste" value="0" oninput="_llamarFuncion('recalcularTotalPelu')" class="w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 outline-none bg-transparent">
+ </div>
+ </div>
+ </div>
+ <div class="bg-blue-50/50 p-4 rounded-2xl space-y-3 border border-blue-100 mt-4">
+ <h4 class="text-[10px] font-black text-blue-600 uppercase text-center tracking-widest mb-1 italic"> Comisiones de Apoyo</h4>
+ <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
+ <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pExtraSolo" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase italic">¿Extra hizo TODO solo?</span></label>
+ </div>
+ <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
+ <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pAyudante1" checked onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Ayudante Principal</span></label>
+ <div class="flex items-center gap-1 font-mono text-blue-600 font-bold text-[9px]"><span class="text-slate-400 font-normal">$1×perro×2</span><input type="hidden" id="pMontoAyu1" value="2"></div>
+ </div>
+ <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
+ <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pAyudanteExtra" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Ayudante Extra (Tridente)</span></label>
+ </div>
+ </div>
+ </div>
+ <div class="space-y-4 flex flex-col justify-between">
+ <div class="bg-white p-6 rounded-3xl border-2 border-blue-600 shadow-sm">
+ <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
+ <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Monto a Cobrar</span>
+ <span id="pTotalCobro" class="text-4xl font-black italic tracking-tighter text-slate-800 font-mono">$ 0.00</span>
+ </div>
+ <div class="space-y-2 mt-4">
+ <div class="flex justify-between items-center border-b border-slate-50 pb-1"><span class="text-[9px] font-bold uppercase text-slate-500 italic">Peluquera:</span><span id="pResPeluquera" class="text-lg font-black text-blue-600 font-mono">$ 0.00</span></div>
+ <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Ayudante ($1 pelu + $1 Avipet):</span><span id="pResAyudante1" class="text-sm font-black text-blue-700 font-mono">$ 0.00</span></div>
+ <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Extra:</span><span id="pResAyudanteExtra" class="text-sm font-black text-slate-600 font-mono">$ 0.00</span></div>
+ <span id="pResAyudantes" class="hidden">$ 0.00</span>
+ </div>
+ </div>
+ <div class="mt-2 bg-slate-50 border border-slate-200 rounded-2xl p-3">
+ <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 italic"> Tarjeta de Fidelidad VIP</h4>
+ <div class="flex items-center justify-between mb-2">
+ <span id="contadorVisitas" class="text-[10px] font-black text-blue-700 uppercase">0 / 10 VISITAS</span>
+ <span id="proximaGratis" class="hidden text-[9px] font-black text-emerald-600 uppercase"> GRATIS</span>
+ </div>
+ <div id="contenedorSellos" class="grid grid-cols-5 gap-1 bg-white rounded-xl border border-slate-200 p-2"></div>
+ <div class="mt-3 flex flex-col sm:flex-row gap-2">
+ <button type="button" onclick="window.descargarTarjetaPelu()" class="flex-1 bg-blue-600 text-white text-[9px] font-black uppercase py-2 rounded-lg shadow-sm"> Tarjeta VIP</button>
+ <button type="button" onclick="window.mostrarQRTarjeta()" class="flex-1 bg-white border border-blue-300 text-[9px] font-black uppercase text-blue-700 py-2 rounded-lg"> QR Digital</button>
+ </div>
+ </div>
+ <div class="space-y-3">
+ <button onclick="window.guardarPeluqueriaPro()" class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black shadow-md transition-all uppercase text-xs tracking-[2px] italic border-b-4 border-blue-800 active:border-b-0 active:translate-y-1"> Registrar Servicio</button>
+ <button onclick="window.showTab('historia')" class="w-full py-2 font-bold text-slate-400 hover:text-red-500 transition-all uppercase text-[9px] tracking-[2px]"> Cancelar</button>
+ </div>
+ </div>
+ </div>
+ <div class="bg-slate-50 p-6 border-t border-slate-200">
+ <div class="flex justify-between items-center mb-3">
+ <h3 class="text-sm font-black text-slate-800 uppercase italic flex items-center gap-2"><span class="w-1 h-5 bg-blue-600 rounded-full"></span>Bitácora de Peluquería</h3>
+ <button onclick="window.cargarBitacoraHoy()" class="text-[9px] bg-white border border-slate-300 px-3 py-1 rounded-lg font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-100"> Hoy</button>
+ </div>
+ <div class="flex items-center gap-2 mb-4 bg-white border border-slate-200 rounded-xl p-2">
+ <input type="date" id="fechaBitacora" class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none focus:border-blue-500 bg-slate-50">
+ <button type="button" onclick="_llamarFuncion('buscarBitacoraFecha')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-blue-700 transition-all"> Buscar fecha</button>
+ </div>
+ <div id="bitacoraPeluqueriaHoy" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+ <div class="col-span-full py-8 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white">
+ <p class="text-slate-400 text-[9px] font-black uppercase italic tracking-widest">Sin movimientos registrados hoy</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div id="panelPeluDescanso" class="hidden p-4">
+ <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4 max-w-lg mx-auto">
+ <p class="text-[10px] font-black text-slate-500 uppercase mb-3"> Registrar Descanso</p>
+ <div class="flex gap-2 mb-2">
+ <select id="selectEmpleadoDescanso" class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white"><option value="">-- Empleado --</option></select>
+ <button onclick="_llamarFuncion('registrarSalidaDescanso')" class="bg-amber-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-amber-600 shadow"> Salida</button>
+ <button onclick="_llamarFuncion('registrarRegresoDescanso')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-emerald-600 shadow"> Regreso</button>
+ </div>
+ </div>
+ <div class="max-w-lg mx-auto space-y-4">
+ <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4"><p class="text-[10px] font-black text-slate-500 uppercase mb-3">⏳ Fuera Ahora</p><div id="listaDescansoActivo"><p class="text-[10px] text-slate-400 italic text-center py-2">Nadie fuera ahora</p></div></div>
+ <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4">
+ <p class="text-[10px] font-black text-slate-500 uppercase mb-3"> Empleados</p>
+ <div class="flex gap-2 mb-3">
+ <input id="inputNuevoEmpleado" type="text" placeholder="Nombre del empleado..." class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500">
+ <button onclick="_llamarFuncion('agregarEmpleadoDescanso')" class="bg-blue-600 text-white px-3 py-2 rounded-xl font-black text-[10px] hover:bg-blue-700 shadow"> Agregar</button>
+ </div>
+ <div id="listaEmpleadosDescanso"></div>
+ </div>
+ <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+ <div class="flex justify-between items-center mb-3"><p class="text-[10px] font-black text-slate-500 uppercase"> Historial de Hoy</p><button onclick="_llamarFuncion('cargarHistorialDescanso')" class="text-[9px] font-black text-blue-500 underline">↻ Actualizar</button></div>
+ <div id="historialDescanso"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin registros hoy</p></div>
+ </div>
+ <div class="bg-red-50 border border-red-100 rounded-2xl p-4">
+ <p class="text-[10px] font-black text-red-500 uppercase mb-3"> Tiempo Excedido Acumulado</p>
+ <div id="resumenExcesosDescanso"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin excesos hoy </p></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- INVENTARIO -->
+ <section id="sectionInventario" class="hidden p-4 bg-slate-100 min-h-screen animate-fadeIn">
+ <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+ <div class="flex justify-between items-center border-b-2 border-blue-600 p-4 bg-white">
+ <div class="flex items-center gap-3"><img src="avipet.png" alt="Logo" class="h-10 object-contain"><h2 class="text-lg font-black text-slate-800 uppercase italic tracking-tighter">Inventario</h2></div>
+ </div>
+ <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+ <div class="flex flex-col sm:flex-row gap-4">
+ <div class="flex-1">
+ <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Búsqueda</label>
+ <input id="filtroInventario" type="text" oninput="window.filtrarInventario()" class="w-full border-b-2 border-slate-200 p-1.5 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent focus:border-blue-500" placeholder="Nombre, proveedor...">
+ </div>
+ <div class="flex gap-2 items-end">
+ <select id="filtroProveedor" onchange="window.filtrarInventario()" class="border-b-2 border-slate-200 p-1.5 text-xs font-bold text-slate-700 uppercase outline-none bg-transparent focus:border-blue-500"><option value="">Todos los proveedores</option></select>
+ <button type="button" onclick="window.nuevoProductoInventario()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-blue-700 transition-all">+ Nuevo</button>
+ <button type="button" onclick="window.descargarReporteProveedor()" class="bg-slate-700 text-white px-4 py-2.5 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-slate-800 transition-all"> Excel</button>
+ <button type="button" onclick="window.verAuditoriaInventario()" class="bg-purple-700 text-white px-4 py-2.5 rounded-lg font-black text-[10px] uppercase shadow-md hover:bg-purple-800 transition-all"> Auditoría</button>
+ </div>
+ </div>
+ </div>
+ <div class="grid grid-cols-1 md:grid-cols-2 divide-x divide-slate-100">
+ <div class="max-h-[75vh] overflow-y-auto p-2 bg-white" id="listaInventario">
+ <p class="text-center text-slate-400 text-[9px] font-black uppercase italic py-8">Cargando inventario...</p>
+ </div>
+ <div class="p-5 bg-slate-50/30" id="formInventarioPanel">
+ <h3 id="tituloFormInventario" class="text-[11px] font-black text-blue-700 uppercase mb-4 tracking-wider"> Nuevo Producto</h3>
+ <div class="space-y-3">
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Nombre del Producto</label><input id="invNombre" class="w-full border-b-2 border-slate-200 p-1 text-xs font-black text-slate-800 uppercase outline-none focus:border-blue-500 bg-transparent"></div>
+ <div class="grid grid-cols-2 gap-3">
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Proveedor</label><input id="invProveedor" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold text-slate-700 outline-none bg-transparent"></div>
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Categoría</label><input id="invCategoria" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold text-slate-700 outline-none bg-transparent"></div>
+ </div>
+ <div class="rounded-2xl overflow-hidden border border-slate-700 mb-1">
+ <button type="button" onclick="window.calcInvToggle()" class="w-full bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-3 flex items-center justify-between hover:from-slate-700 hover:to-slate-600 transition-all">
+ <div class="flex items-center gap-2"><span></span><span class="text-[10px] font-black text-white uppercase tracking-widest">Calculadora de Costo</span></div>
+ <span id="calcInvChevron" class="text-slate-400 font-black text-xs transition-all"> Abrir</span>
+ </button>
+ <div id="calcInvCuerpo" class="hidden bg-gradient-to-br from-slate-800 to-slate-900 p-4">
+ <div class="flex bg-slate-700 rounded-xl p-1 mb-3">
+ <button id="calcInvBtnBCV" type="button" onclick="window.calcInvSetModo('bcv')" class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all bg-blue-600 text-white"> Tasa BCV</button>
+ <button id="calcInvBtnProv" type="button" onclick="window.calcInvSetModo('proveedor')" class="flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase transition-all text-slate-400"> Tasa Proveedor</button>
+ </div>
+ <div class="space-y-2">
+ <div id="calcInvFilaBS">
+ <div class="flex bg-slate-700 rounded-lg p-0.5 mb-2">
+ <button id="calcInvBtnMonedaBS" type="button" onclick="window.calcInvSetMoneda('bs')" class="flex-1 py-1 rounded-md font-black text-[9px] uppercase transition-all bg-amber-500 text-white"> Cobra en Bs</button>
+ <button id="calcInvBtnMonedaUSD" type="button" onclick="window.calcInvSetMoneda('usd')" class="flex-1 py-1 rounded-md font-black text-[9px] uppercase transition-all text-slate-400"> Cobra en USD</button>
+ </div>
+ <label id="calcInvLabelPrecio" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Precio del proveedor (Bs)</label>
+ <input type="number" id="calcInvPrecioBS" placeholder="0.00" step="0.01" min="0" oninput="window.calcularCostoInventario()" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-white outline-none focus:border-blue-400">
+ </div>
+ <div id="calcInvFilaUSD" class="hidden">
+ <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Precio del proveedor ($)</label>
+ <input type="number" id="calcInvPrecioUSD" placeholder="0.00" step="0.01" min="0" oninput="window.calcularCostoInventario()" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-white outline-none focus:border-blue-400">
+ </div>
+ <div id="calcInvFilaTasaProv" class="hidden">
+ <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Tasa del proveedor (Bs / $1)</label>
+ <input type="number" id="calcInvTasaProv" placeholder="Ej: 680" step="0.01" min="1" oninput="window.calcularCostoInventario()" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-amber-300 outline-none focus:border-amber-400">
+ </div>
+ <div>
+ <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Tasa BCV (Bs / $1) <span class="text-emerald-400 italic ml-1"> automática</span></label>
+ <input type="number" id="calcInvTasaBCV" step="0.01" min="1" oninput="window.calcularCostoInventario()" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-emerald-300 outline-none focus:border-emerald-400">
+ </div>
+ <div class="flex items-center justify-between bg-slate-700 rounded-lg px-3 py-2">
+ <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="calcInvIVA" onchange="window.calcularCostoInventario()" class="w-4 h-4 accent-amber-400"><span class="text-[10px] font-black text-slate-300 uppercase">Aplicar IVA (16%)</span></label>
+ <span class="text-[9px] font-bold text-amber-400 italic">+16% al costo</span>
+ </div>
+ <div>
+ <div class="flex justify-between items-center mb-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Margen de ganancia (%)</label><span id="calcInvMargenLabel" class="text-[9px] font-bold text-blue-300"></span></div>
+ <input type="number" id="calcInvMargen" value="30" step="1" min="1" max="99" oninput="window.calcularCostoInventario()" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-blue-300 outline-none focus:border-blue-400">
+ </div>
+ </div>
+ <div id="calcInvResultado" class="mt-3 bg-slate-700/60 rounded-xl p-3 hidden">
+ <div class="grid grid-cols-2 gap-2 text-center">
+ <div class="bg-slate-800 rounded-lg p-2"><p class="text-[8px] text-slate-400 uppercase font-bold mb-1">Me costó (USD)</p><p id="calcInvCostoUSD" class="text-lg font-black text-white font-mono">$0.00</p></div>
+ <div class="bg-blue-600 rounded-lg p-2"><p class="text-[8px] text-blue-200 uppercase font-bold mb-1">Vendo a (USD)</p><p id="calcInvPrecioVentaCalc" class="text-lg font-black text-white font-mono">$0.00</p></div>
+ </div>
+ <p id="calcInvDetalle" class="text-[9px] text-slate-400 italic text-center mt-2"></p>
+ <button type="button" onclick="window.calcInvAplicar()" class="w-full mt-3 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-black text-[10px] uppercase transition-all"> Aplicar al producto</button>
+ </div>
+ </div>
+ </div>
+ <div class="grid grid-cols-2 gap-3">
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Costo Compra ($)</label><input id="invCostoCompra" type="number" step="0.01" class="w-full border-b-2 border-slate-200 p-1 text-xs font-black text-slate-800 outline-none bg-transparent"></div>
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Precio Venta ($)</label><input id="invPrecioVenta" type="number" step="0.01" class="w-full border-b-2 border-slate-200 p-1 text-xs font-black text-blue-600 outline-none bg-transparent"></div>
+ </div>
+ <div class="grid grid-cols-3 gap-3">
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Stock Actual</label><input id="invStock" type="number" oninput="window.actualizarEstadoInventarioVisual()" class="w-full border-b-2 border-slate-200 p-1 text-xs font-black text-blue-600 outline-none bg-transparent"></div>
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Stock Mínimo</label><input id="invStockMinimo" type="number" oninput="window.actualizarEstadoInventarioVisual()" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
+ <div class="flex items-end pb-1"><span id="badgeEstadoStock" class="text-[8px] font-black uppercase px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">OK</span></div>
+ </div>
+ <div class="grid grid-cols-2 gap-3">
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Unidad</label><input id="invUnidad" placeholder="und, ml, kg..." class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Vencimiento</label><input id="invFechaVence" type="date" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
+ </div>
+ <div><label class="text-[9px] font-bold text-slate-400 uppercase">Descripción</label><input id="invDescripcion" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
+ </div>
+ <div class="mt-4 space-y-2">
+ <button type="button" onclick="window.guardarProductoInventario()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-blue-700 active:scale-[.98] transition-all"> Guardar Producto</button>
+ <div class="grid grid-cols-2 gap-2">
+ <button type="button" onclick="window.mostrarAjusteRapido()" class="bg-slate-700 text-white py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-slate-800 transition-all"> Ajuste Stock</button>
+ <button type="button" onclick="window.verMovimientosProducto()" class="bg-slate-200 text-slate-600 py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-slate-300 transition-all"> Historial</button>
+ </div>
+ <div id="panelAjusteRapido" class="hidden border border-blue-100 rounded-xl p-3 bg-blue-50/50 animate-fadeIn">
+ <p class="text-[9px] font-black text-blue-600 uppercase mb-2">Entrada / Salida de Mercancía</p>
+ <div class="grid grid-cols-3 gap-2">
+ <select id="tipoAjuste" class="bg-white border border-slate-200 rounded p-1 text-xs font-bold uppercase"><option value="entrada">Entrada</option><option value="salida">Salida</option></select>
+ <input id="cantAjuste" type="number" placeholder="Cant." class="bg-white border border-slate-200 rounded p-1 text-xs font-bold">
+ <input id="notaAjuste" placeholder="Motivo..." class="bg-white border border-slate-200 rounded p-1 text-xs">
+ </div>
+ <div class="mt-2 flex justify-end gap-2">
+ <button type="button" onclick="document.getElementById('panelAjusteRapido').classList.add('hidden')" class="text-[9px] font-bold text-slate-400 uppercase px-2">Cancelar</button>
+ <button type="button" onclick="window.aplicarAjusteRapido()" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[9px] font-black uppercase">Aplicar</button>
+ </div>
+ </div>
+ <button id="btnEliminarProducto" type="button" onclick="window.eliminarProductoInventario()" class="hidden w-full mt-4 bg-white text-slate-400 border border-slate-200 py-2 rounded-xl font-bold text-[9px] uppercase hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all"> Eliminar Producto</button>
+ <button id="btnNuevoProducto" type="button" onclick="window.nuevoProductoInventario()" class="hidden w-full bg-slate-100 text-slate-500 py-2 rounded-xl font-bold text-[9px] uppercase hover:bg-slate-200 transition-all"> Limpiar / Nuevo</button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- CONFIG / AJUSTES DE PRECIOS -->
+ <section id="sectionConfig_precios" class="hidden p-4 animate-fadeIn">
+ <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-4xl mx-auto">
+ <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic"> Panel de Control Maestro</h2>
+ <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos</p>
+
+ <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:24px;background:#f1f5f9;padding:4px;border-radius:12px;">
+ <button onclick="_llamarFuncion('cambiarSubTabConfig','servicios')" id="btn_subTabServicios"
+ style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:#2563eb;color:white;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Servicios</button>
+ <button onclick="_llamarFuncion('cambiarSubTabConfig','insumos')" id="btn_subTabInsumos"
+ style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Insumos</button>
+ <button onclick="_llamarFuncion('cambiarSubTabConfig','medicamentos')" id="btn_subTabMedicamentos"
+ style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Medicamentos</button>
+ </div>
+
+ <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
+ <div>
+ <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>
+ <p class="text-[9px] text-orange-400">Usa esto solo para subir los datos por primera vez a Firebase.</p>
+ </div>
+ <button onclick="_llamarFuncion('inicializarBaseDeDatosCompleta')" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-lg"> Inicializar</button>
+ </div>
+
+ <div id="panel_subTabServicios" class="bg-slate-50 rounded-xl border border-slate-100 p-3">
+ <div class="flex gap-2 mb-3">
+ <input type="text" id="filtroServiciosMaestro" placeholder=" Buscar servicio..."
+ oninput="_llamarFuncion('filtrarTablaServicios')"
+ class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ <button onclick="_llamarFuncion('abrirModalNuevoServicio')" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-blue-700 transition-all shadow"> Nuevo Servicio</button>
+ </div>
+ <div id="tablaServiciosMaestro" class="overflow-x-auto"></div>
+ </div>
+
+ <div id="panel_subTabInsumos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
+ <div class="flex gap-2 mb-3">
+ <input type="text" id="nuevoInsumoNombre" placeholder="Nombre del insumo..." class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ <input type="number" id="nuevoInsumoCosto" placeholder="Costo $" step="0.0001" min="0" class="w-24 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ <button onclick="_llamarFuncion('agregarInsumoMaestro')" class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-emerald-700 shadow"> Agregar</button>
+ </div>
+ <div id="tablaInsumosMaestro" class="overflow-x-auto"></div>
+ </div>
+
+ <div id="panel_subTabMedicamentos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
+ <div class="flex gap-2 mb-2">
+ <input type="text" id="nuevoMedNombre" placeholder="Nombre del medicamento..." class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ <input type="number" id="nuevoMedPrecio" placeholder="Precio $" step="0.50" min="0" class="w-24 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ <button onclick="_llamarFuncion('agregarMedicamentoMaestro')" class="bg-purple-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-purple-700 shadow"> Agregar</button>
+ </div>
+ <div class="mb-3">
+ <button onclick="_llamarFuncion('sincronizarMedicamentosBase')" class="w-full py-2 border border-purple-200 bg-purple-50 text-purple-700 rounded-lg font-black text-[10px] uppercase hover:bg-purple-100"> Cargar medicamentos base al listado</button>
+ </div>
+ <div id="tablaMedicamentosMaestro" class="overflow-x-auto"></div>
+ </div>
+ </div>
+ </section>
+
+ <!-- SALA DE ESPERA -->
+ <section id="sectionEspera" class="hidden p-4 animate-fadeIn">
+ <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-3xl mx-auto">
+ <h2 class="text-xl font-black text-blue-900 mb-4 uppercase"> Pacientes en Espera</h2>
+ <div id="listaEspera" class="space-y-2 max-h-80 overflow-y-auto text-[11px]"></div>
+ </div>
+ </section>
+
+</main>
+
+<!-- CONTROL DE ALMUERZO -->
+<section id="sectionAlmuerzo" class="hidden p-4 animate-fadeIn">
+ <div class="max-w-lg mx-auto">
+ <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+ <div class="flex items-center justify-between mb-1">
+ <div><h2 class="font-black text-[14px] text-slate-800 uppercase"> Control de Almuerzo</h2><p class="text-[10px] text-slate-400">Límite: 1 hora por empleado</p></div>
+ <div class="text-right"><p id="relojAlmuerzo" class="font-black text-[18px] text-blue-700"></p><p id="fechaAlmuerzo" class="text-[9px] text-slate-400"></p></div>
+ </div>
+ </div>
+ <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+ <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Registrar Salida / Regreso</p>
+ <div class="flex gap-2">
+ <select id="selectEmpleadoAlmuerzo" class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ <option value="">-- Seleccionar empleado --</option>
+ <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
+ <option value="Joan Silva">Dr. Joan Silva</option>
+ <option value="Daniel">Daniel (Inventario)</option>
+ <option value="Carlos">Carlos (Inventario)</option>
+ <option value="Recepcion">Recepción</option>
+ <option value="Peluqueria">Peluquería</option>
+ </select>
+ <button onclick="_llamarFuncion('registrarSalidaAlmuerzo')" class="bg-amber-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-amber-600 transition-all shadow"> Salida</button>
+ <button onclick="_llamarFuncion('registrarRegresoAlmuerzo')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-emerald-600 transition-all shadow"> Regreso</button>
+ </div>
+ </div>
+ <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+ <p class="text-[10px] font-black text-slate-500 uppercase mb-3">⏳ Actualmente en Almuerzo</p>
+ <div id="listaAlmuerzoActivo" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Nadie en almuerzo ahora</p></div>
+ </div>
+ <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+ <div class="flex items-center justify-between mb-3">
+ <p class="text-[10px] font-black text-slate-500 uppercase"> Historial de Hoy</p>
+ <button onclick="_llamarFuncion('cargarHistorialAlmuerzo')" class="text-[9px] font-black text-blue-500 underline">↻ Actualizar</button>
+ </div>
+ <div id="historialAlmuerzo" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin registros hoy</p></div>
+ </div>
+ <div class="bg-red-50 border border-red-100 rounded-2xl p-4">
+ <p class="text-[10px] font-black text-red-500 uppercase mb-3"> Tiempo Excedido Acumulado</p>
+ <div id="resumenExcesos" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin excesos registrados</p></div>
+ </div>
+ </div>
+</section>
+
+<!-- MODAL LOGIN -->
+<section id="modalLoginAcceso" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+ <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-xs w-full border border-slate-200">
+ <h3 class="text-center font-black text-slate-700 uppercase text-sm mb-4"> Acceso Privado</h3>
+ <input type="password" id="modalPinInput" placeholder="Ingrese PIN"
+ class="w-full p-3 rounded-xl border border-slate-200 mb-2 text-center text-lg font-mono"
+ onkeydown="if(event.key==='Enter') window.validarAcceso()">
+ <button onclick="window.validarAcceso()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs mb-3">Entrar</button>
+ <button onclick="window.recuperarPin()" class="w-full text-slate-400 text-[10px] uppercase font-bold hover:text-indigo-600 transition-colors">Olvidé mi PIN</button>
+ <button onclick="window.cerrarModalLogin()" class="w-full mt-2 text-red-400 text-[10px] uppercase font-bold">Cancelar</button>
+ </div>
+</section>
+
+<!-- MODAL FOTO GRANDE -->
+<div id="modalFotoGrande" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+ <div class="relative max-w-3xl w-full">
+ <button onclick="window.cerrarModalFoto()"
+ class="absolute -top-4 -right-4 bg-white text-slate-800 rounded-full w-9 h-9 font-black text-lg flex items-center justify-center shadow-lg hover:bg-red-100 z-10"></button>
+ <img id="fotoGrandeImg" src="" class="w-full rounded-2xl border-4 border-white shadow-2xl object-contain max-h-[80vh]">
+ </div>
+</div>
+
+<!-- IMPORTS JS -->
+<script type="module">
+ try {
+ const { db } = await import('./firebase-config.js');
+ const { enableIndexedDbPersistence } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+ enableIndexedDbPersistence(db).catch(() => {});
+ } catch (e) { console.warn("Persistencia no disponible:", e); }
+</script>
+
+<script type="module" src="./main.js?v=8"></script>
+<script type="module" src="./seguridad.js?v=8"></script>
+<script type="module" src="./historia.js?v=17"></script>
+<script type="module" src="./buscador.js?v=11"></script>
+<script type="module" src="./peluqueria.js?v=8"></script>
+<script type="module" src="./finanzas.js?v=9"></script>
+<script type="module" src="./inventario.js?v=9"></script>
+<script type="module" src="./vacunas.js?v=8"></script>
+<script type="module" src="./almuerzo.js?v=8"></script>
+
+<script>
+ function _llamarFuncion(nombre, ...args) {
+ if (typeof window[nombre] === 'function') {
+ window[nombre](...args);
+ } else {
+ let intentos = 0;
+ const intervalo = setInterval(() => {
+ intentos++;
+ if (typeof window[nombre] === 'function') {
+ clearInterval(intervalo);
+ window[nombre](...args);
+ } else if (intentos >= 20) {
+ clearInterval(intervalo);
+ console.error('Función no disponible:', nombre);
+ alert('⏳ Sistema cargando, intenta en un momento.');
+ }
+ }, 200);
+ }
+ }
+</script>
+
+<script>
+ if ('serviceWorker' in navigator) {
+ window.addEventListener('load', () => {
+ navigator.serviceWorker.register('/sw.js')
+ .then(reg => console.log('[AVIPET] SW registrado:', reg.scope))
+ .catch(err => console.warn('[AVIPET] SW falló:', err));
+ });
+ }
+ function _mostrarEstadoConexion(online) {
+ let banner = document.getElementById('_banner_conexion');
+ if (!banner) {
+ banner = document.createElement('div');
+ banner.id = '_banner_conexion';
+ banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;padding:8px 20px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.2);pointer-events:none;';
+ document.body.appendChild(banner);
+ }
+ if (online) {
+ banner.style.background = '#16a34a';
+ banner.style.color = '#fff';
+ banner.innerText = ' Conexión restaurada';
+ setTimeout(() => { if (banner) banner.remove(); }, 3000);
+ } else {
+ banner.style.background = '#dc2626';
+ banner.style.color = '#fff';
+ banner.innerText = ' Sin internet — modo offline activo';
+ }
+ }
+ window.addEventListener('online', () => _mostrarEstadoConexion(true));
+ window.addEventListener('offline', () => _mostrarEstadoConexion(false));
+ if (!navigator.onLine) _mostrarEstadoConexion(false);
+</script>
+
+</body>
+</html>
