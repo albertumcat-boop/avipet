@@ -546,3 +546,5 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch(_) { localStorage.removeItem('respaldo_historia_activa'); }
 });
+
+console.log("✅ main.js v9 — permisos doctores");
