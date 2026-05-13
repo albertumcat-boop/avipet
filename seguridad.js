@@ -124,8 +124,10 @@ window.pedirAccesoInventario = () => {
           // Daniel o Carlos
           try {
             const snap = await getDoc(doc(db, "usuarios_inventario", usuario));
-            const pinGuardado = snap.exists() ? snap.data().pin : USUARIOS_INVENTARIO[usuario]?.pinDefault;
-            if (pin === pinGuardado || pin === window.MASTER_KEY_SISTEMA) {
+            const pinFirebase = snap.exists() ? snap.data().pin : null;
+            const pinDefault  = USUARIOS_INVENTARIO[usuario]?.pinDefault;
+            // Acepta: PIN de Firebase, PIN default, o Llave Maestra
+            if (pin === pinFirebase || pin === pinDefault || pin === window.MASTER_KEY_SISTEMA) {
               acceso = { nombre: usuario, rol: 'inventario' };
             }
           } catch {
@@ -503,4 +505,4 @@ function _actualizarBadgeSesion() {
 
 window._actualizarBadgeSesion = _actualizarBadgeSesion;
 
-console.log("✅ seguridad.js v4 — usuarios inventario: Daniel, Carlos + auditoría completa");
+console.log("✅ seguridad.js v5 — fix PIN Daniel Carlos");
