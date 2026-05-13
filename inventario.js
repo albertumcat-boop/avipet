@@ -435,6 +435,7 @@ window.cambiarSubTabConfig = (tab) => {
  });
  if (tab === 'servicios') { if(typeof window.renderizarTablaMaestra==='function') window.renderizarTablaMaestra(); else _llamarFuncion('renderizarTablaMaestra'); }
  if (tab === 'insumos') { if(typeof window.renderizarTablaInsumos==='function') window.renderizarTablaInsumos(); else _llamarFuncion('renderizarTablaInsumos'); }
+ if (tab === 'compras') { if(typeof window.cargarRegistroCompras==='function') window.cargarRegistroCompras(); else _llamarFuncion('cargarRegistroCompras'); }
  if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
 };
 
