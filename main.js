@@ -312,13 +312,13 @@ window.ejecutarCambioDeTab = async (t) => {
   if (t === 'historia') limpiarLogoHistoria();
 
   ['sectionHistoria','sectionBuscador','sectionReporte','sectionEspera',
-   'sectionHojaVacunas','sectionConfigPrecios','sectionPeluqueria','sectionInventario']
+   'sectionHojaVacunas','sectionConfig_precios','sectionPeluqueria','sectionInventario']
     .forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
   const mapa = {
     historia:'sectionHistoria', buscador:'sectionBuscador',
     reporte:'sectionReporte',   espera:'sectionEspera',
-    vacunas:'sectionHojaVacunas', config_precios:'sectionConfigPrecios',
+    vacunas:'sectionHojaVacunas', config_precios:'sectionConfig_precios',
     peluqueria:'sectionPeluqueria', inventario:'sectionInventario'
   };
   document.getElementById(mapa[t])?.classList.remove('hidden');
@@ -540,4 +540,4 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch(_) { localStorage.removeItem('respaldo_historia_activa'); }
 });
 
-console.log("✅ main.js v10 — IDs modal corregidos");
+console.log("✅ main.js v11 — fix sectionConfig_precios");
