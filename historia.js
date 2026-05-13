@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v12
+// AVIPET -- historia.js  v14
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
@@ -11,6 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+console.log("✅ historia.js v14 -- EDITAR SERVICIOS, INSUMOS, CANDADO");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -1934,7 +1935,7 @@ window.cambiarSubTabConfig = (tab) => {
 };
 
 
-console.log("historia.js v12 -- categorias dinamicas, gusanera, absceso, boton guardar insumos");
+
 
 // ─── ABRIR CONSULTA PARA EDITAR DESDE BUSCADOR ───────────────────────────────
 // Esta funcion es llamada por buscador.js cuando el usuario hace click en "Editar Consulta"
@@ -2240,5 +2241,3 @@ window.registrarServicioSinMascota = async () => {
     Swal.fire({ icon:'error', title:'Error', text: e.message });
   }
 };
-
-console.log("historia.js v13 -- editar servicios/insumos, candado bloqueado");
