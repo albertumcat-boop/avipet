@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v20
+// AVIPET -- historia.js  v21
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v20 -- PIN fix, med guardar");
+console.log("✅ historia.js v21 -- candado insumos, fix Firebase");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -261,8 +261,30 @@ window.insertarServicio = async (v) => {
   const vLimpio=normalizarNombre(v);
   let nombreFinal=v,precioFinal=0,porcServ=30;
   let insumosFirebase = null;
-  try{const snap=await getDoc(doc(db,"servicios_maestro",v));if(snap.exists()){precioFinal=parseFloat(snap.data().precioVenta)||0;porcServ=parseFloat(snap.data().porcDoc??snap.data().porcentajeDoc??30);if(snap.data().insumos&&snap.data().insumos.length>0)insumosFirebase=snap.data().insumos;}else{const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);precioFinal=lrec?recetas[lrec].precioVenta:0;porcServ=CONFIG_PORC[v]??30;}}
-  catch{const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);precioFinal=lrec?recetas[lrec].precioVenta:0;porcServ=CONFIG_PORC[v]??30;}
+  try {
+    // Intentar con el nombre exacto primero, luego en mayusculas
+    let snap = await getDoc(doc(db,"servicios_maestro",v));
+    if (!snap.exists()) snap = await getDoc(doc(db,"servicios_maestro",v.toUpperCase()));
+    if (snap.exists()) {
+      const d = snap.data();
+      precioFinal = parseFloat(d.precioVenta)||0;
+      porcServ    = parseFloat(d.porcDoc ?? d.porcentajeDoc ?? 30);
+      if (d.insumos && d.insumos.length > 0) {
+        insumosFirebase = d.insumos;
+        console.log('[AVIPET] Insumos Firebase para',v,':', d.insumos.map(i=>i.nombre+'(bloq:'+i.bloqueado+')'));
+      }
+    } else {
+      const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
+      precioFinal=lrec?recetas[lrec].precioVenta:0;
+      porcServ=CONFIG_PORC[v]??30;
+      console.log('[AVIPET] Servicio no en Firebase, usando receta local:', v);
+    }
+  } catch(e) {
+    console.error('[AVIPET] Error cargando servicio Firebase:', e);
+    const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
+    precioFinal=lrec?recetas[lrec].precioVenta:0;
+    porcServ=CONFIG_PORC[v]??30;
+  }
 
   if(vLimpio.includes("kgadicional")){const kgs=prompt("KGs adicionales:");if(!kgs||isNaN(kgs)){document.getElementById('selectorServicios').value="";return;}nombreFinal=`KG ADICIONAL (${parseFloat(kgs)}kg)`;precioFinal=parseFloat(kgs)*7;porcServ=0;}
   else if(vLimpio==="disposicion"||vLimpio==="cremacionconcenizas"){const m=prompt(`Precio pactado para ${v}:`);if(!m||isNaN(m)){document.getElementById('selectorServicios').value="";return;}precioFinal=parseFloat(m);porcServ=0;}
