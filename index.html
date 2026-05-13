@@ -1154,7 +1154,7 @@
  } catch (e) { console.warn("Persistencia no disponible:", e); }
 </script>
 
-<script type="module" src="./main.js?v=9"></script>
+<script type="module" src="./main.js?v=8"></script>
 <script type="module" src="./seguridad.js?v=8"></script>
 <script type="module" src="./historia.js?v=18"></script>
 <script type="module" src="./buscador.js?v=11"></script>
@@ -1217,5 +1217,48 @@
  if (!navigator.onLine) _mostrarEstadoConexion(false);
 </script>
 
+
+<script>
+// PERMISOS DOCTORES — inline en index.html
+// Cuando un doctor firma, oculta Finanzas, Inventario y Ajustes
+(function() {
+  var _orig = null;
+
+  function _aplicarPermisoDoctor(soloDoctor) {
+    var selectores = [
+      '[data-tab="reporte"]',
+      '[data-tab="inventario"]',
+      '[data-tab="config_precios"]'
+    ];
+    selectores.forEach(function(sel) {
+      document.querySelectorAll(sel).forEach(function(btn) {
+        btn.style.display = soloDoctor ? 'none' : '';
+      });
+    });
+    var btnAjustes = document.querySelector('button[onclick*="config_precios"]');
+    if (btnAjustes) btnAjustes.style.display = soloDoctor ? 'none' : '';
+  }
+
+  // Interceptar onDoctorAutenticado una vez que main.js lo defina
+  var _intervalo = setInterval(function() {
+    if (typeof window.onDoctorAutenticado === 'function') {
+      clearInterval(_intervalo);
+      _orig = window.onDoctorAutenticado;
+      window.onDoctorAutenticado = function(id) {
+        _orig(id);
+        _aplicarPermisoDoctor(!!id);
+      };
+      // Tambien interceptar validarAccesoDoctor para restaurar al deseleccionar
+      var _origVAD = window.validarAccesoDoctor;
+      if (typeof _origVAD === 'function') {
+        window.validarAccesoDoctor = async function(nombre) {
+          await _origVAD(nombre);
+          if (!nombre) _aplicarPermisoDoctor(false);
+        };
+      }
+    }
+  }, 200);
+})();
+</script>
 </body>
 </html>
