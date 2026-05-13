@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v19 -- PIN unico doctor");
+console.log("✅ historia.js v20 -- PIN fix, med guardar");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -445,6 +445,7 @@ window.agregarMedicamento = async (nombreMed) => {
           agregadoPor: doctorActivo,
           activo: true
         }, { merge: true });
+        await Swal.fire({ icon:'success', title:'Medicamento guardado', text: nombre.toUpperCase()+' agregado al listado permanente.', timer:2000, showConfirmButton:false });
         // Recargar selector
         if (typeof window.cargarSelectorMedicamentos === 'function') {
           window.cargarSelectorMedicamentos();
@@ -554,7 +555,9 @@ window.guardarFirebase = async (imp) => {
   }
   const selectorDoc=document.getElementById('selectDoctor');const nombreDoctor=selectorDoc?selectorDoc.value:"";if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
   // Si el doctor ya se autenticó con su PIN al seleccionarlo, no pedir PIN de nuevo
-  if (!window.doctorVerificado || window.doctorVerificado !== nombreDoctor) {
+  const _docVerif = (window.doctorVerificado||'').trim().toLowerCase();
+  const _docSel   = (nombreDoctor||'').trim().toLowerCase();
+  if (!_docVerif || _docVerif !== _docSel) {
     const pinIngresado=prompt(`Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);
     if(!pinIngresado)return;
     const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);
