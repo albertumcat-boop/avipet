@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v5
+// AVIPET -- historia.js  v12
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
@@ -1092,8 +1092,13 @@ window.cargarSelectorServicios = async () => {
     // Si no existe (categoria nueva), crear el optgroup y agregar todos
     Object.entries(porCategoria).sort().forEach(([cat, servicios]) => {
       // Buscar optgroup existente (buscar por label que contenga el nombre de la cat)
+      // Limpiar label del optgroup (quitar emojis, espacios, chars especiales) para comparar exacto
+      function _limpiarLabel(s) {
+        return s.replace(/[^\x00-\x7F]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+      }
+
       let grp = Array.from(sel.querySelectorAll('optgroup'))
-        .find(g => g.label.toUpperCase().includes(cat));
+        .find(g => _limpiarLabel(g.label) === cat || _limpiarLabel(g.label) === _limpiarLabel(cat));
 
       if (!grp) {
         // Categoria nueva — crear optgroup
@@ -1124,6 +1129,27 @@ window.cargarSelectorServicios = async () => {
 
 // --- ABRIR MODAL NUEVO SERVICIO ---------------------------
 window.abrirModalNuevoServicio = async () => {
+  // Recoger categorias existentes del selector HTML + Firebase
+  const sel = document.getElementById('selectorServicios');
+  const catsExistentes = new Set();
+  if (sel) {
+    Array.from(sel.querySelectorAll('optgroup')).forEach(g => {
+      // Limpiar el label: quitar caracteres especiales/emojis y espacios extra
+      const limpio = g.label.replace(/[^\x20-\x7E\u00C0-\u024F]/g,'').trim().toUpperCase();
+      if (limpio) catsExistentes.add(limpio);
+    });
+  }
+  // Tambien traer categorias de Firebase
+  try {
+    const snapF = await getDocs(collection(db, "servicios_maestro"));
+    snapF.forEach(d => {
+      const cat = (d.data().categoria||'').toUpperCase().trim();
+      if (cat) catsExistentes.add(cat);
+    });
+  } catch(e) {}
+
+  const catsOrdenadas = Array.from(catsExistentes).sort();
+
   var htmlModal = '<div class="space-y-3 text-left">';
   htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nombre del Servicio</label>';
   htmlModal += '<input id="ns_nombre" type="text" placeholder="Ej: RADIOGRAFIA SIMPLE" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500"></div>';
@@ -1132,18 +1158,15 @@ window.abrirModalNuevoServicio = async () => {
   htmlModal += '<input id="ns_precio" type="number" placeholder="0.00" step="0.50" min="0" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div>';
   htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">% Doctor</label>';
   htmlModal += '<input id="ns_porc" type="number" placeholder="40" step="0.5" min="0" max="100" value="40" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500"></div></div>';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoria (grupo en el selector)</label>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Categoria</label>';
   htmlModal += '<select id="ns_categoria" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">';
-  htmlModal += '<option value="CONSULTAS">Consultas</option>';
-  htmlModal += '<option value="VACUNAS">Vacunas</option>';
-  htmlModal += '<option value="LABORATORIO">Laboratorio</option>';
-  htmlModal += '<option value="TESTS RAPIDOS">Tests Rapidos</option>';
-  htmlModal += '<option value="REFERIDOS">Referidos</option>';
-  htmlModal += '<option value="OTROS">Otros</option>';
-  htmlModal += '<option value="__nueva__">Crear nueva categoria...</option>';
+  catsOrdenadas.forEach(cat => {
+    htmlModal += '<option value="' + cat + '">' + cat + '</option>';
+  });
+  htmlModal += '<option value="__nueva__">+ Crear nueva categoria...</option>';
   htmlModal += '</select>';
   htmlModal += '<input id="ns_categoria_nueva" type="text" placeholder="Ej: CIRUGIAS, HOSPITALIZACION..." style="display:none" class="w-full border-2 border-blue-300 rounded-xl px-3 py-2 text-[11px] font-bold uppercase outline-none focus:border-blue-500 mt-2"></div>';
-  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Es una vacuna? (afecta combos de precios)</label>';
+  htmlModal += '<div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Es una vacuna?</label>';
   htmlModal += '<div class="flex gap-3">';
   htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600"> <span class="text-[10px] font-bold">Si</span></label>';
   htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600"> <span class="text-[10px] font-bold">No</span></label>';
@@ -1155,11 +1178,10 @@ window.abrirModalNuevoServicio = async () => {
     title: 'Nuevo Servicio',
     html: htmlModal,
     showCancelButton: true,
-    confirmButtonText: '? Crear Servicio',
+    confirmButtonText: 'Crear Servicio',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#2563eb',
     didOpen: () => {
-      // Listener para mostrar/ocultar campo de categoria nueva
       const catSel = document.getElementById('ns_categoria');
       if (catSel) {
         catSel.addEventListener('change', function() {
@@ -1176,9 +1198,9 @@ window.abrirModalNuevoServicio = async () => {
       const catNueva  = document.getElementById('ns_categoria_nueva')?.value.trim().toUpperCase();
       const categoria = catSel === '__nueva__' ? catNueva : catSel;
       const esVacuna  = document.getElementById('ns_vacuna_si')?.checked || false;
-      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('(!) Escribe el nombre de la nueva categoria'); return false; }
-      if (!nombre) { Swal.showValidationMessage('(!) El nombre es obligatorio'); return false; }
-      if (precio <= 0) { Swal.showValidationMessage('(!) El precio debe ser mayor a 0'); return false; }
+      if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('Escribe el nombre de la nueva categoria'); return false; }
+      if (!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
+      if (precio <= 0) { Swal.showValidationMessage('El precio debe ser mayor a 0'); return false; }
       return { nombre, precio, porc, categoria, esVacuna };
     }
   });
@@ -1187,14 +1209,12 @@ window.abrirModalNuevoServicio = async () => {
   const { nombre, precio, porc, categoria, esVacuna } = res.value;
 
   try {
-    // Verificar si ya existe
     const existe = await getDoc(doc(db, "servicios_maestro", nombre));
     if (existe.exists()) {
       Swal.fire({ icon:'warning', title:'Ya existe', text:'Un servicio con ese nombre ya esta registrado.', timer:2500, showConfirmButton:false });
       return;
     }
 
-    // Guardar en Firebase
     await setDoc(doc(db, "servicios_maestro", nombre), {
       precioVenta: precio,
       porcDoc:     porc,
@@ -1204,19 +1224,18 @@ window.abrirModalNuevoServicio = async () => {
       activo:      true
     });
 
-    // Recargar tabla y selector
     await window.renderizarTablaMaestra();
     await window.cargarSelectorServicios();
 
     await Swal.fire({
       icon: 'success',
-      title: '? Servicio creado',
-      html: `<b>${nombre}</b><br>$${precio.toFixed(2)} . ${porc}% doctor . ${categoria}`,
+      title: 'Servicio creado',
+      html: '<b>' + nombre + '</b><br>$' + precio.toFixed(2) + ' &middot; ' + porc + '% doctor &middot; ' + categoria,
       timer: 2500,
       showConfirmButton: false
     });
 
-  } catch(e) { console.error(e); alert('? Error: '+e.message); }
+  } catch(e) { console.error(e); alert('Error: '+e.message); }
 };
 
 // --- ELIMINAR SERVICIO ------------------------------------
@@ -1729,7 +1748,7 @@ window.cambiarSubTabConfig = (tab) => {
 };
 
 
-console.log("? historia.js v5 -- selector mascotas, autorelleno mejorado");
+console.log("historia.js v12 -- categorias dinamicas, gusanera, absceso, boton guardar insumos");
 
 // ─── ABRIR CONSULTA PARA EDITAR DESDE BUSCADOR ───────────────────────────────
 // Esta funcion es llamada por buscador.js cuando el usuario hace click en "Editar Consulta"
