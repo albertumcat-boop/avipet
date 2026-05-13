@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v16 -- CANDADO INSUMOS HISTORIA, BUSQUEDA, BOTONES");
+console.log("✅ historia.js v16 -- CANDADO v2 DATA-BLOQUEADO EN TR");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -357,13 +357,15 @@ window.insertarServicio = async (v) => {
 
   insNuevos.forEach(ins=>{
     const tr=document.createElement('tr');
-    tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;
     const bloq = ins.bloqueado === true;
+    tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;
+    tr.dataset.bloqueado = bloq ? 'true' : 'false';
     const lockIcon = bloq ? ' &#128274;' : '';
-    const btnStyle = bloq
-      ? 'color:#f59e0b;font-weight:900;cursor:not-allowed;font-size:11px;'
-      : 'color:#dc2626;font-weight:900;cursor:pointer;font-size:11px;';
-    tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic" data-nombre="${ins.nombre.toUpperCase()}">${ins.nombre.toUpperCase()}${lockIcon}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center ${btnStyle}" onclick="window.intentarEliminarInsumoFila(this)">${bloq?'&#128274;':'X'}</td>`;
+    const bgColor = bloq ? 'background:#fffbeb;' : '';
+    const btnHtml = bloq
+      ? '<td class="p-2 text-center" style="color:#f59e0b;font-size:13px;cursor:not-allowed;" title="Insumo obligatorio">&#128274;</td>'
+      : '<td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="window.intentarEliminarInsumoFila(this)">X</td>';
+    tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic" data-nombre="${ins.nombre.toUpperCase()}" style="${bgColor}">${ins.nombre.toUpperCase()}${lockIcon}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td>${btnHtml}`;
     cuerpo.appendChild(tr);
   });
 
@@ -477,36 +479,14 @@ function _insertarMedicamentoEnTabla(descripcion,precioCliente) {
 window.intentarEliminarInsumoFila = async (btnEl) => {
   const tr = btnEl.closest('tr');
   if (!tr) return;
-  const tdNom = tr.querySelector('td');
-  const nombreInsumo = tdNom ? (tdNom.dataset.nombre || tdNom.textContent.replace('🔒','').trim().toUpperCase()) : '';
-
-  // Buscar en qué servicio está este insumo (por el grupo al que pertenece la fila)
-  const grupoClass = Array.from(tr.classList).find(c => c.startsWith('srv-'));
-  let estaBloqueado = false;
-
-  if (grupoClass && nombreInsumo) {
-    try {
-      // Buscar el servicio cuyo grupoID corresponde — está en la fila encabezado del grupo
-      const filaServicio = document.querySelector('tr.servicio-principal[data-grupo="'+grupoClass+'"]');
-      if (filaServicio) {
-        const nombreServicio = filaServicio.querySelector('td')?.textContent?.split('(')[0]?.trim().toUpperCase();
-        if (nombreServicio) {
-          const snapServ = await getDoc(doc(db, "servicios_maestro", nombreServicio));
-          if (snapServ.exists()) {
-            const insumos = snapServ.data().insumos || [];
-            const ins = insumos.find(i => i.nombre?.toUpperCase() === nombreInsumo);
-            if (ins && ins.bloqueado === true) estaBloqueado = true;
-          }
-        }
-      }
-    } catch(e) { /* si falla, permitir eliminar */ }
-  }
-
-  if (estaBloqueado) {
+  // Leer bloqueado directamente del data attribute del TR (guardado al renderizar)
+  if (tr.dataset.bloqueado === 'true') {
+    const tdNom = tr.querySelector('td');
+    const nombreInsumo = tdNom ? (tdNom.dataset.nombre || tdNom.textContent.replace('\u{1F512}','').trim()) : 'este insumo';
     await Swal.fire({
       icon: 'warning',
-      title: 'Insumo bloqueado',
-      html: '<p style="font-size:11px;">El insumo <b>' + nombreInsumo + '</b> es obligatorio y no puede ser eliminado del historial.<br><br>Si realmente no se usó, contacta al administrador.</p>',
+      title: 'Insumo obligatorio',
+      html: '<p style="font-size:11px;">&#128274; <b>' + nombreInsumo + '</b> es un insumo obligatorio y no puede ser eliminado.<br><br>Si no se uso, avisa al administrador.</p>',
       confirmButtonColor: '#f59e0b',
       confirmButtonText: 'Entendido'
     });
