@@ -265,6 +265,62 @@ window.insertarServicio = async (v) => {
 
   if(vLimpio.includes("kgadicional")){const kgs=prompt("KGs adicionales:");if(!kgs||isNaN(kgs)){document.getElementById('selectorServicios').value="";return;}nombreFinal=`KG ADICIONAL (${parseFloat(kgs)}kg)`;precioFinal=parseFloat(kgs)*7;porcServ=0;}
   else if(vLimpio==="disposicion"||vLimpio==="cremacionconcenizas"){const m=prompt(`Precio pactado para ${v}:`);if(!m||isNaN(m)){document.getElementById('selectorServicios').value="";return;}precioFinal=parseFloat(m);porcServ=0;}
+  else if(vLimpio.includes("gusanera")||v.toUpperCase().includes("GUSANERA")) {
+    const resGus = await Swal.fire({
+      title: 'Gusanera — Gravedad',
+      html:
+        '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' +
+          '<button type="button" onclick="window._gusGrav=\'LEVE\';window._gusPrecio=25;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:13px;color:#15803d;cursor:pointer;">LEVE — $25</button>' +
+          '<button type="button" onclick="window._gusGrav=\'MEDIA\';window._gusPrecio=35;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:13px;color:#92400e;cursor:pointer;">MEDIA — $35</button>' +
+          '<button type="button" onclick="window._gusGrav=\'GRAVE\';window._gusPrecio=50;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #fca5a5;background:#fef2f2;font-weight:900;font-size:13px;color:#dc2626;cursor:pointer;">GRAVE — $50</button>' +
+          '<button type="button" onclick="window._gusGrav=\'PERSONALIZADO\';window._gusPrecio=0;Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:13px;color:#64748b;cursor:pointer;">Precio personalizado...</button>' +
+        '</div>',
+      showConfirmButton: false, showCancelButton: true, cancelButtonText: 'Cancelar'
+    });
+    if (resGus.isDismissed) { document.getElementById('selectorServicios').value=""; return; }
+    if (window._gusGrav === 'PERSONALIZADO') {
+      const custom = await Swal.fire({ title:'Precio gusanera ($)', input:'number', inputPlaceholder:'0.00', showCancelButton:true, confirmButtonColor:'#1d4ed8' });
+      if (!custom.isConfirmed || !custom.value) { document.getElementById('selectorServicios').value=""; return; }
+      window._gusPrecio = parseFloat(custom.value);
+    }
+    precioFinal = window._gusPrecio || precioFinal;
+    nombreFinal = 'GUSANERA ' + (window._gusGrav||'');
+    window._gusGrav = null; window._gusPrecio = null;
+  }
+  else if(vLimpio.includes("absceso")||v.toUpperCase().includes("ABSCESO")) {
+    const resAbs = await Swal.fire({
+      title: 'Absceso — Detalles',
+      width: 460,
+      html:
+        '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:8px;">' +
+          '<div><p style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;">Tipo de absceso</p>' +
+          '<div style="display:flex;gap:6px;">' +
+            '<button type="button" onclick="window._absT=\'ABIERTO\';document.querySelectorAll(\'.btn-abs-t\').forEach(b=>b.style.opacity=\'0.4\');this.style.opacity=\'1\';" class="btn-abs-t" style="flex:1;padding:10px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;">Abierto</button>' +
+            '<button type="button" onclick="window._absT=\'CERRADO\';document.querySelectorAll(\'.btn-abs-t\').forEach(b=>b.style.opacity=\'0.4\');this.style.opacity=\'1\';" class="btn-abs-t" style="flex:1;padding:10px;border-radius:10px;border:2px solid #e9d5ff;background:#faf5ff;font-weight:900;font-size:11px;color:#7c3aed;cursor:pointer;">Cerrado</button>' +
+          '</div></div>' +
+          '<div style="display:flex;gap:16px;">' +
+            '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="abs_anest" style="width:16px;height:16px;accent-color:#2563eb;"><span style="font-size:11px;font-weight:700;">Con Anestesia <b>(+$10)</b></span></label>' +
+            '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="abs_sutura" style="width:16px;height:16px;accent-color:#2563eb;"><span style="font-size:11px;font-weight:700;">Con Sutura <b>(+$15)</b></span></label>' +
+          '</div>' +
+          '<div><label style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Precio base ($)</label>' +
+          '<input type="number" id="abs_precio_base" value="' + (precioFinal||25) + '" step="1" min="0" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
+        '</div>',
+      showCancelButton: true, confirmButtonText: 'Agregar', confirmButtonColor: '#1d4ed8',
+      preConfirm: function() {
+        const tipo   = window._absT || 'ABIERTO';
+        const anest  = document.getElementById('abs_anest')?.checked||false;
+        const sutura = document.getElementById('abs_sutura')?.checked||false;
+        const base   = parseFloat(document.getElementById('abs_precio_base')?.value)||25;
+        const total  = base+(anest?10:0)+(sutura?15:0);
+        const extras = []; if(anest)extras.push('anest'); if(sutura)extras.push('sutura');
+        return {tipo,total,extras};
+      }
+    });
+    window._absT = null;
+    if (!resAbs.isConfirmed) { document.getElementById('selectorServicios').value=""; return; }
+    precioFinal = resAbs.value.total;
+    nombreFinal = 'ABSCESO '+resAbs.value.tipo+(resAbs.value.extras.length?' ('+resAbs.value.extras.join('+')+')':\'\');
+  }
   else if(vLimpio.includes("vacunakc")){
     // Precio base: solo -> $45, en combo con otra vacuna -> $40
     // Se inserta primero con precio base; _recalcularCombos lo ajusta al final
@@ -280,11 +336,11 @@ window.insertarServicio = async (v) => {
   }
 
   const grupoID="srv-"+Date.now();
-  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span>?</span><span class="flex-1">${nombreFinal}</span>`;visual.appendChild(badge);}
+  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span></span><span class="flex-1">${nombreFinal}</span>`;visual.appendChild(badge);}
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo=document.getElementById('listaInsumosDinamica');
   const ft=document.createElement('tr');ft.className="bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioFinal);ft.setAttribute('data-porc',porcServ);
-  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">? ${nombreFinal} ($${precioFinal.toFixed(2)})<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">${porcServ.toFixed(1)}% DOC</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioFinal},event)" class="text-red-500 font-bold text-lg">?</button></td>`;
+  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">${nombreFinal} ($${precioFinal.toFixed(2)})<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">${porcServ.toFixed(1)}% DOC</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioFinal},event)" class="text-red-500 font-bold text-[11px]">X</button></td>`;
   cuerpo.appendChild(ft);
 
   let insNuevos=[];
@@ -298,7 +354,7 @@ window.insertarServicio = async (v) => {
     if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
   }
 
-  insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">?</td>`;cuerpo.appendChild(tr);});
+  insNuevos.forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-gray-700 text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="this.parentElement.remove();window.calcularTodo()">X</td>`;cuerpo.appendChild(tr);});
 
   await window.calcularTodo();
   document.getElementById('selectorServicios').value="";
@@ -395,13 +451,13 @@ window.agregarMedicamento = async (nombreMed) => {
 function _insertarMedicamentoEnTabla(descripcion,precioCliente) {
   const grupoID="med-"+Date.now();
   const visual=document.getElementById('visualizacionServicios');
-  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span>?</span><span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;visual.appendChild(badge);}
+  if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-emerald-50 text-emerald-800 px-2 py-1 rounded border border-emerald-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span></span><span class="flex-1 font-bold text-[10px]">${descripcion}</span>`;visual.appendChild(badge);}
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo=document.getElementById('listaInsumosDinamica');
   const ft=document.createElement('tr');ft.className="bg-slate-100 border-b-2 border-slate-300 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioCliente);ft.setAttribute('data-porc',40);
-  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">? ${descripcion} ($${precioCliente.toFixed(2)})<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px]">MEDICAMENTO</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioCliente},event)" class="text-red-500 font-bold text-lg">?</button></td>`;
+  ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">${descripcion} ($${precioCliente.toFixed(2)})<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-2 text-[9px]">MEDICAMENTO</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioCliente},event)" class="text-red-500 font-bold text-[11px]">X</button></td>`;
   cuerpo.appendChild(ft);
-  if(!insumosBaseMedAgregados){[{nombre:"Jeringa para medicamento",costo:0.50},{nombre:"Algodon",costo:0.10},{nombre:"Alcohol",costo:0.10}].forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">? ${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">?</td>`;cuerpo.appendChild(tr);});insumosBaseMedAgregados=true;}
+  if(!insumosBaseMedAgregados){[{nombre:"Jeringa para medicamento",costo:0.50},{nombre:"Algodon",costo:0.10},{nombre:"Alcohol",costo:0.10}].forEach(ins=>{const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${grupoID}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${ins.nombre.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${ins.costo.toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="this.parentElement.remove();window.calcularTodo()">X</td>`;cuerpo.appendChild(tr);});insumosBaseMedAgregados=true;}
   window.calcularTodo();respaldarProgresoLocal();
 }
 
@@ -431,7 +487,7 @@ window.eliminarServicioCompleto = async (idGrupo, precioARestar, event) => {
 window.agregarInsumoManual = () => {
   const n=document.getElementById('nombreExtra');const c=document.getElementById('costoExtra');if(!n?.value)return alert("Ingrese nombre.");
   const filas=document.querySelectorAll('.servicio-principal');const ultimoGrp=filas.length>0?filas[filas.length-1].getAttribute('data-grupo'):"manual";
-  const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrp}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">? ${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c?.value||0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer" onclick="this.parentElement.remove();window.calcularTodo()">?</td>`;
+  const tr=document.createElement('tr');tr.className=`border-b border-gray-100 insumo-fila bg-yellow-50 ${ultimoGrp}`;tr.innerHTML=`<td class="p-2 font-bold text-[11px] italic">${n.value.toUpperCase()}</td><td class="p-2 text-center"><input type="number" value="1" oninput="window.calcularTodo()" class="i-cant w-12 text-center border rounded"></td><td class="p-2 text-center"><input type="number" value="${parseFloat(c?.value||0).toFixed(2)}" step="0.01" oninput="window.calcularTodo()" class="i-cost w-16 text-center border rounded"></td><td class="p-2 text-center text-red-500 font-bold cursor-pointer text-[11px]" onclick="this.parentElement.remove();window.calcularTodo()">X</td>`;
   document.getElementById('listaInsumosDinamica').appendChild(tr);n.value="";if(c)c.value="";window.calcularTodo();
 };
 
@@ -555,12 +611,12 @@ window.autocompletarPorCedula = async (ci) => {
         const r = m[1];
         htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="' + m[0] + '" ' +
           'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">' +
-          '<span>? ' + m[0] + '</span>' +
+          '<span>' + m[0] + '</span>' +
           '<span style="font-size:9px;color:#64748b;font-weight:600;">' + (r.especie||'') + ' . ' + (r.raza||'') + '</span>' +
           '</button>';
       });
       htmlSel += '<button class="btn-sel-mascota-vet" data-nombre="__nueva__" ' +
-        'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">? Nuevo paciente</button>';
+        'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">Nuevo paciente</button>';
       htmlSel += '</div>';
 
       const resSel = await Swal.fire({
@@ -648,16 +704,16 @@ window.guardarNotasInternas = async () => {
 // --- FOTOS ---
 window.previsualizarFotoHistoria = (event) => {
   const files=event.target.files;const galeria=document.getElementById('previewHistoriaGallery');const cont=document.getElementById('previewHistoriaContainer');const hidden=document.getElementById('pUrlExamen');if(!files?.length||!galeria)return;
-  Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">?</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";
+  Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">X</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";
 };
 window.sincronizarHiddenHistoria=()=>{const galeria=document.getElementById('previewHistoriaGallery');const hidden=document.getElementById('pUrlExamen');if(!galeria||!hidden)return;const imgs=galeria.querySelectorAll('img');if(imgs.length===0){hidden.value="";document.getElementById('previewHistoriaContainer')?.classList.add('hidden');}else hidden.value=imgs[imgs.length-1].src;};
-window.previsualizarFotoTest=(event)=>{const files=event.target.files;const galeria=document.getElementById('previewTestGallery');const cont=document.getElementById('previewTestContainer');const hidden=document.getElementById('pUrlTest');if(!files?.length||!galeria)return;Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenTest()">?</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";};
+window.previsualizarFotoTest=(event)=>{const files=event.target.files;const galeria=document.getElementById('previewTestGallery');const cont=document.getElementById('previewTestContainer');const hidden=document.getElementById('pUrlTest');if(!files?.length||!galeria)return;Array.from(files).forEach(file=>{const reader=new FileReader();reader.onload=async(e)=>{const dataUrl=await comprimirImagen(e.target.result);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${dataUrl}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenTest()">X</button>`;galeria.appendChild(wrapper);if(cont)cont.classList.remove('hidden');if(hidden)hidden.value=dataUrl;};reader.readAsDataURL(file);});event.target.value="";};
 window.sincronizarHiddenTest=()=>{const galeria=document.getElementById('previewTestGallery');const hidden=document.getElementById('pUrlTest');if(!galeria||!hidden)return;const imgs=galeria.querySelectorAll('img');if(imgs.length===0){hidden.value="";document.getElementById('previewTestContainer')?.classList.add('hidden');}else hidden.value=imgs[imgs.length-1].src;};
 
 // --- QR MOVIL ---
-window.generarEnlaceMovil=(tipo='historia')=>{const cedula=document.getElementById('hCI')?.value.trim();if(!cedula)return alert("(!) Escribe la Cedula primero.");const qrDivID=tipo==='test'?"qrcodeTest":"qrcode";const contID=tipo==='test'?"qrContainerTest":"qrContainer";const qrDiv=document.getElementById(qrDivID);if(qrDiv)qrDiv.innerHTML="";const url=`${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;new QRCode(qrDiv,{text:url,width:128,height:128});document.getElementById(contID)?.classList.remove('hidden');const ahora=new Date();if(tipo==='historia')window._ultimaSesionQRHistoria=ahora;if(tipo==='test')window._ultimaSesionQRTest=ahora;const q=query(collection(db,"transferencias_fotos"),where("ci","==",cedula),where("tipo","==",tipo));if(tipo==='historia'&&window._unsubHist)window._unsubHist();if(tipo==='test'&&window._unsubTest)window._unsubTest();const unsub=onSnapshot(q,snap=>{const galeriaId=tipo==='test'?'previewTestGallery':'previewHistoriaGallery';const contIdG=tipo==='test'?'previewTestContainer':'previewHistoriaContainer';const hiddenId=tipo==='test'?'pUrlTest':'pUrlExamen';const galeria=document.getElementById(galeriaId);const cont=document.getElementById(contIdG);const hidden=document.getElementById(hiddenId);if(!galeria||!cont)return;const urlsExist=new Set(Array.from(galeria.querySelectorAll('img')).map(img=>img.src));const inicio=tipo==='historia'?window._ultimaSesionQRHistoria:window._ultimaSesionQRTest;snap.forEach(docSnap=>{const d=docSnap.data();if(!d.url)return;if(d.fecha?.toDate&&d.fecha.toDate()<inicio)return;if(urlsExist.has(d.url))return;urlsExist.add(d.url);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${d.url}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHidden${tipo==='test'?'Test':'Historia'}()">?</button>`;galeria.appendChild(wrapper);if(hidden)hidden.value=d.url;});if(urlsExist.size>0)cont.classList.remove('hidden');});if(tipo==='historia')window._unsubHist=unsub;if(tipo==='test')window._unsubTest=unsub;};
-window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emerald-600':'bg-blue-600';const colorTx=tipo==='test'?'text-emerald-400':'text-blue-400';document.body.innerHTML=`<div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center"><h1 class="text-xl font-black uppercase italic ${colorTx}">${tipo==='test'?'? TEST':'? HISTORIA'}</h1><p class="text-slate-400 text-[10px] mb-6 uppercase">CI: <b>${ci}</b></p><input type="file" id="mobileFileCamera" accept="image/*" capture="environment" class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><input type="file" id="mobileFileGallery" accept="image/*" multiple class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><div class="flex flex-col gap-3"><button onclick="document.getElementById('mobileFileCamera').click()" class="w-full ${colorB} py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">? TOMAR FOTO</button><button onclick="document.getElementById('mobileFileGallery').click()" class="w-full bg-slate-600 py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">? GALERIA</button></div><div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo...</div></div></div>`;};
-window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>? ${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
+window.generarEnlaceMovil=(tipo='historia')=>{const cedula=document.getElementById('hCI')?.value.trim();if(!cedula)return alert("(!) Escribe la Cedula primero.");const qrDivID=tipo==='test'?"qrcodeTest":"qrcode";const contID=tipo==='test'?"qrContainerTest":"qrContainer";const qrDiv=document.getElementById(qrDivID);if(qrDiv)qrDiv.innerHTML="";const url=`${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;new QRCode(qrDiv,{text:url,width:128,height:128});document.getElementById(contID)?.classList.remove('hidden');const ahora=new Date();if(tipo==='historia')window._ultimaSesionQRHistoria=ahora;if(tipo==='test')window._ultimaSesionQRTest=ahora;const q=query(collection(db,"transferencias_fotos"),where("ci","==",cedula),where("tipo","==",tipo));if(tipo==='historia'&&window._unsubHist)window._unsubHist();if(tipo==='test'&&window._unsubTest)window._unsubTest();const unsub=onSnapshot(q,snap=>{const galeriaId=tipo==='test'?'previewTestGallery':'previewHistoriaGallery';const contIdG=tipo==='test'?'previewTestContainer':'previewHistoriaContainer';const hiddenId=tipo==='test'?'pUrlTest':'pUrlExamen';const galeria=document.getElementById(galeriaId);const cont=document.getElementById(contIdG);const hidden=document.getElementById(hiddenId);if(!galeria||!cont)return;const urlsExist=new Set(Array.from(galeria.querySelectorAll('img')).map(img=>img.src));const inicio=tipo==='historia'?window._ultimaSesionQRHistoria:window._ultimaSesionQRTest;snap.forEach(docSnap=>{const d=docSnap.data();if(!d.url)return;if(d.fecha?.toDate&&d.fecha.toDate()<inicio)return;if(urlsExist.has(d.url))return;urlsExist.add(d.url);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${d.url}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHidden${tipo==='test'?'Test':'Historia'}()">X</button>`;galeria.appendChild(wrapper);if(hidden)hidden.value=d.url;});if(urlsExist.size>0)cont.classList.remove('hidden');});if(tipo==='historia')window._unsubHist=unsub;if(tipo==='test')window._unsubTest=unsub;};
+window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emerald-600':'bg-blue-600';const colorTx=tipo==='test'?'text-emerald-400':'text-blue-400';document.body.innerHTML=`<div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center"><h1 class="text-xl font-black uppercase italic ${colorTx}">${tipo==='test'?'? TEST':'? HISTORIA'}</h1><p class="text-slate-400 text-[10px] mb-6 uppercase">CI: <b>${ci}</b></p><input type="file" id="mobileFileCamera" accept="image/*" capture="environment" class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><input type="file" id="mobileFileGallery" accept="image/*" multiple class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><div class="flex flex-col gap-3"><button onclick="document.getElementById('mobileFileCamera').click()" class="w-full ${colorB} py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">TOMAR FOTO</button><button onclick="document.getElementById('mobileFileGallery').click()" class="w-full bg-slate-600 py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">GALERIA</button></div><div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo...</div></div></div>`;};
+window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
 
 // --- IMPRIMIR ---
 window.imprimirDocumento=()=>{const doctor=document.getElementById('selectDoctor')?.value.toUpperCase()||"";const hTrat=document.getElementById('hTratamiento');const hPrint=document.getElementById('hTratamientoPrint');if(hTrat&&hPrint)hPrint.innerText=hTrat.value;try{const galPrev=document.getElementById('previewHistoriaGallery');const galPrint=document.getElementById('printHistoriaGallery');const contP=document.getElementById('printExamenCont');if(galPrev&&galPrint&&contP){galPrint.innerHTML="";const imgs=galPrev.querySelectorAll('img');imgs.forEach(img=>{const w=document.createElement('div');w.className="max-w-[45%] border border-slate-300 rounded-lg overflow-hidden";w.innerHTML=`<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;galPrint.appendChild(w);});contP.classList.toggle('hidden',imgs.length===0);}}catch(e){console.warn(e);}setTimeout(()=>window.print(),500);};
@@ -677,8 +733,8 @@ window.enviarAColaEspera=async()=>{
     // Preguntar a que doctor se asigna
     var htmlDocSel = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Asignar <b>' + dVal('hNombre') + '</b> a:</p>';
     htmlDocSel += '<div style="display:flex;flex-direction:column;gap:8px;">';
-    htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">? Dr. Darwin Sandoval</button>';
-    htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">? Dr. Joan Silva</button>';
+    htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">Dr. Darwin Sandoval</button>';
+    htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">Dr. Joan Silva</button>';
     htmlDocSel += '</div>';
     const resDoc = await Swal.fire({
       title: 'Asignar Doctor',
@@ -724,7 +780,7 @@ window.enviarAColaEspera=async()=>{
     });
   }catch(e){console.error(e);alert("? Error: "+e.message);}
 };
-window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} . CI: ${p.cedula}</p><p class="text-[8px] font-black ${colorDoc} uppercase">? ${docAsig}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
+window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} . CI: ${p.cedula}</p><p class="text-[8px] font-black ${colorDoc} uppercase">${docAsig}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
 window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();
   // Verificar si el doctor activo es el correcto
   const doctorActivo = window.doctorVerificado || "";
@@ -867,7 +923,7 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
         wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
         wrapper.innerHTML = `<img src="${d.urlExamen}" class="w-full h-full object-cover">
           <button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
-                  onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">?</button>`;
+                  onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">X</button>`;
         galeriaH.appendChild(wrapper);
         contH?.classList.remove('hidden');
       }
@@ -918,7 +974,7 @@ function _mostrarBannerEdicion(paciente, fecha) {
   }
   banner.innerHTML = `
     <div class="flex items-center gap-2">
-      <span class="text-xl">?</span>
+      <span class="text-xl font-black text-slate-400">!</span>
       <div>
         <p class="text-[10px] font-black text-amber-700 uppercase">Modo Edicion</p>
         <p class="text-[9px] text-amber-600">Editando: <b>${paciente}</b> . ${fecha || ''}</p>
@@ -1021,49 +1077,42 @@ window.cargarSelectorServicios = async () => {
     const snap = await getDocs(collection(db, "servicios_maestro"));
     if (snap.empty) return;
 
-    // Recoger todos los valores que ya estan en el selector (opciones estaticas)
-    const yaExisten = new Set(
-      Array.from(sel.querySelectorAll('option')).map(o => o.value.toUpperCase())
-    );
-
-    // Iconos por categoria
-    const iconos = {
-      'CONSULTAS':     '?',
-      'VACUNAS':       '?',
-      'LABORATORIO':   '?',
-      'TESTS RAPIDOS': '?',
-      'REFERIDOS':     '?',
-      'OTROS':         '?',
-    };
-
-    // Agrupar solo los NUEVOS (no estan en el HTML estatico)
-    const nuevos = {};
+    // Recoger servicios de Firebase agrupados por categoria
+    const porCategoria = {};
     snap.forEach(d => {
-      const nombre = d.id.toUpperCase();
-      if (!yaExisten.has(nombre)) {
-        const cat = d.data().categoria || 'OTROS';
-        if (!nuevos[cat]) nuevos[cat] = [];
-        nuevos[cat].push({ id: d.id, ...d.data() });
-      }
+      const data = d.data();
+      if (data.activo === false) return; // skip inactivos
+      const cat = (data.categoria || 'OTROS').toUpperCase();
+      if (!porCategoria[cat]) porCategoria[cat] = [];
+      porCategoria[cat].push({ id: d.id, ...data });
     });
 
-    // Agregar los nuevos al selector agrupados
-    Object.entries(nuevos).sort().forEach(([cat, servicios]) => {
-      // Buscar si ya existe el optgroup de esa categoria
+    // Para cada categoria en Firebase, verificar si ya existe optgroup en el selector
+    // Si existe, agregar solo los servicios nuevos que no esten ya como option
+    // Si no existe (categoria nueva), crear el optgroup y agregar todos
+    Object.entries(porCategoria).sort().forEach(([cat, servicios]) => {
+      // Buscar optgroup existente (buscar por label que contenga el nombre de la cat)
       let grp = Array.from(sel.querySelectorAll('optgroup'))
-        .find(g => g.label.includes(cat));
+        .find(g => g.label.toUpperCase().includes(cat));
 
       if (!grp) {
+        // Categoria nueva — crear optgroup
         grp = document.createElement('optgroup');
-        grp.label = (iconos[cat] || '?') + ' ' + cat;
+        grp.label = cat;
         sel.appendChild(grp);
       }
 
+      // Agregar servicios que no existan ya en el optgroup
+      const yaEnGrp = new Set(
+        Array.from(grp.querySelectorAll('option')).map(o => o.value.toUpperCase())
+      );
+
       servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
+        if (yaEnGrp.has(s.id.toUpperCase())) return; // ya esta
         const opt = document.createElement('option');
         opt.value       = s.id;
         opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
-        opt.dataset.nuevo = 'true'; // marcar como dinamico
+        opt.dataset.firebase = 'true';
         grp.appendChild(opt);
       });
     });
@@ -1174,7 +1223,7 @@ window.abrirModalNuevoServicio = async () => {
 window.eliminarServicioMaestro = async (nombreServicio) => {
   const res = await Swal.fire({
     title: '? Eliminar Servicio',
-    html: `<p class="text-[11px] text-slate-600">?Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecera en el selector de Historia Clinica.</p>`,
+    html: `<p class="text-[11px] text-slate-600">Eliminar <b>${nombreServicio}</b> del listado?<br><br>Ya no aparecera en el selector de Historia Clinica.</p>`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: 'Si, eliminar',
@@ -1222,7 +1271,7 @@ window.editarInsumosServicio = async (nombreServicio) => {
           '<input type="number" value="' + (ins.costo||0).toFixed(4) + '" step="0.0001" min="0" ' +
             'style="width:70px;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;text-align:center;" ' +
             'data-idx="' + idx + '" class="inp-costo-ins">' +
-          '<button data-idx="' + idx + '" class="btn-del-ins" style="color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;">?</button>';
+          '<button data-idx="' + idx + '" class="btn-del-ins" style="color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;">X</button>';
         cont.appendChild(row);
       });
 
@@ -1259,12 +1308,12 @@ window.editarInsumosServicio = async (nombreServicio) => {
       '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;">' +
         optsInsumos +
       '</select>' +
-      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">?</button>' +
+      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">X</button>' +
       '</div>' +
       '<div style="display:flex;gap:6px;margin-top:6px;">' +
       '<input id="inpNombreNuevo" type="text" placeholder="O escribe el nombre..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
       '<input id="inpCostoNuevo" type="number" placeholder="Costo $" step="0.0001" min="0" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
-      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">?</button>' +
+      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;">X</button>' +
       '</div>' +
       '</div></div>';
 
