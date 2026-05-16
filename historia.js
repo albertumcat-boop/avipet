@@ -1698,61 +1698,105 @@ window.renderizarTablaInsumos = async () => {
       f3.appendChild(btnG);
       // Editar insumo — modal completo
       f3.appendChild(mkBtn('Editar','#f59e0b', async function(){
-        const idActual   = r.id;
-        const nomActual  = nombreMostrar;
+        const idActual    = r.id;
+        const nomActual   = nombreMostrar;
         const costoActual = parseFloat(r.costo||0);
         const bloqActual  = r.bloqueado === true;
 
-        // Cargar lista de servicios para el selector "agregar a servicio"
-        let optsServs = '<option value="">-- No agregar a ninguno --</option>';
+        // Cargar todos los servicios y clasificar cuáles ya tienen este insumo
+        let serviciosConInsumo   = []; // ya lo tiene
+        let serviciosSinInsumo   = []; // no lo tiene (para agregar)
         try {
           const snapS = await getDocs(collection(db,'servicios_maestro'));
-          snapS.forEach(sd => { optsServs += '<option value="'+sd.id+'">'+sd.id+'</option>'; });
+          snapS.forEach(sd => {
+            const ins = sd.data().insumos || [];
+            const yaEsta = ins.some(i => (i.nombre||'').toUpperCase() === nomActual.toUpperCase() ||
+                                         (i.nombre||'').toUpperCase() === idActual.toUpperCase());
+            if (yaEsta) serviciosConInsumo.push(sd.id);
+            else        serviciosSinInsumo.push(sd.id);
+          });
+          serviciosConInsumo.sort();
+          serviciosSinInsumo.sort();
         } catch(e){}
+
+        // HTML de servicios donde ya está (badges)
+        let htmlServiciosActuales = '';
+        if (serviciosConInsumo.length === 0) {
+          htmlServiciosActuales = '<p style="font-size:10px;color:#94a3b8;font-style:italic;margin:0;">No está en ningún servicio aún.</p>';
+        } else {
+          htmlServiciosActuales = serviciosConInsumo.map(s =>
+            '<span style="display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:900;margin:2px;">'+s+'</span>'
+          ).join('');
+        }
+
+        // HTML selector de servicios adicionales (los que NO lo tienen)
+        let optsAgregar = '<option value="">-- Seleccionar servicio --</option>';
+        serviciosSinInsumo.forEach(s => { optsAgregar += '<option value="'+s+'">'+s+'</option>'; });
+
+        // HTML selector de servicios para QUITAR (los que SÍ lo tienen)
+        let optsQuitar = '<option value="">-- Seleccionar servicio --</option>';
+        serviciosConInsumo.forEach(s => { optsQuitar += '<option value="'+s+'">'+s+'</option>'; });
 
         const htmlModal =
           '<div style="display:flex;flex-direction:column;gap:12px;text-align:left;">' +
 
+          // Nombre
           '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre del insumo</label>' +
           '<input id="ei_nombre" type="text" value="'+nomActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>' +
 
+          // Costo + Bloqueado
           '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
           '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Costo ($)</label>' +
           '<input id="ei_costo" type="number" step="0.01" min="0" value="'+costoActual.toFixed(2)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
           '<div style="display:flex;flex-direction:column;justify-content:flex-end;">' +
-          '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#fffbeb;border:2px solid #fde68a;border-radius:10px;padding:8px;">' +
+          '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:#fffbeb;border:2px solid #fde68a;border-radius:10px;padding:8px;">' +
           '<input type="checkbox" id="ei_bloqueado" '+(bloqActual?'checked':'')+' style="width:16px;height:16px;accent-color:#f59e0b;cursor:pointer;">' +
-          '<span style="font-size:10px;font-weight:900;color:#92400e;">Bloqueado (doctor no puede eliminar)</span></label></div>' +
+          '<span style="font-size:10px;font-weight:900;color:#92400e;">&#128274; Bloqueado</span></label></div>' +
           '</div>' +
 
-          '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">' +
-          '<label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:6px;">Agregar a un servicio (opcional)</label>' +
-          '<select id="ei_servicio" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px;font-size:11px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">' + optsServs + '</select>' +
-          '<p style="font-size:8px;color:#94a3b8;margin:4px 0 0 0;">Solo si quieres asociar este insumo a un servicio adicional.</p>' +
+          // Servicios donde ya está
+          '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;">' +
+          '<p style="font-size:9px;font-weight:900;color:#16a34a;text-transform:uppercase;margin:0 0 6px 0;">Servicios donde ya está ('+serviciosConInsumo.length+')</p>' +
+          htmlServiciosActuales +
           '</div>' +
+
+          // Agregar a servicio adicional
+          (serviciosSinInsumo.length > 0 ?
+          '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px;">' +
+          '<label style="font-size:9px;font-weight:900;color:#2563eb;text-transform:uppercase;display:block;margin-bottom:6px;">+ Agregar a otro servicio</label>' +
+          '<select id="ei_agregar" style="width:100%;border:2px solid #bfdbfe;border-radius:8px;padding:8px;font-size:11px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsAgregar+'</select>' +
+          '</div>' : '') +
+
+          // Quitar de un servicio
+          (serviciosConInsumo.length > 0 ?
+          '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px;">' +
+          '<label style="font-size:9px;font-weight:900;color:#dc2626;text-transform:uppercase;display:block;margin-bottom:6px;">— Quitar de un servicio</label>' +
+          '<select id="ei_quitar" style="width:100%;border:2px solid #fca5a5;border-radius:8px;padding:8px;font-size:11px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsQuitar+'</select>' +
+          '</div>' : '') +
 
           '</div>';
 
         const res = await Swal.fire({
-          title: 'Editar Insumo',
+          title: 'Editar Insumo: '+nomActual,
           html: htmlModal,
-          width: 480,
+          width: 500,
           showCancelButton: true,
           confirmButtonText: 'Guardar cambios',
           cancelButtonText: 'Cancelar',
           confirmButtonColor: '#f59e0b',
           preConfirm: function() {
-            const nombre  = document.getElementById('ei_nombre').value.trim().toUpperCase();
-            const costo   = parseFloat(document.getElementById('ei_costo').value) || 0;
-            const bloq    = document.getElementById('ei_bloqueado').checked;
-            const servAg  = document.getElementById('ei_servicio').value;
+            const nombre = document.getElementById('ei_nombre').value.trim().toUpperCase();
+            const costo  = parseFloat(document.getElementById('ei_costo').value) || 0;
+            const bloq   = document.getElementById('ei_bloqueado').checked;
+            const agregar = document.getElementById('ei_agregar')?.value || '';
+            const quitar  = document.getElementById('ei_quitar')?.value  || '';
             if (!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
-            return { nombre, costo, bloq, servAg };
+            return { nombre, costo, bloq, agregar, quitar };
           }
         });
 
         if (!res.isConfirmed) return;
-        const { nombre: nuevoNom, costo: nuevoCosto, bloq: nuevoBloq, servAg } = res.value;
+        const { nombre:nuevoNom, costo:nuevoCosto, bloq:nuevoBloq, agregar:servAgregar, quitar:servQuitar } = res.value;
 
         try {
           Swal.fire({ title:'Guardando...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
@@ -1761,7 +1805,6 @@ window.renderizarTablaInsumos = async () => {
           const snapOld = await getDoc(doc(db,'insumos_maestro',idActual));
           const dataOld = snapOld.exists() ? snapOld.data() : {};
           const dataNueva = { ...dataOld, nombre:nuevoNom, costo:nuevoCosto, bloqueado:nuevoBloq, actualizadoEn:serverTimestamp() };
-
           if (nuevoNom !== idActual) {
             await setDoc(doc(db,'insumos_maestro',nuevoNom), dataNueva);
             await deleteDoc(doc(db,'insumos_maestro',idActual));
@@ -1769,8 +1812,8 @@ window.renderizarTablaInsumos = async () => {
             await setDoc(doc(db,'insumos_maestro',idActual), dataNueva, { merge:true });
           }
 
-          // 2. Renombrar en todos los servicios que ya lo usan
-          let serviciosActualizados = 0;
+          // 2. Renombrar/actualizar en todos los servicios que ya lo usan
+          let actualizados = 0;
           const snapServs = await getDocs(collection(db,'servicios_maestro'));
           for (const sDoc of snapServs.docs) {
             const sData = sDoc.data();
@@ -1779,45 +1822,53 @@ window.renderizarTablaInsumos = async () => {
               (ins.nombre||'').toUpperCase() === idActual.toUpperCase() ||
               (ins.nombre||'').toUpperCase() === nomActual.toUpperCase()
             );
+
+            // Si es el servicio a quitar, filtrar el insumo fuera
+            if (servQuitar && sDoc.id === servQuitar) {
+              const insLimpios = sData.insumos.filter(ins =>
+                (ins.nombre||'').toUpperCase() !== idActual.toUpperCase() &&
+                (ins.nombre||'').toUpperCase() !== nomActual.toUpperCase()
+              );
+              await setDoc(doc(db,'servicios_maestro',sDoc.id), { insumos:insLimpios }, { merge:true });
+              actualizados++;
+              continue;
+            }
+
             if (!tieneInsumo) continue;
-            const insumosActualizados = sData.insumos.map(ins => {
+            // Renombrar y actualizar costo/bloqueado
+            const insActualizados = sData.insumos.map(ins => {
               const nomIns = (ins.nombre||'').toUpperCase();
               if (nomIns === idActual.toUpperCase() || nomIns === nomActual.toUpperCase()) {
                 return { ...ins, nombre:nuevoNom, costo:nuevoCosto, bloqueado:nuevoBloq };
               }
               return ins;
             });
-            await setDoc(doc(db,'servicios_maestro',sDoc.id), { insumos:insumosActualizados }, { merge:true });
-            serviciosActualizados++;
+            await setDoc(doc(db,'servicios_maestro',sDoc.id), { insumos:insActualizados }, { merge:true });
+            actualizados++;
           }
 
-          // 3. Agregar a un servicio adicional si se seleccionó
-          let msgServicio = '';
-          if (servAg) {
-            const snapServ = await getDoc(doc(db,'servicios_maestro',servAg));
-            if (snapServ.exists()) {
-              const insActuales = snapServ.data().insumos || [];
-              const yaEsta = insActuales.some(ins => (ins.nombre||'').toUpperCase() === nuevoNom.toUpperCase());
+          // 3. Agregar a servicio adicional
+          let msgAgregar = '';
+          if (servAgregar) {
+            const snapAg = await getDoc(doc(db,'servicios_maestro',servAgregar));
+            if (snapAg.exists()) {
+              const insAg = snapAg.data().insumos || [];
+              const yaEsta = insAg.some(ins => (ins.nombre||'').toUpperCase() === nuevoNom.toUpperCase());
               if (!yaEsta) {
-                insActuales.push({ nombre:nuevoNom, costo:nuevoCosto, bloqueado:nuevoBloq });
-                await setDoc(doc(db,'servicios_maestro',servAg), { insumos:insActuales }, { merge:true });
-                msgServicio = '<br><span style="font-size:10px;color:#2563eb;">Agregado a: '+servAg+'</span>';
-              } else {
-                msgServicio = '<br><span style="font-size:10px;color:#f59e0b;">Ya existia en: '+servAg+' (actualizado)</span>';
-                const insUp = insActuales.map(ins => (ins.nombre||'').toUpperCase()===nuevoNom.toUpperCase() ? {...ins,costo:nuevoCosto,bloqueado:nuevoBloq} : ins);
-                await setDoc(doc(db,'servicios_maestro',servAg), { insumos:insUp }, { merge:true });
+                insAg.push({ nombre:nuevoNom, costo:nuevoCosto, bloqueado:nuevoBloq });
+                await setDoc(doc(db,'servicios_maestro',servAgregar), { insumos:insAg }, { merge:true });
+                msgAgregar = '<br><span style="font-size:10px;color:#2563eb;">✅ Agregado a: '+servAgregar+'</span>';
               }
             }
           }
 
           Swal.close();
-          console.log('[AVIPET] Insumo editado:', idActual, '→', nuevoNom, '$'+nuevoCosto, 'bloq:'+nuevoBloq, 'servicios actualizados:'+serviciosActualizados);
+          console.log('[AVIPET] Insumo editado:', idActual, '→', nuevoNom, '$'+nuevoCosto, 'actualizados:'+actualizados);
           await Swal.fire({
             icon:'success', title:'Insumo actualizado',
-            html:'<b>'+nuevoNom+'</b> — $'+nuevoCosto.toFixed(2) +
-              (nuevoBloq ? ' 🔒' : '') +
-              (serviciosActualizados > 0 ? '<br><span style="font-size:10px;color:#16a34a;">Actualizado en '+serviciosActualizados+' servicio(s)</span>' : '') +
-              msgServicio,
+            html:'<b>'+nuevoNom+'</b> — $'+nuevoCosto.toFixed(2)+(nuevoBloq?' 🔒':'')+
+              (actualizados>0?'<br><span style="font-size:10px;color:#16a34a;">Actualizado en '+actualizados+' servicio(s)</span>':'')+
+              msgAgregar,
             timer:2500, showConfirmButton:false
           });
           window.renderizarTablaInsumos();
