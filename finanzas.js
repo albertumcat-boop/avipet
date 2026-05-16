@@ -761,17 +761,16 @@ window.verResumenSemanalPelu = async () => {
       } else {
         rows += '<td style="padding:4px 6px;text-align:center;color:#16a34a;font-weight:700;">$' + neto.toFixed(2) + '</td>';
       }
-      // Columna pago con USD/Bs
+      // Columna pago — monto en dolares con etiqueta Bs o USD
       var modoPago = r.modoPago || '';
-      var tasa = window.tasaDolarHoy || 500;
       var labelPago = 'PEND';
       if (r.estatusPago === 'pagado') {
         if (modoPago === 'bs') {
-          labelPago = 'Bs ' + (precio * tasa).toFixed(0);
+          labelPago = '$' + precio.toFixed(2) + ' (Bs)';
         } else if (modoPago === 'mixto') {
-          labelPago = '$'+(precio/2).toFixed(2)+' + Bs '+(precio/2*tasa).toFixed(0);
+          labelPago = '$' + (precio/2).toFixed(2) + '$ + $' + (precio/2).toFixed(2) + '(Bs)';
         } else {
-          labelPago = 'USD';
+          labelPago = '$' + precio.toFixed(2) + ' USD';
         }
       }
       rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;font-size:8px;">' + labelPago + '</td>';
