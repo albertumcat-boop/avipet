@@ -1347,97 +1347,139 @@ window.editarInsumosServicio = async (nombreServicio) => {
     const data = snap.data();
     const normNombre = normalizarNombre(nombreServicio);
     const recetaBase = Object.entries(recetas).find(([k]) => normalizarNombre(k) === normNombre);
-    let insumosActuales = (data.insumos || (recetaBase ? recetaBase[1].insumos : [])).map(ins => ({
-      nombre: ins.nombre,
-      costo: ins.costo || 0,
+
+    // Array reactivo en memoria
+    let lista = (data.insumos || (recetaBase ? recetaBase[1].insumos : [])).map(ins => ({
+      nombre:   ins.nombre,
+      costo:    parseFloat(ins.costo || 0),
       bloqueado: ins.bloqueado === true
     }));
 
+    // Cargar insumos_maestro para el selector
+    const snapIns = await getDocs(collection(db, "insumos_maestro"));
+    const insumosMaestro = [];
+    snapIns.forEach(d => {
+      const r = d.data();
+      insumosMaestro.push({ nombre: r.nombre || d.id, costo: parseFloat(r.costo||0) });
+    });
+    insumosMaestro.sort((a,b) => a.nombre.localeCompare(b.nombre));
+    let optsInsumos = '<option value="">-- Seleccionar del catálogo --</option>';
+    insumosMaestro.forEach(i => {
+      optsInsumos += '<option value="'+i.nombre+'" data-costo="'+i.costo+'">'+i.nombre+' ($'+i.costo.toFixed(2)+')</option>';
+    });
+
+    // ── Función render: reconstruye la lista visual desde `lista` ──
     const renderLista = () => {
       const cont = document.getElementById('listaInsumosModal');
       if (!cont) return;
       cont.innerHTML = '';
-      if (insumosActuales.length === 0) {
-        cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:8px;">Sin insumos.</p>';
+      if (lista.length === 0) {
+        cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:12px;font-weight:700;">Sin insumos. Agrega uno abajo.</p>';
         return;
       }
-      insumosActuales.forEach((ins, idx) => {
+      lista.forEach((ins, idx) => {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f1f5f9;background:' + (ins.bloqueado?'#fffbeb':'#fff') + ';border-radius:4px;padding:5px;';
-        // Candado toggle
+        row.style.cssText = 'display:grid;grid-template-columns:auto 1fr 80px auto auto;align-items:center;gap:6px;padding:7px 8px;margin-bottom:4px;border-radius:8px;border:1px solid '+(ins.bloqueado?'#fde68a':'#f1f5f9')+';background:'+(ins.bloqueado?'#fffbeb':'#fff')+';';
+
+        // Candado
         const btnLock = document.createElement('button');
+        btnLock.type = 'button';
         btnLock.innerHTML = ins.bloqueado ? '&#128274;' : '&#128275;';
-        btnLock.title = ins.bloqueado ? 'Bloqueado — click para desbloquear' : 'Libre — click para bloquear';
-        btnLock.style.cssText = 'background:' + (ins.bloqueado?'#f59e0b':'#e2e8f0') + ';border:none;border-radius:6px;padding:3px 6px;cursor:pointer;font-size:13px;';
+        btnLock.title = ins.bloqueado ? 'Desbloquear' : 'Bloquear';
+        btnLock.style.cssText = 'background:'+(ins.bloqueado?'#f59e0b':'#e2e8f0')+';border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:13px;';
         btnLock.addEventListener('click', function() {
-          insumosActuales[idx].bloqueado = !insumosActuales[idx].bloqueado;
+          lista[idx].bloqueado = !lista[idx].bloqueado;
           renderLista();
         });
+
         // Nombre
         const nomSpan = document.createElement('span');
-        nomSpan.style.cssText = 'flex:1;font-size:10px;font-weight:' + (ins.bloqueado?'900':'700') + ';color:#1e293b;';
-        nomSpan.textContent = ins.nombre + (ins.bloqueado ? ' 🔒' : '');
-        // Input costo
+        nomSpan.style.cssText = 'font-size:11px;font-weight:'+(ins.bloqueado?'900':'700')+';color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        nomSpan.textContent = ins.nombre;
+
+        // Costo
         const inpCosto = document.createElement('input');
-        inpCosto.type = 'number'; inpCosto.step = '0.0001'; inpCosto.min = '0';
-        inpCosto.value = parseFloat(ins.costo||0).toFixed(4);
-        inpCosto.style.cssText = 'width:70px;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;text-align:center;';
-        inpCosto.addEventListener('change', function() { insumosActuales[idx].costo = parseFloat(this.value)||0; });
-        // Btn eliminar
+        inpCosto.type = 'number'; inpCosto.step = '0.01'; inpCosto.min = '0';
+        inpCosto.value = ins.costo.toFixed(2);
+        inpCosto.style.cssText = 'border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:11px;font-weight:700;text-align:center;width:100%;';
+        inpCosto.addEventListener('input', function() { lista[idx].costo = parseFloat(this.value)||0; });
+
+        // Etiqueta bloqueado
+        const tagBloq = document.createElement('span');
+        tagBloq.style.cssText = 'font-size:8px;font-weight:900;color:'+(ins.bloqueado?'#f59e0b':'#94a3b8')+';text-align:center;';
+        tagBloq.textContent = ins.bloqueado ? 'OBLIG.' : 'LIBRE';
+
+        // Btn ELIMINAR — usa índice capturado en closure
         const btnDel = document.createElement('button');
-        btnDel.textContent = 'X';
-        btnDel.style.cssText = 'color:#dc2626;font-weight:900;font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;cursor:pointer;';
-        btnDel.addEventListener('click', function() { insumosActuales.splice(idx, 1); renderLista(); });
-        row.appendChild(btnLock); row.appendChild(nomSpan); row.appendChild(inpCosto); row.appendChild(btnDel);
+        btnDel.type = 'button';
+        btnDel.textContent = '✕';
+        btnDel.title = 'Eliminar insumo';
+        btnDel.style.cssText = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;font-size:13px;font-weight:900;cursor:pointer;';
+        btnDel.addEventListener('click', (function(i) {
+          return function() {
+            lista.splice(i, 1);
+            renderLista();
+          };
+        })(idx));
+
+        row.appendChild(btnLock);
+        row.appendChild(nomSpan);
+        row.appendChild(inpCosto);
+        row.appendChild(tagBloq);
+        row.appendChild(btnDel);
         cont.appendChild(row);
       });
     };
 
-    const snapIns = await getDocs(collection(db, "insumos_maestro"));
-    let optsInsumos = '<option value="">-- Seleccionar insumo --</option>';
-    snapIns.forEach(d => {
-      const r = d.data();
-      optsInsumos += '<option value="'+(r.nombre||d.id)+'" data-costo="'+(r.costo||0)+'">'+(r.nombre||d.id)+' ($'+parseFloat(r.costo||0).toFixed(4)+')</option>';
-    });
-
     const htmlModal =
       '<div style="text-align:left;">' +
-      '<p style="font-size:9px;color:#64748b;margin-bottom:4px;">Toca <b>&#128274;</b> para bloquear un insumo — el doctor NO podra eliminarlo de la historia.</p>' +
-      '<div id="listaInsumosModal" style="max-height:240px;overflow-y:auto;margin-bottom:12px;border:1px solid #f1f5f9;border-radius:8px;padding:4px;"></div>' +
-      '<div style="border-top:1px solid #e2e8f0;padding-top:10px;">' +
-      '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Agregar insumo:</p>' +
-      '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">' +
-      '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;">' + optsInsumos + '</select>' +
-      '<button id="btnAgregarInsumo" style="background:#2563eb;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;border:none;">+ Agregar</button>' +
+      '<p style="font-size:9px;color:#64748b;margin:0 0 8px 0;">&#128274; = doctor NO puede eliminar en Historia Clínica. ✕ = quitar del servicio.</p>' +
+      '<div id="listaInsumosModal" style="max-height:260px;overflow-y:auto;margin-bottom:10px;"></div>' +
+      '<div style="border-top:2px solid #e2e8f0;padding-top:10px;display:flex;flex-direction:column;gap:8px;">' +
+      '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;">Agregar insumo del catálogo:</p>' +
+      '<div style="display:flex;gap:6px;align-items:center;">' +
+      '<select id="selInsumoAgregar" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:7px;font-size:11px;font-weight:700;background:white;outline:none;">' + optsInsumos + '</select>' +
+      '<button id="btnAgregarInsumo" type="button" style="background:#2563eb;color:white;border:none;border-radius:8px;padding:7px 14px;font-weight:900;font-size:11px;cursor:pointer;white-space:nowrap;">+ Agregar</button>' +
       '</div>' +
+      '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;">O escribe un insumo nuevo:</p>' +
       '<div style="display:flex;gap:6px;">' +
-      '<input id="inpNombreNuevo" type="text" placeholder="O escribe el nombre..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
-      '<input id="inpCostoNuevo" type="number" placeholder="Costo $" step="0.0001" min="0" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;">' +
-      '<button id="btnAgregarManual" style="background:#10b981;color:white;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;border:none;">+ Agregar</button>' +
-      '</div></div></div>';
+      '<input id="inpNombreNuevo" type="text" placeholder="Nombre del insumo..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:7px;font-size:11px;font-weight:700;outline:none;">' +
+      '<input id="inpCostoNuevo" type="number" placeholder="$0.00" step="0.01" min="0" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:7px;font-size:11px;font-weight:700;outline:none;">' +
+      '<button id="btnAgregarManual" type="button" style="background:#10b981;color:white;border:none;border-radius:8px;padding:7px 14px;font-weight:900;font-size:11px;cursor:pointer;white-space:nowrap;">+ Agregar</button>' +
+      '</div>' +
+      '</div></div>';
 
     const res = await Swal.fire({
       title: 'Insumos: ' + nombreServicio,
-      html: htmlModal, width: 540,
+      html: htmlModal,
+      width: 560,
       showCancelButton: true,
       confirmButtonText: 'Guardar cambios',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#2563eb',
       didOpen: function() {
         renderLista();
+
+        // Agregar desde catálogo
         document.getElementById('btnAgregarInsumo').addEventListener('click', function() {
           const sel = document.getElementById('selInsumoAgregar');
           const opt = sel?.options[sel.selectedIndex];
           if (!opt || !opt.value) return;
-          insumosActuales.push({ nombre: opt.value, costo: parseFloat(opt.dataset.costo)||0, bloqueado: false });
+          const yaEsta = lista.some(i => i.nombre.toUpperCase() === opt.value.toUpperCase());
+          if (yaEsta) { alert('Este insumo ya está en la lista.'); return; }
+          lista.push({ nombre: opt.value, costo: parseFloat(opt.dataset.costo)||0, bloqueado: false });
           sel.value = '';
           renderLista();
         });
+
+        // Agregar manual
         document.getElementById('btnAgregarManual').addEventListener('click', function() {
           const nombre = document.getElementById('inpNombreNuevo')?.value.trim().toUpperCase();
           const costo  = parseFloat(document.getElementById('inpCostoNuevo')?.value) || 0;
           if (!nombre) { alert('Escribe el nombre del insumo'); return; }
-          insumosActuales.push({ nombre, costo, bloqueado: false });
+          const yaEsta = lista.some(i => i.nombre.toUpperCase() === nombre);
+          if (yaEsta) { alert('Este insumo ya está en la lista.'); return; }
+          lista.push({ nombre, costo, bloqueado: false });
           document.getElementById('inpNombreNuevo').value = '';
           document.getElementById('inpCostoNuevo').value  = '';
           renderLista();
@@ -1447,12 +1489,14 @@ window.editarInsumosServicio = async (nombreServicio) => {
 
     if (!res.isConfirmed) return;
 
-    await setDoc(doc(db, "servicios_maestro", nombreServicio), { insumos: insumosActuales }, { merge: true });
-    await Swal.fire({ icon:'success', title:'Insumos guardados', html:'<b>'+nombreServicio+'</b><br>'+insumosActuales.length+' insumo(s)', timer:2000, showConfirmButton:false });
+    await setDoc(doc(db, "servicios_maestro", nombreServicio), { insumos: lista }, { merge: true });
+    await Swal.fire({
+      icon:'success', title:'Insumos guardados',
+      html:'<b>'+nombreServicio+'</b><br>'+lista.length+' insumo(s) guardados.',
+      timer:2000, showConfirmButton:false
+    });
 
   } catch(e) { console.error(e); alert('Error: ' + e.message); }
-
-
 };
 
 // --- CARGAR SELECTOR MEDICAMENTOS DESDE FIREBASE ----------
