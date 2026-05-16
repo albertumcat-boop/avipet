@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v24 -- modal compras fix");
+console.log("✅ historia.js v25 -- fix precio selector desde Firebase");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -1180,18 +1180,25 @@ window.cargarSelectorServicios = async () => {
         sel.appendChild(grp);
       }
 
-      // Agregar servicios que no existan ya en el optgroup
-      const yaEnGrp = new Set(
-        Array.from(grp.querySelectorAll('option')).map(o => o.value.toUpperCase())
-      );
-
+      // Agregar o ACTUALIZAR servicios en el optgroup con precio de Firebase
       servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
-        if (yaEnGrp.has(s.id.toUpperCase())) return; // ya esta
-        const opt = document.createElement('option');
-        opt.value       = s.id;
-        opt.textContent = s.id + ' ($' + parseFloat(s.precioVenta||0).toFixed(2) + ')';
-        opt.dataset.firebase = 'true';
-        grp.appendChild(opt);
+        const precioFB = parseFloat(s.precioVenta||0).toFixed(2);
+        // Buscar si el option ya existe (por value exacto o en mayusculas)
+        let optExist = Array.from(grp.querySelectorAll('option'))
+          .find(o => o.value.toUpperCase() === s.id.toUpperCase());
+        if (optExist) {
+          // ACTUALIZAR precio en el texto del option existente
+          optExist.textContent = s.id + ' ($' + precioFB + ')';
+          optExist.dataset.precioFirebase = precioFB;
+        } else {
+          // Crear nuevo option
+          const opt = document.createElement('option');
+          opt.value       = s.id;
+          opt.textContent = s.id + ' ($' + precioFB + ')';
+          opt.dataset.firebase = 'true';
+          opt.dataset.precioFirebase = precioFB;
+          grp.appendChild(opt);
+        }
       });
     });
 
@@ -1546,7 +1553,13 @@ window.renderizarTablaMaestra = async () => {
           this.textContent = '...'; this.disabled = true; this.style.background = '#94a3b8';
           const btn = this;
           try {
-            await setDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:parseFloat(inpP?.value)||0, porcDoc:parseFloat(inpPc?.value)||30, actualizadoEn:serverTimestamp() },{merge:true});
+            const nuevoP = parseFloat(inpP?.value)||0;
+            const nuevoPc = parseFloat(inpPc?.value)||30;
+            await setDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:nuevoP, porcDoc:nuevoPc, actualizadoEn:serverTimestamp() },{merge:true});
+            // Actualizar el selector de historia clinica inmediatamente
+            if (typeof window.cargarSelectorServicios === 'function') await window.cargarSelectorServicios();
+            // Limpiar cache de porcGlobal para que recargue
+            window.porcGlobalCache = undefined;
             btn.textContent = 'OK'; btn.style.background = '#16a34a';
             inpP.style.borderColor = '#16a34a'; inpPc.style.borderColor = '#16a34a';
             setTimeout(()=>{ btn.textContent='Guardar'; btn.disabled=false; btn.style.background='#2563eb'; inpP.style.borderColor=''; inpPc.style.borderColor=''; }, 2000);
@@ -1565,38 +1578,53 @@ window.renderizarTablaMaestra = async () => {
           snapCats.forEach(d => { const c=(d.data().categoria||'').trim().toUpperCase(); if(c) catsSet.add(c); });
           let optsHtml = Array.from(catsSet).sort().map(c => '<option value="'+c+'"'+(c===catActual.toUpperCase()?' selected':'')+'>'+c+'</option>').join('');
           optsHtml += '<option value="__nueva__">+ Nueva categoria...</option>';
+          // Leer precio y % actuales del card
+          const cardEl2 = document.querySelector('#tablaServiciosMaestro [data-card-id="'+idActual+'"]');
+          const precioActual = parseFloat(cardEl2?.querySelector('input[data-campo="precioVenta"]')?.value||0);
+          const porcActual   = parseFloat(cardEl2?.querySelector('input[data-campo="porcDoc"]')?.value||30);
+
           const res = await Swal.fire({
-            title: 'Editar: '+idActual, width:420,
+            title: 'Editar: '+idActual, width:440,
             html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre</label>'+
               '<input id="esn" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Precio ($)</label>'+
+              '<input id="esp" type="number" step="0.50" min="0" value="'+precioActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">% Doctor</label>'+
+              '<input id="espc" type="number" step="0.5" min="0" max="100" value="'+porcActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div></div>'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Categoria</label>'+
               '<select id="esc" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsHtml+'</select>'+
               '<input id="escn" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div></div>',
-            showCancelButton:true, confirmButtonText:'Guardar', confirmButtonColor:'#f59e0b',
+            showCancelButton:true, confirmButtonText:'Guardar todo', confirmButtonColor:'#f59e0b',
             didOpen:()=>{ document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; }); },
             preConfirm:()=>{
               const n=document.getElementById('esn').value.trim().toUpperCase();
+              const p=parseFloat(document.getElementById('esp').value)||0;
+              const pc=parseFloat(document.getElementById('espc').value)||30;
               const cs=document.getElementById('esc').value;
               const cn=document.getElementById('escn').value.trim().toUpperCase();
               const c=cs==='__nueva__'?cn:cs;
               if(!n){Swal.showValidationMessage('Nombre requerido');return false;}
+              if(p<=0){Swal.showValidationMessage('El precio debe ser mayor a 0');return false;}
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
-              return {n,c};
+              return {n,p,pc,c};
             }
           });
           if(!res.isConfirmed) return;
-          const {n:nuevoNom, c:nuevaCat} = res.value;
+          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat} = res.value;
           try {
             const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
             const dataOld = snapOld.exists()?snapOld.data():{};
+            const dataNueva = {...dataOld, precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat, actualizadoEn:serverTimestamp()};
             if(nuevoNom !== idActual) {
-              await setDoc(doc(db,"servicios_maestro",nuevoNom),{...dataOld,categoria:nuevaCat,actualizadoEn:serverTimestamp()});
+              await setDoc(doc(db,"servicios_maestro",nuevoNom), dataNueva);
               await deleteDoc(doc(db,"servicios_maestro",idActual));
             } else {
-              await updateDoc(doc(db,"servicios_maestro",idActual),{categoria:nuevaCat,actualizadoEn:serverTimestamp()});
+              await setDoc(doc(db,"servicios_maestro",idActual), dataNueva, {merge:true});
             }
-            await Swal.fire({icon:'success',title:'Guardado',text:nuevoNom+' → '+nuevaCat,timer:1800,showConfirmButton:false});
+            console.log('[AVIPET] Servicio actualizado:', nuevoNom, '→ $'+nuevoPrecio+' / '+nuevoPorcDoc+'%');
+            await Swal.fire({icon:'success',title:'Guardado',html:'<b>'+nuevoNom+'</b><br>$'+nuevoPrecio.toFixed(2)+' · '+nuevoPorcDoc+'% doc · '+nuevaCat,timer:2000,showConfirmButton:false});
             window.renderizarTablaMaestra(); window.cargarSelectorServicios();
           } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
         });
