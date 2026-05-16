@@ -1703,11 +1703,42 @@ window.renderizarTablaInsumos = async () => {
         if(!res.isConfirmed) return;
         const nuevoNom=res.value;
         try {
+          // 1. Actualizar insumos_maestro
           const snapOld=await getDoc(doc(db,"insumos_maestro",idActual));
           const dataOld=snapOld.exists()?snapOld.data():{};
           if(nuevoNom!==idActual){ await setDoc(doc(db,"insumos_maestro",nuevoNom),{...dataOld,nombre:nuevoNom,actualizadoEn:serverTimestamp()}); await deleteDoc(doc(db,"insumos_maestro",idActual)); }
           else { await updateDoc(doc(db,"insumos_maestro",idActual),{nombre:nuevoNom,actualizadoEn:serverTimestamp()}); }
-          await Swal.fire({icon:'success',title:'OK',text:nuevoNom,timer:1500,showConfirmButton:false});
+
+          // 2. Actualizar el nombre en todos los servicios_maestro que lo usan
+          let serviciosActualizados = 0;
+          const snapServs = await getDocs(collection(db, 'servicios_maestro'));
+          for (const sDoc of snapServs.docs) {
+            const sData = sDoc.data();
+            if (!Array.isArray(sData.insumos)) continue;
+            // Buscar si este servicio contiene el insumo con el nombre viejo
+            const tieneInsumo = sData.insumos.some(ins =>
+              (ins.nombre||'').toUpperCase() === idActual.toUpperCase() ||
+              (ins.nombre||'').toUpperCase() === nomActual.toUpperCase()
+            );
+            if (!tieneInsumo) continue;
+            // Renombrar el insumo dentro del array
+            const insumosActualizados = sData.insumos.map(ins => {
+              const nomIns = (ins.nombre||'').toUpperCase();
+              if (nomIns === idActual.toUpperCase() || nomIns === nomActual.toUpperCase()) {
+                return { ...ins, nombre: nuevoNom };
+              }
+              return ins;
+            });
+            await setDoc(doc(db, 'servicios_maestro', sDoc.id), { insumos: insumosActualizados }, { merge: true });
+            serviciosActualizados++;
+          }
+
+          console.log('[AVIPET] Insumo renombrado:', idActual, '→', nuevoNom, '— servicios actualizados:', serviciosActualizados);
+          await Swal.fire({
+            icon:'success', title:'Insumo renombrado',
+            html:'<b>'+nomActual+'</b> → <b>'+nuevoNom+'</b>' + (serviciosActualizados > 0 ? '<br><span style="font-size:10px;color:#16a34a;">Actualizado en '+serviciosActualizados+' servicio(s)</span>' : ''),
+            timer:2000, showConfirmButton:false
+          });
           window.renderizarTablaInsumos();
         } catch(e){Swal.fire({icon:'error',title:'Error',text:e.message});}
       }));
@@ -1768,7 +1799,34 @@ async function _guardarCostoInsumoFila(inputEl, btnEl) {
 
 window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,"insumos_maestro",idInsumo),{costo:parseFloat(valor)||0,actualizadoEn:serverTimestamp()});}catch(e){console.error(e);}};
 
-window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt(`? Eliminar "${nombreInsumo}"\nCLAVE MAESTRA:`);if(!clave||clave.trim()!==MASTER_KEY()){alert("? Clave incorrecta.");return;}if(!confirm(`(!) Eliminar "${nombreInsumo}".\n?Confirmas?`))return;try{await deleteDoc(doc(db,"insumos_maestro",idInsumo));alert(`? Eliminado.`);window.renderizarTablaInsumos();}catch(e){console.error(e);alert("? Error: "+e.message);}};
+window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{
+  const clave=prompt('Eliminar "'+nombreInsumo+'"\nCLAVE MAESTRA:');
+  if(!clave||clave.trim()!==MASTER_KEY()){alert('Clave incorrecta.');return;}
+  if(!confirm('Eliminar "'+nombreInsumo+'".\nConfirmas?'))return;
+  try{
+    // 1. Eliminar de insumos_maestro
+    await deleteDoc(doc(db,'insumos_maestro',idInsumo));
+    // 2. Eliminar de todos los servicios_maestro que lo usan
+    let serviciosActualizados=0;
+    const snapServs=await getDocs(collection(db,'servicios_maestro'));
+    for(const sDoc of snapServs.docs){
+      const sData=sDoc.data();
+      if(!Array.isArray(sData.insumos))continue;
+      const tieneInsumo=sData.insumos.some(ins=>(ins.nombre||'').toUpperCase()===(nombreInsumo||'').toUpperCase()||
+        (ins.nombre||'').toUpperCase()===(idInsumo||'').toUpperCase());
+      if(!tieneInsumo)continue;
+      const insumosLimpios=sData.insumos.filter(ins=>{
+        const nomIns=(ins.nombre||'').toUpperCase();
+        return nomIns!==(nombreInsumo||'').toUpperCase()&&nomIns!==(idInsumo||'').toUpperCase();
+      });
+      await setDoc(doc(db,'servicios_maestro',sDoc.id),{insumos:insumosLimpios},{merge:true});
+      serviciosActualizados++;
+    }
+    console.log('[AVIPET] Insumo eliminado:',nombreInsumo,'— servicios actualizados:',serviciosActualizados);
+    alert('Eliminado. Actualizado en '+serviciosActualizados+' servicio(s).');
+    window.renderizarTablaInsumos();
+  }catch(e){console.error(e);alert('Error: '+e.message);}
+};;
 
 // --- INICIALIZAR BD ---
 window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("? CLAVE MAESTRA:");if(!clave||clave.trim()!==MASTER_KEY()){alert("? Clave incorrecta.");return;}if(!confirm("(!) ?Inicializar catalogo de servicios en Firebase?"))return;
