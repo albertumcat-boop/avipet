@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v31 -- compras multiples insumos");
+console.log("✅ historia.js v32 -- compras QR movil");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -785,7 +785,7 @@ window.sincronizarHiddenTest=()=>{const galeria=document.getElementById('preview
 
 // --- QR MOVIL ---
 window.generarEnlaceMovil=(tipo='historia')=>{const cedula=document.getElementById('hCI')?.value.trim();if(!cedula)return alert("(!) Escribe la Cedula primero.");const qrDivID=tipo==='test'?"qrcodeTest":"qrcode";const contID=tipo==='test'?"qrContainerTest":"qrContainer";const qrDiv=document.getElementById(qrDivID);if(qrDiv)qrDiv.innerHTML="";const url=`${window.location.origin}${window.location.pathname}?mode=mobile&ci=${cedula}&tipo=${tipo}`;new QRCode(qrDiv,{text:url,width:128,height:128});document.getElementById(contID)?.classList.remove('hidden');const ahora=new Date();if(tipo==='historia')window._ultimaSesionQRHistoria=ahora;if(tipo==='test')window._ultimaSesionQRTest=ahora;const q=query(collection(db,"transferencias_fotos"),where("ci","==",cedula),where("tipo","==",tipo));if(tipo==='historia'&&window._unsubHist)window._unsubHist();if(tipo==='test'&&window._unsubTest)window._unsubTest();const unsub=onSnapshot(q,snap=>{const galeriaId=tipo==='test'?'previewTestGallery':'previewHistoriaGallery';const contIdG=tipo==='test'?'previewTestContainer':'previewHistoriaContainer';const hiddenId=tipo==='test'?'pUrlTest':'pUrlExamen';const galeria=document.getElementById(galeriaId);const cont=document.getElementById(contIdG);const hidden=document.getElementById(hiddenId);if(!galeria||!cont)return;const urlsExist=new Set(Array.from(galeria.querySelectorAll('img')).map(img=>img.src));const inicio=tipo==='historia'?window._ultimaSesionQRHistoria:window._ultimaSesionQRTest;snap.forEach(docSnap=>{const d=docSnap.data();if(!d.url)return;if(d.fecha?.toDate&&d.fecha.toDate()<inicio)return;if(urlsExist.has(d.url))return;urlsExist.add(d.url);const wrapper=document.createElement('div');wrapper.className="relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";wrapper.innerHTML=`<img src="${d.url}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHidden${tipo==='test'?'Test':'Historia'}()">X</button>`;galeria.appendChild(wrapper);if(hidden)hidden.value=d.url;});if(urlsExist.size>0)cont.classList.remove('hidden');});if(tipo==='historia')window._unsubHist=unsub;if(tipo==='test')window._unsubTest=unsub;};
-window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emerald-600':'bg-blue-600';const colorTx=tipo==='test'?'text-emerald-400':'text-blue-400';document.body.innerHTML=`<div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center"><h1 class="text-xl font-black uppercase italic ${colorTx}">${tipo==='test'?'? TEST':'? HISTORIA'}</h1><p class="text-slate-400 text-[10px] mb-6 uppercase">CI: <b>${ci}</b></p><input type="file" id="mobileFileCamera" accept="image/*" capture="environment" class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><input type="file" id="mobileFileGallery" accept="image/*" multiple class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><div class="flex flex-col gap-3"><button onclick="document.getElementById('mobileFileCamera').click()" class="w-full ${colorB} py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">TOMAR FOTO</button><button onclick="document.getElementById('mobileFileGallery').click()" class="w-full bg-slate-600 py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">GALERIA</button></div><div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo...</div></div></div>`;};
+window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emerald-600':tipo==='compras'?'bg-purple-600':'bg-blue-600';const colorTx=tipo==='test'?'text-emerald-400':tipo==='compras'?'text-purple-400':'text-blue-400';document.body.innerHTML=`<div class="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center font-sans"><div class="w-full max-w-sm bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center"><h1 class="text-xl font-black uppercase italic ${colorTx}">${tipo==='test'?'? TEST':'? HISTORIA'}</h1><p class="text-slate-400 text-[10px] mb-6 uppercase">CI: <b>${ci}</b></p><input type="file" id="mobileFileCamera" accept="image/*" capture="environment" class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><input type="file" id="mobileFileGallery" accept="image/*" multiple class="hidden" onchange="window.procesarSubidaMovil(this,'${ci}','${tipo}')"><div class="flex flex-col gap-3"><button onclick="document.getElementById('mobileFileCamera').click()" class="w-full ${colorB} py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">TOMAR FOTO</button><button onclick="document.getElementById('mobileFileGallery').click()" class="w-full bg-slate-600 py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95">GALERIA</button></div><div id="statusMovil" class="mt-6 text-sm font-medium text-blue-300 italic">Listo...</div></div></div>`;};
 window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
 
 // --- IMPRIMIR ---
@@ -2464,12 +2464,18 @@ window.abrirModalNuevaCompra = async () => {
     // Foto factura
     '<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:10px;padding:10px;text-align:center;">' +
     '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 8px 0;">Foto de factura (opcional)</p>' +
-    '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:6px;">' +
+    '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:6px;flex-wrap:wrap;">' +
     '<button type="button" id="btn_cmp_camara" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:900;cursor:pointer;">Cámara</button>' +
     '<button type="button" id="btn_cmp_galeria" style="background:#64748b;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:900;cursor:pointer;">Galería</button>' +
+    '<button type="button" id="btn_cmp_qr" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:900;cursor:pointer;">QR Móvil</button>' +
     '</div>' +
     '<input type="file" id="cmp_foto_cam" accept="image/*" capture="environment" style="display:none">' +
     '<input type="file" id="cmp_foto_gal" accept="image/*" style="display:none">' +
+    '<div id="cmp_qr_container" style="display:none;margin:8px auto 0;text-align:center;">' +
+    '<p style="font-size:9px;color:#7c3aed;font-weight:900;margin:0 0 4px 0;">Escanea desde tu teléfono para subir la foto</p>' +
+    '<div id="cmp_qr_div" style="display:inline-block;padding:8px;background:#fff;border-radius:8px;border:2px solid #e2e8f0;"></div>' +
+    '<p style="font-size:8px;color:#94a3b8;margin:4px 0 0 0;">La foto llegará automáticamente aquí</p>' +
+    '</div>' +
     '<div id="cmp_foto_preview" style="display:none;margin-top:6px;">' +
     '<img id="cmp_foto_img" style="max-width:100%;max-height:120px;border-radius:8px;border:2px solid #bfdbfe;object-fit:contain;" src="">' +
     '<button type="button" id="btn_cmp_quitar" style="display:block;margin:4px auto 0;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:3px 10px;font-size:9px;font-weight:900;cursor:pointer;">Quitar foto</button>' +
@@ -2549,6 +2555,49 @@ window.abrirModalNuevaCompra = async () => {
         const status = document.getElementById('cmp_foto_status');
         if (status) status.textContent = '';
       });
+
+      // QR Móvil — genera un ID único para esta sesión de compra
+      const sesionCompraId = 'compra_' + Date.now();
+      window._unsubCompraFoto = null;
+      window._sesionCompraInicio = null;
+
+      document.getElementById('btn_cmp_qr').addEventListener('click', function() {
+        const qrCont = document.getElementById('cmp_qr_container');
+        const qrDiv  = document.getElementById('cmp_qr_div');
+        if (!qrDiv) return;
+
+        // Generar URL con modo=mobile y tipo=compras + sesionId
+        const url = window.location.origin + window.location.pathname + '?mode=mobile&ci='+sesionCompraId+'&tipo=compras';
+        qrDiv.innerHTML = '';
+        new QRCode(qrDiv, { text:url, width:128, height:128 });
+        qrCont.style.display = 'block';
+        window._sesionCompraInicio = new Date();
+
+        const status = document.getElementById('cmp_foto_status');
+        if (status) status.textContent = 'Esperando foto desde el móvil...';
+
+        // Escuchar en tiempo real las fotos que lleguen
+        if (window._unsubCompraFoto) window._unsubCompraFoto();
+        const q = query(
+          collection(db, 'transferencias_fotos'),
+          where('ci', '==', sesionCompraId),
+          where('tipo', '==', 'compras')
+        );
+        window._unsubCompraFoto = onSnapshot(q, function(snap) {
+          const inicio = window._sesionCompraInicio;
+          snap.forEach(function(docSnap) {
+            const d = docSnap.data();
+            if (!d.url) return;
+            if (d.fecha?.toDate && d.fecha.toDate() < inicio) return;
+            // Llegó una foto — mostrarla
+            window._fotoFacturaB64 = d.url;
+            document.getElementById('cmp_foto_img').src = d.url;
+            document.getElementById('cmp_foto_preview').style.display = 'block';
+            qrCont.style.display = 'none';
+            if (status) status.textContent = '✓ Foto recibida desde el móvil';
+          });
+        });
+      });
     },
     preConfirm: function() {
       if (listaItems.length === 0) {
@@ -2565,7 +2614,11 @@ window.abrirModalNuevaCompra = async () => {
     }
   });
 
-  if (!res.isConfirmed) { window._fotoFacturaB64 = null; return; }
+  if (!res.isConfirmed) {
+    window._fotoFacturaB64 = null;
+    if (window._unsubCompraFoto) { window._unsubCompraFoto(); window._unsubCompraFoto = null; }
+    return;
+  }
   const { proveedor, fechaSimple, notas } = res.value;
 
   try {
@@ -2592,6 +2645,7 @@ window.abrirModalNuevaCompra = async () => {
     }
 
     window._fotoFacturaB64 = null;
+    if (window._unsubCompraFoto) { window._unsubCompraFoto(); window._unsubCompraFoto = null; }
     Swal.close();
     await Swal.fire({
       icon: 'success',
