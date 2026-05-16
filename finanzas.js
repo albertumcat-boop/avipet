@@ -803,18 +803,19 @@ window.verResumenSemanalPelu = async () => {
     }
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p></div>';
 
-    // Desglose ayu1 por moneda: $1 por perro en la moneda que pagó
+    // Desglose ayu1: $2 por mascota (=$1 pelu + $1 avipet) en la moneda que pagó
     var ayu1USD = 0, ayu1BS = 0;
     servicios.forEach(function(r2) {
       if (parseFloat(r2.pagoAyudante1||0) > 0) {
         var mp = r2.modoPago || 'usd';
-        if (mp === 'bs') { ayu1BS += 1; }
-        else if (mp === 'mixto') { ayu1USD += 0.5; ayu1BS += 0.5; }
-        else { ayu1USD += 1; }
+        if (mp === 'bs') { ayu1BS += 2; }           // $2 en Bs
+        else if (mp === 'mixto') { ayu1USD += 1; ayu1BS += 1; } // $1 USD + $1 en Bs
+        else { ayu1USD += 2; }                       // $2 USD
       }
     });
     htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante 1</p>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;margin:0 0 4px 0;">' + perrosConAyu + ' mascotas x $2 ($1 pelu + $1 Avipet)</p>';
     if (ayu1USD > 0 && ayu1BS > 0) {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#2563eb;margin:2px 0;">$' + ayu1USD.toFixed(2) + ' USD</p>';
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$' + ayu1BS.toFixed(2) + ' en Bs</p>';
@@ -823,7 +824,7 @@ window.verResumenSemanalPelu = async () => {
     } else {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#2563eb;margin:2px 0;">$' + ayu1USD.toFixed(2) + ' USD</p>';
     }
-    htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' x $1 pelu + $1 Avipet</p></div></div>';
+    htmlModal += '</div></div>';
 
     // Fila 2 de cards — 4 columnas (con Extra separado)
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">';
