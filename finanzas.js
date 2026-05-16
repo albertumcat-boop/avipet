@@ -795,15 +795,34 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;">Peluquera</p>';
     htmlModal += '<p style="font-size:20px;font-weight:900;color:#7c3aed;">$' + totalPelu.toFixed(2) + '</p>';
     if (totalPeluUSD > 0 && totalPeluBS > 0) {
-      htmlModal += '<p style="font-size:9px;color:#7c3aed;font-weight:700;">$' + totalPeluUSD.toFixed(2) + ' USD + Bs ' + (totalPeluBS * window.tasaDolarHoy).toFixed(2) + '</p>';
+      htmlModal += '<p style="font-size:9px;color:#7c3aed;font-weight:700;">$' + totalPeluUSD.toFixed(2) + ' USD &middot; $' + totalPeluBS.toFixed(2) + ' en Bs</p>';
     } else if (totalPeluBS > 0) {
-      htmlModal += '<p style="font-size:9px;color:#92400e;font-weight:700;">Todo en Bs: Bs ' + (totalPeluBS * window.tasaDolarHoy).toFixed(2) + '</p>';
+      htmlModal += '<p style="font-size:9px;color:#92400e;font-weight:700;">$' + totalPeluBS.toFixed(2) + ' cobrado en Bs</p>';
+    } else {
+      htmlModal += '<p style="font-size:9px;color:#7c3aed;font-weight:700;">$' + totalPelu.toFixed(2) + ' USD</p>';
     }
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p></div>';
 
+    // Desglose ayu1 por moneda: $1 por perro en la moneda que pagó
+    var ayu1USD = 0, ayu1BS = 0;
+    servicios.forEach(function(r2) {
+      if (parseFloat(r2.pagoAyudante1||0) > 0) {
+        var mp = r2.modoPago || 'usd';
+        if (mp === 'bs') { ayu1BS += 1; }
+        else if (mp === 'mixto') { ayu1USD += 0.5; ayu1BS += 0.5; }
+        else { ayu1USD += 1; }
+      }
+    });
     htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante 1</p>';
     htmlModal += '<p style="font-size:20px;font-weight:900;color:#2563eb;">$' + pagoAyu1Real.toFixed(2) + '</p>';
+    if (ayu1USD > 0 && ayu1BS > 0) {
+      htmlModal += '<p style="font-size:9px;color:#2563eb;font-weight:700;">$' + ayu1USD.toFixed(2) + ' USD &middot; $' + ayu1BS.toFixed(2) + ' en Bs</p>';
+    } else if (ayu1BS > 0) {
+      htmlModal += '<p style="font-size:9px;color:#92400e;font-weight:700;">$' + ayu1BS.toFixed(2) + ' cobrado en Bs</p>';
+    } else {
+      htmlModal += '<p style="font-size:9px;color:#2563eb;font-weight:700;">$' + ayu1USD.toFixed(2) + ' USD</p>';
+    }
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' x $1 pelu + $1 Avipet</p></div></div>';
 
     // Fila 2 de cards — 4 columnas (con Extra separado)
@@ -818,9 +837,11 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
     htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p>';
     if (totalAvipetUSD > 0 && totalAvipetBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#16a34a;font-weight:700;">$' + totalAvipetUSD.toFixed(2) + ' + Bs ' + (totalAvipetBS * window.tasaDolarHoy).toFixed(2) + '</p>';
+      htmlModal += '<p style="font-size:8px;color:#16a34a;font-weight:700;">$' + totalAvipetUSD.toFixed(2) + ' USD &middot; $' + totalAvipetBS.toFixed(2) + ' en Bs</p>';
     } else if (totalAvipetBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#92400e;font-weight:700;">Bs ' + (totalAvipetBS * window.tasaDolarHoy).toFixed(2) + '</p>';
+      htmlModal += '<p style="font-size:8px;color:#92400e;font-weight:700;">$' + totalAvipetBS.toFixed(2) + ' cobrado en Bs</p>';
+    } else {
+      htmlModal += '<p style="font-size:8px;color:#16a34a;font-weight:700;">$' + totalAvipetUSD.toFixed(2) + ' USD</p>';
     }
     htmlModal += '</div>';
 
@@ -832,9 +853,11 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
     htmlModal += '<p style="font-size:16px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p>';
     if (totalBrutoUSD > 0 && totalBrutoBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#94a3b8;font-weight:700;">$' + totalBrutoUSD.toFixed(2) + ' + Bs ' + (totalBrutoBS * window.tasaDolarHoy).toFixed(2) + '</p>';
+      htmlModal += '<p style="font-size:8px;color:#94a3b8;font-weight:700;">$' + totalBrutoUSD.toFixed(2) + ' USD &middot; $' + totalBrutoBS.toFixed(2) + ' en Bs</p>';
     } else if (totalBrutoBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#fbbf24;font-weight:700;">Todo Bs: Bs ' + (totalBrutoBS * window.tasaDolarHoy).toFixed(2) + '</p>';
+      htmlModal += '<p style="font-size:8px;color:#fbbf24;font-weight:700;">$' + totalBrutoBS.toFixed(2) + ' cobrado en Bs</p>';
+    } else {
+      htmlModal += '<p style="font-size:8px;color:#94a3b8;font-weight:700;">$' + totalBrutoUSD.toFixed(2) + ' USD</p>';
     }
     htmlModal += '</div></div>';
 
@@ -938,7 +961,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v5 — desglose USD/Bs en resumen semanal peluqueria");
+console.log("finanzas.js v5 — desglose USD y Bs en dolares por empleado");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
