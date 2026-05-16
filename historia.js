@@ -1,5 +1,5 @@
 // =========================================================
-// AVIPET -- historia.js  v24
+// AVIPET -- historia.js  v30
 // NUEVO: selector de mascotas al autocompletar por cedula
 //        (veterinaria y peluqueria)
 //        limpiar formulario al enviar a sala de espera
@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v25 -- fix precio selector desde Firebase");
+console.log("✅ historia.js v30 -- compras en array tabs");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -2011,7 +2011,7 @@ try{Swal.fire({title:'? Inicializando...',allowOutsideClick:false,didOpen:()=>Sw
 
 // --- CAMBIAR SUB-TAB CONFIG ---
 window.cambiarSubTabConfig = (tab) => {
-  ['servicios','insumos','medicamentos','seguridad','tarifa'].forEach(t => {
+  ['servicios','insumos','medicamentos','seguridad','tarifa','compras'].forEach(t => {
     const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
     const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
     const activo = t === tab;
@@ -2691,5 +2691,3 @@ window.cargarRegistroCompras = async () => {
     tablaDiv.innerHTML = '<p style="color:#dc2626;text-align:center;padding:16px;font-size:10px;font-weight:900;">Error: '+e.message+'</p>';
   }
 };
-
-console.log("compras.js integrado en historia.js v21");
