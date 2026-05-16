@@ -31,6 +31,7 @@ window.doctorActivoId         = null;
 window.MASTER_KEY_SISTEMA     = "AVIPET2026";
 window.vacunaPagadaAnteriormente = false;
 window.usuarioActivoSistema   = "";
+window.sesionAdminActiva      = false;  // true cuando entra con clave maestra
 
 // ============================================================
 // CONFIG DOCTORES
@@ -272,6 +273,11 @@ window.validarAcceso = async () => {
 
     if (responsable) {
       window.usuarioActivoSistema = responsable;
+      // Si es clave maestra o Aiby → sesión admin activa (no vuelve a pedir PIN)
+      if (pass === window.MASTER_KEY_SISTEMA || pass === 'AVIPET2026' || pass === '2222') {
+        window.sesionAdminActiva = true;
+        _mostrarBannerAdmin(responsable);
+      }
       await window.registrarLogAuditoria("ACCESO PROTEGIDO",
         `Entró a ${window.tabPendiente} como ${responsable}`);
       window.cerrarModalLogin();
@@ -282,6 +288,10 @@ window.validarAcceso = async () => {
   } catch (_) {
     if (responsable || pass === window.MASTER_KEY_SISTEMA) {
       window.usuarioActivoSistema = responsable || "Albert Peña (Master)";
+      if (pass === window.MASTER_KEY_SISTEMA || pass === 'AVIPET2026' || pass === '2222') {
+        window.sesionAdminActiva = true;
+        _mostrarBannerAdmin(window.usuarioActivoSistema);
+      }
       window.cerrarModalLogin();
       window.ejecutarCambioDeTab(window.tabPendiente);
     } else {
@@ -299,6 +309,11 @@ window.cerrarModalLogin = () => {
 
 window.showTab = async (t) => {
   if (['config_precios', 'reporte', 'inventario'].includes(t)) {
+    // Si hay sesión admin activa, entrar directo sin pedir PIN
+    if (window.sesionAdminActiva) {
+      window.ejecutarCambioDeTab(t);
+      return;
+    }
     window.tabPendiente = t;
     const m = document.getElementById('modalLoginAcceso');
     if (m) { m.classList.remove('hidden'); document.getElementById('modalPinInput')?.focus(); }
@@ -307,6 +322,29 @@ window.showTab = async (t) => {
   }
   window.ejecutarCambioDeTab(t);
 };
+
+// Cerrar sesión admin
+window.cerrarSesionAdmin = () => {
+  window.sesionAdminActiva = false;
+  window.usuarioActivoSistema = "";
+  document.getElementById('bannerSesionAdmin')?.remove();
+  window.ejecutarCambioDeTab('historia');
+};
+
+// Mostrar banner de sesión activa
+function _mostrarBannerAdmin(nombre) {
+  // Evitar duplicados
+  document.getElementById('bannerSesionAdmin')?.remove();
+  const banner = document.createElement('div');
+  banner.id = 'bannerSesionAdmin';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#1e293b;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:6px 16px;font-size:11px;font-weight:900;font-family:sans-serif;';
+  banner.innerHTML =
+    '<span style="display:flex;align-items:center;gap:8px;">' +
+    '<span style="background:#16a34a;border-radius:50%;width:8px;height:8px;display:inline-block;"></span>' +
+    'SESIÓN ACTIVA: ' + nombre.toUpperCase() + ' — Acceso total</span>' +
+    '<button onclick="window.cerrarSesionAdmin()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:10px;font-weight:900;cursor:pointer;text-transform:uppercase;">Cerrar sesión</button>';
+  document.body.prepend(banner);
+}
 
 window.ejecutarCambioDeTab = async (t) => {
   if (t === 'historia') limpiarLogoHistoria();
@@ -540,4 +578,4 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch(_) { localStorage.removeItem('respaldo_historia_activa'); }
 });
 
-console.log("✅ main.js v12 — PIN Aiby 2222");
+console.log("✅ main.js v13 — sesion admin activa");
