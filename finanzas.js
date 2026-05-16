@@ -793,13 +793,13 @@ window.verResumenSemanalPelu = async () => {
 
     htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;">Peluquera</p>';
-    htmlModal += '<p style="font-size:20px;font-weight:900;color:#7c3aed;">$' + totalPelu.toFixed(2) + '</p>';
     if (totalPeluUSD > 0 && totalPeluBS > 0) {
-      htmlModal += '<p style="font-size:9px;color:#7c3aed;font-weight:700;">$' + totalPeluUSD.toFixed(2) + ' USD &middot; $' + totalPeluBS.toFixed(2) + ' en Bs</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$' + totalPeluUSD.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$' + totalPeluBS.toFixed(2) + ' en Bs</p>';
     } else if (totalPeluBS > 0) {
-      htmlModal += '<p style="font-size:9px;color:#92400e;font-weight:700;">$' + totalPeluBS.toFixed(2) + ' cobrado en Bs</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$' + totalPeluBS.toFixed(2) + ' en Bs</p>';
     } else {
-      htmlModal += '<p style="font-size:9px;color:#7c3aed;font-weight:700;">$' + totalPelu.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$' + totalPelu.toFixed(2) + ' USD</p>';
     }
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p></div>';
 
@@ -815,13 +815,13 @@ window.verResumenSemanalPelu = async () => {
     });
     htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;">Ayudante 1</p>';
-    htmlModal += '<p style="font-size:20px;font-weight:900;color:#2563eb;">$' + pagoAyu1Real.toFixed(2) + '</p>';
     if (ayu1USD > 0 && ayu1BS > 0) {
-      htmlModal += '<p style="font-size:9px;color:#2563eb;font-weight:700;">$' + ayu1USD.toFixed(2) + ' USD &middot; $' + ayu1BS.toFixed(2) + ' en Bs</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#2563eb;margin:2px 0;">$' + ayu1USD.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$' + ayu1BS.toFixed(2) + ' en Bs</p>';
     } else if (ayu1BS > 0) {
-      htmlModal += '<p style="font-size:9px;color:#92400e;font-weight:700;">$' + ayu1BS.toFixed(2) + ' cobrado en Bs</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$' + ayu1BS.toFixed(2) + ' en Bs</p>';
     } else {
-      htmlModal += '<p style="font-size:9px;color:#2563eb;font-weight:700;">$' + ayu1USD.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#2563eb;margin:2px 0;">$' + ayu1USD.toFixed(2) + ' USD</p>';
     }
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">' + perrosConAyu + ' x $1 pelu + $1 Avipet</p></div></div>';
 
@@ -835,13 +835,13 @@ window.verResumenSemanalPelu = async () => {
 
     htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#16a34a;">$' + totalAvipet.toFixed(2) + '</p>';
     if (totalAvipetUSD > 0 && totalAvipetBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#16a34a;font-weight:700;">$' + totalAvipetUSD.toFixed(2) + ' USD &middot; $' + totalAvipetBS.toFixed(2) + ' en Bs</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#16a34a;margin:2px 0;">$' + totalAvipetUSD.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#92400e;margin:2px 0;">$' + totalAvipetBS.toFixed(2) + ' en Bs</p>';
     } else if (totalAvipetBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#92400e;font-weight:700;">$' + totalAvipetBS.toFixed(2) + ' cobrado en Bs</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#92400e;margin:2px 0;">$' + totalAvipetBS.toFixed(2) + ' en Bs</p>';
     } else {
-      htmlModal += '<p style="font-size:8px;color:#16a34a;font-weight:700;">$' + totalAvipetUSD.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#16a34a;margin:2px 0;">$' + totalAvipetUSD.toFixed(2) + ' USD</p>';
     }
     htmlModal += '</div>';
 
@@ -851,13 +851,13 @@ window.verResumenSemanalPelu = async () => {
 
     htmlModal += '<div style="background:#1e293b;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#fff;">$' + totalBruto.toFixed(2) + '</p>';
     if (totalBrutoUSD > 0 && totalBrutoBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#94a3b8;font-weight:700;">$' + totalBrutoUSD.toFixed(2) + ' USD &middot; $' + totalBrutoBS.toFixed(2) + ' en Bs</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fff;margin:2px 0;">$' + totalBrutoUSD.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fbbf24;margin:2px 0;">$' + totalBrutoBS.toFixed(2) + ' en Bs</p>';
     } else if (totalBrutoBS > 0) {
-      htmlModal += '<p style="font-size:8px;color:#fbbf24;font-weight:700;">$' + totalBrutoBS.toFixed(2) + ' cobrado en Bs</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fbbf24;margin:2px 0;">$' + totalBrutoBS.toFixed(2) + ' en Bs</p>';
     } else {
-      htmlModal += '<p style="font-size:8px;color:#94a3b8;font-weight:700;">$' + totalBrutoUSD.toFixed(2) + ' USD</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fff;margin:2px 0;">$' + totalBrutoUSD.toFixed(2) + ' USD</p>';
     }
     htmlModal += '</div></div>';
 
@@ -961,7 +961,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v5 — desglose USD y Bs en dolares por empleado");
+console.log("finanzas.js v5 — solo desglose USD y Bs sin total");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
