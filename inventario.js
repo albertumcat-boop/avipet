@@ -413,30 +413,30 @@ try{Swal.fire({title:'Inicializando...',allowOutsideClick:false,didOpen:()=>Swal
 
 // CAMBIAR SUB-TAB CONFIG 
 window.cambiarSubTabConfig = (tab) => {
- ['servicios','insumos','medicamentos','seguridad','tarifa'].forEach(t => {
- const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
- const btn = document.getElementById('btn_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
- const activo = t === tab;
- panel?.classList.toggle('hidden', !activo);
- if (btn) {
- btn.style.background = activo ? '#2563eb' : 'transparent';
- btn.style.color = activo ? '#ffffff' : '#64748b';
- btn.style.fontWeight = '900';
- btn.style.fontSize = '10px';
- btn.style.padding = '8px 4px';
- btn.style.borderRadius = '8px';
- btn.style.border = 'none';
- btn.style.cursor = 'pointer';
- btn.style.textTransform = 'uppercase';
- btn.style.whiteSpace = 'nowrap';
- btn.style.overflow = 'hidden';
- btn.style.textOverflow = 'ellipsis';
- }
- });
- if (tab === 'servicios') { if(typeof window.renderizarTablaMaestra==='function') window.renderizarTablaMaestra(); else _llamarFuncion('renderizarTablaMaestra'); }
- if (tab === 'insumos') { if(typeof window.renderizarTablaInsumos==='function') window.renderizarTablaInsumos(); else _llamarFuncion('renderizarTablaInsumos'); }
- if (tab === 'compras') { if(typeof window.cargarRegistroCompras==='function') window.cargarRegistroCompras(); else _llamarFuncion('cargarRegistroCompras'); }
- if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
+  ['servicios','insumos','medicamentos','seguridad','tarifa','compras'].forEach(t => {
+    const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
+    const activo = t === tab;
+    panel?.classList.toggle('hidden', !activo);
+    if (btn) {
+      btn.style.background    = activo ? '#2563eb' : 'transparent';
+      btn.style.color         = activo ? '#ffffff' : '#64748b';
+      btn.style.fontWeight    = '900';
+      btn.style.fontSize      = '10px';
+      btn.style.padding       = '8px 4px';
+      btn.style.borderRadius  = '8px';
+      btn.style.border        = 'none';
+      btn.style.cursor        = 'pointer';
+      btn.style.textTransform = 'uppercase';
+      btn.style.whiteSpace    = 'nowrap';
+      btn.style.overflow      = 'hidden';
+      btn.style.textOverflow  = 'ellipsis';
+    }
+  });
+  if (tab === 'servicios')    { if(typeof window.renderizarTablaMaestra==='function') window.renderizarTablaMaestra(); else _llamarFuncion('renderizarTablaMaestra'); }
+  if (tab === 'insumos')      { if(typeof window.renderizarTablaInsumos==='function') window.renderizarTablaInsumos(); else _llamarFuncion('renderizarTablaInsumos'); }
+  if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
+  if (tab === 'compras')      { if(typeof window.cargarRegistroCompras==='function') window.cargarRegistroCompras(); else _llamarFuncion('cargarRegistroCompras'); }
 };
 
 // 
@@ -593,4 +593,4 @@ window._verificarStockServicio = async (nombreServicio) => {
  } catch(e){}
 };
 
-console.log(" inventario.js v10 — cambiarSubTabConfig fix ajustes");
+console.log(" inventario.js v11 — compras en array tabs");
