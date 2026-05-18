@@ -377,7 +377,65 @@ window.agregarInsumoMaestro = async () => {
  await addDoc(collection(db,"insumos_maestro"),{nombre,costoTotal:costoUSD,costoOriginalBS:moneda==='bs'?costoIngresado:null,costo:parseFloat(costoPorUso.toFixed(4)),usosEstimados:usosEfectivos,margenSeguridad:MARGEN,creadoEn:serverTimestamp()});
  const inpN=document.getElementById('nuevoInsumoNombre');const inpC=document.getElementById('nuevoInsumoCosto');if(inpN)inpN.value='';if(inpC)inpC.value='';
  await window.renderizarTablaInsumos();
- await Swal.fire({icon:'success',title:'Insumo agregado',html:'<b>'+nombre+'</b><br>$'+costoPorUso.toFixed(4)+' por servicio, '+usosEfectivos+' usos',timer:2500,showConfirmButton:false});
+ await Swal.fire({icon:'success',title:'Insumo agregado',html:'<b>'+nombre+'</b><br>$'+costoPorUso.toFixed(4)+' por servicio, '+usosEfectivos+' usos',timer:2000,showConfirmButton:false});
+
+ // Preguntar a qué servicios agregar este insumo
+ try {
+   const snapServs = await getDocs(collection(db, "servicios_maestro"));
+   const listaServs = [];
+   snapServs.forEach(sd => listaServs.push({ id: sd.id, insumos: sd.data().insumos || [] }));
+   listaServs.sort((a,b) => a.id.localeCompare(b.id));
+
+   let htmlServs = '<p style="font-size:10px;color:#64748b;margin:0 0 8px 0;">Selecciona los servicios donde quieres agregar <b>'+nombre+'</b>:</p>';
+   htmlServs += '<div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">';
+   listaServs.forEach(s => {
+     const yaEsta = s.insumos.some(i => (i.nombre||'').toUpperCase() === nombre);
+     htmlServs += '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid '+(yaEsta?'#bbf7d0':'#e2e8f0')+';border-radius:8px;cursor:pointer;background:'+(yaEsta?'#f0fdf4':'#f8fafc')+';opacity:'+(yaEsta?'0.6':'1')+'">' +
+       '<input type="checkbox" class="chk-serv-insumo" value="'+s.id+'" '+(yaEsta?'checked disabled':'')+' style="width:15px;height:15px;accent-color:#2563eb;cursor:pointer;">' +
+       '<span style="flex:1;font-size:11px;font-weight:700;color:#1e293b;">'+s.id+'</span>' +
+       (yaEsta ? '<span style="font-size:9px;color:#16a34a;font-weight:900;">Ya tiene este insumo</span>' : '') +
+       '</label>';
+   });
+   htmlServs += '</div>';
+
+   const resServs = await Swal.fire({
+     title: 'Agregar a servicios',
+     html: htmlServs,
+     width: 520,
+     showCancelButton: true,
+     confirmButtonText: 'Agregar a seleccionados',
+     cancelButtonText: 'Omitir',
+     confirmButtonColor: '#2563eb'
+   });
+
+   if (resServs.isConfirmed) {
+     const seleccionados = Array.from(document.querySelectorAll('.chk-serv-insumo:checked:not(:disabled)'))
+       .map(c => c.value);
+
+     if (seleccionados.length > 0) {
+       let agregados = 0;
+       for (const idServ of seleccionados) {
+         const snapServ = await getDoc(doc(db, "servicios_maestro", idServ));
+         if (!snapServ.exists()) continue;
+         const insActuales = snapServ.data().insumos || [];
+         const yaEsta = insActuales.some(i => (i.nombre||'').toUpperCase() === nombre);
+         if (!yaEsta) {
+           insActuales.push({ nombre, costo: parseFloat(costoPorUso.toFixed(4)), bloqueado: false });
+           await setDoc(doc(db, "servicios_maestro", idServ), { insumos: insActuales }, { merge: true });
+           agregados++;
+         }
+       }
+       await Swal.fire({
+         icon: 'success',
+         title: 'Listo',
+         html: '<b>'+nombre+'</b> agregado a <b>'+agregados+'</b> servicio(s)',
+         timer: 2000,
+         showConfirmButton: false
+       });
+     }
+   }
+ } catch(e) { console.warn('Error asociando insumo a servicios:', e); }
+
  } catch(e) { console.error(e); alert('Error: '+e.message); }
 };
 
@@ -593,4 +651,4 @@ window._verificarStockServicio = async (nombreServicio) => {
  } catch(e){}
 };
 
-console.log(" inventario.js v11 — compras en array tabs");
+console.log(" inventario.js v12 — agregar insumo con selector de servicios");
