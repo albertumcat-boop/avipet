@@ -1050,6 +1050,9 @@
  </div>
 
  <div id="panel_subTabInsumos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
+ <div class="flex gap-2 mb-2">
+  <input type="text" id="filtroInsumosMaestro" placeholder="Buscar insumo..." oninput="_llamarFuncion('filtrarTablaInsumos')" class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ </div>
  <div class="flex gap-2 mb-3">
  <input type="text" id="nuevoInsumoNombre" placeholder="Nombre del insumo..." class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
  <input type="number" id="nuevoInsumoCosto" placeholder="Costo $" step="0.0001" min="0" class="w-24 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
@@ -1059,6 +1062,9 @@
  </div>
 
  <div id="panel_subTabMedicamentos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
+ <div class="flex gap-2 mb-2">
+  <input type="text" id="filtroMedicamentosMaestro" placeholder="Buscar medicamento..." oninput="_llamarFuncion('filtrarTablaMedicamentos')" class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+ </div>
  <div class="flex gap-2 mb-2">
  <input type="text" id="nuevoMedNombre" placeholder="Nombre del medicamento..." class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
  <input type="number" id="nuevoMedPrecio" placeholder="Precio $" step="0.50" min="0" class="w-24 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
@@ -1170,7 +1176,7 @@
 
 <script type="module" src="./main.js?v=13"></script>
 <script type="module" src="./seguridad.js?v=9"></script>
-<script type="module" src="./historia.js?v=33"></script>
+<script type="module" src="./historia.js?v=34"></script>
 <script type="module" src="./buscador.js?v=11"></script>
 <script type="module" src="./peluqueria.js?v=8"></script>
 <script type="module" src="./finanzas.js?v=10"></script>
