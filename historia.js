@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v33 -- porcentaje individual por servicio");
+console.log("✅ historia.js v34 -- busqueda servicios/insumos/med, selector sin precio");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -1196,7 +1196,7 @@ window.cargarSelectorServicios = async () => {
           // Crear nuevo option
           const opt = document.createElement('option');
           opt.value       = s.id;
-          opt.textContent = s.id + ' ($' + precioFB + ')';
+          opt.textContent = s.id;
           opt.dataset.firebase = 'true';
           opt.dataset.precioFirebase = precioFB;
           grp.appendChild(opt);
@@ -1529,20 +1529,34 @@ window.cargarSelectorMedicamentos = async () => {
 // --- FILTRAR TABLA DE SERVICIOS ---------------------------
 window.filtrarTablaServicios = () => {
   const filtro = document.getElementById('filtroServiciosMaestro')?.value.toUpperCase().trim() || '';
-  // Buscar en cards (nuevo diseño) y en filas tr (por si acaso)
   document.querySelectorAll('#tablaServiciosMaestro [data-card-id]').forEach(card => {
     const nombre = (card.dataset.nombre || card.dataset.cardId || '').toUpperCase();
     card.style.display = (!filtro || nombre.includes(filtro)) ? '' : 'none';
   });
-  // También ocultar/mostrar los títulos de categoría si todos los cards están ocultos
+  // Ocultar categorías vacías
   document.querySelectorAll('#tablaServiciosMaestro > div').forEach(grpDiv => {
     const cards = grpDiv.querySelectorAll('[data-card-id]');
+    if (cards.length === 0) return;
     const alguno = Array.from(cards).some(c => c.style.display !== 'none');
     grpDiv.style.display = alguno ? '' : 'none';
   });
-  // Compatibilidad con tabla antigua si existe
-  document.querySelectorAll('#tablaServiciosMaestro tr[data-nombre]').forEach(tr => {
-    tr.style.display = (!filtro || tr.dataset.nombre.toUpperCase().includes(filtro)) ? '' : 'none';
+};
+
+// Búsqueda de insumos
+window.filtrarTablaInsumos = () => {
+  const filtro = document.getElementById('filtroInsumosMaestro')?.value.toUpperCase().trim() || '';
+  document.querySelectorAll('#tablaInsumosMaestro [data-card-insumo]').forEach(card => {
+    const nombre = (card.dataset.cardInsumo || '').toUpperCase();
+    card.style.display = (!filtro || nombre.includes(filtro)) ? '' : 'none';
+  });
+};
+
+// Búsqueda de medicamentos
+window.filtrarTablaMedicamentos = () => {
+  const filtro = document.getElementById('filtroMedicamentosMaestro')?.value.toUpperCase().trim() || '';
+  document.querySelectorAll('#tablaMedicamentosMaestro [data-card-med]').forEach(card => {
+    const nombre = (card.dataset.cardMed || '').toUpperCase();
+    card.style.display = (!filtro || nombre.includes(filtro)) ? '' : 'none';
   });
 };
 
@@ -1710,6 +1724,7 @@ window.renderizarTablaInsumos = async () => {
       const bloqueado = r.bloqueado === true;
       const card = document.createElement('div');
       card.style.cssText = 'background:'+(bloqueado?'#fffbeb':'#f8fafc')+';border:2px solid '+(bloqueado?'#fde68a':'#e2e8f0')+';border-radius:10px;padding:8px 10px;margin-bottom:6px;';
+      card.dataset.cardInsumo = nombreMostrar.toUpperCase();
       // Fila 1: nombre + icono candado
       const f1 = document.createElement('div');
       f1.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
