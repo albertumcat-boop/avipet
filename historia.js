@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v35 -- selector sin duplicados ni precio");
+console.log("✅ historia.js v36 -- carga insumos completa en compras");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -1369,7 +1369,8 @@ window.editarInsumosServicio = async (nombreServicio) => {
     const insumosMaestro = [];
     snapIns.forEach(d => {
       const r = d.data();
-      insumosMaestro.push({ nombre: r.nombre || d.id, costo: parseFloat(r.costo||0) });
+      const nombre = (r.nombre || d.id || '').trim();
+      if (nombre) insumosMaestro.push({ nombre, costo: parseFloat(r.costo||0) });
     });
     insumosMaestro.sort((a,b) => a.nombre.localeCompare(b.nombre));
     let optsInsumos = '<option value="">-- Seleccionar del catálogo --</option>';
@@ -2388,13 +2389,18 @@ window.abrirModalNuevaCompra = async () => {
   }
   const registradoPor = clave.trim() === '2222' ? 'Aiby' : 'Administrador';
 
-  // Cargar insumos del catálogo
+  // Cargar insumos del catálogo — incluye todos los documentos con y sin campo nombre
   const insumosCatalogo = [];
   try {
     const snapIns = await getDocs(collection(db, "insumos_maestro"));
-    snapIns.forEach(d => insumosCatalogo.push(d.data().nombre || d.id));
+    snapIns.forEach(d => {
+      const r = d.data();
+      // Usar campo nombre si existe, si no usar el ID del documento
+      const nombreInsumo = (r.nombre || d.id || '').trim();
+      if (nombreInsumo) insumosCatalogo.push(nombreInsumo);
+    });
     insumosCatalogo.sort();
-  } catch(e) {}
+  } catch(e) { console.warn('Error cargando insumos para compras:', e); }
 
   let optsInsumos = '<option value="">-- Seleccionar insumo --</option><option value="__otro__">Otro (escribir)</option>';
   insumosCatalogo.forEach(n => { optsInsumos += '<option value="'+n+'">'+n+'</option>'; });
