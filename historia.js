@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v32 -- compras QR movil");
+console.log("✅ historia.js v33 -- porcentaje individual por servicio");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -529,8 +529,9 @@ window.intentarEliminarInsumoFila = async (btnEl) => {
 
 window.calcularTodo = async () => {
   let totalComision=0,totalGastos=0,totalVenta=0;
-  if(window.porcGlobalCache===undefined){try{const snap=await getDoc(doc(db,"configuracion","tarifas"));window.porcGlobalCache=snap.exists()?(snap.data().porcDoc??snap.data().porcentajeDoc??null):null;}catch{window.porcGlobalCache=null;}}
-  document.querySelectorAll('.servicio-principal').forEach(fila=>{const precio=parseFloat(fila.getAttribute('data-precio'))||0;const porcDef=parseFloat(fila.getAttribute('data-porc'))||0;const porc=(window.porcGlobalCache!==null&&window.porcGlobalCache!==undefined)?window.porcGlobalCache:porcDef;const grupoID=fila.getAttribute('data-grupo');let gastos=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{gastos+=(parseFloat(ins.querySelector('.i-cant')?.value)||0)*(parseFloat(ins.querySelector('.i-cost')?.value)||0);});totalVenta+=precio;totalGastos+=gastos;const util=precio-gastos;if(util>0)totalComision+=util*(porc/100);});
+  // Usa SIEMPRE el % individual del servicio (porcDoc en data-porc)
+  // El porcentaje global fue eliminado — cada servicio tiene su propio %
+  document.querySelectorAll('.servicio-principal').forEach(fila=>{const precio=parseFloat(fila.getAttribute('data-precio'))||0;const porc=parseFloat(fila.getAttribute('data-porc'))||0;const grupoID=fila.getAttribute('data-grupo');let gastos=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{gastos+=(parseFloat(ins.querySelector('.i-cant')?.value)||0)*(parseFloat(ins.querySelector('.i-cost')?.value)||0);});totalVenta+=precio;totalGastos+=gastos;const util=precio-gastos;if(util>0)totalComision+=util*(porc/100);});
   const iv=document.getElementById('precioVenta');if(iv)iv.value=totalVenta.toFixed(2);
   const ig=document.getElementById('gastoInsumos');if(ig)ig.value=totalGastos.toFixed(2);
   const id=document.getElementById('montoDoctor');if(id)id.innerText=`$ ${totalComision.toFixed(2)}`;
@@ -591,8 +592,9 @@ window.guardarFirebase = async (imp) => {
     const fileH=document.getElementById('inputFotoHistoria')?.files[0];const fileT=document.getElementById('inputFotoTest')?.files[0];
     let urlFoto=fileH?await comprimirImagen(await leerImg(fileH)):(document.getElementById('pUrlExamen')?.value||"");let urlTest=fileT?await comprimirImagen(await leerImg(fileT)):(document.getElementById('pUrlTest')?.value||"");
     const listaTests=[];document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila=>{const nombre=fila.cells[0]?.querySelector('input')?.value.trim()||fila.cells[0]?.querySelector('span')?.innerText?.trim()||"";const span=fila.cells[1]?.querySelector('.resultado-print');const sel=fila.cells[1]?.querySelector('select');const resultado=(span?.innerText?.trim()&&span.innerText.trim()!=="---")?span.innerText.trim():(sel?.value||"---");const nota=fila.cells[2]?.querySelector('input')?.value?.trim()||"";if(nombre)listaTests.push({nombre,resultado,nota});});
-    const cfgSnap=await getDoc(doc(db,"configuracion","tarifas"));let porcGlobal=cfgSnap.exists()?(cfgSnap.data().porcentajeDoc||null):null;const montoVentaTotal=parseFloat(document.getElementById('precioVenta')?.value)||0;let totalGastos=0,pagoDoctorTotal=0;const detalleInsumos=[];const serviciosRealizados=[];
-    document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=porcGlobal||parseFloat(fila.getAttribute('data-porc'))||0;const nomServ=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();serviciosRealizados.push({nombre:nomServ,precio:precioServ});let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[??]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
+    // Usa % individual de cada servicio (porcGlobal eliminado)
+    const montoVentaTotal=parseFloat(document.getElementById('precioVenta')?.value)||0;let totalGastos=0,pagoDoctorTotal=0;const detalleInsumos=[];const serviciosRealizados=[];
+    document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=parseFloat(fila.getAttribute('data-porc'))||0;const nomServ=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();serviciosRealizados.push({nombre:nomServ,precio:precioServ});let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[??]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
     let montoVacunaPendiente=0;if(window.vacunaPagadaAnteriormente){document.querySelectorAll('.servicio-principal').forEach(fila=>{if(normalizarNombre(fila.innerText).includes("vacuna"))montoVacunaPendiente+=parseFloat(fila.getAttribute('data-precio'))||0;});}
     const montoVentaFinal=window.vacunaPagadaAnteriormente?Math.max(0,montoVentaTotal-montoVacunaPendiente):montoVentaTotal;const gastosFinal=window.vacunaPagadaAnteriormente?Math.max(0,totalGastos-montoVacunaPendiente*0.3):totalGastos;const pagoDoctorFinal=window.vacunaPagadaAnteriormente?Math.max(0,pagoDoctorTotal-montoVacunaPendiente*0.5):pagoDoctorTotal;
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
@@ -1602,8 +1604,7 @@ window.renderizarTablaMaestra = async () => {
             await setDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:nuevoP, porcDoc:nuevoPc, actualizadoEn:serverTimestamp() },{merge:true});
             // Actualizar el selector de historia clinica inmediatamente
             if (typeof window.cargarSelectorServicios === 'function') await window.cargarSelectorServicios();
-            // Limpiar cache de porcGlobal para que recargue
-            window.porcGlobalCache = undefined;
+            // porcGlobal eliminado — cada servicio usa su porcDoc individual
             btn.textContent = 'OK'; btn.style.background = '#16a34a';
             inpP.style.borderColor = '#16a34a'; inpPc.style.borderColor = '#16a34a';
             setTimeout(()=>{ btn.textContent='Guardar'; btn.disabled=false; btn.style.background='#2563eb'; inpP.style.borderColor=''; inpPc.style.borderColor=''; }, 2000);
@@ -2228,22 +2229,17 @@ window.registrarServicioSinMascota = async () => {
     const detalleInsumos = [];
 
     // Porccentaje global de configuracion
-    let porcGlobal = null;
-    try {
-      const cfgSnap = await getDoc(doc(db, "configuracion", "tarifas"));
-      if (cfgSnap.exists()) porcGlobal = cfgSnap.data().porcentajeDoc || null;
-    } catch(e) {}
-
+    // Usa % individual de cada servicio (porcGlobal eliminado)
     for (let i = 0; i < serviciosSeleccionados.length; i++) {
       const s = serviciosSeleccionados[i];
       const snapS = await getDoc(doc(db, "servicios_maestro", s.id));
       let insumosServicio = [];
-      let porcFinal = porcGlobal || s.porc || 30;
+      let porcFinal = s.porc || 30;
 
       if (snapS.exists()) {
         const sd = snapS.data();
         insumosServicio = sd.insumos || [];
-        if (!porcGlobal) porcFinal = parseFloat(sd.porcDoc || sd.porcentajeDoc || s.porc || 30);
+        porcFinal = parseFloat(sd.porcDoc || sd.porcentajeDoc || s.porc || 30);
       }
 
       // Calcular costo insumos de este servicio
