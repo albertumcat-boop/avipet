@@ -193,7 +193,7 @@ window.filtrarTablaServicios = () => {
 };
 
 
-window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});if(typeof window.porcGlobalCache!=='undefined')window.porcGlobalCache=undefined;}catch(e){console.error("Error actualizando precio:",e);}};
+window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});// porcGlobal eliminado}catch(e){console.error("Error actualizando precio:",e);}};
 
 
 // DETECCION TIPO INSUMO 
