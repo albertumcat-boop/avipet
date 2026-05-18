@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v34 -- busqueda servicios/insumos/med, selector sin precio");
+console.log("✅ historia.js v35 -- selector sin duplicados ni precio");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -1152,55 +1152,62 @@ window.cargarSelectorServicios = async () => {
     const snap = await getDocs(collection(db, "servicios_maestro"));
     if (snap.empty) return;
 
-    // Recoger servicios de Firebase agrupados por categoria
-    const porCategoria = {};
+    // Construir mapa de todos los servicios de Firebase: id → data
+    const serviciosFirebase = {};
     snap.forEach(d => {
       const data = d.data();
-      if (data.activo === false) return; // skip inactivos
-      const cat = (data.categoria || 'OTROS').toUpperCase();
-      if (!porCategoria[cat]) porCategoria[cat] = [];
-      porCategoria[cat].push({ id: d.id, ...data });
+      if (data.activo === false) return;
+      serviciosFirebase[d.id.toUpperCase()] = { id: d.id, ...data };
     });
 
-    // Para cada categoria en Firebase, verificar si ya existe optgroup en el selector
-    // Si existe, agregar solo los servicios nuevos que no esten ya como option
-    // Si no existe (categoria nueva), crear el optgroup y agregar todos
-    Object.entries(porCategoria).sort().forEach(([cat, servicios]) => {
-      // Buscar optgroup existente (buscar por label que contenga el nombre de la cat)
-      // Limpiar label del optgroup (quitar emojis, espacios, chars especiales) para comparar exacto
-      function _limpiarLabel(s) {
-        return s.replace(/[^\x00-\x7F]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+    // 1. Actualizar options que ya existen en el selector HTML (sin moverlos ni duplicarlos)
+    Array.from(sel.querySelectorAll('option')).forEach(opt => {
+      const key = opt.value.toUpperCase();
+      if (serviciosFirebase[key]) {
+        // Solo actualizar el textContent sin precio y guardar precio en dataset
+        opt.textContent = serviciosFirebase[key].id;
+        opt.dataset.precioFirebase = parseFloat(serviciosFirebase[key].precioVenta||0).toFixed(2);
+        opt.dataset.porcFirebase   = parseFloat(serviciosFirebase[key].porcDoc||30);
+        delete serviciosFirebase[key]; // marcar como ya procesado
       }
+    });
 
+    // 2. Los servicios que quedaron (nuevos, no estaban en el HTML) → agregar en su categoría
+    const nuevos = Object.values(serviciosFirebase);
+    if (nuevos.length === 0) return;
+
+    // Agrupar por categoría
+    const porCat = {};
+    nuevos.forEach(s => {
+      const cat = (s.categoria || 'OTROS').toUpperCase();
+      if (!porCat[cat]) porCat[cat] = [];
+      porCat[cat].push(s);
+    });
+
+    Object.entries(porCat).sort().forEach(([cat, servicios]) => {
+      // Buscar optgroup existente limpiando emojis del label
+      const _limpiar = s => s.replace(/[^\x00-\x7F]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
       let grp = Array.from(sel.querySelectorAll('optgroup'))
-        .find(g => _limpiarLabel(g.label) === cat || _limpiarLabel(g.label) === _limpiarLabel(cat));
+        .find(g => _limpiar(g.label) === cat || _limpiar(g.label).includes(cat) || cat.includes(_limpiar(g.label)));
 
       if (!grp) {
-        // Categoria nueva — crear optgroup
         grp = document.createElement('optgroup');
         grp.label = cat;
         sel.appendChild(grp);
       }
 
-      // Agregar o ACTUALIZAR servicios en el optgroup con precio de Firebase
       servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
-        const precioFB = parseFloat(s.precioVenta||0).toFixed(2);
-        // Buscar si el option ya existe (por value exacto o en mayusculas)
-        let optExist = Array.from(grp.querySelectorAll('option'))
-          .find(o => o.value.toUpperCase() === s.id.toUpperCase());
-        if (optExist) {
-          // ACTUALIZAR precio en el texto del option existente
-          optExist.textContent = s.id + ' ($' + precioFB + ')';
-          optExist.dataset.precioFirebase = precioFB;
-        } else {
-          // Crear nuevo option
-          const opt = document.createElement('option');
-          opt.value       = s.id;
-          opt.textContent = s.id;
-          opt.dataset.firebase = 'true';
-          opt.dataset.precioFirebase = precioFB;
-          grp.appendChild(opt);
-        }
+        // Verificar que no exista ya con value exacto
+        const yaExiste = Array.from(sel.querySelectorAll('option'))
+          .some(o => o.value.toUpperCase() === s.id.toUpperCase());
+        if (yaExiste) return;
+        const opt = document.createElement('option');
+        opt.value                  = s.id;
+        opt.textContent            = s.id;
+        opt.dataset.firebase       = 'true';
+        opt.dataset.precioFirebase = parseFloat(s.precioVenta||0).toFixed(2);
+        opt.dataset.porcFirebase   = parseFloat(s.porcDoc||30);
+        grp.appendChild(opt);
       });
     });
 
