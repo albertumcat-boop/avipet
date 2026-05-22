@@ -1160,4 +1160,4 @@ window.registrarNuevaDeuda = async () => {
   } catch(e) { alert('Error guardando: ' + e.message); }
 };
 
-console.log("finanzas.js v4 — modulo deudas incluido");
+// modulo deudas incluido en finanzas.js
