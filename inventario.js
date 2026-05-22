@@ -404,7 +404,7 @@ window.calcInvAplicar = () => {
  _calcInvAbierto=false;
  document.getElementById('calcInvCuerpo')?.classList.add('hidden');
  const ch=document.getElementById('calcInvChevron');if(ch)ch.innerText=' Abrir';
- Swal.fire({icon:'success',title:'Valores aplicados',text:`Costo: $${costoUSD.toFixed(2)} · Venta: $${precioVenta.toFixed(2)}`,timer:2000,showConfirmButton:false});
+ Swal.fire({icon:'success',title:'Valores aplicados',text:`Costo: $${costoUSD.toFixed(2)}  x  Venta: $${precioVenta.toFixed(2)}`,timer:2000,showConfirmButton:false});
 };
 
 window.inicializarCalculadoraInventario = () => {
@@ -418,7 +418,7 @@ window.inicializarCalculadoraInventario = () => {
 window.verAuditoriaInventario = async () => {
  try {
  const snap=await getDocs(query(collection(db,"auditoria_inventario"),orderBy("fecha","desc")));
- if(snap.empty){alert("Sin registros de auditoría.");return;}
+ if(snap.empty){alert("Sin registros de auditoria.");return;}
  let html=`<div style="max-height:380px;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#1e293b;color:#fff;"><th style="padding:6px 8px;text-align:left;">Fecha</th><th style="padding:6px 8px;">Usuario</th><th style="padding:6px 8px;">Accion</th><th style="padding:6px 8px;">Detalle</th></tr></thead><tbody>`;
  snap.forEach(d=>{const r=d.data();const fecha=r.fecha?.toDate?r.fecha.toDate().toLocaleString():"---";html+=`<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:5px 8px;font-size:9px;">${fecha}</td><td style="padding:5px 8px;font-weight:700;">${r.usuario||'---'}</td><td style="padding:5px 8px;color:#2563eb;font-weight:700;">${r.accion||'---'}</td><td style="padding:5px 8px;color:#64748b;">${r.detalle||''}</td></tr>`;});
  html+=`</tbody></table></div>`;
@@ -440,7 +440,7 @@ window.verificarStockProducto = async (nombreProducto) => {
  if(snap.empty)return;
  const p=snap.docs[0].data();
  if((p.cantidadStock||0)<=(p.stockMinimo||3)){
- Swal.fire({icon:'warning',title:'Stock Bajo',html:`<b>${p.nombre}</b><br>Stock actual: <b>${p.cantidadStock}</b> · Minimo: ${p.stockMinimo||3}`,timer:4000,timerProgressBar:true,showConfirmButton:false});
+ Swal.fire({icon:'warning',title:'Stock Bajo',html:`<b>${p.nombre}</b><br>Stock actual: <b>${p.cantidadStock}</b>  x  Minimo: ${p.stockMinimo||3}`,timer:4000,timerProgressBar:true,showConfirmButton:false});
  }
  } catch(e){console.warn("Error verificando stock:",e);}
 };
@@ -487,4 +487,4 @@ window._asociarInsumoAServicios = async (nombre, costo) => {
   if (cnt>0) await Swal.fire({icon:'success',title:'Listo',html:'<b>'+nombre+'</b> agregado a <b>'+cnt+'</b> servicio(s)',timer:2000,showConfirmButton:false});
  } catch(e){console.warn('Error asociando insumo:',e);}
 };
-console.log(" inventario.js v12 — agregar insumo con selector de servicios");
+console.log(" inventario.js v12 -- agregar insumo con selector de servicios");
