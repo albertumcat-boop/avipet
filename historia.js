@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v36 -- carga insumos completa en compras");
+console.log("✅ historia.js v37 -- fix limpiarNotasInternas window");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -938,6 +938,7 @@ function _limpiarFormularioHistoria() {
   if (hTratPrint) hTratPrint.innerText = "";
 }
 window._limpiarFormularioHistoria = _limpiarFormularioHistoria;
+window._limpiarNotasInternas = _limpiarNotasInternas;
 
 // --- EDITAR CONSULTA DESDE BUSCADOR ----------------------------------------
 window.abrirConsultaParaEditar = async (idConsulta) => {
