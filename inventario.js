@@ -8,6 +8,11 @@ import {
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
 
+// Variables de estado de la calculadora de inventario
+let _calcInvAbierto = false;
+let _calcInvModo    = 'bcv';
+let _calcInvMoneda  = 'bs';
+
 window.cargarInventario = async () => {
  const lista=document.getElementById('listaInventario');if(!lista)return;
  lista.innerHTML=`<p class="text-center text-blue-500 text-[9px] font-black uppercase italic animate-pulse py-8">Cargando inventario...</p>`;
