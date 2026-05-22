@@ -140,7 +140,7 @@ const libro=XLSX.utils.book_new();XLSX.utils.book_append_sheet(libro,hoja,filtro
 
 // window.filtrarTablaServicios definida en historia.js
 
-window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});// porcGlobal eliminado}catch(e){console.error("Error actualizando precio:",e);}};
+window.actualizarPrecioIndividual=async(nombreServicio,campo,valor,soloGuardar)=>{try{const snap=await getDoc(doc(db,"servicios_maestro",nombreServicio));const data=snap.exists()?snap.data():{};if(!soloGuardar)data[campo]=parseFloat(valor)||0;await setDoc(doc(db,"servicios_maestro",nombreServicio),data,{merge:true});}catch(e){console.error("Error actualizando precio:",e);}};
 
 function _detectarTipoInsumo(nombre) {
  const n = nombre.toLowerCase();
