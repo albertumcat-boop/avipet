@@ -1,4 +1,4 @@
-// AVIPET -- inventario.js v10 -- fix ajustes, cambiarSubTabConfig
+// AVIPET -- inventario.js v12 -- fix ajustes, cambiarSubTabConfig
 
 import { db } from './firebase-config.js';
 import {
@@ -388,25 +388,10 @@ window.cambiarSubTabConfig = (tab) => {
       btn.style.textOverflow  = 'ellipsis';
     }
   });
-  if (tab === 'servicios')    { if(typeof // window.renderizarTablaMaestra definida en historia.js
- } else {
- const precioUSD=parseFloat(document.getElementById('calcInvPrecioUSD')?.value)||0;
- const tasaProv=parseFloat(document.getElementById('calcInvTasaProv')?.value)||0;
- if (precioUSD>0&&tasaProv>0&&tasaBCV>0) { const bsPagados=precioUSD*tasaProv; costoUSD=bsPagados/tasaBCV; detalle=`$${precioUSD}×${tasaProv}=Bs${bsPagados.toLocaleString('es-VE',{minimumFractionDigits:2})}÷${tasaBCV.toFixed(2)}=$${costoUSD.toFixed(4)}`; valido=true; }
- }
- if (!valido) { if(resultDiv)resultDiv.classList.add('hidden'); return; }
- const aplicaIVA=document.getElementById('calcInvIVA')?.checked||false;
- const costoConIVA=aplicaIVA?costoUSD*1.16:costoUSD;
- if(aplicaIVA)detalle+=` + IVA 16% = $${costoConIVA.toFixed(4)}`;
- const precioVenta=divisor>0?costoConIVA/divisor:0;
- if(resultDiv)resultDiv.classList.remove('hidden');
- const elC=document.getElementById('calcInvCostoUSD');
- const elV=document.getElementById('calcInvPrecioVentaCalc');
- const elD=document.getElementById('calcInvDetalle');
- if(elC)elC.innerText=`$${costoConIVA.toFixed(2)}${aplicaIVA?' (c/IVA)':''}`;
- if(elV)elV.innerText=`$${precioVenta.toFixed(2)}`;
- if(elD)elD.innerText=`${detalle} ÷ ${divisor.toFixed(2)} = $${precioVenta.toFixed(2)}`;
- window._calcInvResultado={costoUSD:costoConIVA,precioVenta};
+  if (tab === 'servicios')    { if(typeof window.renderizarTablaMaestra==='function') window.renderizarTablaMaestra(); else _llamarFuncion('renderizarTablaMaestra'); }
+  if (tab === 'insumos')      { if(typeof window.renderizarTablaInsumos==='function') window.renderizarTablaInsumos(); else _llamarFuncion('renderizarTablaInsumos'); }
+  if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
+  if (tab === 'compras')      { if(typeof window.cargarRegistroCompras==='function') window.cargarRegistroCompras(); else _llamarFuncion('cargarRegistroCompras'); }
 };
 
 window.calcInvAplicar = () => {
