@@ -219,6 +219,10 @@ function _limpiarPelu(){
           <input type="text" placeholder="Raza"
                  class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
         </div>
+        <div class="w-20">
+          <input type="text" placeholder="Especie"
+                 class="pelu-especie w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+        </div>
         <div class="w-16">
           <input type="number" placeholder="$0" step="0.50" min="0"
                  class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
