@@ -34,6 +34,10 @@ window.agregarMascotaPelu = () => {
       <input type="text" placeholder="Raza"
              class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
     </div>
+    <div class="w-20">
+      <input type="text" placeholder="Especie"
+             class="pelu-especie w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
+    </div>
     <div class="w-16">
       <input type="number" placeholder="$0" step="0.50" min="0"
              class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
@@ -51,9 +55,10 @@ function _leerMascotasPelu() {
   const mascotas = [];
   filas.forEach(row => {
     const nombre  = row.querySelector('.pelu-nombre')?.value.trim().toUpperCase();
-    const raza    = row.querySelector('.pelu-raza')?.value.trim()   || '';
-    const precioI = parseFloat(row.querySelector('.pelu-precio')?.value) || null;
-    if (nombre) mascotas.push({ nombre, raza, precioIndividual: precioI });
+    const raza     = row.querySelector('.pelu-raza')?.value.trim()    || '';
+    const especie  = row.querySelector('.pelu-especie')?.value.trim() || '';
+    const precioI  = parseFloat(row.querySelector('.pelu-precio')?.value) || null;
+    if (nombre) mascotas.push({ nombre, raza, especie, precioIndividual: precioI });
   });
   return mascotas;
 }
@@ -140,7 +145,7 @@ window.guardarPeluqueriaPro = async () => {
       if(esPremio) premios.push(mascota);
 
       await addDoc(collection(db,"servicios_estetica"),{
-        cedulaCliente:cedula,duenio,paciente:mascota,raza,telefono,telefono2,direccion,condicion,
+        cedulaCliente:cedula,duenio,paciente:mascota,raza,especie:pet.especie||'',telefono,telefono2,direccion,condicion,
         precioTotal:precioEsta,visitaNumero:nuevaVis,
         fecha:serverTimestamp(),fechaSimple,hora,tipo:"PELUQUERIA",servicio:tipoServ,
         pagoPeluquera:pagoPeluEsta,pagoAyudante1:pagoAyu1Esta,pagoAyudanteExtra:pagoAyuExtEsta,
@@ -268,7 +273,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
       const card=document.createElement('div');card.className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm hover:border-blue-400 transition-all";
       card.innerHTML=`
         <div class="flex justify-between items-start mb-2"><span class="text-blue-600 font-black text-xs italic">#${i+1}</span><span class="text-[9px] font-bold text-slate-400 font-mono uppercase italic">${d.hora||'--:--'}</span></div>
-        <div class="mb-2"><p class="font-black text-slate-800 uppercase text-xs leading-none tracking-tighter">${d.paciente||'---'}</p>${d.raza?`<p class="text-[9px] text-slate-400 italic">${d.raza}</p>`:''}<p class="text-[9px] text-blue-600 font-bold uppercase mt-0.5 italic">${d.servicio==='solo_unas'?'✂️ Uñas':'🛁 Baño y Corte'}</p></div>
+        <div class="mb-2"><p class="font-black text-slate-800 uppercase text-xs leading-none tracking-tighter">${d.paciente||'---'}</p>${d.especie?`<p class="text-[9px] font-black text-purple-600 uppercase">${d.especie}</p>`:''} ${d.raza?`<p class="text-[9px] text-slate-400 italic">${d.raza}</p>`:''}<p class="text-[9px] text-blue-600 font-bold uppercase mt-0.5 italic">${d.servicio==='solo_unas'?'✂️ Uñas':'🛁 Baño y Corte'}</p></div>
         <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 mb-2 space-y-0.5">
           <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">👤 Propietario</p>
           <p class="text-[10px] font-bold text-slate-700">${d.duenio||'Cliente'}</p>
@@ -1036,4 +1041,4 @@ window.exportarExcelPeluqueria=async()=>{try{const snap=await getDocs(collection
 // ─── 12. VALIDAR EMPLEADO ───
 window.validarEmpleadoConPin=async(pin)=>{if(!pin)return null;try{const snap=await getDocs(query(collection(db,"empleados"),where("PIN","==",String(pin).trim())));if(snap.empty)return null;const d=snap.docs[0];return{id:d.id,nombre:d.data().nombreEmpleado||d.id};}catch(e){console.error("Error validando empleado:",e);return null;}};
 
-console.log("✅ peluqueria.js v3 — tarjeta VIP premium, recibo impresión, pago mixto");
+console.log("✅ peluqueria.js v4 — especie en bitacora");
