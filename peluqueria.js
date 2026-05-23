@@ -30,11 +30,11 @@ window.agregarMascotaPelu = () => {
              oninput="window.recalcularTotalPelu()"
              class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
     </div>
-    <div class="w-20">
+    <div style="width:58px;flex-shrink:0">
       <input type="text" placeholder="Raza"
              class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
     </div>
-    <div class="w-20">
+    <div style="width:58px;flex-shrink:0">
       <input type="text" placeholder="Especie"
              class="pelu-especie w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
     </div>
@@ -215,11 +215,11 @@ function _limpiarPelu(){
           <input type="text" placeholder="Nombre mascota"
                  class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
         </div>
-        <div class="w-20">
+        <div style="width:58px;flex-shrink:0">
           <input type="text" placeholder="Raza"
                  class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
         </div>
-        <div class="w-20">
+        <div style="width:58px;flex-shrink:0">
           <input type="text" placeholder="Especie"
                  class="pelu-especie w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
         </div>
