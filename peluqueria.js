@@ -23,29 +23,26 @@ window.agregarMascotaPelu = () => {
   if (filas.length >= 10) { alert('Máximo 10 mascotas por registro.'); return; }
 
   const row = document.createElement('div');
-  row.className = "mascota-pelu-row flex gap-1 items-center flex-wrap";
+  row.className = "mascota-pelu-row flex flex-col gap-1 mb-2 pb-2 border-b border-slate-100";
   row.innerHTML = `
-    <div style="flex:2;min-width:70px">
+    <div style="display:flex;gap:4px;align-items:center;width:100%;">
       <input type="text" placeholder="Nombre mascota"
              oninput="window.recalcularTotalPelu()"
-             class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
+             class="pelu-nombre flex-1 border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
+      <button type="button" onclick="this.closest('.mascota-pelu-row').remove();window.recalcularTotalPelu()"
+              class="text-red-400 font-black text-lg hover:text-red-600 flex-shrink-0 leading-none">×</button>
     </div>
-    <div style="flex:1;min-width:50px">
+    <div style="display:flex;gap:4px;align-items:center;width:100%;">
       <input type="text" placeholder="Raza"
-             class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
-    </div>
-    <div style="flex:1;min-width:50px">
+             class="pelu-raza flex-1 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
       <input type="text" placeholder="Especie"
-             class="pelu-especie w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
-    </div>
-    <div style="flex:0 0 52px">
+             class="pelu-especie flex-1 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
       <input type="number" placeholder="$0" step="0.50" min="0"
-             class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+             class="pelu-precio border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+             style="width:52px;flex-shrink:0"
              oninput="window.recalcularTotalPelu()"
              title="Precio individual">
-    </div>
-    <button type="button" onclick="this.parentElement.remove();window.recalcularTotalPelu()"
-            class="text-red-400 font-black text-lg hover:text-red-600 flex-shrink-0">×</button>`;
+    </div>`;
   lista.appendChild(row);
 };
 
@@ -210,22 +207,19 @@ function _limpiarPelu(){
   const lista=document.getElementById('listaMascotasPelu');
   if(lista){
     lista.innerHTML=`
-      <div class="mascota-pelu-row flex gap-2 items-center">
-        <div style="flex:2;min-width:70px">
+      <div class="mascota-pelu-row flex flex-col gap-1 mb-1">
+        <div style="display:flex;gap:4px;align-items:center;width:100%">
           <input type="text" placeholder="Nombre mascota"
-                 class="pelu-nombre w-full border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
+                 class="pelu-nombre flex-1 border-b border-slate-300 p-1 text-xs font-black text-blue-600 uppercase outline-none focus:border-blue-500 bg-transparent">
         </div>
-        <div style="flex:1;min-width:50px">
+        <div style="display:flex;gap:4px;align-items:center;width:100%">
           <input type="text" placeholder="Raza"
-                 class="pelu-raza w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
-        </div>
-        <div style="flex:1;min-width:50px">
+                 class="pelu-raza flex-1 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
           <input type="text" placeholder="Especie"
-                 class="pelu-especie w-full border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
-        </div>
-        <div style="flex:0 0 52px">
+                 class="pelu-especie flex-1 border-b border-slate-300 p-1 text-[10px] font-bold uppercase outline-none bg-transparent">
           <input type="number" placeholder="$0" step="0.50" min="0"
-                 class="pelu-precio w-full border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+                 class="pelu-precio border-b border-slate-300 p-1 text-[10px] font-black text-emerald-700 outline-none bg-transparent text-right"
+                 style="width:52px;flex-shrink:0"
                  oninput="window.recalcularTotalPelu()"
                  title="Precio individual">
         </div>
