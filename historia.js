@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v37 -- fix limpiarNotasInternas window");
+console.log("✅ historia.js v38 -- diagnostico guardar doctor");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -576,11 +576,19 @@ window.guardarFirebase = async (imp) => {
     document.getElementById('hNombre')?.focus();
     return;
   }
-  const selectorDoc=document.getElementById('selectDoctor');const nombreDoctor=selectorDoc?selectorDoc.value:"";if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
+  const selectorDoc=document.getElementById('selectDoctor');
+  let nombreDoctor=selectorDoc?selectorDoc.value:"";
+  console.log('[AVIPET] guardarFirebase — selectDoctor.value:', JSON.stringify(nombreDoctor), '| doctorVerificado:', window.doctorVerificado, '| sesionAdmin:', window.sesionAdminActiva);
+  // Si no hay doctor seleccionado pero hay sesión admin activa, usar usuario activo
+  if (!nombreDoctor && window.sesionAdminActiva) {
+    nombreDoctor = window.usuarioActivoSistema || 'Administrador';
+  }
+  if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
   // Si el doctor ya se autenticó con su PIN al seleccionarlo, no pedir PIN de nuevo
   const _docVerif = (window.doctorVerificado||'').trim().toLowerCase();
   const _docSel   = (nombreDoctor||'').trim().toLowerCase();
-  if (!_docVerif || _docVerif !== _docSel) {
+  // Si hay sesión admin activa tampoco pedir PIN
+  if (!window.sesionAdminActiva && (!_docVerif || _docVerif !== _docSel)) {
     const pinIngresado=prompt(`Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);
     if(!pinIngresado)return;
     const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);
@@ -1080,13 +1088,16 @@ window.guardarFirebase = async (imp) => {
   // -- MODO EDICION -- actualizar consulta existente --
   const idEditar = window._editandoConsultaId;
   const selectorDoc  = document.getElementById('selectDoctor');
-  const nombreDoctor = selectorDoc?.value || "";
+  let nombreDoctor = selectorDoc?.value || "";
+  if (!nombreDoctor && window.sesionAdminActiva) nombreDoctor = window.usuarioActivoSistema || 'Administrador';
   if (!nombreDoctor) return alert("(!) Seleccione un doctor.");
 
-  const pinIngresado = prompt(`? Firma para actualizar. PIN de ${nombreDoctor}:`);
-  if (!pinIngresado) return;
-  const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
-  if (!esValido) return alert("? PIN incorrecto.");
+  if (!window.sesionAdminActiva) {
+    const pinIngresado = prompt(`Firma para actualizar. PIN de ${nombreDoctor}:`);
+    if (!pinIngresado) return;
+    const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
+    if (!esValido) return alert("PIN incorrecto.");
+  }
 
   const btn = document.activeElement;
   const textoOrig = btn?.innerText || "Guardar";
