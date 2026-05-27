@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v38 -- diagnostico guardar doctor");
+console.log("✅ historia.js v39 -- doctorVerificado como fallback");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -578,13 +578,18 @@ window.guardarFirebase = async (imp) => {
   }
   const selectorDoc=document.getElementById('selectDoctor');
   let nombreDoctor=selectorDoc?selectorDoc.value:"";
-  console.log('[AVIPET] guardarFirebase — selectDoctor.value:', JSON.stringify(nombreDoctor), '| doctorVerificado:', window.doctorVerificado, '| sesionAdmin:', window.sesionAdminActiva);
-  // Si no hay doctor seleccionado pero hay sesión admin activa, usar usuario activo
+  // Fallback: usar doctorVerificado si el select está vacío pero el doctor ya se autenticó
+  if (!nombreDoctor && window.doctorVerificado) {
+    nombreDoctor = window.doctorVerificado;
+    // Restaurar el valor del select también
+    if (selectorDoc) selectorDoc.value = nombreDoctor;
+  }
+  // Si hay sesión admin activa, usar usuario activo
   if (!nombreDoctor && window.sesionAdminActiva) {
     nombreDoctor = window.usuarioActivoSistema || 'Administrador';
   }
   if(!nombreDoctor)return alert("(!) Seleccione un doctor.");
-  // Si el doctor ya se autenticó con su PIN al seleccionarlo, no pedir PIN de nuevo
+  // Si el doctor ya se autenticó con su PIN, no pedir PIN de nuevo
   const _docVerif = (window.doctorVerificado||'').trim().toLowerCase();
   const _docSel   = (nombreDoctor||'').trim().toLowerCase();
   // Si hay sesión admin activa tampoco pedir PIN
