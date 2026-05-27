@@ -127,6 +127,7 @@ window.validarAccesoDoctor = async (nombre) => {
 
   if (!nombre) {
     window.doctorVerificado = "";
+    sessionStorage.removeItem('avipet_doctor');
     const dp = document.getElementById('doctorPrint');
     if (dp) dp.innerText = "SELECCIONE DOCTOR";
     if (logoD)  { logoD.classList.add('hidden'); logoD.src = ""; }
@@ -160,10 +161,13 @@ window.validarAccesoDoctor = async (nombre) => {
       window.onDoctorAutenticado(nombre === "Joan Silva" ? "DR_JOAN" : null);
     }
 
+    // Guardar sesión del doctor para sobrevivir recarga
+    sessionStorage.setItem('avipet_doctor', nombre);
     alert(`✅ Identidad confirmada: DR. ${nombre}`);
     if (typeof window.calcularTodo === 'function') await window.calcularTodo();
   } else {
     alert("❌ PIN INCORRECTO.");
+    sessionStorage.removeItem('avipet_doctor');
     const sel = document.getElementById('selectDoctor');
     if (sel) sel.value = "";
     if (logoD)  logoD.classList.add('hidden');
@@ -555,6 +559,31 @@ window.addEventListener('DOMContentLoaded', () => {
   const dt = document.getElementById('displayTasa');
   if (dt) dt.innerText = window.tasaDolarHoy.toFixed(2);
 
+  // Restaurar sesión del doctor si recargó la página
+  const _doctorGuardado = sessionStorage.getItem('avipet_doctor');
+  if (_doctorGuardado) {
+    const sel = document.getElementById('selectDoctor');
+    if (sel) {
+      sel.value = _doctorGuardado;
+      window.doctorVerificado = _doctorGuardado;
+      window.appState.doctor = _doctorGuardado;
+      const dp = document.getElementById('doctorPrint');
+      if (dp) dp.innerText = 'DR. ' + _doctorGuardado.toUpperCase();
+      // Restaurar logo
+      if (_doctorGuardado === 'Darwin Sandoval') {
+        const logoD = document.getElementById('logoDerechoVacuna');
+        const spacer = document.getElementById('spacerDerechoVacuna');
+        if (logoD) { logoD.src = 'https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg'; logoD.classList.remove('hidden'); }
+        if (spacer) spacer.classList.add('hidden');
+        window.doctorActivoId = 'DR_DARWIN';
+      } else if (_doctorGuardado === 'Joan Silva') {
+        window.doctorActivoId = 'DR_JOAN';
+      }
+      _aplicarPermisoDoctor(true);
+      console.log('[AVIPET] Sesión del doctor restaurada:', _doctorGuardado);
+    }
+  }
+
   window.ejecutarCambioDeTab('historia');
   window.iniciarListenerCola();
 
@@ -578,4 +607,4 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch(_) { localStorage.removeItem('respaldo_historia_activa'); }
 });
 
-console.log("✅ main.js v13 — sesion admin activa");
+console.log("✅ main.js v14 — doctor session persiste tras recarga");
