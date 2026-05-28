@@ -70,8 +70,8 @@ window.guardarPeluqueriaPro = async () => {
 
   // ── Leer TODAS las mascotas del formulario ──
   const mascotas = _leerMascotasPelu();
-  if (!cedula) { Swal.fire("⚠️ ATENCIÓN","La cédula es obligatoria.","warning"); return; }
-  if (mascotas.length === 0) { Swal.fire("⚠️ ATENCIÓN","Agrega al menos una mascota.","warning"); return; }
+  if (!cedula) { Swal.fire("[!] ATENCIÓN","La cédula es obligatoria.","warning"); return; }
+  if (mascotas.length === 0) { Swal.fire("[!] ATENCIÓN","Agrega al menos una mascota.","warning"); return; }
 
   let precioFinal=tipoServ==='solo_unas'?precioUnas:(base+ajuste);
   const tieneAyu1=document.getElementById('pAyudante1')?.checked,tieneAyuExt=document.getElementById('pAyudanteExtra')?.checked,extraSolo=document.getElementById('pExtraSolo')?.checked,montoAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||2;
@@ -278,8 +278,8 @@ async function _cargarBitacoraFecha(fechaSimple) {
           <p class="text-[9px] text-slate-500">CI: <span class="font-bold text-slate-700">${d.cedulaCliente||'---'}</span></p>
           <p class="text-[9px] text-slate-500">📞 <span class="font-bold text-slate-700">${tlf}</span></p>
           <p class="text-[9px] text-slate-500">📍 <span class="font-bold text-slate-600">${dir}</span></p>
-          ${d.condicion?`<p class="text-[9px] text-amber-600 italic mt-0.5">⚠️ ${d.condicion}</p>`:''}
-          ${d.afeccion?`<p class="text-[9px] font-black text-red-600 mt-1 bg-red-50 rounded px-1 py-0.5">🔴 Afección: ${d.afeccion}</p>`:''}
+          ${d.condicion?`<p class="text-[9px] text-amber-600 italic mt-0.5">[!] ${d.condicion}</p>`:''}
+          ${d.afeccion?`<p class="text-[9px] font-black text-red-600 mt-1 bg-red-50 rounded px-1 py-0.5">[!] Afeccion: ${d.afeccion}</p>`:''}
         </div>
         <div class="text-[8px] text-slate-400 font-black uppercase space-y-0.5 mb-2">
           <p>Empleado: <span class="text-slate-600">${d.empleadoRegistro||'N/D'}</span></p>
@@ -292,7 +292,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
             ${d.mensajeEnviado?'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:900;">✅ Mensaje enviado</span>':'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#94a3b8;font-weight:900;">Sin mensaje</span>'}
             <button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
             <button type="button" onclick="window.marcarEntregadoPelu('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.entregado?'bg-slate-200 text-slate-500':'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white'} transition-all">${d.entregado?'✅ Entregado':'🐕 Entregar'}</button>
-            <button type="button" onclick="window.editarAfeccionBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${(d.afeccion||'').replace(/'/g,\'\').replace(/"/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.afeccion?'bg-orange-100 text-orange-700 hover:bg-orange-500 hover:text-white':'bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white'} transition-all">✏️ ${d.afeccion?'Afección':'Nota'}</button>
+            <button type="button" onclick="window.editarAfeccionBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${(d.afeccion||'').replace(/'/g,\'\').replace(/"/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.afeccion?'bg-orange-100 text-orange-700 hover:bg-orange-500 hover:text-white':'bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white'} transition-all">[E] ${d.afeccion?'Afeccion':'Nota'}</button>
             <button type="button" onclick="window.eliminarRegistroBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">🗑</button>
           </div>
         </div>`;
@@ -304,7 +304,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
 // ─── EDITAR AFECCIÓN EN BITÁCORA ───
 window.editarAfeccionBitacora = async (idDoc, nombreMascota, afeccionActual) => {
   const res = await Swal.fire({
-    title: '✏️ Afección / Nota: ' + nombreMascota,
+    title: '[E] Afeccion / Nota: ' + nombreMascota,
     html:
       '<div style="text-align:left;">' +
       '<p style="font-size:10px;color:#64748b;margin-bottom:8px;">Registra cualquier afección en piel, herida, pulgas, etc. que se encontró durante el servicio. Aparecerá en el mensaje al dueño.</p>' +
@@ -333,7 +333,7 @@ window.editarAfeccionBitacora = async (idDoc, nombreMascota, afeccionActual) => 
     });
     await Swal.fire({
       icon: nuevaAfeccion ? 'warning' : 'success',
-      title: nuevaAfeccion ? 'Afección registrada' : 'Nota eliminada',
+      title: nuevaAfeccion ? 'Afeccion registrada' : 'Nota eliminada',
       html: nuevaAfeccion ? '<b>' + nombreMascota + '</b>: ' + nuevaAfeccion : 'La nota fue eliminada.',
       timer: 2000, showConfirmButton: false
     });
@@ -342,7 +342,7 @@ window.editarAfeccionBitacora = async (idDoc, nombreMascota, afeccionActual) => 
 };
 
 // ─── 3. ELIMINAR REGISTRO ───
-window.eliminarRegistroBitacora=async(idDoc,nombreMascota)=>{const clave=prompt(`🔐 Eliminar registro de: "${nombreMascota}"\nCLAVE MAESTRA:`);if(!clave)return;if(clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`⚠️ Eliminar permanentemente "${nombreMascota}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"servicios_estetica",idDoc));if(typeof window.registrarLogAuditoria==='function')await window.registrarLogAuditoria("ELIMINACIÓN PELUQUERÍA",`Eliminó ${nombreMascota}`);alert(`✅ Eliminado.`);await window.cargarBitacoraHoy();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.eliminarRegistroBitacora=async(idDoc,nombreMascota)=>{const clave=prompt(`🔐 Eliminar registro de: "${nombreMascota}"\nCLAVE MAESTRA:`);if(!clave)return;if(clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`[!] Eliminar permanentemente "${nombreMascota}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"servicios_estetica",idDoc));if(typeof window.registrarLogAuditoria==='function')await window.registrarLogAuditoria("ELIMINACIÓN PELUQUERÍA",`Eliminó ${nombreMascota}`);alert(`✅ Eliminado.`);await window.cargarBitacoraHoy();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 
 // ─── 4. TOGGLE PAGO MIXTO ───
 window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
@@ -430,7 +430,7 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
       preConfirm: () => {
         const m1 = parseFloat(document.getElementById('swal_monto1')?.value) || 0;
         const m2 = modo === 'mixto' ? parseFloat(document.getElementById('swal_monto2')?.value) || 0 : 0;
-        if (m1 <= 0 && m2 <= 0) { Swal.showValidationMessage('⚠️ Ingresa al menos un monto.'); return false; }
+        if (m1 <= 0 && m2 <= 0) { Swal.showValidationMessage('[!] Ingresa al menos un monto.'); return false; }
         return { m1, m2 };
       }
     });
@@ -529,7 +529,7 @@ window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
   htmlMsg += '<div style="display:flex;flex-direction:column;gap:8px;">';
   htmlMsg += '<button id="msgPelu1" type="button" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:11px;color:#15803d;cursor:pointer;">🐕 Lista para retirar</button>';
   htmlMsg += '<button id="msgPelu2" type="button" style="width:100%;padding:12px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:11px;color:#1d4ed8;cursor:pointer;">📅 Recordatorio próxima visita</button>';
-  htmlMsg += '<button id="msgPelu3" type="button" style="width:100%;padding:12px;border-radius:12px;border:2px solid #e9d5ff;background:#faf5ff;font-weight:900;font-size:11px;color:#7c3aed;cursor:pointer;">✏️ Mensaje personalizado</button>';
+  htmlMsg += '<button id="msgPelu3" type="button" style="width:100%;padding:12px;border-radius:12px;border:2px solid #e9d5ff;background:#faf5ff;font-weight:900;font-size:11px;color:#7c3aed;cursor:pointer;">[E] Mensaje personalizado</button>';
   htmlMsg += '</div>';
 
   const res = await Swal.fire({
@@ -559,7 +559,7 @@ window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
       if (window._idServicioPelu) {
         const snapAf = await getDoc(doc(db,"servicios_estetica",window._idServicioPelu));
         if (snapAf.exists() && snapAf.data().afeccion) {
-          afeccionMsg = '\n\n⚠️ *Nota importante:* ' + snapAf.data().afeccion + '. Te recomendamos pasar por nuestra área de veterinaria para que el Doctor evalúe a tu mascota.';
+          afeccionMsg = '\n\n[!] *Nota importante:* ' + snapAf.data().afeccion + '. Te recomendamos pasar por nuestra area de veterinaria para que el Doctor evalue a tu mascota.';
         }
       }
     } catch(e) {}
@@ -572,7 +572,7 @@ window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
   } else {
     // Mensaje personalizado
     const custom = await Swal.fire({
-      title: '✏️ Escribe tu mensaje',
+      title: '[E] Escribe tu mensaje',
       input: 'textarea',
       inputPlaceholder: 'Escribe aquí el mensaje para el cliente...',
       inputAttributes: { rows: 4 },
@@ -850,7 +850,7 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
             '</button>';
         });
         htmlSel += '<button class="btn-sel-mascota" data-nombre="" data-raza="" ' +
-          'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">✏️ Nueva mascota</button>';
+          'style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:900;font-size:11px;color:#64748b;cursor:pointer;">[E] Nueva mascota</button>';
         htmlSel += '</div>';
 
         const resSel = await Swal.fire({
