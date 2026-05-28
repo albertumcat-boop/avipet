@@ -279,6 +279,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
           <p class="text-[9px] text-slate-500">📞 <span class="font-bold text-slate-700">${tlf}</span></p>
           <p class="text-[9px] text-slate-500">📍 <span class="font-bold text-slate-600">${dir}</span></p>
           ${d.condicion?`<p class="text-[9px] text-amber-600 italic mt-0.5">⚠️ ${d.condicion}</p>`:''}
+          ${d.afeccion?`<p class="text-[9px] font-black text-red-600 mt-1 bg-red-50 rounded px-1 py-0.5">🔴 Afección: ${d.afeccion}</p>`:''}
         </div>
         <div class="text-[8px] text-slate-400 font-black uppercase space-y-0.5 mb-2">
           <p>Empleado: <span class="text-slate-600">${d.empleadoRegistro||'N/D'}</span></p>
@@ -291,12 +292,53 @@ async function _cargarBitacoraFecha(fechaSimple) {
             ${d.mensajeEnviado?'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:900;">✅ Mensaje enviado</span>':'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#94a3b8;font-weight:900;">Sin mensaje</span>'}
             <button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
             <button type="button" onclick="window.marcarEntregadoPelu('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.entregado?'bg-slate-200 text-slate-500':'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white'} transition-all">${d.entregado?'✅ Entregado':'🐕 Entregar'}</button>
+            <button type="button" onclick="window.editarAfeccionBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${(d.afeccion||'').replace(/'/g,\'\').replace(/"/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.afeccion?'bg-orange-100 text-orange-700 hover:bg-orange-500 hover:text-white':'bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white'} transition-all">✏️ ${d.afeccion?'Afección':'Nota'}</button>
             <button type="button" onclick="window.eliminarRegistroBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">🗑</button>
           </div>
         </div>`;
       cuerpo.appendChild(card);
     });
   }catch(e){console.error("Error bitácora:",e);cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-red-100 rounded-2xl bg-red-50"><p class="text-red-500 text-[9px] font-black uppercase italic">❌ Error de conexión</p></div>`;}
+};
+
+// ─── EDITAR AFECCIÓN EN BITÁCORA ───
+window.editarAfeccionBitacora = async (idDoc, nombreMascota, afeccionActual) => {
+  const res = await Swal.fire({
+    title: '✏️ Afección / Nota: ' + nombreMascota,
+    html:
+      '<div style="text-align:left;">' +
+      '<p style="font-size:10px;color:#64748b;margin-bottom:8px;">Registra cualquier afección en piel, herida, pulgas, etc. que se encontró durante el servicio. Aparecerá en el mensaje al dueño.</p>' +
+      '<textarea id="inp_afeccion" rows="4" placeholder="Ej: Se encontró dermatitis en el lomo, parásitos en la oreja derecha..." style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;resize:vertical;">' + (afeccionActual||'') + '</textarea>' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Guardar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#f97316',
+    showDenyButton: afeccionActual ? true : false,
+    denyButtonText: 'Borrar nota',
+    denyButtonColor: '#94a3b8',
+    preConfirm: function() {
+      return document.getElementById('inp_afeccion')?.value.trim() || '';
+    }
+  });
+
+  if (res.isDismissed) return;
+
+  const nuevaAfeccion = res.isDenied ? '' : (res.value || '');
+
+  try {
+    await updateDoc(doc(db, "servicios_estetica", idDoc), {
+      afeccion: nuevaAfeccion,
+      afeccionFecha: nuevaAfeccion ? serverTimestamp() : null
+    });
+    await Swal.fire({
+      icon: nuevaAfeccion ? 'warning' : 'success',
+      title: nuevaAfeccion ? 'Afección registrada' : 'Nota eliminada',
+      html: nuevaAfeccion ? '<b>' + nombreMascota + '</b>: ' + nuevaAfeccion : 'La nota fue eliminada.',
+      timer: 2000, showConfirmButton: false
+    });
+    await window.cargarBitacoraHoy();
+  } catch(e) { console.error(e); alert('Error: ' + e.message); }
 };
 
 // ─── 3. ELIMINAR REGISTRO ───
@@ -511,7 +553,17 @@ window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
 
   if (tipo === 1) {
     // Lista para retirar
-    mensaje = "🐾 Hola " + duenio + ", te informamos que *" + mascota + "* ya está lista para ser retirada en *AVIPET*. \n\n✂️ ¡Te esperamos! 🐕\n\n📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.";
+    // Cargar afección si existe
+    let afeccionMsg = '';
+    try {
+      if (window._idServicioPelu) {
+        const snapAf = await getDoc(doc(db,"servicios_estetica",window._idServicioPelu));
+        if (snapAf.exists() && snapAf.data().afeccion) {
+          afeccionMsg = '\n\n⚠️ *Nota importante:* ' + snapAf.data().afeccion + '. Te recomendamos pasar por nuestra área de veterinaria para que el Doctor evalúe a tu mascota.';
+        }
+      }
+    } catch(e) {}
+    mensaje = "🐾 Hola " + duenio + ", te informamos que *" + mascota + "* ya está lista para ser retirada en *AVIPET*. " + afeccionMsg + "\n\n✂️ ¡Te esperamos! 🐕\n\n📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.";
 
   } else if (tipo === 2) {
     // Recordatorio próxima visita
@@ -1039,4 +1091,4 @@ window.exportarExcelPeluqueria=async()=>{try{const snap=await getDocs(collection
 // ─── 12. VALIDAR EMPLEADO ───
 window.validarEmpleadoConPin=async(pin)=>{if(!pin)return null;try{const snap=await getDocs(query(collection(db,"empleados"),where("PIN","==",String(pin).trim())));if(snap.empty)return null;const d=snap.docs[0];return{id:d.id,nombre:d.data().nombreEmpleado||d.id};}catch(e){console.error("Error validando empleado:",e);return null;}};
 
-console.log("✅ peluqueria.js v4 — especie en bitacora");
+console.log("✅ peluqueria.js v5 — afeccion en bitacora y mensaje");
