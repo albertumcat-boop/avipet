@@ -292,7 +292,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
             ${d.mensajeEnviado?'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:900;">✅ Mensaje enviado</span>':'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#94a3b8;font-weight:900;">Sin mensaje</span>'}
             <button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
             <button type="button" onclick="window.marcarEntregadoPelu('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.entregado?'bg-slate-200 text-slate-500':'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white'} transition-all">${d.entregado?'✅ Entregado':'🐕 Entregar'}</button>
-            <button type="button" onclick="window.editarAfeccionBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${(d.afeccion||'').replace(/'/g,\'\').replace(/"/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.afeccion?'bg-orange-100 text-orange-700 hover:bg-orange-500 hover:text-white':'bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white'} transition-all">[E] ${d.afeccion?'Afeccion':'Nota'}</button>
+            <button type="button" onclick="window.editarAfeccionBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.afeccion?'bg-orange-100 text-orange-700 hover:bg-orange-500 hover:text-white':'bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white'} transition-all">[E] ${d.afeccion?'Afeccion':'Nota'}</button>
             <button type="button" onclick="window.eliminarRegistroBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">🗑</button>
           </div>
         </div>`;
@@ -302,7 +302,13 @@ async function _cargarBitacoraFecha(fechaSimple) {
 };
 
 // ─── EDITAR AFECCIÓN EN BITÁCORA ───
-window.editarAfeccionBitacora = async (idDoc, nombreMascota, afeccionActual) => {
+window.editarAfeccionBitacora = async (idDoc, nombreMascota) => {
+  // Cargar afeccion actual desde Firebase
+  let afeccionActual = '';
+  try {
+    const snapAf = await getDoc(doc(db, "servicios_estetica", idDoc));
+    if (snapAf.exists()) afeccionActual = snapAf.data().afeccion || '';
+  } catch(e) {}
   const res = await Swal.fire({
     title: '[E] Afeccion / Nota: ' + nombreMascota,
     html:
