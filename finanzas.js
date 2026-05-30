@@ -797,6 +797,27 @@ window.verResumenSemanalPelu = async () => {
     // Fila 1 de cards — 3 columnas
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;text-align:left;">';
 
+
+    // Helper: muestra ganó/debe/cobra si hay deuda
+    function _desglosDeuda(ganado, deuda, colorGanado) {
+      if (deuda <= 0) return '';
+      const neto = Math.max(0, ganado - deuda);
+      return '<div style="border-top:1px solid #fca5a5;margin-top:6px;padding-top:6px;">' +
+        '<div style="display:flex;justify-content:space-between;">' +
+          '<p style="font-size:8px;color:#64748b;margin:0;">Gano:</p>' +
+          '<p style="font-size:8px;font-weight:900;color:'+colorGanado+';margin:0;">$'+ganado.toFixed(2)+'</p>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;">' +
+          '<p style="font-size:8px;color:#dc2626;margin:0;">Debe:</p>' +
+          '<p style="font-size:8px;font-weight:900;color:#dc2626;margin:0;">-$'+deuda.toFixed(2)+'</p>' +
+        '</div>' +
+        '<div style="background:#dc2626;border-radius:6px;padding:3px 6px;margin-top:4px;display:flex;justify-content:space-between;">' +
+          '<p style="font-size:8px;font-weight:900;color:#fff;margin:0;">Cobra:</p>' +
+          '<p style="font-size:11px;font-weight:900;color:#fff;margin:0;">$'+neto.toFixed(2)+'</p>' +
+        '</div>' +
+      '</div>';
+    }
+
     htmlModal += '<div style="background:#f8fafc;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Servicios semana</p>';
     htmlModal += '<p style="font-size:20px;font-weight:900;color:#1e293b;">' + servicios.length + ' perros</p>';
@@ -813,7 +834,9 @@ window.verResumenSemanalPelu = async () => {
     } else {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$' + totalPelu.toFixed(2) + ' USD</p>';
     }
-    htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p></div>';
+    htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p>';
+    htmlModal += _desglosDeuda(totalPelu, deudasEquipo['peluquera']||0, '#7c3aed');
+    htmlModal += '</div>';
 
     // Desglose ayu1: $2 por mascota (=$1 pelu + $1 avipet) en la moneda que pagó
     var ayu1USD = 0, ayu1BS = 0;
@@ -836,6 +859,9 @@ window.verResumenSemanalPelu = async () => {
     } else {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#2563eb;margin:2px 0;">$' + ayu1USD.toFixed(2) + ' USD</p>';
     }
+    // Desglose deuda Ayu1
+    var totalAyu1 = ayu1USD + ayu1BS;
+    htmlModal += _desglosDeuda(totalAyu1, deudasEquipo['ayu1']||0, '#2563eb');
     htmlModal += '</div></div>';
 
     // Fila 2 de cards — 4 columnas (con Extra separado)
@@ -844,7 +870,9 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<div style="background:#fff7ed;border-radius:10px;padding:8px;text-align:center;border:2px solid #fed7aa;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#ea580c;text-transform:uppercase;">Ayud. Extra</p>';
     htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;">$' + totalAyuExt.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:8px;color:#94a3b8;">hizo todo solo</p></div>';
+    htmlModal += '<p style="font-size:8px;color:#94a3b8;">hizo todo solo</p>';
+    htmlModal += _desglosDeuda(totalAyuExt, deudasEquipo['ayuext']||0, '#ea580c');
+    htmlModal += '</div>';
 
     htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#16a34a;text-transform:uppercase;">Neto Avipet</p>';
@@ -974,7 +1002,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v6 — deuda con neto a cobrar en resumen");
+console.log("finanzas.js v7 — desglose deuda en resumen semanal pelu");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
