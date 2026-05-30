@@ -375,14 +375,27 @@ window.mostrarDashboardPelu = async () => {
     const deudaAyuExt = deudasEquipo['ayuext'];
 
     function _tarjetaConDeuda(label, valor, bg, colorVal, sub, deuda) {
+      const montoNum = parseFloat(valor.replace('$','')) || 0;
+      const neto = Math.max(0, montoNum - deuda);
       const alertaHtml = deuda > 0
-        ? '<div style="background:#dc2626;border-radius:6px;padding:2px 6px;margin-top:4px;">' +
-            '<p style="font-size:8px;font-weight:900;color:#fff;margin:0;">Deuda: $'+deuda.toFixed(2)+'</p>' +
+        ? '<div style="border-top:1px solid #fca5a5;margin-top:6px;padding-top:6px;">' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:2px;">' +
+              '<p style="font-size:8px;color:#64748b;margin:0;">Gano:</p>' +
+              '<p style="font-size:8px;font-weight:900;color:'+colorVal+';margin:0;">'+valor+'</p>' +
+            '</div>' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:2px;">' +
+              '<p style="font-size:8px;color:#dc2626;margin:0;">Debe:</p>' +
+              '<p style="font-size:8px;font-weight:900;color:#dc2626;margin:0;">-$'+deuda.toFixed(2)+'</p>' +
+            '</div>' +
+            '<div style="background:#dc2626;border-radius:6px;padding:3px 6px;display:flex;justify-content:space-between;">' +
+              '<p style="font-size:8px;font-weight:900;color:#fff;margin:0;">Cobra:</p>' +
+              '<p style="font-size:10px;font-weight:900;color:#fff;margin:0;">$'+neto.toFixed(2)+'</p>' +
+            '</div>' +
           '</div>'
         : '';
-      return '<div style="background:'+bg+';border-radius:12px;padding:10px;text-align:center;">' +
+      return '<div style="background:'+bg+';border-radius:12px;padding:10px;text-align:center;border:'+(deuda>0?'2px solid #fca5a5':'1px solid transparent')+';">' +
         '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 2px 0;">'+label+'</p>' +
-        '<p style="font-size:18px;font-weight:900;color:'+colorVal+';margin:0;font-family:monospace;">'+valor+'</p>' +
+        '<p style="font-size:18px;font-weight:900;color:'+(deuda>0?'#94a3b8':colorVal)+';margin:0;font-family:monospace;'+(deuda>0?'text-decoration:line-through;':'')+'">'+valor+'</p>' +
         (sub ? '<p style="font-size:8px;color:#94a3b8;margin:2px 0 0 0;">'+sub+'</p>' : '') +
         alertaHtml +
       '</div>';
@@ -961,7 +974,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v5 — solo desglose USD y Bs sin total");
+console.log("finanzas.js v6 — deuda con neto a cobrar en resumen");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
