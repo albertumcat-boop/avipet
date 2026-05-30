@@ -798,22 +798,19 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;text-align:left;">';
 
 
-    // Helper: muestra ganó/debe/cobra si hay deuda
-    function _desglosDeuda(ganado, deuda, colorGanado) {
+    // Helper: descuenta la deuda SOLO del monto en Bs
+    // ganado_bs = lo que ganó en Bs (en dólares), ganado_usd = lo que ganó en USD
+    function _desglosDeuda(ganado_usd, ganado_bs, deuda, colorUSD, colorBS) {
       if (deuda <= 0) return '';
-      const neto = Math.max(0, ganado - deuda);
+      const neto_bs = Math.max(0, ganado_bs - deuda);
       return '<div style="border-top:1px solid #fca5a5;margin-top:6px;padding-top:6px;">' +
-        '<div style="display:flex;justify-content:space-between;">' +
-          '<p style="font-size:8px;color:#64748b;margin:0;">Gano:</p>' +
-          '<p style="font-size:8px;font-weight:900;color:'+colorGanado+';margin:0;">$'+ganado.toFixed(2)+'</p>' +
-        '</div>' +
-        '<div style="display:flex;justify-content:space-between;">' +
-          '<p style="font-size:8px;color:#dc2626;margin:0;">Debe:</p>' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:2px;">' +
+          '<p style="font-size:8px;color:#dc2626;margin:0;">Debe (Bs):</p>' +
           '<p style="font-size:8px;font-weight:900;color:#dc2626;margin:0;">-$'+deuda.toFixed(2)+'</p>' +
         '</div>' +
-        '<div style="background:#dc2626;border-radius:6px;padding:3px 6px;margin-top:4px;display:flex;justify-content:space-between;">' +
-          '<p style="font-size:8px;font-weight:900;color:#fff;margin:0;">Cobra:</p>' +
-          '<p style="font-size:11px;font-weight:900;color:#fff;margin:0;">$'+neto.toFixed(2)+'</p>' +
+        '<div style="background:#dc2626;border-radius:6px;padding:3px 6px;display:flex;justify-content:space-between;">' +
+          '<p style="font-size:8px;font-weight:900;color:#fff;margin:0;">Cobra en Bs:</p>' +
+          '<p style="font-size:11px;font-weight:900;color:#fff;margin:0;">$'+neto_bs.toFixed(2)+'</p>' +
         '</div>' +
       '</div>';
     }
@@ -835,7 +832,7 @@ window.verResumenSemanalPelu = async () => {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$' + totalPelu.toFixed(2) + ' USD</p>';
     }
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p>';
-    htmlModal += _desglosDeuda(totalPelu, deudasEquipo['peluquera']||0, '#7c3aed');
+    htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e');
     htmlModal += '</div>';
 
     // Desglose ayu1: $2 por mascota (=$1 pelu + $1 avipet) en la moneda que pagó
@@ -861,7 +858,7 @@ window.verResumenSemanalPelu = async () => {
     }
     // Desglose deuda Ayu1
     var totalAyu1 = ayu1USD + ayu1BS;
-    htmlModal += _desglosDeuda(totalAyu1, deudasEquipo['ayu1']||0, '#2563eb');
+    htmlModal += _desglosDeuda(ayu1USD, ayu1BS, deudasEquipo['ayu1']||0, '#2563eb', '#92400e');
     htmlModal += '</div></div>';
 
     // Fila 2 de cards — 4 columnas (con Extra separado)
@@ -871,7 +868,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#ea580c;text-transform:uppercase;">Ayud. Extra</p>';
     htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;">$' + totalAyuExt.toFixed(2) + '</p>';
     htmlModal += '<p style="font-size:8px;color:#94a3b8;">hizo todo solo</p>';
-    htmlModal += _desglosDeuda(totalAyuExt, deudasEquipo['ayuext']||0, '#ea580c');
+    htmlModal += _desglosDeuda(0, totalAyuExt, deudasEquipo['ayuext']||0, '#ea580c', '#92400e');
     htmlModal += '</div>';
 
     htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
@@ -1002,7 +999,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v7 — desglose deuda en resumen semanal pelu");
+console.log("finanzas.js v8 — deuda descuenta solo del monto en Bs");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
