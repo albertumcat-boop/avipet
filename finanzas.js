@@ -894,6 +894,7 @@ window.verResumenSemanalPelu = async () => {
         }
       }
       rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;font-size:8px;">' + labelPago + '</td>';
+      rows += '<td style="padding:4px 6px;text-align:center;"><button onclick="window.editarRegistroPelu(\''+r.id+'\')" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:8px;font-weight:900;cursor:pointer;white-space:nowrap;">Editar</button></td>';
       rows += '</tr>';
     });
 
@@ -1017,7 +1018,8 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Ayu1</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;color:#fed7aa;">Extra</th>';
     htmlModal += '<th style="padding:5px 6px;text-align:center;">Avipet</th>';
-    htmlModal += '<th style="padding:5px 6px;text-align:center;">Pago</th></tr></thead>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;">Pago</th>';
+    htmlModal += '<th style="padding:5px 6px;text-align:center;"></th></tr></thead>';
     htmlModal += '<tbody>' + rows + '</tbody></table></div>';
 
     // Notas de deuda de empleados
@@ -1106,7 +1108,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v9 — editar registro peluqueria");
+console.log("finanzas.js v10 -- editar desde resumen semanal");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
