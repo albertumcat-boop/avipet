@@ -759,43 +759,58 @@ window.recalcularTotalPelu = () => {
 
 // ─── 7. BUSCAR CLIENTE ───
 window.buscarClientePeluqueria = async (cedulaInput) => {
-  const valor     = (cedulaInput || "").replace(/[.\-\s]/g,'').trim().toUpperCase();
-  const valorOrig = (cedulaInput || "").trim();
+  // Normalizar: quitar puntos, comas, guiones, espacios, mayúsculas
+  const _norm = (s) => (s||'').replace(/[.,\-\s]/g,'').trim().toUpperCase();
+  const valor     = _norm(cedulaInput);
+  const valorOrig = (cedulaInput||'').trim();
   if (!valor || valor.length < 4) return;
-  console.log('[PELU] Buscando cédula:', valor, '| original:', valorOrig);
+
+  // Generar todas las variantes posibles de la cédula
+  const variantes = new Set();
+  variantes.add(valor);               // 12345678
+  variantes.add(valorOrig);           // como se escribió
+  variantes.add('V' + valor);         // V12345678
+  variantes.add('V-' + valor);        // V-12345678
+  variantes.add('v' + valor);         // v12345678
+  // Si ya tiene prefijo, agregar sin prefijo
+  if (/^[VEJPvejp]/.test(valor)) {
+    variantes.add(valor.slice(1));    // quitar la letra inicial
+    variantes.add(valor.slice(2));    // quitar letra y guion si hay
+  }
+  // Quitar duplicados vacíos
+  variantes.delete('');
+
   try {
     let datos = null;
 
-    // 1. Buscar en consultas veterinarias (normalizada)
-    const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",valor), limit(1)));
-    console.log('[PELU] Resultado normalizado:', snap1.size, 'docs');
-    if (!snap1.empty) datos = snap1.docs[0].data();
-
-    // 2. Buscar con cédula original si no encontró
-    if (!datos) {
-      const snap1b = await getDocs(query(collection(db,"consultas"), where("cedula","==",valorOrig), limit(1)));
-      console.log('[PELU] Resultado original:', snap1b.size, 'docs');
-      if (!snap1b.empty) datos = snap1b.docs[0].data();
+    // Buscar en consultas — probar cada variante
+    for (const v of variantes) {
+      if (datos) break;
+      if (!v || v.length < 4) continue;
+      const snap = await getDocs(query(collection(db,'consultas'), where('cedula','==',v), limit(1)));
+      if (!snap.empty) { datos = snap.docs[0].data(); break; }
     }
 
-    // 3. Buscar con V- al inicio si no tiene prefijo
-    if (!datos && !valor.startsWith('V') && !valor.startsWith('E') && !valor.startsWith('J')) {
-      const conV = 'V' + valor;
-      const snap1c = await getDocs(query(collection(db,"consultas"), where("cedula","==",conV), limit(1)));
-      console.log('[PELU] Resultado con V:', snap1c.size, 'docs');
-      if (!snap1c.empty) datos = snap1c.docs[0].data();
+    // Buscar en pacientes_peluqueria
+    if (!datos) {
+      for (const v of variantes) {
+        if (datos) break;
+        try {
+          const pelSnap = await getDoc(doc(db,'pacientes_peluqueria', v));
+          if (pelSnap.exists()) { datos = pelSnap.data(); break; }
+        } catch(e) {}
+      }
     }
 
-    // 2. Buscar en pacientes_peluqueria (clientes solo de peluquería)
+    // Buscar en fidelidad_peluqueria
     if (!datos) {
-      const pelSnap = await getDoc(doc(db,"pacientes_peluqueria", valor));
-      if (pelSnap.exists()) datos = pelSnap.data();
-    }
-
-    // 3. Buscar en fidelidad_peluqueria
-    if (!datos) {
-      const fidSnap = await getDoc(doc(db,"fidelidad_peluqueria", valor.toLowerCase()));
-      if (fidSnap.exists()) datos = fidSnap.data();
+      for (const v of variantes) {
+        if (datos) break;
+        try {
+          const fidSnap = await getDoc(doc(db,'fidelidad_peluqueria', v.toLowerCase()));
+          if (fidSnap.exists()) { datos = fidSnap.data(); break; }
+        } catch(e) {}
+      }
     }
 
     if (datos) {
@@ -1097,4 +1112,4 @@ window.exportarExcelPeluqueria=async()=>{try{const snap=await getDocs(collection
 // ─── 12. VALIDAR EMPLEADO ───
 window.validarEmpleadoConPin=async(pin)=>{if(!pin)return null;try{const snap=await getDocs(query(collection(db,"empleados"),where("PIN","==",String(pin).trim())));if(snap.empty)return null;const d=snap.docs[0];return{id:d.id,nombre:d.data().nombreEmpleado||d.id};}catch(e){console.error("Error validando empleado:",e);return null;}};
 
-console.log("✅ peluqueria.js v5 — afeccion en bitacora y mensaje");
+console.log("✅ peluqueria.js v6 -- busqueda cedula sin importar formato");
