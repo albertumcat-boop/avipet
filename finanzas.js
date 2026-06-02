@@ -672,7 +672,6 @@ window.ajustarPagoPeluqueria = async () => {
 
 // ─── RESUMEN SEMANAL PELUQUERIA ───────────────────────────
 window.editarRegistroPelu = async (idDoc) => {
-  // Cargar registro actual
   let r;
   try {
     const snap = await getDoc(doc(db, "servicios_estetica", idDoc));
@@ -680,84 +679,106 @@ window.editarRegistroPelu = async (idDoc) => {
     r = { id: snap.id, ...snap.data() };
   } catch(e) { return alert("Error cargando registro: " + e.message); }
 
-  const precio     = parseFloat(r.precioTotal||0);
+  const precio = parseFloat(r.precioTotal||0);
+
+  // Detectar modo actual
   const tieneAyu1  = parseFloat(r.pagoAyudante1||0) > 0;
   const tieneAyuEx = parseFloat(r.pagoAyudanteExtra||0) > 0;
   const tieneTrid  = r.tridente || false;
+  let modoActual = 'solo_pelu';
+  if (tieneTrid && tieneAyuEx && parseFloat(r.pagoPeluquera||0) > 0) modoActual = 'tridente';
+  else if (tieneAyuEx && parseFloat(r.pagoPeluquera||0) === 0) modoActual = 'extra_solo';
+  else if (tieneAyu1) modoActual = 'pelu_ayu1';
+
+  const modos = [
+    { val:'solo_pelu',  label:'Solo Peluquera',              desc:'Pelu 40% / Avipet 60%' },
+    { val:'pelu_ayu1',  label:'Peluquera + Ayudante Principal', desc:'(Pelu 40%-$1) / Ayu1 $2 / (Avipet 60%-$1)' },
+    { val:'extra_solo', label:'Ayudante Extra SOLO',          desc:'Extra 40% / Avipet 60% (sin peluquera)' },
+    { val:'tridente',   label:'Tridente (Pelu + Extra + Avipet)', desc:'33.33% Pelu / 33.33% Extra / 33.33% Avipet' },
+  ];
+
+  const opsModo = modos.map(m =>
+    '<option value="'+m.val+'" '+(m.val===modoActual?'selected':'')+'>'+m.label+'</option>'
+  ).join('');
+
+  const opsPago = [
+    '<option value="usd"   '+(r.modoPago==='usd'  ?'selected':'')+'>USD</option>',
+    '<option value="bs"    '+(r.modoPago==='bs'   ?'selected':'')+'>Bolivares</option>',
+    '<option value="mixto" '+(r.modoPago==='mixto'?'selected':'')+'>Mixto</option>',
+  ].join('');
 
   const { value: form } = await Swal.fire({
     title: 'Editar: ' + (r.paciente||'---'),
-    width: 500,
+    width: 480,
     html:
       '<div style="text-align:left;display:flex;flex-direction:column;gap:10px;">' +
 
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Monto cobrado ($)</label>' +
-      '<input id="ep_precio" type="number" step="0.50" min="0" value="'+precio.toFixed(2)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
+      '<input id="ep_precio" type="number" step="0.50" min="0" value="'+precio.toFixed(2)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:14px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
 
-      '<div style="display:flex;gap:12px;align-items:center;">' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;cursor:pointer;">' +
-          '<input type="checkbox" id="ep_ayu1" '+(tieneAyu1?'checked':'')+' style="width:16px;height:16px;accent-color:#2563eb;"> Ayudante Principal</label>' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;cursor:pointer;">' +
-          '<input type="checkbox" id="ep_ayuex" '+(tieneAyuEx?'checked':'')+' style="width:16px;height:16px;accent-color:#ea580c;"> Ayud. Extra</label>' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;cursor:pointer;">' +
-          '<input type="checkbox" id="ep_trid" '+(tieneTrid?'checked':'')+' style="width:16px;height:16px;accent-color:#7c3aed;"> Tridente</label>' +
-      '</div>' +
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Quien trabajo</label>' +
+      '<select id="ep_modo" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;background:#fff;">' +
+      opsModo + '</select>' +
+      '<div id="ep_desc" style="font-size:9px;color:#94a3b8;margin-top:3px;"></div></div>' +
 
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Insumos adicionales ($)</label>' +
-      '<input id="ep_insumos" type="number" step="0.50" min="0" value="'+(parseFloat(r.insumosAdicionales||0)).toFixed(2)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;" placeholder="0.00"></div>' +
+      '<input id="ep_insumos" type="number" step="0.50" min="0" value="'+(parseFloat(r.insumosAdicionales||0)).toFixed(2)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;" placeholder="0.00"></div>' +
 
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Modo de pago</label>' +
-      '<select id="ep_modo" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;outline:none;background:#fff;">' +
-        '<option value="usd" '+(r.modoPago==='usd'?'selected':'')+'>USD</option>' +
-        '<option value="bs" '+(r.modoPago==='bs'?'selected':'')+'>Bolivares</option>' +
-        '<option value="mixto" '+(r.modoPago==='mixto'?'selected':'')+'>Mixto</option>' +
-      '</select></div>' +
+      '<select id="ep_pago" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;background:#fff;">' +
+      opsPago + '</select></div>' +
 
       '</div>',
     showCancelButton: true,
     confirmButtonText: 'Guardar cambios',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#f59e0b',
+    didOpen: function() {
+      const modosDesc = { solo_pelu:'Pelu 40% / Avipet 60%', pelu_ayu1:'(Pelu 40%-$1) / Ayu1 $2 / (Avipet 60%-$1)', extra_solo:'Extra 40% / Avipet 60% (sin peluquera)', tridente:'33.33% Pelu / 33.33% Extra / 33.33% Avipet' };
+      const sel = document.getElementById('ep_modo');
+      const desc = document.getElementById('ep_desc');
+      if (sel && desc) {
+        desc.textContent = modosDesc[sel.value] || '';
+        sel.addEventListener('change', function() { desc.textContent = modosDesc[this.value] || ''; });
+      }
+    },
     preConfirm: function() {
       return {
-        precioTotal:       parseFloat(document.getElementById('ep_precio')?.value)  || 0,
-        tieneAyu1:         document.getElementById('ep_ayu1')?.checked  || false,
-        tieneAyuEx:        document.getElementById('ep_ayuex')?.checked || false,
-        tieneTrid:         document.getElementById('ep_trid')?.checked  || false,
-        insumosAdicionales:parseFloat(document.getElementById('ep_insumos')?.value) || 0,
-        modoPago:          document.getElementById('ep_modo')?.value    || 'usd',
+        precioTotal:        parseFloat(document.getElementById('ep_precio')?.value)  || 0,
+        modo:               document.getElementById('ep_modo')?.value   || 'solo_pelu',
+        insumosAdicionales: parseFloat(document.getElementById('ep_insumos')?.value) || 0,
+        modoPago:           document.getElementById('ep_pago')?.value   || 'bs',
       };
     }
   });
 
   if (!form) return;
 
-  // Recalcular pagos
-  const p = form.precioTotal;
-  const insumos = form.insumosAdicionales;
-  const base = p - insumos;
+  const p      = form.precioTotal;
+  const insumos= form.insumosAdicionales;
+  const base   = p - insumos;
+  let pagoPeluquera=0, pagoAyudante1=0, pagoAyudanteExtra=0, ingresoAvipet=0, tridente=false;
 
-  // Tridente: Extra hizo todo solo (no pelu ni ayu1, avipet se queda con todo)
-  let pagoPeluquera = 0, pagoAyudante1 = 0, pagoAyudanteExtra = 0, ingresoAvipet = 0;
-
-  if (form.tieneTrid) {
-    // Extra hizo todo solo: Extra = 40% - insumos, Avipet = 60%
+  if (form.modo === 'tridente') {
+    // Pelu + Extra + Avipet — 3 partes iguales
+    const tercio      = parseFloat((base / 3).toFixed(2));
+    pagoPeluquera     = tercio;
+    pagoAyudanteExtra = tercio;
+    ingresoAvipet     = parseFloat((base - tercio - tercio).toFixed(2));
+    tridente          = true;
+  } else if (form.modo === 'extra_solo') {
+    // Extra hizo todo solo — sin peluquera
     pagoAyudanteExtra = parseFloat((base * 0.40).toFixed(2));
     ingresoAvipet     = parseFloat((base * 0.60).toFixed(2));
-  } else if (form.tieneAyuEx) {
-    // Peluquera + Extra: Pelu = 40%-$1, Extra = $1, Avipet = 60%-$1
-    pagoPeluquera     = parseFloat((base * 0.40 - 1).toFixed(2));
-    pagoAyudanteExtra = 1;
-    ingresoAvipet     = parseFloat((base * 0.60 - 1).toFixed(2));
-  } else if (form.tieneAyu1) {
-    // Peluquera + Ayu1: Pelu = 40%-$1, Ayu1 = $2 (=$1pelu+$1avipet), Avipet = 60%-$1
-    pagoPeluquera  = parseFloat((base * 0.40 - 1).toFixed(2));
-    pagoAyudante1  = 2;
-    ingresoAvipet  = parseFloat((base * 0.60 - 1).toFixed(2));
+  } else if (form.modo === 'pelu_ayu1') {
+    // Peluquera + Ayudante Principal
+    pagoPeluquera = parseFloat((base * 0.40 - 1).toFixed(2));
+    pagoAyudante1 = 2;
+    ingresoAvipet = parseFloat((base * 0.60 - 1).toFixed(2));
   } else {
     // Solo peluquera
-    pagoPeluquera  = parseFloat((base * 0.40).toFixed(2));
-    ingresoAvipet  = parseFloat((base * 0.60).toFixed(2));
+    pagoPeluquera = parseFloat((base * 0.40).toFixed(2));
+    ingresoAvipet = parseFloat((base * 0.60).toFixed(2));
   }
 
   try {
@@ -769,7 +790,7 @@ window.editarRegistroPelu = async (idDoc) => {
       ingresoAvipet,
       insumosAdicionales: insumos,
       modoPago:           form.modoPago,
-      tridente:           form.tieneTrid,
+      tridente,
       editadoEn:          serverTimestamp(),
     });
     await Swal.fire({ icon:'success', title:'Registro actualizado', timer:1500, showConfirmButton:false });
@@ -1108,7 +1129,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v10 -- editar desde resumen semanal");
+console.log("finanzas.js v12 -- modos correctos con tridente 33pct");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
