@@ -483,11 +483,12 @@ window.mostrarDashboardPelu = async () => {
               '<p style="font-size:9px;font-weight:900;color:'+(pagado?'#16a34a':'#dc2626')+';margin:0;">'+(pagado?'PAGADO '+modoLabel:'PENDIENTE')+'</p>' +
             '</div>' +
           '</div>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px;font-size:9px;">' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px;font-size:9px;align-items:center;">' +
             '<span style="color:#7c3aed;font-weight:700;">Pelu: '+(tieneA1?'($'+peluBruto+' - $1) = ':'')+'$'+pa.toFixed(2)+'</span>' +
             (tieneA1?'<span style="color:#2563eb;font-weight:700;">Ayu1: $'+a1.toFixed(2)+'</span>':'') +
             (tieneAx?'<span style="color:#ea580c;font-weight:700;">Extra: $'+ax.toFixed(2)+'</span>':'') +
             '<span style="color:#16a34a;font-weight:900;">Avipet: '+(tieneA1?'($'+avBruto+' - $1) = ':'')+'$'+n.toFixed(2)+'</span>' +
+            '<button onclick="window.editarRegistroPelu(\''+r.id+'\')" style="margin-left:auto;background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:8px;font-weight:900;cursor:pointer;text-transform:uppercase;">Editar</button>' +
           '</div>';
         contenedor.appendChild(card);
       });
@@ -670,6 +671,112 @@ window.ajustarPagoPeluqueria = async () => {
 };
 
 // ─── RESUMEN SEMANAL PELUQUERIA ───────────────────────────
+window.editarRegistroPelu = async (idDoc) => {
+  // Cargar registro actual
+  let r;
+  try {
+    const snap = await getDoc(doc(db, "servicios_estetica", idDoc));
+    if (!snap.exists()) return alert("Registro no encontrado.");
+    r = { id: snap.id, ...snap.data() };
+  } catch(e) { return alert("Error cargando registro: " + e.message); }
+
+  const precio     = parseFloat(r.precioTotal||0);
+  const tieneAyu1  = parseFloat(r.pagoAyudante1||0) > 0;
+  const tieneAyuEx = parseFloat(r.pagoAyudanteExtra||0) > 0;
+  const tieneTrid  = r.tridente || false;
+
+  const { value: form } = await Swal.fire({
+    title: 'Editar: ' + (r.paciente||'---'),
+    width: 500,
+    html:
+      '<div style="text-align:left;display:flex;flex-direction:column;gap:10px;">' +
+
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Monto cobrado ($)</label>' +
+      '<input id="ep_precio" type="number" step="0.50" min="0" value="'+precio.toFixed(2)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
+
+      '<div style="display:flex;gap:12px;align-items:center;">' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;cursor:pointer;">' +
+          '<input type="checkbox" id="ep_ayu1" '+(tieneAyu1?'checked':'')+' style="width:16px;height:16px;accent-color:#2563eb;"> Ayudante Principal</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;cursor:pointer;">' +
+          '<input type="checkbox" id="ep_ayuex" '+(tieneAyuEx?'checked':'')+' style="width:16px;height:16px;accent-color:#ea580c;"> Ayud. Extra</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;cursor:pointer;">' +
+          '<input type="checkbox" id="ep_trid" '+(tieneTrid?'checked':'')+' style="width:16px;height:16px;accent-color:#7c3aed;"> Tridente</label>' +
+      '</div>' +
+
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Insumos adicionales ($)</label>' +
+      '<input id="ep_insumos" type="number" step="0.50" min="0" value="'+(parseFloat(r.insumosAdicionales||0)).toFixed(2)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;" placeholder="0.00"></div>' +
+
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Modo de pago</label>' +
+      '<select id="ep_modo" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;outline:none;background:#fff;">' +
+        '<option value="usd" '+(r.modoPago==='usd'?'selected':'')+'>USD</option>' +
+        '<option value="bs" '+(r.modoPago==='bs'?'selected':'')+'>Bolivares</option>' +
+        '<option value="mixto" '+(r.modoPago==='mixto'?'selected':'')+'>Mixto</option>' +
+      '</select></div>' +
+
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Guardar cambios',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#f59e0b',
+    preConfirm: function() {
+      return {
+        precioTotal:       parseFloat(document.getElementById('ep_precio')?.value)  || 0,
+        tieneAyu1:         document.getElementById('ep_ayu1')?.checked  || false,
+        tieneAyuEx:        document.getElementById('ep_ayuex')?.checked || false,
+        tieneTrid:         document.getElementById('ep_trid')?.checked  || false,
+        insumosAdicionales:parseFloat(document.getElementById('ep_insumos')?.value) || 0,
+        modoPago:          document.getElementById('ep_modo')?.value    || 'usd',
+      };
+    }
+  });
+
+  if (!form) return;
+
+  // Recalcular pagos
+  const p = form.precioTotal;
+  const insumos = form.insumosAdicionales;
+  const base = p - insumos;
+
+  // Tridente: Extra hizo todo solo (no pelu ni ayu1, avipet se queda con todo)
+  let pagoPeluquera = 0, pagoAyudante1 = 0, pagoAyudanteExtra = 0, ingresoAvipet = 0;
+
+  if (form.tieneTrid) {
+    // Extra hizo todo solo: Extra = 40% - insumos, Avipet = 60%
+    pagoAyudanteExtra = parseFloat((base * 0.40).toFixed(2));
+    ingresoAvipet     = parseFloat((base * 0.60).toFixed(2));
+  } else if (form.tieneAyuEx) {
+    // Peluquera + Extra: Pelu = 40%-$1, Extra = $1, Avipet = 60%-$1
+    pagoPeluquera     = parseFloat((base * 0.40 - 1).toFixed(2));
+    pagoAyudanteExtra = 1;
+    ingresoAvipet     = parseFloat((base * 0.60 - 1).toFixed(2));
+  } else if (form.tieneAyu1) {
+    // Peluquera + Ayu1: Pelu = 40%-$1, Ayu1 = $2 (=$1pelu+$1avipet), Avipet = 60%-$1
+    pagoPeluquera  = parseFloat((base * 0.40 - 1).toFixed(2));
+    pagoAyudante1  = 2;
+    ingresoAvipet  = parseFloat((base * 0.60 - 1).toFixed(2));
+  } else {
+    // Solo peluquera
+    pagoPeluquera  = parseFloat((base * 0.40).toFixed(2));
+    ingresoAvipet  = parseFloat((base * 0.60).toFixed(2));
+  }
+
+  try {
+    await updateDoc(doc(db, "servicios_estetica", idDoc), {
+      precioTotal:        p,
+      pagoPeluquera,
+      pagoAyudante1,
+      pagoAyudanteExtra,
+      ingresoAvipet,
+      insumosAdicionales: insumos,
+      modoPago:           form.modoPago,
+      tridente:           form.tieneTrid,
+      editadoEn:          serverTimestamp(),
+    });
+    await Swal.fire({ icon:'success', title:'Registro actualizado', timer:1500, showConfirmButton:false });
+    window.mostrarDashboardPelu();
+  } catch(e) { alert("Error guardando: " + e.message); }
+};
+
 window.verResumenSemanalPelu = async () => {
   try {
     const hoy = new Date();
@@ -999,7 +1106,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v8 — deuda descuenta solo del monto en Bs");
+console.log("finanzas.js v9 — editar registro peluqueria");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
