@@ -838,6 +838,7 @@ window.verResumenSemanalPelu = async () => {
     let perrosConAyu=0, perrosSinAyu=0;
     let totalPeluUSD=0, totalPeluBS=0, totalAvipetUSD=0, totalAvipetBS=0;
     let totalBrutoUSD=0, totalBrutoBS=0;
+    let totalAyuExtUSD=0, totalAyuExtBS=0;
     let rows = '';
 
     servicios.forEach(function(r) {
@@ -859,21 +860,24 @@ window.verResumenSemanalPelu = async () => {
       // Acumular por moneda para el desglose USD/Bs
       const modoPagoR = r.modoPago || 'usd';
       if (modoPagoR === 'bs') {
-        totalPeluBS   += pagPelu;
-        totalAvipetBS += neto;
-        totalBrutoBS  += precio;
+        totalPeluBS      += pagPelu;
+        totalAvipetBS    += neto;
+        totalBrutoBS     += precio;
+        totalAyuExtBS    += pagAx;
       } else if (modoPagoR === 'mixto') {
-        // Mitad en USD, mitad en Bs
-        totalPeluUSD   += pagPelu / 2;
-        totalPeluBS    += pagPelu / 2;
-        totalAvipetUSD += neto / 2;
-        totalAvipetBS  += neto / 2;
-        totalBrutoUSD  += precio / 2;
-        totalBrutoBS   += precio / 2;
+        totalPeluUSD     += pagPelu / 2;
+        totalPeluBS      += pagPelu / 2;
+        totalAvipetUSD   += neto / 2;
+        totalAvipetBS    += neto / 2;
+        totalBrutoUSD    += precio / 2;
+        totalBrutoBS     += precio / 2;
+        totalAyuExtUSD   += pagAx / 2;
+        totalAyuExtBS    += pagAx / 2;
       } else {
-        totalPeluUSD   += pagPelu;
-        totalAvipetUSD += neto;
-        totalBrutoUSD  += precio;
+        totalPeluUSD     += pagPelu;
+        totalAvipetUSD   += neto;
+        totalBrutoUSD    += precio;
+        totalAyuExtUSD   += pagAx;
       }
 
       // Desglose de la resta
@@ -995,9 +999,10 @@ window.verResumenSemanalPelu = async () => {
 
     htmlModal += '<div style="background:#fff7ed;border-radius:10px;padding:8px;text-align:center;border:2px solid #fed7aa;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#ea580c;text-transform:uppercase;">Ayud. Extra</p>';
-    htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;">$' + totalAyuExt.toFixed(2) + '</p>';
-    htmlModal += '<p style="font-size:8px;color:#94a3b8;">hizo todo solo</p>';
-    htmlModal += _desglosDeuda(0, totalAyuExt, deudasEquipo['ayuext']||0, '#ea580c', '#92400e');
+    if (totalAyuExtUSD > 0) htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;margin:0;">$' + totalAyuExtUSD.toFixed(2) + ' USD</p>';
+    if (totalAyuExtBS  > 0) htmlModal += '<p style="font-size:14px;font-weight:900;color:#92400e;margin:0;">$' + totalAyuExtBS.toFixed(2) + ' en Bs</p>';
+    if (totalAyuExtUSD===0 && totalAyuExtBS===0) htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;margin:0;">$0.00</p>';
+    htmlModal += _desglosDeuda(totalAyuExtUSD, totalAyuExtBS, deudasEquipo['ayuext']||0, '#ea580c', '#92400e');
     htmlModal += '</div>';
 
     htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
@@ -1129,7 +1134,7 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v12 -- modos correctos con tridente 33pct");
+console.log("finanzas.js v13 -- AyuExt con desglose USD/Bs");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS
