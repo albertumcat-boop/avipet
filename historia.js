@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v39 -- doctorVerificado como fallback");
+console.log("✅ historia.js v41 -- fix categorias con tildes en selector");
 // respaldarProgresoLocal definida localmente para evitar doble carga de main.js
 const respaldarProgresoLocal = () => {
   try {
@@ -1203,9 +1203,9 @@ window.cargarSelectorServicios = async () => {
 
     Object.entries(porCat).sort().forEach(([cat, servicios]) => {
       // Buscar optgroup existente limpiando emojis del label
-      const _limpiar = s => s.replace(/[^\x00-\x7F]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+      const _limpiar = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
       let grp = Array.from(sel.querySelectorAll('optgroup'))
-        .find(g => _limpiar(g.label) === cat || _limpiar(g.label).includes(cat) || cat.includes(_limpiar(g.label)));
+        .find(g => _limpiar(g.label) === _limpiar(cat) || _limpiar(g.label).includes(_limpiar(cat)) || _limpiar(cat).includes(_limpiar(g.label)));
 
       if (!grp) {
         grp = document.createElement('optgroup');
@@ -2122,7 +2122,7 @@ window._abrirConsultaParaEditar = async (idConsulta) => {
       set('precioVenta',  r.montoVenta);
 
       // Guardar el ID para que al guardar actualice en vez de crear
-      window._idConsultaEditando = idConsulta;
+      window._editandoConsultaId = idConsulta;
 
       // Seleccionar el doctor
       if (r.doctor) {
