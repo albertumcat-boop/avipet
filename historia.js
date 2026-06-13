@@ -1191,6 +1191,7 @@ window.cargarSelectorServicios = async () => {
 
     // 2. Los servicios que quedaron (nuevos, no estaban en el HTML) → agregar en su categoría
     const nuevos = Object.values(serviciosFirebase);
+    console.log('[AVIPET] Servicios nuevos (no en HTML):', nuevos.map(s=>s.id+'→'+s.categoria));
     if (nuevos.length === 0) return;
 
     // Agrupar por categoría
