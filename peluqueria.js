@@ -114,26 +114,25 @@ window.abrirFotosBitacora = async (idDoc, telefono, paciente, duenio, condicion)
     }
   }).then(result => {
     if (result.isConfirmed) {
-      // Enviar por WhatsApp
-      window._enviarFotosWhatsApp(telefono, paciente, duenio, condicion, fotosActuales);
+      // Enviar por WhatsApp con link al reporte de evidencia
+      window._enviarFotosWhatsApp(telefono, paciente, duenio, condicion, fotosActuales, idDoc);
     }
   });
 };
 
-window._enviarFotosWhatsApp = (telefonoRaw, paciente, duenio, condicion, fotos) => {
+window._enviarFotosWhatsApp = (telefonoRaw, paciente, duenio, condicion, fotos, idDoc) => {
   if (!telefonoRaw || telefonoRaw.length < 7) {
     Swal.fire({ icon:'warning', title:'Sin teléfono', text:'Este registro no tiene número de teléfono.', timer:2000, showConfirmButton:false });
     return;
   }
   const tlf = telefonoRaw.replace(/[\s\-().+]/g,'');
+  const linkEvidencia = `https://avipet.vercel.app?evidencia=${idDoc}`;
   let msg = `🐾 Hola *${duenio}*, le informamos que *${paciente}* llegó hoy a AVIPET.\n\n`;
   if (condicion) msg += `📋 *Estado al llegar:* ${condicion}\n\n`;
   if (fotos && fotos.length > 0) {
-    msg += `📷 *Fotos de evidencia (${fotos.length}):*\n`;
-    fotos.forEach((url, i) => { msg += `Foto ${i+1}: ${url}\n`; });
-    msg += '\n';
+    msg += `📷 *${fotos.length} foto(s) de evidencia* del estado de llegada:\n👉 ${linkEvidencia}\n\n`;
   }
-  msg += '_Guardamos este registro como evidencia para su tranquilidad y la nuestra. 🐾_\n— AVIPET';
+  msg += '_Este reporte queda registrado como evidencia del estado de la mascota al momento del ingreso._\n— AVIPET 🐾';
   window.open('https://wa.me/' + tlf + '?text=' + encodeURIComponent(msg), '_blank');
 };
 

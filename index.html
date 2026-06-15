@@ -1182,6 +1182,64 @@
  </div>
 </div>
 
+<!-- PÁGINA PÚBLICA DE EVIDENCIA DE LLEGADA (?evidencia=ID) -->
+<div id="paginaEvidencia" style="display:none;min-height:100vh;background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 50%,#fff7ed 100%);font-family:system-ui,sans-serif;padding:0 0 40px 0;">
+  <div style="background:#1e293b;padding:14px 20px;display:flex;align-items:center;gap:12px;">
+    <img src="https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_avipet.png" style="height:36px;border-radius:8px;" onerror="this.style.display='none'">
+    <div>
+      <p style="color:#fbbf24;font-size:13px;font-weight:900;margin:0;letter-spacing:1px;">AVIPET</p>
+      <p style="color:#94a3b8;font-size:9px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:1px;">Reporte de Evidencia de Llegada</p>
+    </div>
+  </div>
+  <div style="max-width:480px;margin:0 auto;padding:20px 16px;">
+    <div id="evCard" style="background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,0.10);overflow:hidden;">
+      <!-- Cargando -->
+      <div id="evLoading" style="padding:48px;text-align:center;">
+        <div style="font-size:32px;margin-bottom:12px;">🐾</div>
+        <p style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Cargando reporte...</p>
+      </div>
+      <!-- Contenido (oculto hasta cargar) -->
+      <div id="evContent" style="display:none;">
+        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:20px;">
+          <p id="evEspecie" style="font-size:10px;font-weight:900;color:#fef3c7;text-transform:uppercase;letter-spacing:2px;margin:0 0 4px 0;"></p>
+          <p id="evMascota" style="font-size:26px;font-weight:900;color:#fff;margin:0 0 2px 0;"></p>
+          <p id="evDuenio" style="font-size:12px;color:#fef9c3;font-weight:700;margin:0;"></p>
+        </div>
+        <div style="padding:16px;">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+            <span id="evFecha" style="background:#f1f5f9;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:900;color:#475569;"></span>
+            <span id="evHora" style="background:#f1f5f9;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:900;color:#475569;"></span>
+            <span id="evServicio" style="background:#dbeafe;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:900;color:#1d4ed8;"></span>
+          </div>
+          <div id="evCondicionBox" style="display:none;background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;padding:12px;margin-bottom:16px;">
+            <p style="font-size:9px;font-weight:900;color:#92400e;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px 0;">⚠️ Condición al llegar</p>
+            <p id="evCondicion" style="font-size:13px;font-weight:700;color:#78350f;margin:0;"></p>
+          </div>
+          <div id="evAfeccionBox" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:12px;margin-bottom:16px;">
+            <p style="font-size:9px;font-weight:900;color:#991b1b;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px 0;">🔴 Afección encontrada</p>
+            <p id="evAfeccion" style="font-size:13px;font-weight:700;color:#7f1d1d;margin:0;"></p>
+          </div>
+          <div id="evFotosSection" style="display:none;">
+            <p style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px 0;">📷 Fotos de evidencia</p>
+            <div id="evFotosGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;"></div>
+          </div>
+          <div id="evSinFotos" style="display:none;text-align:center;padding:16px;">
+            <p style="font-size:11px;color:#94a3b8;font-weight:700;">Sin fotos en este registro</p>
+          </div>
+        </div>
+        <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:12px 16px;text-align:center;">
+          <p style="font-size:9px;color:#94a3b8;font-weight:700;margin:0;">Este reporte fue generado por AVIPET como evidencia del estado de la mascota al momento de ingresar al servicio.</p>
+        </div>
+      </div>
+      <!-- Error -->
+      <div id="evError" style="display:none;padding:48px;text-align:center;">
+        <div style="font-size:32px;margin-bottom:12px;">❌</div>
+        <p style="font-size:12px;color:#ef4444;font-weight:700;">Reporte no encontrado</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- IMPORTS JS -->
 <script type="module">
  import('./firebase-config.js').catch(() => {});
@@ -1292,6 +1350,69 @@
     }
   }, 200);
 })();
+</script>
+
+<!-- LÓGICA PÁGINA DE EVIDENCIA -->
+<script type="module">
+import { db } from './firebase-config.js';
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const params = new URLSearchParams(location.search);
+const evidenciaId = params.get('evidencia');
+
+if (evidenciaId) {
+  // Ocultar toda la app, mostrar página de evidencia
+  document.querySelectorAll('body > *:not(#paginaEvidencia)').forEach(el => el.style.display = 'none');
+  document.getElementById('paginaEvidencia').style.display = 'block';
+
+  (async () => {
+    try {
+      const snap = await getDoc(doc(db, 'servicios_estetica', evidenciaId));
+      document.getElementById('evLoading').style.display = 'none';
+      if (!snap.exists()) { document.getElementById('evError').style.display = 'block'; return; }
+      const d = snap.data();
+
+      // Rellenar datos
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
+      set('evMascota',  d.paciente  || 'Mascota');
+      set('evDuenio',   '👤 ' + (d.duenio || 'Propietario'));
+      set('evEspecie',  (d.especie || '') + (d.raza ? ' · ' + d.raza : ''));
+      set('evFecha',    '📅 ' + (d.fechaSimple || ''));
+      set('evHora',     '🕐 ' + (d.hora || ''));
+      set('evServicio', d.servicio === 'solo_unas' ? '✂️ Corte de uñas' : '🛁 Baño y Corte');
+
+      if (d.condicion) {
+        document.getElementById('evCondicion').textContent = d.condicion;
+        document.getElementById('evCondicionBox').style.display = 'block';
+      }
+      if (d.afeccion) {
+        document.getElementById('evAfeccion').textContent = d.afeccion;
+        document.getElementById('evAfeccionBox').style.display = 'block';
+      }
+
+      const fotos = d.fotosLlegada || [];
+      if (fotos.length > 0) {
+        document.getElementById('evFotosSection').style.display = 'block';
+        const grid = document.getElementById('evFotosGrid');
+        fotos.forEach(url => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;border:2px solid #fbbf24;cursor:pointer;';
+          img.onclick = () => window.open(url, '_blank');
+          grid.appendChild(img);
+        });
+      } else {
+        document.getElementById('evSinFotos').style.display = 'block';
+      }
+
+      document.getElementById('evContent').style.display = 'block';
+    } catch(e) {
+      document.getElementById('evLoading').style.display = 'none';
+      document.getElementById('evError').style.display = 'block';
+      console.error(e);
+    }
+  })();
+}
 </script>
 </body>
 </html>
