@@ -771,7 +771,24 @@
  </div>
  <div class="pt-2">
  <h3 class="text-[10px] font-black text-slate-400 uppercase mb-1 italic tracking-widest"> Notas de Salud / Conducta</h3>
- <textarea id="pCondicion" rows="3" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 text-[11px] font-bold text-slate-600 focus:border-blue-600 outline-none leading-tight" placeholder="¿Es agresivo? ¿Verrugas? ¿Soplos?"></textarea>
+ <textarea id="pCondicion" rows="3" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 text-[11px] font-bold text-slate-600 focus:border-blue-600 outline-none leading-tight" placeholder="¿Es agresivo? ¿Verrugas? ¿Soplos? ¿Alguna afección al llegar?"></textarea>
+ </div>
+ <!-- FOTOS DE LLEGADA -->
+ <div class="pt-2">
+   <h3 class="text-[10px] font-black text-amber-600 uppercase mb-2 italic tracking-widest">📷 Evidencia de llegada</h3>
+   <div id="fotosLlegadaPeluPreview" class="flex flex-wrap gap-2 mb-2 min-h-[0px]"></div>
+   <div class="flex gap-2">
+     <label class="flex-1 flex items-center justify-center gap-1 bg-amber-50 border-2 border-dashed border-amber-300 rounded-xl p-2 cursor-pointer hover:bg-amber-100 transition-colors">
+       <span class="text-[10px] font-black text-amber-600 uppercase">📷 Agregar foto</span>
+       <input type="file" id="inputFotosPelu" accept="image/*" multiple class="hidden" onchange="window.previsualizarFotosPelu(this.files)">
+     </label>
+     <button type="button" onclick="window.abrirQRFotoPelu()" class="bg-amber-500 hover:bg-amber-600 text-white font-black text-[10px] uppercase px-3 py-2 rounded-xl">QR 📱</button>
+   </div>
+   <!-- Historial de fotos de llegadas anteriores -->
+   <div id="historialFotosPelu" class="hidden mt-3 border border-amber-100 rounded-xl p-2 bg-amber-50/40">
+     <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">📋 Historial de llegadas anteriores:</p>
+     <div id="historialFotosGrid" class="flex flex-col gap-2"></div>
+   </div>
  </div>
  </div>
  <div class="space-y-4 lg:border-r lg:pr-6 border-slate-100">

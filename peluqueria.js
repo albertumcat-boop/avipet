@@ -1,8 +1,6 @@
 // =========================================================
-// AVIPET — peluqueria.js  v3
-// NUEVO: tarjeta fidelidad VIP rediseñada (diseño premium)
-//        historial últimos 7 días desde bitácora sin ir a cierre
-//        impresión rápida de recibo desde bitácora
+// AVIPET — peluqueria.js  v4
+// NUEVO: fotos de evidencia de llegada + historial por cédula
 // =========================================================
 
 import { db } from './firebase-config.js';
@@ -13,6 +11,93 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
+
+// ─── FOTOS DE LLEGADA ─────────────────────────────────────
+const _comprimirPelu = (b64, maxW=900, q=0.60) => new Promise(res => {
+  const img = new Image(); img.src = b64;
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    let w = img.width, h = img.height;
+    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = "#FFF"; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+    res(c.toDataURL('image/jpeg', q));
+  };
+  img.onerror = () => res(b64);
+});
+
+window._fotosPeluArr = []; // array de base64 pendientes de guardar
+
+window.previsualizarFotosPelu = async (files) => {
+  const cont = document.getElementById('fotosLlegadaPeluPreview');
+  if (!cont || !files?.length) return;
+  for (const file of files) {
+    const b64raw = await new Promise(res => {
+      const r = new FileReader(); r.readAsDataURL(file);
+      r.onload = e => res(e.target.result); r.onerror = () => res('');
+    });
+    if (!b64raw) continue;
+    const b64 = await _comprimirPelu(b64raw);
+    window._fotosPeluArr.push(b64);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:inline-block;';
+    wrap.innerHTML = `<img src="${b64}" style="height:72px;width:72px;object-fit:cover;border-radius:10px;border:2px solid #fbbf24;cursor:pointer;"
+      onclick="Swal.fire({imageUrl:'${b64}',showCloseButton:true,showConfirmButton:false})">
+      <button onclick="window._quitarFotoPelu(this)" data-b64="${b64.substring(0,30)}"
+        style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:900;cursor:pointer;line-height:1;">×</button>`;
+    cont.appendChild(wrap);
+  }
+  document.getElementById('inputFotosPelu').value = '';
+};
+
+window._quitarFotoPelu = (btn) => {
+  const wrap = btn.parentElement;
+  const img = wrap.querySelector('img');
+  window._fotosPeluArr = window._fotosPeluArr.filter(f => !f.startsWith(img.src.substring(0,30)));
+  wrap.remove();
+};
+
+window.abrirQRFotoPelu = () => {
+  const id = 'pelu_' + Date.now();
+  window._qrPeluId = id;
+  const url = `${location.origin}${location.pathname}?modo=foto_pelu&id=${id}`;
+  const div = document.createElement('div');
+  div.id = 'qrPeluDiv';
+  Swal.fire({
+    title: '📱 Escanea para subir foto',
+    html: `<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Usa la cámara del celular para subir la foto de evidencia.</p><div id="qrPeluDiv" style="display:flex;justify-content:center;margin:10px 0;"></div>`,
+    showConfirmButton: false, showCloseButton: true,
+    didOpen: () => {
+      new QRCode(document.getElementById('qrPeluDiv'), { text: url, width: 180, height: 180 });
+      // Escuchar foto subida via localStorage
+      window._qrPeluInterval = setInterval(() => {
+        const foto = localStorage.getItem('foto_pelu_' + id);
+        if (foto) {
+          localStorage.removeItem('foto_pelu_' + id);
+          clearInterval(window._qrPeluInterval);
+          window._fotosPeluArr.push(foto);
+          const cont = document.getElementById('fotosLlegadaPeluPreview');
+          if (cont) {
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'position:relative;display:inline-block;';
+            wrap.innerHTML = `<img src="${foto}" style="height:72px;width:72px;object-fit:cover;border-radius:10px;border:2px solid #fbbf24;">`;
+            cont.appendChild(wrap);
+          }
+          Swal.close();
+          Swal.fire({ icon:'success', title:'Foto recibida ✓', timer:1500, showConfirmButton:false });
+        }
+      }, 1500);
+    },
+    willClose: () => clearInterval(window._qrPeluInterval)
+  });
+};
+
+window._limpiarFotosPelu = () => {
+  window._fotosPeluArr = [];
+  const cont = document.getElementById('fotosLlegadaPeluPreview');
+  if (cont) cont.innerHTML = '';
+};
 
 // ─── GESTIÓN DE MASCOTAS EN FORMULARIO ───────────────────
 window.agregarMascotaPelu = () => {
@@ -148,7 +233,8 @@ window.guardarPeluqueriaPro = async () => {
         pagoPeluquera:pagoPeluEsta,pagoAyudante1:pagoAyu1Esta,pagoAyudanteExtra:pagoAyuExtEsta,
         ingresoAvipet:esPremio?0:ingresoAvipetEsta,
         estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,
-        montoPagadoUSD:0,montoPagadoBS:0,modoPago:''
+        montoPagadoUSD:0,montoPagadoBS:0,modoPago:'',
+        fotosLlegada: window._fotosPeluArr.length > 0 ? [...window._fotosPeluArr] : []
       });
 
       await setDoc(fidRef,{
@@ -197,6 +283,9 @@ window.guardarPeluqueriaPro = async () => {
 function _limpiarPelu(){
   ['pCedula','pDuenio','pNombre','pRaza','pAjuste','pCondicion','pTelefono','pDireccion']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  window._limpiarFotosPelu();
+  const histDiv = document.getElementById('historialFotosPelu');
+  if (histDiv) histDiv.classList.add('hidden');
   ['pTotalCobro','pResPeluquera','pResAyudante1','pResAyudanteExtra']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.innerText="$ 0.00";});
   const a1=document.getElementById('pAyudante1');
@@ -836,7 +925,8 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
         });
       } catch(e) {}
 
-      // Desde servicios de peluquería
+      // Desde servicios de peluquería — también extraer historial de fotos
+      const registrosConFotos = [];
       try {
         const snapPelu = await getDocs(query(
           collection(db,"servicios_estetica"),
@@ -845,8 +935,42 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
         snapPelu.forEach(d => {
           const r = d.data();
           if (r.paciente) mascotasSet.set(r.paciente.toUpperCase(), r.raza || "");
+          if (r.fotosLlegada && r.fotosLlegada.length > 0) {
+            registrosConFotos.push({
+              fecha: r.fechaSimple || '---',
+              hora: r.hora || '',
+              paciente: r.paciente || '',
+              condicion: r.condicion || '',
+              fotos: r.fotosLlegada
+            });
+          }
         });
       } catch(e) {}
+
+      // Mostrar historial de fotos si existen
+      const histDiv = document.getElementById('historialFotosPelu');
+      const histGrid = document.getElementById('historialFotosGrid');
+      if (histDiv && histGrid && registrosConFotos.length > 0) {
+        histGrid.innerHTML = '';
+        registrosConFotos.forEach(reg => {
+          const bloque = document.createElement('div');
+          bloque.style.cssText = 'border:1px solid #fde68a;border-radius:10px;padding:8px;background:#fffbeb;margin-bottom:6px;';
+          const fotosHtml = reg.fotos.map(f =>
+            `<img src="${f}" style="height:60px;width:60px;object-fit:cover;border-radius:8px;border:2px solid #fbbf24;cursor:pointer;"
+              onclick="Swal.fire({imageUrl:'${f}',showCloseButton:true,showConfirmButton:false,width:'90vw'})">`
+          ).join('');
+          bloque.innerHTML = `
+            <p style="font-size:9px;font-weight:900;color:#92400e;text-transform:uppercase;margin-bottom:4px;">
+              🐾 ${reg.paciente} — ${reg.fecha} ${reg.hora}
+            </p>
+            ${reg.condicion ? `<p style="font-size:9px;color:#b45309;margin-bottom:4px;font-style:italic;">[!] ${reg.condicion}</p>` : ''}
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">${fotosHtml}</div>`;
+          histGrid.appendChild(bloque);
+        });
+        histDiv.classList.remove('hidden');
+      } else if (histDiv) {
+        histDiv.classList.add('hidden');
+      }
 
       // Desde pacientes_peluqueria
       try {

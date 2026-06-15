@@ -2846,3 +2846,6 @@ window.cargarRegistroCompras = async () => {
     tablaDiv.innerHTML = '<p style="color:#dc2626;text-align:center;padding:16px;font-size:10px;font-weight:900;">Error: '+e.message+'</p>';
   }
 };
+
+// Cargar servicios de Firebase al iniciar (fix: no desaparecen al refrescar)
+setTimeout(() => window.cargarSelectorServicios?.(), 400);
