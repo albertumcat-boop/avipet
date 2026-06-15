@@ -3,100 +3,138 @@
 // NUEVO: fotos de evidencia de llegada + historial por cédula
 // =========================================================
 
-import { db } from './firebase-config.js';
+import { db, storage } from './firebase-config.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   deleteDoc, getDocs, query, where, orderBy, serverTimestamp,
   arrayUnion, limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
 
-// ─── FOTOS DE LLEGADA ─────────────────────────────────────
-const _comprimirPelu = (b64, maxW=900, q=0.60) => new Promise(res => {
-  const img = new Image(); img.src = b64;
-  img.onload = () => {
-    const c = document.createElement('canvas');
-    let w = img.width, h = img.height;
-    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-    c.width = w; c.height = h;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = "#FFF"; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
-    res(c.toDataURL('image/jpeg', q));
+// ─── FOTOS DE EVIDENCIA (desde bitácora) ──────────────────
+const _comprimirPelu = (file) => new Promise(res => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = e => {
+    const img = new Image(); img.src = e.target.result;
+    img.onload = () => {
+      const maxW = 1000, q = 0.65;
+      const c = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#FFF'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+      c.toBlob(blob => res(blob), 'image/jpeg', q);
+    };
+    img.onerror = () => res(null);
   };
-  img.onerror = () => res(b64);
+  reader.onerror = () => res(null);
 });
 
-window._fotosPeluArr = []; // array de base64 pendientes de guardar
+// Abre modal de fotos desde la bitácora
+window.abrirFotosBitacora = async (idDoc, telefono, paciente, duenio, condicion) => {
+  // Cargar fotos existentes
+  let fotosActuales = [];
+  try {
+    const snap = await getDoc(doc(db, 'servicios_estetica', idDoc));
+    if (snap.exists()) fotosActuales = snap.data().fotosLlegada || [];
+  } catch(e) {}
 
-window.previsualizarFotosPelu = async (files) => {
-  const cont = document.getElementById('fotosLlegadaPeluPreview');
-  if (!cont || !files?.length) return;
-  for (const file of files) {
-    const b64raw = await new Promise(res => {
-      const r = new FileReader(); r.readAsDataURL(file);
-      r.onload = e => res(e.target.result); r.onerror = () => res('');
+  const _renderGrid = (fotos, contenedor) => {
+    contenedor.innerHTML = '';
+    if (!fotos.length) {
+      contenedor.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:12px;">Sin fotos aún</p>';
+      return;
+    }
+    fotos.forEach((url, i) => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.cssText = 'height:80px;width:80px;object-fit:cover;border-radius:10px;border:2px solid #fbbf24;cursor:pointer;flex-shrink:0;';
+      img.onclick = () => Swal.fire({ imageUrl: url, showCloseButton: true, showConfirmButton: false, width: '90vw' });
+      contenedor.appendChild(img);
     });
-    if (!b64raw) continue;
-    const b64 = await _comprimirPelu(b64raw);
-    window._fotosPeluArr.push(b64);
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative;display:inline-block;';
-    wrap.innerHTML = `<img src="${b64}" style="height:72px;width:72px;object-fit:cover;border-radius:10px;border:2px solid #fbbf24;cursor:pointer;"
-      onclick="Swal.fire({imageUrl:'${b64}',showCloseButton:true,showConfirmButton:false})">
-      <button onclick="window._quitarFotoPelu(this)" data-b64="${b64.substring(0,30)}"
-        style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:900;cursor:pointer;line-height:1;">×</button>`;
-    cont.appendChild(wrap);
-  }
-  document.getElementById('inputFotosPelu').value = '';
-};
+  };
 
-window._quitarFotoPelu = (btn) => {
-  const wrap = btn.parentElement;
-  const img = wrap.querySelector('img');
-  window._fotosPeluArr = window._fotosPeluArr.filter(f => !f.startsWith(img.src.substring(0,30)));
-  wrap.remove();
-};
+  const htmlModal = `
+    <div style="text-align:left;">
+      <p style="font-size:10px;color:#92400e;font-weight:900;margin-bottom:8px;">🐾 ${paciente} — ${duenio}</p>
+      ${condicion ? `<p style="font-size:9px;color:#b45309;background:#fef3c7;padding:6px 8px;border-radius:8px;margin-bottom:8px;">[!] ${condicion}</p>` : ''}
+      <div id="gridFotosBit" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px;margin-bottom:12px;"></div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:6px;background:#fffbeb;border:2px dashed #fbbf24;border-radius:12px;padding:10px;cursor:pointer;font-size:10px;font-weight:900;color:#d97706;text-transform:uppercase;">
+        📷 Agregar fotos
+        <input type="file" id="inputFotosBit" accept="image/*" multiple style="display:none;">
+      </label>
+      <p id="statusFotosBit" style="font-size:9px;color:#64748b;text-align:center;margin-top:6px;min-height:14px;"></p>
+    </div>`;
 
-window.abrirQRFotoPelu = () => {
-  const id = 'pelu_' + Date.now();
-  window._qrPeluId = id;
-  const url = `${location.origin}${location.pathname}?modo=foto_pelu&id=${id}`;
-  const div = document.createElement('div');
-  div.id = 'qrPeluDiv';
   Swal.fire({
-    title: '📱 Escanea para subir foto',
-    html: `<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Usa la cámara del celular para subir la foto de evidencia.</p><div id="qrPeluDiv" style="display:flex;justify-content:center;margin:10px 0;"></div>`,
-    showConfirmButton: false, showCloseButton: true,
-    didOpen: () => {
-      new QRCode(document.getElementById('qrPeluDiv'), { text: url, width: 180, height: 180 });
-      // Escuchar foto subida via localStorage
-      window._qrPeluInterval = setInterval(() => {
-        const foto = localStorage.getItem('foto_pelu_' + id);
-        if (foto) {
-          localStorage.removeItem('foto_pelu_' + id);
-          clearInterval(window._qrPeluInterval);
-          window._fotosPeluArr.push(foto);
-          const cont = document.getElementById('fotosLlegadaPeluPreview');
-          if (cont) {
-            const wrap = document.createElement('div');
-            wrap.style.cssText = 'position:relative;display:inline-block;';
-            wrap.innerHTML = `<img src="${foto}" style="height:72px;width:72px;object-fit:cover;border-radius:10px;border:2px solid #fbbf24;">`;
-            cont.appendChild(wrap);
-          }
-          Swal.close();
-          Swal.fire({ icon:'success', title:'Foto recibida ✓', timer:1500, showConfirmButton:false });
+    title: '📷 Fotos de evidencia',
+    html: htmlModal,
+    showCancelButton: true,
+    cancelButtonText: 'Cerrar',
+    confirmButtonText: '📲 Enviar por WhatsApp',
+    confirmButtonColor: '#16a34a',
+    showDenyButton: false,
+    didOpen: async () => {
+      const grid = document.getElementById('gridFotosBit');
+      _renderGrid(fotosActuales, grid);
+
+      document.getElementById('inputFotosBit').addEventListener('change', async function() {
+        const files = Array.from(this.files);
+        if (!files.length) return;
+        const status = document.getElementById('statusFotosBit');
+        status.textContent = '⏳ Subiendo fotos...';
+        const nuevasUrls = [];
+        for (const file of files) {
+          try {
+            const blob = await _comprimirPelu(file);
+            if (!blob) continue;
+            const storageRef = ref(storage, `peluqueria/${idDoc}/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
+            const url = await getDownloadURL(storageRef);
+            nuevasUrls.push(url);
+          } catch(e) { console.error('Error subiendo foto:', e); }
         }
-      }, 1500);
-    },
-    willClose: () => clearInterval(window._qrPeluInterval)
+        if (nuevasUrls.length) {
+          fotosActuales = [...fotosActuales, ...nuevasUrls];
+          await updateDoc(doc(db, 'servicios_estetica', idDoc), {
+            fotosLlegada: fotosActuales,
+            fotosActualizadoEn: serverTimestamp()
+          });
+          _renderGrid(fotosActuales, grid);
+          status.textContent = `✅ ${nuevasUrls.length} foto(s) guardada(s)`;
+        } else {
+          status.textContent = '❌ No se pudieron subir las fotos';
+        }
+        this.value = '';
+      });
+    }
+  }).then(result => {
+    if (result.isConfirmed) {
+      // Enviar por WhatsApp
+      window._enviarFotosWhatsApp(telefono, paciente, duenio, condicion, fotosActuales);
+    }
   });
 };
 
-window._limpiarFotosPelu = () => {
-  window._fotosPeluArr = [];
-  const cont = document.getElementById('fotosLlegadaPeluPreview');
-  if (cont) cont.innerHTML = '';
+window._enviarFotosWhatsApp = (telefonoRaw, paciente, duenio, condicion, fotos) => {
+  if (!telefonoRaw || telefonoRaw.length < 7) {
+    Swal.fire({ icon:'warning', title:'Sin teléfono', text:'Este registro no tiene número de teléfono.', timer:2000, showConfirmButton:false });
+    return;
+  }
+  const tlf = telefonoRaw.replace(/[\s\-().+]/g,'');
+  let msg = `🐾 Hola *${duenio}*, le informamos que *${paciente}* llegó hoy a AVIPET.\n\n`;
+  if (condicion) msg += `📋 *Estado al llegar:* ${condicion}\n\n`;
+  if (fotos && fotos.length > 0) {
+    msg += `📷 *Fotos de evidencia (${fotos.length}):*\n`;
+    fotos.forEach((url, i) => { msg += `Foto ${i+1}: ${url}\n`; });
+    msg += '\n';
+  }
+  msg += '_Guardamos este registro como evidencia para su tranquilidad y la nuestra. 🐾_\n— AVIPET';
+  window.open('https://wa.me/' + tlf + '?text=' + encodeURIComponent(msg), '_blank');
 };
 
 // ─── GESTIÓN DE MASCOTAS EN FORMULARIO ───────────────────
@@ -234,7 +272,7 @@ window.guardarPeluqueriaPro = async () => {
         ingresoAvipet:esPremio?0:ingresoAvipetEsta,
         estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,
         montoPagadoUSD:0,montoPagadoBS:0,modoPago:'',
-        fotosLlegada: window._fotosPeluArr.length > 0 ? [...window._fotosPeluArr] : []
+        fotosLlegada: []
       });
 
       await setDoc(fidRef,{
@@ -283,7 +321,6 @@ window.guardarPeluqueriaPro = async () => {
 function _limpiarPelu(){
   ['pCedula','pDuenio','pNombre','pRaza','pAjuste','pCondicion','pTelefono','pDireccion']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-  window._limpiarFotosPelu();
   const histDiv = document.getElementById('historialFotosPelu');
   if (histDiv) histDiv.classList.add('hidden');
   ['pTotalCobro','pResPeluquera','pResAyudante1','pResAyudanteExtra']
@@ -379,6 +416,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
           <div class="flex gap-1 flex-wrap justify-end">
             <button type="button" onclick="window.togglePagoPeluqueria('${d.id}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${pagado?'bg-slate-200 text-slate-600':'bg-emerald-600 text-white'}">${pagado?'↩ Revertir':'💰 Pagar'}</button>
             ${d.mensajeEnviado?'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:900;">✅ Mensaje enviado</span>':'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#94a3b8;font-weight:900;">Sin mensaje</span>'}
+            <button type="button" onclick="window.abrirFotosBitacora('${d.id}','${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}','${(d.condicion||'').replace(/'/g,'').replace(/\n/g,' ')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${(d.fotosLlegada&&d.fotosLlegada.length)?'bg-amber-400 text-white':'bg-amber-100 text-amber-700 hover:bg-amber-400 hover:text-white'} transition-all">📷 ${(d.fotosLlegada&&d.fotosLlegada.length)?d.fotosLlegada.length+' foto(s)':'Fotos'}</button>
             <button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
             <button type="button" onclick="window.marcarEntregadoPelu('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.entregado?'bg-slate-200 text-slate-500':'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white'} transition-all">${d.entregado?'✅ Entregado':'🐕 Entregar'}</button>
             <button type="button" onclick="window.editarAfeccionBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.afeccion?'bg-orange-100 text-orange-700 hover:bg-orange-500 hover:text-white':'bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white'} transition-all">[E] ${d.afeccion?'Afeccion':'Nota'}</button>
