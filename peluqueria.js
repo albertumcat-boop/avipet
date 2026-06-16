@@ -3,31 +3,31 @@
 // NUEVO: fotos de evidencia de llegada + historial por cédula
 // =========================================================
 
-import { db, storage } from './firebase-config.js';
+import { db } from './firebase-config.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   deleteDoc, getDocs, query, where, orderBy, serverTimestamp,
   arrayUnion, limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
 
 // ─── FOTOS DE EVIDENCIA (desde bitácora) ──────────────────
+// Comprime imagen a base64 JPEG (igual que historia.js, sin Firebase Storage)
 const _comprimirPelu = (file) => new Promise(res => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = e => {
     const img = new Image(); img.src = e.target.result;
     img.onload = () => {
-      const maxW = 1000, q = 0.65;
+      const maxW = 900, q = 0.60;
       const c = document.createElement('canvas');
       let w = img.width, h = img.height;
       if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
       c.width = w; c.height = h;
       const ctx = c.getContext('2d');
       ctx.fillStyle = '#FFF'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
-      c.toBlob(blob => res(blob), 'image/jpeg', q);
+      res(c.toDataURL('image/jpeg', q)); // base64, no blob
     };
     img.onerror = () => res(null);
   };
@@ -87,27 +87,23 @@ window.abrirFotosBitacora = async (idDoc, telefono, paciente, duenio, condicion)
         if (!files.length) return;
         const status = document.getElementById('statusFotosBit');
         status.textContent = '⏳ Subiendo fotos...';
-        const nuevasUrls = [];
+        const nuevasB64 = [];
         for (const file of files) {
           try {
-            const blob = await _comprimirPelu(file);
-            if (!blob) continue;
-            const storageRef = ref(storage, `peluqueria/${idDoc}/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-            const url = await getDownloadURL(storageRef);
-            nuevasUrls.push(url);
-          } catch(e) { console.error('Error subiendo foto:', e); }
+            const b64 = await _comprimirPelu(file);
+            if (b64) nuevasB64.push(b64);
+          } catch(e) { console.error('Error comprimiendo foto:', e); }
         }
-        if (nuevasUrls.length) {
-          fotosActuales = [...fotosActuales, ...nuevasUrls];
+        if (nuevasB64.length) {
+          fotosActuales = [...fotosActuales, ...nuevasB64];
           await updateDoc(doc(db, 'servicios_estetica', idDoc), {
             fotosLlegada: fotosActuales,
             fotosActualizadoEn: serverTimestamp()
           });
           _renderGrid(fotosActuales, grid);
-          status.textContent = `✅ ${nuevasUrls.length} foto(s) guardada(s)`;
+          status.textContent = `✅ ${nuevasB64.length} foto(s) guardada(s)`;
         } else {
-          status.textContent = '❌ No se pudieron subir las fotos';
+          status.textContent = '❌ No se procesaron las fotos. Intenta de nuevo.';
         }
         this.value = '';
       });
@@ -129,10 +125,8 @@ window._enviarFotosWhatsApp = (telefonoRaw, paciente, duenio, condicion, fotos, 
   const linkEvidencia = `https://avipet.vercel.app?evidencia=${idDoc}`;
   let msg = `🐾 Hola *${duenio}*, le informamos que *${paciente}* llegó hoy a AVIPET.\n\n`;
   if (condicion) msg += `📋 *Estado al llegar:* ${condicion}\n\n`;
-  if (fotos && fotos.length > 0) {
-    msg += `📷 *${fotos.length} foto(s) de evidencia* del estado de llegada:\n👉 ${linkEvidencia}\n\n`;
-  }
-  msg += '_Este reporte queda registrado como evidencia del estado de la mascota al momento del ingreso._\n— AVIPET 🐾';
+  msg += `📷 *Ver reporte de llegada con fotos:*\n👉 ${linkEvidencia}\n\n`;
+  msg += '_Este reporte queda registrado como evidencia del estado de la mascota al momento del ingreso. Para su tranquilidad y la nuestra._ 🐾\n— AVIPET';
   window.open('https://wa.me/' + tlf + '?text=' + encodeURIComponent(msg), '_blank');
 };
 
