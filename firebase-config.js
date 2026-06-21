@@ -7,8 +7,6 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
 const firebaseConfig = {
     apiKey: "AIzaSyBd7HDH1wDbkq8T1XTsKUV0gBQ_O_BF7jI",
     authDomain: "avicolapet.firebaseapp.com",
@@ -40,4 +38,3 @@ try {
 }
 
 export { db };
-export const storage = getStorage(app);
