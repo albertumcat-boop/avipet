@@ -88,10 +88,10 @@ const recetas = {
   "CITOLOGIA 2 OIDOS":          { precioVenta:20,  insumos:[{nombre:"Hisopos - Tinciones",costo:4.00}] },
   "RASPADO PIEL":               { precioVenta:10,  insumos:[{nombre:"Hoja Bisturi",costo:3.00}] },
   "PERFIL ANEMICO":             { precioVenta:25,  insumos:[{nombre:"Kit Anemia",costo:8.00}] },
-  "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
-  "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
-  "EUTANASIA HASTA 25KG":       { precioVenta:140, insumos:[{nombre:"Propofol",costo:10.00},{nombre:"Xilacina",costo:3.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
-  "EUTANASIA HASTA 35KG":       { precioVenta:170, insumos:[{nombre:"Propofol",costo:15.00},{nombre:"Xilacina",costo:4.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
+  "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:4.00, preguntaCostoCC:0.50 },
+  "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:7.00, preguntaCostoCC:0.50 },
+  "EUTANASIA HASTA 25KG":       { precioVenta:140, insumos:[{nombre:"Propofol",costo:10.00},{nombre:"Xilacina",costo:3.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:10.00, preguntaCostoCC:0.50 },
+  "EUTANASIA HASTA 35KG":       { precioVenta:170, insumos:[{nombre:"Propofol",costo:15.00},{nombre:"Xilacina",costo:4.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:15.00, preguntaCostoCC:0.50 },
   "REFERIDO: EXAMEN DE HECES":  { precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
   "REFERIDO: EXAMENES DE ORINA":{ precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
   "REFERIDO: CULTIVOS":         { precioVenta:30,  insumos:[{nombre:"Pago Lab Externo",costo:15.00}] },
@@ -615,27 +615,43 @@ window.guardarFirebase = async (imp) => {
         if (!snapPq.exists()) continue;
         const rdPq = snapPq.data();
         if (!rdPq.preguntaActiva || !rdPq.preguntaInsumo) continue;
-        const { value: cantPq } = await Swal.fire({
+        const costoPote = parseFloat(rdPq.preguntaCostoPote)||0;
+        const costoCC = parseFloat(rdPq.preguntaCostoCC)||parseFloat(rdPq.preguntaCostoUnidad)||0;
+        const { value: respPq } = await Swal.fire({
           title: nomServAsk,
-          text: rdPq.preguntaTexto || '¿Cuánto se utilizó?',
-          input: 'number',
-          inputAttributes: { min:0, step:0.1 },
-          inputPlaceholder: rdPq.preguntaUnidadLabel||'ml',
+          html: '<div style="text-align:left;">'+
+            '<p style="font-size:11px;color:#475569;margin-bottom:10px;">'+(rdPq.preguntaTexto||'¿Cuánto se utilizó?')+'</p>'+
+            '<div style="display:flex;gap:8px;">'+
+            '<select id="pq_unidad_sel" style="flex:1;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;">'+
+            '<option value="pote">Pote(s) / Frasco(s) completo(s)</option>'+
+            '<option value="cc">CC / ml</option>'+
+            '</select>'+
+            '<input id="pq_cant_sel" type="number" min="0" step="0.1" placeholder="Cantidad" style="flex:1;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;"></div>'+
+            '</div>',
           confirmButtonText: 'Confirmar',
           confirmButtonColor:'#7c3aed',
-          allowOutsideClick:false
+          allowOutsideClick:false,
+          preConfirm: () => {
+            const unidad = document.getElementById('pq_unidad_sel').value;
+            const cantidad = parseFloat(document.getElementById('pq_cant_sel').value);
+            if (isNaN(cantidad) || cantidad < 0) { Swal.showValidationMessage('Ingresa una cantidad válida'); return false; }
+            return { unidad, cantidad };
+          }
         });
         fila.dataset.preguntaHecha='1';
-        if (cantPq===undefined||cantPq===null||cantPq==='') continue;
-        const cantidadUsada=parseFloat(cantPq)||0;
-        const costoTotal=cantidadUsada*(parseFloat(rdPq.preguntaCostoUnidad)||0);
+        if (!respPq) continue;
+        const { unidad: unidadUsada, cantidad: cantidadUsada } = respPq;
+        const costoPorUnidad = unidadUsada==='pote' ? costoPote : costoCC;
+        const costoTotal = cantidadUsada * costoPorUnidad;
         const grupoID=fila.getAttribute('data-grupo');
         const filaInsumo=Array.from(document.querySelectorAll(`.${grupoID}.insumo-fila`)).find(ins=>(ins.cells[0]?.innerText||'').toUpperCase().includes((rdPq.preguntaInsumo||'').toUpperCase()));
         if (filaInsumo) {
           const inpCant=filaInsumo.querySelector('.i-cant');
           const inpCost=filaInsumo.querySelector('.i-cost');
-          if (inpCant) inpCant.value=cantidadUsada;
-          if (inpCost) inpCost.value=(cantidadUsada>0?(costoTotal/cantidadUsada):0).toFixed(4);
+          // Se guarda cantidad=1 y costo=costoTotal para que el total ($1 x costoTotal) quede correcto
+          // sin importar si el doctor respondió en potes o en cc (se suma igual a insumos).
+          if (inpCant) inpCant.value=1;
+          if (inpCost) inpCost.value=costoTotal.toFixed(4);
         }
       } catch(e) { console.warn('Error en pregunta extra:', e); }
     }
@@ -1775,20 +1791,21 @@ window.renderizarTablaMaestra = async () => {
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Insumo afectado</label>'+
               '<select id="pq_insumo" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+
               (optsIns||'<option value="">-- Este servicio no tiene insumos --</option>')+'</select></div>'+
-              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Costo por unidad ($)</label>'+
-              '<input id="pq_costo" type="number" step="0.01" min="0" value="'+(rd.preguntaCostoUnidad||0)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Unidad</label>'+
-              '<input id="pq_unidad" type="text" value="'+(rd.preguntaUnidadLabel||'ml')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div></div>'+
-              '<p style="font-size:9px;color:#7c3aed;background:#f5f3ff;border-radius:8px;padding:8px;">Al guardar este servicio en Historia Clínica, se abrirá esta pregunta. La respuesta (cantidad) se multiplica por el costo por unidad y reemplaza el costo del insumo seleccionado para ese registro — afecta automáticamente el pago del doctor y el ingreso de Avipet.</p>'+
+              '<p style="font-size:9px;color:#64748b;font-weight:700;">El doctor podrá responder en la unidad que use realmente (ej: potes/frascos completos, o cc/ml sueltos). Define el costo de cada una:</p>'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#f5f3ff;border-radius:10px;padding:8px;">'+
+              '<div><label style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;display:block;margin-bottom:4px;">Costo por pote/frasco ($)</label>'+
+              '<input id="pq_costo_pote" type="number" step="0.01" min="0" value="'+(rd.preguntaCostoPote||0)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;display:block;margin-bottom:4px;">Costo por cc/ml ($)</label>'+
+              '<input id="pq_costo_cc" type="number" step="0.01" min="0" value="'+(rd.preguntaCostoCC||rd.preguntaCostoUnidad||0)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div></div>'+
+              '<p style="font-size:9px;color:#7c3aed;background:#f5f3ff;border-radius:8px;padding:8px;">Al guardar este servicio en Historia Clínica, se abrirá esta pregunta con un selector "Potes / CC". Sea cual sea la unidad y cantidad que indique el doctor, el costo se calcula y se suma automáticamente al total de insumos — afectando el pago del doctor y el ingreso de Avipet.</p>'+
               '</div>',
             showCancelButton:true, confirmButtonText:'Guardar', confirmButtonColor:'#7c3aed',
             preConfirm: () => ({
               activa: document.getElementById('pq_activa').checked,
               texto: document.getElementById('pq_texto').value.trim() || '¿Cuánto se utilizó?',
               insumo: document.getElementById('pq_insumo').value || '',
-              costoUnidad: parseFloat(document.getElementById('pq_costo').value) || 0,
-              unidad: document.getElementById('pq_unidad').value.trim() || 'ml'
+              costoPote: parseFloat(document.getElementById('pq_costo_pote').value) || 0,
+              costoCC: parseFloat(document.getElementById('pq_costo_cc').value) || 0
             })
           });
           if (!res.isConfirmed) return;
@@ -1797,8 +1814,8 @@ window.renderizarTablaMaestra = async () => {
               preguntaActiva: res.value.activa,
               preguntaTexto: res.value.texto,
               preguntaInsumo: res.value.insumo,
-              preguntaCostoUnidad: res.value.costoUnidad,
-              preguntaUnidadLabel: res.value.unidad,
+              preguntaCostoPote: res.value.costoPote,
+              preguntaCostoCC: res.value.costoCC,
               actualizadoEn: serverTimestamp()
             }, {merge:true});
             await Swal.fire({icon:'success',title:'Guardado',timer:1200,showConfirmButton:false});
