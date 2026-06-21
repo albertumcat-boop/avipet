@@ -7,7 +7,7 @@ import { db } from './firebase-config.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   deleteDoc, getDocs, query, where, orderBy, serverTimestamp,
-  arrayUnion, limit
+  arrayUnion, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
@@ -63,13 +63,21 @@ window.abrirFotosBitacora = async (idDoc, telefono, paciente, duenio, condicion)
       <p style="font-size:10px;color:#92400e;font-weight:900;margin-bottom:8px;">🐾 ${paciente} — ${duenio}</p>
       ${condicion ? `<p style="font-size:9px;color:#b45309;background:#fef3c7;padding:6px 8px;border-radius:8px;margin-bottom:8px;">[!] ${condicion}</p>` : ''}
       <div id="gridFotosBit" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px;margin-bottom:12px;"></div>
-      <label style="display:flex;align-items:center;justify-content:center;gap:6px;background:#fffbeb;border:2px dashed #fbbf24;border-radius:12px;padding:10px;cursor:pointer;font-size:10px;font-weight:900;color:#d97706;text-transform:uppercase;">
-        📷 Agregar fotos
-        <input type="file" id="inputFotosBit" accept="image/*" multiple style="display:none;">
-      </label>
+      <div style="display:flex;gap:6px;">
+        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#fffbeb;border:2px dashed #fbbf24;border-radius:12px;padding:10px;cursor:pointer;font-size:10px;font-weight:900;color:#d97706;text-transform:uppercase;">
+          📷 Agregar fotos
+          <input type="file" id="inputFotosBit" accept="image/*" multiple style="display:none;">
+        </label>
+        <button type="button" id="btnQrBit" style="flex:0 0 auto;background:#2563eb;color:#fff;border:none;border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">📱 QR</button>
+      </div>
+      <div id="qrContainerBit" style="display:none;flex-direction:column;align-items:center;gap:6px;margin-top:10px;background:#fff;border:2px solid #93c5fd;border-radius:12px;padding:10px;">
+        <div id="qrDivBit"></div>
+        <p style="font-size:9px;color:#2563eb;font-weight:900;text-align:center;">Escanea con el teléfono del dueño/staff y toma la foto desde ahí</p>
+      </div>
       <p id="statusFotosBit" style="font-size:9px;color:#64748b;text-align:center;margin-top:6px;min-height:14px;"></p>
     </div>`;
 
+  let _unsubBitFoto = null;
   Swal.fire({
     title: '📷 Fotos de evidencia',
     html: htmlModal,
@@ -107,6 +115,49 @@ window.abrirFotosBitacora = async (idDoc, telefono, paciente, duenio, condicion)
         }
         this.value = '';
       });
+
+      // ─── QR para subir fotos desde el teléfono ───
+      const sesionBit = 'bitacora_' + idDoc + '_' + Date.now();
+      document.getElementById('btnQrBit').addEventListener('click', function() {
+        const qrCont = document.getElementById('qrContainerBit');
+        const qrDiv  = document.getElementById('qrDivBit');
+        if (!qrDiv) return;
+        qrDiv.innerHTML = '';
+        const url = window.location.origin + window.location.pathname + '?mode=mobile&ci=' + sesionBit + '&tipo=bitacora';
+        new QRCode(qrDiv, { text: url, width: 128, height: 128 });
+        qrCont.style.display = 'flex';
+        const inicio = new Date();
+        const status = document.getElementById('statusFotosBit');
+        if (status) status.textContent = '⏳ Esperando foto desde el teléfono...';
+
+        if (_unsubBitFoto) _unsubBitFoto();
+        const q = query(
+          collection(db, 'transferencias_fotos'),
+          where('ci', '==', sesionBit),
+          where('tipo', '==', 'bitacora')
+        );
+        _unsubBitFoto = onSnapshot(q, async (snap) => {
+          for (const docSnap of snap.docs) {
+            const d = docSnap.data();
+            if (!d.url) continue;
+            if (d.fecha?.toDate && d.fecha.toDate() < inicio) continue;
+            if (fotosActuales.includes(d.url)) continue;
+            fotosActuales = [...fotosActuales, d.url];
+            await updateDoc(doc(db, 'servicios_estetica', idDoc), {
+              fotosLlegada: fotosActuales,
+              fotosActualizadoEn: serverTimestamp()
+            });
+            const grid = document.getElementById('gridFotosBit');
+            if (grid) _renderGrid(fotosActuales, grid);
+            if (status) status.textContent = '✅ Foto recibida desde el teléfono';
+            qrCont.style.display = 'none';
+          }
+        });
+      });
+    },
+    willClose: () => {
+      // limpiar listener al cerrar el modal
+      try { if (typeof _unsubBitFoto === 'function') _unsubBitFoto(); } catch(e) {}
     }
   }).then(result => {
     if (result.isConfirmed) {

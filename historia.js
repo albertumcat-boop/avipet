@@ -88,10 +88,10 @@ const recetas = {
   "CITOLOGIA 2 OIDOS":          { precioVenta:20,  insumos:[{nombre:"Hisopos - Tinciones",costo:4.00}] },
   "RASPADO PIEL":               { precioVenta:10,  insumos:[{nombre:"Hoja Bisturi",costo:3.00}] },
   "PERFIL ANEMICO":             { precioVenta:25,  insumos:[{nombre:"Kit Anemia",costo:8.00}] },
-  "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}] },
-  "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}] },
-  "EUTANASIA HASTA 25KG":       { precioVenta:140, insumos:[{nombre:"Propofol",costo:10.00},{nombre:"Xilacina",costo:3.00}] },
-  "EUTANASIA HASTA 35KG":       { precioVenta:170, insumos:[{nombre:"Propofol",costo:15.00},{nombre:"Xilacina",costo:4.00}] },
+  "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
+  "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
+  "EUTANASIA HASTA 25KG":       { precioVenta:140, insumos:[{nombre:"Propofol",costo:10.00},{nombre:"Xilacina",costo:3.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
+  "EUTANASIA HASTA 35KG":       { precioVenta:170, insumos:[{nombre:"Propofol",costo:15.00},{nombre:"Xilacina",costo:4.00}], preguntaActiva:true, preguntaTexto:"¿Cuántos ml de Propofol se utilizaron?", preguntaInsumo:"Propofol", preguntaCostoUnidad:0.50, preguntaUnidadLabel:"ml" },
   "REFERIDO: EXAMEN DE HECES":  { precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
   "REFERIDO: EXAMENES DE ORINA":{ precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
   "REFERIDO: CULTIVOS":         { precioVenta:30,  insumos:[{nombre:"Pago Lab Externo",costo:15.00}] },
@@ -605,6 +605,40 @@ window.guardarFirebase = async (imp) => {
     const fileH=document.getElementById('inputFotoHistoria')?.files[0];const fileT=document.getElementById('inputFotoTest')?.files[0];
     let urlFoto=fileH?await comprimirImagen(await leerImg(fileH)):(document.getElementById('pUrlExamen')?.value||"");let urlTest=fileT?await comprimirImagen(await leerImg(fileT)):(document.getElementById('pUrlTest')?.value||"");
     const listaTests=[];document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila=>{const nombre=fila.cells[0]?.querySelector('input')?.value.trim()||fila.cells[0]?.querySelector('span')?.innerText?.trim()||"";const span=fila.cells[1]?.querySelector('.resultado-print');const sel=fila.cells[1]?.querySelector('select');const resultado=(span?.innerText?.trim()&&span.innerText.trim()!=="---")?span.innerText.trim():(sel?.value||"---");const nota=fila.cells[2]?.querySelector('input')?.value?.trim()||"";if(nombre)listaTests.push({nombre,resultado,nota});});
+    // --- Preguntas extra por servicio (ej: eutanasia -> cuanto Propofol se usó) ---
+    for (const fila of Array.from(document.querySelectorAll('.servicio-principal'))) {
+      const nomServAsk=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();
+      if (!nomServAsk || fila.dataset.preguntaHecha==='1') continue;
+      try {
+        let snapPq = await getDoc(doc(db,"servicios_maestro",nomServAsk));
+        if (!snapPq.exists()) snapPq = await getDoc(doc(db,"servicios_maestro",nomServAsk.toUpperCase()));
+        if (!snapPq.exists()) continue;
+        const rdPq = snapPq.data();
+        if (!rdPq.preguntaActiva || !rdPq.preguntaInsumo) continue;
+        const { value: cantPq } = await Swal.fire({
+          title: nomServAsk,
+          text: rdPq.preguntaTexto || '¿Cuánto se utilizó?',
+          input: 'number',
+          inputAttributes: { min:0, step:0.1 },
+          inputPlaceholder: rdPq.preguntaUnidadLabel||'ml',
+          confirmButtonText: 'Confirmar',
+          confirmButtonColor:'#7c3aed',
+          allowOutsideClick:false
+        });
+        fila.dataset.preguntaHecha='1';
+        if (cantPq===undefined||cantPq===null||cantPq==='') continue;
+        const cantidadUsada=parseFloat(cantPq)||0;
+        const costoTotal=cantidadUsada*(parseFloat(rdPq.preguntaCostoUnidad)||0);
+        const grupoID=fila.getAttribute('data-grupo');
+        const filaInsumo=Array.from(document.querySelectorAll(`.${grupoID}.insumo-fila`)).find(ins=>(ins.cells[0]?.innerText||'').toUpperCase().includes((rdPq.preguntaInsumo||'').toUpperCase()));
+        if (filaInsumo) {
+          const inpCant=filaInsumo.querySelector('.i-cant');
+          const inpCost=filaInsumo.querySelector('.i-cost');
+          if (inpCant) inpCant.value=cantidadUsada;
+          if (inpCost) inpCost.value=(cantidadUsada>0?(costoTotal/cantidadUsada):0).toFixed(4);
+        }
+      } catch(e) { console.warn('Error en pregunta extra:', e); }
+    }
     // Usa % individual de cada servicio (porcGlobal eliminado)
     const montoVentaTotal=parseFloat(document.getElementById('precioVenta')?.value)||0;let totalGastos=0,pagoDoctorTotal=0;const detalleInsumos=[];const serviciosRealizados=[];
     document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=parseFloat(fila.getAttribute('data-porc'))||0;const nomServ=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();serviciosRealizados.push({nombre:nomServ,precio:precioServ});let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[??]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
@@ -1627,7 +1661,7 @@ window.renderizarTablaMaestra = async () => {
         const f3 = document.createElement('div');
         f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px;';
         const f3b = document.createElement('div');
-        f3b.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;';
+        f3b.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;';
         // Btn Guardar
         const btnG = document.createElement('button');
         btnG.textContent = 'Guardar precio'; btnG.dataset.id = r.id;
@@ -1720,6 +1754,58 @@ window.renderizarTablaMaestra = async () => {
         btnI.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
         btnI.addEventListener('click', function(){ window.editarInsumosServicio(this.dataset.id); });
         f3b.appendChild(btnI);
+        // Btn Pregunta Extra (ej: cuanto Propofol se usó en eutanasia)
+        const btnQ = document.createElement('button');
+        const tienePregunta = r.preguntaActiva === true;
+        btnQ.textContent = tienePregunta ? '❓ Pregunta: ON' : '❓ Pregunta extra';
+        btnQ.dataset.id = r.id;
+        btnQ.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:'+(tienePregunta?'#7c3aed':'#a78bfa')+';color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
+        btnQ.addEventListener('click', async function(){
+          const idServ = this.dataset.id;
+          const snapR = await getDoc(doc(db,'servicios_maestro',idServ));
+          const rd = snapR.exists()?snapR.data():{};
+          const insumosServ = rd.insumos || [];
+          const optsIns = insumosServ.map(i => '<option value="'+(i.nombre||'')+'"'+((rd.preguntaInsumo||'')===i.nombre?' selected':'')+'>'+i.nombre+'</option>').join('');
+          const res = await Swal.fire({
+            title: 'Pregunta extra: '+idServ, width:440,
+            html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
+              '<label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;color:#1e293b;"><input type="checkbox" id="pq_activa" '+(rd.preguntaActiva?'checked':'')+' style="width:16px;height:16px;accent-color:#7c3aed;"> Activar ventana emergente al guardar</label>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Texto de la pregunta</label>'+
+              '<input id="pq_texto" type="text" value="'+(rd.preguntaTexto||'¿Cuánto se utilizó?')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Insumo afectado</label>'+
+              '<select id="pq_insumo" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+
+              (optsIns||'<option value="">-- Este servicio no tiene insumos --</option>')+'</select></div>'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Costo por unidad ($)</label>'+
+              '<input id="pq_costo" type="number" step="0.01" min="0" value="'+(rd.preguntaCostoUnidad||0)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Unidad</label>'+
+              '<input id="pq_unidad" type="text" value="'+(rd.preguntaUnidadLabel||'ml')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div></div>'+
+              '<p style="font-size:9px;color:#7c3aed;background:#f5f3ff;border-radius:8px;padding:8px;">Al guardar este servicio en Historia Clínica, se abrirá esta pregunta. La respuesta (cantidad) se multiplica por el costo por unidad y reemplaza el costo del insumo seleccionado para ese registro — afecta automáticamente el pago del doctor y el ingreso de Avipet.</p>'+
+              '</div>',
+            showCancelButton:true, confirmButtonText:'Guardar', confirmButtonColor:'#7c3aed',
+            preConfirm: () => ({
+              activa: document.getElementById('pq_activa').checked,
+              texto: document.getElementById('pq_texto').value.trim() || '¿Cuánto se utilizó?',
+              insumo: document.getElementById('pq_insumo').value || '',
+              costoUnidad: parseFloat(document.getElementById('pq_costo').value) || 0,
+              unidad: document.getElementById('pq_unidad').value.trim() || 'ml'
+            })
+          });
+          if (!res.isConfirmed) return;
+          try {
+            await setDoc(doc(db,'servicios_maestro',idServ), {
+              preguntaActiva: res.value.activa,
+              preguntaTexto: res.value.texto,
+              preguntaInsumo: res.value.insumo,
+              preguntaCostoUnidad: res.value.costoUnidad,
+              preguntaUnidadLabel: res.value.unidad,
+              actualizadoEn: serverTimestamp()
+            }, {merge:true});
+            await Swal.fire({icon:'success',title:'Guardado',timer:1200,showConfirmButton:false});
+            window.renderizarTablaMaestra();
+          } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
+        });
+        f3b.appendChild(btnQ);
         // Btn Eliminar
         const btnD = document.createElement('button');
         btnD.textContent = 'Eliminar servicio'; btnD.dataset.id = r.id;
