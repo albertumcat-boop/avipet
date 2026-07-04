@@ -167,17 +167,40 @@ window.abrirFotosBitacora = async (idDoc, telefono, paciente, duenio, condicion)
   });
 };
 
-window._enviarFotosWhatsApp = (telefonoRaw, paciente, duenio, condicion, fotos, idDoc) => {
-  if (!telefonoRaw || telefonoRaw.length < 7) {
-    Swal.fire({ icon:'warning', title:'Sin teléfono', text:'Este registro no tiene número de teléfono.', timer:2000, showConfirmButton:false });
-    return;
-  }
-  const tlf = telefonoRaw.replace(/[\s\-().+]/g,'');
+window._enviarFotosWhatsApp = async (telefonoRaw, paciente, duenio, condicion, fotos, idDoc) => {
+  const tlf = (telefonoRaw || '').replace(/[\s\-().+]/g,'');
   const linkEvidencia = `https://avipet.vercel.app?evidencia=${idDoc}`;
   let msg = `🐾 Hola *${duenio}*, le informamos que *${paciente}* llegó hoy a AVIPET.\n\n`;
   if (condicion) msg += `📋 *Estado al llegar:* ${condicion}\n\n`;
   msg += `📷 *Ver reporte de llegada con fotos:*\n👉 ${linkEvidencia}\n\n`;
   msg += '_Este reporte queda registrado como evidencia del estado de la mascota al momento del ingreso. Para su tranquilidad y la nuestra._ 🐾\n— AVIPET';
+
+  // Intentar Web Share API con las imágenes reales (funciona en móvil)
+  if (fotos && fotos.length > 0 && navigator.canShare) {
+    try {
+      const archivos = fotos.map((b64, i) => {
+        const partes = b64.split(',');
+        const mime = (partes[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+        const byteStr = atob(partes[1]);
+        const arr = new Uint8Array(byteStr.length);
+        for (let x = 0; x < byteStr.length; x++) arr[x] = byteStr.charCodeAt(x);
+        return new File([arr], `foto_${i+1}.jpg`, { type: mime });
+      });
+      const shareData = { files: archivos, text: msg };
+      if (navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch(e) {
+      if (e.name !== 'AbortError') console.warn('Web Share con fotos no disponible, usando fallback:', e);
+    }
+  }
+
+  // Fallback: abrir WhatsApp con texto + link
+  if (!tlf || tlf.length < 7) {
+    Swal.fire({ icon:'warning', title:'Sin teléfono', text:'Este registro no tiene número de teléfono.', timer:2000, showConfirmButton:false });
+    return;
+  }
   window.open('https://wa.me/' + tlf + '?text=' + encodeURIComponent(msg), '_blank');
 };
 
@@ -468,6 +491,29 @@ async function _cargarBitacoraFecha(fechaSimple) {
           </div>
         </div>`;
       cuerpo.appendChild(card);
+
+      // Miniaturas de fotos debajo de la info, encima de los botones
+      if (d.fotosLlegada && d.fotosLlegada.length) {
+        const strip = document.createElement('div');
+        strip.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px 0;';
+        d.fotosLlegada.slice(0, 6).forEach(url => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.style.cssText = 'width:44px;height:44px;object-fit:cover;border-radius:8px;border:2px solid #fbbf24;cursor:pointer;flex-shrink:0;';
+          img.addEventListener('click', () => Swal.fire({ imageUrl: url, showCloseButton: true, showConfirmButton: false, width: '90vw' }));
+          strip.appendChild(img);
+        });
+        if (d.fotosLlegada.length > 6) {
+          const more = document.createElement('div');
+          more.style.cssText = 'width:44px;height:44px;border-radius:8px;border:2px solid #fbbf24;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#d97706;cursor:pointer;';
+          more.textContent = '+' + (d.fotosLlegada.length - 6);
+          more.addEventListener('click', () => window.abrirFotosBitacora(d.id, d.telefono||'', d.paciente||'', d.duenio||'', (d.condicion||'').replace(/\n/g,' ')));
+          strip.appendChild(more);
+        }
+        const botonesRow = card.querySelector('.flex.justify-between');
+        if (botonesRow) card.insertBefore(strip, botonesRow);
+        else card.appendChild(strip);
+      }
     });
   }catch(e){console.error("Error bitácora:",e);cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-red-100 rounded-2xl bg-red-50"><p class="text-red-500 text-[9px] font-black uppercase italic">❌ Error de conexión</p></div>`;}
 };
