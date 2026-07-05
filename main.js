@@ -577,29 +577,63 @@ window.addEventListener('DOMContentLoaded', () => {
   const dt = document.getElementById('displayTasa');
   if (dt) dt.innerText = window.tasaDolarHoy.toFixed(2);
 
-  // Restaurar sesión del doctor si recargó la página
+  // Restaurar sesión del doctor si recargó la página — requiere reconfirmar PIN
   const _doctorGuardado = sessionStorage.getItem('avipet_doctor');
   if (_doctorGuardado) {
     const sel = document.getElementById('selectDoctor');
-    if (sel) {
-      sel.value = _doctorGuardado;
-      window.doctorVerificado = _doctorGuardado;
-      window.appState.doctor = _doctorGuardado;
+    if (sel) sel.value = _doctorGuardado;
+    // Mostrar banner de confirmación — NO activar privilegios aún
+    const _bannerPendiente = document.createElement('div');
+    _bannerPendiente.id = 'bannerSesionPendiente';
+    _bannerPendiente.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#1e40af;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.35);';
+    _bannerPendiente.innerHTML = `
+      <span>🔒 Sesión del Dr. <strong>${_doctorGuardado}</strong> detectada. Confirma tu PIN para continuar.</span>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <input id="pinConfirmSesion" type="password" maxlength="6" placeholder="PIN"
+          style="width:80px;padding:4px 8px;border-radius:6px;border:none;color:#000;font-size:14px;">
+        <button id="btnConfirmSesion"
+          style="background:#22c55e;color:#fff;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:13px;">Confirmar</button>
+        <button id="btnCancelarSesion"
+          style="background:#ef4444;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px;">✕</button>
+      </div>`;
+    document.body.prepend(_bannerPendiente);
+
+    const _confirmarSesionPendiente = async () => {
+      const pin = document.getElementById('pinConfirmSesion')?.value?.trim();
+      if (!pin) return;
+      const ok = await window.validarDoctorConMaster(_doctorGuardado, pin);
+      if (!ok) {
+        const inp = document.getElementById('pinConfirmSesion');
+        inp.value = '';
+        inp.placeholder = '❌ PIN incorrecto';
+        return;
+      }
+      // PIN correcto — activar sesión completa
+      window.doctorVerificado  = _doctorGuardado;
+      window.appState.doctor   = _doctorGuardado;
       const dp = document.getElementById('doctorPrint');
       if (dp) dp.innerText = 'DR. ' + _doctorGuardado.toUpperCase();
-      // Restaurar logo
       if (_doctorGuardado === 'Darwin Sandoval') {
-        const logoD = document.getElementById('logoDerechoVacuna');
+        const logoD  = document.getElementById('logoDerechoVacuna');
         const spacer = document.getElementById('spacerDerechoVacuna');
-        if (logoD) { logoD.src = 'https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg'; logoD.classList.remove('hidden'); }
+        if (logoD)  { logoD.src = 'https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg'; logoD.classList.remove('hidden'); }
         if (spacer) spacer.classList.add('hidden');
         window.doctorActivoId = 'DR_DARWIN';
       } else if (_doctorGuardado === 'Joan Silva') {
         window.doctorActivoId = 'DR_JOAN';
       }
       _aplicarPermisoDoctor(true);
-      console.log('[AVIPET] Sesión del doctor restaurada:', _doctorGuardado);
-    }
+      _bannerPendiente.remove();
+      console.log('[AVIPET] Sesión del doctor reconfirmada:', _doctorGuardado);
+    };
+
+    document.getElementById('btnConfirmSesion').addEventListener('click', _confirmarSesionPendiente);
+    document.getElementById('pinConfirmSesion').addEventListener('keydown', e => { if (e.key === 'Enter') _confirmarSesionPendiente(); });
+    document.getElementById('btnCancelarSesion').addEventListener('click', () => {
+      sessionStorage.removeItem('avipet_doctor');
+      if (sel) sel.value = '';
+      _bannerPendiente.remove();
+    });
   }
 
   window.ejecutarCambioDeTab('historia');
