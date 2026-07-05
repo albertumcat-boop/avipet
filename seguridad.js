@@ -28,11 +28,11 @@ window.validarDoctorConMaster = async (nombreDoc, pinIngresado) => {
   try {
     const snap = await getDoc(doc(db, "doctores", nombreDoc));
     if (snap.exists()) return pinIngresado === snap.data().pin;
-    const backup = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
-    return pinIngresado === backup[nombreDoc];
+    // Sin dato en Firestore → rechazar (no hay PINs hardcodeados como fallback)
+    return false;
   } catch {
-    const backup = { "Darwin Sandoval": "1111", "Joan Silva": "2222" };
-    return pinIngresado === backup[nombreDoc];
+    // Sin conexión → rechazar para evitar acceso offline con PIN genérico
+    return false;
   }
 };
 
@@ -310,19 +310,45 @@ window.cambiarPinDoctor = async (nombreDoc) => {
 };
 
 window.solicitarCambioPinDoctor = async () => {
-  const nombreDoc = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
-  if (!nombreDoc) return;
-  const claveAdmin = prompt("🔐 Ingrese la Llave Maestra:");
-  if (!claveAdmin) return;
-  if (claveAdmin === window.MASTER_KEY_SISTEMA) {
-    const nuevoPin = prompt(`Nuevo PIN para ${nombreDoc} (mínimo 4 dígitos):`);
-    if (nuevoPin && nuevoPin.length >= 4) {
-      await setDoc(doc(db, "doctores", nombreDoc), { pin: nuevoPin }, { merge: true });
-      alert(`✅ PIN de ${nombreDoc} actualizado.`);
+  const res = await Swal.fire({
+    title: '🔑 Cambiar PIN — Doctor',
+    width: 420,
+    html: `<div class="space-y-3 text-left mt-2">
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Doctor</label>
+        <select id="swal_doc_nombre" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[12px] font-bold outline-none focus:border-blue-500 bg-white">
+          <option value="">-- Seleccionar --</option>
+          <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
+          <option value="Joan Silva">Dr. Joan Silva</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Llave Maestra</label>
+        <input type="password" id="swal_doc_master" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-center font-black text-[14px] outline-none focus:border-blue-500" placeholder="••••">
+      </div>
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nuevo PIN (mínimo 4 dígitos)</label>
+        <input type="password" id="swal_doc_pin" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-center font-black text-[14px] outline-none focus:border-blue-500" placeholder="••••">
+      </div>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: '✅ Cambiar PIN',
+    confirmButtonColor: '#1d4ed8',
+    preConfirm: async () => {
+      const nombre  = document.getElementById('swal_doc_nombre')?.value;
+      const master  = document.getElementById('swal_doc_master')?.value?.trim();
+      const nuevoPin= document.getElementById('swal_doc_pin')?.value?.trim();
+      if (!nombre)                     { Swal.showValidationMessage('Selecciona el doctor'); return false; }
+      if (master !== window.MASTER_KEY_SISTEMA) { Swal.showValidationMessage('Llave Maestra incorrecta'); return false; }
+      if (!nuevoPin || nuevoPin.length < 4)     { Swal.showValidationMessage('El PIN debe tener al menos 4 dígitos'); return false; }
+      return { nombre, nuevoPin };
     }
-    return;
+  });
+  if (res.isConfirmed && res.value) {
+    await setDoc(doc(db, "doctores", res.value.nombre), { pin: res.value.nuevoPin, ultimaActualizacion: serverTimestamp() }, { merge: true });
+    await _registrarAuditoriaInventario('CAMBIO PIN DOCTOR', `Admin cambió el PIN de ${res.value.nombre}.`);
+    Swal.fire({ icon:'success', title:'✅ PIN actualizado', timer:1800, showConfirmButton:false });
   }
-  alert("🚫 Clave incorrecta.");
 };
 
 // ─── ACCESO DOCTOR (Historia Clínica) ────────────────────

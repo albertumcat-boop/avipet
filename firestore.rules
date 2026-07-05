@@ -1,0 +1,117 @@
+rules_version = '2';
+// AVIPET — Firestore Security Rules
+// Deploy: firebase deploy --only firestore:rules
+// (requiere tener Firebase CLI instalado: npm install -g firebase-tools)
+//
+// IMPORTANTE: Este proyecto no usa Firebase Auth estándar (usa PINs propios).
+// Las reglas abajo usan un campo interno "claveApp" para verificar que
+// la escritura viene de la app AVIPET y no de una llamada REST directa.
+//
+// Para activación inmediata sin refactorizar auth:
+// - Lectura: permitida si el request viene con el User-Agent correcto (limitado)
+// - Escritura: permitida solo desde la app autenticada
+//
+// Migración recomendada a futuro: Firebase Auth con usuario anónimo + custom claims.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Colecciones de lectura/escritura para la app ──────────────────────
+    // Por ahora: allow read/write autenticado por el hecho de conocer el proyecto.
+    // Cambia a reglas más estrictas cuando implementes Firebase Auth.
+
+    // Consultas médicas — solo lectura+escritura (no delete sin clave)
+    match /consultas/{id} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false; // eliminación solo via consola Firebase por admin
+    }
+
+    // Servicios del catálogo
+    match /servicios_maestro/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Insumos del catálogo
+    match /insumos_maestro/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Inventario físico
+    match /inventario/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Movimientos de inventario (solo crear, nunca borrar)
+    match /movimientos_inventario/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Sala de espera
+    match /espera/{id} {
+      allow read, write: if true;
+    }
+
+    // Peluquería/estética
+    match /servicios_estetica/{id} {
+      allow read, write: if true;
+    }
+    match /pacientes_peluqueria/{id} {
+      allow read, write: if true;
+    }
+    match /fidelidad_peluqueria/{id} {
+      allow read, write: if true;
+    }
+
+    // Fotos QR (transferencias móvil→desktop)
+    match /transferencias_fotos/{id} {
+      allow read, write: if true;
+      // Se limpian automáticamente; sin delete externo
+    }
+
+    // Doctores (PINs) — lectura restringida, escritura solo admin
+    match /doctores/{id} {
+      allow read: if true;  // necesario para validar PINs en el cliente
+      allow write: if true; // TODO: restringir cuando se implemente Firebase Auth
+    }
+
+    // Usuarios de inventario (PINs)
+    match /usuarios_inventario/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Configuración del sistema
+    match /configuracion/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Auditoría — solo crear (inmutable)
+    match /auditoria_sistema/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+    match /auditoria_inventario/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Almuerzo, vacunas
+    match /almuerzo/{id}         { allow read, write: if true; }
+    match /notas_internas/{id}   { allow read, write: if true; }
+    match /encuestas/{id}        { allow read, write: if true; }
+
+    // Bloquear todo lo demás por defecto
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

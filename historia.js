@@ -88,10 +88,10 @@ const recetas = {
   "CITOLOGIA 2 OIDOS":          { precioVenta:20,  insumos:[{nombre:"Hisopos - Tinciones",costo:4.00}] },
   "RASPADO PIEL":               { precioVenta:10,  insumos:[{nombre:"Hoja Bisturi",costo:3.00}] },
   "PERFIL ANEMICO":             { precioVenta:25,  insumos:[{nombre:"Kit Anemia",costo:8.00}] },
-  "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:4.00, preguntaCostoCC:0.50 },
-  "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:7.00, preguntaCostoCC:0.50 },
-  "EUTANASIA HASTA 25KG":       { precioVenta:140, insumos:[{nombre:"Propofol",costo:10.00},{nombre:"Xilacina",costo:3.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:10.00, preguntaCostoCC:0.50 },
-  "EUTANASIA HASTA 35KG":       { precioVenta:170, insumos:[{nombre:"Propofol",costo:15.00},{nombre:"Xilacina",costo:4.00}], preguntaActiva:true, preguntaTexto:"¿Cuánto Propofol se utilizó?", preguntaInsumo:"Propofol", preguntaCostoPote:15.00, preguntaCostoCC:0.50 },
+  "EUTANASIA HASTA 5KG":        { precioVenta:80,  insumos:[{nombre:"Propofol",costo:4.00},{nombre:"Xilacina",costo:1.00}] },
+  "EUTANASIA HASTA 15KG":       { precioVenta:110, insumos:[{nombre:"Propofol",costo:7.00},{nombre:"Xilacina",costo:2.00}] },
+  "EUTANASIA HASTA 25KG":       { precioVenta:140, insumos:[{nombre:"Propofol",costo:10.00},{nombre:"Xilacina",costo:3.00}] },
+  "EUTANASIA HASTA 35KG":       { precioVenta:170, insumos:[{nombre:"Propofol",costo:15.00},{nombre:"Xilacina",costo:4.00}] },
   "REFERIDO: EXAMEN DE HECES":  { precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
   "REFERIDO: EXAMENES DE ORINA":{ precioVenta:10,  insumos:[{nombre:"Pago Lab Externo",costo:5.00}] },
   "REFERIDO: CULTIVOS":         { precioVenta:30,  insumos:[{nombre:"Pago Lab Externo",costo:15.00}] },
@@ -673,7 +673,38 @@ window.guardarFirebase = async (imp) => {
       await addDoc(collection(db,"consultas"),data);
       alert("✅ ¡Consulta guardada con éxito!");
     }
-    localStorage.removeItem('respaldoConsulta');localStorage.removeItem('respaldo_historia_activa');
+    // ── Decrementar stock de inventario por insumos usados ──────────────────
+    if (detalleInsumos.length > 0) {
+      try {
+        const snapInv = await getDocs(collection(db,"inventario"));
+        const invMap = {};
+        snapInv.forEach(d => {
+          const nombre = normalizarNombre(d.data().nombre || '');
+          if (nombre) invMap[nombre] = { id: d.id, stock: parseFloat(d.data().cantidadStock||0) };
+        });
+        for (const ins of detalleInsumos) {
+          const clave = normalizarNombre(ins.nombre || '');
+          const entrada = invMap[clave];
+          if (!entrada) continue;
+          const nuevoStock = Math.max(0, entrada.stock - (ins.cant || 0));
+          await updateDoc(doc(db,"inventario",entrada.id), {
+            cantidadStock: nuevoStock,
+            ultimaActualizacion: serverTimestamp()
+          });
+          await addDoc(collection(db,"movimientos_inventario"), {
+            productoId: entrada.id,
+            productoNombre: ins.nombre,
+            tipo: "SALIDA-CONSULTA",
+            cantidad: ins.cant || 0,
+            stockResultante: nuevoStock,
+            fecha: serverTimestamp(),
+            doctor: nombreDoctor,
+            cedula: data.cedula
+          });
+        }
+      } catch(eInv) { console.warn("Error descontando stock:", eInv); }
+    }
+    localStorage.removeItem('respaldo_historia_activa');
     _limpiarFormularioHistoria();
     _limpiarNotasInternas();
     if(imp)window.imprimirDocumento();
@@ -1110,13 +1141,26 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
       if (typeof window.sincronizarHiddenHistoria === 'function') window.sincronizarHiddenHistoria();
     }
 
-    // Restaurar servicios realizados
+    // Restaurar servicios realizados con precios históricos
     if (Array.isArray(d.serviciosRealizados) && d.serviciosRealizados.length > 0) {
       for (const serv of d.serviciosRealizados) {
         if (serv.nombre) {
           await window.insertarServicio(serv.nombre);
+          // Sobreescribir con el precio guardado históricamente
+          if (serv.precio != null && serv.precio > 0) {
+            const filas = document.querySelectorAll('.servicio-principal');
+            filas.forEach(fila => {
+              const nomFila = (fila.querySelector('td')?.innerText || '').replace(/[🔹💊]/g,'').split('(')[0].trim();
+              if (normalizarNombre(nomFila) === normalizarNombre(serv.nombre)) {
+                fila.setAttribute('data-precio', serv.precio);
+              }
+            });
+          }
         }
       }
+      // Restaurar el total guardado (evita que precios actuales distorsionen el historial)
+      const inpPrecio = document.getElementById('precioVenta');
+      if (inpPrecio && d.montoVenta > 0) inpPrecio.value = d.montoVenta;
     } else if (d.montoVenta > 0) {
       // Si no hay serviciosRealizados pero hay monto, mostrar aviso
       const visual = document.getElementById('visualizacionServicios');

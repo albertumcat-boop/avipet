@@ -205,15 +205,19 @@ function _aplicarPermisoDoctor(soloDoctor) {
 
 // ============================================================
 // VALIDACIÓN PIN DOCTORES
+// (implementación real en seguridad.js — esta es sólo un fallback
+//  hasta que seguridad.js termine de cargarse)
 // ============================================================
-window.validarDoctorConMaster = async (nombreDoc, pin) => {
-  if (pin === window.MASTER_KEY_SISTEMA) return true;
-  try {
-    const snap = await getDoc(doc(db, "doctores", nombreDoc));
-    if (snap.exists()) return pin === snap.data().pin;
-  } catch (_) {}
-  return pin === { "Darwin Sandoval": "1111", "Joan Silva": "2222" }[nombreDoc];
-};
+if (typeof window.validarDoctorConMaster !== 'function') {
+  window.validarDoctorConMaster = async (nombreDoc, pin) => {
+    if (pin === window.MASTER_KEY_SISTEMA) return true;
+    try {
+      const snap = await getDoc(doc(db, "doctores", nombreDoc));
+      if (snap.exists()) return pin === snap.data().pin;
+    } catch (_) {}
+    return false; // sin fallback hardcodeado
+  };
+}
 
 window.cambiarPinDoctor = async (nombreDoc) => {
   if (!nombreDoc) return alert("Seleccione un doctor primero.");
@@ -351,6 +355,13 @@ function _mostrarBannerAdmin(nombre) {
 }
 
 window.ejecutarCambioDeTab = async (t) => {
+  // Si hay edición de consulta activa y el usuario cambia de tab, advertir y cancelar
+  if (window._editandoConsultaId && t !== 'historia') {
+    const ok = confirm('⚠️ Hay una edición de consulta en curso.\n¿Salir y cancelar la edición?');
+    if (!ok) return;
+    window._editandoConsultaId = null;
+    document.getElementById('bannerModoEdicion')?.classList.add('hidden');
+  }
   if (t === 'historia') limpiarLogoHistoria();
 
   ['sectionHistoria','sectionBuscador','sectionReporte','sectionEspera',
@@ -426,12 +437,14 @@ window.enviarAColaEspera = async () => {
   } catch (e) { alert("❌ Error: " + e.message); }
 };
 
-window.cargarListaEspera = async () => {
+let _unsubEspera = null;
+window.cargarListaEspera = () => {
   const cont = document.getElementById('listaEspera');
   if (!cont) return;
+  // Cancelar listener anterior si existe
+  if (_unsubEspera) { _unsubEspera(); _unsubEspera = null; }
   cont.innerHTML = "<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";
-  try {
-    const snap = await getDocs(collection(db, "espera"));
+  const _renderEspera = (snap) => {
     let items = [];
     snap.forEach(d => items.push({ id: d.id, ...d.data() }));
     items = items.filter(i => i.estado === "en_espera")
@@ -458,7 +471,12 @@ window.cargarListaEspera = async () => {
         </div>`;
       cont.appendChild(div);
     });
-  } catch (e) {
+  };
+  try {
+    _unsubEspera = onSnapshot(collection(db, "espera"), _renderEspera, (e) => {
+      cont.innerHTML = "<p class='text-red-500 text-[10px] text-center'>Error al cargar.</p>";
+    });
+  } catch(e) {
     cont.innerHTML = "<p class='text-red-500 text-[10px] text-center'>Error al cargar.</p>";
   }
 };
@@ -595,12 +613,32 @@ window.addEventListener('DOMContentLoaded', () => {
     const ok = datos.timestamp > Date.now()-(24*60*60*1000) && datos.diagnostico?.trim().length>0;
     if (!ok) return;
     if (confirm("⚠ Historia no guardada detectada.\n¿Deseas recuperar los datos?")) {
-      const area=document.getElementById('hTratamiento');
-      const vis =document.getElementById('visualizacionServicios');
-      const prt =document.getElementById('hTratamientoPrint');
-      if (area) area.value      = datos.diagnostico;
-      if (vis)  vis.innerHTML   = datos.serviciosVisuales;
-      if (prt)  prt.innerText   = datos.diagnostico;
+      const set = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+      set('hCI',       datos.cedula);
+      set('hProp',     datos.propietario);
+      set('hNombre',   datos.paciente);
+      set('hEspecie',  datos.especie);
+      set('hRaza',     datos.raza);
+      set('hEdad',     datos.edad);
+      set('hSexo',     datos.sexo);
+      set('hPeso',     datos.peso);
+      set('hColor',    datos.color);
+      set('hTlf',      datos.telefono);
+      set('hMail',     datos.correo);
+      set('hDir',      datos.direccion);
+      set('hTratamiento', datos.tratamiento);
+      set('hFechaNac', datos.fechaNac);
+      const prt = document.getElementById('hTratamientoPrint');
+      if (prt && datos.tratamiento) prt.innerText = datos.tratamiento;
+      // Reinsertar servicios (restaura listeners y atributos data-precio correctamente)
+      if (Array.isArray(datos.servicios) && datos.servicios.length > 0) {
+        const chk = setInterval(() => {
+          if (typeof window.insertarServicio === 'function') {
+            clearInterval(chk);
+            datos.servicios.forEach(s => { if (s.nombre) window.insertarServicio(s.nombre); });
+          }
+        }, 200);
+      }
     } else {
       localStorage.removeItem('respaldo_historia_activa');
     }
