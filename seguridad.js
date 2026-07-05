@@ -45,19 +45,15 @@ window.validarUsuarioInventario = async (pinIngresado) => {
     return { nombre: "Administrador", rol: "admin" };
   }
 
-  // Buscar en Firebase primero
+  // Buscar en Firebase — sin fallback a PINs hardcodeados
   for (const [nombre, cfg] of Object.entries(USUARIOS_INVENTARIO)) {
     try {
       const snap = await getDoc(doc(db, "usuarios_inventario", nombre));
-      const pinGuardado = snap.exists() ? snap.data().pin : cfg.pinDefault;
-      if (pinIngresado === pinGuardado) {
+      if (snap.exists() && pinIngresado === snap.data().pin) {
         return { nombre, rol: cfg.rol };
       }
     } catch {
-      // Fallback a pin por defecto
-      if (pinIngresado === cfg.pinDefault) {
-        return { nombre, rol: cfg.rol };
-      }
+      // Sin Firestore → rechazar (no usar PINs hardcodeados como fallback)
     }
   }
 

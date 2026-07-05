@@ -75,9 +75,30 @@ function limpiarLogoHistoria() {
 }
 
 // ============================================================
-// TASA DEL DÓLAR BCV
+// TASA DEL DÓLAR BCV — sincronizada en Firestore configuracion/tasa
 // ============================================================
 window.tasaDolarHoy = parseFloat(localStorage.getItem('tasaDolarAvipet')) || 440.97;
+
+// Cargar tasa desde Firestore al iniciar y suscribirse a cambios en tiempo real
+(async () => {
+  try {
+    const refTasa = doc(db, "configuracion", "tasa");
+    onSnapshot(refTasa, (snap) => {
+      if (snap.exists()) {
+        const tasaFS = parseFloat(snap.data().valor || 0);
+        if (tasaFS > 0 && tasaFS !== window.tasaDolarHoy) {
+          window.tasaDolarHoy = tasaFS;
+          localStorage.setItem('tasaDolarAvipet', tasaFS);
+          const d = document.getElementById('displayTasa');
+          if (d) d.innerText = tasaFS.toFixed(2);
+          if (typeof window.calcularPrecioFinalAvipet === 'function') window.calcularPrecioFinalAvipet();
+          if (window.inventarioCache && typeof window.renderListaInventario === 'function')
+            window.renderListaInventario(window.inventarioCache);
+        }
+      }
+    });
+  } catch (_) {}
+})();
 
 window.ajustarTasaDolar = async () => {
   try {
@@ -104,6 +125,9 @@ window.ajustarTasaDolar = async () => {
 
 function _aplicarYGuardarTasa() {
   localStorage.setItem('tasaDolarAvipet', window.tasaDolarHoy);
+  // Persistir en Firestore para sincronizar todos los dispositivos
+  setDoc(doc(db, "configuracion", "tasa"), { valor: window.tasaDolarHoy, actualizado: serverTimestamp() })
+    .catch(() => {});
   const d = document.getElementById('displayTasa');
   if (d) d.innerText = window.tasaDolarHoy.toFixed(2);
   if (typeof window.calcularPrecioFinalAvipet === 'function') window.calcularPrecioFinalAvipet();
@@ -282,7 +306,7 @@ window.validarAcceso = async () => {
     if (responsable) {
       window.usuarioActivoSistema = responsable;
       // Si es clave maestra o Aiby → sesión admin activa (no vuelve a pedir PIN)
-      if (pass === window.MASTER_KEY_SISTEMA || pass === 'AVIPET2026' || pass === '2222') {
+      if (pass === window.MASTER_KEY_SISTEMA) {
         window.sesionAdminActiva = true;
         _mostrarBannerAdmin(responsable);
       }
@@ -296,7 +320,7 @@ window.validarAcceso = async () => {
   } catch (_) {
     if (responsable || pass === window.MASTER_KEY_SISTEMA) {
       window.usuarioActivoSistema = responsable || "Albert Peña (Master)";
-      if (pass === window.MASTER_KEY_SISTEMA || pass === 'AVIPET2026' || pass === '2222') {
+      if (pass === window.MASTER_KEY_SISTEMA) {
         window.sesionAdminActiva = true;
         _mostrarBannerAdmin(window.usuarioActivoSistema);
       }
@@ -644,7 +668,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const raw = localStorage.getItem('respaldo_historia_activa');
     if (!raw) return;
     const datos = JSON.parse(raw);
-    const ok = datos.timestamp > Date.now()-(24*60*60*1000) && datos.diagnostico?.trim().length>0;
+    const textoRestaurar = datos.diagnostico || datos.tratamiento || '';
+    const ok = datos.timestamp > Date.now()-(24*60*60*1000) && textoRestaurar.trim().length>0;
     if (!ok) return;
     if (confirm("⚠ Historia no guardada detectada.\n¿Deseas recuperar los datos?")) {
       const set = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };

@@ -40,6 +40,7 @@ const respaldarProgresoLocal = () => {
       correo:      leer('hMail'),
       direccion:   leer('hDir'),
       tratamiento: leer('hTratamiento'),
+      diagnostico: leer('hTratamiento'), // alias para compatibilidad con restore de main.js
       fechaNac:    leer('hFechaNac'),
       servicios,
       timestamp: Date.now()
@@ -663,7 +664,8 @@ window.guardarFirebase = async (imp) => {
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
     const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
     const data={cedula:dInput('hCI'),propietario:dInput('hProp'),paciente:dInput('hNombre'),especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:new Date().toLocaleDateString()};
-    if (window._editandoConsultaId) {
+    const esEdicion = !!window._editandoConsultaId;
+    if (esEdicion) {
       const idEditar = window._editandoConsultaId;
       await updateDoc(doc(db,"consultas",idEditar), {...data, ultimaEdicion:serverTimestamp(), editadoPor:nombreDoctor});
       window._editandoConsultaId = null;
@@ -673,8 +675,8 @@ window.guardarFirebase = async (imp) => {
       await addDoc(collection(db,"consultas"),data);
       alert("✅ ¡Consulta guardada con éxito!");
     }
-    // ── Decrementar stock de inventario por insumos usados ──────────────────
-    if (detalleInsumos.length > 0) {
+    // ── Decrementar stock solo en consultas NUEVAS (no al editar) ───────────
+    if (!esEdicion && detalleInsumos.length > 0) {
       try {
         const snapInv = await getDocs(collection(db,"inventario"));
         const invMap = {};
@@ -1217,11 +1219,6 @@ window.cancelarEdicion = () => {
   document.getElementById('bannerModoEdicion')?.classList.add('hidden');
   _limpiarFormularioHistoria();
 };
-
-// guardarFirebase original detecta _editandoConsultaId internamente:
-// usa updateDoc si estamos editando, addDoc si es consulta nueva.
-const _guardarFirebaseOriginal = window.guardarFirebase;
-window.guardarFirebase = async (imp) => _guardarFirebaseOriginal(imp);
 
 // --- FUNCIONES DE AJUSTES (movidas aqui para garantizar carga) ---
 window.cargarSelectorServicios = async () => {
@@ -2215,6 +2212,9 @@ window._abrirConsultaParaEditar = async (idConsulta) => {
 
     // Esperar a que la section este visible, luego llenar
     setTimeout(function() {
+      // Limpiar formulario primero para evitar mezcla con datos previos
+      if (typeof _limpiarFormularioHistoria === 'function') _limpiarFormularioHistoria();
+
       const set = function(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; };
       const setCheck = function(id, val) { const el = document.getElementById(id); if (el) el.checked = !!val; };
 
@@ -2232,6 +2232,7 @@ window._abrirConsultaParaEditar = async (idConsulta) => {
       set('hMail',     r.correo);
       set('hDir',      r.direccion);
       set('hFechaNac', r.fechaNacimiento);
+      if (typeof _calcularEdadDesdeFechaNac === 'function') _calcularEdadDesdeFechaNac(r.fechaNacimiento);
       setCheck('hAlerta', r.alerta);
 
       // Datos clinicos
@@ -2241,17 +2242,31 @@ window._abrirConsultaParaEditar = async (idConsulta) => {
       // Guardar el ID para que al guardar actualice en vez de crear
       window._editandoConsultaId = idConsulta;
 
-      // Seleccionar el doctor
+      // Seleccionar el doctor directamente sin disparar el click handler (evita modal PIN)
       if (r.doctor) {
-        const selDoc = document.getElementById('selectorDoctor');
-        if (selDoc) {
-          const opciones = selDoc.querySelectorAll('button');
-          opciones.forEach(function(btn) {
-            if (btn.dataset && btn.dataset.doctor && r.doctor.includes(btn.dataset.doctor)) {
-              btn.click();
-            }
-          });
-        }
+        window.doctorVerificado = window.doctorVerificado || r.doctor;
+        window.appState.doctor  = window.appState.doctor  || r.doctor;
+        const dp = document.getElementById('doctorPrint');
+        if (dp && !dp.innerText.trim()) dp.innerText = 'DR. ' + r.doctor.toUpperCase();
+      }
+
+      // Restaurar fotos existentes
+      var galeriaH = document.getElementById('previewHistoriaGallery');
+      var contH    = document.getElementById('previewHistoriaContainer');
+      var fotosARestaurar = (r.fotosHistoria && r.fotosHistoria.length > 0)
+        ? r.fotosHistoria
+        : (r.urlExamen ? [r.urlExamen] : []);
+      if (galeriaH && fotosARestaurar.length > 0) {
+        fotosARestaurar.forEach(function(urlF) {
+          var wrapper = document.createElement('div');
+          wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
+          wrapper.innerHTML = '<img src="' + urlF + '" class="w-full h-full object-cover">' +
+            '<button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"' +
+            ' onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">X</button>';
+          galeriaH.appendChild(wrapper);
+        });
+        if (contH) contH.classList.remove('hidden');
+        if (typeof window.sincronizarHiddenHistoria === 'function') window.sincronizarHiddenHistoria();
       }
 
       // Restaurar servicios realizados con precios historicos

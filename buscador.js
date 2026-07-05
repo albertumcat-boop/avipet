@@ -372,17 +372,7 @@ function _renderizarTarjeta(consulta) {
  return card;
 }
 
-// ABRIR CONSULTA PARA EDITAR DESDE BUSCADOR 
-window.abrirConsultaParaEditar = async (idConsulta) => {
- if (typeof window.showTab === 'function') window.showTab('historia');
- setTimeout(() => {
- if (typeof window._abrirConsultaParaEditar === 'function') {
- window._abrirConsultaParaEditar(idConsulta);
- } else {
- _llamarFuncion('abrirConsultaParaEditar', idConsulta);
- }
- }, 400);
-};
+// abrirConsultaParaEditar definida canónicamente en historia.js — no redefinir aquí
 
 // TOGGLE RANGO DE FECHAS 
 window.toggleRangoBuscador = () => {
