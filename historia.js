@@ -2254,6 +2254,31 @@ window._abrirConsultaParaEditar = async (idConsulta) => {
         }
       }
 
+      // Restaurar servicios realizados con precios historicos
+      if (Array.isArray(r.serviciosRealizados) && r.serviciosRealizados.length > 0) {
+        (async function() {
+          for (var serv of r.serviciosRealizados) {
+            if (serv.nombre) {
+              await window.insertarServicio(serv.nombre);
+              if (serv.precio != null && serv.precio > 0) {
+                document.querySelectorAll('.servicio-principal').forEach(function(fila) {
+                  var nomFila = (fila.querySelector('td')?.innerText || '').replace(/[🔹💊]/g,'').split('(')[0].trim();
+                  if (normalizarNombre(nomFila) === normalizarNombre(serv.nombre)) {
+                    fila.setAttribute('data-precio', serv.precio);
+                  }
+                });
+              }
+            }
+          }
+          // Restaurar el total guardado
+          var inpPrecio = document.getElementById('precioVenta');
+          if (inpPrecio && r.montoVenta > 0) inpPrecio.value = r.montoVenta;
+        })();
+      } else if (r.montoVenta > 0) {
+        var visual = document.getElementById('visualizacionServicios');
+        if (visual) visual.innerHTML = '<p style="font-size:10px;color:#f59e0b;font-weight:700;">Consulta guardada sin detalle de servicios. Agrega los servicios manualmente.</p>';
+      }
+
       // Mostrar aviso
       Swal.fire({
         icon: 'info',
@@ -2264,6 +2289,9 @@ window._abrirConsultaParaEditar = async (idConsulta) => {
         confirmButtonText: 'Entendido',
         confirmButtonColor: '#1d4ed8'
       });
+
+      // Mostrar banner de edicion
+      if (typeof _mostrarBannerEdicion === 'function') _mostrarBannerEdicion(r.paciente, r.fechaSimple);
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 600);
