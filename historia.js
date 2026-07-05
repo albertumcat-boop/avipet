@@ -663,13 +663,51 @@ window.guardarFirebase = async (imp) => {
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
     const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
     const data={cedula:dInput('hCI'),propietario:dInput('hProp'),paciente:dInput('hNombre'),especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:new Date().toLocaleDateString()};
-    await addDoc(collection(db,"consultas"),data);localStorage.removeItem('respaldoConsulta');localStorage.removeItem('respaldo_historia_activa');alert("? ?Consulta guardada con exito!");
+    if (window._editandoConsultaId) {
+      const idEditar = window._editandoConsultaId;
+      await updateDoc(doc(db,"consultas",idEditar), {...data, ultimaEdicion:serverTimestamp(), editadoPor:nombreDoctor});
+      window._editandoConsultaId = null;
+      document.getElementById('bannerModoEdicion')?.classList.add('hidden');
+      alert("✅ Consulta actualizada con éxito!");
+    } else {
+      await addDoc(collection(db,"consultas"),data);
+      alert("✅ ¡Consulta guardada con éxito!");
+    }
+    localStorage.removeItem('respaldoConsulta');localStorage.removeItem('respaldo_historia_activa');
     _limpiarFormularioHistoria();
     _limpiarNotasInternas();
     if(imp)window.imprimirDocumento();
   }catch(e){console.error("Error guardando:",e);alert("? Error: "+e.message);}
   finally{if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}}
 };
+
+// --- CALCULO DE EDAD DESDE FECHA DE NACIMIENTO ---
+function _calcularEdadDesdeFechaNac(fechaNac) {
+  if (!fechaNac) return;
+  try {
+    // Soporta YYYY-MM-DD (input type=date) y DD/MM/YYYY (formato local)
+    let nac;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaNac)) {
+      nac = new Date(fechaNac + 'T00:00:00');
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(fechaNac)) {
+      const [d, m, y] = fechaNac.split('/');
+      nac = new Date(`${y}-${m}-${d}T00:00:00`);
+    } else { return; }
+    if (isNaN(nac)) return;
+    const hoy = new Date();
+    let anios = hoy.getFullYear() - nac.getFullYear();
+    let meses = hoy.getMonth() - nac.getMonth();
+    let dias  = hoy.getDate() - nac.getDate();
+    if (dias < 0)  { meses--; dias += 30; }
+    if (meses < 0) { anios--; meses += 12; }
+    let edadStr = '';
+    if (anios > 0)       edadStr = anios + (anios === 1 ? ' año' : ' años');
+    else if (meses > 0)  edadStr = meses + (meses === 1 ? ' mes' : ' meses');
+    else                 edadStr = dias + ' días';
+    const inp = document.getElementById('hEdad');
+    if (inp) inp.value = edadStr;
+  } catch(e) { console.warn('Error calculando edad:', e); }
+}
 
 // --- AUTOCOMPLETAR POR CEDULA + ALERTA VACUNA + NOTAS INTERNAS ---
 // Verificar vacunas vencidas - funcion separada sin caracteres especiales
@@ -797,6 +835,7 @@ window.autocompletarPorCedula = async (ci) => {
     set('hPeso',     datosSeleccionados.peso);
     set('hColor',    datosSeleccionados.color);
     set('hFechaNac', datosSeleccionados.fechaNacimiento);
+    _calcularEdadDesdeFechaNac(datosSeleccionados.fechaNacimiento);
 
     // Verificar vacunas vencidas
     await _verificarVacunasVencidas(datosSeleccionados);
@@ -1045,27 +1084,30 @@ window.abrirConsultaParaEditar = async (idConsulta) => {
     set('hMail',     d.correo || d.email);
     set('hDir',      d.direccion);
     set('hFechaNac', d.fechaNacimiento);
+    _calcularEdadDesdeFechaNac(d.fechaNacimiento);
     set('hTratamiento', d.tratamiento);
 
     // Checkbox alerta
     const chkAlerta = document.getElementById('hAlerta');
     if (chkAlerta) chkAlerta.checked = d.alerta || false;
 
-    // Foto principal (si existe)
-    if (d.urlExamen) {
-      const pUrlExamen = document.getElementById('pUrlExamen');
-      if (pUrlExamen) pUrlExamen.value = d.urlExamen;
-      const galeriaH = document.getElementById('previewHistoriaGallery');
-      const contH    = document.getElementById('previewHistoriaContainer');
-      if (galeriaH && d.urlExamen) {
+    // Restaurar fotos existentes (array completo, no solo urlExamen)
+    const galeriaH = document.getElementById('previewHistoriaGallery');
+    const contH    = document.getElementById('previewHistoriaContainer');
+    const fotosARestaurar = d.fotosHistoria && d.fotosHistoria.length > 0
+      ? d.fotosHistoria
+      : (d.urlExamen ? [d.urlExamen] : []);
+    if (galeriaH && fotosARestaurar.length > 0) {
+      fotosARestaurar.forEach(urlF => {
         const wrapper = document.createElement('div');
         wrapper.className = "relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white";
-        wrapper.innerHTML = `<img src="${d.urlExamen}" class="w-full h-full object-cover">
+        wrapper.innerHTML = `<img src="${urlF}" class="w-full h-full object-cover">
           <button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold"
                   onclick="this.parentElement.remove();window.sincronizarHiddenHistoria()">X</button>`;
         galeriaH.appendChild(wrapper);
-        contH?.classList.remove('hidden');
-      }
+      });
+      contH?.classList.remove('hidden');
+      if (typeof window.sincronizarHiddenHistoria === 'function') window.sincronizarHiddenHistoria();
     }
 
     // Restaurar servicios realizados
@@ -1132,83 +1174,10 @@ window.cancelarEdicion = () => {
   _limpiarFormularioHistoria();
 };
 
-// Modificar guardarFirebase para que actualice si estamos en modo edicion
+// guardarFirebase original detecta _editandoConsultaId internamente:
+// usa updateDoc si estamos editando, addDoc si es consulta nueva.
 const _guardarFirebaseOriginal = window.guardarFirebase;
-window.guardarFirebase = async (imp) => {
-  if (!window._editandoConsultaId) {
-    // Flujo normal -- crear nueva consulta
-    return _guardarFirebaseOriginal(imp);
-  }
-
-  // -- MODO EDICION -- actualizar consulta existente --
-  const idEditar = window._editandoConsultaId;
-  const selectorDoc  = document.getElementById('selectDoctor');
-  let nombreDoctor = selectorDoc?.value || "";
-  if (!nombreDoctor && window.sesionAdminActiva) nombreDoctor = window.usuarioActivoSistema || 'Administrador';
-  if (!nombreDoctor) return alert("(!) Seleccione un doctor.");
-
-  if (!window.sesionAdminActiva) {
-    const pinIngresado = prompt(`Firma para actualizar. PIN de ${nombreDoctor}:`);
-    if (!pinIngresado) return;
-    const esValido = await window.validarDoctorConMaster(nombreDoctor, pinIngresado);
-    if (!esValido) return alert("PIN incorrecto.");
-  }
-
-  const btn = document.activeElement;
-  const textoOrig = btn?.innerText || "Guardar";
-  if (btn?.tagName === 'BUTTON') { btn.disabled = true; btn.innerText = "? ACTUALIZANDO..."; }
-
-  try {
-    const dInput = (id) => document.getElementById(id)?.value?.trim() || "";
-    const dataActualizada = {
-      cedula:          dInput('hCI'),
-      propietario:     dInput('hProp'),
-      paciente:        dInput('hNombre'),
-      especie:         dInput('hEspecie'),
-      raza:            dInput('hRaza'),
-      sexo:            dInput('hSexo'),
-      edad:            dInput('hEdad'),
-      peso:            dInput('hPeso'),
-      color:           dInput('hColor'),
-      telefono:        dInput('hTlf'),
-      correo:          dInput('hMail'),
-      direccion:       dInput('hDir'),
-      fechaNacimiento: dInput('hFechaNac'),
-      tratamiento:     dInput('hTratamiento'),
-      alerta:          document.getElementById('hAlerta')?.checked || false,
-      doctor:          nombreDoctor,
-      ultimaEdicion:   serverTimestamp(),
-      editadoPor:      nombreDoctor,
-    };
-
-    // Actualizar foto si cambio
-    const galeriaH = document.getElementById('previewHistoriaGallery');
-    const imgs     = galeriaH ? Array.from(galeriaH.querySelectorAll('img')).map(i => i.src) : [];
-    if (imgs.length > 0) dataActualizada.urlExamen = imgs[imgs.length - 1];
-
-    await updateDoc(doc(db, "consultas", idEditar), dataActualizada);
-
-    // Limpiar modo edicion
-    window._editandoConsultaId = null;
-    document.getElementById('bannerModoEdicion')?.classList.add('hidden');
-    _limpiarFormularioHistoria();
-    _limpiarNotasInternas();
-
-    await Swal.fire({
-      icon: 'success', title: '? Consulta actualizada',
-      text: `Los datos de ${dataActualizada.paciente} fueron actualizados.`,
-      timer: 2500, showConfirmButton: false
-    });
-
-    if (imp) window.imprimirDocumento();
-
-  } catch (e) {
-    console.error("Error actualizando:", e);
-    alert("? Error: " + e.message);
-  } finally {
-    if (btn?.tagName === 'BUTTON') { btn.disabled = false; btn.innerText = textoOrig; }
-  }
-};
+window.guardarFirebase = async (imp) => _guardarFirebaseOriginal(imp);
 
 // --- FUNCIONES DE AJUSTES (movidas aqui para garantizar carga) ---
 window.cargarSelectorServicios = async () => {
@@ -2952,3 +2921,11 @@ window.cargarRegistroCompras = async () => {
 
 // Cargar servicios de Firebase al iniciar (fix: no desaparecen al refrescar)
 setTimeout(() => window.cargarSelectorServicios?.(), 400);
+
+// Calcular edad automáticamente cuando el usuario cambia la fecha de nacimiento
+setTimeout(() => {
+  const inpFechaNac = document.getElementById('hFechaNac');
+  if (inpFechaNac) {
+    inpFechaNac.addEventListener('change', () => _calcularEdadDesdeFechaNac(inpFechaNac.value));
+  }
+}, 600);
