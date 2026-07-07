@@ -282,6 +282,7 @@ window.guardarPeluqueriaPro = async () => {
     (mascotas.length > 1 ? '\n' + detallePin + '\nTotal: $' + totalAcumulado.toFixed(2) : '\nTotal: $' + totalAcumulado.toFixed(2)) +
     '\nPIN de empleado o clave maestra:';
   const pin=prompt(txtPin);if(!pin)return;
+  await window._masterKeyReady;
   const empleadoInfo=await window.validarEmpleadoConPin(String(pin).trim());
   if(!empleadoInfo&&String(pin).trim()!==MASTER_KEY()){alert("❌ PIN incorrecto.");return;}
   const nombreEmpleado=empleadoInfo?empleadoInfo.nombre:"ADMIN_MASTER";
@@ -565,7 +566,7 @@ window.editarAfeccionBitacora = async (idDoc, nombreMascota) => {
 };
 
 // ─── 3. ELIMINAR REGISTRO ───
-window.eliminarRegistroBitacora=async(idDoc,nombreMascota)=>{const clave=prompt(`🔐 Eliminar registro de: "${nombreMascota}"\nCLAVE MAESTRA:`);if(!clave)return;if(clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`[!] Eliminar permanentemente "${nombreMascota}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"servicios_estetica",idDoc));if(typeof window.registrarLogAuditoria==='function')await window.registrarLogAuditoria("ELIMINACIÓN PELUQUERÍA",`Eliminó ${nombreMascota}`);alert(`✅ Eliminado.`);await window.cargarBitacoraHoy();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
+window.eliminarRegistroBitacora=async(idDoc,nombreMascota)=>{const clave=prompt(`🔐 Eliminar registro de: "${nombreMascota}"\nCLAVE MAESTRA:`);if(!clave)return;await window._masterKeyReady;if(clave.trim()!==MASTER_KEY()){alert("🚫 Clave incorrecta.");return;}if(!confirm(`[!] Eliminar permanentemente "${nombreMascota}".\n¿Confirmas?`))return;try{await deleteDoc(doc(db,"servicios_estetica",idDoc));if(typeof window.registrarLogAuditoria==='function')await window.registrarLogAuditoria("ELIMINACIÓN PELUQUERÍA",`Eliminó ${nombreMascota}`);alert(`✅ Eliminado.`);await window.cargarBitacoraHoy();}catch(e){console.error(e);alert("❌ Error: "+e.message);}};
 
 // ─── 4. TOGGLE PAGO MIXTO ───
 window.togglePagoPeluqueria = async (idServicio, estatusActual) => {

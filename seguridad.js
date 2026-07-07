@@ -24,6 +24,7 @@ window.usuarioInventarioActivo = null; // { nombre, rol }
 
 // ─── VALIDAR DOCTOR ───
 window.validarDoctorConMaster = async (nombreDoc, pinIngresado) => {
+  await window._masterKeyReady;
   if (pinIngresado === window.MASTER_KEY_SISTEMA) return true;
   try {
     const snap = await getDoc(doc(db, "doctores", nombreDoc));
@@ -39,6 +40,7 @@ window.validarDoctorConMaster = async (nombreDoc, pinIngresado) => {
 // ─── VALIDAR USUARIO DE INVENTARIO ───────────────────────
 window.validarUsuarioInventario = async (pinIngresado) => {
   if (!pinIngresado) return null;
+  await window._masterKeyReady;
 
   // Intentar con llave maestra
   if (pinIngresado === window.MASTER_KEY_SISTEMA) {
@@ -109,6 +111,7 @@ window.pedirAccesoInventario = () => {
         if (!usuario)  { Swal.showValidationMessage('⚠️ Selecciona tu usuario'); return false; }
         if (!pin)      { Swal.showValidationMessage('⚠️ Ingresa tu PIN'); return false; }
 
+        await window._masterKeyReady;
         // Validar según tipo de usuario
         let acceso = null;
         if (usuario === 'Administrador') {
@@ -267,6 +270,7 @@ window.cambiarPinUsuarioInventario = async (nombreUsuario) => {
       if (!nuevo || nuevo.length < 4) { Swal.showValidationMessage('El PIN debe tener al menos 4 dígitos'); return false; }
 
       // Verificar PIN actual
+      await window._masterKeyReady;
       let valido = actual === window.MASTER_KEY_SISTEMA;
       if (!valido) {
         try {

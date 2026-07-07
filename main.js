@@ -28,11 +28,11 @@ import {
 window.appState               = { doctor: "" };
 window.doctorVerificado       = "";
 window.doctorActivoId         = null;
-window.MASTER_KEY_SISTEMA     = crypto.randomUUID(); // nonce temporal — se reemplaza al cargar de Firestore
+window.MASTER_KEY_SISTEMA     = crypto.randomUUID(); // sustituido por Firestore antes de cualquier login
 window.vacunaPagadaAnteriormente = false;
 
-// Cargar MASTER_KEY desde Firestore (nunca hardcodeada en el cliente)
-getDoc(doc(db, "configuracion", "sistema")).then(snap => {
+// Cargar MASTER_KEY desde Firestore — la Promise se usa para bloquear login hasta que cargue
+window._masterKeyReady = getDoc(doc(db, "configuracion", "sistema")).then(snap => {
   if (snap.exists() && snap.data().masterKey) {
     window.MASTER_KEY_SISTEMA = snap.data().masterKey;
   }
@@ -301,6 +301,7 @@ window.recuperarPin = () => {
 if (typeof window.tabPendiente === 'undefined') window.tabPendiente = '';
 
 window.validarAcceso = async () => {
+  await window._masterKeyReady;
   const pass = document.getElementById('modalPinInput').value;
   const clavesPersonal = { "AVIPET2026": "Albert Peña (Master)", "2021": "daniel", "2022": "carlos", "2222": "Aiby" };
   let responsable = clavesPersonal[pass] || null;

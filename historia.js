@@ -2132,7 +2132,9 @@ window.actualizarCostoInsumo=async(idInsumo,valor)=>{try{await updateDoc(doc(db,
 
 window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{
   const clave=prompt('Eliminar "'+nombreInsumo+'"\nCLAVE MAESTRA:');
-  if(!clave||clave.trim()!==MASTER_KEY()){alert('Clave incorrecta.');return;}
+  if(!clave)return;
+  await window._masterKeyReady;
+  if(clave.trim()!==MASTER_KEY()){alert('Clave incorrecta.');return;}
   if(!confirm('Eliminar "'+nombreInsumo+'".\nConfirmas?'))return;
   try{
     // 1. Eliminar de insumos_maestro
@@ -2553,13 +2555,11 @@ window.registrarServicioSinMascota = async () => {
 // =========================================================
 
 window.abrirModalNuevaCompra = async () => {
-  // Verificar clave maestra o PIN de Aiby (2222)
-  const clave = prompt('Clave maestra o PIN:');
+  const clave = prompt('Clave maestra o PIN de empleado autorizado:');
   if (!clave) return;
-  const claveValida =
-    clave.trim() === (window.MASTER_KEY_SISTEMA || 'AVIPET2026') ||
-    clave.trim() === 'AVIPET2026' ||
-    clave.trim() === '2222';
+  await window._masterKeyReady;
+  const empleadoOk = await window.validarEmpleadoConPin?.(clave.trim());
+  const claveValida = clave.trim() === window.MASTER_KEY_SISTEMA || !!empleadoOk;
   if (!claveValida) {
     await Swal.fire({ icon:'error', title:'Acceso denegado', text:'Clave o PIN incorrecto.', timer:2000, showConfirmButton:false });
     return;
