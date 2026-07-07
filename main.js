@@ -28,8 +28,15 @@ import {
 window.appState               = { doctor: "" };
 window.doctorVerificado       = "";
 window.doctorActivoId         = null;
-window.MASTER_KEY_SISTEMA     = "AVIPET2026";
+window.MASTER_KEY_SISTEMA     = crypto.randomUUID(); // nonce temporal — se reemplaza al cargar de Firestore
 window.vacunaPagadaAnteriormente = false;
+
+// Cargar MASTER_KEY desde Firestore (nunca hardcodeada en el cliente)
+getDoc(doc(db, "configuracion", "sistema")).then(snap => {
+  if (snap.exists() && snap.data().masterKey) {
+    window.MASTER_KEY_SISTEMA = snap.data().masterKey;
+  }
+}).catch(() => {});
 window.usuarioActivoSistema   = "";
 window.sesionAdminActiva      = false;  // true cuando entra con clave maestra
 
@@ -45,13 +52,13 @@ window.CONFIG_DOCTORES = {
   "DR_JOAN": {
     nombre:  "Dr. Joan Silva",
     clinica: "AVIPET - Medicina Veterinaria",
-    logo:    "logo_joan.png"
+    logo:    "avipet.png"
   }
 };
 
 const _doctores = {
   "Darwin Sandoval": { logo: "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg" },
-  "Joan Silva":      { logo: "logo_joan.png" }
+  "Joan Silva":      { logo: "avipet.png" }
 };
 
 // ============================================================
