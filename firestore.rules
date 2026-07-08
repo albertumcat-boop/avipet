@@ -109,6 +109,15 @@ service cloud.firestore {
     match /notas_internas/{id}   { allow read, write: if true; }
     match /encuestas/{id}        { allow read, write: if true; }
 
+    // Empleados de peluquería (autenticación por PIN)
+    match /empleados/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /empleados_descanso/{id} {
+      allow read, write: if true;
+    }
+
     // Bloquear todo lo demás por defecto
     match /{document=**} {
       allow read, write: if false;
