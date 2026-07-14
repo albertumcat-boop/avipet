@@ -451,7 +451,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
     const registros=[];snap.forEach(d=>registros.push({id:d.id,...d.data()}));registros.sort((a,b)=>(a.fecha?.seconds||0)-(b.fecha?.seconds||0));cuerpo.innerHTML="";
     registros.forEach((d,i)=>{
       const estatus=d.estatusPago||'pendiente';const pagado=estatus==='pagado';
-      const tlf=d.telefono||"Sin teléfono";const dir=d.direccion||"Sin dirección";
+      const tlf=d.telefono||"Sin teléfono";const tlf2=d.telefono2||"";const dir=d.direccion||"Sin dirección";
       let resumenPago="";if(pagado){
   const usd=parseFloat(d.montoPagadoUSD||0),bs=parseFloat(d.montoPagadoBS||0);
   const modo=d.modoPago||'';
@@ -471,6 +471,7 @@ async function _cargarBitacoraFecha(fechaSimple) {
           <p class="text-[10px] font-bold text-slate-700">${d.duenio||'Cliente'}</p>
           <p class="text-[9px] text-slate-500">CI: <span class="font-bold text-slate-700">${d.cedulaCliente||'---'}</span></p>
           <p class="text-[9px] text-slate-500">📞 <span class="font-bold text-slate-700">${tlf}</span></p>
+          ${tlf2?`<p class="text-[9px] text-slate-500">📞 <span class="font-bold text-slate-700">${tlf2}</span></p>`:''}
           <p class="text-[9px] text-slate-500">📍 <span class="font-bold text-slate-600">${dir}</span></p>
           ${d.condicion?`<p class="text-[9px] text-amber-600 italic mt-0.5">[!] ${d.condicion}</p>`:''}
           ${d.afeccion?`<p class="text-[9px] font-black text-red-600 mt-1 bg-red-50 rounded px-1 py-0.5">[!] Afeccion: ${d.afeccion}</p>`:''}
@@ -485,7 +486,8 @@ async function _cargarBitacoraFecha(fechaSimple) {
             <button type="button" onclick="window.togglePagoPeluqueria('${d.id}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${pagado?'bg-slate-200 text-slate-600':'bg-emerald-600 text-white'}">${pagado?'↩ Revertir':'💰 Pagar'}</button>
             ${d.mensajeEnviado?'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:900;">✅ Mensaje enviado</span>':'<span id="badge-msg-'+d.id+'" style="font-size:8px;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#94a3b8;font-weight:900;">Sin mensaje</span>'}
             <button type="button" onclick="window.abrirFotosBitacora('${d.id}','${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}','${(d.condicion||'').replace(/'/g,'').replace(/\n/g,' ')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${(d.fotosLlegada&&d.fotosLlegada.length)?'bg-amber-400 text-white':'bg-amber-100 text-amber-700 hover:bg-amber-400 hover:text-white'} transition-all">📷 ${(d.fotosLlegada&&d.fotosLlegada.length)?d.fotosLlegada.length+' foto(s)':'Fotos'}</button>
-            <button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Mensaje</button>
+            <button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Msg 1</button>
+            ${d.telefono2?`<button type="button" onclick="window._idServicioPelu='${d.id}';window.enviarMensajePelu('${(d.telefono2||'').replace(/'/g,'')}','${(d.paciente||'').replace(/'/g,'')}','${(d.duenio||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all">📲 Msg 2</button>`:''}
             <button type="button" onclick="window.marcarEntregadoPelu('${d.id}','${(d.paciente||'').replace(/'/g,'')}','${estatus}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.entregado?'bg-slate-200 text-slate-500':'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white'} transition-all">${d.entregado?'✅ Entregado':'🐕 Entregar'}</button>
             <button type="button" onclick="window.editarAfeccionBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase ${d.afeccion?'bg-orange-100 text-orange-700 hover:bg-orange-500 hover:text-white':'bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white'} transition-all">[E] ${d.afeccion?'Afeccion':'Nota'}</button>
             <button type="button" onclick="window.eliminarRegistroBitacora('${d.id}','${(d.paciente||'').replace(/'/g,'')}')" class="text-[8px] px-2 py-1 rounded-lg font-black uppercase bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all">🗑</button>
