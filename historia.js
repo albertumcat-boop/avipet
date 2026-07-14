@@ -274,6 +274,10 @@ window.insertarServicio = async (v) => {
         insumosFirebase = d.insumos;
         console.log('[AVIPET] Insumos Firebase para',v,':', d.insumos.map(i=>i.nombre+'(bloq:'+i.bloqueado+')'));
       }
+      if (d.esReferido) {
+        window._esConsultaReferida = true;
+        _mostrarBannerReferido();
+      }
     } else {
       const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
       precioFinal=lrec?recetas[lrec].precioVenta:0;
@@ -567,7 +571,7 @@ window.toggleVacunaPagada = (marcado) => {
 window.guardarFirebase = async (imp) => {
   // Validaciones obligatorias ANTES del PIN
   const _dv = (id) => document.getElementById(id)?.value?.trim() || "";
-  if (!_dv('hCI')) {
+  if (!_dv('hCI') && !window._esConsultaReferida) {
     await Swal.fire({ icon:'warning', title:'Cedula obligatoria', text:'Debes ingresar la cedula del propietario antes de guardar.', confirmButtonColor:'#1d4ed8' });
     document.getElementById('hCI')?.focus();
     return;
@@ -663,7 +667,8 @@ window.guardarFirebase = async (imp) => {
     const montoVentaFinal=window.vacunaPagadaAnteriormente?Math.max(0,montoVentaTotal-montoVacunaPendiente):montoVentaTotal;const gastosFinal=window.vacunaPagadaAnteriormente?Math.max(0,totalGastos-montoVacunaPendiente*0.3):totalGastos;const pagoDoctorFinal=window.vacunaPagadaAnteriormente?Math.max(0,pagoDoctorTotal-montoVacunaPendiente*0.5):pagoDoctorTotal;
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
     const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
-    const data={cedula:dInput('hCI'),propietario:dInput('hProp'),paciente:dInput('hNombre'),especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:new Date().toLocaleDateString()};
+    const _cedulaFinal = window._esConsultaReferida ? 'REFERIDO' : dInput('hCI');
+    const data={cedula:_cedulaFinal,propietario:dInput('hProp')||'REFERIDO',paciente:dInput('hNombre'),esReferido:window._esConsultaReferida||false,especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:new Date().toLocaleDateString()};
     const esEdicion = !!window._editandoConsultaId;
     if (esEdicion) {
       const idEditar = window._editandoConsultaId;
@@ -1010,7 +1015,26 @@ window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap
 window.eliminarDeSalaEspera=async(idEspera)=>{if(!confirm("?Eliminar de la sala de espera?"))return;try{await updateDoc(doc(db,"espera",idEspera),{estado:"eliminado",fechaEliminacion:serverTimestamp()});alert("? Eliminado.");window.cargarListaEspera();}catch(e){console.error(e);alert("? Error: "+e.message);}};
 
 // --- LIMPIAR FORMULARIO COMPLETO -------------------------------------------
+function _mostrarBannerReferido() {
+  document.getElementById('bannerModoReferido')?.remove();
+  const b = document.createElement('div');
+  b.id = 'bannerModoReferido';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;background:#7c3aed;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:5px 16px;font-size:11px;font-weight:900;font-family:sans-serif;';
+  b.innerHTML = '<span>🔗 MODO REFERIDO — Cédula no requerida. Solo ingresa el nombre de la mascota y los servicios.</span>' +
+    '<button onclick="window._cancelarModoReferido()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:900;cursor:pointer;">✕ Cancelar</button>';
+  document.body.prepend(b);
+}
+
+window._cancelarModoReferido = () => {
+  window._esConsultaReferida = false;
+  document.getElementById('bannerModoReferido')?.remove();
+};
+
 function _limpiarFormularioHistoria() {
+  // Resetear modo referido
+  window._esConsultaReferida = false;
+  document.getElementById('bannerModoReferido')?.remove();
+
   // Campos de texto
   ['hCI','hProp','hNombre','hEspecie','hRaza','hSexo','hEdad',
    'hPeso','hColor','hTlf','hMail','hDir','hTratamiento','hFechaNac']
@@ -1237,6 +1261,13 @@ window.cargarSelectorServicios = async () => {
       serviciosFirebase[d.id.toUpperCase()] = { id: d.id, ...data };
     });
 
+    // 0. Ordenar alfabéticamente las opciones dentro de cada optgroup existente
+    Array.from(sel.querySelectorAll('optgroup')).forEach(grp => {
+      const opts = Array.from(grp.querySelectorAll('option'))
+        .sort((a, b) => a.textContent.localeCompare(b.textContent, 'es'));
+      opts.forEach(o => grp.appendChild(o));
+    });
+
     // 1. Actualizar options que ya existen en el selector HTML (sin moverlos ni duplicarlos)
     Array.from(sel.querySelectorAll('option')).forEach(opt => {
       const key = opt.value.toUpperCase();
@@ -1338,6 +1369,7 @@ window.abrirModalNuevoServicio = async () => {
   htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_si" value="si" class="accent-blue-600"> <span class="text-[10px] font-bold">Si</span></label>';
   htmlModal += '<label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="ns_esvacuna" id="ns_vacuna_no" value="no" checked class="accent-blue-600"> <span class="text-[10px] font-bold">No</span></label>';
   htmlModal += '</div></div>';
+  htmlModal += '<div><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="ns_referido" class="accent-purple-600 w-4 h-4"> <span class="text-[10px] font-black text-purple-700">Es servicio referido (no requiere cédula del dueño)</span></label></div>';
   htmlModal += '<div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[9px] text-blue-700 font-bold">El % Doctor se aplica sobre (Precio - Insumos), no sobre el precio bruto.</div>';
   htmlModal += '</div>';
 
@@ -1364,16 +1396,17 @@ window.abrirModalNuevoServicio = async () => {
       const catSel    = document.getElementById('ns_categoria')?.value || 'OTROS';
       const catNueva  = document.getElementById('ns_categoria_nueva')?.value.trim().toUpperCase();
       const categoria = catSel === '__nueva__' ? catNueva : catSel;
-      const esVacuna  = document.getElementById('ns_vacuna_si')?.checked || false;
+      const esVacuna   = document.getElementById('ns_vacuna_si')?.checked || false;
+      const esReferido = document.getElementById('ns_referido')?.checked || false;
       if (catSel === '__nueva__' && !catNueva) { Swal.showValidationMessage('Escribe el nombre de la nueva categoria'); return false; }
       if (!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
       if (precio <= 0) { Swal.showValidationMessage('El precio debe ser mayor a 0'); return false; }
-      return { nombre, precio, porc, categoria, esVacuna };
+      return { nombre, precio, porc, categoria, esVacuna, esReferido };
     }
   });
 
   if (!res.isConfirmed) return;
-  const { nombre, precio, porc, categoria, esVacuna } = res.value;
+  const { nombre, precio, porc, categoria, esVacuna, esReferido } = res.value;
 
   try {
     const existe = await getDoc(doc(db, "servicios_maestro", nombre));
@@ -1387,6 +1420,7 @@ window.abrirModalNuevoServicio = async () => {
       porcDoc:     porc,
       categoria,
       esVacuna,
+      esReferido:  esReferido || false,
       creadoEn:    serverTimestamp(),
       activo:      true
     });
