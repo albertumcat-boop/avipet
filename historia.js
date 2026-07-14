@@ -1260,13 +1260,6 @@ window.cargarSelectorServicios = async () => {
       serviciosFirebase[d.id.toUpperCase()] = { id: d.id, ...data };
     });
 
-    // 0. Ordenar alfabéticamente las opciones dentro de cada optgroup existente
-    Array.from(sel.querySelectorAll('optgroup')).forEach(grp => {
-      const opts = Array.from(grp.querySelectorAll('option'))
-        .sort((a, b) => a.textContent.localeCompare(b.textContent, 'es'));
-      opts.forEach(o => grp.appendChild(o));
-    });
-
     // 1. Actualizar options que ya existen en el selector HTML (sin moverlos ni duplicarlos)
     Array.from(sel.querySelectorAll('option')).forEach(opt => {
       const key = opt.value.toUpperCase();
@@ -1304,8 +1297,7 @@ window.cargarSelectorServicios = async () => {
         sel.appendChild(grp);
       }
 
-      servicios.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
-        // Verificar que no exista ya con value exacto
+      servicios.forEach(s => {
         const yaExiste = Array.from(sel.querySelectorAll('option'))
           .some(o => o.value.toUpperCase() === s.id.toUpperCase());
         if (yaExiste) return;
@@ -1317,6 +1309,13 @@ window.cargarSelectorServicios = async () => {
         opt.dataset.porcFirebase   = parseFloat(s.porcDoc||30);
         grp.appendChild(opt);
       });
+    });
+
+    // Ordenar alfabéticamente dentro de cada optgroup DESPUÉS de agregar todos los servicios
+    Array.from(sel.querySelectorAll('optgroup')).forEach(grp => {
+      Array.from(grp.querySelectorAll('option'))
+        .sort((a, b) => a.textContent.localeCompare(b.textContent, 'es'))
+        .forEach(o => grp.appendChild(o));
     });
 
   } catch(e) {
@@ -1637,11 +1636,22 @@ window.cargarSelectorMedicamentos = async () => {
         const opt = document.createElement('option');
         opt.value = nombre;
         opt.textContent = nombre + ' ($' + parseFloat(r.precioCliente||0).toFixed(2) + ')';
-        const optOtro = sel.querySelector('option[value="OTRO"]');
-        if (optOtro) sel.insertBefore(opt, optOtro);
-        else sel.appendChild(opt);
+        sel.appendChild(opt);
       }
     });
+
+    // Ordenar alfabéticamente todas las opciones excepto la primera (placeholder) y OTRO
+    const placeholder = sel.options[0];
+    const optOtro = sel.querySelector('option[value="OTRO"]');
+    const resto = Array.from(sel.querySelectorAll('option'))
+      .filter(o => o !== placeholder && o !== optOtro)
+      .sort((a, b) => a.textContent.localeCompare(b.textContent, 'es'));
+    // Reconstruir: placeholder → ordenados → OTRO al final
+    while (sel.options.length > 0) sel.remove(0);
+    sel.appendChild(placeholder);
+    resto.forEach(o => sel.appendChild(o));
+    if (optOtro) sel.appendChild(optOtro);
+
   } catch(e) { console.warn('Error cargando medicamentos:', e); }
 };
 
