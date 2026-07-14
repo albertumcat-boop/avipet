@@ -798,6 +798,42 @@ window.editarRegistroPelu = async (idDoc) => {
   } catch(e) { alert("Error guardando: " + e.message); }
 };
 
+window.pagarRegistroPeluFinanzas = async (idDoc, paciente, precio) => {
+  const { value: modoPago } = await Swal.fire({
+    title: '💰 Registrar pago — ' + paciente,
+    html:
+      '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Monto: <b>$' + parseFloat(precio).toFixed(2) + '</b></p>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;">' +
+        '<button type="button" onclick="document.getElementById(\'_mp\').value=\'usd\';Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #bbf7d0;background:#f0fdf4;font-weight:900;font-size:13px;color:#15803d;cursor:pointer;">💵 USD</button>' +
+        '<button type="button" onclick="document.getElementById(\'_mp\').value=\'bs\';Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #fde68a;background:#fffbeb;font-weight:900;font-size:13px;color:#92400e;cursor:pointer;">🟡 Bolívares</button>' +
+        '<button type="button" onclick="document.getElementById(\'_mp\').value=\'mixto\';Swal.clickConfirm()" style="padding:12px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:13px;color:#1d4ed8;cursor:pointer;">🔀 Mixto</button>' +
+        '<input type="hidden" id="_mp" value="">' +
+      '</div>',
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+    preConfirm: () => document.getElementById('_mp')?.value || null,
+  });
+  if (!modoPago) return;
+
+  const p = parseFloat(precio);
+  const montoPagadoUSD = modoPago === 'bs'    ? 0     : modoPago === 'mixto' ? p / 2 : p;
+  const montoPagadoBS  = modoPago === 'usd'   ? 0     : modoPago === 'mixto' ? p / 2 : p;
+
+  try {
+    await updateDoc(doc(db, 'servicios_estetica', idDoc), {
+      estatusPago:   'pagado',
+      modoPago,
+      montoPagadoUSD,
+      montoPagadoBS,
+      pagadoEn:      serverTimestamp(),
+      mensajeEnviado: false,
+    });
+    await Swal.fire({ icon:'success', title:'✅ Pago registrado', text: paciente + ' — ' + modoPago.toUpperCase(), timer:1500, showConfirmButton:false });
+    window.verResumenSemanalPelu();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
 window.verResumenSemanalPelu = async () => {
   try {
     const hoy = new Date();
@@ -919,7 +955,10 @@ window.verResumenSemanalPelu = async () => {
         }
       }
       rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;font-size:8px;">' + labelPago + '</td>';
-      rows += '<td style="padding:4px 6px;text-align:center;"><button onclick="window.editarRegistroPelu(\''+r.id+'\')" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:8px;font-weight:900;cursor:pointer;white-space:nowrap;">Editar</button></td>';
+      rows += '<td style="padding:4px 6px;text-align:center;display:flex;gap:4px;align-items:center;">' +
+        '<button onclick="window.editarRegistroPelu(\''+r.id+'\')" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:8px;font-weight:900;cursor:pointer;white-space:nowrap;">Editar</button>' +
+        (!pagado ? '<button onclick="window.pagarRegistroPeluFinanzas(\''+r.id+'\',\''+((r.paciente||'').replace(/'/g,''))+'\','+precio+')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:8px;font-weight:900;cursor:pointer;white-space:nowrap;">💰 Pagar</button>' : '') +
+        '</td>';
       rows += '</tr>';
     });
 
