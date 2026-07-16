@@ -6,7 +6,7 @@ import {
  deleteDoc, getDocs, query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
+const MASTER_KEY = () => window.MASTER_KEY_SISTEMA;
 
 // Variables de estado de la calculadora de inventario
 let _calcInvAbierto = false;

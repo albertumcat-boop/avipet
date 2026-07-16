@@ -335,6 +335,7 @@ window.solicitarCambioPinDoctor = async () => {
     confirmButtonText: '✅ Cambiar PIN',
     confirmButtonColor: '#1d4ed8',
     preConfirm: async () => {
+      await window._masterKeyReady;
       const nombre  = document.getElementById('swal_doc_nombre')?.value;
       const master  = document.getElementById('swal_doc_master')?.value?.trim();
       const nuevoPin= document.getElementById('swal_doc_pin')?.value?.trim();
@@ -363,6 +364,8 @@ window.validarAccesoDoctor = async (nombre) => {
     if (logoD)  { logoD.src = ""; logoD.classList.add("hidden"); }
     if (spacer) spacer.classList.remove("hidden");
     window.doctorActivoId = null;
+    sessionStorage.removeItem('avipet_doctor');
+    if (typeof window._aplicarPermisoDoctor === 'function') window._aplicarPermisoDoctor(false);
     _actualizarBadgeSesion();
     return;
   }
@@ -393,6 +396,7 @@ window.validarAccesoDoctor = async (nombre) => {
 
     _actualizarBadgeSesion();
     _actualizarDatosDoctor(nombre);
+    sessionStorage.setItem('avipet_doctor', nombre);
     if (typeof window.registrarLogAuditoria === 'function')
       await window.registrarLogAuditoria("ACCESO", `${nombre} inició sesión.`);
     alert(`✅ Bienvenido, DR. ${nombre}`);

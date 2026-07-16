@@ -1384,7 +1384,7 @@ async function _getComisionCashea() {
     const snap = await getDoc(doc(db, 'configuracion', 'cashea'));
     if (snap.exists() && snap.data().comision != null)
       return parseFloat(snap.data().comision);
-  } catch(_) {}
+  } catch(e) { console.warn('[Cashea] Error leyendo comision de Firestore:', e); }
   return 4; // default 4%
 }
 

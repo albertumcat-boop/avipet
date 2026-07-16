@@ -47,7 +47,7 @@ const respaldarProgresoLocal = () => {
     }));
   } catch(e) { console.warn('Error guardando respaldo:', e); }
 };
-const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || 'AVIPET2026';
+const MASTER_KEY = () => window.MASTER_KEY_SISTEMA;
 
 // Normalizar cedula: quitar puntos, espacios, guiones -- para buscar con o sin formato
 const normalizarCedula = (ci) => String(ci || '').replace(/[\.\-\s]/g, '').trim().toUpperCase();
@@ -2675,7 +2675,7 @@ window.abrirModalNuevaCompra = async () => {
     await Swal.fire({ icon:'error', title:'Acceso denegado', text:'Clave o PIN incorrecto.', timer:2000, showConfirmButton:false });
     return;
   }
-  const registradoPor = clave.trim() === '2222' ? 'Aiby' : 'Administrador';
+  const registradoPor = empleadoOk?.nombre || 'Administrador';
 
   // Cargar insumos del catálogo — incluye todos los documentos con y sin campo nombre
   const insumosCatalogo = [];

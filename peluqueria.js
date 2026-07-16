@@ -10,7 +10,7 @@ import {
   arrayUnion, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const MASTER_KEY = () => window.MASTER_KEY_SISTEMA || "AVIPET2026";
+const MASTER_KEY = () => window.MASTER_KEY_SISTEMA;
 
 // ─── FOTOS DE EVIDENCIA (desde bitácora) ──────────────────
 // Comprime imagen a base64 JPEG (igual que historia.js, sin Firebase Storage)

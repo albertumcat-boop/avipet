@@ -152,59 +152,7 @@ document.getElementById("selectDoctor")?.addEventListener("change", async functi
   actualizarLogoDoctor();
 });
 
-window.validarAccesoDoctor = async (nombre) => {
-  const logoD = document.getElementById('logoDerechoVacuna');
-  const spacer = document.getElementById('spacerDerechoVacuna');
-
-  if (!nombre) {
-    window.doctorVerificado = "";
-    sessionStorage.removeItem('avipet_doctor');
-    const dp = document.getElementById('doctorPrint');
-    if (dp) dp.innerText = "SELECCIONE DOCTOR";
-    if (logoD)  { logoD.classList.add('hidden'); logoD.src = ""; }
-    if (spacer) spacer.classList.remove('hidden');
-    window.doctorActivoId = null;
-    _aplicarPermisoDoctor(false); // Restaurar tabs al deseleccionar doctor
-    return;
-  }
-
-  const pin = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
-  if (!pin) {
-    const sel = document.getElementById('selectDoctor');
-    if (sel) sel.value = "";
-    return;
-  }
-
-  const ok = await window.validarDoctorConMaster(nombre, pin);
-  if (ok) {
-    window.doctorVerificado = nombre;
-    const dp = document.getElementById('doctorPrint');
-    if (dp) dp.innerText = "DR. " + nombre.toUpperCase();
-
-    if (nombre === "Darwin Sandoval") {
-      const url = "https://raw.githubusercontent.com/albertumcat-boop/avipet/main/logo_darwin.jpg";
-      if (logoD)  { logoD.src = url; logoD.classList.remove('hidden'); }
-      if (spacer) spacer.classList.add('hidden');
-      window.onDoctorAutenticado("DR_DARWIN");
-    } else {
-      if (logoD)  logoD.classList.add('hidden');
-      if (spacer) spacer.classList.remove('hidden');
-      window.onDoctorAutenticado(nombre === "Joan Silva" ? "DR_JOAN" : null);
-    }
-
-    // Guardar sesión del doctor para sobrevivir recarga
-    sessionStorage.setItem('avipet_doctor', nombre);
-    alert(`✅ Identidad confirmada: DR. ${nombre}`);
-    if (typeof window.calcularTodo === 'function') await window.calcularTodo();
-  } else {
-    alert("❌ PIN INCORRECTO.");
-    sessionStorage.removeItem('avipet_doctor');
-    const sel = document.getElementById('selectDoctor');
-    if (sel) sel.value = "";
-    if (logoD)  logoD.classList.add('hidden');
-    if (spacer) spacer.classList.remove('hidden');
-  }
-};
+// window.validarAccesoDoctor — implementación completa en seguridad.js
 
 window.onDoctorAutenticado = (id) => {
   window.doctorActivoId = id;
@@ -216,7 +164,7 @@ window.onDoctorAutenticado = (id) => {
   }
 };
 
-// Mostrar/ocultar tabs según si hay un doctor activo
+// Mostrar/ocultar tabs según si hay un doctor activo — expuesto en window para seguridad.js
 function _aplicarPermisoDoctor(soloDoctor) {
   // Tabs que el doctor NO puede ver
   const tabsRestringidos = [
@@ -233,6 +181,7 @@ function _aplicarPermisoDoctor(soloDoctor) {
   const btnAjustes = document.querySelector('button[onclick*="config_precios"]');
   if (btnAjustes) btnAjustes.style.display = soloDoctor ? 'none' : '';
 }
+window._aplicarPermisoDoctor = _aplicarPermisoDoctor;
 
 // ============================================================
 // VALIDACIÓN PIN DOCTORES
@@ -264,31 +213,7 @@ window.cambiarPinDoctor = async (nombreDoc) => {
   } else alert("⚠️ PIN inválido.");
 };
 
-window.solicitarCambioPinDoctor = async () => {
-  const nombre = prompt("Ingrese su nombre (Darwin Sandoval / Joan Silva):");
-  if (!nombre) return;
-  const clave  = prompt("🔐 Llave Maestra o PIN administrativo:");
-  if (!clave) return;
-  if (clave === window.MASTER_KEY_SISTEMA) {
-    const np = prompt(`NUEVO PIN para ${nombre}:`);
-    if (np?.length >= 4) {
-      await setDoc(doc(db, "doctores", nombre), { pin: np }, { merge: true });
-      alert("✅ PIN actualizado.");
-    }
-    return;
-  }
-  try {
-    const s = await getDoc(doc(db, "configuracion", "seguridad"));
-    const pa = s.exists() ? (s.data().pin || "AVIPET2026") : "AVIPET2026";
-    if (clave === pa) {
-      const np = prompt(`NUEVO PIN para ${nombre}:`);
-      if (np?.length >= 4) {
-        await setDoc(doc(db, "doctores", nombre), { pin: np }, { merge: true });
-        alert("✅ PIN actualizado.");
-      }
-    } else alert("🚫 Clave incorrecta.");
-  } catch (_) { alert("❌ Error al validar."); }
-};
+// window.solicitarCambioPinDoctor — implementación completa en seguridad.js
 
 window.recuperarPin = () => {
   window.cerrarModalLogin();
@@ -303,13 +228,22 @@ if (typeof window.tabPendiente === 'undefined') window.tabPendiente = '';
 window.validarAcceso = async () => {
   await window._masterKeyReady;
   const pass = document.getElementById('modalPinInput').value;
-  const clavesPersonal = { "AVIPET2026": "Albert Peña (Master)", "2021": "daniel", "2022": "carlos", "2222": "Aiby" };
-  let responsable = clavesPersonal[pass] || null;
+  let responsable = null;
+  if (pass && pass === window.MASTER_KEY_SISTEMA) responsable = 'Administrador';
 
   try {
-    const snap = await getDoc(doc(db, "configuracion", "seguridad"));
-    const pinG = snap.exists() ? (snap.data().pin || "AVIPET2026") : "AVIPET2026";
-    if (!responsable && pass === pinG) responsable = "Personal General";
+    if (!responsable) {
+      const snap = await getDoc(doc(db, "configuracion", "seguridad"));
+      const pinG = snap.exists() ? (snap.data().pin || "") : "";
+      if (pinG && pass === pinG) responsable = "Personal General";
+    }
+    if (!responsable) {
+      const snapEmp = await getDocs(query(collection(db, "empleados"), where("PIN", "==", pass)));
+      if (!snapEmp.empty) {
+        const empData = snapEmp.docs[0].data();
+        responsable = empData.nombreEmpleado || snapEmp.docs[0].id;
+      }
+    }
 
     if (responsable) {
       window.usuarioActivoSistema = responsable;
@@ -326,8 +260,8 @@ window.validarAcceso = async () => {
       alert("🚫 PIN Incorrecto.");
     }
   } catch (_) {
-    if (responsable || pass === window.MASTER_KEY_SISTEMA) {
-      window.usuarioActivoSistema = responsable || "Albert Peña (Master)";
+    if (responsable) {
+      window.usuarioActivoSistema = responsable;
       if (pass === window.MASTER_KEY_SISTEMA) {
         window.sesionAdminActiva = true;
         _mostrarBannerAdmin(window.usuarioActivoSistema);

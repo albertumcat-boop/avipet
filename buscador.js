@@ -332,7 +332,7 @@ function _renderizarTarjeta(consulta) {
      input: 'password',
      inputPlaceholder: 'Clave maestra...',
      preConfirm: function(clave) {
-       if (!clave || clave.trim() !== 'AVIPET2026') {
+       if (!clave || clave.trim() !== window.MASTER_KEY_SISTEMA) {
          Swal.showValidationMessage('Clave maestra incorrecta');
          return false;
        }
