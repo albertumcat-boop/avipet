@@ -6,7 +6,7 @@
 import { db } from './firebase-config.js';
 import {
   collection, addDoc, getDocs, query, where,
-  updateDoc, doc, getDoc, serverTimestamp
+  updateDoc, deleteDoc, doc, getDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let _tabFinanzas  = null;
@@ -120,6 +120,7 @@ window.mostrarMenuFinanzas = async () => {
   const botones = [
     { tab:'veterinaria', label:'Veterinaria',       color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe', desc:'Consultas, doctores, insumos', deuda: deudaVet  },
     { tab:'peluqueria',  label:'Peluqueria',         color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff', desc:'Servicios, ayudantes, cobros', deuda: deudaPelu },
+    { tab:'cashea',      label:'Cashea',             color:'#0f766e', bg:'#f0fdfa', border:'#99f6e4', desc:'Ventas financiadas — cobro los martes', deuda: 0 },
     { tab:'deudas',      label:'Deudas y Prestamos', color:'#dc2626', bg:'#fef2f2', border:'#fca5a5', desc:'Prestamos pendientes',          deuda: deudaTotal },
   ];
 
@@ -152,6 +153,7 @@ window.mostrarMenuFinanzas = async () => {
       return function(){
         if (tab === 'veterinaria') { _tabFinanzas='veterinaria'; window.mostrarDashboardVet(); }
         else if (tab === 'peluqueria') { _tabFinanzas='peluqueria'; window.mostrarDashboardPelu(); }
+        else if (tab === 'cashea') { window.mostrarDashboardCashea(); }
         else if (tab === 'deudas') { window.abrirModuloDeudas(); }
       };
     })(b.tab);
@@ -1370,6 +1372,288 @@ window.registrarNuevaDeuda = async () => {
     await Swal.fire({ icon:'success', title:'Deuda registrada', text: personaLabel + ': $' + res2.value.monto.toFixed(2), timer:2000, showConfirmButton:false });
     window.abrirModuloDeudas();
   } catch(e) { alert('Error guardando: ' + e.message); }
+};
+
+// =========================================================
+// MÓDULO CASHEA
+// =========================================================
+
+// ─── Cargar comisión configurada ─────────────────────────
+async function _getComisionCashea() {
+  try {
+    const snap = await getDoc(doc(db, 'configuracion', 'cashea'));
+    if (snap.exists() && snap.data().comision != null)
+      return parseFloat(snap.data().comision);
+  } catch(_) {}
+  return 4; // default 4%
+}
+
+// ─── Dashboard principal Cashea ───────────────────────────
+window.mostrarDashboardCashea = async () => {
+  _tabFinanzas = 'cashea';
+  const listaDiv = document.getElementById('listaReporte');
+  if (!listaDiv) return;
+  listaDiv.innerHTML = '<p style="text-align:center;padding:16px;font-size:10px;font-weight:900;color:#0f766e;">Cargando Cashea...</p>';
+
+  const comision = await _getComisionCashea();
+
+  // Registros del período seleccionado
+  const fechas = _getFechasRango();
+  let registros = [];
+  try {
+    const snap = await getDocs(collection(db, 'cashea_registros'));
+    snap.forEach(d => { const r = d.data(); if (fechas.includes(r.fechaSimple)) registros.push({id:d.id,...r}); });
+    registros.sort((a,b) => (b.creadoEn?.seconds||0)-(a.creadoEn?.seconds||0));
+  } catch(e) { console.error('Cashea load:', e); }
+
+  // Totales
+  let sumVenta = 0, sumFinanciado = 0, sumCliente = 0;
+  registros.forEach(r => {
+    sumVenta      += parseFloat(r.totalVenta||0);
+    sumFinanciado += parseFloat(r.totalFinanciado||0);
+    sumCliente    += parseFloat(r.totalClientePago||0);
+  });
+  const comisionMonto = sumFinanciado * (comision / 100);
+  const netoMartes    = sumFinanciado - comisionMonto;
+
+  const html = document.createElement('div');
+  _renderCabecera(html, 'Cashea', '#0f766e');
+  // patch: cashea tab en selector de periodo
+  html.querySelectorAll('button[data-p]').forEach(b => {
+    b.onclick = () => { _periodoActual = b.dataset.p; window.mostrarDashboardCashea(); };
+    b.style.background = b.dataset.p === _periodoActual ? '#0f766e' : 'transparent';
+  });
+
+  // Cards resumen
+  const cards = document.createElement('div');
+  cards.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;';
+  cards.innerHTML =
+    _tarjeta('Total Vendido',    '$'+sumVenta.toFixed(2),      '#f0fdfa', '#0f766e', _labelPeriodo()) +
+    _tarjeta('Financiado Cashea','$'+sumFinanciado.toFixed(2), '#f0fdfa', '#0891b2', 'Cashea paga') +
+    _tarjeta('Cobrado al cliente','$'+sumCliente.toFixed(2),   '#f0fdfa', '#475569', 'Recibido directo') +
+    _tarjeta('Comisión '+comision+'%','-$'+comisionMonto.toFixed(2),'#fef2f2','#dc2626','Sobre financiado') +
+    '<div style="grid-column:1/-1;">'+_tarjeta('💰 Neto que llega el martes','$'+netoMartes.toFixed(2),'#ecfdf5','#16a34a','Financiado − Comisión')+'</div>';
+  html.appendChild(cards);
+
+  // Botones acción
+  const acciones = document.createElement('div');
+  acciones.style.cssText = 'display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;';
+  acciones.innerHTML =
+    '<button onclick="window.registrarDiaCashea()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-size:10px;font-weight:900;cursor:pointer;min-width:120px;">➕ Registrar día</button>' +
+    '<button onclick="window.verResumenSemanalCashea()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#0891b2;color:#fff;font-size:10px;font-weight:900;cursor:pointer;min-width:120px;">📊 Resumen semanal</button>' +
+    '<button onclick="window.ajustarComisionCashea()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#f1f5f9;color:#475569;font-size:10px;font-weight:900;cursor:pointer;min-width:120px;">⚙️ Comisión ('+comision+'%)</button>';
+  html.appendChild(acciones);
+
+  // Lista de registros del período
+  if (registros.length === 0) {
+    const vacio = document.createElement('p');
+    vacio.style.cssText = 'text-align:center;color:#94a3b8;font-size:10px;font-weight:900;padding:20px;';
+    vacio.textContent = 'Sin registros para ' + _labelPeriodo();
+    html.appendChild(vacio);
+  } else {
+    const tabla = document.createElement('div');
+    tabla.style.cssText = 'overflow-x:auto;';
+    let rows = '';
+    registros.forEach(r => {
+      const fin = parseFloat(r.totalFinanciado||0);
+      const com = fin * (comision/100);
+      const neto = fin - com;
+      rows += '<tr style="border-bottom:1px solid #f0fdfa;font-size:9px;">' +
+        '<td style="padding:5px 6px;color:#64748b;">'          + (r.fechaSimple||'---') + '</td>' +
+        '<td style="padding:5px 6px;font-weight:700;text-align:right;">$' + parseFloat(r.totalVenta||0).toFixed(2) + '</td>' +
+        '<td style="padding:5px 6px;color:#0891b2;font-weight:700;text-align:right;">$' + fin.toFixed(2) + '</td>' +
+        '<td style="padding:5px 6px;color:#475569;font-weight:700;text-align:right;">$' + parseFloat(r.totalClientePago||0).toFixed(2) + '</td>' +
+        '<td style="padding:5px 6px;color:#dc2626;font-weight:700;text-align:right;">-$' + com.toFixed(2) + '</td>' +
+        '<td style="padding:5px 6px;color:#16a34a;font-weight:900;text-align:right;">$' + neto.toFixed(2) + '</td>' +
+        '<td style="padding:5px 6px;text-align:center;">' +
+          '<button onclick="window.eliminarRegistroCashea(\''+r.id+'\')" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;">🗑</button>' +
+        '</td>' +
+        '</tr>';
+    });
+    tabla.innerHTML =
+      '<table style="width:100%;border-collapse:collapse;">' +
+        '<thead><tr style="background:#f0fdfa;font-size:8px;text-transform:uppercase;color:#0f766e;font-weight:900;">' +
+          '<th style="padding:5px 6px;text-align:left;">Fecha</th>' +
+          '<th style="padding:5px 6px;text-align:right;">Total Venta</th>' +
+          '<th style="padding:5px 6px;text-align:right;">Financiado</th>' +
+          '<th style="padding:5px 6px;text-align:right;">Cliente pagó</th>' +
+          '<th style="padding:5px 6px;text-align:right;">Comisión</th>' +
+          '<th style="padding:5px 6px;text-align:right;">Neto</th>' +
+          '<th style="padding:5px 6px;"></th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+    html.appendChild(tabla);
+  }
+
+  listaDiv.innerHTML = '';
+  listaDiv.appendChild(html);
+};
+
+// ─── Registrar día Cashea ─────────────────────────────────
+window.registrarDiaCashea = async () => {
+  const hoy = new Date();
+  const fechaHoy = hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
+
+  const { value: form } = await Swal.fire({
+    title: '➕ Registrar día Cashea',
+    width: 420,
+    html:
+      '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
+      '<p style="font-size:10px;color:#64748b;margin:0;">Fecha: <b>' + fechaHoy + '</b></p>' +
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Total vendido con Cashea ($)</label>' +
+      '<input id="cs_total" type="number" step="0.01" min="0" placeholder="Ej: 200.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Total financiado por Cashea ($)</label>' +
+      '<input id="cs_fin" type="number" step="0.01" min="0" placeholder="Ej: 140.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;" oninput="const t=parseFloat(document.getElementById(\'cs_total\').value||0),f=parseFloat(this.value||0);document.getElementById(\'cs_cli\').value=(t-f>0?(t-f).toFixed(2):\'\');"></div>' +
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Cobrado al cliente en tienda ($)</label>' +
+      '<input id="cs_cli" type="number" step="0.01" min="0" placeholder="Se calcula automático" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;background:#f8fafc;"></div>' +
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nota (opcional)</label>' +
+      '<input id="cs_nota" type="text" placeholder="Ej: 3 transacciones" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;outline:none;box-sizing:border-box;"></div>' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Guardar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#0f766e',
+    preConfirm: () => {
+      const total = parseFloat(document.getElementById('cs_total')?.value) || 0;
+      const fin   = parseFloat(document.getElementById('cs_fin')?.value)   || 0;
+      const cli   = parseFloat(document.getElementById('cs_cli')?.value)   || (total - fin);
+      const nota  = document.getElementById('cs_nota')?.value.trim() || '';
+      if (total <= 0) { Swal.showValidationMessage('Ingresa el total vendido'); return false; }
+      if (fin  <= 0) { Swal.showValidationMessage('Ingresa el monto financiado por Cashea'); return false; }
+      if (fin > total) { Swal.showValidationMessage('El financiado no puede ser mayor al total'); return false; }
+      return { total, fin, cli: cli >= 0 ? cli : 0, nota };
+    }
+  });
+
+  if (!form) return;
+
+  try {
+    await addDoc(collection(db, 'cashea_registros'), {
+      totalVenta:       form.total,
+      totalFinanciado:  form.fin,
+      totalClientePago: form.cli,
+      nota:             form.nota,
+      fechaSimple:      fechaHoy,
+      creadoEn:         serverTimestamp()
+    });
+    await Swal.fire({ icon:'success', title:'✅ Día registrado', html:'Total: <b>$'+form.total.toFixed(2)+'</b> · Cashea financia: <b>$'+form.fin.toFixed(2)+'</b> · Cliente pagó: <b>$'+form.cli.toFixed(2)+'</b>', timer:2500, showConfirmButton:false });
+    window.mostrarDashboardCashea();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+// ─── Resumen semanal Cashea ───────────────────────────────
+window.verResumenSemanalCashea = async () => {
+  const hoy = new Date();
+  const diasDesdeElLunes = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
+  const fechas = [];
+  for (let i = diasDesdeElLunes; i >= 0; i--) {
+    const d = new Date(hoy); d.setDate(hoy.getDate() - i);
+    fechas.push(d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear());
+  }
+
+  const comision = await _getComisionCashea();
+  let registros = [];
+  try {
+    const snap = await getDocs(collection(db, 'cashea_registros'));
+    snap.forEach(d => { const r = d.data(); if (fechas.includes(r.fechaSimple)) registros.push({id:d.id,...r}); });
+    registros.sort((a,b) => fechas.indexOf(a.fechaSimple) - fechas.indexOf(b.fechaSimple));
+  } catch(e) { alert('Error: ' + e.message); return; }
+
+  let sumVenta = 0, sumFinanciado = 0, sumCliente = 0;
+  registros.forEach(r => {
+    sumVenta      += parseFloat(r.totalVenta||0);
+    sumFinanciado += parseFloat(r.totalFinanciado||0);
+    sumCliente    += parseFloat(r.totalClientePago||0);
+  });
+  const comisionMonto = sumFinanciado * (comision / 100);
+  const netoMartes    = sumFinanciado - comisionMonto;
+
+  let rows = '';
+  registros.forEach(r => {
+    const fin  = parseFloat(r.totalFinanciado||0);
+    const com  = fin * (comision/100);
+    const neto = fin - com;
+    rows += '<tr style="border-bottom:1px solid #f0fdf4;font-size:9px;">' +
+      '<td style="padding:5px 6px;color:#64748b;">'         + (r.fechaSimple||'---') + '</td>' +
+      '<td style="padding:5px 6px;font-weight:700;text-align:right;">$' + parseFloat(r.totalVenta||0).toFixed(2) + '</td>' +
+      '<td style="padding:5px 6px;color:#0891b2;font-weight:700;text-align:right;">$' + fin.toFixed(2) + '</td>' +
+      '<td style="padding:5px 6px;color:#475569;text-align:right;">$' + parseFloat(r.totalClientePago||0).toFixed(2) + '</td>' +
+      '<td style="padding:5px 6px;color:#dc2626;text-align:right;">-$' + com.toFixed(2) + '</td>' +
+      '<td style="padding:5px 6px;color:#16a34a;font-weight:900;text-align:right;">$' + neto.toFixed(2) + '</td>' +
+      '</tr>';
+  });
+
+  const resumenHtml =
+    '<div style="background:#f0fdfa;border-radius:14px;padding:12px;margin-bottom:12px;text-align:left;">' +
+      '<p style="font-size:9px;font-weight:900;color:#0f766e;text-transform:uppercase;margin:0 0 8px 0;">📊 Semana actual</p>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">' +
+        '<div style="background:#fff;border-radius:10px;padding:8px;text-align:center;"><p style="font-size:8px;color:#64748b;margin:0;font-weight:900;text-transform:uppercase;">Total Vendido</p><p style="font-size:18px;font-weight:900;color:#0f766e;margin:0;font-family:monospace;">$'+sumVenta.toFixed(2)+'</p></div>' +
+        '<div style="background:#fff;border-radius:10px;padding:8px;text-align:center;"><p style="font-size:8px;color:#64748b;margin:0;font-weight:900;text-transform:uppercase;">Financiado Cashea</p><p style="font-size:18px;font-weight:900;color:#0891b2;margin:0;font-family:monospace;">$'+sumFinanciado.toFixed(2)+'</p></div>' +
+        '<div style="background:#fff;border-radius:10px;padding:8px;text-align:center;"><p style="font-size:8px;color:#64748b;margin:0;font-weight:900;text-transform:uppercase;">Cobrado al cliente</p><p style="font-size:18px;font-weight:900;color:#475569;margin:0;font-family:monospace;">$'+sumCliente.toFixed(2)+'</p></div>' +
+        '<div style="background:#fef2f2;border-radius:10px;padding:8px;text-align:center;"><p style="font-size:8px;color:#64748b;margin:0;font-weight:900;text-transform:uppercase;">Comisión Cashea '+comision+'%</p><p style="font-size:18px;font-weight:900;color:#dc2626;margin:0;font-family:monospace;">-$'+comisionMonto.toFixed(2)+'</p></div>' +
+      '</div>' +
+      '<div style="background:#ecfdf5;border:2px solid #6ee7b7;border-radius:12px;padding:12px;text-align:center;">' +
+        '<p style="font-size:9px;color:#065f46;font-weight:900;text-transform:uppercase;margin:0 0 4px 0;">💰 Neto que llega el martes</p>' +
+        '<p style="font-size:28px;font-weight:900;color:#16a34a;margin:0;font-family:monospace;">$'+netoMartes.toFixed(2)+'</p>' +
+        '<p style="font-size:8px;color:#94a3b8;margin:4px 0 0 0;">Financiado $'+sumFinanciado.toFixed(2)+' − Comisión $'+comisionMonto.toFixed(2)+'</p>' +
+      '</div>' +
+    '</div>' +
+    (rows ? '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">' +
+      '<thead><tr style="background:#f0fdfa;font-size:8px;text-transform:uppercase;color:#0f766e;font-weight:900;">' +
+        '<th style="padding:5px 6px;text-align:left;">Fecha</th>' +
+        '<th style="padding:5px 6px;text-align:right;">Total</th>' +
+        '<th style="padding:5px 6px;text-align:right;">Financiado</th>' +
+        '<th style="padding:5px 6px;text-align:right;">Cliente</th>' +
+        '<th style="padding:5px 6px;text-align:right;">Comisión</th>' +
+        '<th style="padding:5px 6px;text-align:right;">Neto</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>' :
+      '<p style="text-align:center;color:#94a3b8;font-size:10px;font-weight:900;padding:12px;">Sin registros esta semana</p>');
+
+  await Swal.fire({
+    title: '📊 Resumen Semanal Cashea',
+    html: resumenHtml,
+    width: 520,
+    confirmButtonText: 'Cerrar',
+    confirmButtonColor: '#0f766e'
+  });
+};
+
+// ─── Ajustar comisión Cashea ──────────────────────────────
+window.ajustarComisionCashea = async () => {
+  const actual = await _getComisionCashea();
+  const { value } = await Swal.fire({
+    title: '⚙️ Comisión Cashea',
+    html:
+      '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Porcentaje que cobra Cashea sobre el monto financiado.</p>' +
+      '<input id="cs_com" type="number" step="0.1" min="0" max="50" value="'+actual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:12px;font-size:20px;font-weight:900;text-align:center;outline:none;box-sizing:border-box;">'+
+      '<p style="font-size:9px;color:#94a3b8;margin-top:6px;">Valor actual: '+actual+'%</p>',
+    showCancelButton: true,
+    confirmButtonText: 'Guardar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#0f766e',
+    preConfirm: () => {
+      const v = parseFloat(document.getElementById('cs_com')?.value);
+      if (isNaN(v) || v < 0 || v > 50) { Swal.showValidationMessage('Ingresa un % válido entre 0 y 50'); return false; }
+      return v;
+    }
+  });
+  if (value == null) return;
+  try {
+    await setDoc(doc(db, 'configuracion', 'cashea'), { comision: value, actualizadoEn: serverTimestamp() }, { merge: true });
+    await Swal.fire({ icon:'success', title:'✅ Comisión actualizada', text: value + '% sobre monto financiado', timer:1800, showConfirmButton:false });
+    window.mostrarDashboardCashea();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+// ─── Eliminar registro Cashea ─────────────────────────────
+window.eliminarRegistroCashea = async (id) => {
+  const res = await Swal.fire({ icon:'warning', title:'¿Eliminar registro?', showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Sí, eliminar', cancelButtonText:'Cancelar' });
+  if (!res.isConfirmed) return;
+  try {
+    await deleteDoc(doc(db, 'cashea_registros', id));
+    window.mostrarDashboardCashea();
+  } catch(e) { alert('Error: ' + e.message); }
 };
 
 // modulo deudas incluido en finanzas.js

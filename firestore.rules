@@ -133,6 +133,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Registros diarios Cashea
+    match /cashea_registros/{id} {
+      allow read, write: if true;
+    }
+
     // Bloquear todo lo demás por defecto
     match /{document=**} {
       allow read, write: if false;
