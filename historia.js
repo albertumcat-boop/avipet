@@ -1772,18 +1772,75 @@ window.renderizarTablaMaestra = async () => {
         btnE.addEventListener('click', async function() {
           const idActual = this.dataset.id;
           const catActual = this.dataset.cat;
+
+          // Cargar categorías
           const snapCats = await getDocs(collection(db,"servicios_maestro"));
           const catsSet = new Set(['CONSULTAS','VACUNAS','LABORATORIO','TESTS RAPIDOS','REFERIDOS','OTROS PROCEDIMIENTOS','OTROS']);
           snapCats.forEach(d => { const c=(d.data().categoria||'').trim().toUpperCase(); if(c) catsSet.add(c); });
           let optsHtml = Array.from(catsSet).sort().map(c => '<option value="'+c+'"'+(c===catActual.toUpperCase()?' selected':'')+'>'+c+'</option>').join('');
           optsHtml += '<option value="__nueva__">+ Nueva categoria...</option>';
+
           // Leer precio y % actuales del card
           const cardEl2 = document.querySelector('#tablaServiciosMaestro [data-card-id="'+idActual+'"]');
           const precioActual = parseFloat(cardEl2?.querySelector('input[data-campo="precioVenta"]')?.value||0);
           const porcActual   = parseFloat(cardEl2?.querySelector('input[data-campo="porcDoc"]')?.value||30);
 
+          // Cargar insumos del servicio y catálogo
+          const snapServ = await getDoc(doc(db,"servicios_maestro",idActual));
+          const dataServ = snapServ.exists()?snapServ.data():{};
+          const normNom = normalizarNombre(idActual);
+          const recetaBase = Object.entries(recetas).find(([k]) => normalizarNombre(k) === normNom);
+          let listaIns = (dataServ.insumos || (recetaBase ? recetaBase[1].insumos : [])).map(ins => ({
+            nombre: ins.nombre, costo: parseFloat(ins.costo||0), bloqueado: ins.bloqueado===true
+          }));
+
+          const snapIns = await getDocs(collection(db,"insumos_maestro"));
+          const insumosMaestro = [];
+          snapIns.forEach(d => {
+            const rd = d.data();
+            const nom = (rd.nombre||d.id||'').trim();
+            if (nom) insumosMaestro.push({ nombre:nom, costo:parseFloat(rd.costo||0) });
+          });
+          insumosMaestro.sort((a,b) => a.nombre.localeCompare(b.nombre));
+          let optsIns = '<option value="">-- Seleccionar del catálogo --</option>';
+          insumosMaestro.forEach(i => { optsIns += '<option value="'+i.nombre+'" data-costo="'+i.costo+'">'+i.nombre+' ($'+i.costo.toFixed(2)+')</option>'; });
+
+          const renderListaIns = () => {
+            const cont = document.getElementById('es_listaIns');
+            if (!cont) return;
+            cont.innerHTML = '';
+            if (listaIns.length === 0) {
+              cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:10px;font-weight:700;">Sin insumos. Agrega uno abajo.</p>';
+              return;
+            }
+            listaIns.forEach((ins, idx) => {
+              const row = document.createElement('div');
+              row.style.cssText = 'display:grid;grid-template-columns:auto 1fr 80px auto auto;align-items:center;gap:5px;padding:6px 7px;margin-bottom:3px;border-radius:8px;border:1px solid '+(ins.bloqueado?'#fde68a':'#f1f5f9')+';background:'+(ins.bloqueado?'#fffbeb':'#fff')+';';
+              const btnLock = document.createElement('button');
+              btnLock.type='button'; btnLock.innerHTML=ins.bloqueado?'&#128274;':'&#128275;';
+              btnLock.style.cssText='background:'+(ins.bloqueado?'#f59e0b':'#e2e8f0')+';border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;';
+              btnLock.addEventListener('click',()=>{ listaIns[idx].bloqueado=!listaIns[idx].bloqueado; renderListaIns(); });
+              const nomSpan = document.createElement('span');
+              nomSpan.style.cssText='font-size:10px;font-weight:700;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+              nomSpan.textContent=ins.nombre;
+              const inpC = document.createElement('input');
+              inpC.type='number'; inpC.step='0.01'; inpC.min='0'; inpC.value=ins.costo.toFixed(2);
+              inpC.style.cssText='border:1px solid #e2e8f0;border-radius:6px;padding:3px 5px;font-size:10px;font-weight:700;text-align:center;width:100%;';
+              inpC.addEventListener('input',()=>{ listaIns[idx].costo=parseFloat(inpC.value)||0; });
+              const tagB = document.createElement('span');
+              tagB.style.cssText='font-size:8px;font-weight:900;color:'+(ins.bloqueado?'#f59e0b':'#94a3b8')+';text-align:center;';
+              tagB.textContent=ins.bloqueado?'OBLIG.':'LIBRE';
+              const btnDel = document.createElement('button');
+              btnDel.type='button'; btnDel.textContent='✕';
+              btnDel.style.cssText='background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:2px 7px;font-size:12px;font-weight:900;cursor:pointer;';
+              btnDel.addEventListener('click',(function(i){ return ()=>{ listaIns.splice(i,1); renderListaIns(); }; })(idx));
+              row.appendChild(btnLock); row.appendChild(nomSpan); row.appendChild(inpC); row.appendChild(tagB); row.appendChild(btnDel);
+              cont.appendChild(row);
+            });
+          };
+
           const res = await Swal.fire({
-            title: 'Editar: '+idActual, width:440,
+            title: 'Editar: '+idActual, width:560,
             html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre</label>'+
               '<input id="esn" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>'+
@@ -1796,9 +1853,43 @@ window.renderizarTablaMaestra = async () => {
               '<select id="esc" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsHtml+'</select>'+
               '<input id="escn" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div>'+
               '<div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:10px;font-weight:900;color:#7c3aed;"><input type="checkbox" id="es_ref_edit"'+(r.esReferido?' checked':'')+' style="width:16px;height:16px;accent-color:#7c3aed;"> Es servicio referido (no requiere cédula del dueño)</label></div>'+
+              '<div style="border-top:2px solid #e2e8f0;padding-top:10px;">'+
+              '<p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;">Insumos del servicio</p>'+
+              '<p style="font-size:8px;color:#94a3b8;margin:0 0 6px 0;">&#128274; = doctor NO puede eliminar en Historia Clínica.</p>'+
+              '<div id="es_listaIns" style="max-height:180px;overflow-y:auto;margin-bottom:8px;"></div>'+
+              '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'+
+              '<select id="es_selIns" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;background:white;outline:none;">'+optsIns+'</select>'+
+              '<button id="es_btnAddCat" type="button" style="background:#2563eb;color:white;border:none;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;white-space:nowrap;">+ Catálogo</button>'+
+              '</div>'+
+              '<div style="display:flex;gap:6px;">'+
+              '<input id="es_inpNom" type="text" placeholder="Nombre insumo nuevo..." style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;outline:none;">'+
+              '<input id="es_inpCosto" type="number" placeholder="$0.00" step="0.01" min="0" style="width:75px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;outline:none;">'+
+              '<button id="es_btnAddMan" type="button" style="background:#10b981;color:white;border:none;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;white-space:nowrap;">+ Manual</button>'+
+              '</div></div>'+
               '</div>',
             showCancelButton:true, confirmButtonText:'Guardar todo', confirmButtonColor:'#f59e0b',
-            didOpen:()=>{ document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; }); },
+            didOpen: () => {
+              document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; });
+              renderListaIns();
+              document.getElementById('es_btnAddCat').addEventListener('click', () => {
+                const sel = document.getElementById('es_selIns');
+                const opt = sel?.options[sel.selectedIndex];
+                if (!opt||!opt.value) return;
+                if (listaIns.some(i=>i.nombre.toUpperCase()===opt.value.toUpperCase())) { alert('Ya está en la lista.'); return; }
+                listaIns.push({ nombre:opt.value, costo:parseFloat(opt.dataset.costo)||0, bloqueado:false });
+                sel.value=''; renderListaIns();
+              });
+              document.getElementById('es_btnAddMan').addEventListener('click', () => {
+                const nom = document.getElementById('es_inpNom')?.value.trim().toUpperCase();
+                const cos = parseFloat(document.getElementById('es_inpCosto')?.value)||0;
+                if (!nom) { alert('Escribe el nombre del insumo'); return; }
+                if (listaIns.some(i=>i.nombre.toUpperCase()===nom)) { alert('Ya está en la lista.'); return; }
+                listaIns.push({ nombre:nom, costo:cos, bloqueado:false });
+                document.getElementById('es_inpNom').value='';
+                document.getElementById('es_inpCosto').value='';
+                renderListaIns();
+              });
+            },
             preConfirm:()=>{
               const n=document.getElementById('esn').value.trim().toUpperCase();
               const p=parseFloat(document.getElementById('esp').value)||0;
@@ -1810,33 +1901,26 @@ window.renderizarTablaMaestra = async () => {
               if(!n){Swal.showValidationMessage('Nombre requerido');return false;}
               if(p<=0){Swal.showValidationMessage('El precio debe ser mayor a 0');return false;}
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
-              return {n,p,pc,c,esRef};
+              return {n,p,pc,c,esRef,insumos:listaIns};
             }
           });
           if(!res.isConfirmed) return;
-          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef} = res.value;
+          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, insumos:nuevosInsumos} = res.value;
           try {
             const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
             const dataOld = snapOld.exists()?snapOld.data():{};
-            const dataNueva = {...dataOld, precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat, esReferido:nuevoEsRef, actualizadoEn:serverTimestamp()};
+            const dataNueva = {...dataOld, precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat, esReferido:nuevoEsRef, insumos:nuevosInsumos, actualizadoEn:serverTimestamp()};
             if(nuevoNom !== idActual) {
               await setDoc(doc(db,"servicios_maestro",nuevoNom), dataNueva);
               await deleteDoc(doc(db,"servicios_maestro",idActual));
             } else {
               await setDoc(doc(db,"servicios_maestro",idActual), dataNueva, {merge:true});
             }
-            console.log('[AVIPET] Servicio actualizado:', nuevoNom, '→ $'+nuevoPrecio+' / '+nuevoPorcDoc+'%');
-            await Swal.fire({icon:'success',title:'Guardado',html:'<b>'+nuevoNom+'</b><br>$'+nuevoPrecio.toFixed(2)+' · '+nuevoPorcDoc+'% doc · '+nuevaCat,timer:2000,showConfirmButton:false});
+            await Swal.fire({icon:'success',title:'Guardado',html:'<b>'+nuevoNom+'</b><br>$'+nuevoPrecio.toFixed(2)+' · '+nuevoPorcDoc+'% doc · '+nuevaCat+'<br>'+nuevosInsumos.length+' insumo(s)',timer:2000,showConfirmButton:false});
             window.renderizarTablaMaestra(); window.cargarSelectorServicios();
           } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
         });
         f3.appendChild(btnE);
-        // Btn Insumos
-        const btnI = document.createElement('button');
-        btnI.textContent = 'Editar Insumos'; btnI.dataset.id = r.id;
-        btnI.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        btnI.addEventListener('click', function(){ window.editarInsumosServicio(this.dataset.id); });
-        f3b.appendChild(btnI);
         // Btn Pregunta Extra (ej: cuanto Propofol se usó en eutanasia)
         const btnQ = document.createElement('button');
         const tienePregunta = r.preguntaActiva === true;
