@@ -676,7 +676,12 @@ window.guardarFirebase = async (imp) => {
       document.getElementById('bannerModoEdicion')?.classList.add('hidden');
       alert("✅ Consulta actualizada con éxito!");
     } else {
-      await addDoc(collection(db,"consultas"),data);
+      const nuevoRef = await addDoc(collection(db,"consultas"),data);
+      // Si se guardó desde Test, quedar en modo edición para que la historia no cree duplicado
+      if (window._modoGuardarTest) {
+        window._editandoConsultaId = nuevoRef.id;
+        _mostrarBannerEdicion?.();
+      }
       alert("✅ ¡Consulta guardada con éxito!");
     }
     // ── Decrementar stock solo en consultas NUEVAS (no al editar) ───────────
@@ -711,9 +716,15 @@ window.guardarFirebase = async (imp) => {
       } catch(eInv) { console.warn("Error descontando stock:", eInv); }
     }
     localStorage.removeItem('respaldo_historia_activa');
-    _limpiarFormularioHistoria();
-    _limpiarNotasInternas();
-    if(imp)window.imprimirDocumento();
+    if (window._modoGuardarTest) {
+      window._modoGuardarTest = false;
+      // No limpiar el formulario — el doctor sigue completando la historia
+      Swal.fire({ icon:'success', title:'✅ Test guardado', text:'Continúa completando la historia clínica y guarda cuando termines.', timer:2500, showConfirmButton:false });
+    } else {
+      _limpiarFormularioHistoria();
+      _limpiarNotasInternas();
+      if(imp) window.imprimirDocumento();
+    }
   }catch(e){console.error("Error guardando:",e);alert("? Error: "+e.message);}
   finally{if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}}
 };
@@ -1756,7 +1767,7 @@ window.renderizarTablaMaestra = async () => {
         f3.appendChild(btnG);
         // Btn Editar nombre/categoria
         const btnE = document.createElement('button');
-        btnE.textContent = 'Editar nombre'; btnE.dataset.id = r.id; btnE.dataset.cat = r.categoria||'OTROS';
+        btnE.textContent = 'Editar Servicio'; btnE.dataset.id = r.id; btnE.dataset.cat = r.categoria||'OTROS';
         btnE.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
         btnE.addEventListener('click', async function() {
           const idActual = this.dataset.id;
@@ -1783,7 +1794,9 @@ window.renderizarTablaMaestra = async () => {
               '<input id="espc" type="number" step="0.5" min="0" max="100" value="'+porcActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div></div>'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Categoria</label>'+
               '<select id="esc" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsHtml+'</select>'+
-              '<input id="escn" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div></div>',
+              '<input id="escn" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div>'+
+              '<div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:10px;font-weight:900;color:#7c3aed;"><input type="checkbox" id="es_ref_edit"'+(r.esReferido?' checked':'')+' style="width:16px;height:16px;accent-color:#7c3aed;"> Es servicio referido (no requiere cédula del dueño)</label></div>'+
+              '</div>',
             showCancelButton:true, confirmButtonText:'Guardar todo', confirmButtonColor:'#f59e0b',
             didOpen:()=>{ document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; }); },
             preConfirm:()=>{
@@ -1793,18 +1806,19 @@ window.renderizarTablaMaestra = async () => {
               const cs=document.getElementById('esc').value;
               const cn=document.getElementById('escn').value.trim().toUpperCase();
               const c=cs==='__nueva__'?cn:cs;
+              const esRef = document.getElementById('es_ref_edit')?.checked || false;
               if(!n){Swal.showValidationMessage('Nombre requerido');return false;}
               if(p<=0){Swal.showValidationMessage('El precio debe ser mayor a 0');return false;}
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
-              return {n,p,pc,c};
+              return {n,p,pc,c,esRef};
             }
           });
           if(!res.isConfirmed) return;
-          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat} = res.value;
+          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef} = res.value;
           try {
             const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
             const dataOld = snapOld.exists()?snapOld.data():{};
-            const dataNueva = {...dataOld, precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat, actualizadoEn:serverTimestamp()};
+            const dataNueva = {...dataOld, precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat, esReferido:nuevoEsRef, actualizadoEn:serverTimestamp()};
             if(nuevoNom !== idActual) {
               await setDoc(doc(db,"servicios_maestro",nuevoNom), dataNueva);
               await deleteDoc(doc(db,"servicios_maestro",idActual));

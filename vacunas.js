@@ -240,4 +240,53 @@ window.borrarFechaNacVacuna = () => {
   el.dispatchEvent(new Event('change'));
 };
 
-console.log("✅ vacunas.js v2 cargado — fecha de nacimiento incluida");
+// ─── IMPRIMIR VACUNAS VALIDANDO PACIENTE ─────────────────
+window.imprimirHojaVacunasSeguro = async () => {
+  const cedula = document.getElementById('hCI')?.value.trim();
+  const nombre = document.getElementById('hNombre')?.value.trim();
+  if (!cedula || !nombre) {
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Paciente no identificado',
+      text: 'Ingresa la cédula y el nombre de la mascota en Historia Clínica antes de imprimir.',
+      confirmButtonColor: '#1d4ed8'
+    });
+    return;
+  }
+  window.imprimirHojaVacunas();
+};
+
+// ─── GUARDAR TEST SIN BORRAR HISTORIA ────────────────────
+window.guardarTestRapido = async () => {
+  const cedula  = document.getElementById('hCI')?.value.trim();
+  const nombre  = document.getElementById('hNombre')?.value.trim();
+  if (!cedula || !nombre) {
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Paciente no identificado',
+      text: 'Ingresa la cédula y el nombre de la mascota en Historia Clínica antes de guardar el test.',
+      confirmButtonColor: '#1d4ed8'
+    });
+    return;
+  }
+  window._modoGuardarTest = true;
+  await window.guardarFirebase(false);
+};
+
+// ─── IMPRIMIR TEST VALIDANDO PACIENTE ────────────────────
+window.imprimirHojaTestSeguro = async () => {
+  const cedula = document.getElementById('hCI')?.value.trim();
+  const nombre = document.getElementById('hNombre')?.value.trim();
+  if (!cedula || !nombre) {
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Paciente no identificado',
+      text: 'Ingresa la cédula y el nombre de la mascota en Historia Clínica antes de imprimir.',
+      confirmButtonColor: '#1d4ed8'
+    });
+    return;
+  }
+  window.imprimirHojaTest();
+};
+
+console.log("✅ vacunas.js v3 cargado — guardarTestRapido sin borrar historia");

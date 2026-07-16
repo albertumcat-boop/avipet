@@ -118,6 +118,21 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Finanzas — deudas y préstamos del equipo
+    match /deudas/{id} {
+      allow read, write: if true;
+    }
+
+    // Medicamentos del catálogo
+    match /medicamentos_maestro/{id} {
+      allow read, write: if true;
+    }
+
+    // Compras de insumos
+    match /compras_insumos/{id} {
+      allow read, write: if true;
+    }
+
     // Bloquear todo lo demás por defecto
     match /{document=**} {
       allow read, write: if false;
