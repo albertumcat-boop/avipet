@@ -1739,32 +1739,9 @@ window.renderizarTablaMaestra = async () => {
         card.appendChild(f2);
         // Fila 3: botones
         const f3 = document.createElement('div');
-        f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px;';
+        f3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:0;';
         const f3b = document.createElement('div');
-        f3b.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;';
-        // Btn Guardar
-        const btnG = document.createElement('button');
-        btnG.textContent = 'Guardar precio'; btnG.dataset.id = r.id;
-        btnG.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        btnG.addEventListener('click', async function() {
-          const cardEl = document.querySelector('#tablaServiciosMaestro [data-card-id="'+this.dataset.id+'"]');
-          const inpP = cardEl?.querySelector('input[data-campo="precioVenta"]');
-          const inpPc = cardEl?.querySelector('input[data-campo="porcDoc"]');
-          this.textContent = '...'; this.disabled = true; this.style.background = '#94a3b8';
-          const btn = this;
-          try {
-            const nuevoP = parseFloat(inpP?.value)||0;
-            const nuevoPc = parseFloat(inpPc?.value)||30;
-            await setDoc(doc(db,"servicios_maestro",this.dataset.id),{ precioVenta:nuevoP, porcDoc:nuevoPc, actualizadoEn:serverTimestamp() },{merge:true});
-            // Actualizar el selector de historia clinica inmediatamente
-            if (typeof window.cargarSelectorServicios === 'function') await window.cargarSelectorServicios();
-            // porcGlobal eliminado — cada servicio usa su porcDoc individual
-            btn.textContent = 'OK'; btn.style.background = '#16a34a';
-            inpP.style.borderColor = '#16a34a'; inpPc.style.borderColor = '#16a34a';
-            setTimeout(()=>{ btn.textContent='Guardar'; btn.disabled=false; btn.style.background='#2563eb'; inpP.style.borderColor=''; inpPc.style.borderColor=''; }, 2000);
-          } catch(e) { btn.textContent='Error'; btn.style.background='#dc2626'; btn.disabled=false; setTimeout(()=>{ btn.textContent='Guardar'; btn.style.background='#2563eb'; },2500); }
-        });
-        f3.appendChild(btnG);
+        f3b.style.cssText = 'display:none;';
         // Btn Editar nombre/categoria
         const btnE = document.createElement('button');
         btnE.textContent = 'Editar Servicio'; btnE.dataset.id = r.id; btnE.dataset.cat = r.categoria||'OTROS';
@@ -1866,18 +1843,52 @@ window.renderizarTablaMaestra = async () => {
               '<input id="es_inpCosto" type="number" placeholder="$0.00" step="0.01" min="0" style="width:75px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;outline:none;">'+
               '<button id="es_btnAddMan" type="button" style="background:#10b981;color:white;border:none;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;white-space:nowrap;">+ Manual</button>'+
               '</div></div>'+
+              // ── Pregunta Extra ──────────────────────────────────
+              '<div style="border-top:2px solid #f3e8ff;padding-top:10px;margin-top:2px;">'+
+              '<p style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 8px 0;">❓ Pregunta extra al guardar</p>'+
+              '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:10px;font-weight:900;color:#1e293b;margin-bottom:8px;"><input type="checkbox" id="es_pq_activa"'+(dataServ.preguntaActiva?' checked':'')+' style="width:15px;height:15px;accent-color:#7c3aed;"> Activar ventana emergente al guardar</label>'+
+              '<div style="display:flex;flex-direction:column;gap:6px;" id="es_pq_campos">'+
+              '<input id="es_pq_texto" type="text" value="'+(dataServ.preguntaTexto||'¿Cuánto se utilizó?')+'" placeholder="Texto de la pregunta..." style="width:100%;border:2px solid #e9d5ff;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:700;outline:none;box-sizing:border-box;">'+
+              '<div><label style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;display:block;margin-bottom:3px;">Insumo afectado</label>'+
+              '<select id="es_pq_insumo" style="width:100%;border:2px solid #e9d5ff;border-radius:8px;padding:6px;font-size:10px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;"><option value="">-- Sin insumo --</option></select></div>'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#f5f3ff;border-radius:8px;padding:7px;">'+
+              '<div><label style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;display:block;margin-bottom:3px;">Costo/pote ($)</label>'+
+              '<input id="es_pq_pote" type="number" step="0.01" min="0" value="'+(dataServ.preguntaCostoPote||0)+'" style="width:100%;border:2px solid #e9d5ff;border-radius:8px;padding:6px;font-size:11px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;display:block;margin-bottom:3px;">Costo/cc ($)</label>'+
+              '<input id="es_pq_cc" type="number" step="0.01" min="0" value="'+(dataServ.preguntaCostoCC||dataServ.preguntaCostoUnidad||0)+'" style="width:100%;border:2px solid #e9d5ff;border-radius:8px;padding:6px;font-size:11px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '</div></div></div>'+
               '</div>',
             showCancelButton:true, confirmButtonText:'Guardar todo', confirmButtonColor:'#f59e0b',
             didOpen: () => {
               document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; });
-              renderListaIns();
+
+              // Función para refrescar el dropdown de insumo afectado en Pregunta Extra
+              const refreshPqInsumo = () => {
+                const sel = document.getElementById('es_pq_insumo');
+                if (!sel) return;
+                const prev = sel.value;
+                sel.innerHTML = '<option value="">-- Sin insumo --</option>';
+                listaIns.forEach(i => {
+                  const opt = document.createElement('option');
+                  opt.value = i.nombre;
+                  opt.textContent = i.nombre;
+                  if (i.nombre === (prev || dataServ.preguntaInsumo)) opt.selected = true;
+                  sel.appendChild(opt);
+                });
+              };
+
+              // Wrap renderListaIns para también refrescar el dropdown PQ
+              const renderListaInsConPQ = () => { renderListaIns(); refreshPqInsumo(); };
+
+              renderListaInsConPQ();
+
               document.getElementById('es_btnAddCat').addEventListener('click', () => {
                 const sel = document.getElementById('es_selIns');
                 const opt = sel?.options[sel.selectedIndex];
                 if (!opt||!opt.value) return;
                 if (listaIns.some(i=>i.nombre.toUpperCase()===opt.value.toUpperCase())) { alert('Ya está en la lista.'); return; }
                 listaIns.push({ nombre:opt.value, costo:parseFloat(opt.dataset.costo)||0, bloqueado:false });
-                sel.value=''; renderListaIns();
+                sel.value=''; renderListaInsConPQ();
               });
               document.getElementById('es_btnAddMan').addEventListener('click', () => {
                 const nom = document.getElementById('es_inpNom')?.value.trim().toUpperCase();
@@ -1887,7 +1898,7 @@ window.renderizarTablaMaestra = async () => {
                 listaIns.push({ nombre:nom, costo:cos, bloqueado:false });
                 document.getElementById('es_inpNom').value='';
                 document.getElementById('es_inpCosto').value='';
-                renderListaIns();
+                renderListaInsConPQ();
               });
             },
             preConfirm:()=>{
@@ -1898,90 +1909,49 @@ window.renderizarTablaMaestra = async () => {
               const cn=document.getElementById('escn').value.trim().toUpperCase();
               const c=cs==='__nueva__'?cn:cs;
               const esRef = document.getElementById('es_ref_edit')?.checked || false;
+              const pqActiva = document.getElementById('es_pq_activa')?.checked || false;
+              const pqTexto  = document.getElementById('es_pq_texto')?.value.trim() || '¿Cuánto se utilizó?';
+              const pqInsumo = document.getElementById('es_pq_insumo')?.value || '';
+              const pqPote   = parseFloat(document.getElementById('es_pq_pote')?.value) || 0;
+              const pqCC     = parseFloat(document.getElementById('es_pq_cc')?.value)   || 0;
               if(!n){Swal.showValidationMessage('Nombre requerido');return false;}
               if(p<=0){Swal.showValidationMessage('El precio debe ser mayor a 0');return false;}
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
-              return {n,p,pc,c,esRef,insumos:listaIns};
+              return {n,p,pc,c,esRef,insumos:listaIns,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
             }
           });
           if(!res.isConfirmed) return;
-          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, insumos:nuevosInsumos} = res.value;
+          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, insumos:nuevosInsumos,
+                 pqActiva, pqTexto, pqInsumo, pqPote, pqCC} = res.value;
           try {
             const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
             const dataOld = snapOld.exists()?snapOld.data():{};
-            const dataNueva = {...dataOld, precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat, esReferido:nuevoEsRef, insumos:nuevosInsumos, actualizadoEn:serverTimestamp()};
+            const dataNueva = {
+              ...dataOld,
+              precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat,
+              esReferido:nuevoEsRef, insumos:nuevosInsumos,
+              preguntaActiva:pqActiva, preguntaTexto:pqTexto, preguntaInsumo:pqInsumo,
+              preguntaCostoPote:pqPote, preguntaCostoCC:pqCC,
+              actualizadoEn:serverTimestamp()
+            };
             if(nuevoNom !== idActual) {
               await setDoc(doc(db,"servicios_maestro",nuevoNom), dataNueva);
               await deleteDoc(doc(db,"servicios_maestro",idActual));
             } else {
               await setDoc(doc(db,"servicios_maestro",idActual), dataNueva, {merge:true});
             }
-            await Swal.fire({icon:'success',title:'Guardado',html:'<b>'+nuevoNom+'</b><br>$'+nuevoPrecio.toFixed(2)+' · '+nuevoPorcDoc+'% doc · '+nuevaCat+'<br>'+nuevosInsumos.length+' insumo(s)',timer:2000,showConfirmButton:false});
+            await Swal.fire({icon:'success',title:'Guardado',html:'<b>'+nuevoNom+'</b><br>$'+nuevoPrecio.toFixed(2)+' · '+nuevoPorcDoc+'% doc · '+nuevaCat+'<br>'+nuevosInsumos.length+' insumo(s)'+(pqActiva?' · ❓ Pregunta ON':''),timer:2000,showConfirmButton:false});
             window.renderizarTablaMaestra(); window.cargarSelectorServicios();
           } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
         });
         f3.appendChild(btnE);
-        // Btn Pregunta Extra (ej: cuanto Propofol se usó en eutanasia)
-        const btnQ = document.createElement('button');
-        const tienePregunta = r.preguntaActiva === true;
-        btnQ.textContent = tienePregunta ? '❓ Pregunta: ON' : '❓ Pregunta extra';
-        btnQ.dataset.id = r.id;
-        btnQ.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:'+(tienePregunta?'#7c3aed':'#a78bfa')+';color:#fff;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
-        btnQ.addEventListener('click', async function(){
-          const idServ = this.dataset.id;
-          const snapR = await getDoc(doc(db,'servicios_maestro',idServ));
-          const rd = snapR.exists()?snapR.data():{};
-          const insumosServ = rd.insumos || [];
-          const optsIns = insumosServ.map(i => '<option value="'+(i.nombre||'')+'"'+((rd.preguntaInsumo||'')===i.nombre?' selected':'')+'>'+i.nombre+'</option>').join('');
-          const res = await Swal.fire({
-            title: 'Pregunta extra: '+idServ, width:440,
-            html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
-              '<label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;color:#1e293b;"><input type="checkbox" id="pq_activa" '+(rd.preguntaActiva?'checked':'')+' style="width:16px;height:16px;accent-color:#7c3aed;"> Activar ventana emergente al guardar</label>'+
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Texto de la pregunta</label>'+
-              '<input id="pq_texto" type="text" value="'+(rd.preguntaTexto||'¿Cuánto se utilizó?')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;box-sizing:border-box;"></div>'+
-              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Insumo afectado</label>'+
-              '<select id="pq_insumo" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+
-              (optsIns||'<option value="">-- Este servicio no tiene insumos --</option>')+'</select></div>'+
-              '<p style="font-size:9px;color:#64748b;font-weight:700;">El doctor podrá responder en la unidad que use realmente (ej: potes/frascos completos, o cc/ml sueltos). Define el costo de cada una:</p>'+
-              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#f5f3ff;border-radius:10px;padding:8px;">'+
-              '<div><label style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;display:block;margin-bottom:4px;">Costo por pote/frasco ($)</label>'+
-              '<input id="pq_costo_pote" type="number" step="0.01" min="0" value="'+(rd.preguntaCostoPote||0)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
-              '<div><label style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;display:block;margin-bottom:4px;">Costo por cc/ml ($)</label>'+
-              '<input id="pq_costo_cc" type="number" step="0.01" min="0" value="'+(rd.preguntaCostoCC||rd.preguntaCostoUnidad||0)+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div></div>'+
-              '<p style="font-size:9px;color:#7c3aed;background:#f5f3ff;border-radius:8px;padding:8px;">Al guardar este servicio en Historia Clínica, se abrirá esta pregunta con un selector "Potes / CC". Sea cual sea la unidad y cantidad que indique el doctor, el costo se calcula y se suma automáticamente al total de insumos — afectando el pago del doctor y el ingreso de Avipet.</p>'+
-              '</div>',
-            showCancelButton:true, confirmButtonText:'Guardar', confirmButtonColor:'#7c3aed',
-            preConfirm: () => ({
-              activa: document.getElementById('pq_activa').checked,
-              texto: document.getElementById('pq_texto').value.trim() || '¿Cuánto se utilizó?',
-              insumo: document.getElementById('pq_insumo').value || '',
-              costoPote: parseFloat(document.getElementById('pq_costo_pote').value) || 0,
-              costoCC: parseFloat(document.getElementById('pq_costo_cc').value) || 0
-            })
-          });
-          if (!res.isConfirmed) return;
-          try {
-            await setDoc(doc(db,'servicios_maestro',idServ), {
-              preguntaActiva: res.value.activa,
-              preguntaTexto: res.value.texto,
-              preguntaInsumo: res.value.insumo,
-              preguntaCostoPote: res.value.costoPote,
-              preguntaCostoCC: res.value.costoCC,
-              actualizadoEn: serverTimestamp()
-            }, {merge:true});
-            await Swal.fire({icon:'success',title:'Guardado',timer:1200,showConfirmButton:false});
-            window.renderizarTablaMaestra();
-          } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
-        });
-        f3b.appendChild(btnQ);
         // Btn Eliminar
         const btnD = document.createElement('button');
         btnD.textContent = 'Eliminar servicio'; btnD.dataset.id = r.id;
         btnD.style.cssText = 'padding:8px 6px;border-radius:8px;border:none;background:#fee2e2;color:#dc2626;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;';
         btnD.addEventListener('click', function(){ window.eliminarServicioMaestro(this.dataset.id); });
-        f3b.appendChild(btnD);
+        f3.appendChild(btnD);
         card.appendChild(f3);
-        card.appendChild(f3b);
         catDiv.appendChild(card);
       });
       cont.appendChild(catDiv);
