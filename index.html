@@ -1058,6 +1058,7 @@
  oninput="_llamarFuncion('filtrarTablaServicios')"
  class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
  <button onclick="_llamarFuncion('abrirModalNuevoServicio')" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-blue-700 transition-all shadow"> Nuevo Servicio</button>
+ <button onclick="window.migrarRecetasAFirestore()" class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-emerald-700 transition-all shadow" title="Sube los servicios del código a Firestore para poder editarlos">⬆️ Sincronizar recetas</button>
  </div>
  <div id="tablaServiciosMaestro" class="overflow-x-auto"></div>
  </div>

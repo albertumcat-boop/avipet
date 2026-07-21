@@ -256,6 +256,50 @@ function _recalcularCombos() {
   window.calcularTodo();
 }
 
+window.migrarRecetasAFirestore = async () => {
+  const conf = await Swal.fire({
+    icon:'question', title:'Sincronizar recetas',
+    html:'Esto sube los servicios del código a Firestore.<br><b>No sobreescribe</b> los que ya existen.<br>¿Continuar?',
+    showCancelButton:true, confirmButtonText:'Sí, sincronizar', confirmButtonColor:'#059669'
+  });
+  if (!conf.isConfirmed) return;
+
+  try {
+    const snapExist = await getDocs(collection(db, 'servicios_maestro'));
+    const yaExisten = new Set();
+    snapExist.forEach(d => yaExisten.add(d.id));
+
+    let creados = 0, omitidos = 0;
+    const batch = [];
+    for (const [nombre, data] of Object.entries(recetas)) {
+      if (yaExisten.has(nombre)) { omitidos++; continue; }
+      const porcDoc = CONFIG_PORC[nombre] || 40;
+      const cat = nombre.startsWith('VACUNA') ? 'VACUNAS'
+               : nombre.startsWith('REFERIDO') ? 'REFERIDOS'
+               : nombre.startsWith('HEMATOLOGIA')||nombre.startsWith('QUIMICA')||nombre.startsWith('EXAMEN')||nombre.startsWith('CITOLOGIA')||nombre.startsWith('DESCARTE')||nombre.startsWith('DISTEMPER')||nombre.startsWith('PARVO')||nombre.startsWith('FILARIA')||nombre.startsWith('SIDA')||nombre.startsWith('TEST')||nombre.startsWith('PERFIL') ? 'LABORATORIO'
+               : nombre.startsWith('CONSULTA') ? 'CONSULTAS'
+               : nombre.startsWith('EUTANASIA') ? 'OTROS PROCEDIMIENTOS' : 'OTROS PROCEDIMIENTOS';
+      await setDoc(doc(db, 'servicios_maestro', nombre), {
+        precioVenta: data.precioVenta,
+        porcDoc,
+        categoria: cat,
+        insumos: (data.insumos || []).map(i => ({ nombre:i.nombre, costo:i.costo, bloqueado:false })),
+        esReferido: nombre.startsWith('REFERIDO'),
+        activo: true,
+        creadoEn: serverTimestamp()
+      });
+      creados++;
+    }
+
+    await Swal.fire({
+      icon:'success', title:'✅ Sincronización completa',
+      html:'<b>'+creados+'</b> servicios subidos a Firestore.<br><span style="color:#64748b;font-size:11px;">'+omitidos+' ya existían y no fueron tocados.</span>'
+      timer:3000, showConfirmButton:false
+    });
+    window.renderizarTablaMaestra();
+  } catch(e) { Swal.fire({icon:'error', title:'Error', text:e.message}); }
+};
+
 window.insertarServicio = async (v) => {
   if (!v) return;
   const visual=document.getElementById('visualizacionServicios');
