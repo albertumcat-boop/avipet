@@ -1917,6 +1917,7 @@ window.renderizarTablaMaestra = async () => {
               if(!n){Swal.showValidationMessage('Nombre requerido');return false;}
               if(p<=0){Swal.showValidationMessage('El precio debe ser mayor a 0');return false;}
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
+              document.querySelectorAll('#es_listaIns input[type="number"]').forEach((inp,i)=>{ if(listaIns[i]) listaIns[i].costo=parseFloat(inp.value)||0; });
               return {n,p,pc,c,esRef,insumos:listaIns,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
             }
           });

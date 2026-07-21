@@ -1408,6 +1408,7 @@ window.mostrarDashboardCashea = async () => {
 
   // Totales
   let sumVenta = 0, sumFinanciado = 0, sumCliente = 0;
+    window._casheaReg = {};
   registros.forEach(r => {
     sumVenta      += parseFloat(r.totalVenta||0);
     sumFinanciado += parseFloat(r.totalFinanciado||0);
@@ -1456,6 +1457,7 @@ window.mostrarDashboardCashea = async () => {
     let rows = '';
     registros.forEach(r => {
       const fin = parseFloat(r.totalFinanciado||0);
+      window._casheaReg[r.id] = r;
       const com = fin * (comision/100);
       const neto = fin - com;
       rows += '<tr style="border-bottom:1px solid #f0fdfa;font-size:9px;">' +
@@ -1466,7 +1468,8 @@ window.mostrarDashboardCashea = async () => {
         '<td style="padding:5px 6px;color:#dc2626;font-weight:700;text-align:right;">-$' + com.toFixed(2) + '</td>' +
         '<td style="padding:5px 6px;color:#16a34a;font-weight:900;text-align:right;">$' + neto.toFixed(2) + '</td>' +
         '<td style="padding:5px 6px;text-align:center;">' +
-          '<button onclick="window.eliminarRegistroCashea(\''+r.id+'\')" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;">🗑</button>' +
+          '<button onclick="window.editarRegistroCashea(\''+r.id+'\'')" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;margin-right:3px;">✏️</button>' +
+          '<button onclick="window.eliminarRegistroCashea(\''+r.id+'\'')" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;">🗑</button>' +
         '</td>' +
         '</tr>';
     });
@@ -1491,53 +1494,75 @@ window.mostrarDashboardCashea = async () => {
 };
 
 // ─── Registrar día Cashea ─────────────────────────────────
-window.registrarDiaCashea = async () => {
+window.editarRegistroCashea = async (id) => {
+  const r = window._casheaReg?.[id];
+  if (r) { window.registrarDiaCashea(r); return; }
+  try {
+    const snap = await getDoc(doc(db, 'cashea_registros', id));
+    if (snap.exists()) window.registrarDiaCashea({ id, ...snap.data() });
+  } catch(e) { alert('Error cargando registro: ' + e.message); }
+};
+
+window.registrarDiaCashea = async (registroExistente) => {
   const hoy = new Date();
-  const fechaHoy = hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
+  const toInput = d => d.getFullYear()+'-'+(String(d.getMonth()+1).padStart(2,'0'))+'-'+(String(d.getDate()).padStart(2,'0'));
+  const fromInput = s => { const [y,m,d]=s.split('-'); return d+'/'+parseInt(m)+'/'+y; };
+  const esEdicion = !!registroExistente;
+  const initTot = esEdicion ? (registroExistente.totalVenta||0).toFixed(2) : '';
+  const initFin = esEdicion ? (registroExistente.totalFinanciado||0).toFixed(2) : '';
+  const initCli = esEdicion ? (registroExistente.totalClientePago||0).toFixed(2) : '';
+  const initNota = esEdicion ? (registroExistente.nota||'') : '';
+  const initFecha = toInput(hoy);
 
   const { value: form } = await Swal.fire({
-    title: '➕ Registrar día Cashea',
+    title: esEdicion ? '✏️ Editar día Cashea' : '➕ Registrar día Cashea',
     width: 420,
     html:
       '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">' +
-      '<p style="font-size:10px;color:#64748b;margin:0;">Fecha: <b>' + fechaHoy + '</b></p>' +
+      '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Fecha</label>' +
+      '<input id="cs_fecha" type="date" value="'+initFecha+'\" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Total vendido con Cashea ($)</label>' +
-      '<input id="cs_total" type="number" step="0.01" min="0" placeholder="Ej: 200.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
+      '<input id="cs_total" type="number" step="0.01" min="0" value="'+initTot+'\" placeholder="Ej: 200.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Total financiado por Cashea ($)</label>' +
-      '<input id="cs_fin" type="number" step="0.01" min="0" placeholder="Ej: 140.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;" oninput="const t=parseFloat(document.getElementById(\'cs_total\').value||0),f=parseFloat(this.value||0);document.getElementById(\'cs_cli\').value=(t-f>0?(t-f).toFixed(2):\'\');"></div>' +
+      '<input id="cs_fin" type="number" step="0.01" min="0" value="'+initFin+'\" placeholder="Ej: 140.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;" oninput="const t=parseFloat(document.getElementById('cs_total').value||0),f=parseFloat(this.value||0);document.getElementById('cs_cli').value=(t-f>0?(t-f).toFixed(2):'');"></div>' +
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Cobrado al cliente en tienda ($)</label>' +
-      '<input id="cs_cli" type="number" step="0.01" min="0" placeholder="Se calcula automático" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;background:#f8fafc;"></div>' +
+      '<input id="cs_cli" type="number" step="0.01" min="0" value="'+initCli+'\" placeholder="Se calcula automático" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;background:#f8fafc;"></div>' +
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nota (opcional)</label>' +
-      '<input id="cs_nota" type="text" placeholder="Ej: 3 transacciones" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;outline:none;box-sizing:border-box;"></div>' +
+      '<input id="cs_nota" type="text" value="'+initNota+'\" placeholder="Ej: 3 transacciones" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;outline:none;box-sizing:border-box;"></div>' +
       '</div>',
     showCancelButton: true,
     confirmButtonText: 'Guardar',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#0f766e',
     preConfirm: () => {
-      const total = parseFloat(document.getElementById('cs_total')?.value) || 0;
-      const fin   = parseFloat(document.getElementById('cs_fin')?.value)   || 0;
-      const cli   = parseFloat(document.getElementById('cs_cli')?.value)   || (total - fin);
-      const nota  = document.getElementById('cs_nota')?.value.trim() || '';
-      if (total <= 0) { Swal.showValidationMessage('Ingresa el total vendido'); return false; }
-      if (fin  <= 0) { Swal.showValidationMessage('Ingresa el monto financiado por Cashea'); return false; }
-      if (fin > total) { Swal.showValidationMessage('El financiado no puede ser mayor al total'); return false; }
-      return { total, fin, cli: cli >= 0 ? cli : 0, nota };
+      const tot  = parseFloat(document.getElementById('cs_total')?.value) || 0;
+      const fin  = parseFloat(document.getElementById('cs_fin')?.value)   || 0;
+      const cli  = parseFloat(document.getElementById('cs_cli')?.value)   || (tot - fin);
+      const nota = document.getElementById('cs_nota')?.value.trim() || '';
+      const fv   = document.getElementById('cs_fecha')?.value || initFecha;
+      if (tot <= 0) { Swal.showValidationMessage('Ingresa el total vendido'); return false; }
+      if (fin <= 0) { Swal.showValidationMessage('Ingresa el monto financiado por Cashea'); return false; }
+      if (fin > tot) { Swal.showValidationMessage('El financiado no puede ser mayor al total'); return false; }
+      return { total:tot, fin, cli: cli >= 0 ? cli : 0, nota, fecha: fromInput(fv) };
     }
   });
 
   if (!form) return;
 
   try {
-    await addDoc(collection(db, 'cashea_registros'), {
-      totalVenta:       form.total,
-      totalFinanciado:  form.fin,
-      totalClientePago: form.cli,
-      nota:             form.nota,
-      fechaSimple:      fechaHoy,
-      creadoEn:         serverTimestamp()
-    });
-    await Swal.fire({ icon:'success', title:'✅ Día registrado', html:'Total: <b>$'+form.total.toFixed(2)+'</b> · Cashea financia: <b>$'+form.fin.toFixed(2)+'</b> · Cliente pagó: <b>$'+form.cli.toFixed(2)+'</b>', timer:2500, showConfirmButton:false });
+    if (esEdicion) {
+      const { updateDoc: upd, doc: docRef } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      await updateDoc(doc(db, 'cashea_registros', registroExistente.id), {
+        totalVenta: form.total, totalFinanciado: form.fin, totalClientePago: form.cli,
+        nota: form.nota, fechaSimple: form.fecha
+      });
+    } else {
+      await addDoc(collection(db, 'cashea_registros'), {
+        totalVenta: form.total, totalFinanciado: form.fin, totalClientePago: form.cli,
+        nota: form.nota, fechaSimple: form.fecha, creadoEn: serverTimestamp()
+      });
+    }
+    await Swal.fire({ icon:'success', title:esEdicion?'✅ Actualizado':'✅ Día registrado', html:'Total: <b>$'+form.total.toFixed(2)+'</b> · Cashea: <b>$'+form.fin.toFixed(2)+'</b>', timer:2000, showConfirmButton:false });
     window.mostrarDashboardCashea();
   } catch(e) { alert('Error: ' + e.message); }
 };
