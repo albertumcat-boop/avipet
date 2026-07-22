@@ -1044,6 +1044,29 @@
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Compras</button>
  </div>
 
+ <div id="panelClaveMaestra" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between gap-4">
+ <div>
+ <h3 class="text-[10px] font-black text-red-600 uppercase">🔐 Clave Maestra del Sistema</h3>
+ <p id="txtEstadoClave" class="text-[9px] text-red-400">Verificando...</p>
+ </div>
+ <button onclick="window.configurarClaveMaestra()" class="bg-red-600 text-white px-4 py-2 rounded-xl font-black uppercase text-[10px] shadow-lg hover:bg-red-700 transition-all" id="btnClaveMaestra">Configurar</button>
+ </div>
+ <script>
+ window._masterKeyReady && window._masterKeyReady.then(() => {
+   const txt = document.getElementById('txtEstadoClave');
+   const btn = document.getElementById('btnClaveMaestra');
+   if (window._masterKeyLoaded) {
+     txt && (txt.textContent = '✅ Clave maestra cargada correctamente.');
+     txt && (txt.className = 'text-[9px] text-green-600 font-semibold');
+     btn && (btn.textContent = 'Cambiar Clave');
+     document.getElementById('panelClaveMaestra')?.classList.replace('bg-red-50','bg-green-50');
+     document.getElementById('panelClaveMaestra')?.classList.replace('border-red-200','border-green-200');
+   } else {
+     txt && (txt.textContent = '⚠️ No configurada — ningún acceso admin funcionará.');
+   }
+ });
+ </script>
+
  <div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between gap-4">
  <div>
  <h3 class="text-[10px] font-black text-orange-600 uppercase">Sincronización Maestra</h3>

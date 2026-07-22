@@ -535,4 +535,48 @@ function _actualizarBadgeSesion() {
 
 window._actualizarBadgeSesion = _actualizarBadgeSesion;
 
-console.log("✅ seguridad.js v5 — fix PIN Daniel Carlos");
+// ─── CONFIGURAR CLAVE MAESTRA (primera vez o cambio) ─────
+window.configurarClaveMaestra = async () => {
+  const esPrimeraVez = !window._masterKeyLoaded;
+  const res = await Swal.fire({
+    title: esPrimeraVez ? '🔐 Inicializar Clave Maestra' : '🔐 Cambiar Clave Maestra',
+    width: 420,
+    html: `<div class="space-y-3 text-left mt-2">
+      ${!esPrimeraVez ? `<div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Clave actual</label>
+        <input type="password" id="swal_mk_actual" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-center font-black text-[14px] outline-none focus:border-blue-500" placeholder="••••">
+      </div>` : '<p class="text-[11px] text-amber-700 bg-amber-50 rounded-lg p-3 font-semibold">⚠️ Primera configuración: define la clave maestra del sistema.</p>'}
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nueva clave maestra</label>
+        <input type="password" id="swal_mk_nueva" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-center font-black text-[14px] outline-none focus:border-blue-500" placeholder="••••">
+      </div>
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Confirmar nueva clave</label>
+        <input type="password" id="swal_mk_conf" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-center font-black text-[14px] outline-none focus:border-blue-500" placeholder="••••">
+      </div>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: esPrimeraVez ? '✅ Guardar Clave' : '✅ Cambiar Clave',
+    confirmButtonColor: '#1d4ed8',
+    preConfirm: async () => {
+      await window._masterKeyReady;
+      const actual = document.getElementById('swal_mk_actual')?.value?.trim();
+      const nueva  = document.getElementById('swal_mk_nueva')?.value?.trim();
+      const conf   = document.getElementById('swal_mk_conf')?.value?.trim();
+      if (!esPrimeraVez && actual !== window.MASTER_KEY_SISTEMA) {
+        Swal.showValidationMessage('Clave actual incorrecta'); return false;
+      }
+      if (!nueva || nueva.length < 4) { Swal.showValidationMessage('La clave debe tener al menos 4 caracteres'); return false; }
+      if (nueva !== conf)              { Swal.showValidationMessage('Las claves no coinciden'); return false; }
+      return nueva;
+    }
+  });
+  if (res.isConfirmed && res.value) {
+    await setDoc(doc(db, 'configuracion', 'sistema'), { masterKey: res.value, actualizadoEn: serverTimestamp() }, { merge: true });
+    window.MASTER_KEY_SISTEMA = res.value;
+    window._masterKeyLoaded = true;
+    Swal.fire({ icon:'success', title:'✅ Clave maestra guardada', text:'Ya puedes usarla para firmar operaciones.', timer:2500, showConfirmButton:false });
+  }
+};
+
+console.log("✅ seguridad.js v6 — configurarClaveMaestra");

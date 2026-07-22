@@ -32,11 +32,17 @@ window.MASTER_KEY_SISTEMA     = crypto.randomUUID(); // sustituido por Firestore
 window.vacunaPagadaAnteriormente = false;
 
 // Cargar MASTER_KEY desde Firestore — la Promise se usa para bloquear login hasta que cargue
+window._masterKeyLoaded = false;
 window._masterKeyReady = getDoc(doc(db, "configuracion", "sistema")).then(snap => {
   if (snap.exists() && snap.data().masterKey) {
     window.MASTER_KEY_SISTEMA = snap.data().masterKey;
+    window._masterKeyLoaded = true;
+  } else {
+    console.warn("[AVIPET] configuracion/sistema sin masterKey — usa Ajustes para configurarla.");
   }
-}).catch(() => {});
+}).catch(err => {
+  console.warn("[AVIPET] Error cargando clave maestra:", err.message);
+});
 window.usuarioActivoSistema   = "";
 window.sesionAdminActiva      = false;  // true cuando entra con clave maestra
 
