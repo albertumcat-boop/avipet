@@ -293,7 +293,7 @@ window.migrarRecetasAFirestore = async () => {
 
     await Swal.fire({
       icon:'success', title:'✅ Sincronización completa',
-      html:'<b>'+creados+'</b> servicios subidos a Firestore.<br><span style="color:#64748b;font-size:11px;">'+omitidos+' ya existían y no fueron tocados.</span>'
+      html:'<b>'+creados+'</b> servicios subidos a Firestore.<br><span style="color:#64748b;font-size:11px;">'+omitidos+' ya existían y no fueron tocados.</span>',
       timer:3000, showConfirmButton:false
     });
     window.renderizarTablaMaestra();

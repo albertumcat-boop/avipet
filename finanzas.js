@@ -1524,7 +1524,7 @@ window.registrarDiaCashea = async (registroExistente) => {
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Total vendido con Cashea ($)</label>' +
       '<input id="cs_total" type="number" step="0.01" min="0" value="'+initTot+'\" placeholder="Ej: 200.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;"></div>' +
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Total financiado por Cashea ($)</label>' +
-      '<input id="cs_fin" type="number" step="0.01" min="0" value="'+initFin+'\" placeholder="Ej: 140.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;" oninput="const t=parseFloat(document.getElementById('cs_total').value||0),f=parseFloat(this.value||0);document.getElementById('cs_cli').value=(t-f>0?(t-f).toFixed(2):'');"></div>' +
+      '<input id="cs_fin" type="number" step="0.01" min="0" value="'+initFin+'" placeholder="Ej: 140.00" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;" oninput="const t=parseFloat(document.getElementById(\'cs_total\').value||0),f=parseFloat(this.value||0);document.getElementById(\'cs_cli\').value=(t-f>0?(t-f).toFixed(2):\'\')"></div>' +
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Cobrado al cliente en tienda ($)</label>' +
       '<input id="cs_cli" type="number" step="0.01" min="0" value="'+initCli+'\" placeholder="Se calcula automático" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:15px;font-weight:900;outline:none;box-sizing:border-box;background:#f8fafc;"></div>' +
       '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nota (opcional)</label>' +
@@ -1551,7 +1551,7 @@ window.registrarDiaCashea = async (registroExistente) => {
 
   try {
     if (esEdicion) {
-      const { updateDoc: upd, doc: docRef } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      // updateDoc and doc already imported at top of file
       await updateDoc(doc(db, 'cashea_registros', registroExistente.id), {
         totalVenta: form.total, totalFinanciado: form.fin, totalClientePago: form.cli,
         nota: form.nota, fechaSimple: form.fecha
