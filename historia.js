@@ -870,7 +870,7 @@ window.autocompletarPorCedula = async (ci) => {
 
     let datosSeleccionados = datosBase;
 
-    if (mascotasMap.size > 1) {
+    if (mascotasMap.size >= 1) {
       // Mostrar selector de mascotas
       const mascotas = Array.from(mascotasMap.entries());
       var htmlSel = '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Propietario: <b>' + (datosBase.propietario||'') + '</b></p>';
