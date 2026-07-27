@@ -524,47 +524,6 @@ window.cambiarTabFinanzas = function(tab) {
   window.cargarReporte();
 };
 
-window.setCalcModo=(modo)=>{
-  window._calcModoActual=modo;
-  const btnUsd=document.getElementById('btnUsdToBS'),btnBs=document.getElementById('btnBsToUSD'),simbolo=document.getElementById('calcSimbolo'),modoEl=document.getElementById('calcModo');
-  if(modoEl)modoEl.value=modo;
-  if(btnUsd&&btnBs){
-    if(modo==='usdToBS'){
-      btnUsd.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all bg-blue-600 text-white shadow-sm';
-      btnBs.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all text-slate-500';
-      if(simbolo)simbolo.innerText='$';
-    }else{
-      btnBs.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all bg-amber-500 text-white shadow-sm';
-      btnUsd.className='flex-1 py-2 rounded-lg font-black text-[11px] uppercase transition-all text-slate-500';
-      if(simbolo)simbolo.innerText='Bs';
-    }
-  }
-  const inputEl=document.getElementById('calcInput');if(inputEl?.value)window.calcularConversor();
-};
-window.calcularConversor=()=>{
-  const tasa=window.tasaDolarHoy||36,modo=document.getElementById('calcModo')?.value||window._calcModoActual||'usdToBS',inputEl=document.getElementById('calcInput'),resultEl=document.getElementById('calcResultado'),tasaEl=document.getElementById('calcTasaMostrar');
-  if(!inputEl||!resultEl)return;
-  const monto=parseFloat(inputEl.value)||0;
-  if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";
-  if(monto<=0){resultEl.innerHTML='<p class="text-[10px] text-slate-400 italic font-bold uppercase">Ingresa un monto arriba</p>';return;}
-  if(modo==='usdToBS'){const r=monto*tasa;resultEl.innerHTML='<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">$'+monto.toFixed(2)+' equivale a:</p><p class="text-4xl font-black text-amber-600 font-mono">Bs '+r.toFixed(2)+'</p><p class="text-[9px] text-slate-400 mt-2 italic">Tasa BCV: '+tasa.toFixed(2)+'</p>';}
-  else{const r=monto/tasa;resultEl.innerHTML='<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Bs '+monto.toFixed(2)+' equivale a:</p><p class="text-4xl font-black text-emerald-600 font-mono">$ '+r.toFixed(2)+'</p><p class="text-[9px] text-slate-400 mt-2 italic">Tasa BCV: '+tasa.toFixed(2)+'</p>';}
-};
-window.aplicarTasaManualCalc=()=>{
-  const inp=document.getElementById('calcTasaManual'),tasa=parseFloat(inp?.value);
-  if(!tasa||tasa<1){alert('Ingresa una tasa valida');return;}
-  window.tasaDolarHoy=tasa;
-  const tasaEl=document.getElementById('calcTasaMostrar');
-  if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";
-  if(inp)inp.value='';
-  window.calcularConversor();
-};
-window.inicializarCalculadora=()=>{
-  const tasa=window.tasaDolarHoy||36,tasaEl=document.getElementById('calcTasaMostrar');
-  if(tasaEl)tasaEl.innerText="Tasa: Bs "+tasa.toFixed(2)+" / $1";
-  window.setCalcModo('usdToBS');
-};
-
 // ─── AJUSTAR PAGO DESDE FINANZAS ─────────────────────────
 window.ajustarPagoPeluqueria = async () => {
   const resFecha = await Swal.fire({
