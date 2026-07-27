@@ -189,7 +189,7 @@ window.mostrarDashboardVet = async () => {
           if (r.personaId === 'joan')   { deudasDoc.joan   += parseFloat(r.monto||0); detDeudasDoc.joan.push({ desc:r.descripcion||'---', monto:parseFloat(r.monto||0) }); }
         }
       });
-    } catch(e) {}
+    } catch(e) { console.warn('[Finanzas] Error cargando deudas:', e.message); }
 
     listaDiv.innerHTML = '';
     const contenedor = document.createElement('div');
@@ -318,7 +318,7 @@ window.mostrarDashboardPelu = async () => {
           deudasEquipo[r.personaId] += parseFloat(r.monto||0);
         }
       });
-    } catch(e) {}
+    } catch(e) { console.warn('[Finanzas] Error cargando deudas:', e.message); }
 
     listaDiv.innerHTML = '';
     const contenedor = document.createElement('div');
@@ -859,7 +859,7 @@ window.verResumenSemanalPelu = async () => {
           detDeudas[r.personaId].push({ desc: r.descripcion||'---', monto: parseFloat(r.monto||0) });
         }
       });
-    } catch(e) {}
+    } catch(e) { console.warn('[Finanzas] Error cargando deudas:', e.message); }
 
     const snap = await getDocs(collection(db,"servicios_estetica"));
     const servicios = [];

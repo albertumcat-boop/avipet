@@ -196,6 +196,7 @@ window._aplicarPermisoDoctor = _aplicarPermisoDoctor;
 // ============================================================
 if (typeof window.validarDoctorConMaster !== 'function') {
   window.validarDoctorConMaster = async (nombreDoc, pin) => {
+    await window._masterKeyReady;
     if (pin === window.MASTER_KEY_SISTEMA) return true;
     try {
       const snap = await getDoc(doc(db, "doctores", nombreDoc));

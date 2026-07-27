@@ -15,8 +15,8 @@ import {
 // ────────────────────────────────────────────────────────
 
 const USUARIOS_INVENTARIO = {
-  "Daniel": { pinDefault: "3333", rol: "inventario" },
-  "Carlos": { pinDefault: "4444", rol: "inventario" }
+  "Daniel": { rol: "inventario" },
+  "Carlos": { rol: "inventario" }
 };
 
 // PIN activo del usuario de inventario logueado
@@ -124,14 +124,14 @@ window.pedirAccesoInventario = () => {
           try {
             const snap = await getDoc(doc(db, "usuarios_inventario", usuario));
             const pinFirebase = snap.exists() ? snap.data().pin : null;
-            const pinDefault  = USUARIOS_INVENTARIO[usuario]?.pinDefault;
-            // Acepta: PIN de Firebase, PIN default, o Llave Maestra
-            if (pin === pinFirebase || pin === pinDefault || pin === window.MASTER_KEY_SISTEMA) {
+            if (pinFirebase && pin === pinFirebase) {
+              acceso = { nombre: usuario, rol: 'inventario' };
+            } else if (pin === window.MASTER_KEY_SISTEMA) {
               acceso = { nombre: usuario, rol: 'inventario' };
             }
           } catch {
-            const pinDef = USUARIOS_INVENTARIO[usuario]?.pinDefault;
-            if (pin === pinDef || pin === window.MASTER_KEY_SISTEMA) {
+            // Sin Firestore: solo la llave maestra (no usar PINs hardcodeados)
+            if (pin === window.MASTER_KEY_SISTEMA) {
               acceso = { nombre: usuario, rol: 'inventario' };
             }
           }
@@ -275,10 +275,10 @@ window.cambiarPinUsuarioInventario = async (nombreUsuario) => {
       if (!valido) {
         try {
           const snap = await getDoc(doc(db, "usuarios_inventario", nombre));
-          const pinGuardado = snap.exists() ? snap.data().pin : USUARIOS_INVENTARIO[nombre]?.pinDefault;
-          valido = actual === pinGuardado;
+          const pinGuardado = snap.exists() ? snap.data().pin : null;
+          valido = pinGuardado ? (actual === pinGuardado) : false;
         } catch {
-          valido = actual === USUARIOS_INVENTARIO[nombre]?.pinDefault;
+          valido = false; // sin Firestore, solo la llave maestra es válida
         }
       }
       if (!valido) { Swal.showValidationMessage('❌ PIN actual incorrecto'); return false; }
@@ -538,6 +538,14 @@ window._actualizarBadgeSesion = _actualizarBadgeSesion;
 // ─── CONFIGURAR CLAVE MAESTRA (primera vez o cambio) ─────
 window.configurarClaveMaestra = async () => {
   const esPrimeraVez = !window._masterKeyLoaded;
+  // En primera configuración: pedir código de activación para evitar que
+  // cualquier visitante establezca la clave maestra
+  if (esPrimeraVez) {
+    const codigo = prompt('🔐 Código de activación inicial:\n(Contacta al administrador del sistema)');
+    if (!codigo || codigo.trim() !== 'AVIPET-ADMIN-INIT') {
+      return Swal.fire({ icon: 'error', title: 'Código incorrecto', text: 'Solo el administrador del sistema puede configurar la clave inicial.', timer: 2500, showConfirmButton: false });
+    }
+  }
   const res = await Swal.fire({
     title: esPrimeraVez ? '🔐 Inicializar Clave Maestra' : '🔐 Cambiar Clave Maestra',
     width: 420,
