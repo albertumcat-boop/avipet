@@ -1427,8 +1427,8 @@ window.mostrarDashboardCashea = async () => {
         '<td style="padding:5px 6px;color:#dc2626;font-weight:700;text-align:right;">-$' + com.toFixed(2) + '</td>' +
         '<td style="padding:5px 6px;color:#16a34a;font-weight:900;text-align:right;">$' + neto.toFixed(2) + '</td>' +
         '<td style="padding:5px 6px;text-align:center;">' +
-          '<button onclick="window.editarRegistroCashea(\''+r.id+'\'')" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;margin-right:3px;">✏️</button>' +
-          '<button onclick="window.eliminarRegistroCashea(\''+r.id+'\'')" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;">🗑</button>' +
+          '<button onclick="window.editarRegistroCashea(\'' + r.id + '\')" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;margin-right:3px;">✏️</button>' +
+          '<button onclick="window.eliminarRegistroCashea(\'' + r.id + '\')" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:2px 8px;font-size:8px;font-weight:900;cursor:pointer;">🗑</button>' +
         '</td>' +
         '</tr>';
     });
