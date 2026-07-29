@@ -374,11 +374,234 @@ function _renderizarTarjeta(consulta) {
 
 // abrirConsultaParaEditar definida canónicamente en historia.js — no redefinir aquí
 
-// TOGGLE RANGO DE FECHAS 
+// TOGGLE RANGO DE FECHAS
 window.toggleRangoBuscador = () => {
  const sel = document.getElementById('buscadorPeriodo')?.value;
  const rango = document.getElementById('rangoBuscador');
  if (rango) rango.classList.toggle('hidden', sel !== 'rango');
 };
+
+// ─── TAB BUSCADOR ─────────────────────────────────────────
+let _tabBusc = 'historial';
+
+window.cambiarTabBuscador = (tab) => {
+  _tabBusc = tab;
+  const tabH = document.getElementById('tabBuscHistorial');
+  const tabT = document.getElementById('tabBuscTestVac');
+  const filtroWrap = document.getElementById('filtroTipoDocWrap');
+  const btn = document.getElementById('btnBuscarPrincipal');
+  if (tabH) {
+    tabH.classList.toggle('text-blue-600', tab === 'historial');
+    tabH.classList.toggle('border-blue-600', tab === 'historial');
+    tabH.classList.toggle('text-slate-400', tab !== 'historial');
+    tabH.classList.toggle('border-transparent', tab !== 'historial');
+  }
+  if (tabT) {
+    tabT.classList.toggle('text-purple-600', tab === 'testvac');
+    tabT.classList.toggle('border-purple-600', tab === 'testvac');
+    tabT.classList.toggle('text-slate-400', tab !== 'testvac');
+    tabT.classList.toggle('border-transparent', tab !== 'testvac');
+  }
+  if (filtroWrap) filtroWrap.classList.toggle('hidden', tab !== 'testvac');
+  if (btn) btn.style.background = tab === 'testvac' ? '#7c3aed' : '';
+  document.getElementById('resultadoBusqueda').innerHTML = '';
+};
+
+window.buscarEnBuscador = () => {
+  if (_tabBusc === 'testvac') {
+    window.buscarTestsYVacunas();
+  } else {
+    window.buscarPorCedula();
+  }
+};
+
+// ─── FILTRO FECHA (reutilizable) ──────────────────────────
+function _filtrarPorFecha(registros) {
+  const periodo = document.getElementById('buscadorPeriodo')?.value || 'hoy';
+  const fechaDesde = document.getElementById('buscadorFechaDesde')?.value || '';
+  const fechaHasta = document.getElementById('buscadorFechaHasta')?.value || '';
+  const ci = document.getElementById('buscadorCI')?.value.trim() || '';
+  if (ci) return registros; // con cédula no se filtra por fecha
+  const hoy = new Date();
+  const fmt = d => d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if (periodo === 'hoy') {
+    const s = fmt(hoy);
+    return registros.filter(r => r.fechaSimple === s);
+  } else if (periodo === 'semana') {
+    const hace7 = new Date(hoy); hace7.setDate(hoy.getDate()-7);
+    return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); if(p.length!==3)return false; const fd=new Date(p[2],p[1]-1,p[0]); return fd>=hace7&&fd<=hoy; });
+  } else if (periodo === 'mes') {
+    return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); return p.length===3&&parseInt(p[1])===hoy.getMonth()+1&&parseInt(p[2])===hoy.getFullYear(); });
+  } else if (periodo === 'rango' && fechaDesde && fechaHasta) {
+    const desde=new Date(fechaDesde); const hasta=new Date(fechaHasta);
+    return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); if(p.length!==3)return false; const fd=new Date(p[2],p[1]-1,p[0]); return fd>=desde&&fd<=hasta; });
+  }
+  return registros;
+}
+
+// ─── BUSCAR TESTS Y VACUNAS ───────────────────────────────
+window.buscarTestsYVacunas = async () => {
+  const ci = document.getElementById('buscadorCI')?.value.trim() || '';
+  const nombre = document.getElementById('buscadorNombre')?.value.trim().toUpperCase() || '';
+  const doctor = document.getElementById('buscadorDoctor')?.value || '';
+  const tipoDoc = document.getElementById('filtroTipoDoc')?.value || 'ambos';
+  const cont = document.getElementById('resultadoBusqueda');
+  if (!cont) return;
+
+  cont.innerHTML = '<p style="text-align:center;color:#7c3aed;font-size:9px;font-weight:900;text-transform:uppercase;font-style:italic;padding:32px 0;animation:pulse 1s infinite;">Buscando...</p>';
+
+  try {
+    let registros = [];
+    if (ci) {
+      const ciNorm = normalizarCedula(ci);
+      const snap = await getDocs(query(collection(db,'consultas'), where('cedula','==',ciNorm), orderBy('fecha','desc')));
+      snap.forEach(d => registros.push({ id:d.id, ...d.data() }));
+      if (!registros.length && ciNorm !== ci.trim()) {
+        const snap2 = await getDocs(query(collection(db,'consultas'), where('cedula','==',ci.trim()), orderBy('fecha','desc')));
+        snap2.forEach(d => registros.push({ id:d.id, ...d.data() }));
+      }
+    } else {
+      const snap = await getDocs(query(collection(db,'consultas'), orderBy('fecha','desc')));
+      snap.forEach(d => registros.push({ id:d.id, ...d.data() }));
+      if (nombre) registros = registros.filter(r => (r.paciente||'').toUpperCase().includes(nombre));
+    }
+    if (doctor) registros = registros.filter(r => (r.doctorNombre||r.doctor||'').includes(doctor));
+    registros = _filtrarPorFecha(registros);
+
+    // Filtrar por tipo
+    if (tipoDoc === 'tests') {
+      registros = registros.filter(r => Array.isArray(r.testsRealizados) && r.testsRealizados.length > 0);
+    } else if (tipoDoc === 'vacunas') {
+      registros = registros.filter(r =>
+        (Array.isArray(r.vacunasAplicadas) && r.vacunasAplicadas.length > 0) ||
+        (Array.isArray(r.desparasitacionesAplicadas) && r.desparasitacionesAplicadas.length > 0)
+      );
+    } else {
+      registros = registros.filter(r =>
+        (Array.isArray(r.testsRealizados) && r.testsRealizados.length > 0) ||
+        (Array.isArray(r.vacunasAplicadas) && r.vacunasAplicadas.length > 0) ||
+        (Array.isArray(r.desparasitacionesAplicadas) && r.desparasitacionesAplicadas.length > 0)
+      );
+    }
+
+    if (!registros.length) {
+      cont.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:9px;font-weight:900;text-transform:uppercase;font-style:italic;padding:32px 0;">Sin resultados.</p>';
+      return;
+    }
+
+    cont.innerHTML = '';
+    const resumen = document.createElement('div');
+    resumen.style.cssText = 'background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;';
+    resumen.innerHTML = '<p style="font-size:10px;font-weight:900;color:#5b21b6;">' + registros.length + ' registros encontrados</p>' +
+      '<p style="font-size:9px;color:#7c3aed;">Tests & Vacunas</p>';
+    cont.appendChild(resumen);
+    registros.forEach(r => cont.appendChild(_renderizarTarjetaTV(r, tipoDoc)));
+
+  } catch(e) {
+    console.error(e);
+    cont.innerHTML = '<p style="text-align:center;color:#ef4444;font-size:9px;font-weight:900;padding:16px;">Error: ' + e.message + '</p>';
+  }
+};
+
+// ─── TARJETA TESTS & VACUNAS ──────────────────────────────
+function _renderizarTarjetaTV(c, tipoDoc) {
+  const fecha = c.fechaSimple || c.fecha?.toDate?.().toLocaleDateString() || '---';
+  const doctor = c.doctorNombre || c.doctor || '---';
+  const card = document.createElement('div');
+  card.style.cssText = 'background:#fff;border:1px solid #ede9fe;border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(124,58,237,0.07);';
+
+  // Header morado
+  const header = document.createElement('div');
+  header.style.cssText = 'background:linear-gradient(to right,#7c3aed,#6d28d9);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;';
+  header.innerHTML =
+    '<div>' +
+    '<p style="font-weight:900;color:#fff;text-transform:uppercase;font-size:12px;line-height:1;">' + (c.paciente||'---') + '</p>' +
+    '<p style="color:#ddd6fe;font-size:9px;margin-top:2px;">' + (c.especie||'') + (c.raza?' · '+c.raza:'') + '</p>' +
+    '</div>' +
+    '<div style="text-align:right;">' +
+    '<p style="color:#fff;font-weight:900;font-size:11px;">' + fecha + '</p>' +
+    '<p style="color:#ddd6fe;font-size:9px;">CI: ' + (c.cedula||'---') + ' · ' + (c.propietario||'') + '</p>' +
+    '</div>';
+  card.appendChild(header);
+
+  const body = document.createElement('div');
+  body.style.cssText = 'padding:10px 12px;';
+
+  // Info compacta
+  const info = document.createElement('div');
+  info.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;font-size:9px;color:#64748b;flex-wrap:wrap;';
+  info.innerHTML =
+    (c.telefono ? '<span>📞 ' + c.telefono + '</span>' : '') +
+    '<span>👨‍⚕️ ' + doctor + '</span>' +
+    (c.peso ? '<span>⚖️ ' + c.peso + ' kg</span>' : '') +
+    (c.edad ? '<span>🎂 ' + c.edad + '</span>' : '');
+  body.appendChild(info);
+
+  // Tests rápidos
+  const tests = c.testsRealizados || [];
+  if (tests.length > 0 && tipoDoc !== 'vacunas') {
+    const sec = document.createElement('div');
+    sec.style.cssText = 'border:1px solid #ede9fe;border-radius:10px;overflow:hidden;margin-bottom:8px;';
+    let html = '<div style="background:#f5f3ff;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;">🧪 Tests Rápidos</p></div>';
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<thead><tr style="background:#faf5ff;"><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:left;">Prueba</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:center;width:100px;">Resultado</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:left;">Nota</th></tr></thead><tbody>';
+    tests.forEach(t => {
+      const color = (t.resultado||'').includes('POSITIVO') ? '#dc2626' : (t.resultado||'').includes('NEGATIVO') ? '#16a34a' : '#64748b';
+      html += '<tr style="border-top:1px solid #f1f5f9;">' +
+        '<td style="padding:4px 8px;font-size:10px;font-weight:700;">' + (t.nombre||'') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center;font-size:11px;font-weight:900;color:' + color + ';">' + (t.resultado||'---') + '</td>' +
+        '<td style="padding:4px 8px;font-size:9px;color:#64748b;font-style:italic;">' + (t.nota||'-') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    sec.innerHTML = html;
+    body.appendChild(sec);
+  }
+
+  // Vacunas
+  const vacunas = c.vacunasAplicadas || [];
+  if (vacunas.length > 0 && tipoDoc !== 'tests') {
+    const sec = document.createElement('div');
+    sec.style.cssText = 'border:1px solid #d1fae5;border-radius:10px;overflow:hidden;margin-bottom:8px;';
+    let html = '<div style="background:#f0fdf4;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#065f46;text-transform:uppercase;">💉 Vacunas Aplicadas</p></div>';
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<thead><tr style="background:#f0fdf4;"><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:left;">Vacuna</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:center;">Fecha</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:center;">Próxima</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:center;">Peso</th></tr></thead><tbody>';
+    vacunas.forEach(v => {
+      html += '<tr style="border-top:1px solid #f1f5f9;">' +
+        '<td style="padding:4px 8px;font-size:10px;font-weight:700;">' + (v.vacuna||'') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center;font-size:9px;">' + (v.fecha||'---') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center;font-size:9px;color:#059669;font-weight:700;">' + (v.proxima||'---') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center;font-size:9px;">' + (v.peso||'---') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    sec.innerHTML = html;
+    body.appendChild(sec);
+  }
+
+  // Desparasitaciones
+  const desp = c.desparasitacionesAplicadas || [];
+  if (desp.length > 0 && tipoDoc !== 'tests') {
+    const sec = document.createElement('div');
+    sec.style.cssText = 'border:1px solid #fef3c7;border-radius:10px;overflow:hidden;margin-bottom:8px;';
+    let html = '<div style="background:#fffbeb;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#92400e;text-transform:uppercase;">🐛 Desparasitaciones</p></div>';
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<thead><tr style="background:#fffbeb;"><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:left;">Producto</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:center;">Fecha</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:center;">Próxima</th><th style="padding:3px 8px;font-size:8px;color:#94a3b8;text-align:center;">Peso</th></tr></thead><tbody>';
+    desp.forEach(d => {
+      html += '<tr style="border-top:1px solid #f1f5f9;">' +
+        '<td style="padding:4px 8px;font-size:10px;font-weight:700;">' + (d.producto||'') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center;font-size:9px;">' + (d.fecha||'---') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center;font-size:9px;color:#d97706;font-weight:700;">' + (d.proxima||'---') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center;font-size:9px;">' + (d.peso||'---') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    sec.innerHTML = html;
+    body.appendChild(sec);
+  }
+
+  card.appendChild(body);
+  return card;
+}
 
 console.log(" buscador.js v5 — filtros, paginacion, servicios e insumos separados");

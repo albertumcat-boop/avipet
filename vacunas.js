@@ -240,7 +240,7 @@ window.borrarFechaNacVacuna = () => {
   el.dispatchEvent(new Event('change'));
 };
 
-// ─── IMPRIMIR VACUNAS VALIDANDO PACIENTE ─────────────────
+// ─── IMPRIMIR VACUNAS — guarda automáticamente primero ───
 window.imprimirHojaVacunasSeguro = async () => {
   const cedula = document.getElementById('hCI')?.value.trim();
   const nombre = document.getElementById('hNombre')?.value.trim();
@@ -253,6 +253,9 @@ window.imprimirHojaVacunasSeguro = async () => {
     });
     return;
   }
+  window._modoGuardarTest = true;
+  window._modoAutoImprimir = true;
+  await window.guardarFirebase(false);
   window.imprimirHojaVacunas();
 };
 
@@ -273,7 +276,7 @@ window.guardarTestRapido = async () => {
   await window.guardarFirebase(false);
 };
 
-// ─── IMPRIMIR TEST VALIDANDO PACIENTE ────────────────────
+// ─── IMPRIMIR TEST — guarda automáticamente primero ──────
 window.imprimirHojaTestSeguro = async () => {
   const cedula = document.getElementById('hCI')?.value.trim();
   const nombre = document.getElementById('hNombre')?.value.trim();
@@ -286,6 +289,9 @@ window.imprimirHojaTestSeguro = async () => {
     });
     return;
   }
+  window._modoGuardarTest = true;
+  window._modoAutoImprimir = true;
+  await window.guardarFirebase(false);
   window.imprimirHojaTest();
 };
 

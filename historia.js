@@ -762,8 +762,10 @@ window.guardarFirebase = async (imp) => {
     localStorage.removeItem('respaldo_historia_activa');
     if (window._modoGuardarTest) {
       window._modoGuardarTest = false;
-      // No limpiar el formulario — el doctor sigue completando la historia
-      Swal.fire({ icon:'success', title:'✅ Test guardado', text:'Continúa completando la historia clínica y guarda cuando termines.', timer:2500, showConfirmButton:false });
+      if (!window._modoAutoImprimir) {
+        Swal.fire({ icon:'success', title:'✅ Test guardado', text:'Continúa completando la historia clínica y guarda cuando termines.', timer:2500, showConfirmButton:false });
+      }
+      window._modoAutoImprimir = false;
     } else {
       _limpiarFormularioHistoria();
       _limpiarNotasInternas();
