@@ -256,6 +256,11 @@ window.imprimirHojaVacunasSeguro = async () => {
   window._modoGuardarTest = true;
   window._modoAutoImprimir = true;
   await window.guardarFirebase(false);
+  if (window._modoGuardarTest) { // sigue true = save falló (early return)
+    window._modoGuardarTest = false;
+    window._modoAutoImprimir = false;
+    return;
+  }
   window.imprimirHojaVacunas();
 };
 
@@ -292,6 +297,11 @@ window.imprimirHojaTestSeguro = async () => {
   window._modoGuardarTest = true;
   window._modoAutoImprimir = true;
   await window.guardarFirebase(false);
+  if (window._modoGuardarTest) { // sigue true = save falló (early return)
+    window._modoGuardarTest = false;
+    window._modoAutoImprimir = false;
+    return;
+  }
   window.imprimirHojaTest();
 };
 

@@ -104,8 +104,9 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Almuerzo, vacunas
+    // Almuerzo, vacunas, control de descanso
     match /almuerzo/{id}         { allow read, write: if true; }
+    match /control_descanso/{id} { allow read, write: if true; }
     match /notas_internas/{id}   { allow read, write: if true; }
     match /encuestas/{id}        { allow read, write: if true; }
 
