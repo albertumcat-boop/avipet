@@ -789,7 +789,7 @@ window.enviarMensajePelu = async (telefonoRaw, mascota, duenio) => {
         }
       }
     } catch(e) {}
-    mensaje = "🐾 Hola " + duenio + ", te informamos que *" + mascota + "* ya está lista para ser retirada en *AVIPET*. " + afeccionMsg + "\n\n✂️ ¡Te esperamos! 🐕\n\n📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.";
+    mensaje = "🐾 Hola " + duenio + ", te informamos que *" + mascota + "* ya está lista para ser retirada en *AVIPET*. ✂️ ¡Te esperamos! 🐕\n\n📌 *Recuerda* que contamos con espacio limitado. Pasada *1 hora* desde este mensaje se aplicará un recargo de *$5 por hora* adicional de estadía. Ten en cuenta que las mascotas pueden estresarse y ensuciarse con sus necesidades, lo que requeriría bañarla nuevamente y aumentaría el cobro extra." + (afeccionMsg ? "\n\n" + afeccionMsg : "") + "\n\n📍 Av. Fco. de Miranda, Sector Buena Vista, Petare.";
 
   } else if (tipo === 2) {
     // Recordatorio próxima visita
