@@ -139,6 +139,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Planificador semanal de tareas
+    match /planificador_tareas/{id} {
+      allow read, write: if true;
+    }
+
     // Bloquear todo lo demás por defecto
     match /{document=**} {
       allow read, write: if false;

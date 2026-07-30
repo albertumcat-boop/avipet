@@ -95,6 +95,7 @@
  <button onclick="window.showTab('peluqueria')" data-tab="peluqueria" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Peluquería</button>
  <button onclick="window.showTab('reporte')" data-tab="reporte" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Finanzas</button>
  <button onclick="window.showTab('inventario')" data-tab="inventario" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Inventario</button>
+ <button id="tabPersonal" onclick="window.showTab('personal')" data-tab="personal" class="py-2 text-[11px] px-2 uppercase font-bold text-gray-500">Personal</button>
  <button onclick="window.showTab('config_precios')" data-tab="config_precios" class="px-4 py-2 font-black text-[10px] uppercase bg-slate-100 rounded-lg shadow-sm border border-slate-200"> Ajustes</button>
  </div>
  <div class="sm:hidden px-2 py-2">
@@ -105,6 +106,7 @@
  <option value="peluqueria">Peluquería</option>
  <option value="reporte">Finanzas / Caja</option>
  <option value="inventario">Inventario</option>
+ <option value="personal">Personal / Almuerzo</option>
  <option value="config_precios">Ajustes de Precios</option>
  </select>
  </div>
@@ -1024,7 +1026,7 @@
  <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic"> Panel de Control Maestro</h2>
  <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos</p>
 
- <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:24px;background:#f1f5f9;padding:4px;border-radius:12px;">
+ <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;margin-bottom:24px;background:#f1f5f9;padding:4px;border-radius:12px;">
  <button onclick="_llamarFuncion('cambiarSubTabConfig','servicios')" id="btn_subTabServicios"
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:#2563eb;color:white;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Servicios</button>
  <button onclick="_llamarFuncion('cambiarSubTabConfig','insumos')" id="btn_subTabInsumos"
@@ -1033,6 +1035,8 @@
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Medicamentos</button>
  <button onclick="_llamarFuncion('cambiarSubTabConfig','compras')" id="btn_subTabCompras"
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Compras</button>
+ <button onclick="_llamarFuncion('cambiarSubTabConfig','empleados')" id="btn_subTabEmpleados"
+ style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">👥 Empleados</button>
  </div>
 
  <div id="panelClaveMaestra" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between gap-4">
@@ -1119,6 +1123,16 @@
   <div id="resumenCompras" class="grid grid-cols-3 gap-3 mb-3"></div>
   <div id="tablaCompras"></div>
  </div>
+
+ <!-- Panel Empleados -->
+ <div id="panel_subTabEmpleados" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-3">
+  <p class="text-[10px] font-black text-slate-600 uppercase mb-3">👥 Teléfonos del Personal</p>
+  <p class="text-[9px] text-slate-400 mb-3">Agrega el número de WhatsApp de cada empleado para poder enviarles su planificador semanal.</p>
+  <div id="listaEmpleadosTelefono" class="space-y-2">
+   <p style="font-size:10px;color:#94a3b8;text-align:center;padding:16px;">Cargando empleados...</p>
+  </div>
+ </div>
+
  </div>
  </section>
 
@@ -1135,43 +1149,79 @@
 <!-- CONTROL DE ALMUERZO -->
 <section id="sectionAlmuerzo" class="hidden p-4 animate-fadeIn">
  <div class="max-w-lg mx-auto">
- <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
- <div class="flex items-center justify-between mb-1">
- <div><h2 class="font-black text-[14px] text-slate-800 uppercase"> Control de Almuerzo</h2><p class="text-[10px] text-slate-400">Límite: 1 hora por empleado</p></div>
- <div class="text-right"><p id="relojAlmuerzo" class="font-black text-[18px] text-blue-700"></p><p id="fechaAlmuerzo" class="text-[9px] text-slate-400"></p></div>
- </div>
- </div>
- <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
- <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Registrar Salida / Regreso</p>
- <div class="flex gap-2">
- <select id="selectEmpleadoAlmuerzo" class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
- <option value="">-- Seleccionar empleado --</option>
- <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
- <option value="Joan Silva">Dr. Joan Silva</option>
- <option value="Daniel">Daniel (Inventario)</option>
- <option value="Carlos">Carlos (Inventario)</option>
- <option value="Recepcion">Recepción</option>
- <option value="Peluqueria">Peluquería</option>
- </select>
- <button onclick="_llamarFuncion('registrarSalidaAlmuerzo')" class="bg-amber-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-amber-600 transition-all shadow"> Salida</button>
- <button onclick="_llamarFuncion('registrarRegresoAlmuerzo')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-emerald-600 transition-all shadow"> Regreso</button>
- </div>
- </div>
- <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
- <p class="text-[10px] font-black text-slate-500 uppercase mb-3">⏳ Actualmente en Almuerzo</p>
- <div id="listaAlmuerzoActivo" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Nadie en almuerzo ahora</p></div>
- </div>
- <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
- <div class="flex items-center justify-between mb-3">
- <p class="text-[10px] font-black text-slate-500 uppercase"> Historial de Hoy</p>
- <button onclick="_llamarFuncion('cargarHistorialAlmuerzo')" class="text-[9px] font-black text-blue-500 underline">↻ Actualizar</button>
- </div>
- <div id="historialAlmuerzo" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin registros hoy</p></div>
- </div>
- <div class="bg-red-50 border border-red-100 rounded-2xl p-4">
- <p class="text-[10px] font-black text-red-500 uppercase mb-3"> Tiempo Excedido Acumulado</p>
- <div id="resumenExcesos" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin excesos registrados</p></div>
- </div>
+  <!-- Header -->
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+   <div class="flex items-center justify-between mb-1">
+    <div><h2 class="font-black text-[14px] text-slate-800 uppercase">Control de Personal</h2><p class="text-[10px] text-slate-400">Almuerzo · Planificador</p></div>
+    <div class="text-right"><p id="relojAlmuerzo" class="font-black text-[18px] text-blue-700"></p><p id="fechaAlmuerzo" class="text-[9px] text-slate-400"></p></div>
+   </div>
+  </div>
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-4">
+   <button id="tabAlmuerzoDescanso" onclick="_llamarFuncion('cambiarTabAlmuerzo','descanso')"
+    class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase bg-blue-600 text-white shadow">⏰ Almuerzo</button>
+   <button id="tabAlmuerzoPlan" onclick="_llamarFuncion('cambiarTabAlmuerzo','planificador')"
+    class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase bg-slate-100 text-slate-500">📅 Planificador</button>
+  </div>
+
+  <!-- Panel Descanso (existente) -->
+  <div id="panelAlmuerzoDescanso">
+   <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+    <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Registrar Salida / Regreso</p>
+    <div class="flex gap-2">
+     <select id="selectEmpleadoDescanso" class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+      <option value="">-- Seleccionar empleado --</option>
+     </select>
+     <button onclick="_llamarFuncion('registrarSalidaDescanso')" class="bg-amber-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-amber-600 transition-all shadow">Salida</button>
+     <button onclick="_llamarFuncion('registrarRegresoDescanso')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-emerald-600 transition-all shadow">Regreso</button>
+    </div>
+   </div>
+   <!-- Agregar empleado -->
+   <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+    <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Gestión de Empleados</p>
+    <div class="flex gap-2 mb-2">
+     <input type="text" id="inputNuevoEmpleado" placeholder="Nombre del empleado..."
+      class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500">
+     <button onclick="_llamarFuncion('agregarEmpleadoDescanso')" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700">+ Agregar</button>
+    </div>
+    <div id="listaEmpleadosDescanso" class="space-y-1"></div>
+   </div>
+   <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+    <p class="text-[10px] font-black text-slate-500 uppercase mb-3">⏳ Actualmente Fuera</p>
+    <div id="listaDescansoActivo" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Nadie fuera ahora</p></div>
+   </div>
+   <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+     <p class="text-[10px] font-black text-slate-500 uppercase">Historial de Hoy</p>
+     <button onclick="_llamarFuncion('cargarHistorialDescanso')" class="text-[9px] font-black text-blue-500 underline">↻ Actualizar</button>
+    </div>
+    <div id="historialDescanso" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin registros hoy</p></div>
+   </div>
+   <div class="bg-red-50 border border-red-100 rounded-2xl p-4">
+    <p class="text-[10px] font-black text-red-500 uppercase mb-3">Tiempo Excedido Acumulado</p>
+    <div id="resumenExcesosDescanso" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin excesos hoy ✅</p></div>
+   </div>
+  </div>
+
+  <!-- Panel Planificador -->
+  <div id="panelAlmuerzoPlan" class="hidden">
+   <!-- Navegación de semana -->
+   <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+    <div class="flex items-center justify-between">
+     <button onclick="_llamarFuncion('navegarSemanaPlan',-1)" class="w-9 h-9 rounded-full bg-slate-100 font-black text-slate-600 hover:bg-slate-200 text-lg">‹</button>
+     <div class="text-center">
+      <p id="labelSemanaPlan" class="font-black text-[13px] text-slate-800"></p>
+      <p id="labelRangoSemana" class="text-[9px] text-slate-400"></p>
+     </div>
+     <button onclick="_llamarFuncion('navegarSemanaPlan',1)" class="w-9 h-9 rounded-full bg-slate-100 font-black text-slate-600 hover:bg-slate-200 text-lg">›</button>
+    </div>
+   </div>
+   <!-- Lista de empleados con tareas -->
+   <div id="listaPlanificador" class="space-y-3">
+    <p class="text-[10px] text-slate-400 text-center py-8">Cargando empleados...</p>
+   </div>
+  </div>
+
  </div>
 </section>
 

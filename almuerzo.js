@@ -401,4 +401,302 @@ window.cargarHistorialDescanso = async () => {
   }
 };
 
-console.log("✅ almuerzo.js v3 — descansos con tolerancia y empleados dinámicos");
+// ─── TAB ALMUERZO ─────────────────────────────────────────
+let _tabAlmuerzoActiva = 'descanso';
+
+window.cambiarTabAlmuerzo = (tab) => {
+  _tabAlmuerzoActiva = tab;
+  const panelD = document.getElementById('panelAlmuerzoDescanso');
+  const panelP = document.getElementById('panelAlmuerzoPlan');
+  const btnD   = document.getElementById('tabAlmuerzoDescanso');
+  const btnP   = document.getElementById('tabAlmuerzoPlan');
+
+  panelD?.classList.toggle('hidden', tab !== 'descanso');
+  panelP?.classList.toggle('hidden', tab !== 'planificador');
+
+  if (btnD) { btnD.className = 'flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase ' + (tab === 'descanso' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-500'); }
+  if (btnP) { btnP.className = 'flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase ' + (tab === 'planificador' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-100 text-slate-500'); }
+
+  if (tab === 'descanso') {
+    _iniciarReloj();
+    cargarEmpleadosSelector();
+    cargarActivosDescanso();
+    cargarHistorialDescanso();
+  } else {
+    _iniciarPlanificador();
+  }
+};
+
+// ─── PLANIFICADOR SEMANAL ─────────────────────────────────
+const DIAS = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+const DIAS_LABEL = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+let _semanaOffset = 0; // 0 = semana actual, 1 = próxima, etc.
+
+function _getLunesDeSemana(offset) {
+  const hoy = new Date();
+  const diaSemana = hoy.getDay(); // 0=dom, 1=lun...
+  const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() + diffLunes + (offset * 7));
+  lunes.setHours(0,0,0,0);
+  return lunes;
+}
+
+function _fmtFecha(d) {
+  return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+}
+
+function _semanaKey(lunes) {
+  return lunes.getFullYear() + '-' + String(lunes.getMonth()+1).padStart(2,'0') + '-' + String(lunes.getDate()).padStart(2,'0');
+}
+
+function _iniciarPlanificador() {
+  _renderEncabezadoSemana();
+  _cargarPlanEmpleados();
+}
+
+function _renderEncabezadoSemana() {
+  const lunes = _getLunesDeSemana(_semanaOffset);
+  const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const label = document.getElementById('labelSemanaPlan');
+  const rango  = document.getElementById('labelRangoSemana');
+  if (label) label.textContent = _semanaOffset === 0 ? '📅 Semana actual' : _semanaOffset === 1 ? '📅 Próxima semana' : '📅 Semana +' + _semanaOffset;
+  if (rango) rango.textContent = lunes.getDate() + ' ' + meses[lunes.getMonth()] + ' → ' + domingo.getDate() + ' ' + meses[domingo.getMonth()] + ' ' + domingo.getFullYear();
+}
+
+window.navegarSemanaPlan = (dir) => {
+  if (_semanaOffset + dir < 0) return; // no ir al pasado
+  _semanaOffset += dir;
+  _renderEncabezadoSemana();
+  _cargarPlanEmpleados();
+};
+
+async function _cargarPlanEmpleados() {
+  const cont = document.getElementById('listaPlanificador');
+  if (!cont) return;
+  cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:24px;">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db, 'empleados_descanso'));
+    const empleados = [];
+    snap.forEach(d => empleados.push({ id: d.id, ...d.data() }));
+    empleados.sort((a,b) => a.nombre.localeCompare(b.nombre));
+
+    if (!empleados.length) {
+      cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:24px;">Sin empleados registrados.<br>Agrégalos en la pestaña Almuerzo.</p>';
+      return;
+    }
+
+    const lunes = _getLunesDeSemana(_semanaOffset);
+    const semKey = _semanaKey(lunes);
+    cont.innerHTML = '';
+
+    for (const emp of empleados) {
+      const docId = emp.nombre.replace(/\s+/g,'_') + '_' + semKey;
+      let tareas = {};
+      try {
+        const snap = await getDoc(doc(db, 'planificador_tareas', docId));
+        if (snap.exists()) tareas = snap.data().tareas || {};
+      } catch(_) {}
+      cont.appendChild(_renderTarjetaPlan(emp, semKey, lunes, tareas, docId));
+    }
+  } catch(e) {
+    cont.innerHTML = '<p style="font-size:10px;color:#dc2626;text-align:center;padding:16px;">Error: ' + e.message + '</p>';
+  }
+}
+
+function _renderTarjetaPlan(emp, semKey, lunes, tareas, docId) {
+  const card = document.createElement('div');
+  card.style.cssText = 'background:#fff;border:1px solid #e0e7ff;border-radius:16px;overflow:hidden;';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'background:linear-gradient(to right,#4f46e5,#6366f1);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;';
+  hdr.innerHTML = '<p style="font-weight:900;color:#fff;font-size:13px;">👤 ' + emp.nombre + '</p>' +
+    '<div style="display:flex;gap:6px;">' +
+    '<button onclick="window.guardarPlanEmpleado(\'' + docId + '\',\'' + emp.nombre + '\',\'' + semKey + '\')" style="background:#818cf8;color:#fff;border:none;padding:4px 10px;border-radius:8px;font-weight:900;font-size:9px;cursor:pointer;text-transform:uppercase;">💾 Guardar</button>' +
+    '<button onclick="window.enviarPlanWhatsApp(\'' + emp.nombre + '\',\'' + semKey + '\')" style="background:#22c55e;color:#fff;border:none;padding:4px 10px;border-radius:8px;font-weight:900;font-size:9px;cursor:pointer;text-transform:uppercase;">📲 WhatsApp</button>' +
+    '</div>';
+  card.appendChild(hdr);
+
+  const body = document.createElement('div');
+  body.style.cssText = 'padding:10px 12px;';
+
+  DIAS.forEach((dia, i) => {
+    const fechaDia = new Date(lunes);
+    fechaDia.setDate(lunes.getDate() + i);
+    const fechaStr = _fmtFecha(fechaDia);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    row.innerHTML =
+      '<span style="font-size:9px;font-weight:900;color:#6366f1;text-transform:uppercase;width:32px;flex-shrink:0;">' + DIAS_LABEL[i] + '</span>' +
+      '<span style="font-size:8px;color:#94a3b8;width:36px;flex-shrink:0;">' + fechaDia.getDate() + '/' + (fechaDia.getMonth()+1) + '</span>' +
+      '<input type="text" id="plan_' + docId + '_' + dia + '" placeholder="Sin tarea asignada..." value="' + (tareas[dia] || '') + '" ' +
+        'style="flex:1;border:1px solid #e0e7ff;border-radius:8px;padding:5px 8px;font-size:10px;outline:none;font-family:inherit;" ' +
+        'onfocus="this.style.borderColor=\'#6366f1\'" onblur="this.style.borderColor=\'#e0e7ff\'">';
+    body.appendChild(row);
+  });
+
+  card.appendChild(body);
+  return card;
+}
+
+window.guardarPlanEmpleado = async (docId, nombre, semKey) => {
+  const tareas = {};
+  DIAS.forEach(dia => {
+    const inp = document.getElementById('plan_' + docId + '_' + dia);
+    tareas[dia] = inp?.value.trim() || '';
+  });
+  try {
+    await setDoc(doc(db, 'planificador_tareas', docId), {
+      empleado: nombre,
+      semanaInicio: semKey,
+      tareas,
+      actualizadoEn: serverTimestamp()
+    });
+    Swal.fire({ icon:'success', title:'✅ Guardado', text: nombre, timer:1500, showConfirmButton:false });
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};
+
+window.enviarPlanWhatsApp = async (nombre, semKey) => {
+  // Cargar datos guardados
+  const docId = nombre.replace(/\s+/g,'_') + '_' + semKey;
+  let tareas = {};
+  try {
+    const snap = await getDoc(doc(db, 'planificador_tareas', docId));
+    if (snap.exists()) tareas = snap.data().tareas || {};
+  } catch(_) {}
+
+  // Cargar teléfono del empleado
+  let telefono = '';
+  try {
+    const snapEmp = await getDocs(collection(db,'empleados_descanso'));
+    snapEmp.forEach(d => { if (d.data().nombre === nombre) telefono = d.data().telefono || ''; });
+  } catch(_) {}
+
+  // Construir fechas de la semana
+  const lunes = new Date(semKey + 'T00:00:00');
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+
+  // Verificar si hay alguna tarea
+  const hayTareas = DIAS.some(d => tareas[d]?.trim());
+  if (!hayTareas) {
+    Swal.fire({ icon:'warning', title:'Sin tareas', text:'Agrega al menos una tarea antes de enviar.', confirmButtonColor:'#6366f1' });
+    return;
+  }
+
+  // Construir mensaje y links de calendario
+  let msg = '📅 Hola ' + nombre.split(' ')[0] + ', aquí están tus actividades para la semana del ' +
+    lunes.getDate() + ' al ' + domingo.getDate() + ' de ' + meses[domingo.getMonth()] + ':\n\n';
+
+  const calLinks = [];
+
+  DIAS.forEach((dia, i) => {
+    const tarea = tareas[dia]?.trim();
+    if (!tarea) return;
+    const fechaDia = new Date(lunes);
+    fechaDia.setDate(lunes.getDate() + i);
+    const dd = String(fechaDia.getDate()).padStart(2,'0');
+    const mm = String(fechaDia.getMonth()+1).padStart(2,'0');
+    const yyyy = fechaDia.getFullYear();
+    // Siguiente día para evento de todo el día
+    const sig = new Date(fechaDia); sig.setDate(sig.getDate()+1);
+    const ddS = String(sig.getDate()).padStart(2,'0');
+    const mmS = String(sig.getMonth()+1).padStart(2,'0');
+
+    msg += '• ' + DIAS_LABEL[i] + ' ' + dd + '/' + mm + ': ' + tarea + '\n';
+
+    const calUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+      '&text=' + encodeURIComponent(tarea + ' — AVIPET') +
+      '&dates=' + yyyy+mm+dd + '/' + yyyy+mmS+ddS +
+      '&details=' + encodeURIComponent('Tarea asignada por AVIPET');
+    calLinks.push('📌 ' + DIAS_LABEL[i] + ': ' + calUrl);
+  });
+
+  msg += '\n🗓️ Guarda tus actividades en tu calendario:\n' + calLinks.join('\n');
+  msg += '\n\n✂️ AVIPET — Av. Fco. de Miranda, Sector Buena Vista, Petare.';
+
+  // Enviar por WhatsApp
+  const telLimpio = telefono.replace(/\D/g,'');
+  const waUrl = 'https://wa.me/' + (telLimpio || '') + '?text=' + encodeURIComponent(msg);
+
+  if (!telLimpio) {
+    const { isConfirmed } = await Swal.fire({
+      icon: 'warning',
+      title: 'Sin número registrado',
+      html: '<p style="font-size:11px;">El empleado <b>' + nombre + '</b> no tiene número de WhatsApp guardado.<br>Ve a Ajustes → Empleados para agregarlo.<br><br>¿Quieres copiar el mensaje de todas formas?</p>',
+      showCancelButton: true,
+      confirmButtonText: 'Copiar mensaje',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#6366f1'
+    });
+    if (isConfirmed) {
+      try { await navigator.clipboard.writeText(msg); } catch(_) {}
+      Swal.fire({ icon:'success', title:'Mensaje copiado', timer:1500, showConfirmButton:false });
+    }
+    return;
+  }
+
+  window.open(waUrl, '_blank');
+};
+
+// ─── EMPLEADOS — TELÉFONOS (para Ajustes) ────────────────
+window.cargarEmpleadosTelefono = async () => {
+  const cont = document.getElementById('listaEmpleadosTelefono');
+  if (!cont) return;
+  cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:16px;">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db,'empleados_descanso'));
+    const empleados = [];
+    snap.forEach(d => empleados.push({ id: d.id, ...d.data() }));
+    empleados.sort((a,b) => a.nombre.localeCompare(b.nombre));
+
+    if (!empleados.length) {
+      cont.innerHTML = '<p style="font-size:10px;color:#94a3b8;text-align:center;padding:16px;">Sin empleados. Agrégalos desde el módulo de Almuerzo.</p>';
+      return;
+    }
+
+    cont.innerHTML = '';
+    empleados.forEach(emp => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:6px;';
+      row.innerHTML =
+        '<p style="font-weight:900;font-size:11px;color:#1e293b;flex:1;">' + emp.nombre + '</p>' +
+        '<input type="tel" id="tel_emp_' + emp.id + '" placeholder="584121234567" value="' + (emp.telefono||'') + '" ' +
+          'style="border:1px solid #e2e8f0;border-radius:8px;padding:4px 8px;font-size:10px;width:140px;outline:none;" ' +
+          'onfocus="this.style.borderColor=\'#6366f1\'" onblur="this.style.borderColor=\'#e2e8f0\'">' +
+        '<button onclick="window.guardarTelefonoEmpleado(\'' + emp.id + '\',\'' + emp.nombre + '\')" ' +
+          'style="background:#6366f1;color:#fff;border:none;padding:4px 10px;border-radius:8px;font-weight:900;font-size:9px;cursor:pointer;text-transform:uppercase;">Guardar</button>';
+      cont.appendChild(row);
+    });
+  } catch(e) {
+    cont.innerHTML = '<p style="font-size:10px;color:#dc2626;text-align:center;">Error: ' + e.message + '</p>';
+  }
+};
+
+window.guardarTelefonoEmpleado = async (id, nombre) => {
+  const inp = document.getElementById('tel_emp_' + id);
+  const tel = inp?.value.trim().replace(/\D/g,'');
+  if (!tel) { Swal.fire({ icon:'warning', title:'Número vacío', text:'Escribe el número con código de país. Ej: 584121234567', confirmButtonColor:'#6366f1' }); return; }
+  try {
+    await updateDoc(doc(db,'empleados_descanso',id), { telefono: tel });
+    Swal.fire({ icon:'success', title:'✅ Guardado', text: nombre, timer:1500, showConfirmButton:false });
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};
+
+// Cargar descanso al entrar al módulo desde showTab
+const _origShowTabAlmuerzo = window.showTab;
+window._initAlmuerzoModule = () => {
+  _iniciarReloj();
+  cargarEmpleadosSelector();
+  cargarActivosDescanso();
+  cargarHistorialDescanso();
+};
+
+console.log("✅ almuerzo.js v4 — descansos + planificador semanal + teléfonos empleados");

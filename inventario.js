@@ -374,7 +374,7 @@ try{Swal.fire({title:'Inicializando...',allowOutsideClick:false,didOpen:()=>Swal
 
 // CAMBIAR SUB-TAB CONFIG 
 window.cambiarSubTabConfig = (tab) => {
-  ['servicios','insumos','medicamentos','seguridad','tarifa','compras'].forEach(t => {
+  ['servicios','insumos','medicamentos','seguridad','tarifa','compras','empleados'].forEach(t => {
     const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
     const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
     const activo = t === tab;
@@ -398,6 +398,7 @@ window.cambiarSubTabConfig = (tab) => {
   if (tab === 'insumos')      { if(typeof window.renderizarTablaInsumos==='function') window.renderizarTablaInsumos(); else _llamarFuncion('renderizarTablaInsumos'); }
   if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
   if (tab === 'compras')      { if(typeof window.cargarRegistroCompras==='function') window.cargarRegistroCompras(); else _llamarFuncion('cargarRegistroCompras'); }
+  if (tab === 'empleados')   { if(typeof window.cargarEmpleadosTelefono==='function') window.cargarEmpleadosTelefono(); else _llamarFuncion('cargarEmpleadosTelefono'); }
 };
 
 window.calcInvAplicar = () => {

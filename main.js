@@ -338,19 +338,20 @@ window.ejecutarCambioDeTab = async (t) => {
   if (t === 'historia') limpiarLogoHistoria();
 
   ['sectionHistoria','sectionBuscador','sectionReporte','sectionEspera',
-   'sectionHojaVacunas','sectionConfig_precios','sectionPeluqueria','sectionInventario']
+   'sectionHojaVacunas','sectionConfig_precios','sectionPeluqueria','sectionInventario','sectionAlmuerzo']
     .forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
   const mapa = {
     historia:'sectionHistoria', buscador:'sectionBuscador',
     reporte:'sectionReporte',   espera:'sectionEspera',
     vacunas:'sectionHojaVacunas', config_precios:'sectionConfig_precios',
-    peluqueria:'sectionPeluqueria', inventario:'sectionInventario'
+    peluqueria:'sectionPeluqueria', inventario:'sectionInventario',
+    personal:'sectionAlmuerzo'
   };
   document.getElementById(mapa[t])?.classList.remove('hidden');
 
   const tabs = { historia:'tabH', buscador:'tabB', reporte:'tabR',
-                 espera:'tabE', peluqueria:'tabP', inventario:'tabInv' };
+                 espera:'tabE', peluqueria:'tabP', inventario:'tabInv', personal:'tabPersonal' };
   Object.keys(tabs).forEach(k => {
     const b = document.getElementById(tabs[k]);
     if (!b) return;
@@ -367,6 +368,7 @@ window.ejecutarCambioDeTab = async (t) => {
     typeof window.actualizarSelectorProveedores ==='function' && window.actualizarSelectorProveedores();
   }
   if (t==='peluqueria' && typeof window.cargarBitacoraHoy ==='function') window.cargarBitacoraHoy();
+  if (t==='personal'   && typeof window._initAlmuerzoModule==='function') window._initAlmuerzoModule();
 
   const nav = document.getElementById('navMobile');
   if (nav) nav.value = t;
