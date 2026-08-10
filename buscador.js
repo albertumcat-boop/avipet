@@ -321,6 +321,7 @@ function _renderizarTarjeta(consulta) {
  btnEliminar.className = 'bg-red-100 text-red-600 px-3 py-2 rounded-xl font-black text-[9px] uppercase hover:bg-red-600 hover:text-white transition-all';
  btnEliminar.textContent = 'Eliminar';
  btnEliminar.addEventListener('click', async function() {
+   if (window._masterKeyReady) await window._masterKeyReady;
    const conf = await Swal.fire({
      icon: 'warning',
      title: 'Eliminar historia',

@@ -24,7 +24,7 @@ service cloud.firestore {
     match /consultas/{id} {
       allow read: if true;
       allow create, update: if true;
-      allow delete: if false; // eliminación solo via consola Firebase por admin
+      allow delete: if true; // validación de clave maestra ocurre en cliente
     }
 
     // Servicios del catálogo
