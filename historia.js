@@ -993,6 +993,38 @@ window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamien
 // --- HOJA DE VACUNAS ---
 window.abrirHojaVacunasDesdeHistoria=()=>{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};const f=new Date();set('hv_fecha',`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);const campos={'hv_propietario':'hProp','hv_cedula':'hCI','hv_telefono':'hTlf','hv_direccion':'hDir','hv_especie':'hEspecie','hv_raza':'hRaza','hv_paciente':'hNombre','hv_edad':'hEdad','hv_sexo':'hSexo','hv_color':'hColor','hv_peso':'hPeso'};Object.entries(campos).forEach(([d,o])=>set(d,dVal(o)));set('hv_fechaNacimiento',dVal('hFechaNac'));document.getElementById('sectionHistoria')?.classList.add('hidden');const v=document.getElementById('sectionHojaVacunas');if(v){v.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}};
 
+// --- AGREGAR MASCOTA EXTRA PARA SALA DE ESPERA ---
+window.agregarMascotaExtra = () => {
+  const cont = document.getElementById('mascotasExtrasHistoria');
+  if (!cont) return;
+  const idx = cont.children.length + 2;
+  const div = document.createElement('div');
+  div.className = 'mascota-extra-row';
+  div.style.cssText = 'border:2px solid #c7d2fe;border-radius:12px;padding:10px;background:#eef2ff;position:relative;margin-top:4px;';
+  div.innerHTML =
+    '<button type="button" onclick="this.closest(\'.mascota-extra-row\').remove()" ' +
+    'style="position:absolute;top:5px;right:7px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:900;cursor:pointer;line-height:17px;text-align:center;">✕</button>' +
+    '<p style="font-size:8px;font-weight:900;color:#6366f1;text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;">Mascota ' + idx + '</p>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">' +
+    '<div style="grid-column:span 2;"><label style="font-size:8px;font-weight:700;color:#94a3b8;">MASCOTA</label>' +
+    '<input class="mascota-extra-nombre" style="border:none;border-bottom:1px solid #a5b4fc;width:100%;font-weight:700;text-transform:uppercase;color:#1d4ed8;font-size:11px;background:transparent;outline:none;"></div>' +
+    '<div><label style="font-size:8px;font-weight:700;color:#94a3b8;">ESPECIE</label>' +
+    '<input class="mascota-extra-especie" style="border:none;border-bottom:1px solid #a5b4fc;width:100%;text-transform:uppercase;font-size:11px;background:transparent;outline:none;"></div>' +
+    '<div><label style="font-size:8px;font-weight:700;color:#94a3b8;">RAZA</label>' +
+    '<input class="mascota-extra-raza" style="border:none;border-bottom:1px solid #a5b4fc;width:100%;text-transform:uppercase;font-size:11px;background:transparent;outline:none;"></div>' +
+    '<div><label style="font-size:8px;font-weight:700;color:#94a3b8;">EDAD</label>' +
+    '<input class="mascota-extra-edad" style="border:none;border-bottom:1px solid #a5b4fc;width:100%;text-transform:uppercase;font-size:11px;background:transparent;outline:none;"></div>' +
+    '<div><label style="font-size:8px;font-weight:700;color:#94a3b8;">SEXO</label>' +
+    '<input class="mascota-extra-sexo" style="border:none;border-bottom:1px solid #a5b4fc;width:100%;text-transform:uppercase;font-size:11px;background:transparent;outline:none;"></div>' +
+    '<div><label style="font-size:8px;font-weight:700;color:#94a3b8;">PESO (KG)</label>' +
+    '<input class="mascota-extra-peso" placeholder="0.00" style="border:none;border-bottom:1px solid #a5b4fc;width:100%;font-size:11px;background:transparent;outline:none;"></div>' +
+    '<div><label style="font-size:8px;font-weight:700;color:#94a3b8;">COLOR</label>' +
+    '<input class="mascota-extra-color" style="border:none;border-bottom:1px solid #a5b4fc;width:100%;text-transform:uppercase;font-size:11px;background:transparent;outline:none;"></div>' +
+    '</div>';
+  cont.appendChild(div);
+  div.querySelector('.mascota-extra-nombre')?.focus();
+};
+
 // --- SALA DE ESPERA ---
 async function _seleccionarDoctorEspera(nombreMascota) {
   var htmlDocSel = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Asignar <b>' + nombreMascota + '</b> a:</p>';
@@ -1027,60 +1059,55 @@ window.enviarAColaEspera=async()=>{
       alert("(!) Cedula, Propietario y Paciente son obligatorios.");return;
     }
 
-    const baseData = {
+    const baseOwner = {
       cedula:dVal('hCI'), propietario:dVal('hProp'),
-      especie:dVal('hEspecie'), raza:dVal('hRaza'), edad:dVal('hEdad'),
-      sexo:dVal('hSexo'), peso:dVal('hPeso'), telefono:dVal('hTlf'),
-      correo:dVal('hMail'), direccion:dVal('hDir'), color:dVal('hColor'),
-      fechaNacimiento:dVal('hFechaNac'),
+      telefono:dVal('hTlf'), correo:dVal('hMail'),
+      direccion:dVal('hDir'),
       fechaSimple:new Date().getDate()+'/'+(new Date().getMonth()+1)+'/'+new Date().getFullYear(),
       estado:"en_espera"
     };
 
+    // Mascota principal del formulario
+    const mascotas = [{
+      nombre: dVal('hNombre'), especie: dVal('hEspecie'), raza: dVal('hRaza'),
+      edad: dVal('hEdad'), sexo: dVal('hSexo'), peso: dVal('hPeso'),
+      color: dVal('hColor'), fechaNacimiento: dVal('hFechaNac')
+    }];
+
+    // Mascotas adicionales agregadas con el botón +
+    document.querySelectorAll('#mascotasExtrasHistoria .mascota-extra-row').forEach(row => {
+      const nombre = row.querySelector('.mascota-extra-nombre')?.value.trim().toUpperCase() || '';
+      if (!nombre) return;
+      mascotas.push({
+        nombre,
+        especie: row.querySelector('.mascota-extra-especie')?.value.trim().toUpperCase() || '',
+        raza:    row.querySelector('.mascota-extra-raza')?.value.trim().toUpperCase() || '',
+        edad:    row.querySelector('.mascota-extra-edad')?.value.trim().toUpperCase() || '',
+        sexo:    row.querySelector('.mascota-extra-sexo')?.value.trim().toUpperCase() || '',
+        peso:    row.querySelector('.mascota-extra-peso')?.value.trim() || '',
+        color:   row.querySelector('.mascota-extra-color')?.value.trim().toUpperCase() || '',
+        fechaNacimiento: ''
+      });
+    });
+
+    // Asignar doctor a cada mascota individualmente
     const mascotasEnviadas = [];
-    let nombreMascota = dVal('hNombre');
-
-    // Loop: enviar mascotas hasta que el usuario cancele
-    while (true) {
-      const doctor = await _seleccionarDoctorEspera(nombreMascota);
-      if (!doctor) break;
-
+    for (const m of mascotas) {
+      const doctor = await _seleccionarDoctorEspera(m.nombre);
+      if (!doctor) return; // usuario canceló — abortar todo
       await addDoc(collection(db,"espera"), {
-        ...baseData, paciente: nombreMascota,
+        ...baseOwner, ...m, paciente: m.nombre,
         doctorAsignado: doctor, fechaIngreso: serverTimestamp()
       });
-      mascotasEnviadas.push({ nombre: nombreMascota, doctor });
-
-      // Preguntar si hay otra mascota del mismo dueño
-      const otraRes = await Swal.fire({
-        icon: 'success',
-        title: '✅ ' + nombreMascota + ' en sala de espera',
-        html: '<p style="font-size:12px;color:#475569;">Asignado al Dr. ' + doctor + '</p>' +
-              '<p style="font-size:11px;color:#64748b;margin-top:10px;">¿Hay otra mascota del mismo dueño?</p>',
-        showConfirmButton: true,
-        confirmButtonText: '➕ Agregar otra mascota',
-        showCancelButton: true,
-        cancelButtonText: 'No, listo',
-        confirmButtonColor: '#6366f1',
-        cancelButtonColor: '#64748b',
-        input: 'text',
-        inputPlaceholder: 'Nombre de la segunda mascota...',
-        inputAttributes: { autocomplete: 'off', style: 'text-transform:uppercase;font-weight:700;' },
-        preConfirm: function(val) {
-          if (!val || !val.trim()) { Swal.showValidationMessage('Escribe el nombre de la mascota'); return false; }
-          return val.trim().toUpperCase();
-        }
-      });
-
-      if (!otraRes.isConfirmed || !otraRes.value) break;
-      nombreMascota = otraRes.value;
+      mascotasEnviadas.push({ nombre: m.nombre, doctor });
     }
 
-    if (!mascotasEnviadas.length) return;
-
+    // Limpiar formulario y mascotas extra
     localStorage.removeItem("respaldo_historia_activa");
     _limpiarFormularioHistoria();
     _limpiarNotasInternas();
+    const extCont = document.getElementById('mascotasExtrasHistoria');
+    if (extCont) extCont.innerHTML = '';
 
     if (mascotasEnviadas.length === 1) {
       await Swal.fire({
