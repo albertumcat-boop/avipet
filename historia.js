@@ -994,6 +994,32 @@ window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamien
 window.abrirHojaVacunasDesdeHistoria=()=>{const dVal=(id)=>document.getElementById(id)?.value.trim()||"";const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||"";};const f=new Date();set('hv_fecha',`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);const campos={'hv_propietario':'hProp','hv_cedula':'hCI','hv_telefono':'hTlf','hv_direccion':'hDir','hv_especie':'hEspecie','hv_raza':'hRaza','hv_paciente':'hNombre','hv_edad':'hEdad','hv_sexo':'hSexo','hv_color':'hColor','hv_peso':'hPeso'};Object.entries(campos).forEach(([d,o])=>set(d,dVal(o)));set('hv_fechaNacimiento',dVal('hFechaNac'));document.getElementById('sectionHistoria')?.classList.add('hidden');const v=document.getElementById('sectionHojaVacunas');if(v){v.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}};
 
 // --- SALA DE ESPERA ---
+async function _seleccionarDoctorEspera(nombreMascota) {
+  var htmlDocSel = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Asignar <b>' + nombreMascota + '</b> a:</p>';
+  htmlDocSel += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">Dr. Darwin Sandoval</button>';
+  htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">Dr. Joan Silva</button>';
+  htmlDocSel += '</div>';
+  window._docEspera = null;
+  const res = await Swal.fire({
+    title: 'Asignar Doctor',
+    html: htmlDocSel,
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+    didOpen: function() {
+      document.getElementById('btnDocDarwin').addEventListener('click', function() {
+        window._docEspera = 'Darwin Sandoval'; Swal.clickConfirm();
+      });
+      document.getElementById('btnDocJoan').addEventListener('click', function() {
+        window._docEspera = 'Joan Silva'; Swal.clickConfirm();
+      });
+    }
+  });
+  if (res.isDismissed) return null;
+  return window._docEspera || null;
+}
+
 window.enviarAColaEspera=async()=>{
   try{
     const dVal=(id)=>document.getElementById(id)?.value.trim()||"";
@@ -1001,55 +1027,76 @@ window.enviarAColaEspera=async()=>{
       alert("(!) Cedula, Propietario y Paciente son obligatorios.");return;
     }
 
-    // Preguntar a que doctor se asigna
-    var htmlDocSel = '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">Asignar <b>' + dVal('hNombre') + '</b> a:</p>';
-    htmlDocSel += '<div style="display:flex;flex-direction:column;gap:8px;">';
-    htmlDocSel += '<button id="btnDocDarwin" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:14px;color:#1d4ed8;cursor:pointer;">Dr. Darwin Sandoval</button>';
-    htmlDocSel += '<button id="btnDocJoan" type="button" style="width:100%;padding:14px;border-radius:12px;border:2px solid #a7f3d0;background:#ecfdf5;font-weight:900;font-size:14px;color:#065f46;cursor:pointer;">Dr. Joan Silva</button>';
-    htmlDocSel += '</div>';
-    const resDoc = await Swal.fire({
-      title: 'Asignar Doctor',
-      html: htmlDocSel,
-      showConfirmButton: false,
-      showCancelButton: true,
-      cancelButtonText: 'Cancelar',
-      didOpen: function() {
-        document.getElementById('btnDocDarwin').addEventListener('click', function() {
-          window._docEspera = 'Darwin Sandoval'; Swal.clickConfirm();
-        });
-        document.getElementById('btnDocJoan').addEventListener('click', function() {
-          window._docEspera = 'Joan Silva'; Swal.clickConfirm();
-        });
-      }
-    });
-    if (resDoc.isDismissed) return;
-    const doctorAsignado = window._docEspera || '';
-    window._docEspera = null;
-    if (!doctorAsignado) return;
-
-    const data={
-      cedula:dVal('hCI'),propietario:dVal('hProp'),paciente:dVal('hNombre'),
-      especie:dVal('hEspecie'),raza:dVal('hRaza'),edad:dVal('hEdad'),
-      sexo:dVal('hSexo'),peso:dVal('hPeso'),telefono:dVal('hTlf'),
-      correo:dVal('hMail'),direccion:dVal('hDir'),color:dVal('hColor'),
+    const baseData = {
+      cedula:dVal('hCI'), propietario:dVal('hProp'),
+      especie:dVal('hEspecie'), raza:dVal('hRaza'), edad:dVal('hEdad'),
+      sexo:dVal('hSexo'), peso:dVal('hPeso'), telefono:dVal('hTlf'),
+      correo:dVal('hMail'), direccion:dVal('hDir'), color:dVal('hColor'),
       fechaNacimiento:dVal('hFechaNac'),
-      doctorAsignado,
-      fechaIngreso:serverTimestamp(),
       fechaSimple:new Date().getDate()+'/'+(new Date().getMonth()+1)+'/'+new Date().getFullYear(),
       estado:"en_espera"
     };
 
-    await addDoc(collection(db,"espera"),data);
+    const mascotasEnviadas = [];
+    let nombreMascota = dVal('hNombre');
+
+    // Loop: enviar mascotas hasta que el usuario cancele
+    while (true) {
+      const doctor = await _seleccionarDoctorEspera(nombreMascota);
+      if (!doctor) break;
+
+      await addDoc(collection(db,"espera"), {
+        ...baseData, paciente: nombreMascota,
+        doctorAsignado: doctor, fechaIngreso: serverTimestamp()
+      });
+      mascotasEnviadas.push({ nombre: nombreMascota, doctor });
+
+      // Preguntar si hay otra mascota del mismo dueño
+      const otraRes = await Swal.fire({
+        icon: 'success',
+        title: '✅ ' + nombreMascota + ' en sala de espera',
+        html: '<p style="font-size:12px;color:#475569;">Asignado al Dr. ' + doctor + '</p>' +
+              '<p style="font-size:11px;color:#64748b;margin-top:10px;">¿Hay otra mascota del mismo dueño?</p>',
+        showConfirmButton: true,
+        confirmButtonText: '➕ Agregar otra mascota',
+        showCancelButton: true,
+        cancelButtonText: 'No, listo',
+        confirmButtonColor: '#6366f1',
+        cancelButtonColor: '#64748b',
+        input: 'text',
+        inputPlaceholder: 'Nombre de la segunda mascota...',
+        inputAttributes: { autocomplete: 'off', style: 'text-transform:uppercase;font-weight:700;' },
+        preConfirm: function(val) {
+          if (!val || !val.trim()) { Swal.showValidationMessage('Escribe el nombre de la mascota'); return false; }
+          return val.trim().toUpperCase();
+        }
+      });
+
+      if (!otraRes.isConfirmed || !otraRes.value) break;
+      nombreMascota = otraRes.value;
+    }
+
+    if (!mascotasEnviadas.length) return;
+
     localStorage.removeItem("respaldo_historia_activa");
     _limpiarFormularioHistoria();
     _limpiarNotasInternas();
-    await Swal.fire({
-      icon:"success",
-      title:"? Enviado a Sala de Espera",
-      html:"<b>"+data.paciente+"</b><br><span class='text-[11px] text-slate-500'>Asignado al Dr. "+doctorAsignado+"</span>",
-      timer:2500,showConfirmButton:false
-    });
-  }catch(e){console.error(e);alert("? Error: "+e.message);}
+
+    if (mascotasEnviadas.length === 1) {
+      await Swal.fire({
+        icon:"success", title:"✅ Enviado a Sala de Espera",
+        html:"<b>"+mascotasEnviadas[0].nombre+"</b><br><span style='font-size:11px;color:#64748b;'>Dr. "+mascotasEnviadas[0].doctor+"</span>",
+        timer:2000, showConfirmButton:false
+      });
+    } else {
+      const lista = mascotasEnviadas.map(m=>'🐾 <b>'+m.nombre+'</b> → Dr. '+m.doctor).join('<br>');
+      await Swal.fire({
+        icon:"success", title:"✅ "+mascotasEnviadas.length+" mascotas en sala de espera",
+        html:'<div style="font-size:11px;line-height:2;text-align:left;padding:4px 8px;">'+lista+'</div>',
+        timer:3000, showConfirmButton:false
+      });
+    }
+  }catch(e){console.error(e);alert("❌ Error: "+e.message);}
 };
 window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>(a.fechaIngreso?.seconds||0)-(b.fechaIngreso?.seconds||0));if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}cont.innerHTML="";filtrados.forEach(p=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";div.innerHTML=`<div><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} . CI: ${p.cedula}</p><p class="text-[8px] font-black ${colorDoc} uppercase">${docAsig}</p></div><div class="flex gap-2"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
 window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();

@@ -175,28 +175,7 @@ window._enviarFotosWhatsApp = async (telefonoRaw, paciente, duenio, condicion, f
   msg += `📷 *Ver reporte de llegada con fotos:*\n👉 ${linkEvidencia}\n\n`;
   msg += '_Este reporte queda registrado como evidencia del estado de la mascota al momento del ingreso. Para su tranquilidad y la nuestra._ 🐾\n— AVIPET';
 
-  // Intentar Web Share API con las imágenes reales (funciona en móvil)
-  if (fotos && fotos.length > 0 && navigator.canShare) {
-    try {
-      const archivos = fotos.map((b64, i) => {
-        const partes = b64.split(',');
-        const mime = (partes[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
-        const byteStr = atob(partes[1]);
-        const arr = new Uint8Array(byteStr.length);
-        for (let x = 0; x < byteStr.length; x++) arr[x] = byteStr.charCodeAt(x);
-        return new File([arr], `foto_${i+1}.jpg`, { type: mime });
-      });
-      const shareData = { files: archivos, text: msg };
-      if (navigator.canShare(shareData)) {
-        await navigator.share(shareData);
-        return;
-      }
-    } catch(e) {
-      if (e.name !== 'AbortError') console.warn('Web Share con fotos no disponible, usando fallback:', e);
-    }
-  }
-
-  // Fallback: abrir WhatsApp con texto + link
+  // Abrir WhatsApp directamente con el número y el mensaje+link de evidencia
   if (!tlf || tlf.length < 7) {
     Swal.fire({ icon:'warning', title:'Sin teléfono', text:'Este registro no tiene número de teléfono.', timer:2000, showConfirmButton:false });
     return;
