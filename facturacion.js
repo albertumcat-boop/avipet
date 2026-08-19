@@ -408,6 +408,50 @@ window.toggleConsumidorFinal = () => {
   }
 };
 
+// ─── BRIDGE ACLAS ────────────────────────────────────────
+const BRIDGE_URL = 'http://localhost:3001';
+
+async function _bridgeHealth() {
+  try {
+    const r = await fetch(`${BRIDGE_URL}/health`, { signal: AbortSignal.timeout(2500) });
+    const d = await r.json();
+    return d.aclas?.ok === true;
+  } catch { return false; }
+}
+
+async function _emitirEnAclas(items, cliente, monedaPago, totalUSD, tasaBCV) {
+  const r = await fetch(`${BRIDGE_URL}/factura`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items, cliente, monedaPago, totalUSD, tasaBCV }),
+    signal: AbortSignal.timeout(15000)
+  });
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || 'Error desconocido del bridge');
+  return d; // { numeroFactura, numeroControl }
+}
+
+async function _modoManual() {
+  const { value } = await Swal.fire({
+    title: '📟 Ingresa los datos de la Aclas',
+    html: `<p class="text-[11px] text-slate-500 mb-3">El bridge no está activo. Emite la factura en la máquina Aclas y escribe los números aquí.</p>
+      <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">N° Factura</label>
+      <input id="manualFact" type="number" class="swal2-input" placeholder="Ej: 44921">
+      <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1 mt-2">N° Control</label>
+      <input id="manualCtrl" type="text" class="swal2-input" placeholder="Ej: ZZN0020855">`,
+    showCancelButton: true,
+    confirmButtonText: 'Registrar',
+    confirmButtonColor: '#1d4ed8',
+    preConfirm: () => {
+      const nf = document.getElementById('manualFact')?.value.trim();
+      const nc = document.getElementById('manualCtrl')?.value.trim();
+      if (!nf) { Swal.showValidationMessage('El N° de Factura es obligatorio'); return false; }
+      return { numeroFactura: parseInt(nf), numeroControl: nc || '' };
+    }
+  });
+  return value; // undefined si canceló
+}
+
 // ─── EMITIR FACTURA ─────────────────────────────────────
 window.emitirFactura = async () => {
   if (!_carrito.length) {
@@ -456,48 +500,72 @@ window.emitirFactura = async () => {
 
   try {
     const serieId      = _configFiscal.serieId || 'A';
-    const correlatRef  = doc(db, 'correlativos', serieId);
     const facturaRef   = doc(collection(db, 'facturas'));
     const auditRef     = doc(collection(db, 'auditoria_facturacion'));
 
     const lineas = _carrito.map(item => ({
-      referenciaId:  item.id,
+      referenciaId:   item.id,
       referenciaTipo: item.tipo,
-      descripcion:   item.descripcion,
-      cantidad:      item.cantidad,
+      descripcion:    item.descripcion,
+      cantidad:       item.cantidad,
       precioUnitario: item.precio,
-      alicuotaIVA:   item.alicuotaIVA ?? 16,
-      baseImponible: item.precio * item.cantidad,
-      montoIVA:      (item.precio * item.cantidad) * ((item.alicuotaIVA ?? 16) / 100)
+      alicuotaIVA:    item.alicuotaIVA ?? 16,
+      baseImponible:  item.precio * item.cantidad,
+      montoIVA:       (item.precio * item.cantidad) * ((item.alicuotaIVA ?? 16) / 100)
     }));
 
     const stockItems = _carrito
       .filter(i => i.tipo === 'producto')
       .map(i => ({ id: i.id, cantidad: i.cantidad, nombre: i.descripcion }));
 
-    let numeroFactura, numeroControl;
+    // ── PASO 1: Emitir en la Aclas (bridge) o modo manual ──
+    let numeroFactura, numeroControl, modoAclas;
+    if (btn) btn.textContent = '🔌 Conectando con Aclas...';
 
+    const bridgeActivo = await _bridgeHealth();
+    if (bridgeActivo) {
+      if (btn) btn.textContent = '🖨️ Imprimiendo en Aclas...';
+      const itemsAclas = _carrito.map(i => ({
+        descripcion:  i.descripcion,
+        precioUSD:    i.precio,
+        cantidad:     i.cantidad,
+        alicuotaIVA:  i.alicuotaIVA ?? 16
+      }));
+      const cliente = _esConsumidorFinal ? null : {
+        rif:    document.getElementById('inputRIFReceptor')?.value.trim(),
+        nombre: document.getElementById('inputNomReceptor')?.value.trim()
+      };
+      const resp = await _emitirEnAclas(itemsAclas, cliente, _monedaPago, totales.totalUSD, _tasaBCV);
+      numeroFactura = resp.numeroFactura;
+      numeroControl = resp.numeroControl;
+      modoAclas     = true;
+    } else {
+      // Bridge no disponible — modo manual
+      if (btn) btn.disabled = false;
+      const manual = await _modoManual();
+      if (!manual) {
+        if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
+        return;
+      }
+      if (btn) btn.disabled = true;
+      numeroFactura = manual.numeroFactura;
+      numeroControl = manual.numeroControl;
+      modoAclas     = false;
+    }
+
+    if (btn) btn.textContent = '💾 Guardando en Firestore...';
+
+    // ── PASO 2: Guardar en Firestore (atómico) ────────────
     await runTransaction(db, async (tx) => {
-      // Leer correlativo
-      const corrSnap = await tx.get(correlatRef);
-      const ultimo   = corrSnap.exists() ? corrSnap.data() : {};
-      numeroFactura  = (ultimo.ultimoNumeroFactura  || 0) + 1;
-      numeroControl  = (ultimo.ultimoNumeroControl  || 0) + 1;
 
       // Leer stock actual para cada producto
       const stockReads = await Promise.all(stockItems.map(s => tx.get(doc(db,'inventario',s.id))));
 
-      // Actualizar correlativo
-      tx.set(correlatRef, {
-        ultimoNumeroFactura: numeroFactura,
-        ultimoNumeroControl: numeroControl,
-        actualizado: serverTimestamp()
-      }, { merge: true });
-
       // Escribir factura
       tx.set(facturaRef, {
         numeroFactura,
-        numeroControl:        String(numeroControl).padStart(8, '0'),
+        numeroControl:        String(numeroControl),
+        modoEmision:          modoAclas ? 'aclas' : 'manual',
         serieId,
         rifEmisor:            _configFiscal.rifEmisor,
         razonSocialEmisor:    _configFiscal.razonSocial   || 'AVIPET',
@@ -520,7 +588,7 @@ window.emitirFactura = async () => {
         totalVES:             totales.totalVES,
         condicionPago:        'contado',
         estado:               'emitida',
-        ticketFiscal:         null,
+        ticketFiscal:         modoAclas ? 'aclas-auto' : 'manual',
         fechaEmision:         serverTimestamp(),
         fechaSimple:          new Date().toLocaleDateString('es-VE'),
         horaEmision:          new Date().toLocaleTimeString('es-VE', { hour:'2-digit', minute:'2-digit' })

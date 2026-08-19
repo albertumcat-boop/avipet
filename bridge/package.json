@@ -1,0 +1,15 @@
+{
+  "name": "avipet-bridge",
+  "version": "1.0.0",
+  "description": "Bridge local AVIPET ↔ Aclas CR2050",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "install-service": "node install-service.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-windows": "^1.0.0-beta.8"
+  }
+}
