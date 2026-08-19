@@ -1,56 +1,96 @@
 // =========================================================
-// AVIPET — Service Worker v8
-// Elimina TODO el cache anterior sin excepción
-// NUNCA cachea JS ni HTML — siempre frescos de Vercel
+// AVIPET — Service Worker v9
+// Estrategia: cache-first para archivos propios, network-only para CDN/Firebase
+// Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v8';
+const CACHE_V = 'avipet-v9';
+
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/main.js',
+  '/historia.js',
+  '/peluqueria.js',
+  '/buscador.js',
+  '/vacunas.js',
+  '/inventario.js',
+  '/almuerzo.js',
+  '/firebase-config.js',
+  '/finanzas.js',
+  '/permisos.js',
+  '/seguridad.js',
+  '/manifest.json',
+  '/avipet.png',
+  '/logo_darwin.jpg',
+];
+
+// CDN y servicios externos — NUNCA cachear, siempre red
+const ES_EXTERNO = url =>
+  url.includes('firestore.googleapis.com') ||
+  url.includes('firebase') ||
+  url.includes('googleapis.com') ||
+  url.includes('dolarapi.com') ||
+  url.includes('er-api.com') ||
+  url.includes('gstatic.com') ||
+  url.includes('cdn.') ||
+  url.includes('jsdelivr') ||
+  url.includes('cdnjs') ||
+  url.includes('tailwind') ||
+  url.includes('sweetalert') ||
+  url.includes('wa.me') ||
+  url.includes('calendar.google') ||
+  url.includes('vercel.app');
 
 self.addEventListener('install', event => {
-  console.log('[SW v8] Instalando...');
-  // No cachear nada en la instalación — todo viene de la red
-  event.waitUntil(self.skipWaiting());
+  console.log('[SW v9] Instalando y pre-cacheando app shell...');
+  event.waitUntil(
+    caches.open(CACHE_V).then(cache =>
+      // addAll falla si algún archivo no existe — usamos add individual con soft-fail
+      Promise.allSettled(APP_SHELL.map(url => cache.add(url)))
+        .then(results => {
+          const ok  = results.filter(r => r.status === 'fulfilled').length;
+          const err = results.filter(r => r.status === 'rejected').length;
+          console.log(`[SW v9] Cache: ${ok} archivos OK, ${err} fallidos`);
+        })
+    ).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW v8] Activando — eliminando TODOS los caches...');
+  console.log('[SW v9] Activando — limpiando caches anteriores...');
   event.waitUntil(
-    caches.keys().then(keys => {
-      console.log('[SW v8] Caches encontrados:', keys);
-      return Promise.all(keys.map(k => {
-        console.log('[SW v8] Eliminando:', k);
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_V).map(k => {
+        console.log('[SW v9] Eliminando cache viejo:', k);
         return caches.delete(k);
-      }));
-    }).then(() => {
-      console.log('[SW v8] Todos los caches eliminados');
-      return self.clients.claim();
-    })
+      }))
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
   const url = event.request.url;
 
-  // Firebase, APIs externas, CDNs → dejar pasar sin interceptar
-  if (url.includes('firestore.googleapis.com') ||
-      url.includes('firebase') ||
-      url.includes('googleapis.com') ||
-      url.includes('dolarapi.com') ||
-      url.includes('er-api.com') ||
-      url.includes('cdn.') ||
-      url.includes('jsdelivr') ||
-      url.includes('cdnjs') ||
-      url.includes('tailwind') ||
-      url.includes('gstatic')) {
-    return; // no interceptar
-  }
+  // Externos: dejar pasar sin tocar
+  if (ES_EXTERNO(url)) return;
 
-  // JS, HTML y cualquier archivo del sitio → SIEMPRE de la red
-  // NUNCA del cache — así los cambios se reflejan inmediatamente
+  // Archivos propios: cache-first con actualización en background (stale-while-revalidate)
   event.respondWith(
-    fetch(event.request).catch(() => {
-      // Sin red → intentar cache solo como último recurso
-      return caches.match(event.request);
+    caches.open(CACHE_V).then(async cache => {
+      const cached = await cache.match(event.request);
+
+      // Intentar actualizar desde la red en background
+      const networkFetch = fetch(event.request).then(response => {
+        if (response && response.ok && event.request.method === 'GET') {
+          cache.put(event.request, response.clone());
+        }
+        return response;
+      }).catch(() => null);
+
+      // Si hay cache: devolver inmediatamente (app carga offline)
+      // Si no hay cache: esperar la red
+      return cached || networkFetch;
     })
   );
 });

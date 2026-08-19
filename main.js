@@ -528,18 +528,11 @@ window.addEventListener('popstate', _ejecutarDetectorMovil);
 if ('navigation' in window)
   window.navigation.addEventListener('navigate', ()=>setTimeout(_ejecutarDetectorMovil,100));
 
-// ============================================================
-// RESPALDO LOCAL
-// ============================================================
-window.respaldarProgresoLocal = () => {
-  const area=document.getElementById('hTratamiento');
-  const vis =document.getElementById('visualizacionServicios');
-  if (!area||!vis) return;
-  localStorage.setItem('respaldo_historia_activa', JSON.stringify({
-    diagnostico: area.value, serviciosVisuales: vis.innerHTML, timestamp: Date.now()
-  }));
-};
-document.getElementById('hTratamiento')?.addEventListener('input', window.respaldarProgresoLocal);
+// RESPALDO LOCAL — definido en historia.js (incluye todos los campos del paciente)
+// main.js NO sobreescribe esa función — solo se asegura que exista como no-op hasta que cargue historia.js
+if (typeof window.respaldarProgresoLocal !== 'function') {
+  window.respaldarProgresoLocal = () => {};
+}
 
 // ============================================================
 // ARRANQUE DOMContentLoaded
@@ -619,8 +612,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const raw = localStorage.getItem('respaldo_historia_activa');
     if (!raw) return;
     const datos = JSON.parse(raw);
-    const textoRestaurar = datos.diagnostico || datos.tratamiento || '';
-    const ok = datos.timestamp > Date.now()-(24*60*60*1000) && textoRestaurar.trim().length>0;
+    // Recuperar si hay cualquier campo relevante (no solo tratamiento)
+    const hayDatos = (datos.cedula||datos.paciente||datos.propietario||datos.diagnostico||datos.tratamiento||'').trim().length > 0;
+    const ok = datos.timestamp > Date.now()-(24*60*60*1000) && hayDatos;
     if (!ok) return;
     if (confirm("⚠ Historia no guardada detectada.\n¿Deseas recuperar los datos?")) {
       const set = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
