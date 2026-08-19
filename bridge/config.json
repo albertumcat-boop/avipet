@@ -8,15 +8,22 @@
     "port": 3001
   },
   "pagos": {
-    "USD":    "02",
-    "BS":     "01",
-    "TARJETA":"02",
-    "ZELLE":  "14",
-    "MIXTO":  "02"
+    "USD":     "02",
+    "BS":      "01",
+    "TARJETA": "02",
+    "ZELLE":   "14",
+    "MIXTO":   "02"
   },
-  "alicuotas": {
-    "0":  32,
-    "8":  34,
-    "16": 33
+  "departamentos": {
+    "medicina_exento":     1,
+    "alimento_exento":     2,
+    "agropecuaria_exento": 3,
+    "medica_16":           4,
+    "alimento_16":         5,
+    "insecticida_16":      6,
+    "animales_cria_16":    7,
+    "accesorios_16":       8,
+    "peluqueria_16":       9,
+    "veterinaria_16":      10
   }
 }

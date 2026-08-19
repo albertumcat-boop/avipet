@@ -65,6 +65,35 @@ function parseFacturaResp(buf) {
   };
 }
 
+// ── Resolver departamento según categoría e IVA ───────────
+// Cada producto en AVIPET tiene: alicuotaIVA (0/8/16) y categoria
+function _resolverDepartamento(item) {
+  const iva  = parseInt(item.alicuotaIVA ?? 16);
+  const cat  = String(item.categoria || '').toLowerCase();
+
+  if (iva === 0) {
+    // Exentos — elegir por categoría
+    if (cat.includes('medicin') || cat.includes('medic') || cat.includes('farmac')) return 1;
+    if (cat.includes('aliment') || cat.includes('comida') || cat.includes('croqueta')) return 2;
+    return 3; // agropecuaria exenta por defecto
+  }
+
+  if (iva === 16) {
+    if (cat.includes('medicin') || cat.includes('medic') || cat.includes('farmac') ||
+        cat.includes('consul')  || cat.includes('vacuna')) return 4;
+    if (cat.includes('aliment') || cat.includes('comida') || cat.includes('croqueta')) return 5;
+    if (cat.includes('insect') || cat.includes('parasiticid') || cat.includes('antipulga')) return 6;
+    if (cat.includes('cria') || cat.includes('avicola') || cat.includes('gallina')) return 7;
+    if (cat.includes('accesori') || cat.includes('collar') || cat.includes('juguete') ||
+        cat.includes('cama')    || cat.includes('bebeder')) return 8;
+    if (cat.includes('peluca') || cat.includes('estetica') || cat.includes('baño') ||
+        cat.includes('groomin')) return 9;
+    return 10; // veterinaria 16% por defecto
+  }
+
+  return 10; // fallback
+}
+
 // ── Flujo completo: emitir factura fiscal ─────────────────
 async function emitirFactura(data) {
   const { items, cliente, monedaPago, totalUSD, tasaBCV } = data;
@@ -94,11 +123,12 @@ async function emitirFactura(data) {
 
         // 2. Ítems del carrito
         for (const item of items) {
-          const taxCode = cfg.alicuotas[String(item.alicuotaIVA || 16)] || cfg.alicuotas['16'];
+          const depto   = _resolverDepartamento(item);
           const precio  = fmtPrice(item.precioUSD);
           const qty     = fmtQty(item.cantidad || 1);
           const desc    = fmtDesc(item.descripcion);
-          const cmd     = `!${precio}${qty}${String.fromCharCode(taxCode)}${desc}`;
+          // Comando de ítem por departamento: DP + número de departamento
+          const cmd = `DP${depto}${precio}${qty}${desc}`;
           await sendCmd(socket, cmd);
         }
 
