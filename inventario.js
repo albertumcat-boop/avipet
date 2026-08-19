@@ -495,3 +495,51 @@ window._asociarInsumoAServicios = async (nombre, costo) => {
  } catch(e){console.warn('Error asociando insumo:',e);}
 };
 console.log(" inventario.js v12 -- agregar insumo con selector de servicios");
+
+// ─── ESCÁNER CÁMARA PARA INVENTARIO ──────────────────────
+let _html5QrInv = null;
+
+window.abrirEscanerInventario = async function() {
+  const modal    = document.getElementById('modalEscanerInv');
+  const estadoEl = document.getElementById('escanerInvEstado');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  estadoEl.textContent = 'Iniciando cámara...';
+
+  try {
+    _html5QrInv = new Html5Qrcode('qr-reader-inv');
+    const cameras = await Html5Qrcode.getCameras();
+    if (!cameras || !cameras.length) throw new Error('No se encontró cámara en este dispositivo.');
+
+    const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+
+    await _html5QrInv.start(
+      cam.id,
+      { fps: 10, qrbox: { width: 250, height: 180 }, aspectRatio: 1.4 },
+      (decodedText) => {
+        window.cerrarEscanerInventario();
+        const input = document.getElementById('invCodigoBarra');
+        if (input) {
+          input.value = decodedText;
+          input.focus();
+        }
+        // Si ya hay un producto cargado con ese código, avisa
+        estadoEl.textContent = '✅ Código cargado: ' + decodedText;
+      },
+      () => {}
+    );
+    estadoEl.textContent = 'Apunta la cámara al código de barras del producto';
+  } catch(e) {
+    estadoEl.textContent = '⚠️ ' + (e.message || 'No se pudo acceder a la cámara.');
+  }
+};
+
+window.cerrarEscanerInventario = async function() {
+  const modal = document.getElementById('modalEscanerInv');
+  if (modal) modal.classList.add('hidden');
+  if (_html5QrInv) {
+    try { await _html5QrInv.stop(); } catch(_) {}
+    try { _html5QrInv.clear(); } catch(_) {}
+    _html5QrInv = null;
+  }
+};

@@ -17,6 +17,7 @@
  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
  <style>
@@ -996,7 +997,13 @@
  </div>
  <div><label class="text-[9px] font-bold text-slate-400 uppercase">Descripción</label><input id="invDescripcion" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
  <div class="grid grid-cols-2 gap-3">
-   <div><label class="text-[9px] font-bold text-slate-400 uppercase">Código de Barras</label><input id="invCodigoBarra" placeholder="EAN-13 / Code128..." class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
+   <div><label class="text-[9px] font-bold text-slate-400 uppercase">Código de Barras</label>
+     <div class="flex items-center gap-1">
+       <input id="invCodigoBarra" placeholder="EAN-13 / Code128..." class="flex-1 border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent">
+       <button onclick="window.abrirEscanerInventario()" title="Escanear con cámara"
+         class="text-blue-500 hover:text-blue-700 text-base leading-none flex-shrink-0 transition-colors">📷</button>
+     </div>
+   </div>
    <div><label class="text-[9px] font-bold text-slate-400 uppercase">Alícuota IVA (%)</label>
      <select id="invAlicuotaIVA" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent">
        <option value="16">16% — General</option>
@@ -1493,6 +1500,22 @@ if (evidenciaId) {
   })();
 }
 </script>
+
+<!-- Modal escáner inventario -->
+<div id="modalEscanerInv" class="hidden fixed inset-0 z-[9998] flex items-center justify-center p-4"
+  style="background:rgba(0,0,0,0.85)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+      <span class="font-black text-[12px] text-slate-800 uppercase">📷 Escanear Código</span>
+      <button onclick="window.cerrarEscanerInventario()"
+        class="text-slate-400 hover:text-red-500 font-black text-lg leading-none transition-colors">✕</button>
+    </div>
+    <div id="qr-reader-inv" class="w-full" style="min-height:260px"></div>
+    <div id="escanerInvEstado" class="px-4 py-3 text-center text-[10px] text-slate-400 italic">
+      Apunta la cámara al código de barras del producto
+    </div>
+  </div>
+</div>
 
 <!-- Botón flotante Facturación -->
 <a href="facturacion.html" target="_blank" style="
