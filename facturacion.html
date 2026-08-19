@@ -6,6 +6,7 @@
   <title>AVIPET — Facturación</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     body { background:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; color:#0f172a; }
     input,select,textarea { color:#0f172a !important; outline:none; }
@@ -130,9 +131,14 @@
       <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider mb-3">📦 Agregar Producto</h2>
       <div class="flex gap-2 mb-2">
         <input id="inputBarcode" type="text"
-          placeholder="Escanea código de barras o escríbelo..."
+          placeholder="Escribe el código o usa la cámara..."
           class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2.5 text-[11px] font-bold focus:border-blue-500 bg-white transition-all"
           autocomplete="off">
+        <button onclick="window.abrirEscaner()"
+          class="bg-blue-600 text-white px-3 py-2.5 rounded-xl font-black text-[14px] hover:bg-blue-700 shadow transition-all"
+          title="Escanear con cámara">
+          📷
+        </button>
         <button id="btnBuscarBarcode" onclick="window.agregarProductoAlCarrito(document.getElementById('inputBarcode').value.trim())"
           class="bg-slate-700 text-white px-4 py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-slate-800 shadow transition-all">
           ↵
@@ -416,6 +422,22 @@
       </div>
       <div id="retencionesResumen" class="mb-2"></div>
       <div id="retencionesLista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ESCÁNER CÁMARA ════════════════════════════ -->
+<div id="modalEscaner" class="hidden fixed inset-0 z-[9998] flex items-center justify-center p-4"
+  style="background:rgba(0,0,0,0.85)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+      <span class="font-black text-[12px] text-slate-800 uppercase">📷 Escanear Código</span>
+      <button onclick="window.cerrarEscaner()"
+        class="text-slate-400 hover:text-red-500 font-black text-lg leading-none transition-colors">✕</button>
+    </div>
+    <div id="qr-reader" class="w-full" style="min-height:260px"></div>
+    <div id="escanerEstado" class="px-4 py-3 text-center text-[10px] text-slate-400 italic">
+      Apunta la cámara al código de barras o QR del producto
     </div>
   </div>
 </div>

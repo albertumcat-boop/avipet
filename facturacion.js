@@ -658,6 +658,50 @@ function _mostrarResumenMaquinaFiscal(facturaId, numeroFactura, numeroControl, c
   });
 }
 
+// ─── ESCÁNER CÁMARA (html5-qrcode) ────────────────────
+let _html5Qr = null;
+
+window.abrirEscaner = async function() {
+  const modal = document.getElementById('modalEscaner');
+  const estadoEl = document.getElementById('escanerEstado');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  estadoEl.textContent = 'Iniciando cámara...';
+
+  try {
+    _html5Qr = new Html5Qrcode('qr-reader');
+    const cameras = await Html5Qrcode.getCameras();
+    if (!cameras || !cameras.length) throw new Error('No se encontró cámara en este dispositivo.');
+
+    // Preferir cámara trasera
+    const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+
+    await _html5Qr.start(
+      cam.id,
+      { fps: 10, qrbox: { width: 250, height: 180 }, aspectRatio: 1.4 },
+      (decodedText) => {
+        window.cerrarEscaner();
+        document.getElementById('inputBarcode').value = decodedText;
+        window.agregarProductoAlCarrito(decodedText);
+      },
+      () => {} // frame error silencioso
+    );
+    estadoEl.textContent = 'Apunta la cámara al código de barras o QR del producto';
+  } catch(e) {
+    estadoEl.textContent = '⚠️ ' + (e.message || 'No se pudo acceder a la cámara. Verifica los permisos.');
+  }
+};
+
+window.cerrarEscaner = async function() {
+  const modal = document.getElementById('modalEscaner');
+  if (modal) modal.classList.add('hidden');
+  if (_html5Qr) {
+    try { await _html5Qr.stop(); } catch(_) {}
+    try { _html5Qr.clear(); } catch(_) {}
+    _html5Qr = null;
+  }
+};
+
 // ─── LECTOR CÓDIGO DE BARRAS ───────────────────────────
 function _initBarcodeReader() {
   const input = document.getElementById('inputBarcode');
