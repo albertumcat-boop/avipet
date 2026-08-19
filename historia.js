@@ -9,11 +9,11 @@ import { db } from './firebase-config.js';
 import {
   collection, addDoc, doc, getDoc, updateDoc, setDoc, deleteDoc,
   getDocs, query, where, orderBy, limit,
-  onSnapshot, serverTimestamp
+  onSnapshot, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 console.log("✅ historia.js v41 -- fix categorias con tildes en selector");
-// respaldarProgresoLocal definida localmente para evitar doble carga de main.js
-const respaldarProgresoLocal = () => {
+// Expuesta en window para que los handlers inline de index.html puedan llamarla
+window.respaldarProgresoLocal = () => {
   try {
     const leer = (id) => document.getElementById(id)?.value || '';
     const ci = leer('hCI');
@@ -728,7 +728,7 @@ window.guardarFirebase = async (imp) => {
       }
       alert("✅ ¡Consulta guardada con éxito!");
     }
-    // ── Decrementar stock solo en consultas NUEVAS (no al editar) ───────────
+    // ── Decrementar stock solo en consultas NUEVAS (no al editar) — batch atómico ──
     if (!esEdicion && detalleInsumos.length > 0) {
       try {
         const snapInv = await getDocs(collection(db,"inventario"));
@@ -737,16 +737,17 @@ window.guardarFirebase = async (imp) => {
           const nombre = normalizarNombre(d.data().nombre || '');
           if (nombre) invMap[nombre] = { id: d.id, stock: parseFloat(d.data().cantidadStock||0) };
         });
+        const batch = writeBatch(db);
         for (const ins of detalleInsumos) {
           const clave = normalizarNombre(ins.nombre || '');
           const entrada = invMap[clave];
           if (!entrada) continue;
           const nuevoStock = Math.max(0, entrada.stock - (ins.cant || 0));
-          await updateDoc(doc(db,"inventario",entrada.id), {
+          batch.update(doc(db,"inventario",entrada.id), {
             cantidadStock: nuevoStock,
             ultimaActualizacion: serverTimestamp()
           });
-          await addDoc(collection(db,"movimientos_inventario"), {
+          batch.set(doc(collection(db,"movimientos_inventario")), {
             productoId: entrada.id,
             productoNombre: ins.nombre,
             tipo: "SALIDA-CONSULTA",
@@ -757,6 +758,7 @@ window.guardarFirebase = async (imp) => {
             cedula: data.cedula
           });
         }
+        await batch.commit();
       } catch(eInv) { console.warn("Error descontando stock:", eInv); }
     }
     localStorage.removeItem('respaldo_historia_activa');
@@ -1104,13 +1106,24 @@ window.enviarAColaEspera=async()=>{
 
     // Asignar doctor a cada mascota individualmente
     const mascotasEnviadas = [];
+    const docsEsperaCreados = [];
     for (const m of mascotas) {
       const doctor = await _seleccionarDoctorEspera(m.nombre);
-      if (!doctor) return; // usuario canceló — abortar todo
-      await addDoc(collection(db,"espera"), {
+      if (!doctor) {
+        // Usuario canceló — revertir las mascotas ya enviadas
+        if (docsEsperaCreados.length > 0) {
+          for (const idDoc of docsEsperaCreados) {
+            try { await deleteDoc(doc(db,"espera",idDoc)); } catch(_) {}
+          }
+          Swal.fire({icon:'info',title:'Cancelado',text:'No se envió ninguna mascota a sala de espera.',timer:2000,showConfirmButton:false});
+        }
+        return;
+      }
+      const ref = await addDoc(collection(db,"espera"), {
         ...baseOwner, ...m, paciente: m.nombre,
         doctorAsignado: doctor, fechaIngreso: serverTimestamp()
       });
+      docsEsperaCreados.push(ref.id);
       mascotasEnviadas.push({ nombre: m.nombre, doctor });
     }
 

@@ -36,7 +36,7 @@ window.renderListaInventario = (items) => {
 window.seleccionarProductoInventario = async (id) => {
  try{const snap=await getDoc(doc(db,"inventario",id));if(!snap.exists())return;const p=snap.data();window._productoEditandoId=id;
  const set=(elId,v)=>{const el=document.getElementById(elId);if(el)el.value=v??"";}
- set('invNombre',p.nombre);set('invProveedor',p.proveedor);set('invCategoria',p.categoria);set('invCostoCompra',p.costoCompra);set('invPrecioVenta',p.precioVenta);set('invStock',p.cantidadStock);set('invStockMinimo',p.stockMinimo);set('invUnidad',p.unidad);set('invDescripcion',p.descripcion);set('invFechaVence',p.fechaVencimiento);
+ set('invNombre',p.nombre);set('invProveedor',p.proveedor);set('invCategoria',p.categoria);set('invCostoCompra',p.costoCompra);set('invPrecioVenta',p.precioVenta);set('invStock',p.cantidadStock);set('invStockMinimo',p.stockMinimo);set('invUnidad',p.unidad);set('invDescripcion',p.descripcion);set('invFechaVence',p.fechaVencimiento);set('invCodigoBarra',p.codigoBarra);set('invAlicuotaIVA',p.alicuotaIVA??16);
  window.actualizarEstadoInventarioVisual();const titulo=document.getElementById('tituloFormInventario');if(titulo)titulo.innerText=`Editando: ${p.nombre}`;document.getElementById('formInventarioPanel')?.classList.remove('hidden');document.getElementById('btnEliminarProducto')?.classList.remove('hidden');document.getElementById('btnNuevoProducto')?.classList.remove('hidden');}
  catch(e){console.error(e);alert("Error cargando producto.");}
 };
@@ -44,7 +44,7 @@ window.seleccionarProductoInventario = async (id) => {
 window.guardarProductoInventario = async () => {
  const val=(id)=>document.getElementById(id)?.value.trim()||"";const num=(id)=>parseFloat(document.getElementById(id)?.value)||0;
  const nombre=val('invNombre');if(!nombre){alert("El nombre es obligatorio.");return;}
- const data={nombre,proveedor:val('invProveedor'),categoria:val('invCategoria'),costoCompra:num('invCostoCompra'),precioVenta:num('invPrecioVenta'),cantidadStock:num('invStock'),stockMinimo:num('invStockMinimo')||3,unidad:val('invUnidad')||"und",descripcion:val('invDescripcion'),fechaVencimiento:val('invFechaVence'),ultimaActualizacion:serverTimestamp()};
+ const data={nombre,proveedor:val('invProveedor'),categoria:val('invCategoria'),costoCompra:num('invCostoCompra'),precioVenta:num('invPrecioVenta'),cantidadStock:num('invStock'),stockMinimo:num('invStockMinimo')||3,unidad:val('invUnidad')||"und",descripcion:val('invDescripcion'),fechaVencimiento:val('invFechaVence'),codigoBarra:val('invCodigoBarra'),alicuotaIVA:num('invAlicuotaIVA')||16,ultimaActualizacion:serverTimestamp()};
  try{const id=window._productoEditandoId;
  if(id){await updateDoc(doc(db,"inventario",id),data);
  await addDoc(collection(db,"movimientos_inventario"),{productoId:id,productoNombre:nombre,tipo:"ACTUALIZACION",cantidad:data.cantidadStock,fecha:serverTimestamp()});
@@ -56,7 +56,7 @@ window.guardarProductoInventario = async () => {
  catch(e){console.error(e);alert("Error: "+e.message);}
 };
 
-window.nuevoProductoInventario=()=>{window._productoEditandoId=null;['invNombre','invProveedor','invCategoria','invCostoCompra','invPrecioVenta','invStock','invStockMinimo','invUnidad','invDescripcion','invFechaVence'].forEach(id=>{const el=document.getElementById(id);
+window.nuevoProductoInventario=()=>{window._productoEditandoId=null;['invNombre','invProveedor','invCategoria','invCostoCompra','invPrecioVenta','invStock','invStockMinimo','invUnidad','invDescripcion','invFechaVence','invCodigoBarra','invAlicuotaIVA'].forEach(id=>{const el=document.getElementById(id);
 if(el)el.value="";});
 const titulo=document.getElementById('tituloFormInventario');
 if(titulo)titulo.innerText="Nuevo Producto";

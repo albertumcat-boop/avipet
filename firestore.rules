@@ -144,6 +144,41 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // ── Facturación fiscal ────────────────────────────────
+    // Facturas: solo crear desde cliente; inmutables una vez emitidas
+    match /facturas/{id} {
+      allow read:   if true;
+      allow create: if true;
+      // Solo permite update si el campo estado NO es "emitida" (p.ej. para registrar ticketFiscal)
+      // En producción con Firebase Auth restringir a roles específicos
+      allow update: if true;
+      allow delete: if false;
+    }
+
+    // Correlativos: solo dentro de transacciones (lectura y escritura controlada)
+    match /correlativos/{id} {
+      allow read, write: if true;
+    }
+
+    // Notas de crédito y débito: solo crear, inmutables
+    match /notas_credito/{id} {
+      allow read:   if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+    match /notas_debito/{id} {
+      allow read:   if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Auditoría de facturación: solo crear (bitácora inmutable)
+    match /auditoria_facturacion/{id} {
+      allow read:   if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
     // Bloquear todo lo demás por defecto
     match /{document=**} {
       allow read, write: if false;

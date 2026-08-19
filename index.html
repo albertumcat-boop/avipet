@@ -995,6 +995,17 @@
  <div><label class="text-[9px] font-bold text-slate-400 uppercase">Vencimiento</label><input id="invFechaVence" type="date" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
  </div>
  <div><label class="text-[9px] font-bold text-slate-400 uppercase">Descripción</label><input id="invDescripcion" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
+ <div class="grid grid-cols-2 gap-3">
+   <div><label class="text-[9px] font-bold text-slate-400 uppercase">Código de Barras</label><input id="invCodigoBarra" placeholder="EAN-13 / Code128..." class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent"></div>
+   <div><label class="text-[9px] font-bold text-slate-400 uppercase">Alícuota IVA (%)</label>
+     <select id="invAlicuotaIVA" class="w-full border-b-2 border-slate-200 p-1 text-xs font-bold outline-none bg-transparent">
+       <option value="16">16% — General</option>
+       <option value="8">8% — Reducida</option>
+       <option value="31">31% — Suntuaria</option>
+       <option value="0">0% — Exento</option>
+     </select>
+   </div>
+ </div>
  </div>
  <div class="mt-4 space-y-2">
  <button type="button" onclick="window.guardarProductoInventario()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-blue-700 active:scale-[.98] transition-all"> Guardar Producto</button>
@@ -1482,5 +1493,17 @@ if (evidenciaId) {
   })();
 }
 </script>
+
+<!-- Botón flotante Facturación -->
+<a href="facturacion.html" target="_blank" style="
+  position:fixed; bottom:20px; right:20px; z-index:9999;
+  background:#1d4ed8; color:#fff; text-decoration:none;
+  padding:12px 18px; border-radius:50px;
+  font-weight:900; font-size:12px; text-transform:uppercase; letter-spacing:.05em;
+  box-shadow:0 4px 20px rgba(29,78,216,.45);
+  display:flex; align-items:center; gap:6px;
+  transition:background .2s;">
+  🧾 Facturación
+</a>
 </body>
 </html>
