@@ -771,7 +771,19 @@ window.guardarFirebase = async (imp) => {
       _limpiarNotasInternas();
       if(imp) window.imprimirDocumento();
     }
-  }catch(e){console.error("Error guardando:",e);alert("? Error: "+e.message);}
+  }catch(e){
+    console.error("Error guardando:",e);
+    const _esRed = !navigator.onLine || ['unavailable','client is offline','failed to fetch'].some(k=>String(e?.message||e?.code||'').toLowerCase().includes(k));
+    if (_esRed) {
+      // Firebase persistentLocalCache ya encoló el write — limpiar y confirmar
+      localStorage.removeItem('respaldo_historia_activa');
+      _limpiarFormularioHistoria();
+      _limpiarNotasInternas();
+      Swal.fire({icon:'info',title:'📶 Sin internet',html:'<p style="font-size:12px;color:#475569;">Guardado localmente en este dispositivo.<br><b>Se sincronizará automáticamente</b> cuando regrese la conexión.</p>',timer:3500,showConfirmButton:false});
+    } else {
+      alert("❌ Error: "+e.message);
+    }
+  }
   finally{if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}}
 };
 

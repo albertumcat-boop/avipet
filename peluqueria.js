@@ -305,8 +305,8 @@ window.guardarPeluqueriaPro = async () => {
 
       const idFid=`${cedula}-${mascota}`.toLowerCase().replace(/\s+/g,'');
       const fidRef=doc(db,"fidelidad_peluqueria",idFid);
-      const fidSnap=await getDoc(fidRef);
-      let visitas=fidSnap.exists()?(fidSnap.data().contador||0):0;
+      let visitas=0;
+      try{const fidSnap=await getDoc(fidRef);visitas=fidSnap.exists()?(fidSnap.data().contador||0):0;}catch(_){}
       let nuevaVis=visitas+1;if(nuevaVis>10)nuevaVis=1;
       const esPremio=nuevaVis===10;
       if(esPremio) premios.push(mascota);
@@ -362,7 +362,16 @@ window.guardarPeluqueriaPro = async () => {
 
     await window.cargarBitacoraHoy();
     _limpiarPelu();
-  }catch(e){console.error(e);alert("❌ ERROR: "+e.message);}
+  }catch(e){
+    console.error(e);
+    const _esRed = !navigator.onLine || ['unavailable','client is offline','failed to fetch'].some(k=>String(e?.message||e?.code||'').toLowerCase().includes(k));
+    if (_esRed) {
+      Swal.fire({icon:'info',title:'📶 Sin internet',html:'<p style="font-size:12px;color:#475569;">Registro guardado localmente.<br><b>Se sincronizará automáticamente</b> cuando regrese la conexión.</p>',timer:3500,showConfirmButton:false});
+      _limpiarPelu();
+    } else {
+      alert("❌ ERROR: "+e.message);
+    }
+  }
 };
 
 function _limpiarPelu(){

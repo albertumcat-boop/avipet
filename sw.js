@@ -23,6 +23,7 @@ const APP_SHELL = [
   '/manifest.json',
   '/avipet.png',
   '/logo_darwin.jpg',
+  '/cola_offline.js',
 ];
 
 // CDN y servicios externos — NUNCA cachear, siempre red
