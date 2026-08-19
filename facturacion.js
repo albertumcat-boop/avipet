@@ -797,3 +797,512 @@ window.guardarConfigFiscal = async () => {
 };
 
 console.log('✅ facturacion.js v1 — módulo de facturación fiscal AVIPET');
+
+// =========================================================
+// MÓDULOS FISCALES: Libros, Notas C/D, Retenciones
+// =========================================================
+
+// ─── TAB SWITCHING ────────────────────────────────────────
+window.showFacTab = function(tab) {
+  const tabs = ['facturar','libro-ventas','libro-compras','notas','retenciones'];
+  tabs.forEach(t => {
+    const sec = document.getElementById('sec-' + t);
+    const btn = document.getElementById('ftab-' + t);
+    if (!sec || !btn) return;
+    if (t === tab) {
+      sec.classList.remove('hidden');
+      btn.className = 'shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all bg-blue-600 text-white shadow';
+    } else {
+      sec.classList.add('hidden');
+      btn.className = 'shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100';
+    }
+  });
+  if (tab === 'libro-ventas')  _initSelectoresLibro('lv');
+  if (tab === 'libro-compras') _initSelectoresLibro('lc');
+  if (tab === 'retenciones')   _initSelectoresRet();
+};
+
+// ─── HELPERS COMUNES ──────────────────────────────────────
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function _initSelectoresLibro(prefix) {
+  const mesEl  = document.getElementById(prefix + 'Mes');
+  const anioEl = document.getElementById(prefix + 'Anio');
+  if (!mesEl || mesEl.options.length) return;
+  MESES.forEach((m, i) => { const o = document.createElement('option'); o.value = i+1; o.textContent = m; mesEl.appendChild(o); });
+  const now = new Date();
+  mesEl.value = now.getMonth() + 1;
+  for (let a = now.getFullYear(); a >= 2024; a--) {
+    const o = document.createElement('option'); o.value = a; o.textContent = a; anioEl.appendChild(o);
+  }
+}
+
+function _initSelectoresRet() {
+  _initSelectoresLibro('ret');
+  const fechaEl = document.getElementById('retFecha');
+  if (fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().slice(0,10);
+}
+
+function _parseFechaSimple(fs) {
+  if (!fs) return null;
+  const p = String(fs).split('/');
+  if (p.length !== 3) return null;
+  return { dia: parseInt(p[0]), mes: parseInt(p[1]), anio: parseInt(p[2]) };
+}
+
+function _fmtMoney(n) { return '$' + parseFloat(n||0).toFixed(2); }
+
+function _cardHTML(titulo, valor, color) {
+  return `<div class="bg-${color}-50 border border-${color}-200 rounded-xl p-3 text-center">
+    <div class="text-[8px] font-bold text-${color}-500 uppercase mb-1">${titulo}</div>
+    <div class="text-[13px] font-black text-${color}-700">${valor}</div>
+  </div>`;
+}
+
+// ─── LIBRO DE VENTAS ──────────────────────────────────────
+window.cargarLibroVentas = async function() {
+  const mes  = parseInt(document.getElementById('lvMes')?.value);
+  const anio = parseInt(document.getElementById('lvAnio')?.value);
+  if (!mes || !anio) return;
+
+  const tablaEl   = document.getElementById('lvTabla');
+  const resumenEl = document.getElementById('lvResumen');
+  tablaEl.innerHTML = '<p class="text-center text-slate-400 py-6 italic">Cargando...</p>';
+
+  try {
+    const snap = await getDocs(collection(db, 'facturas'));
+    const filas = [];
+    snap.forEach(d => {
+      const f = d.data();
+      const fecha = _parseFechaSimple(f.fechaSimple);
+      if (!fecha || fecha.mes !== mes || fecha.anio !== anio) return;
+      if (f.estado === 'anulada') return;
+      filas.push(f);
+    });
+    filas.sort((a,b) => (a.numeroFactura||0) - (b.numeroFactura||0));
+
+    let totBase16=0, totIVA16=0, totBase8=0, totIVA8=0, totBase0=0, totExento=0, totTotal=0;
+    filas.forEach(f => {
+      totBase16  += f.baseImponible16 || 0;
+      totIVA16   += f.iva16 || 0;
+      totBase8   += f.baseImponible8  || 0;
+      totIVA8    += f.iva8  || 0;
+      totBase0   += f.baseImponible0  || 0;
+      totExento  += f.exento || 0;
+      totTotal   += f.totalUSD || 0;
+    });
+
+    resumenEl.innerHTML =
+      _cardHTML('Facturas', filas.length, 'blue') +
+      _cardHTML('Total Ventas', _fmtMoney(totTotal), 'emerald') +
+      _cardHTML('IVA 16%', _fmtMoney(totIVA16), 'amber') +
+      _cardHTML('IVA 8%', _fmtMoney(totIVA8), 'orange');
+
+    if (!filas.length) {
+      tablaEl.innerHTML = '<p class="text-center text-slate-400 py-6 italic">Sin facturas en este período.</p>';
+      return;
+    }
+
+    let rows = '';
+    filas.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border px-2 py-1">${f.fechaSimple||''}</td>
+        <td class="border px-2 py-1">${f.numeroFactura||''}</td>
+        <td class="border px-2 py-1">${f.numeroControl||''}</td>
+        <td class="border px-2 py-1 max-w-[100px] truncate"></td>
+        <td class="border px-2 py-1">${f.rifCliente||'V/F'}</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.baseImponible16)}</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.iva16)}</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.baseImponible8)}</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.iva8)}</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.baseImponible0)}</td>
+        <td class="border px-2 py-1 text-right font-bold">${_fmtMoney(f.totalUSD)}</td>
+      `;
+      tr.querySelector('td:nth-child(4)').textContent = f.nombreCliente || 'Consumidor Final';
+      rows += tr.outerHTML;
+    });
+
+    // totales row
+    const totRow = `<tr class="font-bold bg-slate-50">
+      <td class="border px-2 py-1" colspan="5">TOTALES</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totBase16)}</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totIVA16)}</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totBase8)}</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totIVA8)}</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totBase0)}</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totTotal)}</td>
+    </tr>`;
+
+    tablaEl.innerHTML = `
+      <table id="tablaLV" class="w-full border-collapse border border-slate-200 text-[9px]">
+        <thead class="bg-slate-100 font-bold">
+          <tr>
+            <th class="border px-2 py-1">Fecha</th>
+            <th class="border px-2 py-1">N° Fact.</th>
+            <th class="border px-2 py-1">N° Control</th>
+            <th class="border px-2 py-1">Cliente</th>
+            <th class="border px-2 py-1">RIF</th>
+            <th class="border px-2 py-1">Base 16%</th>
+            <th class="border px-2 py-1">IVA 16%</th>
+            <th class="border px-2 py-1">Base 8%</th>
+            <th class="border px-2 py-1">IVA 8%</th>
+            <th class="border px-2 py-1">Base 0%</th>
+            <th class="border px-2 py-1">Total $</th>
+          </tr>
+        </thead>
+        <tbody>${rows}${totRow}</tbody>
+      </table>`;
+  } catch(e) { tablaEl.innerHTML = `<p class="text-red-600 text-xs p-4">${e.message}</p>`; }
+};
+
+// ─── LIBRO DE COMPRAS ─────────────────────────────────────
+window.cargarLibroCompras = async function() {
+  const mes  = parseInt(document.getElementById('lcMes')?.value);
+  const anio = parseInt(document.getElementById('lcAnio')?.value);
+  if (!mes || !anio) return;
+
+  const tablaEl   = document.getElementById('lcTabla');
+  const resumenEl = document.getElementById('lcResumen');
+  tablaEl.innerHTML = '<p class="text-center text-slate-400 py-6 italic">Cargando...</p>';
+
+  try {
+    const [snapF, snapI] = await Promise.all([
+      getDocs(collection(db,'compras_fiscales')),
+      getDocs(collection(db,'compras_insumos'))
+    ]);
+    const filas = [];
+    snapF.forEach(d => {
+      const f = d.data();
+      const fecha = _parseFechaSimple(f.fechaSimple);
+      if (!fecha || fecha.mes !== mes || fecha.anio !== anio) return;
+      filas.push({ ...f, _fuente:'fiscal' });
+    });
+    snapI.forEach(d => {
+      const f = d.data();
+      const fecha = _parseFechaSimple(f.fechaSimple || (f.fecha?.toDate ? f.fecha.toDate().toLocaleDateString('es-VE') : null));
+      if (!fecha || fecha.mes !== mes || fecha.anio !== anio) return;
+      if (!f.rifProveedor && !f.nroFactura) return; // skip if no fiscal data
+      filas.push({ ...f, _fuente:'insumos' });
+    });
+    filas.sort((a,b) => (a.fechaSimple||'').localeCompare(b.fechaSimple||''));
+
+    let totBase=0, totIVA=0, totTotal=0;
+    filas.forEach(f => { totBase += f.baseImponible||0; totIVA += f.ivaCompra||0; totTotal += f.totalCompra||0; });
+
+    resumenEl.innerHTML =
+      _cardHTML('Compras', filas.length, 'blue') +
+      _cardHTML('Total Compras', _fmtMoney(totTotal), 'emerald') +
+      _cardHTML('IVA Crédito', _fmtMoney(totIVA), 'amber') +
+      _cardHTML('Base Imponible', _fmtMoney(totBase), 'slate');
+
+    if (!filas.length) {
+      tablaEl.innerHTML = '<p class="text-center text-slate-400 py-6 italic">Sin compras fiscales en este período.</p>';
+      return;
+    }
+
+    let rows = '';
+    filas.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border px-2 py-1">${f.fechaSimple||''}</td>
+        <td class="border px-2 py-1">${f.nroFactura||''}</td>
+        <td class="border px-2 py-1"></td>
+        <td class="border px-2 py-1">${f.rifProveedor||''}</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.baseImponible)}</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.alicuotaIVA||16)}%</td>
+        <td class="border px-2 py-1 text-right">${_fmtMoney(f.ivaCompra)}</td>
+        <td class="border px-2 py-1 text-right font-bold">${_fmtMoney(f.totalCompra)}</td>
+        <td class="border px-2 py-1 text-center"><span class="text-[7px] px-1 py-0.5 rounded ${f._fuente==='fiscal'?'bg-blue-100 text-blue-700':'bg-slate-100 text-slate-500'}">${f._fuente}</span></td>
+      `;
+      tr.querySelector('td:nth-child(3)').textContent = f.nombreProveedor || '';
+      rows += tr.outerHTML;
+    });
+
+    const totRow = `<tr class="font-bold bg-slate-50">
+      <td class="border px-2 py-1" colspan="4">TOTALES</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totBase)}</td>
+      <td class="border px-2 py-1"></td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totIVA)}</td>
+      <td class="border px-2 py-1 text-right">${_fmtMoney(totTotal)}</td>
+      <td></td>
+    </tr>`;
+
+    tablaEl.innerHTML = `
+      <table id="tablaLC" class="w-full border-collapse border border-slate-200 text-[9px]">
+        <thead class="bg-slate-100 font-bold">
+          <tr>
+            <th class="border px-2 py-1">Fecha</th>
+            <th class="border px-2 py-1">N° Fact.</th>
+            <th class="border px-2 py-1">Proveedor</th>
+            <th class="border px-2 py-1">RIF</th>
+            <th class="border px-2 py-1">Base Imp.</th>
+            <th class="border px-2 py-1">Alic.</th>
+            <th class="border px-2 py-1">IVA</th>
+            <th class="border px-2 py-1">Total $</th>
+            <th class="border px-2 py-1">Fuente</th>
+          </tr>
+        </thead>
+        <tbody>${rows}${totRow}</tbody>
+      </table>`;
+  } catch(e) { tablaEl.innerHTML = `<p class="text-red-600 text-xs p-4">${e.message}</p>`; }
+};
+
+window.abrirRegistroCompraFiscal = async function() {
+  const { value: datos } = await Swal.fire({
+    title: 'Registrar Compra Fiscal',
+    html: `
+      <div class="space-y-2 text-left text-sm">
+        <div><label class="text-xs font-bold text-slate-500">Fecha</label>
+          <input id="cfFecha" type="date" class="w-full border rounded px-2 py-1 text-sm mt-1" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div><label class="text-xs font-bold text-slate-500">N° Factura Proveedor</label>
+          <input id="cfNro" type="text" class="w-full border rounded px-2 py-1 text-sm mt-1" placeholder="Ej: 0001"></div>
+        <div><label class="text-xs font-bold text-slate-500">Nombre Proveedor</label>
+          <input id="cfNom" type="text" class="w-full border rounded px-2 py-1 text-sm mt-1"></div>
+        <div><label class="text-xs font-bold text-slate-500">RIF Proveedor</label>
+          <input id="cfRIF" type="text" class="w-full border rounded px-2 py-1 text-sm mt-1" placeholder="J-XXXXXXXXX-X"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="text-xs font-bold text-slate-500">Base Imponible ($)</label>
+            <input id="cfBase" type="number" step="0.01" class="w-full border rounded px-2 py-1 text-sm mt-1" placeholder="0.00"></div>
+          <div><label class="text-xs font-bold text-slate-500">Alícuota IVA %</label>
+            <select id="cfAlic" class="w-full border rounded px-2 py-1 text-sm mt-1">
+              <option value="16">16%</option><option value="8">8%</option><option value="0">0%</option>
+            </select></div>
+        </div>
+        <div><label class="text-xs font-bold text-slate-500">Descripción / Concepto</label>
+          <input id="cfDesc" type="text" class="w-full border rounded px-2 py-1 text-sm mt-1" placeholder="Ej: Insumos veterinarios"></div>
+      </div>`,
+    showCancelButton: true,
+    confirmButtonText: 'Registrar',
+    preConfirm: () => {
+      const base = parseFloat(document.getElementById('cfBase')?.value)||0;
+      const alic = parseFloat(document.getElementById('cfAlic')?.value)||16;
+      const iva  = parseFloat((base * alic / 100).toFixed(2));
+      const d = document.getElementById('cfFecha')?.value;
+      if (!d) { Swal.showValidationMessage('Fecha requerida'); return false; }
+      const dObj = new Date(d + 'T12:00:00');
+      return {
+        fechaSimple:    dObj.toLocaleDateString('es-VE'),
+        nroFactura:     document.getElementById('cfNro')?.value.trim()||'',
+        nombreProveedor:document.getElementById('cfNom')?.value.trim()||'',
+        rifProveedor:   document.getElementById('cfRIF')?.value.trim()||'',
+        baseImponible:  base,
+        alicuotaIVA:    alic,
+        ivaCompra:      iva,
+        totalCompra:    parseFloat((base + iva).toFixed(2)),
+        descripcion:    document.getElementById('cfDesc')?.value.trim()||'',
+        ts:             serverTimestamp()
+      };
+    }
+  });
+  if (!datos) return;
+  try {
+    await addDoc(collection(db,'compras_fiscales'), datos);
+    Swal.fire({ icon:'success', title:'Compra registrada ✓', timer:1500, showConfirmButton:false });
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+// ─── NOTAS C/D ────────────────────────────────────────────
+let _tipoNota = 'NC';
+let _facturaNotaRef = null;
+
+window.selTipoNota = function(tipo) {
+  _tipoNota = tipo;
+  ['NC','ND'].forEach(t => {
+    const btn = document.getElementById('btnSel' + t);
+    if (!btn) return;
+    btn.className = 'flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition-all ' +
+      (t === tipo ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-500 hover:bg-slate-200');
+  });
+};
+
+window.buscarFacturaNota = async function() {
+  const num = parseInt(document.getElementById('notaFacturaNum')?.value);
+  const infoEl = document.getElementById('notaFacturaInfo');
+  if (!num) { infoEl.classList.add('hidden'); return; }
+  try {
+    const q = query(collection(db,'facturas'), where('numeroFactura','==',num), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) { infoEl.classList.remove('hidden'); infoEl.textContent = 'Factura no encontrada.'; _facturaNotaRef = null; return; }
+    const f = snap.docs[0].data();
+    _facturaNotaRef = { id: snap.docs[0].id, data: f };
+    infoEl.classList.remove('hidden');
+    infoEl.innerHTML = '';
+    infoEl.textContent = `Fact. #${f.numeroFactura} | ${f.fechaSimple} | Cliente: ${f.nombreCliente||'Cons. Final'} | Total: ${_fmtMoney(f.totalUSD)}`;
+  } catch(e) { infoEl.textContent = 'Error: ' + e.message; infoEl.classList.remove('hidden'); }
+};
+
+window.emitirNota = async function() {
+  if (!_facturaNotaRef) { alert('Busca la factura original primero.'); return; }
+  const monto  = parseFloat(document.getElementById('notaMonto')?.value)||0;
+  const motivo = document.getElementById('notaMotivo')?.value.trim()||'';
+  if (monto <= 0 || !motivo) { alert('Monto y motivo son requeridos.'); return; }
+
+  const colName  = _tipoNota === 'NC' ? 'notas_credito' : 'notas_debito';
+  const corrName = _tipoNota === 'NC' ? 'NC' : 'ND';
+  const f = _facturaNotaRef.data;
+
+  try {
+    let numero;
+    await runTransaction(db, async tx => {
+      const corrRef  = doc(db,'correlativos', corrName);
+      const corrSnap = await tx.get(corrRef);
+      numero = (corrSnap.exists() ? (corrSnap.data().ultimo||0) : 0) + 1;
+      const nota = {
+        numero,
+        tipo:          _tipoNota,
+        fechaSimple:   new Date().toLocaleDateString('es-VE'),
+        facturaRef:    _facturaNotaRef.id,
+        numeroFactura: f.numeroFactura,
+        nombreCliente: f.nombreCliente||'Consumidor Final',
+        rifCliente:    f.rifCliente||'',
+        monto,
+        motivo,
+        ts:            serverTimestamp()
+      };
+      tx.set(doc(collection(db, colName)), nota);
+      tx.set(corrRef, { ultimo: numero }, { merge: true });
+    });
+    Swal.fire({ icon:'success', title:`${_tipoNota} #${numero} emitida ✓`, timer:1800, showConfirmButton:false });
+    document.getElementById('notaFacturaNum').value = '';
+    document.getElementById('notaMonto').value = '';
+    document.getElementById('notaMotivo').value = '';
+    document.getElementById('notaFacturaInfo').classList.add('hidden');
+    _facturaNotaRef = null;
+    window.cargarNotasHistorial();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.cargarNotasHistorial = async function() {
+  const el = document.getElementById('notasHistorial');
+  if (!el) return;
+  el.innerHTML = '<p class="text-center text-slate-400 text-xs italic py-4">Cargando...</p>';
+  try {
+    const [snapNC, snapND] = await Promise.all([
+      getDocs(query(collection(db,'notas_credito'), orderBy('ts','desc'), limit(25))),
+      getDocs(query(collection(db,'notas_debito'),  orderBy('ts','desc'), limit(25)))
+    ]);
+    const notas = [];
+    snapNC.forEach(d => notas.push({...d.data(), _tipo:'NC'}));
+    snapND.forEach(d => notas.push({...d.data(), _tipo:'ND'}));
+    notas.sort((a,b) => (b.ts?.seconds||0) - (a.ts?.seconds||0));
+    if (!notas.length) { el.innerHTML = '<p class="text-center text-slate-400 text-xs italic py-4">Sin notas emitidas.</p>'; return; }
+    el.innerHTML = '';
+    notas.forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'flex items-center justify-between border-b border-slate-100 py-2 text-[10px]';
+      const badge = n._tipo === 'NC'
+        ? '<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold text-[8px]">NC</span>'
+        : '<span class="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold text-[8px]">ND</span>';
+      div.innerHTML = `${badge} <span class="flex-1 ml-2"></span> <span class="text-slate-400">${n.fechaSimple||''}</span> <span class="font-bold ml-2">${_fmtMoney(n.monto)}</span>`;
+      div.querySelector('span.flex-1').textContent = `#${n.numero} — ${n.motivo||''}`;
+      el.appendChild(div);
+    });
+  } catch(e) { el.innerHTML = `<p class="text-red-600 text-xs p-2">${e.message}</p>`; }
+};
+
+// init historial al cargar tab notas
+document.getElementById('ftab-notas')?.addEventListener('click', () => window.cargarNotasHistorial());
+
+// ─── RETENCIONES ──────────────────────────────────────────
+window.calcularRetencion = function() {
+  const iva    = parseFloat(document.getElementById('retIVATotal')?.value)||0;
+  const pct    = parseFloat(document.getElementById('retPorcent')?.value)||75;
+  const monto  = parseFloat((iva * pct / 100).toFixed(2));
+  const el     = document.getElementById('retMontoCalc');
+  if (el) el.textContent = _fmtMoney(monto);
+};
+
+window.guardarRetencion = async function() {
+  const fecha    = document.getElementById('retFecha')?.value;
+  const rifCli   = document.getElementById('retClienteRIF')?.value.trim();
+  const nomCli   = document.getElementById('retClienteNom')?.value.trim();
+  const factNum  = document.getElementById('retFacturaNum')?.value.trim();
+  const ivaTotal = parseFloat(document.getElementById('retIVATotal')?.value)||0;
+  const pct      = parseFloat(document.getElementById('retPorcent')?.value)||75;
+  const comprobante = document.getElementById('retNroComprobante')?.value.trim();
+
+  if (!fecha || !rifCli || ivaTotal <= 0) { alert('Fecha, RIF del cliente e IVA son requeridos.'); return; }
+  const monto = parseFloat((ivaTotal * pct / 100).toFixed(2));
+  const dObj  = new Date(fecha + 'T12:00:00');
+
+  try {
+    await addDoc(collection(db,'retenciones'), {
+      fechaSimple:     dObj.toLocaleDateString('es-VE'),
+      rifCliente:      rifCli,
+      nombreCliente:   nomCli||'',
+      nroFactura:      factNum||'',
+      ivaTotalFactura: ivaTotal,
+      porcentaje:      pct,
+      montoRetenido:   monto,
+      nroComprobante:  comprobante||'',
+      ts:              serverTimestamp()
+    });
+    Swal.fire({ icon:'success', title:'Retención registrada ✓', timer:1500, showConfirmButton:false });
+    ['retClienteRIF','retClienteNom','retFacturaNum','retIVATotal','retNroComprobante'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('retMontoCalc').textContent = '$0.00';
+    window.cargarRetenciones();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.cargarRetenciones = async function() {
+  const mes  = parseInt(document.getElementById('retMes')?.value);
+  const anio = parseInt(document.getElementById('retAnio')?.value);
+  const listaEl   = document.getElementById('retencionesLista');
+  const resumenEl = document.getElementById('retencionesResumen');
+  if (!mes || !anio || !listaEl) return;
+
+  listaEl.innerHTML = '<p class="text-center text-slate-400 text-xs italic py-4">Cargando...</p>';
+  try {
+    const snap = await getDocs(collection(db,'retenciones'));
+    const filas = [];
+    snap.forEach(d => {
+      const f = d.data();
+      const fecha = _parseFechaSimple(f.fechaSimple);
+      if (!fecha || fecha.mes !== mes || fecha.anio !== anio) return;
+      filas.push(f);
+    });
+    filas.sort((a,b) => (a.fechaSimple||'').localeCompare(b.fechaSimple||''));
+
+    const totalRet = filas.reduce((s,f) => s + (f.montoRetenido||0), 0);
+    resumenEl.innerHTML = `<div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3 text-center">
+      <div class="text-[8px] font-bold text-blue-500 uppercase">Total Retenido ${MESES[mes-1]} ${anio}</div>
+      <div class="text-[16px] font-black text-blue-700">${_fmtMoney(totalRet)}</div>
+      <div class="text-[9px] text-blue-400 mt-1">${filas.length} retenciones registradas</div>
+    </div>`;
+
+    if (!filas.length) { listaEl.innerHTML = '<p class="text-center text-slate-400 text-xs italic py-4">Sin retenciones en este período.</p>'; return; }
+
+    listaEl.innerHTML = '';
+    filas.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'border border-slate-100 rounded-xl p-3 mb-2 text-[10px]';
+      div.innerHTML = `<div class="flex justify-between mb-1"><span class="font-bold"></span><span class="text-slate-400">${f.fechaSimple||''}</span></div>
+        <div class="text-slate-500">RIF: ${f.rifCliente||''} | Fact. #${f.nroFactura||''} | Comprobante: ${f.nroComprobante||'—'}</div>
+        <div class="flex justify-between mt-1"><span class="text-slate-400">IVA Factura: ${_fmtMoney(f.ivaTotalFactura)} × ${f.porcentaje||75}%</span><span class="font-black text-blue-700">${_fmtMoney(f.montoRetenido)}</span></div>`;
+      div.querySelector('span.font-bold').textContent = f.nombreCliente || f.rifCliente;
+      listaEl.appendChild(div);
+    });
+  } catch(e) { listaEl.innerHTML = `<p class="text-red-600 text-xs p-2">${e.message}</p>`; }
+};
+
+// ─── IMPRIMIR LIBRO ───────────────────────────────────────
+window.imprimirLibro = function(tipo) {
+  const tablaId = tipo === 'ventas' ? 'tablaLV' : 'tablaLC';
+  const tabla = document.getElementById(tablaId);
+  if (!tabla) { alert('Carga el libro primero.'); return; }
+  const w = window.open('','_blank','width=900,height=700');
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8">
+    <title>Libro de ${tipo === 'ventas' ? 'Ventas' : 'Compras'} — AVIPET</title>
+    <style>body{font-family:Arial,sans-serif;font-size:9px;margin:20px}
+    table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:3px 5px}
+    th{background:#eee;font-weight:bold}tr:nth-child(even){background:#f9f9f9}
+    @media print{body{margin:5mm}}</style></head><body>
+    <h2 style="font-size:12px;margin-bottom:8px">LIBRO DE ${tipo === 'ventas' ? 'VENTAS' : 'COMPRAS'} — AVIPET</h2>
+    ${tabla.outerHTML}
+    <script>window.print();</script></body></html>`);
+  w.document.close();
+};

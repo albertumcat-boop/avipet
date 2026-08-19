@@ -62,6 +62,34 @@
   </div>
 </div>
 
+<!-- ═══ TABS DE MÓDULOS ══════════════════════════════════ -->
+<div class="max-w-7xl mx-auto px-4 pt-3 pb-1">
+  <div class="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm overflow-x-auto">
+    <button id="ftab-facturar" onclick="window.showFacTab('facturar')"
+      class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all bg-blue-600 text-white shadow">
+      🧾 Facturar
+    </button>
+    <button id="ftab-libro-ventas" onclick="window.showFacTab('libro-ventas')"
+      class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      📚 Libro de Ventas
+    </button>
+    <button id="ftab-libro-compras" onclick="window.showFacTab('libro-compras')"
+      class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      📚 Libro de Compras
+    </button>
+    <button id="ftab-notas" onclick="window.showFacTab('notas')"
+      class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      📝 Notas C/D
+    </button>
+    <button id="ftab-retenciones" onclick="window.showFacTab('retenciones')"
+      class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      🔒 Retenciones
+    </button>
+  </div>
+</div>
+
+<div id="sec-facturar">
+
 <!-- ═══ CONTENIDO PRINCIPAL ══════════════════════════════ -->
 <main class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
 
@@ -231,6 +259,166 @@
     <div id="historialFacturasLista"></div>
   </div>
 </section>
+</div><!-- /sec-facturar -->
+
+<!-- ═══ LIBRO DE VENTAS ══════════════════════════════════ -->
+<div id="sec-libro-ventas" class="hidden max-w-7xl mx-auto px-4 pb-8 pt-4">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <h2 class="text-[13px] font-black text-slate-800 uppercase tracking-tight">📚 Libro de Ventas</h2>
+      <div class="flex items-center gap-2 flex-wrap">
+        <select id="lvMes" class="border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-700 bg-white"></select>
+        <select id="lvAnio" class="border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-700 bg-white"></select>
+        <button onclick="window.cargarLibroVentas()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-blue-700 transition-all">🔄 Cargar</button>
+        <button onclick="window.imprimirLibro('ventas')" class="bg-slate-700 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-slate-800 transition-all">🖨️ Imprimir</button>
+      </div>
+    </div>
+    <div id="lvResumen" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+    <div id="lvTabla" class="overflow-x-auto text-[9px]"></div>
+  </div>
+</div>
+
+<!-- ═══ LIBRO DE COMPRAS ══════════════════════════════════ -->
+<div id="sec-libro-compras" class="hidden max-w-7xl mx-auto px-4 pb-8 pt-4">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <h2 class="text-[13px] font-black text-slate-800 uppercase tracking-tight">📚 Libro de Compras</h2>
+      <div class="flex items-center gap-2 flex-wrap">
+        <select id="lcMes" class="border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-700 bg-white"></select>
+        <select id="lcAnio" class="border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-700 bg-white"></select>
+        <button onclick="window.cargarLibroCompras()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-blue-700 transition-all">🔄 Cargar</button>
+        <button onclick="window.imprimirLibro('compras')" class="bg-slate-700 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-slate-800 transition-all">🖨️ Imprimir</button>
+        <button onclick="window.abrirRegistroCompraFiscal()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-emerald-700 transition-all">+ Nueva Compra</button>
+      </div>
+    </div>
+    <div id="lcResumen" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+    <div id="lcTabla" class="overflow-x-auto text-[9px]"></div>
+  </div>
+</div>
+
+<!-- ═══ NOTAS C/D ═════════════════════════════════════════ -->
+<div id="sec-notas" class="hidden max-w-7xl mx-auto px-4 pb-8 pt-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <h2 class="text-[13px] font-black text-slate-800 uppercase tracking-tight mb-4">📝 Emitir Nota</h2>
+      <div class="flex gap-2 mb-4">
+        <button id="btnSelNC" onclick="window.selTipoNota('NC')"
+          class="flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition-all bg-blue-600 text-white shadow">
+          Nota de Crédito
+        </button>
+        <button id="btnSelND" onclick="window.selTipoNota('ND')"
+          class="flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition-all bg-slate-100 text-slate-500 hover:bg-slate-200">
+          Nota de Débito
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[9px] font-bold text-slate-400 uppercase">N° Factura Original</label>
+          <div class="flex gap-2 mt-1">
+            <input id="notaFacturaNum" type="number" placeholder="Ej: 1"
+              class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white">
+            <button onclick="window.buscarFacturaNota()"
+              class="bg-blue-600 text-white px-3 py-2 rounded-xl font-black text-[9px] uppercase hover:bg-blue-700 transition-all">Buscar</button>
+          </div>
+        </div>
+        <div id="notaFacturaInfo" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-3 text-[10px] text-slate-700 leading-relaxed"></div>
+        <div>
+          <label class="text-[9px] font-bold text-slate-400 uppercase">Monto a Ajustar ($)</label>
+          <input id="notaMonto" type="number" step="0.01" min="0" placeholder="0.00"
+            class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-slate-400 uppercase">Motivo</label>
+          <textarea id="notaMotivo" rows="3" placeholder="Describe el motivo de la nota..."
+            class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] focus:border-blue-500 bg-white mt-1 resize-none"></textarea>
+        </div>
+        <button onclick="window.emitirNota()"
+          class="w-full bg-blue-700 text-white py-3 rounded-xl font-black text-[11px] uppercase shadow-lg hover:bg-blue-800 transition-all">
+          📝 Emitir Nota
+        </button>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-[13px] font-black text-slate-800 uppercase tracking-tight">📋 Notas Emitidas</h2>
+        <button onclick="window.cargarNotasHistorial()" class="text-[9px] font-black text-slate-400 uppercase hover:text-blue-600">Actualizar ↺</button>
+      </div>
+      <div id="notasHistorial"><p class="text-center text-slate-400 text-xs italic py-6">Sin notas emitidas.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RETENCIONES ═══════════════════════════════════════ -->
+<div id="sec-retenciones" class="hidden max-w-7xl mx-auto px-4 pb-8 pt-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <h2 class="text-[13px] font-black text-slate-800 uppercase tracking-tight mb-1">🔒 Registrar Retención Recibida</h2>
+      <p class="text-[9px] text-slate-400 italic mb-4">Como contribuyente especial, los clientes retienen el 75% de tu IVA. Regístralo aquí para tu declaración mensual.</p>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[9px] font-bold text-slate-400 uppercase">Fecha</label>
+          <input id="retFecha" type="date" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">RIF Cliente</label>
+            <input id="retClienteRIF" type="text" placeholder="J-XXXXXXXXX-X"
+              class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">N° Factura Retenida</label>
+            <input id="retFacturaNum" type="text" placeholder="Ej: 1"
+              class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-slate-400 uppercase">Nombre / Razón Social</label>
+          <input id="retClienteNom" type="text" placeholder="Nombre del cliente..."
+            class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">IVA Factura ($)</label>
+            <input id="retIVATotal" type="number" step="0.01" placeholder="0.00"
+              oninput="window.calcularRetencion()"
+              class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">% Retención</label>
+            <input id="retPorcent" type="number" value="75" min="0" max="100"
+              oninput="window.calcularRetencion()"
+              class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">Monto Retenido</label>
+            <div id="retMontoCalc" class="w-full border-2 border-blue-200 rounded-xl px-3 py-2 text-[11px] font-black text-blue-700 bg-blue-50 mt-1">$0.00</div>
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-slate-400 uppercase">N° Comprobante de Retención</label>
+          <input id="retNroComprobante" type="text" placeholder="N° del comprobante emitido por el cliente..."
+            class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white mt-1">
+        </div>
+        <button onclick="window.guardarRetencion()"
+          class="w-full bg-blue-700 text-white py-3 rounded-xl font-black text-[11px] uppercase shadow-lg hover:bg-blue-800 transition-all">
+          🔒 Registrar Retención
+        </button>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-[13px] font-black text-slate-800 uppercase tracking-tight">📋 Retenciones del Mes</h2>
+        <div class="flex gap-2">
+          <select id="retMes" class="border border-slate-200 rounded-lg px-2 py-1 text-[9px] font-bold text-slate-700 bg-white"></select>
+          <select id="retAnio" class="border border-slate-200 rounded-lg px-2 py-1 text-[9px] font-bold text-slate-700 bg-white"></select>
+          <button onclick="window.cargarRetenciones()" class="bg-blue-600 text-white px-2 py-1 rounded-lg font-black text-[8px] uppercase hover:bg-blue-700 transition-all">↺</button>
+        </div>
+      </div>
+      <div id="retencionesResumen" class="mb-2"></div>
+      <div id="retencionesLista"></div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ PANEL CONFIGURACIÓN FISCAL ══════════════════════ -->
 <div id="panelConfigFiscal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
