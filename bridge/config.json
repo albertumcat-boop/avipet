@@ -1,7 +1,16 @@
 {
+  "modo": "tcp",
   "aclas": {
     "ip": "192.168.0.121",
     "port": 8888,
+    "timeoutMs": 8000
+  },
+  "serial": {
+    "port": "COM3",
+    "baudRate": 9600,
+    "dataBits": 8,
+    "parity": "even",
+    "stopBits": 1,
     "timeoutMs": 8000
   },
   "bridge": {
