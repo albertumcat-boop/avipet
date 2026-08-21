@@ -50,11 +50,44 @@ window.abrirFotosBitacora = async (idDoc, telefono, paciente, duenio, condicion)
       return;
     }
     fotos.forEach((url, i) => {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;flex-shrink:0;';
+
       const img = document.createElement('img');
       img.src = url;
-      img.style.cssText = 'height:80px;width:80px;object-fit:cover;border-radius:10px;border:2px solid #fbbf24;cursor:pointer;flex-shrink:0;';
+      img.style.cssText = 'height:80px;width:80px;object-fit:cover;border-radius:10px;border:2px solid #fbbf24;cursor:pointer;display:block;';
       img.onclick = () => Swal.fire({ imageUrl: url, showCloseButton: true, showConfirmButton: false, width: '90vw' });
-      contenedor.appendChild(img);
+
+      const btnDel = document.createElement('button');
+      btnDel.type = 'button';
+      btnDel.textContent = '✕';
+      btnDel.style.cssText = 'position:absolute;top:3px;right:3px;width:20px;height:20px;background:#ef4444;color:#fff;border:none;border-radius:50%;font-size:10px;font-weight:900;cursor:pointer;line-height:1;padding:0;';
+      btnDel.onclick = async (e) => {
+        e.stopPropagation();
+        const conf = await Swal.fire({
+          title: '¿Eliminar esta foto?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#ef4444'
+        });
+        if (!conf.isConfirmed) return;
+        fotosActuales.splice(i, 1);
+        try {
+          await updateDoc(doc(db, 'servicios_estetica', idDoc), {
+            fotosLlegada: fotosActuales,
+            fotosActualizadoEn: serverTimestamp()
+          });
+        } catch(e) { console.error('Error eliminando foto:', e); }
+        _renderGrid(fotosActuales, contenedor);
+        const status = document.getElementById('statusFotosBit');
+        if (status) status.textContent = '🗑️ Foto eliminada';
+      };
+
+      wrap.appendChild(img);
+      wrap.appendChild(btnDel);
+      contenedor.appendChild(wrap);
     });
   };
 
