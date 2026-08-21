@@ -193,6 +193,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Sesiones de escáner remoto — se crean desde el PC, el teléfono las lee y escribe
+    // Solo viven minutos; pueden ser leídas/escritas por cualquiera con el sessionId
+    match /scanner_sessions/{id} {
+      allow read, write: if true;
+    }
+
     // Bloquear todo lo demás por defecto
     match /{document=**} {
       allow read, write: if false;

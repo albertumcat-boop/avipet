@@ -180,7 +180,14 @@ window._enviarFotosWhatsApp = async (telefonoRaw, paciente, duenio, condicion, f
     Swal.fire({ icon:'warning', title:'Sin teléfono', text:'Este registro no tiene número de teléfono.', timer:2000, showConfirmButton:false });
     return;
   }
-  window.open('https://wa.me/' + tlf + '?text=' + encodeURIComponent(msg), '_blank');
+  // Crear <a> y hacer click directo para evitar bloqueo de popup
+  const a = document.createElement('a');
+  a.href = 'https://wa.me/' + tlf + '?text=' + encodeURIComponent(msg);
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
 // ─── GESTIÓN DE MASCOTAS EN FORMULARIO ───────────────────

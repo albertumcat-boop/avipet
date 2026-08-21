@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { background:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; color:#0f172a; }
     input,select,textarea { color:#0f172a !important; outline:none; }
@@ -136,8 +137,13 @@
           autocomplete="off">
         <button onclick="window.abrirEscaner()"
           class="bg-blue-600 text-white px-3 py-2.5 rounded-xl font-black text-[14px] hover:bg-blue-700 shadow transition-all"
-          title="Escanear con cámara">
+          title="Escanear con cámara de este dispositivo">
           📷
+        </button>
+        <button onclick="window.abrirEscanerRemoto()"
+          class="bg-purple-600 text-white px-3 py-2.5 rounded-xl font-black text-[11px] hover:bg-purple-700 shadow transition-all"
+          title="Escanear con teléfono (QR)">
+          📱QR
         </button>
         <button id="btnBuscarBarcode" onclick="window.agregarProductoAlCarrito(document.getElementById('inputBarcode').value.trim())"
           class="bg-slate-700 text-white px-4 py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-slate-800 shadow transition-all">
@@ -225,19 +231,38 @@
         </button>
       </div>
       <div id="panelRIF" class="hidden space-y-2 fade-in">
-        <div>
-          <label class="text-[9px] font-bold text-slate-400 uppercase">RIF del Receptor</label>
-          <input id="inputRIFReceptor" type="text" placeholder="J-XXXXXXXXX-X"
-            class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">RIF / CI del Receptor</label>
+            <input id="inputRIFReceptor" type="text" placeholder="J-XXXXXXXXX o V-XXXXXXXX"
+              class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">Cédula</label>
+            <input id="inputCedulaReceptor" type="text" placeholder="V-XXXXXXXX"
+              class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
+          </div>
         </div>
         <div>
           <label class="text-[9px] font-bold text-slate-400 uppercase">Nombre / Razón Social</label>
-          <input id="inputNomReceptor" type="text" placeholder="Nombre del receptor..."
+          <input id="inputNomReceptor" type="text" placeholder="Nombre completo del receptor..."
             class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
         </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">Teléfono</label>
+            <input id="inputTelefonoReceptor" type="tel" placeholder="04XX-XXXXXXX"
+              class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
+          </div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-400 uppercase">Email (opcional)</label>
+            <input id="inputEmailReceptor" type="email" placeholder="correo@..."
+              class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
+          </div>
+        </div>
         <div>
-          <label class="text-[9px] font-bold text-slate-400 uppercase">Dirección Fiscal (opcional)</label>
-          <input id="inputDirReceptor" type="text" placeholder="Dirección fiscal..."
+          <label class="text-[9px] font-bold text-slate-400 uppercase">Dirección Fiscal</label>
+          <input id="inputDirReceptor" type="text" placeholder="Dirección fiscal del receptor..."
             class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
         </div>
       </div>
@@ -431,13 +456,13 @@
   style="background:rgba(0,0,0,0.85)">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
     <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-      <span class="font-black text-[12px] text-slate-800 uppercase">📷 Escanear Código</span>
+      <span class="font-black text-[12px] text-slate-800 uppercase">📷 Escanear Productos</span>
       <button onclick="window.cerrarEscaner()"
-        class="text-slate-400 hover:text-red-500 font-black text-lg leading-none transition-colors">✕</button>
+        class="bg-red-500 hover:bg-red-600 text-white font-black text-[11px] px-3 py-1 rounded-lg transition-colors">✕ Listo</button>
     </div>
     <div id="qr-reader" class="w-full" style="min-height:260px"></div>
-    <div id="escanerEstado" class="px-4 py-3 text-center text-[10px] text-slate-400 italic">
-      Apunta la cámara al código de barras o QR del producto
+    <div id="escanerEstado" class="px-4 py-3 text-center text-[11px] text-slate-500 font-medium">
+      Apunta la cámara al código de barras. La cámara queda abierta para varios productos.
     </div>
   </div>
 </div>

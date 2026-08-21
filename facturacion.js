@@ -6,7 +6,8 @@
 import { db } from './firebase-config.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc, getDocs,
-  query, where, orderBy, limit, serverTimestamp, runTransaction
+  query, where, orderBy, limit, serverTimestamp, runTransaction,
+  onSnapshot, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ─── ESTADO ────────────────────────────────────────────
@@ -110,6 +111,26 @@ window.buscarClienteFact = async () => {
     document.getElementById('clienteNombreFact').textContent = primero.propietario || ci;
     document.getElementById('clienteCIFact').textContent     = `CI: ${ci}`;
     document.getElementById('clientePanel')?.classList.remove('hidden');
+
+    // Auto-rellenar campos del receptor con datos de la consulta
+    const panelRIF = document.getElementById('panelRIF');
+    if (panelRIF) {
+      // Cambiar a modo "Con RIF" para mostrar los campos
+      _esConsumidorFinal = false;
+      document.getElementById('btnConsumidorFinal')?.classList.replace('bg-blue-600','bg-slate-100');
+      document.getElementById('btnConsumidorFinal')?.classList.replace('text-white','text-slate-500');
+      document.getElementById('btnConsumidorFinal')?.classList.remove('shadow');
+      document.getElementById('btnConRIF')?.classList.replace('bg-slate-100','bg-blue-600');
+      document.getElementById('btnConRIF')?.classList.replace('text-slate-500','text-white');
+      document.getElementById('btnConRIF')?.classList.add('shadow');
+      panelRIF.classList.remove('hidden');
+
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+      set('inputRIFReceptor',     `V-${primero.cedula}`);
+      set('inputCedulaReceptor',  `V-${primero.cedula}`);
+      set('inputNomReceptor',     primero.propietario);
+      set('inputTelefonoReceptor',primero.telefono);
+    }
 
     _serviciosHoy = servicios; // expuesto para botones inline
     cont.innerHTML = '';
@@ -319,14 +340,19 @@ function _renderCarrito() {
 }
 
 // ─── CÁLCULO IVA / IGTF ────────────────────────────────
+// Los precios en inventario YA incluyen IVA → se retrocálcula la base
 function _calcularTotales() {
   const grupos = {};
   _carrito.forEach(item => {
-    const base = item.precio * item.cantidad;
-    const aliq = item.alicuotaIVA ?? 16;
+    const aliq      = item.alicuotaIVA ?? 16;
+    const totalItem = item.precio * item.cantidad;
+    const base      = aliq > 0
+      ? parseFloat((totalItem / (1 + aliq / 100)).toFixed(4))
+      : totalItem;
+    const iva       = parseFloat((totalItem - base).toFixed(4));
     if (!grupos[aliq]) grupos[aliq] = { base: 0, iva: 0 };
     grupos[aliq].base += base;
-    grupos[aliq].iva  += base * (aliq / 100);
+    grupos[aliq].iva  += iva;
   });
 
   const totalBase = Object.values(grupos).reduce((s,g) => s + g.base, 0);
@@ -473,6 +499,9 @@ window.emitirFactura = async () => {
   const rifReceptor = _esConsumidorFinal ? 'CONSUMIDOR FINAL' : (document.getElementById('inputRIFReceptor')?.value.trim() || 'CONSUMIDOR FINAL');
   const nomReceptor = _esConsumidorFinal ? (_clienteActual?.propietario || '') : (document.getElementById('inputNomReceptor')?.value.trim() || '');
   const dirReceptor = _esConsumidorFinal ? '' : (document.getElementById('inputDirReceptor')?.value.trim() || '');
+  const cedulaReceptor  = document.getElementById('inputCedulaReceptor')?.value.trim()  || _clienteActual?.cedula || '';
+  const telefonoReceptor= document.getElementById('inputTelefonoReceptor')?.value.trim()|| _clienteActual?.telefono|| '';
+  const emailReceptor   = document.getElementById('inputEmailReceptor')?.value.trim()   || '';
   const totales     = _calcularTotales();
 
   const confirmHTML = `<div style="text-align:left;font-size:11px;color:#334155;line-height:1.8;">
@@ -510,8 +539,13 @@ window.emitirFactura = async () => {
       cantidad:       item.cantidad,
       precioUnitario: item.precio,
       alicuotaIVA:    item.alicuotaIVA ?? 16,
-      baseImponible:  item.precio * item.cantidad,
-      montoIVA:       (item.precio * item.cantidad) * ((item.alicuotaIVA ?? 16) / 100)
+      // precio ya incluye IVA → retrocálculo
+      baseImponible:  (item.alicuotaIVA ?? 16) > 0
+        ? parseFloat((item.precio * item.cantidad / (1 + (item.alicuotaIVA ?? 16) / 100)).toFixed(4))
+        : item.precio * item.cantidad,
+      montoIVA: (item.alicuotaIVA ?? 16) > 0
+        ? parseFloat((item.precio * item.cantidad - item.precio * item.cantidad / (1 + (item.alicuotaIVA ?? 16) / 100)).toFixed(4))
+        : 0
     }));
 
     const stockItems = _carrito
@@ -573,9 +607,12 @@ window.emitirFactura = async () => {
         rifReceptor,
         nombreReceptor:       nomReceptor,
         direccionReceptor:    dirReceptor,
+        cedulaReceptor:       cedulaReceptor,
+        telefonoReceptor:     telefonoReceptor,
+        emailReceptor:        emailReceptor,
         esConsumidorFinal:    _esConsumidorFinal,
         propietario:          _clienteActual?.propietario || '',
-        cedulaCliente:        _clienteActual?.cedula      || '',
+        cedulaCliente:        _clienteActual?.cedula      || _clienteActual?.cedula || cedulaReceptor,
         lineas,
         totalBaseImponible:   totales.totalBase,
         totalIVA:             totales.totalIVA,
@@ -588,6 +625,17 @@ window.emitirFactura = async () => {
         totalVES:             totales.totalVES,
         condicionPago:        'contado',
         estado:               'emitida',
+        // Alias para Libro de Ventas (cargarLibroVentas los espera con estos nombres)
+        nombreCliente:        nomReceptor || _clienteActual?.propietario || 'Consumidor Final',
+        rifCliente:           rifReceptor,
+        cedulaCliente:        cedulaReceptor,
+        telefonoCliente:      telefonoReceptor,
+        totalUSD:             totales.totalUSD,
+        baseImponible16:      totales.grupos[16]?.base || 0,
+        iva16:                totales.grupos[16]?.iva  || 0,
+        baseImponible8:       totales.grupos[8]?.base  || 0,
+        iva8:                 totales.grupos[8]?.iva   || 0,
+        baseImponible0:       totales.grupos[0]?.base  || 0,
         ticketFiscal:         modoAclas ? 'aclas-auto' : 'manual',
         fechaEmision:         serverTimestamp(),
         fechaSimple:          new Date().toLocaleDateString('es-VE'),
@@ -726,13 +774,19 @@ function _mostrarResumenMaquinaFiscal(facturaId, numeroFactura, numeroControl, c
   });
 }
 
-// ─── ESCÁNER CÁMARA (html5-qrcode) ────────────────────
+// ─── ESCÁNER CÁMARA — modo multi-scan (html5-qrcode) ──
+// La cámara queda abierta: cada código agrega el producto al carrito.
+// Se filtra el mismo código por 2 s para no duplicar el mismo scan.
 let _html5Qr = null;
+let _lastScanned = '';
+let _lastScannedTs = 0;
+let _scanCount = 0;
 
 window.abrirEscaner = async function() {
   const modal = document.getElementById('modalEscaner');
   const estadoEl = document.getElementById('escanerEstado');
   if (!modal) return;
+  _scanCount = 0;
   modal.classList.remove('hidden');
   estadoEl.textContent = 'Iniciando cámara...';
 
@@ -741,20 +795,26 @@ window.abrirEscaner = async function() {
     const cameras = await Html5Qrcode.getCameras();
     if (!cameras || !cameras.length) throw new Error('No se encontró cámara en este dispositivo.');
 
-    // Preferir cámara trasera
     const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
 
     await _html5Qr.start(
       cam.id,
       { fps: 10, qrbox: { width: 250, height: 180 }, aspectRatio: 1.4 },
       (decodedText) => {
-        window.cerrarEscaner();
+        const now = Date.now();
+        // Ignorar si es el mismo código dentro de 2 segundos
+        if (decodedText === _lastScanned && now - _lastScannedTs < 2000) return;
+        _lastScanned = decodedText;
+        _lastScannedTs = now;
+        _scanCount++;
+
         document.getElementById('inputBarcode').value = decodedText;
         window.agregarProductoAlCarrito(decodedText);
+        estadoEl.textContent = `✅ ${_scanCount} producto${_scanCount > 1 ? 's' : ''} agregado${_scanCount > 1 ? 's' : ''}. Apunta al siguiente o cierra.`;
       },
-      () => {} // frame error silencioso
+      () => {}
     );
-    estadoEl.textContent = 'Apunta la cámara al código de barras o QR del producto';
+    estadoEl.textContent = 'Apunta la cámara al código de barras del producto. La cámara queda abierta para escanear varios.';
   } catch(e) {
     estadoEl.textContent = '⚠️ ' + (e.message || 'No se pudo acceder a la cámara. Verifica los permisos.');
   }
@@ -984,7 +1044,7 @@ window.cargarLibroVentas = async function() {
 
   try {
     const snap = await getDocs(collection(db, 'facturas'));
-    const filas = [];
+    let filas = [];
     snap.forEach(d => {
       const f = d.data();
       const fecha = _parseFechaSimple(f.fechaSimple);
@@ -993,6 +1053,14 @@ window.cargarLibroVentas = async function() {
       filas.push(f);
     });
     filas.sort((a,b) => (a.numeroFactura||0) - (b.numeroFactura||0));
+
+    // Normalizar facturas viejas que usan campos distintos
+    filas = filas.map(f => ({
+      ...f,
+      nombreCliente: f.nombreCliente || f.nombreReceptor || 'Consumidor Final',
+      rifCliente:    f.rifCliente    || f.rifReceptor    || '',
+      totalUSD:      f.totalUSD      ?? f.totalMoneda    ?? 0,
+    }));
 
     let totBase16=0, totIVA16=0, totBase8=0, totIVA8=0, totBase0=0, totExento=0, totTotal=0;
     filas.forEach(f => {
@@ -1399,6 +1467,77 @@ window.cargarRetenciones = async function() {
       listaEl.appendChild(div);
     });
   } catch(e) { listaEl.innerHTML = `<p class="text-red-600 text-xs p-2">${e.message}</p>`; }
+};
+
+// ─── ESCÁNER REMOTO POR QR ───────────────────────────────
+// Genera una sesión en Firestore, muestra un QR con la URL de scanner.html.
+// El teléfono abre esa URL, escanea productos, y el PC los agrega al carrito
+// en tiempo real usando onSnapshot.
+let _unsubEscaneoRemoto = null;
+let _codigosYaAgregados = new Set();
+
+window.abrirEscanerRemoto = async function() {
+  const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const sesRef    = doc(db, 'scanner_sessions', sessionId);
+  const url       = `${location.origin}/scanner.html?s=${sessionId}`;
+
+  try {
+    await setDoc(sesRef, { activa: true, scans: [], ts: serverTimestamp() });
+  } catch(e) {
+    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la sesión: ' + e.message });
+    return;
+  }
+
+  _codigosYaAgregados.clear();
+
+  // Escuchar scans en tiempo real
+  _unsubEscaneoRemoto = onSnapshot(sesRef, async (snap) => {
+    if (!snap.exists()) return;
+    const scans = snap.data().scans || [];
+    for (const s of scans) {
+      const key = s.codigo + '_' + s.n;
+      if (_codigosYaAgregados.has(key)) continue;
+      _codigosYaAgregados.add(key);
+      await window.agregarProductoAlCarrito(s.codigo);
+      const el = document.getElementById('qrRemotoEstado');
+      if (el) el.textContent = `✅ ${_codigosYaAgregados.size} producto(s) agregado(s) al carrito`;
+    }
+  });
+
+  // Mostrar QR con SweetAlert2
+  Swal.fire({
+    title: '📱 Escanear con Teléfono',
+    html: `<p style="font-size:11px;color:#64748b;margin-bottom:10px;">
+             Escanea este QR con la cámara del teléfono para abrir el escáner móvil.
+             Los productos se agregan al carrito automáticamente.
+           </p>
+           <div id="qrCanvasDiv" style="display:flex;justify-content:center;margin-bottom:10px;"></div>
+           <p id="qrRemotoEstado" style="font-size:12px;color:#475569;font-style:italic;">
+             Esperando escaneos desde el teléfono...
+           </p>`,
+    confirmButtonText: '✅ Listo, cerrar',
+    confirmButtonColor: '#1d4ed8',
+    allowOutsideClick: false,
+    showCancelButton: false,
+    didOpen: () => {
+      // Generar QR con la librería qrcode.js (cargada en el HTML)
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(document.getElementById('qrCanvasDiv'), {
+          text: url, width: 200, height: 200,
+          colorDark: '#1e293b', colorLight: '#ffffff'
+        });
+      } else {
+        // Fallback: mostrar la URL como texto copiable
+        const p = document.createElement('p');
+        p.style = 'font-size:9px;color:#64748b;word-break:break-all;padding:8px;background:#f1f5f9;border-radius:8px;';
+        p.textContent = url;
+        document.getElementById('qrCanvasDiv').appendChild(p);
+      }
+    }
+  }).then(async () => {
+    if (_unsubEscaneoRemoto) { _unsubEscaneoRemoto(); _unsubEscaneoRemoto = null; }
+    try { await updateDoc(sesRef, { activa: false }); } catch(_) {}
+  });
 };
 
 // ─── IMPRIMIR LIBRO ───────────────────────────────────────
