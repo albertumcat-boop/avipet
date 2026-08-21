@@ -502,35 +502,80 @@ let _html5QrInv = null;
 window.abrirEscanerInventario = async function() {
   const modal    = document.getElementById('modalEscanerInv');
   const estadoEl = document.getElementById('escanerInvEstado');
-  if (!modal) return;
+
+  if (!modal) {
+    Swal.fire({ icon: 'error', title: 'Error interno', text: 'No se encontró el modal del escáner (modalEscanerInv).', timer: 3000, showConfirmButton: false });
+    return;
+  }
+
+  if (typeof Html5Qrcode === 'undefined') {
+    Swal.fire({ icon: 'error', title: 'Librería no cargada', text: 'La librería de escaneo no está disponible. Verifica tu conexión a internet y recarga la página.', confirmButtonColor: '#1d4ed8' });
+    return;
+  }
+
   modal.classList.remove('hidden');
   estadoEl.textContent = 'Iniciando cámara...';
 
   try {
     _html5QrInv = new Html5Qrcode('qr-reader-inv');
     const cameras = await Html5Qrcode.getCameras();
-    if (!cameras || !cameras.length) throw new Error('No se encontró cámara en este dispositivo.');
+    if (!cameras || !cameras.length) throw new Error('No se detectó ninguna cámara en este dispositivo.');
 
     const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
 
     await _html5QrInv.start(
       cam.id,
       { fps: 10, qrbox: { width: 250, height: 180 }, aspectRatio: 1.4 },
-      (decodedText) => {
-        window.cerrarEscanerInventario();
-        const input = document.getElementById('invCodigoBarra');
-        if (input) {
-          input.value = decodedText;
-          input.focus();
+      async (decodedText) => {
+        await window.cerrarEscanerInventario();
+
+        // Buscar el producto en inventario por código de barras
+        try {
+          const { getDocs, query, collection, where, limit } =
+            await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+
+          estadoEl.textContent = '🔍 Buscando producto...';
+          const snap = await getDocs(query(collection(db, 'inventario'), where('codigoBarra', '==', decodedText), limit(1)));
+
+          if (!snap.empty) {
+            // Producto encontrado — cargarlo en el formulario
+            await window.seleccionarProductoInventario(snap.docs[0].id);
+            Swal.fire({
+              icon: 'success',
+              title: '✅ Producto encontrado',
+              text: snap.docs[0].data().nombre,
+              timer: 1800,
+              showConfirmButton: false
+            });
+          } else {
+            // No existe — poner el código en el campo para un producto nuevo
+            const input = document.getElementById('invCodigoBarra');
+            if (input) { input.value = decodedText; input.focus(); }
+            Swal.fire({
+              icon: 'info',
+              title: 'Código escaneado',
+              text: `Código: ${decodedText}\n\nNo se encontró en inventario. Completa el formulario para agregar el producto.`,
+              confirmButtonColor: '#1d4ed8',
+              confirmButtonText: 'OK'
+            });
+          }
+        } catch(err) {
+          // Fallback: solo poner el código
+          const input = document.getElementById('invCodigoBarra');
+          if (input) { input.value = decodedText; input.focus(); }
         }
-        // Si ya hay un producto cargado con ese código, avisa
-        estadoEl.textContent = '✅ Código cargado: ' + decodedText;
       },
       () => {}
     );
     estadoEl.textContent = 'Apunta la cámara al código de barras del producto';
   } catch(e) {
-    estadoEl.textContent = '⚠️ ' + (e.message || 'No se pudo acceder a la cámara.');
+    modal.classList.add('hidden');
+    Swal.fire({
+      icon: 'warning',
+      title: 'No se pudo abrir la cámara',
+      text: e.message || 'Verifica que diste permiso de cámara al navegador y que no esté siendo usada por otra app.',
+      confirmButtonColor: '#1d4ed8'
+    });
   }
 };
 
