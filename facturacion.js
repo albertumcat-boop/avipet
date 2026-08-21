@@ -187,8 +187,17 @@ window.agregarProductoAlCarrito = async (codigo) => {
       snap = await getDocs(query(collection(db,'inventario'), where('codigoBarra','==',codigo.toUpperCase()), limit(1)));
     }
     if (snap.empty) {
-      Swal.fire({ icon:'warning', title:'Producto no encontrado', text:`Código: ${codigo}`, timer:2000, showConfirmButton:false });
-      document.getElementById('inputBarcode').value = '';
+      Swal.fire({
+        icon: 'warning',
+        title: 'Producto no encontrado',
+        html: `<p style="font-size:13px;">Código escaneado: <strong style="font-family:monospace;">${codigo}</strong></p>
+               <p style="font-size:11px;color:#64748b;margin-top:6px;">Este código no está registrado en Inventario.<br>
+               Ve a Inventario → escanea el producto → llena los datos y <strong>guarda</strong>.</p>`,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#1d4ed8'
+      });
+      const barcodeInput = document.getElementById('inputBarcode');
+      if (barcodeInput) barcodeInput.value = '';
       return;
     }
     const d = snap.docs[0];
