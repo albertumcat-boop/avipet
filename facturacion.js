@@ -220,6 +220,7 @@ window.agregarProductoAlCarrito = async (codigo) => {
     document.getElementById('inputBarcode').value = '';
   } catch(e) {
     console.error(e);
+    Swal.fire({ icon:'error', title:'Error buscando producto', text: e.message, confirmButtonColor:'#1d4ed8' });
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1538,6 +1539,7 @@ window.abrirEscanerRemoto = async function() {
       const key = s.codigo + '_' + s.n;
       if (_codigosYaAgregados.has(key)) continue;
       _codigosYaAgregados.add(key);
+      console.log('[FACTURACION] Código recibido del escáner:', s.codigo);
       await window.agregarProductoAlCarrito(s.codigo);
       const el = document.getElementById('qrRemotoEstado');
       if (el) el.textContent = `✅ ${_codigosYaAgregados.size} producto(s) agregado(s) al carrito`;

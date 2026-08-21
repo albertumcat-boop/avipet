@@ -44,7 +44,8 @@ window.seleccionarProductoInventario = async (id) => {
 window.guardarProductoInventario = async () => {
  const val=(id)=>document.getElementById(id)?.value.trim()||"";const num=(id)=>parseFloat(document.getElementById(id)?.value)||0;
  const nombre=val('invNombre');if(!nombre){alert("El nombre es obligatorio.");return;}
- const data={nombre,proveedor:val('invProveedor'),categoria:val('invCategoria'),costoCompra:num('invCostoCompra'),precioVenta:num('invPrecioVenta'),cantidadStock:num('invStock'),stockMinimo:num('invStockMinimo')||3,unidad:val('invUnidad')||"und",descripcion:val('invDescripcion'),fechaVencimiento:val('invFechaVence'),codigoBarra:val('invCodigoBarra'),alicuotaIVA:num('invAlicuotaIVA')||16,ultimaActualizacion:serverTimestamp()};
+ const ivaEl=document.getElementById('invAlicuotaIVA');const ivaVal=ivaEl?parseFloat(ivaEl.value):16;const iva=isNaN(ivaVal)?16:ivaVal;
+ const data={nombre,proveedor:val('invProveedor'),categoria:val('invCategoria'),costoCompra:num('invCostoCompra'),precioVenta:num('invPrecioVenta'),cantidadStock:num('invStock'),stockMinimo:num('invStockMinimo')||3,unidad:val('invUnidad')||"und",descripcion:val('invDescripcion'),fechaVencimiento:val('invFechaVence'),codigoBarra:val('invCodigoBarra'),alicuotaIVA:iva,ultimaActualizacion:serverTimestamp()};
  try{const id=window._productoEditandoId;
  if(id){await updateDoc(doc(db,"inventario",id),data);
  await addDoc(collection(db,"movimientos_inventario"),{productoId:id,productoNombre:nombre,tipo:"ACTUALIZACION",cantidad:data.cantidadStock,fecha:serverTimestamp()});
