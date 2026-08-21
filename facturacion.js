@@ -1536,13 +1536,24 @@ window.abrirEscanerRemoto = async function() {
     if (!snap.exists()) return;
     const scans = snap.data().scans || [];
     for (const s of scans) {
-      const key = s.codigo + '_' + s.n;
+      const key = s.codigo + '_' + (s.n || 0);
       if (_codigosYaAgregados.has(key)) continue;
       _codigosYaAgregados.add(key);
-      console.log('[FACTURACION] Código recibido del escáner:', s.codigo);
-      await window.agregarProductoAlCarrito(s.codigo);
+
+      // Mostrar el código recibido para que el usuario lo vea
       const el = document.getElementById('qrRemotoEstado');
-      if (el) el.textContent = `✅ ${_codigosYaAgregados.size} producto(s) agregado(s) al carrito`;
+      if (el) {
+        el.style.color = '#1d4ed8';
+        el.style.fontWeight = 'bold';
+        el.textContent = `📥 Recibido: ${s.codigo} — buscando...`;
+      }
+
+      await window.agregarProductoAlCarrito(s.codigo);
+
+      if (el) {
+        el.style.color = '#16a34a';
+        el.textContent = `✅ ${_codigosYaAgregados.size} producto(s) en el carrito — sigue escaneando o cierra`;
+      }
     }
   });
 
@@ -1550,11 +1561,10 @@ window.abrirEscanerRemoto = async function() {
   Swal.fire({
     title: '📱 Escanear con Teléfono',
     html: `<p style="font-size:11px;color:#64748b;margin-bottom:10px;">
-             Escanea este QR con la cámara del teléfono para abrir el escáner móvil.
-             Los productos se agregan al carrito automáticamente.
+             Escanea este QR con el teléfono. Cada código escaneado se agrega al carrito.
            </p>
            <div id="qrCanvasDiv" style="display:flex;justify-content:center;margin-bottom:10px;"></div>
-           <p id="qrRemotoEstado" style="font-size:12px;color:#475569;font-style:italic;">
+           <p id="qrRemotoEstado" style="font-size:12px;color:#475569;font-style:italic;min-height:20px;">
              Esperando escaneos desde el teléfono...
            </p>`,
     confirmButtonText: '✅ Listo, cerrar',
