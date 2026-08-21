@@ -1181,7 +1181,7 @@ window.cargarLibroCompras = async function() {
   try {
     const [snapF, snapI] = await Promise.all([
       getDocs(query(collection(db,'compras_fiscales'), orderBy('ts','desc'), limit(500))),
-      getDocs(query(collection(db,'compras_insumos'),  orderBy('fecha','desc'), limit(500)))
+      getDocs(query(collection(db,'compras_insumos'),  limit(500)))
     ]);
     const filas = [];
     snapF.forEach(d => {

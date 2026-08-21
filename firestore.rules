@@ -20,11 +20,11 @@ service cloud.firestore {
     // Por ahora: allow read/write autenticado por el hecho de conocer el proyecto.
     // Cambia a reglas más estrictas cuando implementes Firebase Auth.
 
-    // Consultas médicas — inmutables una vez creadas
+    // Consultas médicas
     match /consultas/{id} {
       allow read: if true;
       allow create, update: if true;
-      allow delete: if false;
+      allow delete: if true;
     }
 
     // Servicios del catálogo
@@ -59,9 +59,7 @@ service cloud.firestore {
 
     // Peluquería/estética
     match /servicios_estetica/{id} {
-      allow read: if true;
-      allow create, update: if true;
-      allow delete: if false;
+      allow read, write: if true;
     }
     match /pacientes_peluqueria/{id} {
       allow read: if true;
@@ -117,9 +115,7 @@ service cloud.firestore {
 
     // Empleados de peluquería (autenticación por PIN)
     match /empleados/{id} {
-      allow read: if true;
-      allow create, update: if true;
-      allow delete: if false;
+      allow read, write: if true;
     }
     match /empleados_descanso/{id} {
       allow read, write: if true;
