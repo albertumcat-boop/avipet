@@ -581,6 +581,7 @@ window.abrirEscanerInventario = async function() {
 
 // Variable para el listener QR remoto de inventario
 let _unsubEscaneoRemotoInv = null;
+let _invScanPendiente = null; // resultado guardado para procesar en .then()
 
 window.abrirEscanerRemotoInventario = async function() {
   const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -594,47 +595,60 @@ window.abrirEscanerRemotoInventario = async function() {
     return;
   }
 
+  _invScanPendiente = null;
   const yaVistos = new Set();
-  let swalCerrado = false;
+  let procesando = false;
 
   _unsubEscaneoRemotoInv = onSnapshot(sesRef, async (snap) => {
-    if (!snap.exists() || swalCerrado) return;
+    if (!snap.exists() || procesando) return;
     const scans = snap.data().scans || [];
     for (const s of scans) {
       const key = s.codigo + '_' + (s.n || 0);
       if (yaVistos.has(key)) continue;
       yaVistos.add(key);
+      procesando = true;
 
-      try {
-        const snap2 = await getDocs(query(collection(db, 'inventario'), where('codigoBarra', '==', s.codigo)));
-        swalCerrado = true;
-        Swal.close();
-        if (!snap2.empty) {
-          await window.seleccionarProductoInventario(snap2.docs[0].id);
-          Swal.fire({ icon: 'success', title: '✅ Producto encontrado', text: snap2.docs[0].data().nombre, timer: 1800, showConfirmButton: false });
-        } else {
-          const input = document.getElementById('invCodigoBarra');
-          if (input) { input.value = s.codigo; input.focus(); }
-          Swal.fire({ icon: 'info', title: 'Código escaneado', text: `Código: ${s.codigo}\n\nNo se encontró en inventario. Completa el formulario para agregar el producto.`, confirmButtonColor: '#1d4ed8' });
-        }
-      } catch(err) {
-        swalCerrado = true;
-        Swal.close();
-        const input = document.getElementById('invCodigoBarra');
-        if (input) { input.value = s.codigo; input.focus(); }
+      // Mostrar estado en el modal mientras busca
+      const statusEl = document.getElementById('qrInvEstado');
+      if (statusEl) {
+        statusEl.textContent = '🔍 Buscando: ' + s.codigo + '...';
+        statusEl.style.color = '#1d4ed8';
+        statusEl.style.fontWeight = 'bold';
+        statusEl.style.fontStyle = 'normal';
       }
 
+      // Cancelar la sesión en Firestore
       if (_unsubEscaneoRemotoInv) { _unsubEscaneoRemotoInv(); _unsubEscaneoRemotoInv = null; }
       try { await updateDoc(sesRef, { activa: false }); } catch(_) {}
+
+      // Buscar en inventario
+      let resultado = { codigo: s.codigo, encontrado: false, id: null, nombre: null };
+      try {
+        const snap2 = await getDocs(query(collection(db, 'inventario'), where('codigoBarra', '==', s.codigo)));
+        if (!snap2.empty) {
+          resultado.encontrado = true;
+          resultado.id = snap2.docs[0].id;
+          resultado.nombre = snap2.docs[0].data().nombre;
+          if (statusEl) statusEl.textContent = '✅ Encontrado: ' + resultado.nombre;
+        } else {
+          if (statusEl) statusEl.textContent = '📦 Producto nuevo — abriendo formulario...';
+        }
+      } catch(err) {
+        if (statusEl) statusEl.textContent = '⚠️ Error al buscar. Código: ' + s.codigo;
+      }
+
+      // Guardar resultado y cerrar el modal después de mostrar el estado
+      _invScanPendiente = resultado;
+      setTimeout(() => Swal.clickConfirm(), 1200);
       break;
     }
   });
 
-  Swal.fire({
+  await Swal.fire({
     title: '📱 Escanear con Teléfono',
     html: `<p style="font-size:11px;color:#64748b;margin-bottom:10px;">
-             Escanea este QR con la cámara del teléfono para abrir el escáner.<br>
-             El producto se cargará automáticamente.
+             Escanea este QR con tu teléfono para abrir el escáner.<br>
+             El resultado aparecerá aquí automáticamente.
            </p>
            <div id="qrInvDiv" style="display:flex;justify-content:center;margin-bottom:10px;"></div>
            <p id="qrInvEstado" style="font-size:12px;color:#475569;font-style:italic;">
@@ -656,11 +670,32 @@ window.abrirEscanerRemotoInventario = async function() {
         document.getElementById('qrInvDiv').appendChild(p);
       }
     }
-  }).then(async () => {
-    swalCerrado = true;
-    if (_unsubEscaneoRemotoInv) { _unsubEscaneoRemotoInv(); _unsubEscaneoRemotoInv = null; }
-    try { await updateDoc(sesRef, { activa: false }); } catch(_) {}
   });
+
+  // Limpiar listener si el usuario canceló manualmente
+  if (_unsubEscaneoRemotoInv) { _unsubEscaneoRemotoInv(); _unsubEscaneoRemotoInv = null; }
+  try { await updateDoc(sesRef, { activa: false }); } catch(_) {}
+
+  // Procesar el resultado del escaneo (si hubo uno)
+  const res = _invScanPendiente;
+  _invScanPendiente = null;
+  if (!res) return;
+
+  if (res.encontrado) {
+    await window.seleccionarProductoInventario(res.id);
+    Swal.fire({ icon: 'success', title: '✅ ' + res.nombre, text: 'Producto cargado en el formulario.', timer: 2000, showConfirmButton: false });
+  } else {
+    const input = document.getElementById('invCodigoBarra');
+    if (input) { input.value = res.codigo; input.dispatchEvent(new Event('input')); input.focus(); }
+    Swal.fire({
+      icon: 'info',
+      title: '📦 Producto nuevo',
+      html: `<p style="font-size:13px;">Código: <strong>${res.codigo}</strong></p>
+             <p style="font-size:11px;color:#64748b;margin-top:6px;">No existe en inventario.<br>Completa el formulario para agregarlo.</p>`,
+      confirmButtonColor: '#1d4ed8',
+      confirmButtonText: 'Aceptar'
+    });
+  }
 };
 
 window.cerrarEscanerInventario = async function() {
