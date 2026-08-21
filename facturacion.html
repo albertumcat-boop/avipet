@@ -163,7 +163,14 @@
 
     <!-- CARRITO -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-      <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider mb-3">🛒 Carrito</h2>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider">🛒 Carrito</h2>
+        <button id="btnToggleIVA" onclick="window.toggleModoIVA()"
+          class="text-[9px] font-black px-2 py-1 rounded-lg border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-all uppercase tracking-wide"
+          title="Activar o desactivar desglose de IVA">
+          IVA ✓ incluido
+        </button>
+      </div>
       <div id="carritoItems" class="min-h-[80px]"></div>
     </div>
 

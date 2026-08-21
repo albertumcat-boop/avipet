@@ -18,6 +18,7 @@ let _monedaPago     = 'USD';
 let _esConsumidorFinal = true;
 let _masterKey      = null;
 let _tasaBCV        = 1;
+let _modoSinIVA     = false;  // true = precios sin desglose IVA
 let _serviciosHoy   = []; // referencia para botones "Agregar" de servicios del día
 
 // ─── INIT ──────────────────────────────────────────────
@@ -269,6 +270,21 @@ function _agregarProductoObjeto(p) {
   _renderCarrito();
 }
 
+window.toggleModoIVA = function() {
+  _modoSinIVA = !_modoSinIVA;
+  const btn = document.getElementById('btnToggleIVA');
+  if (btn) {
+    if (_modoSinIVA) {
+      btn.textContent = 'IVA ✗ sin desglose';
+      btn.className = btn.className.replace('border-emerald-500 text-emerald-600 hover:bg-emerald-50', 'border-slate-400 text-slate-500 hover:bg-slate-50');
+    } else {
+      btn.textContent = 'IVA ✓ incluido';
+      btn.className = btn.className.replace('border-slate-400 text-slate-500 hover:bg-slate-50', 'border-emerald-500 text-emerald-600 hover:bg-emerald-50');
+    }
+  }
+  _renderCarrito();
+};
+
 window.eliminarDelCarrito = (idx) => {
   _carrito.splice(idx, 1);
   _renderCarrito();
@@ -310,7 +326,7 @@ function _renderCarrito() {
         <div class="flex-1 min-w-0">
           <p class="text-[10px] font-black text-slate-800 uppercase leading-tight truncate" data-desc></p>
           <div class="flex items-center gap-1 mt-1">
-            <span class="text-[8px] text-slate-400">IVA ${item.alicuotaIVA}%</span>
+            <span class="text-[8px] text-slate-400">${_modoSinIVA ? 'Sin desglose IVA' : `IVA ${item.alicuotaIVA}%`}</span>
             <button data-edit class="text-[8px] text-blue-500 underline ml-1">$${item.precio.toFixed(2)} 🔐</button>
           </div>
         </div>
@@ -344,7 +360,8 @@ function _renderCarrito() {
 function _calcularTotales() {
   const grupos = {};
   _carrito.forEach(item => {
-    const aliq      = item.alicuotaIVA ?? 16;
+    // En modo sin IVA: tratar todo como alícuota 0 (sin desglose)
+    const aliq      = _modoSinIVA ? 0 : (item.alicuotaIVA ?? 16);
     const totalItem = item.precio * item.cantidad;
     const base      = aliq > 0
       ? parseFloat((totalItem / (1 + aliq / 100)).toFixed(4))
@@ -375,17 +392,25 @@ function _renderTotales(t) {
   const desglose = el('desgloseIVA');
   if (desglose) {
     desglose.innerHTML = '';
-    Object.entries(t.grupos).forEach(([aliq, g]) => {
-      if (!g.base) return;
-      desglose.insertAdjacentHTML('beforeend', `
-        <div class="flex justify-between text-[10px] text-slate-500">
-          <span>Base imponible ${aliq}%:</span><span class="font-bold">$${g.base.toFixed(2)}</span>
-        </div>
-        <div class="flex justify-between text-[10px] text-slate-500">
-          <span>IVA ${aliq}%:</span><span class="font-bold text-emerald-600">$${g.iva.toFixed(2)}</span>
-        </div>`);
-    });
+    if (!_modoSinIVA) {
+      Object.entries(t.grupos).forEach(([aliq, g]) => {
+        if (!g.base) return;
+        desglose.insertAdjacentHTML('beforeend', `
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>Base imponible ${aliq}%:</span><span class="font-bold">$${g.base.toFixed(2)}</span>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>IVA ${aliq}%:</span><span class="font-bold text-emerald-600">$${g.iva.toFixed(2)}</span>
+          </div>`);
+      });
+    }
   }
+
+  // Mostrar/ocultar filas de base e IVA según el modo
+  const rowBase = el('totalBaseDisplay')?.closest('.flex');
+  const rowIVA  = el('totalIVADisplay')?.closest('.flex');
+  if (rowBase) rowBase.style.display = _modoSinIVA ? 'none' : 'flex';
+  if (rowIVA)  rowIVA.style.display  = _modoSinIVA ? 'none' : 'flex';
 
   if (el('totalIVADisplay'))  el('totalIVADisplay').textContent  = `$${t.totalIVA.toFixed(2)}`;
   if (el('totalBaseDisplay')) el('totalBaseDisplay').textContent = `$${t.totalBase.toFixed(2)}`;
