@@ -729,14 +729,20 @@ window.emitirFactura = async () => {
 };
 
 // ─── RESUMEN PARA MÁQUINA FISCAL ───────────────────────
+function _esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function _mostrarResumenMaquinaFiscal(facturaId, numeroFactura, numeroControl, carrito, totales) {
   let filas = carrito.map(item => {
     const sub = (item.precio * item.cantidad).toFixed(2);
     return `<tr style="border-bottom:1px solid #f1f5f9;">
-      <td style="padding:4px 8px;font-size:10px;text-align:left;">${item.descripcion}</td>
-      <td style="padding:4px 8px;font-size:10px;text-align:center;">${item.cantidad}</td>
+      <td style="padding:4px 8px;font-size:10px;text-align:left;">${_esc(item.descripcion)}</td>
+      <td style="padding:4px 8px;font-size:10px;text-align:center;">${_esc(item.cantidad)}</td>
       <td style="padding:4px 8px;font-size:10px;text-align:right;">$${item.precio.toFixed(2)}</td>
-      <td style="padding:4px 8px;font-size:10px;text-align:center;">${item.alicuotaIVA}%</td>
+      <td style="padding:4px 8px;font-size:10px;text-align:center;">${_esc(item.alicuotaIVA)}%</td>
       <td style="padding:4px 8px;font-size:10px;text-align:right;font-weight:900;">$${sub}</td>
     </tr>`;
   }).join('');
@@ -1068,7 +1074,7 @@ window.cargarLibroVentas = async function() {
   tablaEl.innerHTML = '<p class="text-center text-slate-400 py-6 italic">Cargando...</p>';
 
   try {
-    const snap = await getDocs(collection(db, 'facturas'));
+    const snap = await getDocs(query(collection(db, 'facturas'), orderBy('fechaEmision', 'desc'), limit(500)));
     let filas = [];
     snap.forEach(d => {
       const f = d.data();
@@ -1174,8 +1180,8 @@ window.cargarLibroCompras = async function() {
 
   try {
     const [snapF, snapI] = await Promise.all([
-      getDocs(collection(db,'compras_fiscales')),
-      getDocs(collection(db,'compras_insumos'))
+      getDocs(query(collection(db,'compras_fiscales'), orderBy('ts','desc'), limit(500))),
+      getDocs(query(collection(db,'compras_insumos'),  orderBy('fecha','desc'), limit(500)))
     ]);
     const filas = [];
     snapF.forEach(d => {
@@ -1462,7 +1468,7 @@ window.cargarRetenciones = async function() {
 
   listaEl.innerHTML = '<p class="text-center text-slate-400 text-xs italic py-4">Cargando...</p>';
   try {
-    const snap = await getDocs(collection(db,'retenciones'));
+    const snap = await getDocs(query(collection(db,'retenciones'), orderBy('ts','desc'), limit(500)));
     const filas = [];
     snap.forEach(d => {
       const f = d.data();

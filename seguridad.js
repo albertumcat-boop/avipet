@@ -296,17 +296,37 @@ window.cambiarPinUsuarioInventario = async (nombreUsuario) => {
 
 // ─── CAMBIAR PIN DOCTOR ───────────────────────────────────
 window.cambiarPinDoctor = async (nombreDoc) => {
-  if (!nombreDoc) return alert("Seleccione un doctor primero.");
-  const pinActual = prompt(`🔐 [${nombreDoc}] Ingrese PIN actual o Llave Maestra:`);
-  if (!pinActual) return;
-  const esValido = await window.validarDoctorConMaster(nombreDoc, pinActual);
-  if (esValido) {
-    const nuevoPin = prompt("🆕 Nuevo PIN (mínimo 4 dígitos):");
-    if (nuevoPin && nuevoPin.length >= 4) {
-      await setDoc(doc(db, "doctores", nombreDoc), { pin: nuevoPin, ultimaActualizacion: serverTimestamp() }, { merge: true });
-      alert("✅ PIN actualizado.");
-    } else alert("⚠️ El PIN debe tener al menos 4 dígitos.");
-  } else alert("🚫 Validación fallida.");
+  if (!nombreDoc) return Swal.fire({ icon: 'warning', title: 'Seleccione un doctor primero', timer: 1500, showConfirmButton: false });
+  const res = await Swal.fire({
+    title: `🔑 Cambiar PIN — ${nombreDoc}`,
+    width: 400,
+    html: `<div class="space-y-3 text-left mt-2">
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">PIN actual o Llave Maestra</label>
+        <input type="password" id="swal_cpd_actual" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-center font-black text-[14px] outline-none focus:border-blue-500" placeholder="••••">
+      </div>
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Nuevo PIN (mínimo 4 dígitos)</label>
+        <input type="password" id="swal_cpd_nuevo" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-center font-black text-[14px] outline-none focus:border-blue-500" placeholder="••••">
+      </div>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: '✅ Cambiar PIN',
+    confirmButtonColor: '#1d4ed8',
+    preConfirm: async () => {
+      const actual = document.getElementById('swal_cpd_actual')?.value.trim();
+      const nuevo  = document.getElementById('swal_cpd_nuevo')?.value.trim();
+      if (!actual) { Swal.showValidationMessage('Ingresa el PIN actual'); return false; }
+      if (!nuevo || nuevo.length < 4) { Swal.showValidationMessage('El nuevo PIN debe tener al menos 4 dígitos'); return false; }
+      const valido = await window.validarDoctorConMaster(nombreDoc, actual);
+      if (!valido) { Swal.showValidationMessage('🚫 PIN actual incorrecto'); return false; }
+      return nuevo;
+    }
+  });
+  if (res.isConfirmed && res.value) {
+    await setDoc(doc(db, "doctores", nombreDoc), { pin: res.value, ultimaActualizacion: serverTimestamp() }, { merge: true });
+    Swal.fire({ icon: 'success', title: '✅ PIN actualizado', timer: 1500, showConfirmButton: false });
+  }
 };
 
 window.solicitarCambioPinDoctor = async () => {
@@ -370,7 +390,25 @@ window.validarAccesoDoctor = async (nombre) => {
     return;
   }
 
-  const pinIngresado = prompt(`ACCESO RESTRINGIDO: PIN para ${nombre.toUpperCase()}:`);
+  const { value: pinIngresado } = await Swal.fire({
+    title: `🩺 Acceso — ${nombre}`,
+    html: `<input type="password" id="swal_doc_login_pin" maxlength="20"
+             class="swal2-input" placeholder="PIN" autocomplete="off" style="letter-spacing:.2em;font-size:18px;">`,
+    confirmButtonText: '🔓 Entrar',
+    confirmButtonColor: '#1d4ed8',
+    showCancelButton: true,
+    focusConfirm: false,
+    didOpen: () => {
+      const el = document.getElementById('swal_doc_login_pin');
+      el?.focus();
+      el?.addEventListener('keydown', e => { if (e.key === 'Enter') Swal.clickConfirm(); });
+    },
+    preConfirm: () => {
+      const v = document.getElementById('swal_doc_login_pin')?.value.trim();
+      if (!v) { Swal.showValidationMessage('Ingresa tu PIN'); return false; }
+      return v;
+    }
+  });
   if (!pinIngresado) {
     const sel = document.getElementById('selectDoctor');
     if (sel) sel.value = "";
@@ -538,14 +576,6 @@ window._actualizarBadgeSesion = _actualizarBadgeSesion;
 // ─── CONFIGURAR CLAVE MAESTRA (primera vez o cambio) ─────
 window.configurarClaveMaestra = async () => {
   const esPrimeraVez = !window._masterKeyLoaded;
-  // En primera configuración: pedir código de activación para evitar que
-  // cualquier visitante establezca la clave maestra
-  if (esPrimeraVez) {
-    const codigo = prompt('🔐 Código de activación inicial:\n(Contacta al administrador del sistema)');
-    if (!codigo || codigo.trim() !== 'AVIPET-ADMIN-INIT') {
-      return Swal.fire({ icon: 'error', title: 'Código incorrecto', text: 'Solo el administrador del sistema puede configurar la clave inicial.', timer: 2500, showConfirmButton: false });
-    }
-  }
   const res = await Swal.fire({
     title: esPrimeraVez ? '🔐 Inicializar Clave Maestra' : '🔐 Cambiar Clave Maestra',
     width: 420,
