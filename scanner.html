@@ -5,72 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AVIPET — Escáner</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
   <style>
-    video { border-radius: 12px; width: 100%; display: block; }
-    #videoWrap { position: relative; background: #0f172a; border-radius: 16px; overflow: hidden; }
-    #scanLine {
-      position: absolute; left: 10%; right: 10%;
-      height: 2px; background: #ef4444;
-      top: 50%; transform: translateY(-50%);
-      box-shadow: 0 0 6px #ef4444;
-    }
-    #scanBox {
-      position: absolute; left: 10%; right: 10%;
-      top: 30%; bottom: 30%;
-      border: 2px solid rgba(239,68,68,0.5);
-      border-radius: 8px;
-      pointer-events: none;
+    #video { width:100%; border-radius:12px; display:block; background:#000; }
+    #videoWrap { position:relative; background:#0f172a; border-radius:16px; overflow:hidden; }
+    #aimLine {
+      position:absolute; left:8%; right:8%; height:2px;
+      top:50%; transform:translateY(-50%);
+      background:#ef4444; box-shadow:0 0 8px #ef4444;
     }
   </style>
 </head>
-<body class="bg-slate-900 min-h-screen flex flex-col items-center justify-start pt-6 px-4">
+<body class="bg-slate-900 min-h-screen flex flex-col items-center justify-start pt-4 px-4 pb-8">
 
   <div class="w-full max-w-sm">
-    <!-- Cabecera -->
-    <div class="flex items-center justify-center mb-4">
+    <div class="flex items-center justify-center mb-3">
       <span class="text-2xl mr-2">🐾</span>
       <h1 class="text-white font-black text-lg tracking-tight">AVIPET Escáner</h1>
     </div>
 
-    <!-- Estado de sesión -->
-    <div id="estadoSesion" class="bg-blue-600 rounded-xl px-4 py-2 mb-4 text-white text-center text-[12px] font-bold">
+    <div id="estadoSesion" class="bg-blue-600 rounded-xl px-4 py-2 mb-3 text-white text-center text-[12px] font-bold">
       Conectando...
     </div>
 
-    <!-- Cámara con línea de escaneo -->
-    <div id="videoWrap" class="mb-4" style="min-height:220px;">
+    <!-- Video -->
+    <div id="videoWrap" class="mb-3" style="min-height:200px;">
       <video id="video" autoplay playsinline muted></video>
-      <div id="scanBox"></div>
-      <div id="scanLine"></div>
+      <div id="aimLine"></div>
     </div>
 
-    <!-- Estado del último scan -->
-    <div id="estadoScan" class="bg-slate-800 rounded-xl px-4 py-3 mb-3 text-slate-300 text-center text-[12px] min-h-[48px] flex items-center justify-center">
-      Apunta al código de barras del producto
+    <!-- Estado del scan -->
+    <div id="estadoScan" class="bg-slate-800 rounded-xl px-4 py-3 mb-3 text-slate-300 text-center text-[12px] min-h-[44px] flex items-center justify-center">
+      Iniciando cámara...
     </div>
 
-    <!-- Entrada manual como respaldo -->
-    <div class="bg-slate-800 rounded-xl px-4 py-3 mb-4">
+    <!-- Productos escaneados -->
+    <div id="listaEscaneados" class="space-y-2 mb-3"></div>
+
+    <!-- Entrada manual -->
+    <div class="bg-slate-800 rounded-xl px-4 py-3 mb-3">
       <p class="text-slate-400 text-[10px] font-bold uppercase mb-2">¿No detecta? Escribe el código:</p>
       <div class="flex gap-2">
-        <input id="manualInput" type="text" inputmode="numeric" pattern="[0-9]*"
-          placeholder="7593432000024"
-          class="flex-1 bg-slate-700 text-white text-[12px] font-mono rounded-lg px-3 py-2 outline-none border border-slate-600 focus:border-blue-500">
-        <button onclick="enviarManual()"
-          class="bg-blue-600 text-white font-black text-[11px] px-3 py-2 rounded-lg">
+        <input id="manualInput" type="text" inputmode="numeric"
+          placeholder="7593420000024"
+          class="flex-1 bg-slate-700 text-white text-[12px] font-mono rounded-lg px-3 py-2 outline-none border border-slate-600 focus:border-blue-400">
+        <button id="btnManual"
+          class="bg-blue-600 text-white font-black text-[11px] px-4 py-2 rounded-lg active:bg-blue-700">
           Enviar
         </button>
       </div>
     </div>
 
-    <!-- Lista de códigos enviados -->
-    <div id="listaEscaneados" class="space-y-2 mb-4"></div>
-
-    <!-- Botón finalizar -->
     <button id="btnFinalizar"
-      class="w-full bg-green-500 hover:bg-green-600 text-white font-black py-3 rounded-xl text-[13px] transition-colors hidden"
-      onclick="finalizarSesion()">
-      ✅ Finalizar — cerrar escáner
+      class="w-full bg-green-500 text-white font-black py-3 rounded-xl text-[13px] hidden">
+      ✅ Finalizar
     </button>
   </div>
 
@@ -95,166 +83,128 @@
     const params    = new URLSearchParams(location.search);
     const sessionId = params.get('s');
 
-    const estadoSesionEl = document.getElementById('estadoSesion');
-    const estadoScanEl   = document.getElementById('estadoScan');
-    const listaEl        = document.getElementById('listaEscaneados');
-    const btnFinalizar   = document.getElementById('btnFinalizar');
-    const video          = document.getElementById('video');
+    const sesionEl   = document.getElementById('estadoSesion');
+    const scanEl     = document.getElementById('estadoScan');
+    const listaEl    = document.getElementById('listaEscaneados');
+    const btnFin     = document.getElementById('btnFinalizar');
+    const manualInp  = document.getElementById('manualInput');
+    const btnManual  = document.getElementById('btnManual');
 
     if (!sessionId) {
-      estadoSesionEl.textContent = '❌ Sin sesión válida. Escanea el QR desde AVIPET.';
-      estadoSesionEl.className = 'bg-red-600 rounded-xl px-4 py-2 mb-4 text-white text-center text-[12px] font-bold';
-      throw new Error('No sessionId');
+      sesionEl.textContent = '❌ URL inválida — escanea el QR desde AVIPET';
+      sesionEl.className = sesionEl.className.replace('bg-blue-600','bg-red-600');
+      throw new Error('no sessionId');
     }
 
     const sesRef   = doc(db, 'scanner_sessions', sessionId);
     let scanCount  = 0;
     let lastCode   = '';
     let lastTs     = 0;
-    let stream     = null;
-    let detectLoop = null;
+    let codeReader = null;
 
-    // Escuchar si la sesión se cierra desde el PC
+    // Monitorear si la sesión sigue activa
     onSnapshot(sesRef, snap => {
       if (!snap.exists() || snap.data().activa === false) {
-        estadoSesionEl.textContent = '🔒 Sesión cerrada desde el PC';
-        estadoSesionEl.className = 'bg-slate-600 rounded-xl px-4 py-2 mb-4 text-white text-center text-[12px] font-bold';
-        if (detectLoop) { cancelAnimationFrame(detectLoop); detectLoop = null; }
-        if (stream) stream.getTracks().forEach(t => t.stop());
+        sesionEl.textContent = '🔒 Sesión cerrada desde el PC';
+        sesionEl.className = sesionEl.className.replace(/bg-\w+-600/,'bg-slate-600');
       }
     });
 
-    estadoSesionEl.textContent = '🟢 Sesión activa — listo para escanear';
-    estadoSesionEl.className = 'bg-green-600 rounded-xl px-4 py-2 mb-4 text-white text-center text-[12px] font-bold';
+    sesionEl.textContent = '🟢 Sesión activa — listo para escanear';
+    sesionEl.className = sesionEl.className.replace('bg-blue-600','bg-green-600');
 
     // ── Enviar código a Firestore ──────────────────────────
     async function enviarCodigo(code) {
+      code = String(code).trim();
+      if (!code) return;
       const now = Date.now();
-      if (code === lastCode && now - lastTs < 2500) return;
+      if (code === lastCode && now - lastTs < 2000) return;
       lastCode = code;
       lastTs   = now;
       scanCount++;
 
-      estadoScanEl.textContent = `⏳ Enviando: ${code}`;
-      estadoScanEl.style.color = '#fbbf24';
+      scanEl.textContent = `⏳ Enviando: ${code}`;
+      scanEl.style.color = '#fbbf24';
 
       try {
         await updateDoc(sesRef, {
           scans: arrayUnion({ codigo: code, ts: Date.now(), n: scanCount })
         });
-        estadoScanEl.textContent = `✅ Enviado: ${code}`;
-        estadoScanEl.style.color = '#4ade80';
+        scanEl.textContent = `✅ Enviado: ${code}`;
+        scanEl.style.color = '#4ade80';
 
         const item = document.createElement('div');
         item.className = 'bg-slate-700 rounded-xl px-3 py-2 flex items-center gap-2';
-        item.innerHTML = `<span class="text-green-400 font-black">✓</span>
-          <span class="text-white text-[11px] font-mono flex-1 truncate">${code}</span>
+        item.innerHTML = `<span class="text-green-400 font-black text-[13px]">✓</span>
+          <span class="text-white text-[11px] font-mono flex-1">${code}</span>
           <span class="text-slate-400 text-[10px]">#${scanCount}</span>`;
         listaEl.prepend(item);
-        btnFinalizar.classList.remove('hidden');
+        btnFin.classList.remove('hidden');
       } catch(e) {
-        estadoScanEl.textContent = '❌ Error: ' + e.message;
-        estadoScanEl.style.color = '#f87171';
+        scanEl.textContent = '❌ Error: ' + e.message;
+        scanEl.style.color = '#f87171';
       }
     }
 
-    window.enviarManual = () => {
-      const val = document.getElementById('manualInput').value.trim();
-      if (!val) return;
-      document.getElementById('manualInput').value = '';
-      enviarCodigo(val);
-    };
-    document.getElementById('manualInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') window.enviarManual();
+    // ── Manual input ──────────────────────────────────────
+    btnManual.addEventListener('click', () => {
+      const v = manualInp.value.trim();
+      if (v) { enviarCodigo(v); manualInp.value = ''; }
+    });
+    manualInp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { btnManual.click(); }
     });
 
-    // ── Intentar BarcodeDetector (API nativa de Chrome/Android) ──
-    async function iniciarBarcodeDetector() {
-      const detector = new BarcodeDetector({
-        formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','itf','qr_code','data_matrix']
-      });
+    // ── ZXing scanner ──────────────────────────────────────
+    async function iniciarZXing() {
+      if (typeof ZXing === 'undefined') throw new Error('ZXing no cargó');
 
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-      video.srcObject = stream;
-      await video.play();
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.UPC_E,
+        ZXing.BarcodeFormat.ITF,
+        ZXing.BarcodeFormat.QR_CODE,
+      ]);
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
-      estadoScanEl.textContent = 'Apunta al código de barras del producto';
+      codeReader = new ZXing.BrowserMultiFormatReader(hints, 400);
 
-      const tick = async () => {
-        if (video.readyState >= 2) {
-          try {
-            const barcodes = await detector.detect(video);
-            if (barcodes.length > 0) {
-              await enviarCodigo(barcodes[0].rawValue);
-            }
-          } catch(_) {}
-        }
-        detectLoop = requestAnimationFrame(tick);
-      };
-      detectLoop = requestAnimationFrame(tick);
-      return true;
-    }
+      const devices = await codeReader.listVideoInputDevices();
+      if (!devices || !devices.length) throw new Error('Sin cámara disponible');
 
-    // ── Fallback: Html5Qrcode ──────────────────────────────
-    async function iniciarHtml5Qrcode() {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-        script.onload = () => {
-          try {
-            const formats = [0,2,3,4,5,8,9,10,11,14,15]; // todos los formatos numéricos
-            const scanner = new Html5Qrcode('videoWrap', { formatsToSupport: formats });
-            Html5Qrcode.getCameras().then(cameras => {
-              if (!cameras || !cameras.length) { reject(new Error('Sin cámara')); return; }
-              const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
-              scanner.start(
-                cam.id,
-                { fps: 15, qrbox: { width: 250, height: 100 } },
-                (code) => enviarCodigo(code),
-                () => {}
-              ).then(() => {
-                window._scannerH5 = scanner;
-                resolve(true);
-              }).catch(reject);
-            }).catch(reject);
-          } catch(e) { reject(e); }
-        };
-        script.onerror = reject;
-        document.head.appendChild(script);
+      const cam = devices.find(d => /back|rear|environment/i.test(d.label))
+               || devices[devices.length - 1];
+
+      scanEl.textContent = 'Apunta al código de barras — línea roja al centro';
+      scanEl.style.color = '';
+
+      codeReader.decodeFromVideoDevice(cam.deviceId, 'video', (result, err) => {
+        if (result) enviarCodigo(result.getText());
+        // err es normal en frames sin código — no mostrar
       });
     }
 
-    // ── Arrancar: BarcodeDetector primero, Html5Qrcode si falla ──
     (async () => {
       try {
-        if ('BarcodeDetector' in window) {
-          estadoScanEl.textContent = '📷 Iniciando cámara (modo nativo)...';
-          await iniciarBarcodeDetector();
-        } else {
-          throw new Error('BarcodeDetector no disponible');
-        }
-      } catch(e1) {
-        estadoScanEl.textContent = '📷 Iniciando cámara (modo compatibilidad)...';
-        try {
-          await iniciarHtml5Qrcode();
-          estadoScanEl.textContent = 'Apunta al código de barras del producto';
-        } catch(e2) {
-          estadoScanEl.textContent = '⚠️ No se pudo abrir la cámara. Usa la entrada manual abajo.';
-        }
+        await iniciarZXing();
+      } catch(e) {
+        scanEl.textContent = '⚠️ Cámara no disponible. Usa el campo manual abajo.';
+        scanEl.style.color = '#f87171';
+        console.error('ZXing error:', e);
       }
     })();
 
-    window.finalizarSesion = async () => {
-      if (detectLoop) { cancelAnimationFrame(detectLoop); detectLoop = null; }
-      if (stream) stream.getTracks().forEach(t => t.stop());
-      if (window._scannerH5) { try { await window._scannerH5.stop(); } catch(_) {} }
-      estadoSesionEl.textContent = `✅ ${scanCount} código(s) enviado(s). Puedes cerrar esta página.`;
-      estadoSesionEl.className = 'bg-green-600 rounded-xl px-4 py-2 mb-4 text-white text-center text-[12px] font-bold';
-      btnFinalizar.textContent  = '✅ Escaneo completado';
-      btnFinalizar.disabled     = true;
-    };
+    btnFin.addEventListener('click', () => {
+      if (codeReader) codeReader.reset();
+      sesionEl.textContent = `✅ ${scanCount} código(s) enviado(s). Cierra esta página.`;
+      btnFin.textContent   = '✅ Completado';
+      btnFin.disabled      = true;
+    });
   </script>
 </body>
 </html>
