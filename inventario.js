@@ -3,7 +3,7 @@
 import { db } from './firebase-config.js';
 import {
  collection, addDoc, doc, getDoc, setDoc, updateDoc,
- deleteDoc, getDocs, query, where, orderBy, serverTimestamp
+ deleteDoc, getDocs, query, where, orderBy, serverTimestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA;
@@ -577,6 +577,90 @@ window.abrirEscanerInventario = async function() {
       confirmButtonColor: '#1d4ed8'
     });
   }
+};
+
+// Variable para el listener QR remoto de inventario
+let _unsubEscaneoRemotoInv = null;
+
+window.abrirEscanerRemotoInventario = async function() {
+  const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const sesRef    = doc(db, 'scanner_sessions', sessionId);
+  const url       = `${location.origin}/scanner.html?s=${sessionId}`;
+
+  try {
+    await setDoc(sesRef, { activa: true, scans: [], ts: serverTimestamp() });
+  } catch(e) {
+    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la sesión: ' + e.message });
+    return;
+  }
+
+  const yaVistos = new Set();
+  let swalCerrado = false;
+
+  _unsubEscaneoRemotoInv = onSnapshot(sesRef, async (snap) => {
+    if (!snap.exists() || swalCerrado) return;
+    const scans = snap.data().scans || [];
+    for (const s of scans) {
+      const key = s.codigo + '_' + (s.n || 0);
+      if (yaVistos.has(key)) continue;
+      yaVistos.add(key);
+
+      try {
+        const snap2 = await getDocs(query(collection(db, 'inventario'), where('codigoBarra', '==', s.codigo)));
+        swalCerrado = true;
+        Swal.close();
+        if (!snap2.empty) {
+          await window.seleccionarProductoInventario(snap2.docs[0].id);
+          Swal.fire({ icon: 'success', title: '✅ Producto encontrado', text: snap2.docs[0].data().nombre, timer: 1800, showConfirmButton: false });
+        } else {
+          const input = document.getElementById('invCodigoBarra');
+          if (input) { input.value = s.codigo; input.focus(); }
+          Swal.fire({ icon: 'info', title: 'Código escaneado', text: `Código: ${s.codigo}\n\nNo se encontró en inventario. Completa el formulario para agregar el producto.`, confirmButtonColor: '#1d4ed8' });
+        }
+      } catch(err) {
+        swalCerrado = true;
+        Swal.close();
+        const input = document.getElementById('invCodigoBarra');
+        if (input) { input.value = s.codigo; input.focus(); }
+      }
+
+      if (_unsubEscaneoRemotoInv) { _unsubEscaneoRemotoInv(); _unsubEscaneoRemotoInv = null; }
+      try { await updateDoc(sesRef, { activa: false }); } catch(_) {}
+      break;
+    }
+  });
+
+  Swal.fire({
+    title: '📱 Escanear con Teléfono',
+    html: `<p style="font-size:11px;color:#64748b;margin-bottom:10px;">
+             Escanea este QR con la cámara del teléfono para abrir el escáner.<br>
+             El producto se cargará automáticamente.
+           </p>
+           <div id="qrInvDiv" style="display:flex;justify-content:center;margin-bottom:10px;"></div>
+           <p id="qrInvEstado" style="font-size:12px;color:#475569;font-style:italic;">
+             Esperando escaneo del teléfono...
+           </p>`,
+    confirmButtonText: '✕ Cancelar',
+    confirmButtonColor: '#ef4444',
+    allowOutsideClick: false,
+    didOpen: () => {
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(document.getElementById('qrInvDiv'), {
+          text: url, width: 200, height: 200,
+          colorDark: '#1e293b', colorLight: '#ffffff'
+        });
+      } else {
+        const p = document.createElement('p');
+        p.style = 'font-size:9px;color:#64748b;word-break:break-all;padding:8px;background:#f1f5f9;border-radius:8px;';
+        p.textContent = url;
+        document.getElementById('qrInvDiv').appendChild(p);
+      }
+    }
+  }).then(async () => {
+    swalCerrado = true;
+    if (_unsubEscaneoRemotoInv) { _unsubEscaneoRemotoInv(); _unsubEscaneoRemotoInv = null; }
+    try { await updateDoc(sesRef, { activa: false }); } catch(_) {}
+  });
 };
 
 window.cerrarEscanerInventario = async function() {
