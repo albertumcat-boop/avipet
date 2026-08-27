@@ -571,7 +571,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const _confirmarSesionPendiente = async () => {
       const pin = document.getElementById('pinConfirmSesion')?.value?.trim();
-      if (!pin) return;
+      if (!pin) {
+        const inp = document.getElementById('pinConfirmSesion');
+        if (inp) { inp.placeholder = '⚠️ Escribe tu PIN'; inp.style.borderColor = '#f59e0b'; inp.focus(); }
+        return;
+      }
       const ok = await window.validarDoctorConMaster(_doctorGuardado, pin);
       if (!ok) {
         const inp = document.getElementById('pinConfirmSesion');
