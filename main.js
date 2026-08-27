@@ -186,6 +186,9 @@ function _aplicarPermisoDoctor(soloDoctor) {
   // También el botón de Ajustes que no tiene data-tab
   const btnAjustes = document.querySelector('button[onclick*="config_precios"]');
   if (btnAjustes) btnAjustes.style.display = soloDoctor ? 'none' : '';
+  // Botón flotante Facturación — se oculta cuando hay doctor activo
+  const btnFact = document.getElementById('btnFacturacionFloat');
+  if (btnFact) btnFact.style.display = soloDoctor ? 'none' : '';
 }
 window._aplicarPermisoDoctor = _aplicarPermisoDoctor;
 

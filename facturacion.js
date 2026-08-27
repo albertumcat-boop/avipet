@@ -217,7 +217,8 @@ window.agregarProductoAlCarrito = async (codigo) => {
       });
     }
     _renderCarrito();
-    document.getElementById('inputBarcode').value = '';
+    const bc = document.getElementById('inputBarcode');
+    if (bc) bc.value = '';
   } catch(e) {
     console.error(e);
     Swal.fire({ icon:'error', title:'Error buscando producto', text: e.message, confirmButtonColor:'#1d4ed8' });

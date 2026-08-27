@@ -4,7 +4,7 @@
 // Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v11';
+const CACHE_V = 'avipet-v13';
 
 const APP_SHELL = [
   '/',
@@ -31,7 +31,7 @@ const APP_SHELL = [
 // CDN y servicios externos — NUNCA cachear, siempre red
 const ES_EXTERNO = url =>
   url.includes('firestore.googleapis.com') ||
-  url.includes('firebase') ||
+  url.includes('firebaseapp.com') ||
   url.includes('googleapis.com') ||
   url.includes('dolarapi.com') ||
   url.includes('er-api.com') ||
@@ -42,8 +42,7 @@ const ES_EXTERNO = url =>
   url.includes('tailwind') ||
   url.includes('sweetalert') ||
   url.includes('wa.me') ||
-  url.includes('calendar.google') ||
-  url.includes('vercel.app');
+  url.includes('calendar.google');
 
 self.addEventListener('install', event => {
   console.log('[SW v9] Instalando y pre-cacheando app shell...');

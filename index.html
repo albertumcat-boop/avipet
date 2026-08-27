@@ -53,7 +53,7 @@
  .animate-fadeIn { animation:fadeIn .3s ease-out; }
  @media print {
  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
- .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print),#hTratamiento,.no-imprimir { display:none !important; }
+ .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print),#hTratamiento,.no-imprimir,#btnFacturacionFloat { display:none !important; }
  span.resultado-print { display:inline !important; visibility:visible !important; }
  img,.print-area img { display:block !important; max-width:100%; opacity:1 !important; }
  #sectionHojaVacunas:not(.hidden),#sectionHojaTest:not(.hidden) { display:block !important; height:auto !important; min-height:0 !important; padding-top:4px !important; }
@@ -1518,15 +1518,30 @@ if (evidenciaId) {
 </div>
 
 <!-- Botón flotante Facturación -->
-<a href="facturacion.html" target="_blank" style="
+<a id="btnFacturacionFloat" class="no-print" href="facturacion.html" target="_blank" style="
   position:fixed; bottom:20px; right:20px; z-index:9999;
   background:#1d4ed8; color:#fff; text-decoration:none;
   padding:12px 18px; border-radius:50px;
   font-weight:900; font-size:12px; text-transform:uppercase; letter-spacing:.05em;
   box-shadow:0 4px 20px rgba(29,78,216,.45);
-  display:flex; align-items:center; gap:6px;
+  align-items:center; gap:6px;
   transition:background .2s;">
   🧾 Facturación
 </a>
+<style>
+  #btnFacturacionFloat { display:flex; }
+  @media print { #btnFacturacionFloat { display:none !important; } }
+</style>
+<script>
+  // Chrome ignora @media print en elementos position:fixed — forzar via JS
+  window.addEventListener('beforeprint', function() {
+    var b = document.getElementById('btnFacturacionFloat');
+    if (b) b.style.setProperty('display', 'none', 'important');
+  });
+  window.addEventListener('afterprint', function() {
+    var b = document.getElementById('btnFacturacionFloat');
+    if (b) b.style.removeProperty('display');
+  });
+</script>
 </body>
 </html>
