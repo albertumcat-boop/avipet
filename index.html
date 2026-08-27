@@ -1186,6 +1186,8 @@
     class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase bg-blue-600 text-white shadow">⏰ Almuerzo</button>
    <button id="tabAlmuerzoPlan" onclick="_llamarFuncion('cambiarTabAlmuerzo','planificador')"
     class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase bg-slate-100 text-slate-500">📅 Planificador</button>
+   <button id="tabDocumentos" onclick="_llamarFuncion('cambiarTabAlmuerzo','documentos')"
+    class="flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase bg-slate-100 text-slate-500">📄 Documentos</button>
   </div>
 
   <!-- Panel Descanso (existente) -->
@@ -1226,6 +1228,100 @@
     <div id="resumenExcesosDescanso" class="space-y-2"><p class="text-[10px] text-slate-400 italic text-center py-2">Sin excesos hoy ✅</p></div>
    </div>
   </div>
+
+  <!-- Panel Documentos de Empleados -->
+  <div id="panelDocumentos" class="hidden">
+
+   <!-- Fila superior: selects + botones agregar -->
+   <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+    <p class="text-[10px] font-black text-slate-500 uppercase mb-3">Generar Documento</p>
+    <div class="flex gap-2 mb-2">
+     <select id="docSelectEmp" onchange="_llamarFuncion('_docOnEmpChange')"
+      class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+      <option value="">-- Seleccionar empleado --</option>
+     </select>
+     <button onclick="window.docToggleModalEmp()"
+      class="bg-emerald-500 text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-emerald-600">+ Emp.</button>
+    </div>
+    <div class="flex gap-2">
+     <select id="docSelectTipo" onchange="_llamarFuncion('_docOnTipoChange')"
+      class="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-blue-500 bg-white">
+      <option value="">-- Tipo de documento --</option>
+     </select>
+     <button onclick="window.docToggleModalTipo()"
+      class="bg-indigo-500 text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-indigo-600">+ Tipo</button>
+    </div>
+   </div>
+
+   <!-- Área de edición (se muestra al elegir emp+tipo) -->
+   <div id="docSeccionEdicion" class="hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+     <div class="flex items-center justify-between mb-3">
+      <p class="text-[10px] font-black text-slate-500 uppercase">Campos del documento</p>
+      <div class="flex gap-2">
+       <button id="docBtnGuardar" onclick="window.docGuardar()"
+        class="bg-blue-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-blue-700 shadow">💾 Guardar</button>
+       <button onclick="window.docImprimir()"
+        class="bg-purple-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-purple-700 shadow">🖨 Imprimir</button>
+      </div>
+     </div>
+     <div id="docFormArea"></div>
+    </div>
+
+    <!-- Historial -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+     <div class="flex items-center justify-between mb-2">
+      <p class="text-[10px] font-black text-slate-500 uppercase">📋 Historial de versiones</p>
+      <button onclick="window.docToggleHistorial()" class="text-[9px] font-black text-blue-500 underline">Mostrar/Ocultar</button>
+     </div>
+     <div id="docHistorialSec" class="hidden">
+      <div id="docHistorialArea">
+       <p class="text-[10px] text-slate-400 italic text-center py-2">Sin historial.</p>
+      </div>
+     </div>
+    </div>
+   </div>
+
+   <!-- Modal: Agregar empleado -->
+   <div id="docModalEmp" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-sm">
+     <p class="font-black text-[13px] text-slate-800 mb-4">➕ Agregar Empleado</p>
+     <input id="docNuevoNombre" type="text" placeholder="Nombre completo *"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-2 outline-none focus:border-blue-500">
+     <input id="docNuevoCi" type="text" placeholder="Cédula de identidad"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-2 outline-none focus:border-blue-500">
+     <input id="docNuevoCargo" type="text" placeholder="Cargo"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-2 outline-none focus:border-blue-500">
+     <input id="docNuevaFecha" type="date" placeholder="Fecha de ingreso"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-2 outline-none focus:border-blue-500">
+     <input id="docNuevoTel" type="text" placeholder="Teléfono"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-3 outline-none focus:border-blue-500">
+     <div class="flex gap-2">
+      <button onclick="window.docAgregarEmpleado()"
+       class="flex-1 bg-emerald-500 text-white py-2 rounded-xl font-black text-[11px] uppercase">Guardar</button>
+      <button onclick="window.docToggleModalEmp()"
+       class="flex-1 bg-slate-200 text-slate-600 py-2 rounded-xl font-black text-[11px] uppercase">Cancelar</button>
+     </div>
+    </div>
+   </div>
+
+   <!-- Modal: Agregar tipo de documento -->
+   <div id="docModalTipo" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-sm">
+     <p class="font-black text-[13px] text-slate-800 mb-3">➕ Nuevo Tipo de Documento</p>
+     <input id="docNuevoTipoLabel" type="text" placeholder="Nombre del documento (ej: Amonestación)"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-3 outline-none focus:border-blue-500">
+     <p class="text-[9px] text-slate-400 mb-3">Se crearán campos básicos: descripción, firmado por, fecha. Podrás personalizar el contenido antes de guardar.</p>
+     <div class="flex gap-2">
+      <button onclick="window.docAgregarTipo()"
+       class="flex-1 bg-indigo-500 text-white py-2 rounded-xl font-black text-[11px] uppercase">Crear</button>
+      <button onclick="window.docToggleModalTipo()"
+       class="flex-1 bg-slate-200 text-slate-600 py-2 rounded-xl font-black text-[11px] uppercase">Cancelar</button>
+     </div>
+    </div>
+   </div>
+
+  </div><!-- /panelDocumentos -->
 
   <!-- Panel Planificador -->
   <div id="panelAlmuerzoPlan" class="hidden">
@@ -1344,6 +1440,7 @@
 <script type="module" src="./inventario.js"></script>
 <script type="module" src="./vacunas.js"></script>
 <script type="module" src="./almuerzo.js"></script>
+<script type="module" src="./documentos.js"></script>
 
 <script>
  function _llamarFuncion(nombre, ...args) {

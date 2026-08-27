@@ -408,22 +408,29 @@ window.cambiarTabAlmuerzo = (tab) => {
   _tabAlmuerzoActiva = tab;
   const panelD = document.getElementById('panelAlmuerzoDescanso');
   const panelP = document.getElementById('panelAlmuerzoPlan');
+  const panelDoc = document.getElementById('panelDocumentos');
   const btnD   = document.getElementById('tabAlmuerzoDescanso');
   const btnP   = document.getElementById('tabAlmuerzoPlan');
+  const btnDoc = document.getElementById('tabDocumentos');
 
   panelD?.classList.toggle('hidden', tab !== 'descanso');
   panelP?.classList.toggle('hidden', tab !== 'planificador');
+  panelDoc?.classList.toggle('hidden', tab !== 'documentos');
 
-  if (btnD) { btnD.className = 'flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase ' + (tab === 'descanso' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-500'); }
-  if (btnP) { btnP.className = 'flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase ' + (tab === 'planificador' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-100 text-slate-500'); }
+  const cls = (active, color) => 'flex-1 py-2.5 rounded-xl font-black text-[11px] uppercase ' + (active ? `${color} text-white shadow` : 'bg-slate-100 text-slate-500');
+  if (btnD)   btnD.className   = cls(tab === 'descanso',     'bg-blue-600');
+  if (btnP)   btnP.className   = cls(tab === 'planificador', 'bg-indigo-600');
+  if (btnDoc) btnDoc.className = cls(tab === 'documentos',   'bg-emerald-600');
 
   if (tab === 'descanso') {
     _iniciarReloj();
     cargarEmpleadosSelector();
     cargarActivosDescanso();
     cargarHistorialDescanso();
-  } else {
+  } else if (tab === 'planificador') {
     _iniciarPlanificador();
+  } else if (tab === 'documentos') {
+    window.iniciarDocumentos?.();
   }
 };
 

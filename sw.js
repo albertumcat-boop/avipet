@@ -4,7 +4,7 @@
 // Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v13';
+const CACHE_V = 'avipet-v14';
 
 const APP_SHELL = [
   '/',
@@ -26,6 +26,7 @@ const APP_SHELL = [
   '/cola_offline.js',
   '/facturacion.html',
   '/facturacion.js',
+  '/documentos.js',
 ];
 
 // CDN y servicios externos — NUNCA cachear, siempre red
