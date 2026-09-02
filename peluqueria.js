@@ -477,7 +477,28 @@ async function _cargarBitacoraFecha(fechaSimple) {
     const snap=await getDocs(query(collection(db,"servicios_estetica"),where("fechaSimple","==",hoyS)));
     if(snap.empty){cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-white"><p class="text-slate-400 text-[9px] font-black uppercase italic tracking-widest">Sin servicios para esta fecha</p></div>`;return;}
     const registros=[];snap.forEach(d=>registros.push({id:d.id,...d.data()}));registros.sort((a,b)=>(a.fecha?.seconds||0)-(b.fecha?.seconds||0));cuerpo.innerHTML="";
-    registros.forEach((d,i)=>{
+
+    const banioCorte = registros.filter(d => d.servicio !== 'solo_unas');
+    const soloUnas   = registros.filter(d => d.servicio === 'solo_unas');
+
+    const _renderSeccion = (lista, titulo, color, emojiBg) => {
+      const header = document.createElement('div');
+      header.className = 'col-span-full mb-1 mt-3 first:mt-0';
+      header.innerHTML = `<div class="flex items-center gap-2 px-2 py-1.5 rounded-xl ${emojiBg}">
+        <span class="font-black text-[11px] uppercase ${color}">${titulo}</span>
+        <span class="ml-auto font-black text-[11px] ${color}">${lista.length} perro${lista.length !== 1 ? 's' : ''}</span>
+      </div>`;
+      cuerpo.appendChild(header);
+
+      if (!lista.length) {
+        const vacío = document.createElement('div');
+        vacío.className = 'col-span-full';
+        vacío.innerHTML = `<p class="text-[9px] text-slate-400 italic text-center py-3">Sin registros en esta categoría</p>`;
+        cuerpo.appendChild(vacío);
+        return;
+      }
+
+      lista.forEach((d, i) => {
       const estatus=d.estatusPago||'pendiente';const pagado=estatus==='pagado';
       const tlf=d.telefono||"Sin teléfono";const tlf2=d.telefono2||"";const dir=d.direccion||"Sin dirección";
       let resumenPago="";if(pagado){
@@ -545,7 +566,12 @@ async function _cargarBitacoraFecha(fechaSimple) {
         if (botonesRow) card.insertBefore(strip, botonesRow);
         else card.appendChild(strip);
       }
-    });
+      }); // fin lista.forEach
+    }; // fin _renderSeccion
+
+    _renderSeccion(banioCorte, '🛁 Baño y Corte', 'text-blue-700', 'bg-blue-50 border border-blue-200');
+    _renderSeccion(soloUnas,   '💅 Corte de Uñas', 'text-purple-700', 'bg-purple-50 border border-purple-200');
+
   }catch(e){console.error("Error bitácora:",e);cuerpo.innerHTML=`<div class="col-span-full py-12 text-center border-2 border-red-100 rounded-2xl bg-red-50"><p class="text-red-500 text-[9px] font-black uppercase italic">❌ Error de conexión</p></div>`;}
 };
 
