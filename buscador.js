@@ -34,14 +34,15 @@ window.buscarPorCedula = async () => {
  let registros = [];
 
  if (ci) {
- // Busqueda especifica por cedula
+ // Busqueda especifica por cedula (sin orderBy para evitar índice compuesto — ordenamos en memoria)
  const ciNorm = normalizarCedula(ci);
- const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ciNorm), orderBy("fecha","desc")));
+ const snap1 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ciNorm)));
  snap1.forEach(d => registros.push({ id:d.id, ...d.data() }));
  if (registros.length === 0 && ciNorm !== ci.trim()) {
- const snap2 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ci.trim()), orderBy("fecha","desc")));
+ const snap2 = await getDocs(query(collection(db,"consultas"), where("cedula","==",ci.trim())));
  snap2.forEach(d => registros.push({ id:d.id, ...d.data() }));
  }
+ registros.sort((a,b) => (b.fecha?.seconds||0) - (a.fecha?.seconds||0));
  } else {
  // Busqueda general con filtros
  const snap = await getDocs(query(collection(db,"consultas"), orderBy("fecha","desc")));
@@ -67,13 +68,13 @@ window.buscarPorCedula = async () => {
  const fechaHoyStr = fmt(hoy);
  registros = registros.filter(r => r.fechaSimple === fechaHoyStr);
  } else if (periodo === 'semana') {
- const hace7 = new Date(hoy); hace7.setDate(hoy.getDate() - 7);
+ const lunes = new Date(hoy); const dow = lunes.getDay(); lunes.setDate(hoy.getDate() - (dow === 0 ? 6 : dow - 1)); lunes.setHours(0,0,0,0);
  registros = registros.filter(r => {
  if (!r.fechaSimple) return false;
  const p = r.fechaSimple.split('/');
  if (p.length !== 3) return false;
- const fd = new Date(p[2], p[1]-1, p[0]);
- return fd >= hace7 && fd <= hoy;
+ const fd = new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+ return fd >= lunes && fd <= hoy;
  });
  } else if (periodo === 'mes') {
  registros = registros.filter(r => {
@@ -82,13 +83,15 @@ window.buscarPorCedula = async () => {
  return p.length === 3 && parseInt(p[1]) === hoy.getMonth()+1 && parseInt(p[2]) === hoy.getFullYear();
  });
  } else if (periodo === 'rango' && fechaDesde && fechaHasta) {
- const desde = new Date(fechaDesde);
- const hasta = new Date(fechaHasta);
+ const [dy,dm,dd] = fechaDesde.split('-').map(Number);
+ const [hy,hm,hd] = fechaHasta.split('-').map(Number);
+ const desde = new Date(dy, dm-1, dd, 0, 0, 0);
+ const hasta = new Date(hy, hm-1, hd, 23, 59, 59);
  registros = registros.filter(r => {
  if (!r.fechaSimple) return false;
  const p = r.fechaSimple.split('/');
  if (p.length !== 3) return false;
- const fd = new Date(p[2], p[1]-1, p[0]);
+ const fd = new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
  return fd >= desde && fd <= hasta;
  });
  }
@@ -255,7 +258,10 @@ function _renderizarTarjeta(consulta) {
  body.appendChild(insDiv);
  }
 
- // FINANZAS 
+ // FINANZAS
+ const _fpLabel = consulta.formaPagoLabel || consulta.formaPago || '';
+ const _fpColors = {dolares:'#15803d:#f0fdf4', movil:'#1d4ed8:#eff6ff', cashea:'#7c3aed:#faf5ff'};
+ const [_fpColor, _fpBg] = (_fpColors[consulta.formaPago]||'#64748b:#f8fafc').split(':');
  const finDiv = document.createElement('div');
  finDiv.className = 'grid grid-cols-3 gap-2 mt-2';
  finDiv.innerHTML =
@@ -267,9 +273,15 @@ function _renderizarTarjeta(consulta) {
  '<p class="text-[7px] font-black text-amber-500 uppercase">Insumos</p>' +
  '<p class="text-[13px] font-black text-amber-700 font-mono">$' + gastos + '</p>' +
  '</div>' +
- '<div class="bg-slate-50 rounded-lg p-2 text-center">' +
- '<p class="text-[7px] font-black text-slate-400 uppercase">Doctor</p>' +
- '<p class="text-[10px] font-black text-slate-600 leading-tight">' + doctor + '</p>' +
+ '<div class="rounded-lg p-2 text-center" style="background:' + _fpBg + ';" id="fpCell_' + consulta.id + '">' +
+ '<p style="font-size:7px;font-weight:900;color:' + _fpColor + ';text-transform:uppercase;margin:0 0 2px 0;">Pago</p>' +
+ '<select onchange="window._cambiarFormaPago(\'' + consulta.id + '\', this.value, this)" ' +
+   'style="font-size:9px;font-weight:900;color:' + _fpColor + ';background:transparent;border:none;outline:none;text-align:center;width:100%;cursor:pointer;font-family:inherit;">' +
+   '<option value="dolares"' + (consulta.formaPago==='dolares'?' selected':'') + '>💵 Dólares</option>' +
+   '<option value="movil"' + (consulta.formaPago==='movil'?' selected':'') + '>📲 Móvil/Tarjeta</option>' +
+   '<option value="cashea"' + (consulta.formaPago==='cashea'?' selected':'') + '>🟣 Cashea</option>' +
+   '<option value="otro"' + (consulta.formaPago==='otro'?' selected':'') + '>Sin registro</option>' +
+ '</select>' +
  '</div>';
  body.appendChild(finDiv);
 
@@ -375,6 +387,39 @@ function _renderizarTarjeta(consulta) {
 
 // abrirConsultaParaEditar definida canónicamente en historia.js — no redefinir aquí
 
+// Cambio de forma de pago inline desde el buscador
+const _fpLabels = { dolares:'Dólares / Efectivo', movil:'Pago Móvil / Tarjeta', cashea:'Cashea', otro:'Sin registro' };
+const _fpColorsMap = { dolares:'#15803d:#f0fdf4', movil:'#1d4ed8:#eff6ff', cashea:'#7c3aed:#faf5ff', otro:'#64748b:#f8fafc' };
+
+window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
+  try {
+    const label = _fpLabels[nuevaFp] || nuevaFp;
+    await updateDoc(doc(db, 'consultas', consultaId), {
+      formaPago: nuevaFp,
+      formaPagoLabel: label
+    });
+    // Actualizar colores de la celda
+    const [color, bg] = (_fpColorsMap[nuevaFp] || '#64748b:#f8fafc').split(':');
+    const cell = document.getElementById('fpCell_' + consultaId);
+    if (cell) {
+      cell.style.background = bg;
+      const titulo = cell.querySelector('p');
+      if (titulo) titulo.style.color = color;
+      selectEl.style.color = color;
+    }
+    // Toast discreto
+    const t = document.createElement('div');
+    t.textContent = '✓ Forma de pago actualizada';
+    t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;font-weight:700;z-index:9999;opacity:1;transition:opacity .5s;';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); }, 500); }, 2000);
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+    // Revertir el select al valor original
+    selectEl.value = selectEl.getAttribute('data-original') || selectEl.value;
+  }
+};
+
 // TOGGLE RANGO DE FECHAS
 window.toggleRangoBuscador = () => {
  const sel = document.getElementById('buscadorPeriodo')?.value;
@@ -429,13 +474,14 @@ function _filtrarPorFecha(registros) {
     const s = fmt(hoy);
     return registros.filter(r => r.fechaSimple === s);
   } else if (periodo === 'semana') {
-    const hace7 = new Date(hoy); hace7.setDate(hoy.getDate()-7);
-    return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); if(p.length!==3)return false; const fd=new Date(p[2],p[1]-1,p[0]); return fd>=hace7&&fd<=hoy; });
+    const lunes2=new Date(hoy); const dow2=lunes2.getDay(); lunes2.setDate(hoy.getDate()-(dow2===0?6:dow2-1)); lunes2.setHours(0,0,0,0);
+    return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); if(p.length!==3)return false; const fd=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0])); return fd>=lunes2&&fd<=hoy; });
   } else if (periodo === 'mes') {
     return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); return p.length===3&&parseInt(p[1])===hoy.getMonth()+1&&parseInt(p[2])===hoy.getFullYear(); });
   } else if (periodo === 'rango' && fechaDesde && fechaHasta) {
-    const desde=new Date(fechaDesde); const hasta=new Date(fechaHasta);
-    return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); if(p.length!==3)return false; const fd=new Date(p[2],p[1]-1,p[0]); return fd>=desde&&fd<=hasta; });
+    const [dy,dm,dd]=fechaDesde.split('-').map(Number); const [hy,hm,hd]=fechaHasta.split('-').map(Number);
+    const desde=new Date(dy,dm-1,dd,0,0,0); const hasta=new Date(hy,hm-1,hd,23,59,59);
+    return registros.filter(r => { if (!r.fechaSimple) return false; const p=r.fechaSimple.split('/'); if(p.length!==3)return false; const fd=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0])); return fd>=desde&&fd<=hasta; });
   }
   return registros;
 }
