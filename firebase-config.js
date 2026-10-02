@@ -7,10 +7,6 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import {
-  getAuth,
-  signInAnonymously
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 const firebaseConfig = {
     apiKey: "AIzaSyBd7HDH1wDbkq8T1XTsKUV0gBQ_O_BF7jI",
     authDomain: "avicolapet.firebaseapp.com",
@@ -41,12 +37,4 @@ try {
   console.log("✅ AVIPET — Firebase conectado (modo estándar)");
 }
 
-// ── AUTH ANÓNIMO ──────────────────────────────────────────
-// Requerido para que las reglas de Firestore puedan verificar
-// que la solicitud viene de la app AVIPET y no de internet abierto.
-const auth = getAuth(app);
-signInAnonymously(auth)
-  .then(() => console.log("✅ AVIPET — Auth anónimo activo"))
-  .catch(e => console.warn("[AVIPET] Auth anónimo falló:", e.message));
-
-export { db, auth };
+export { db };
