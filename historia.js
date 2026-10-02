@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v41 -- fix categorias con tildes en selector");
+console.log("✅ historia.js v44 -- forma de pago modal, elimina ECOGRAFIA de CONFIG_PORC");
 // Expuesta en window para que los handlers inline de index.html puedan llamarla
 window.respaldarProgresoLocal = () => {
   try {
@@ -63,7 +63,6 @@ const recetas = {
   "CONSULTA CAMADA MAS DE 8 CACHORROS": { precioVenta:100, insumos:[{nombre:"Insumos Camada XL",costo:6.00}] },
   "CONSULTA DE EMERGENCIA":     { precioVenta:40,  insumos:[{nombre:"Crema",costo:0.50}] },
   "ABSCESO":                    { precioVenta:25,  insumos:[{nombre:"Jelco",costo:4.50},{nombre:"Agua Oxigenada",costo:0.50},{nombre:"Compresa",costo:0.50},{nombre:"Antibiotico",costo:0.50},{nombre:"Antinflamatorio",costo:0.50},{nombre:"Sedacion",costo:0.50}] },
-  "ECOGRAFIA":                  { precioVenta:30,  insumos:[{nombre:"Gel Ecografico",costo:1.00},{nombre:"Papel Absorbente",costo:0.50}] },
   "COLOCACION VIA":             { precioVenta:15,  insumos:[{nombre:"Jelco",costo:1.50},{nombre:"Jeringa 5cc",costo:0.50},{nombre:"Adhesivo",costo:0.30},{nombre:"Mariposa",costo:1.00},{nombre:"Obturador",costo:1.00}] },
   "ADMINISTRACION MEDICINA":    { precioVenta:10,  insumos:[{nombre:"Jeringa",costo:0.50}] },
   "TOMA DE MUESTRA SANGRE":     { precioVenta:10,  insumos:[{nombre:"Jeringa",costo:0.50},{nombre:"Mariposa",costo:1.00},{nombre:"Tubo",costo:1.20}] },
@@ -105,7 +104,7 @@ const CONFIG_PORC = {
   "CONSULTA GENERAL":40,"CONSULTA OFTALMOLOGICA":12.5,
   "CONSULTA CAMADA 3-4 CACHORROS":40,"CONSULTA CAMADA HASTA 8 CACHORROS":40,
   "CONSULTA CAMADA MAS DE 8 CACHORROS":40,"CONSULTA DE EMERGENCIA":40,
-  "ABSCESO":50,"ECOGRAFIA":40,"COLOCACION VIA":50,
+  "ABSCESO":50,"COLOCACION VIA":50,
   "ADMINISTRACION MEDICINA":50,"TOMA DE MUESTRA SANGRE":50,
   "HEMATOLOGIA COMPLETA":34.78,"PERFIL ANEMICO":17.5,
 };
@@ -138,14 +137,20 @@ const comprimirImagen = (b64, maxW=800, q=0.55) => new Promise(res=>{
 });
 
 // --- ALERTA STOCK BAJO ---
+let _inventarioCache = null;
+let _inventarioCacheTs = 0;
 async function _verificarStockServicio(nombreServicio) {
   try {
     const vLimpio = normalizarNombre(nombreServicio);
-    // Buscar en inventario productos relacionados con el servicio
-    const snap = await getDocs(collection(db, "inventario"));
+    // Usar cache de inventario (5 minutos) para no hacer getDocs en cada servicio
+    if (!_inventarioCache || Date.now() - _inventarioCacheTs > 300000) {
+      const snap = await getDocs(collection(db, "inventario"));
+      _inventarioCache = [];
+      snap.forEach(d => _inventarioCache.push(d.data()));
+      _inventarioCacheTs = Date.now();
+    }
     const alertas = [];
-    snap.forEach(d => {
-      const r = d.data();
+    _inventarioCache.forEach(r => {
       const nomInv = normalizarNombre(r.nombre || "");
       // Detectar si el producto del inventario esta relacionado con el servicio
       const esRelacionado =
@@ -270,7 +275,7 @@ window.migrarRecetasAFirestore = async () => {
     snapExist.forEach(d => yaExisten.add(d.id));
 
     let creados = 0, omitidos = 0;
-    const batch = [];
+    const wBatch = writeBatch(db);
     for (const [nombre, data] of Object.entries(recetas)) {
       if (yaExisten.has(nombre)) { omitidos++; continue; }
       const porcDoc = CONFIG_PORC[nombre] || 40;
@@ -279,7 +284,7 @@ window.migrarRecetasAFirestore = async () => {
                : nombre.startsWith('HEMATOLOGIA')||nombre.startsWith('QUIMICA')||nombre.startsWith('EXAMEN')||nombre.startsWith('CITOLOGIA')||nombre.startsWith('DESCARTE')||nombre.startsWith('DISTEMPER')||nombre.startsWith('PARVO')||nombre.startsWith('FILARIA')||nombre.startsWith('SIDA')||nombre.startsWith('TEST')||nombre.startsWith('PERFIL') ? 'LABORATORIO'
                : nombre.startsWith('CONSULTA') ? 'CONSULTAS'
                : nombre.startsWith('EUTANASIA') ? 'OTROS PROCEDIMIENTOS' : 'OTROS PROCEDIMIENTOS';
-      await setDoc(doc(db, 'servicios_maestro', nombre), {
+      wBatch.set(doc(db, 'servicios_maestro', nombre), {
         precioVenta: data.precioVenta,
         porcDoc,
         categoria: cat,
@@ -290,6 +295,7 @@ window.migrarRecetasAFirestore = async () => {
       });
       creados++;
     }
+    if (creados > 0) await wBatch.commit();
 
     await Swal.fire({
       icon:'success', title:'✅ Sincronización completa',
@@ -358,6 +364,32 @@ window.insertarServicio = async (v) => {
     precioFinal = window._gusPrecio || precioFinal;
     nombreFinal = 'GUSANERA ' + (window._gusGrav||'');
     window._gusGrav = null; window._gusPrecio = null;
+  }
+  else if(vLimpio==="oxigeno"||v.toUpperCase()==="OXÍGENO"||v.toUpperCase()==="OXIGENO") {
+    const pphFb = precioFinal || 10;
+    const resOx = await Swal.fire({
+      title: 'OXÍGENO',
+      html:
+        '<div style="text-align:left;margin-top:8px;">' +
+          '<p style="font-size:11px;color:#475569;margin-bottom:12px;">¿Cuántas horas de oxígeno se utilizaron?</p>' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<input type="number" id="ox_horas" min="0.5" step="0.5" placeholder="0" style="flex:1;border:2px solid #3b82f6;border-radius:10px;padding:10px;font-size:20px;font-weight:900;outline:none;text-align:center;" oninput="const h=parseFloat(this.value)||0;document.getElementById(\'ox_total\').innerText=\'$\'+(h*' + pphFb + ').toFixed(2);">' +
+            '<div style="text-align:center;min-width:80px;"><div style="font-size:10px;color:#64748b;font-weight:700;">TOTAL</div><div id="ox_total" style="font-size:20px;font-weight:900;color:#1d4ed8;">$0.00</div></div>' +
+          '</div>' +
+          '<p style="font-size:10px;color:#94a3b8;margin-top:8px;">Precio: $' + pphFb.toFixed(2) + '/hora</p>' +
+        '</div>',
+      showCancelButton: true, confirmButtonText: 'Confirmar', confirmButtonColor: '#1d4ed8',
+      preConfirm: () => {
+        const h = parseFloat(document.getElementById('ox_horas').value);
+        if (isNaN(h) || h <= 0) { Swal.showValidationMessage('Ingresa las horas utilizadas'); return false; }
+        return h;
+      }
+    });
+    if (!resOx.isConfirmed) { document.getElementById('selectorServicios').value=""; return; }
+    const horas = resOx.value;
+    precioFinal = parseFloat((horas * pphFb).toFixed(2));
+    nombreFinal = 'OXÍGENO (' + horas + 'h)';
+    porcServ = porcServ || 30;
   }
   else if(vLimpio.includes("absceso")||v.toUpperCase().includes("ABSCESO")) {
     const resAbs = await Swal.fire({
@@ -454,7 +486,7 @@ window.insertarServicio = async (v) => {
   // Recalcular precios de combos DESPUES de insertar (actualiza los ya existentes)
   _recalcularCombos();
   // Verificar stock DESPUES de insertar
-  _verificarStockServicio(v);
+  await _verificarStockServicio(v);
 };
 
 // --- AGREGAR MEDICAMENTO ---
@@ -516,12 +548,10 @@ window.agregarMedicamento = async (nombreMed) => {
           agregadoPor: doctorActivo,
           activo: true
         }, { merge: true });
-        await Swal.fire({ icon:'success', title:'Medicamento guardado', text: nombre.toUpperCase()+' agregado al listado permanente.', timer:2000, showConfirmButton:false });
-        // Recargar selector
         if (typeof window.cargarSelectorMedicamentos === 'function') {
           window.cargarSelectorMedicamentos();
         }
-        Swal.fire({ icon: 'success', title: 'Guardado en el listado', text: nombre, timer: 1500, showConfirmButton: false });
+        await Swal.fire({ icon:'success', title:'Medicamento guardado', text: nombre.toUpperCase()+' agregado al listado permanente.', timer:2000, showConfirmButton:false });
       } catch(e) { console.warn('Error guardando medicamento:', e); }
     }
 
@@ -642,18 +672,51 @@ window.guardarFirebase = async (imp) => {
   const _docVerif = (window.doctorVerificado||'').trim().toLowerCase();
   const _docSel   = (nombreDoctor||'').trim().toLowerCase();
   // Si hay sesión admin activa tampoco pedir PIN
+  const btn=document.activeElement;const textoOrig=btn?.innerText||"Guardar";if(btn?.tagName==='BUTTON'){btn.disabled=true;btn.innerText="⏳ PROCESANDO...";}
   if (!window.sesionAdminActiva && (!_docVerif || _docVerif !== _docSel)) {
     const pinIngresado=prompt(`Firma Medica: Dr(a). ${nombreDoctor}\nIngrese su PIN:`);
-    if(!pinIngresado)return;
+    if(!pinIngresado){if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}return;}
     const esValido=await window.validarDoctorConMaster(nombreDoctor,pinIngresado);
-    if(!esValido)return alert("PIN incorrecto.");
+    if(!esValido){if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}return alert("PIN incorrecto.");}
   }
-  const btn=document.activeElement;const textoOrig=btn?.innerText||"Guardar";if(btn?.tagName==='BUTTON'){btn.disabled=true;btn.innerText="? PROCESANDO...";}
+  // ── Forma de pago ─────────────────────────────────────────
+  const { value: formaPagoElegida } = await Swal.fire({
+    title: '💳 Forma de pago',
+    html:
+      '<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">' +
+        '<button id="fp_dolares"  style="padding:14px;border-radius:12px;border:2px solid #22c55e;background:#f0fdf4;font-size:13px;font-weight:900;cursor:pointer;color:#15803d;">💵 Dólares</button>' +
+        '<button id="fp_movil"   style="padding:14px;border-radius:12px;border:2px solid #3b82f6;background:#eff6ff;font-size:13px;font-weight:900;cursor:pointer;color:#1d4ed8;">📲 Pago Móvil / Tarjeta</button>' +
+        '<button id="fp_cashea"  style="padding:14px;border-radius:12px;border:2px solid #7c3aed;background:#faf5ff;font-size:13px;font-weight:900;cursor:pointer;color:#7c3aed;">🟣 Cashea</button>' +
+      '</div>',
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+    allowOutsideClick: false,
+    didOpen: () => {
+      const btns = document.querySelectorAll('#fp_dolares,#fp_movil,#fp_cashea');
+      btns.forEach(b => b.addEventListener('click', function() {
+        btns.forEach(x => { x.style.opacity = '0.4'; x.style.transform = ''; });
+        this.style.opacity = '1';
+        this.style.transform = 'scale(1.03)';
+        Swal._pagoElegido = this.id.replace('fp_','');
+        Swal.clickConfirm();
+      }));
+    },
+    preConfirm: () => {
+      const v = Swal._pagoElegido;
+      if (!v) { Swal.showValidationMessage('Selecciona una forma de pago'); return false; }
+      Swal._pagoElegido = null;
+      return v;
+    }
+  });
+  if (!formaPagoElegida) { if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;} return; }
+  const _labelFormaPago = { dolares:'Dólares', movil:'Pago Móvil / Tarjeta', cashea:'Cashea' }[formaPagoElegida] || formaPagoElegida;
+
   try{
     const leerImg=(a)=>new Promise(res=>{const r=new FileReader();r.readAsDataURL(a);r.onload=e=>res(e.target.result);r.onerror=()=>res("");});
     const fileH=document.getElementById('inputFotoHistoria')?.files[0];const fileT=document.getElementById('inputFotoTest')?.files[0];
     let urlFoto=fileH?await comprimirImagen(await leerImg(fileH)):(document.getElementById('pUrlExamen')?.value||"");let urlTest=fileT?await comprimirImagen(await leerImg(fileT)):(document.getElementById('pUrlTest')?.value||"");
-    const listaTests=[];document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila=>{const nombre=fila.cells[0]?.querySelector('input')?.value.trim()||fila.cells[0]?.querySelector('span')?.innerText?.trim()||"";const span=fila.cells[1]?.querySelector('.resultado-print');const sel=fila.cells[1]?.querySelector('select');const resultado=(span?.innerText?.trim()&&span.innerText.trim()!=="---")?span.innerText.trim():(sel?.value||"---");const nota=fila.cells[2]?.querySelector('input')?.value?.trim()||"";if(nombre)listaTests.push({nombre,resultado,nota});});
+    const listaTests=[];document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(fila=>{const nombre=fila.cells[0]?.querySelector('input')?.value.trim()||fila.cells[0]?.querySelector('span')?.innerText?.trim()||"";const span=fila.cells[1]?.querySelector('.resultado-print');const sel=fila.cells[1]?.querySelector('select');const resultado=(span?.innerText?.trim()&&span.innerText.trim()!=="---")?span.innerText.trim():(sel?.value||"---");const nota=fila.cells[2]?.querySelector('.obs-print')?.innerText?.trim()||fila.cells[2]?.querySelector('textarea,.obs-textarea')?.value?.trim()||"";if(nombre)listaTests.push({nombre,resultado,nota});});
     // --- Preguntas extra por servicio (ej: eutanasia -> cuanto Propofol se usó) ---
     for (const fila of Array.from(document.querySelectorAll('.servicio-principal'))) {
       const nomServAsk=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();
@@ -711,7 +774,7 @@ window.guardarFirebase = async (imp) => {
     const montoVentaFinal=window.vacunaPagadaAnteriormente?Math.max(0,montoVentaTotal-montoVacunaPendiente):montoVentaTotal;const gastosFinal=window.vacunaPagadaAnteriormente?Math.max(0,totalGastos-montoVacunaPendiente*0.3):totalGastos;const pagoDoctorFinal=window.vacunaPagadaAnteriormente?Math.max(0,pagoDoctorTotal-montoVacunaPendiente*0.5):pagoDoctorTotal;
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
     const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
-    const data={cedula:(String(dInput('hCI')||'').replace(/[.\-\s]/g,'').trim().toUpperCase()||'SIN-CI'),propietario:dInput('hProp')||'',paciente:dInput('hNombre'),esReferido:window._esConsultaReferida||false,especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),fecha:serverTimestamp(),fechaSimple:(function(){var _n=new Date();return _n.getDate()+"/"+((_n.getMonth()+1))+"/"+_n.getFullYear();})()};
+    const data={cedula:(String(dInput('hCI')||'').replace(/[.\-\s]/g,'').trim().toUpperCase()||'SIN-CI'),propietario:dInput('hProp')||'',paciente:dInput('hNombre'),esReferido:window._esConsultaReferida||false,especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),formaPago:formaPagoElegida,formaPagoLabel:_labelFormaPago,fecha:serverTimestamp(),fechaSimple:(function(){var _n=new Date();return _n.getDate()+"/"+((_n.getMonth()+1))+"/"+_n.getFullYear();})()};
     const esEdicion = !!window._editandoConsultaId;
     if (esEdicion) {
       const idEditar = window._editandoConsultaId;
@@ -825,7 +888,7 @@ async function _verificarVacunasVencidas(datos) {
     const hoy = new Date();
     const vencidas = [];
     datos.vacunasAplicadas.forEach(function(vac) {
-      if (!vac.proxima) return;
+      if (!vac || !vac.proxima) return;
       const p = vac.proxima.split('/');
       if (p.length === 3) {
         const fp = new Date(p[2], p[1]-1, p[0]);
@@ -856,9 +919,9 @@ window.autocompletarPorCedula = async (ci) => {
   const ciNorm = normalizarCedula(ci);
   try{
     // Buscar TODAS las consultas de esta cedula para encontrar todas las mascotas
-    let snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ciNorm),orderBy("fecha","desc")));
+    let snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ciNorm)));
     if(snapTodas.empty && ciNorm !== ci.trim()) {
-      snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim()),orderBy("fecha","desc")));
+      snapTodas = await getDocs(query(collection(db,"consultas"),where("cedula","==",ci.trim())));
     }
     if(snapTodas.empty) return;
 
@@ -978,7 +1041,7 @@ window.guardarNotasInternas = async () => {
   if (!cedula) { alert("No hay paciente cargado."); return; }
   try {
     // Actualizar todas las consultas de este CI con las notas
-    const snap = await getDocs(query(collection(db,"consultas"),where("cedula","==",cedula),orderBy("fecha","desc"),limit(1)));
+    const snap = await getDocs(query(collection(db,"consultas"),where("cedula","==",cedula),limit(1)));
     if (!snap.empty) {
       await updateDoc(doc(db,"consultas",snap.docs[0].id),{observacionesPermanentes:notas});
       await Swal.fire({icon:'success',title:'Notas guardadas',timer:1400,showConfirmButton:false});
@@ -1409,16 +1472,23 @@ window.cargarSelectorServicios = async () => {
     if (snap.empty) return;
 
     // Construir mapa de todos los servicios de Firebase: id → data
+    // Normaliza acentos para evitar duplicados (ej: ECOGRAFIA vs ECOGRAFÍA)
+    const _normKey = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
     const serviciosFirebase = {};
     snap.forEach(d => {
       const data = d.data();
       if (data.activo === false) return;
-      serviciosFirebase[d.id.toUpperCase()] = { id: d.id, ...data };
+      const key = _normKey(d.id);
+      const existing = serviciosFirebase[key];
+      // Si ya existe una entrada con mismo nombre normalizado, conservar la de mayor precio
+      if (!existing || parseFloat(data.precioVenta||0) > parseFloat(existing.precioVenta||0)) {
+        serviciosFirebase[key] = { id: d.id, ...data };
+      }
     });
 
     // 1. Actualizar options que ya existen en el selector HTML (sin moverlos ni duplicarlos)
     Array.from(sel.querySelectorAll('option')).forEach(opt => {
-      const key = opt.value.toUpperCase();
+      const key = _normKey(opt.value);
       if (serviciosFirebase[key]) {
         // Solo actualizar el textContent sin precio y guardar precio en dataset
         opt.textContent = serviciosFirebase[key].id;
@@ -1455,7 +1525,7 @@ window.cargarSelectorServicios = async () => {
 
       servicios.forEach(s => {
         const yaExiste = Array.from(sel.querySelectorAll('option'))
-          .some(o => o.value.toUpperCase() === s.id.toUpperCase());
+          .some(o => _normKey(o.value) === _normKey(s.id));
         if (yaExiste) return;
         const opt = document.createElement('option');
         opt.value                  = s.id;
@@ -1477,6 +1547,24 @@ window.cargarSelectorServicios = async () => {
   } catch(e) {
     console.warn('Error cargando selector servicios:', e);
   }
+
+  // Asegurar que OXÍGENO existe en Firestore
+  try {
+    const oxSnap = await getDoc(doc(db, 'servicios_maestro', 'OXÍGENO'));
+    if (!oxSnap.exists()) {
+      await setDoc(doc(db, 'servicios_maestro', 'OXÍGENO'), {
+        precioVenta: 10,
+        porcDoc: 30,
+        categoria: 'CIRUGÍAS',
+        insumos: [],
+        esReferido: false,
+        activo: true,
+        esHora: true,
+        creadoEn: serverTimestamp()
+      });
+      console.log('[AVIPET] OXÍGENO creado en servicios_maestro');
+    }
+  } catch(e) { console.warn('[AVIPET] No se pudo verificar OXÍGENO:', e); }
 };
 
 // --- ABRIR MODAL NUEVO SERVICIO ---------------------------
