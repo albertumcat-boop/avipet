@@ -140,7 +140,7 @@ function _aplicarYGuardarTasa() {
   localStorage.setItem('tasaDolarAvipet', window.tasaDolarHoy);
   // Persistir en Firestore para sincronizar todos los dispositivos
   setDoc(doc(db, "configuracion", "tasa"), { valor: window.tasaDolarHoy, actualizado: serverTimestamp() })
-    .catch(() => {});
+    .catch(e => console.warn('[AVIPET] Error guardando tasa en Firestore:', e));
   const d = document.getElementById('displayTasa');
   if (d) d.innerText = window.tasaDolarHoy.toFixed(2);
   if (typeof window.calcularPrecioFinalAvipet === 'function') window.calcularPrecioFinalAvipet();
@@ -370,7 +370,10 @@ window.ejecutarCambioDeTab = async (t) => {
     typeof window.cargarInventario              ==='function' && window.cargarInventario();
     typeof window.actualizarSelectorProveedores ==='function' && window.actualizarSelectorProveedores();
   }
-  if (t==='peluqueria' && typeof window.cargarBitacoraHoy ==='function') window.cargarBitacoraHoy();
+  if (t==='peluqueria') {
+    if (typeof window.cargarBitacoraHoy    ==='function') window.cargarBitacoraHoy();
+    if (typeof window.recalcularTotalPelu  ==='function') window.recalcularTotalPelu();
+  }
   if (t==='personal'   && typeof window._initAlmuerzoModule==='function') window._initAlmuerzoModule();
 
   const nav = document.getElementById('navMobile');
@@ -487,9 +490,11 @@ window.eliminarDeSalaEspera = async (id) => {
 // ============================================================
 // LISTENER COLA DE ESPERA — ALERTA SONORA EN TIEMPO REAL
 // ============================================================
+let _unsubListenerCola = null;
 window.iniciarListenerCola = () => {
+  if (_unsubListenerCola) return; // ya activo, no duplicar
   let primera = true;
-  onSnapshot(collection(db,"espera"), snap => {
+  _unsubListenerCola = onSnapshot(collection(db,"espera"), snap => {
     if (primera) { primera = false; return; }
     snap.docChanges().forEach(change => {
       if (change.type==="added" && change.doc.data().estado==="en_espera") _sonarAlerta();
@@ -544,6 +549,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const f = new Date();
   const cf = document.getElementById('fechaDoc');
   if (cf) cf.value = `${f.getDate()}/${f.getMonth()+1}/${f.getFullYear()}`;
+
+  // Verificar permisos/documentos próximos a vencer (5s para que Firebase esté listo)
+  setTimeout(() => window.permisosChequearVencimientos?.(), 5000);
 
   const dt = document.getElementById('displayTasa');
   if (dt) dt.innerText = window.tasaDolarHoy.toFixed(2);
@@ -654,6 +662,9 @@ window.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('respaldo_historia_activa');
     }
   } catch(_) { localStorage.removeItem('respaldo_historia_activa'); }
+
+  // Auto-backup cada 30 segundos para no perder datos aunque no se toque CI o tratamiento
+  setInterval(() => { window.respaldarProgresoLocal?.(); }, 30000);
 });
 
-console.log("✅ main.js v14 — doctor session persiste tras recarga");
+console.log("✅ main.js v15 — auto-backup 30s, banner offline/online");

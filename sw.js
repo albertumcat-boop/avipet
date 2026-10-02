@@ -4,7 +4,7 @@
 // Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v47';
+const CACHE_V = 'avipet-v48';
 
 const APP_SHELL = [
   '/',
@@ -78,21 +78,32 @@ self.addEventListener('fetch', event => {
   // Externos: dejar pasar sin tocar
   if (ES_EXTERNO(url)) return;
 
-  // Archivos propios: cache-first con actualización en background (stale-while-revalidate)
+  // index.html: network-first para que los deploys lleguen de inmediato
+  const esShell = url.endsWith('/') || url.endsWith('/index.html') || url.split('?')[0].endsWith('/index.html');
+  if (esShell) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response && response.ok) {
+            caches.open(CACHE_V).then(c => c.put(event.request, response.clone()));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Demás archivos propios: cache-first con actualización en background
   event.respondWith(
     caches.open(CACHE_V).then(async cache => {
       const cached = await cache.match(event.request);
-
-      // Intentar actualizar desde la red en background
       const networkFetch = fetch(event.request).then(response => {
         if (response && response.ok && event.request.method === 'GET') {
           cache.put(event.request, response.clone());
         }
         return response;
       }).catch(() => null);
-
-      // Si hay cache: devolver inmediatamente (app carga offline)
-      // Si no hay cache: esperar la red
       return cached || networkFetch;
     })
   );

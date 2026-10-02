@@ -6,7 +6,7 @@
 
 import { db } from './firebase-config.js';
 import {
- collection, getDocs, query, where, orderBy, doc, updateDoc, serverTimestamp, deleteDoc
+ collection, getDocs, query, where, orderBy, limit, doc, updateDoc, serverTimestamp, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const normalizarCedula = (ci) =>
@@ -392,6 +392,7 @@ const _fpLabels = { dolares:'Dólares / Efectivo', movil:'Pago Móvil / Tarjeta'
 const _fpColorsMap = { dolares:'#15803d:#f0fdf4', movil:'#1d4ed8:#eff6ff', cashea:'#7c3aed:#faf5ff', otro:'#64748b:#f8fafc' };
 
 window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
+  const valorOriginal = selectEl.value;
   try {
     const label = _fpLabels[nuevaFp] || nuevaFp;
     await updateDoc(doc(db, 'consultas', consultaId), {
@@ -415,8 +416,7 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
     setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); }, 500); }, 2000);
   } catch(e) {
     Swal.fire({ icon:'error', title:'Error', text: e.message });
-    // Revertir el select al valor original
-    selectEl.value = selectEl.getAttribute('data-original') || selectEl.value;
+    selectEl.value = valorOriginal;
   }
 };
 
@@ -501,14 +501,15 @@ window.buscarTestsYVacunas = async () => {
     let registros = [];
     if (ci) {
       const ciNorm = normalizarCedula(ci);
-      const snap = await getDocs(query(collection(db,'consultas'), where('cedula','==',ciNorm), orderBy('fecha','desc')));
+      const snap = await getDocs(query(collection(db,'consultas'), where('cedula','==',ciNorm)));
       snap.forEach(d => registros.push({ id:d.id, ...d.data() }));
       if (!registros.length && ciNorm !== ci.trim()) {
-        const snap2 = await getDocs(query(collection(db,'consultas'), where('cedula','==',ci.trim()), orderBy('fecha','desc')));
+        const snap2 = await getDocs(query(collection(db,'consultas'), where('cedula','==',ci.trim())));
         snap2.forEach(d => registros.push({ id:d.id, ...d.data() }));
       }
+      registros.sort((a,b) => (b.fecha?.seconds||0) - (a.fecha?.seconds||0));
     } else {
-      const snap = await getDocs(query(collection(db,'consultas'), orderBy('fecha','desc')));
+      const snap = await getDocs(query(collection(db,'consultas'), orderBy('fecha','desc'), limit(300)));
       snap.forEach(d => registros.push({ id:d.id, ...d.data() }));
       if (nombre) registros = registros.filter(r => (r.paciente||'').toUpperCase().includes(nombre));
     }

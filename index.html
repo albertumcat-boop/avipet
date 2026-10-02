@@ -17,7 +17,7 @@
  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
- <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
  <style>
@@ -53,8 +53,11 @@
  .animate-fadeIn { animation:fadeIn .3s ease-out; }
  @media print {
  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
- .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print),#hTratamiento,.no-imprimir,#btnFacturacionFloat { display:none !important; }
+ .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print):not(.obs-print):not(#datosDoctorTest),#hTratamiento,.no-imprimir,#btnFacturacionFloat { display:none !important; }
  span.resultado-print { display:inline !important; visibility:visible !important; }
+ .obs-print { display:block !important; visibility:visible !important; }
+ .obs-textarea { display:none !important; }
+ #datosDoctorTest { display:flex !important; }
  img,.print-area img { display:block !important; max-width:100%; opacity:1 !important; }
  #sectionHojaVacunas:not(.hidden),#sectionHojaTest:not(.hidden) { display:block !important; height:auto !important; min-height:0 !important; padding-top:4px !important; }
  #sectionHojaVacunas { min-height:0 !important; height:auto !important; overflow:visible !important; }
@@ -387,10 +390,8 @@
  <button type="button" onclick="window.guardarFirebase(false)" class="bg-slate-200 py-4 rounded-xl font-black uppercase text-xs">Guardar Datos</button>
  <button type="button" onclick="window.guardarFirebase(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">Guardar e Imprimir</button>
  </div>
- <button type="button" onclick="window.imprimirRecetaLimpia()" class="no-print w-full bg-cyan-500 text-white py-4 rounded-xl font-black uppercase text-xs mt-3"> Receta Sin Costos</button>
- <button type="button" onclick="window.abrirHojaVacunasDesdeHistoria()" class="no-print w-full bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3"> Hoja de Vacunas del Paciente</button>
+ <button type="button" onclick="window.abrirHojaVacunasDesdeHistoria()" class="no-print w-full bg-orange-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3"> Hoja de Vacunas del Paciente</button>
  <button type="button" onclick="window.enviarAColaEspera()" class="no-print w-full bg-indigo-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3"> Enviar a Sala de Espera</button>
- <button type="button" onclick="_llamarFuncion('registrarServicioSinMascota')" class="no-print w-full bg-orange-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-3"> Servicio sin Mascota (Muestra)</button>
  <button type="button" onclick="_llamarFuncion('_limpiarFormularioHistoria');_llamarFuncion('_limpiarNotasInternas');localStorage.removeItem('respaldo_historia_activa')" class="no-print w-full bg-slate-500 text-white py-3 rounded-xl font-black uppercase text-[10px] mt-2"> Limpiar Formulario (Nuevo Paciente)</button>
 
  </section>
@@ -465,7 +466,7 @@
  <div class="border border-slate-400 rounded p-1.5 space-y-1">
  <div class="flex border-b border-slate-200 pb-0.5"><span class="text-[8px] font-bold text-slate-500 w-16">DUEÑO:</span><input id="hv_propietario" class="flex-1 font-bold text-[10px] uppercase"></div>
  <div class="grid grid-cols-2 gap-1">
- <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">CÉDULA:</span><input id="hv_cedula" class="flex-1 text-[9px]"></div>
+ <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-12">CÉDULA:</span><input id="hv_cedula" class="flex-1 text-[9px]" placeholder="Ej: V12345678" onblur="if(this.value.trim()) window.autocompletarTarjeta(this.value.trim())"></div>
  <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-8">TLF:</span><input id="hv_telefono" class="flex-1 text-[9px]"></div>
  </div>
  <div class="flex border-b border-slate-200"><span class="text-[8px] font-bold text-slate-500 w-16">DIRECCIÓN:</span><input id="hv_direccion" class="flex-1 text-[8px] uppercase"></div>
@@ -814,10 +815,10 @@
  <div class="bg-blue-50/50 p-4 rounded-2xl space-y-3 border border-blue-100 mt-4">
  <h4 class="text-[10px] font-black text-blue-600 uppercase text-center tracking-widest mb-1 italic"> Comisiones de Apoyo</h4>
  <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
- <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pExtraSolo" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase italic">¿Extra hizo TODO solo?</span></label>
+ <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pExtraSolo" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Daniel <span class="text-slate-400 font-normal normal-case">(Ayudante Extra)</span></span></label>
  </div>
  <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
- <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pAyudante1" checked onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Ayudante Principal</span></label>
+ <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pAyudante1" checked onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Adriani <span class="text-slate-400 font-normal normal-case">(Ayudante Principal)</span></span></label>
  <div class="flex items-center gap-1 font-mono text-blue-600 font-bold text-[9px]"><span class="text-slate-400 font-normal">$1×perro×2</span><input type="hidden" id="pMontoAyu1" value="2"></div>
  </div>
  <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
@@ -832,9 +833,9 @@
  <span id="pTotalCobro" class="text-4xl font-black italic tracking-tighter text-slate-800 font-mono">$ 0.00</span>
  </div>
  <div class="space-y-2 mt-4">
- <div class="flex justify-between items-center border-b border-slate-50 pb-1"><span class="text-[9px] font-bold uppercase text-slate-500 italic">Peluquera:</span><span id="pResPeluquera" class="text-lg font-black text-blue-600 font-mono">$ 0.00</span></div>
- <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Ayudante ($1 pelu + $1 Avipet):</span><span id="pResAyudante1" class="text-sm font-black text-blue-700 font-mono">$ 0.00</span></div>
- <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Extra:</span><span id="pResAyudanteExtra" class="text-sm font-black text-slate-600 font-mono">$ 0.00</span></div>
+ <div class="flex justify-between items-center border-b border-slate-50 pb-1"><span class="text-[9px] font-bold uppercase text-slate-500 italic">Miguelina:</span><span id="pResPeluquera" class="text-lg font-black text-blue-600 font-mono">$ 0.00</span></div>
+ <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Adriani ($1×perro×2):</span><span id="pResAyudante1" class="text-sm font-black text-blue-700 font-mono">$ 0.00</span></div>
+ <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Daniel:</span><span id="pResAyudanteExtra" class="text-sm font-black text-slate-600 font-mono">$ 0.00</span></div>
  <span id="pResAyudantes" class="hidden">$ 0.00</span>
  </div>
  </div>
@@ -1231,6 +1232,46 @@
 
   <!-- Panel Documentos de Empleados -->
   <div id="panelDocumentos" class="hidden">
+
+   <!-- ═══ PERMISOS Y DOCUMENTOS DE LA EMPRESA ═══ -->
+   <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+     <p class="text-[10px] font-black text-amber-600 uppercase">⚠️ Permisos y Documentos de la Empresa</p>
+     <button onclick="window.permisosModalAbrir()" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg font-black text-[10px] uppercase hover:bg-amber-600">+ Agregar</button>
+    </div>
+    <div id="permisosLista" class="space-y-2">
+     <p class="text-[10px] text-slate-400 italic text-center py-2">Cargando...</p>
+    </div>
+   </div>
+
+   <!-- Modal: Agregar/Editar permiso -->
+   <div id="permisosModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-sm" style="max-height:90vh;overflow-y:auto;">
+     <p class="font-black text-[13px] text-slate-800 mb-4">📄 Permiso / Documento</p>
+     <input id="permNombre" type="text" placeholder="Nombre del documento *"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-2 outline-none focus:border-amber-400">
+     <input id="permDescripcion" type="text" placeholder="Descripción (opcional)"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-2 outline-none focus:border-amber-400">
+     <label class="block text-[9px] font-black text-slate-500 uppercase mb-1">Fecha de vencimiento</label>
+     <input id="permFecha" type="date"
+      class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] mb-3 outline-none focus:border-amber-400">
+     <label class="block text-[9px] font-black text-slate-500 uppercase mb-1">Foto del documento</label>
+     <div class="flex gap-2 mb-2">
+      <input id="permFotoInput" type="file" accept="image/*"
+       class="flex-1 text-[10px] text-slate-500"
+       onchange="(async()=>{const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const prev=document.getElementById('permFotoPreview');prev.src=e.target.result;prev.classList.remove('hidden');document.getElementById('permFotoData').value=e.target.result;};r.readAsDataURL(f);})()">
+      <button type="button" onclick="window.permisosEscanearQR()" title="Escanear QR con teléfono"
+       style="background:#6366f1;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;">📱 QR</button>
+     </div>
+     <img id="permFotoPreview" src="" alt="preview" class="hidden w-full rounded-lg border border-slate-200 mb-3" style="max-height:140px;object-fit:contain;">
+     <input type="hidden" id="permEditId">
+     <input type="hidden" id="permFotoData">
+     <div class="flex gap-2 mt-1">
+      <button onclick="window.permisosGuardar()" class="flex-1 bg-amber-500 text-white py-2 rounded-xl font-black text-[11px] uppercase">Guardar</button>
+      <button onclick="window.permisosModalCerrar()" class="flex-1 bg-slate-200 text-slate-600 py-2 rounded-xl font-black text-[11px] uppercase">Cancelar</button>
+     </div>
+    </div>
+   </div>
 
    <!-- Fila superior: selects + botones agregar -->
    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
