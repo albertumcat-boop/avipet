@@ -257,6 +257,9 @@
  <option value="REFERIDO: PARVOVIRUS - CORONAVIRUS">REFERIDO: PARVOVIRUS</option>
 <option value="REFERIDO: ECOGRAFIA">REFERIDO: ECOGRAFIA</option>
  </optgroup>
+ <optgroup label="🔪 CIRUGÍAS">
+ <option value="CIRUGÍA PERSONALIZADA">CIRUGÍA (ESPECIFICAR TIPO Y PRECIO)</option>
+ </optgroup>
  <optgroup label=" OTROS PROCEDIMIENTOS">
  <option value="ABSCESO">ABSCESO</option>
  <option value="ECOGRAFÍA">ECOGRAFÍA</option>
@@ -1164,7 +1167,13 @@
  <!-- SALA DE ESPERA -->
  <section id="sectionEspera" class="hidden p-4 animate-fadeIn">
  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-3xl mx-auto">
- <h2 class="text-xl font-black text-blue-900 mb-4 uppercase"> Pacientes en Espera</h2>
+ <div class="flex justify-between items-center mb-4">
+ <h2 class="text-xl font-black text-blue-900 uppercase"> Pacientes en Espera</h2>
+ <button onclick="window.abrirFichaReferido()"
+  class="bg-purple-600 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-purple-700 transition-all shadow">
+  🔗 Registrar Referido
+ </button>
+ </div>
  <div id="listaEspera" class="space-y-2 max-h-80 overflow-y-auto text-[11px]"></div>
  </div>
  </section>

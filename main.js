@@ -472,10 +472,90 @@ window.abrirPacienteDesdeEspera = async (id) => {
     set('hEspecie',d.especie); set('hRaza',d.raza);   set('hEdad',d.edad);
     set('hSexo',d.sexo); set('hPeso',d.peso);         set('hTlf',d.telefono);
     set('hMail',d.correo); set('hDir',d.direccion);   set('hColor',d.color);
+    if (d.motivoConsulta) {
+      set('hTratamiento', 'MOTIVO DE CONSULTA:\n' + d.motivoConsulta);
+    }
+    if (d.esReferido && typeof window._mostrarBannerReferido === 'function') {
+      window._esConsultaReferida = true;
+      window._mostrarBannerReferido();
+    }
     await updateDoc(doc(db,"espera",id),{estado:"atendiendo",fechaAtencion:serverTimestamp()});
     window.showTab('historia');
     alert(`✅ ${d.paciente} cargado en historia clínica.`);
   } catch (e) { alert("❌ Error: " + e.message); }
+};
+
+// Registrar paciente referido desde sala de espera (recepcionista, sin PIN de doctor)
+window.abrirFichaReferido = async () => {
+  const res = await Swal.fire({
+    title: '🔗 Registrar Paciente Referido',
+    html:
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;margin-top:8px;">' +
+        '<div style="grid-column:1/-1;">' +
+          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Nombre de la Mascota *</label>' +
+          '<input id="rf_paciente" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="LUNA, THOR...">' +
+        '</div>' +
+        '<div>' +
+          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Especie</label>' +
+          '<input id="rf_especie" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="CANINO, FELINO...">' +
+        '</div>' +
+        '<div>' +
+          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Raza</label>' +
+          '<input id="rf_raza" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="MESTIZO...">' +
+        '</div>' +
+        '<div>' +
+          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Propietario *</label>' +
+          '<input id="rf_propietario" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="NOMBRE APELLIDO">' +
+        '</div>' +
+        '<div>' +
+          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Cédula</label>' +
+          '<input id="rf_cedula" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;" placeholder="V12345678">' +
+        '</div>' +
+        '<div>' +
+          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Teléfono</label>' +
+          '<input id="rf_telefono" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;" placeholder="04XX-XXXXXXX">' +
+        '</div>' +
+        '<div style="grid-column:1/-1;">' +
+          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Motivo de Consulta / Síntomas *</label>' +
+          '<textarea id="rf_motivo" rows="3" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;resize:vertical;outline:none;font-family:inherit;" placeholder="Describir síntomas o motivo de la visita..."></textarea>' +
+        '</div>' +
+      '</div>',
+    confirmButtonText: '✅ Registrar en Espera',
+    confirmButtonColor: '#7c3aed',
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+    width: '500px',
+    didOpen: () => { document.getElementById('rf_paciente')?.focus(); },
+    preConfirm: () => {
+      const paciente    = document.getElementById('rf_paciente')?.value.trim().toUpperCase();
+      const propietario = document.getElementById('rf_propietario')?.value.trim().toUpperCase();
+      const motivo      = document.getElementById('rf_motivo')?.value.trim();
+      if (!paciente)    { Swal.showValidationMessage('El nombre de la mascota es obligatorio'); return false; }
+      if (!propietario) { Swal.showValidationMessage('El nombre del propietario es obligatorio'); return false; }
+      if (!motivo)      { Swal.showValidationMessage('Describe el motivo de la consulta'); return false; }
+      return {
+        paciente, propietario, motivo,
+        cedula:    document.getElementById('rf_cedula')?.value.trim()    || 'REFERIDO',
+        especie:   document.getElementById('rf_especie')?.value.trim().toUpperCase() || '',
+        raza:      document.getElementById('rf_raza')?.value.trim().toUpperCase()    || '',
+        telefono:  document.getElementById('rf_telefono')?.value.trim()  || '',
+      };
+    }
+  });
+  if (!res.isConfirmed) return;
+  const d = res.value;
+  try {
+    await addDoc(collection(db, "espera"), {
+      cedula: d.cedula, propietario: d.propietario, paciente: d.paciente,
+      especie: d.especie, raza: d.raza, telefono: d.telefono,
+      motivoConsulta: d.motivo,
+      esReferido: true,
+      fechaIngreso: serverTimestamp(),
+      fechaSimple: `${new Date().getDate()}/${new Date().getMonth()+1}/${new Date().getFullYear()}`,
+      estado: "en_espera"
+    });
+    await Swal.fire({ icon:'success', title:'✅ Registrado', text:`${d.paciente} está en sala de espera.`, timer:2000, showConfirmButton:false });
+  } catch(e) { alert("❌ Error: " + e.message); }
 };
 
 window.eliminarDeSalaEspera = async (id) => {

@@ -285,7 +285,7 @@ window.guardarPeluqueriaPro = async () => {
   let precioFinal=tipoServ==='solo_unas'?precioUnas:(base+ajuste);
   const tieneAyu1=document.getElementById('pAyudante1')?.checked,tieneAyuExt=document.getElementById('pAyudanteExtra')?.checked,extraSolo=document.getElementById('pExtraSolo')?.checked,montoAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||2;
   let pagoPelu=0,pagoAyu1=0,pagoAyuExt=0,ingresoAvipet=0;
-  if(extraSolo){pagoAyuExt=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;}
+  if(extraSolo){pagoAyuExt=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;if(tieneAyu1){pagoAyuExt-=1;pagoAyu1=montoAyu1;ingresoAvipet-=1;}}
   else if(tieneAyuExt){const p=precioFinal/3;pagoPelu=p;pagoAyuExt=p;ingresoAvipet=p;}
   else{pagoPelu=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;if(tieneAyu1){pagoPelu-=montoAyu1;pagoAyu1=montoAyu1;}}
 
@@ -305,6 +305,39 @@ window.guardarPeluqueriaPro = async () => {
   const empleadoInfo=await window.validarEmpleadoConPin(String(pin).trim());
   if(!empleadoInfo&&String(pin).trim()!==MASTER_KEY()){alert("❌ PIN incorrecto.");return;}
   const nombreEmpleado=empleadoInfo?empleadoInfo.nombre:"ADMIN_MASTER";
+
+  // ── Forma de pago ─────────────────────────────────────────
+  const { value: _fpPelu } = await Swal.fire({
+    title: '💳 Forma de pago',
+    html:
+      '<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">' +
+        '<button id="fp_dolares"  style="padding:14px;border-radius:12px;border:2px solid #22c55e;background:#f0fdf4;font-size:13px;font-weight:900;cursor:pointer;color:#15803d;">💵 Dólares</button>' +
+        '<button id="fp_movil"   style="padding:14px;border-radius:12px;border:2px solid #3b82f6;background:#eff6ff;font-size:13px;font-weight:900;cursor:pointer;color:#1d4ed8;">📲 Pago Móvil / Tarjeta</button>' +
+        '<button id="fp_cashea"  style="padding:14px;border-radius:12px;border:2px solid #7c3aed;background:#faf5ff;font-size:13px;font-weight:900;cursor:pointer;color:#7c3aed;">🟣 Cashea</button>' +
+      '</div>',
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+    allowOutsideClick: false,
+    didOpen: () => {
+      const btns = document.querySelectorAll('#fp_dolares,#fp_movil,#fp_cashea');
+      btns.forEach(b => b.addEventListener('click', function() {
+        btns.forEach(x => { x.style.opacity = '0.4'; x.style.transform = ''; });
+        this.style.opacity = '1';
+        this.style.transform = 'scale(1.03)';
+        Swal._pagoElegido = this.id.replace('fp_','');
+        Swal.clickConfirm();
+      }));
+    },
+    preConfirm: () => {
+      const v = Swal._pagoElegido;
+      if (!v) { Swal.showValidationMessage('Selecciona una forma de pago'); return false; }
+      Swal._pagoElegido = null;
+      return v;
+    }
+  });
+  if (!_fpPelu) return;
+  const _fpPeluLabel = { dolares:'Dólares', movil:'Pago Móvil / Tarjeta', cashea:'Cashea' }[_fpPelu] || _fpPelu;
 
   try{
     const ahora=new Date();
@@ -332,14 +365,15 @@ window.guardarPeluqueriaPro = async () => {
       let pagoPeluEsta=0, pagoAyu1Esta=0, pagoAyuExtEsta=0, ingresoAvipetEsta=0;
       if(extraSolo){
         pagoAyuExtEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
+        if(aplicaAyu1){ pagoAyuExtEsta-=1; pagoAyu1Esta=2; ingresoAvipetEsta-=1; }
       } else if(tieneAyuExt){
         const p=precioEsta/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
       } else {
         pagoPeluEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
         if(aplicaAyu1){
-          pagoPeluEsta      -= 1;  // $1 descontado a peluquera
-          ingresoAvipetEsta -= 1;  // $1 descontado a Avipet
-          pagoAyu1Esta       = 2;  // ayudante recibe $2 ($1 de pelu + $1 de Avipet)
+          pagoPeluEsta      -= 1;
+          ingresoAvipetEsta -= 1;
+          pagoAyu1Esta       = 2;
         }
       }
 
@@ -359,6 +393,7 @@ window.guardarPeluqueriaPro = async () => {
         ingresoAvipet:esPremio?0:ingresoAvipetEsta,
         estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,
         montoPagadoUSD:0,montoPagadoBS:0,modoPago:'',
+        formaPago:_fpPelu,formaPagoLabel:_fpPeluLabel,
         fotosLlegada: []
       });
 
@@ -654,6 +689,11 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
                   class="w-full py-4 rounded-2xl border-2 border-slate-200 bg-slate-50 font-black text-sm text-slate-600 hover:bg-slate-600 hover:text-white hover:border-slate-600 transition-all">
             🔀 Pago Mixto (USD + Bs)
           </button>
+          <button type="button" id="btnPagoCashea"
+                  onclick="window._selPago('cashea')"
+                  class="w-full py-4 rounded-2xl border-2 border-purple-200 bg-purple-50 font-black text-sm text-purple-700 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all">
+            🟣 Cashea
+          </button>
         </div>`,
       showConfirmButton: false,
       showCancelButton: true,
@@ -674,9 +714,10 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
     if (!modo) return;
 
     // ── PASO 2: Ingresar monto (siempre en USD) ──
-    const labelModo = modo === 'usd' ? '💵 Monto en Dólares ($)' :
-                      modo === 'bs'  ? '🟡 Monto en Dólares ($ equivalente en Bs)' :
-                                       '💵 Cuánto pagó en USD';
+    const labelModo = modo === 'usd'    ? '💵 Monto en Dólares ($)' :
+                      modo === 'bs'     ? '🟡 Monto en Dólares ($ equivalente en Bs)' :
+                      modo === 'cashea' ? '🟣 Monto en Dólares ($) vía Cashea' :
+                                         '💵 Cuánto pagó en USD';
     const labelModo2 = modo === 'mixto' ? '🟡 Cuánto pagó en Bs (monto en $)' : '';
 
     let htmlMonto = `
@@ -698,7 +739,7 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
     }
     htmlMonto += '</div>';
 
-    const titulos = { usd: '💵 Pago en Dólares', bs: '🟡 Pago en Bolívares', mixto: '🔀 Pago Mixto' };
+    const titulos = { usd: '💵 Pago en Dólares', bs: '🟡 Pago en Bolívares', mixto: '🔀 Pago Mixto', cashea: '🟣 Pago Cashea' };
 
     const resMonto = await Swal.fire({
       title: titulos[modo],
@@ -731,8 +772,13 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
       txtConfirm = `$${m1.toFixed(2)} en Dólares`;
     } else if (modo === 'bs') {
       guardar.montoPagadoUSD = 0;
-      guardar.montoPagadoBS  = m1;   // guardamos el equivalente en $ que se pagó en Bs
+      guardar.montoPagadoBS  = m1;
       txtConfirm = `$${m1.toFixed(2)} en Bolívares`;
+    } else if (modo === 'cashea') {
+      guardar.montoPagadoUSD = m1;
+      guardar.montoPagadoBS  = 0;
+      guardar.formaPago = 'cashea';
+      txtConfirm = `$${m1.toFixed(2)} vía Cashea`;
     } else {
       guardar.montoPagadoUSD = m1;
       guardar.montoPagadoBS  = m2;
@@ -986,19 +1032,21 @@ window.recalcularTotalPelu = () => {
 
     let pelu = 0, a1 = 0, aex = 0;
     if (exSolo) {
+      // Ayudante Extra cobra 40% — Ayudante Principal puede cobrar además $2/perro
       aex = cobro * 0.40;
-      if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
+      if (chkA1) chkA1.disabled = false;
+      if (ayu1Act && cobro >= 10) { aex -= 1; a1 = 2; }
     } else if (ayuExt) {
+      // Tridente: pelu + extra + avipet a partes iguales, sin ayudante principal
       if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
       pelu = cobro / 3;
       aex  = cobro / 3;
     } else {
       if (chkA1) chkA1.disabled = false;
       pelu = cobro * 0.40;
-      // Ayudante solo aplica si precio >= $10
       if (ayu1Act && cobro >= 10) {
-        pelu -= 1; // $1 descontado a peluquera
-        a1 = 2;   // ayudante recibe $2 ($1 pelu + $1 Avipet)
+        pelu -= 1;
+        a1 = 2;
       }
     }
 
@@ -1012,7 +1060,8 @@ window.recalcularTotalPelu = () => {
   if (totalCobro === 0) {
     totalCobro = precioBase;
     if (exSolo) {
-      totalAex  = precioBase * 0.40;
+      totalAex = precioBase * 0.40;
+      if (ayu1Act && precioBase >= 10) { totalAex -= 1; totalA1 = 2; }
     } else if (ayuExt) {
       totalPelu = precioBase / 3;
       totalAex  = precioBase / 3;
@@ -1056,36 +1105,18 @@ window.buscarClientePeluqueria = async (cedulaInput) => {
 
   try {
     let datos = null;
+    const varArr = Array.from(variantes).filter(v => v && v.length >= 4);
 
-    // Buscar en consultas — probar cada variante
-    for (const v of variantes) {
-      if (datos) break;
-      if (!v || v.length < 4) continue;
-      const snap = await getDocs(query(collection(db,'consultas'), where('cedula','==',v), limit(1)));
-      if (!snap.empty) { datos = snap.docs[0].data(); break; }
-    }
+    // Buscar en consultas, pacientes_peluqueria y fidelidad_peluqueria en paralelo
+    const [consultasResults, pelResults, fidResults] = await Promise.all([
+      Promise.all(varArr.map(v => getDocs(query(collection(db,'consultas'), where('cedula','==',v), limit(1))).catch(()=>null))),
+      Promise.all(varArr.map(v => getDoc(doc(db,'pacientes_peluqueria', v)).catch(()=>null))),
+      Promise.all(varArr.map(v => getDoc(doc(db,'fidelidad_peluqueria', v.toLowerCase())).catch(()=>null)))
+    ]);
 
-    // Buscar en pacientes_peluqueria
-    if (!datos) {
-      for (const v of variantes) {
-        if (datos) break;
-        try {
-          const pelSnap = await getDoc(doc(db,'pacientes_peluqueria', v));
-          if (pelSnap.exists()) { datos = pelSnap.data(); break; }
-        } catch(e) {}
-      }
-    }
-
-    // Buscar en fidelidad_peluqueria
-    if (!datos) {
-      for (const v of variantes) {
-        if (datos) break;
-        try {
-          const fidSnap = await getDoc(doc(db,'fidelidad_peluqueria', v.toLowerCase()));
-          if (fidSnap.exists()) { datos = fidSnap.data(); break; }
-        } catch(e) {}
-      }
-    }
+    for (const snap of consultasResults) { if (snap && !snap.empty) { datos = snap.docs[0].data(); break; } }
+    if (!datos) { for (const snap of pelResults) { if (snap?.exists()) { datos = snap.data(); break; } } }
+    if (!datos) { for (const snap of fidResults) { if (snap?.exists()) { datos = snap.data(); break; } } }
 
     if (datos) {
       // Llenar campos del dueño
@@ -1413,7 +1444,7 @@ window.descargarTarjetaPelu = async () => {
 window.mostrarQRTarjeta=()=>{const cedula=document.getElementById('pCedula')?.value||"";const mascota=document.getElementById('pNombre')?.value||"CLIENTE VIP";const visitas=document.getElementById('contadorVisitas')?.innerText||"0/10";if(!cedula){Swal.fire({icon:'error',title:'FALTA CÉDULA'});return;}Swal.fire({title:`<span class="text-blue-700 font-black italic">TARJETA DIGITAL</span>`,html:`<div class="flex flex-col items-center"><div id="qr_real" class="bg-white p-3 border-4 border-blue-600 rounded-2xl shadow-lg"></div><p class="mt-4 text-sm font-black text-slate-800 uppercase">${mascota}</p><p class="text-[10px] font-bold text-blue-600">CI: ${cedula}</p></div>`,showConfirmButton:true,confirmButtonText:'LISTO',confirmButtonColor:'#1d4ed8',didOpen:()=>{new QRCode(document.getElementById("qr_real"),{text:`AVIPET_VIP\nID:${cedula}\nPET:${mascota}\nVISITS:${visitas}`,width:180,height:180,colorDark:"#1d4ed8",correctLevel:QRCode.CorrectLevel.H});}});};
 
 // ─── 10. LIQUIDACIÓN SEMANAL ───
-window.generarCierrePeluqueria=async()=>{const cont=document.getElementById('reportePeluqueriaResultados');if(!cont)return;cont.classList.remove('hidden');cont.innerHTML=`<div class="flex flex-col items-center p-10 bg-white rounded-xl border border-slate-100 mt-4"><div class="animate-spin rounded-full h-10 w-10 border-b-4 border-purple-600 mb-4"></div><p class="text-[10px] font-black uppercase text-purple-900 italic">Calculando...</p></div>`;try{const hace7=new Date();hace7.setDate(hace7.getDate()-7);const snap=await getDocs(query(collection(db,"servicios_estetica"),where("fecha",">=",hace7),orderBy("fecha","desc")));let totalRec=0,totalPelu=0,totalAyu=0,totalUSD=0,totalBS=0,cnt=0,rows='';snap.forEach(d=>{const r=d.data();const b=parseFloat(r.precioTotal)||0,p=parseFloat(r.pagoPeluquera)||0,a=(parseFloat(r.pagoAyudante1)||0)+(parseFloat(r.pagoAyudanteExtra)||0);totalRec+=b;totalPelu+=p;totalAyu+=a;cnt++;if(r.estatusPago==='pagado'){totalUSD+=parseFloat(r.montoPagadoUSD||0);totalBS+=parseFloat(r.montoPagadoBS||0);}const usd=parseFloat(r.montoPagadoUSD||0),bs=parseFloat(r.montoPagadoBS||0);const pagoStr=r.estatusPago==='pagado'?(usd>0&&bs>0?`$${usd.toFixed(0)}+Bs${bs.toFixed(0)}`:bs>0?`Bs${bs.toFixed(0)}`:`$${usd.toFixed(0)}`):'-';rows+=`<tr class="border-b border-slate-100 hover:bg-purple-50"><td class="p-3 opacity-70">${r.fechaSimple||'---'}</td><td class="p-3 uppercase"><span class="text-purple-600 block">${r.paciente||'---'}</span><span class="text-[8px] text-slate-400">${r.duenio||''}</span></td><td class="p-3 text-center font-mono">$${b.toFixed(2)}</td><td class="p-3 text-center text-blue-700 font-mono font-black">$${p.toFixed(2)}</td><td class="p-3 text-center text-emerald-600 font-mono font-black">$${a.toFixed(2)}</td><td class="p-3 text-center text-[9px] font-bold ${r.estatusPago==='pagado'?'text-emerald-600':'text-red-500'}">${pagoStr}</td></tr>`;});cont.innerHTML=`<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4"><div class="bg-slate-900 border-b-4 border-slate-600 p-4 rounded-xl"><p class="text-[8px] text-slate-400 uppercase font-black mb-1">Bruto 7d</p><p class="text-xl font-black text-white">$${totalRec.toFixed(2)}</p></div><div class="bg-blue-600 border-b-4 border-blue-800 p-4 rounded-xl"><p class="text-[8px] text-blue-100 uppercase font-black mb-1">Peluquera</p><p class="text-xl font-black text-white">$${totalPelu.toFixed(2)}</p></div><div class="bg-emerald-500 border-b-4 border-emerald-700 p-4 rounded-xl"><p class="text-[8px] text-emerald-100 uppercase font-black mb-1">Caja USD</p><p class="text-xl font-black text-white">$${totalUSD.toFixed(2)}</p></div><div class="bg-amber-500 border-b-4 border-amber-700 p-4 rounded-xl"><p class="text-[8px] text-amber-100 uppercase font-black mb-1">Caja Bs</p><p class="text-xl font-black text-white">Bs ${totalBS.toFixed(2)}</p></div></div>${cnt===0?`<div class="mt-6 p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-black uppercase italic text-xs">Sin servicios en 7 días</div>`:`<div class="overflow-x-auto mt-6"><table class="w-full text-left border-collapse rounded-lg overflow-hidden shadow-sm"><thead><tr class="bg-purple-900 text-white uppercase text-[9px] font-black italic"><th class="p-3">Fecha</th><th class="p-3">Mascota</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Peluquera</th><th class="p-3 text-center">Ayudantes</th><th class="p-3 text-center">Cobrado</th></tr></thead><tbody class="text-[11px] font-bold text-slate-700 bg-white">${rows}</tbody></table></div>`}<button onclick="this.parentElement.classList.add('hidden')" class="w-full mt-4 text-[9px] font-black text-slate-400 uppercase hover:text-red-500 italic">✖ Cerrar</button>`;}catch(e){console.error(e);alert("Error: "+e.message);}};
+window.generarCierrePeluqueria=async()=>{const cont=document.getElementById('reportePeluqueriaResultados');if(!cont)return;cont.classList.remove('hidden');cont.innerHTML=`<div class="flex flex-col items-center p-10 bg-white rounded-xl border border-slate-100 mt-4"><div class="animate-spin rounded-full h-10 w-10 border-b-4 border-purple-600 mb-4"></div><p class="text-[10px] font-black uppercase text-purple-900 italic">Calculando...</p></div>`;try{const hace7=new Date();hace7.setDate(hace7.getDate()-7);hace7.setHours(0,0,0,0);const snap=await getDocs(query(collection(db,"servicios_estetica"),where("fecha",">=",hace7),orderBy("fecha","desc")));let totalRec=0,totalPelu=0,totalAyu=0,totalUSD=0,totalBS=0,cnt=0,rows='';snap.forEach(d=>{const r=d.data();const b=parseFloat(r.precioTotal)||0,p=parseFloat(r.pagoPeluquera)||0,a=(parseFloat(r.pagoAyudante1)||0)+(parseFloat(r.pagoAyudanteExtra)||0);totalRec+=b;totalPelu+=p;totalAyu+=a;cnt++;if(r.estatusPago==='pagado'){totalUSD+=parseFloat(r.montoPagadoUSD||0);totalBS+=parseFloat(r.montoPagadoBS||0);}const usd=parseFloat(r.montoPagadoUSD||0),bs=parseFloat(r.montoPagadoBS||0);const pagoStr=r.estatusPago==='pagado'?(usd>0&&bs>0?`$${usd.toFixed(0)}+Bs${bs.toFixed(0)}`:bs>0?`Bs${bs.toFixed(0)}`:`$${usd.toFixed(0)}`):'-';rows+=`<tr class="border-b border-slate-100 hover:bg-purple-50"><td class="p-3 opacity-70">${r.fechaSimple||'---'}</td><td class="p-3 uppercase"><span class="text-purple-600 block">${r.paciente||'---'}</span><span class="text-[8px] text-slate-400">${r.duenio||''}</span></td><td class="p-3 text-center font-mono">$${b.toFixed(2)}</td><td class="p-3 text-center text-blue-700 font-mono font-black">$${p.toFixed(2)}</td><td class="p-3 text-center text-emerald-600 font-mono font-black">$${a.toFixed(2)}</td><td class="p-3 text-center text-[9px] font-bold ${r.estatusPago==='pagado'?'text-emerald-600':'text-red-500'}">${pagoStr}</td></tr>`;});cont.innerHTML=`<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4"><div class="bg-slate-900 border-b-4 border-slate-600 p-4 rounded-xl"><p class="text-[8px] text-slate-400 uppercase font-black mb-1">Bruto 7d</p><p class="text-xl font-black text-white">$${totalRec.toFixed(2)}</p></div><div class="bg-blue-600 border-b-4 border-blue-800 p-4 rounded-xl"><p class="text-[8px] text-blue-100 uppercase font-black mb-1">Peluquera</p><p class="text-xl font-black text-white">$${totalPelu.toFixed(2)}</p></div><div class="bg-emerald-500 border-b-4 border-emerald-700 p-4 rounded-xl"><p class="text-[8px] text-emerald-100 uppercase font-black mb-1">Caja USD</p><p class="text-xl font-black text-white">$${totalUSD.toFixed(2)}</p></div><div class="bg-amber-500 border-b-4 border-amber-700 p-4 rounded-xl"><p class="text-[8px] text-amber-100 uppercase font-black mb-1">Caja Bs</p><p class="text-xl font-black text-white">Bs ${totalBS.toFixed(2)}</p></div></div>${cnt===0?`<div class="mt-6 p-8 text-center bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-black uppercase italic text-xs">Sin servicios en 7 días</div>`:`<div class="overflow-x-auto mt-6"><table class="w-full text-left border-collapse rounded-lg overflow-hidden shadow-sm"><thead><tr class="bg-purple-900 text-white uppercase text-[9px] font-black italic"><th class="p-3">Fecha</th><th class="p-3">Mascota</th><th class="p-3 text-center">Total</th><th class="p-3 text-center">Peluquera</th><th class="p-3 text-center">Ayudantes</th><th class="p-3 text-center">Cobrado</th></tr></thead><tbody class="text-[11px] font-bold text-slate-700 bg-white">${rows}</tbody></table></div>`}<button onclick="this.parentElement.classList.add('hidden')" class="w-full mt-4 text-[9px] font-black text-slate-400 uppercase hover:text-red-500 italic">✖ Cerrar</button>`;}catch(e){console.error(e);alert("Error: "+e.message);}};
 
 // ─── 11. EXPORTAR EXCEL ───
 window.exportarExcelPeluqueria=async()=>{try{const snap=await getDocs(collection(db,"servicios_estetica"));const datos=[];snap.forEach(d=>{const r=d.data();datos.push({Fecha:r.fechaSimple||'---',Paciente:r.paciente||'---',Dueno:r.duenio||'---',CI:r.cedulaCliente||'---',Telefono:r.telefono||'---',Direccion:r.direccion||'---',Servicio:r.servicio||'---',Total:r.precioTotal||0,Peluquera:r.pagoPeluquera||0,Ayudantes:(parseFloat(r.pagoAyudante1)||0)+(parseFloat(r.pagoAyudanteExtra)||0),PagadoUSD:r.montoPagadoUSD||0,PagadoBS:r.montoPagadoBS||0,TasaCambio:r.tasaCambioPago||0,Estatus:r.estatusPago||'---',Empleado:r.empleadoRegistro||'---'});});if(!datos.length)return alert("No hay datos.");const hoja=XLSX.utils.json_to_sheet(datos);const libro=XLSX.utils.book_new();XLSX.utils.book_append_sheet(libro,hoja,"Peluqueria");XLSX.writeFile(libro,`Peluqueria_${new Date().toISOString().split('T')[0]}.xlsx`);}catch(e){console.error(e);alert("❌ Error: "+e.message);}};

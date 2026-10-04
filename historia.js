@@ -365,6 +365,34 @@ window.insertarServicio = async (v) => {
     nombreFinal = 'GUSANERA ' + (window._gusGrav||'');
     window._gusGrav = null; window._gusPrecio = null;
   }
+  else if(v === 'CIRUGÍA PERSONALIZADA' || vLimpio === 'cirugiapersonalizada') {
+    const resCir = await Swal.fire({
+      title: '🔪 Cirugía',
+      html:
+        '<div style="text-align:left;">' +
+          '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Tipo de cirugía</label>' +
+          '<input id="sw_tipoCirugia" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;margin-bottom:14px;" placeholder="Ej: CASTRACIÓN, PIOMETRA, FRACTURA...">' +
+          '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Precio ($)</label>' +
+          '<input id="sw_precioCirugia" type="number" step="0.50" min="0" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:18px;font-weight:900;outline:none;" placeholder="0.00">' +
+        '</div>',
+      confirmButtonText: '✅ Agregar',
+      confirmButtonColor: '#1d4ed8',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      didOpen: () => { document.getElementById('sw_tipoCirugia')?.focus(); },
+      preConfirm: () => {
+        const tipo = document.getElementById('sw_tipoCirugia')?.value.trim().toUpperCase();
+        const precio = parseFloat(document.getElementById('sw_precioCirugia')?.value) || 0;
+        if (!tipo) { Swal.showValidationMessage('Escribe el tipo de cirugía'); return false; }
+        if (precio <= 0) { Swal.showValidationMessage('Ingresa un precio mayor a 0'); return false; }
+        return { tipo, precio };
+      }
+    });
+    if (resCir.isDismissed) { document.getElementById('selectorServicios').value = ''; return; }
+    nombreFinal = 'CIRUGÍA: ' + resCir.value.tipo;
+    precioFinal = resCir.value.precio;
+    porcServ = 50;
+  }
   else if(vLimpio==="oxigeno"||v.toUpperCase()==="OXÍGENO"||v.toUpperCase()==="OXIGENO") {
     const pphFb = precioFinal || 10;
     const resOx = await Swal.fire({
