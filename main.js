@@ -479,83 +479,305 @@ window.abrirPacienteDesdeEspera = async (id) => {
       window._esConsultaReferida = true;
       window._mostrarBannerReferido();
     }
+    // Si ya existe una consulta creada por recepcionista, abrirla en modo edición
+    if (d.consultaId && typeof window.abrirConsultaParaEditar === 'function') {
+      await updateDoc(doc(db,"espera",id),{estado:"atendiendo",fechaAtencion:serverTimestamp()});
+      await window.abrirConsultaParaEditar(d.consultaId);
+      return;
+    }
+
+    // Asignar doctor pre-seleccionado
+    if (d.doctor) {
+      const selDoc = document.getElementById('selectDoctor');
+      if (selDoc) selDoc.value = d.doctor;
+    }
+    // Preset forma de pago para saltar el Swal en guardarFirebase
+    if (d.formaPago) {
+      window._formaPagoPreset = { value: d.formaPago, label: d.formaPagoLabel || d.formaPago };
+    }
+    // Pre-cargar servicios del referido en la tabla de historia
+    if (Array.isArray(d.serviciosReferido) && d.serviciosReferido.length > 0 && typeof window.insertarServicioReferido === 'function') {
+      for (const s of d.serviciosReferido) {
+        await window.insertarServicioReferido(s.nombre, s.precio, s.porc);
+      }
+    }
     await updateDoc(doc(db,"espera",id),{estado:"atendiendo",fechaAtencion:serverTimestamp()});
     window.showTab('historia');
     alert(`✅ ${d.paciente} cargado en historia clínica.`);
   } catch (e) { alert("❌ Error: " + e.message); }
 };
 
-// Registrar paciente referido desde sala de espera (recepcionista, sin PIN de doctor)
+// ── FICHA REFERIDO — modal completo con servicios ─────────
+let _rfServicios = [];
+const _rfFP_LABELS = { dolares:'Dólares', movil:'Pago Móvil / Tarjeta', cashea:'Cashea' };
+
+function _rfCrearModal() {
+  const el = document.createElement('div');
+  el.id = 'modalFichaReferido';
+  el.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.65);overflow-y:auto;padding:16px;';
+  el.innerHTML = `
+  <div style="background:#fff;max-width:580px;margin:0 auto;border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.35);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h2 style="font-size:14px;font-weight:900;color:#1e293b;text-transform:uppercase;margin:0;">🔗 Ficha de Paciente Referido</h2>
+      <button onclick="document.getElementById('modalFichaReferido').style.display='none'"
+              style="background:#f1f5f9;border:none;border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;color:#64748b;">✕</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="grid-column:1/-1;">
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Nombre Mascota *</label>
+        <input id="rf_paciente" type="text" placeholder="LUNA, THOR..."
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Especie</label>
+        <input id="rf_especie" type="text" placeholder="CANINO / FELINO"
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Raza</label>
+        <input id="rf_raza" type="text" placeholder="MESTIZO..."
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Propietario *</label>
+        <input id="rf_propietario" type="text" placeholder="NOMBRE APELLIDO"
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Cédula</label>
+        <input id="rf_cedula" type="text" placeholder="V12345678"
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Teléfono</label>
+        <input id="rf_telefono" type="text" placeholder="04XX-XXXXXXX"
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Doctor Asignado</label>
+        <select id="rf_doctor"
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;outline:none;background:#fff;">
+          <option value="">-- Seleccionar --</option>
+          <option value="Darwin Sandoval">Dr. Darwin Sandoval</option>
+          <option value="Joan Silva">Dr. Joan Silva</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Forma de Pago</label>
+        <select id="rf_formaPago"
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;outline:none;background:#fff;">
+          <option value="dolares">💵 Dólares</option>
+          <option value="movil">📲 Pago Móvil / Tarjeta</option>
+          <option value="cashea">🟣 Cashea</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:3px;">Motivo / Síntomas *</label>
+        <textarea id="rf_motivo" rows="2" placeholder="Describir síntomas o motivo..."
+          style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;resize:vertical;outline:none;font-family:inherit;"></textarea>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;">Servicios</p>
+        <p style="font-size:12px;font-weight:900;color:#2563eb;margin:0;">Total: <span id="rf_total">$0.00</span></p>
+      </div>
+      <select id="rf_selectorServicio" onchange="window._rfAgregarServicio(this)"
+        style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:11px;font-weight:700;outline:none;background:#fff;margin-bottom:8px;">
+        <option value="">+ Agregar servicio...</option>
+      </select>
+      <div id="rf_listaServicios"></div>
+    </div>
+
+    <div id="rf_error" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:8px 12px;font-size:11px;font-weight:700;color:#dc2626;margin-bottom:10px;"></div>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="document.getElementById('modalFichaReferido').style.display='none'"
+        style="flex:1;padding:12px;border:2px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:12px;font-weight:900;cursor:pointer;color:#64748b;">
+        Cancelar
+      </button>
+      <button id="rf_btnGuardar" onclick="window._rfGuardar()"
+        style="flex:2;padding:12px;border:none;border-radius:12px;background:#7c3aed;color:#fff;font-size:12px;font-weight:900;cursor:pointer;">
+        ✅ Registrar en Espera
+      </button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+}
+
 window.abrirFichaReferido = async () => {
-  const res = await Swal.fire({
-    title: '🔗 Registrar Paciente Referido',
-    html:
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;margin-top:8px;">' +
-        '<div style="grid-column:1/-1;">' +
-          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Nombre de la Mascota *</label>' +
-          '<input id="rf_paciente" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="LUNA, THOR...">' +
-        '</div>' +
-        '<div>' +
-          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Especie</label>' +
-          '<input id="rf_especie" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="CANINO, FELINO...">' +
-        '</div>' +
-        '<div>' +
-          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Raza</label>' +
-          '<input id="rf_raza" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="MESTIZO...">' +
-        '</div>' +
-        '<div>' +
-          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Propietario *</label>' +
-          '<input id="rf_propietario" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;" placeholder="NOMBRE APELLIDO">' +
-        '</div>' +
-        '<div>' +
-          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Cédula</label>' +
-          '<input id="rf_cedula" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;" placeholder="V12345678">' +
-        '</div>' +
-        '<div>' +
-          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Teléfono</label>' +
-          '<input id="rf_telefono" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;outline:none;" placeholder="04XX-XXXXXXX">' +
-        '</div>' +
-        '<div style="grid-column:1/-1;">' +
-          '<label style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:3px;">Motivo de Consulta / Síntomas *</label>' +
-          '<textarea id="rf_motivo" rows="3" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;resize:vertical;outline:none;font-family:inherit;" placeholder="Describir síntomas o motivo de la visita..."></textarea>' +
-        '</div>' +
-      '</div>',
-    confirmButtonText: '✅ Registrar en Espera',
-    confirmButtonColor: '#7c3aed',
-    showCancelButton: true,
-    cancelButtonText: 'Cancelar',
-    width: '500px',
-    didOpen: () => { document.getElementById('rf_paciente')?.focus(); },
-    preConfirm: () => {
-      const paciente    = document.getElementById('rf_paciente')?.value.trim().toUpperCase();
-      const propietario = document.getElementById('rf_propietario')?.value.trim().toUpperCase();
-      const motivo      = document.getElementById('rf_motivo')?.value.trim();
-      if (!paciente)    { Swal.showValidationMessage('El nombre de la mascota es obligatorio'); return false; }
-      if (!propietario) { Swal.showValidationMessage('El nombre del propietario es obligatorio'); return false; }
-      if (!motivo)      { Swal.showValidationMessage('Describe el motivo de la consulta'); return false; }
-      return {
-        paciente, propietario, motivo,
-        cedula:    document.getElementById('rf_cedula')?.value.trim()    || 'REFERIDO',
-        especie:   document.getElementById('rf_especie')?.value.trim().toUpperCase() || '',
-        raza:      document.getElementById('rf_raza')?.value.trim().toUpperCase()    || '',
-        telefono:  document.getElementById('rf_telefono')?.value.trim()  || '',
-      };
-    }
-  });
-  if (!res.isConfirmed) return;
-  const d = res.value;
+  if (!document.getElementById('modalFichaReferido')) _rfCrearModal();
+  _rfServicios = [];
+
+  // Reset campos
+  ['rf_paciente','rf_especie','rf_raza','rf_propietario','rf_cedula','rf_telefono','rf_motivo']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const elDoc = document.getElementById('rf_doctor');
+  if (elDoc) elDoc.value = '';
+  const elFP = document.getElementById('rf_formaPago');
+  if (elFP) elFP.value = 'dolares';
+  document.getElementById('rf_listaServicios').innerHTML = '';
+  document.getElementById('rf_total').textContent = '$0.00';
+  document.getElementById('rf_error').style.display = 'none';
+
+  // Cargar servicios desde Firestore
+  const sel = document.getElementById('rf_selectorServicio');
+  sel.innerHTML = '<option value="">⏳ Cargando servicios...</option>';
   try {
-    await addDoc(collection(db, "espera"), {
-      cedula: d.cedula, propietario: d.propietario, paciente: d.paciente,
-      especie: d.especie, raza: d.raza, telefono: d.telefono,
-      motivoConsulta: d.motivo,
-      esReferido: true,
-      fechaIngreso: serverTimestamp(),
-      fechaSimple: `${new Date().getDate()}/${new Date().getMonth()+1}/${new Date().getFullYear()}`,
-      estado: "en_espera"
+    const snap = await getDocs(collection(db, 'servicios_maestro'));
+    const grupos = {};
+    snap.forEach(d => {
+      const dat = d.data();
+      if (dat.activo === false) return;
+      const cat = (dat.categoria || 'OTROS').toUpperCase();
+      if (!grupos[cat]) grupos[cat] = [];
+      grupos[cat].push({ nombre: d.id, precio: parseFloat(dat.precioVenta || 0), porc: parseFloat(dat.porcDoc || 30) });
     });
-    await Swal.fire({ icon:'success', title:'✅ Registrado', text:`${d.paciente} está en sala de espera.`, timer:2000, showConfirmButton:false });
-  } catch(e) { alert("❌ Error: " + e.message); }
+    sel.innerHTML = '<option value="">+ Agregar servicio...</option>';
+    Object.entries(grupos).sort().forEach(([cat, servicios]) => {
+      const grp = document.createElement('optgroup');
+      grp.label = cat;
+      servicios.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify(s);
+        opt.textContent = `${s.nombre}  —  $${s.precio.toFixed(2)}`;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+  } catch(e) {
+    sel.innerHTML = '<option value="">Error cargando servicios</option>';
+    console.warn('Error cargando servicios referido:', e);
+  }
+
+  document.getElementById('modalFichaReferido').style.display = 'block';
+  setTimeout(() => document.getElementById('rf_paciente')?.focus(), 100);
+};
+
+window._rfAgregarServicio = (sel) => {
+  if (!sel.value) return;
+  try {
+    const s = JSON.parse(sel.value);
+    _rfServicios.push({ ...s });
+    _rfRenderServicios();
+  } catch(e) { console.warn(e); }
+  sel.value = '';
+};
+
+window._rfQuitarServicio = (idx) => {
+  _rfServicios.splice(idx, 1);
+  _rfRenderServicios();
+};
+
+function _rfRenderServicios() {
+  const lista = document.getElementById('rf_listaServicios');
+  if (!lista) return;
+  let total = 0;
+  lista.innerHTML = '';
+  _rfServicios.forEach((s, i) => {
+    total += s.precio;
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;margin-bottom:6px;';
+    div.innerHTML = `
+      <span style="font-size:11px;font-weight:700;color:#1e293b;flex:1;">${s.nombre}</span>
+      <span style="font-size:13px;font-weight:900;color:#2563eb;margin-right:10px;">$${s.precio.toFixed(2)}</span>
+      <button onclick="window._rfQuitarServicio(${i})"
+        style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:22px;height:22px;font-weight:900;cursor:pointer;font-size:13px;line-height:1;">×</button>`;
+    lista.appendChild(div);
+  });
+  const totalEl = document.getElementById('rf_total');
+  if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
+}
+
+window._rfGuardar = async () => {
+  const get = id => document.getElementById(id)?.value?.trim() || '';
+  const paciente    = get('rf_paciente').toUpperCase();
+  const propietario = get('rf_propietario').toUpperCase();
+  const motivo      = get('rf_motivo');
+  const errEl = document.getElementById('rf_error');
+
+  if (!paciente || !propietario || !motivo) {
+    errEl.textContent = !paciente ? 'El nombre de la mascota es obligatorio.'
+                      : !propietario ? 'El nombre del propietario es obligatorio.'
+                      : 'Describe el motivo de la consulta.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const formaPago      = get('rf_formaPago') || 'dolares';
+  const montoReferido  = _rfServicios.reduce((s, x) => s + x.precio, 0);
+
+  const btn = document.getElementById('rf_btnGuardar');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+  try {
+    const cedula      = get('rf_cedula') || 'REFERIDO';
+    const especie     = get('rf_especie').toUpperCase();
+    const raza        = get('rf_raza').toUpperCase();
+    const telefono    = get('rf_telefono');
+    const doctor      = get('rf_doctor');
+    const fpLabel     = _rfFP_LABELS[formaPago] || formaPago;
+    const now         = new Date();
+    const fechaSimple = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+
+    // Calcular montos desde servicios
+    let totalGastos = 0, pagoDoctorTotal = 0;
+    const serviciosRealizados = _rfServicios.map(s => {
+      const porc  = parseFloat(s.porc) || 30;
+      const precio = parseFloat(s.precio) || 0;
+      const doc   = precio * porc / 100;
+      const gas   = precio - doc;
+      pagoDoctorTotal += doc;
+      totalGastos     += gas;
+      return { nombre: s.nombre, precio, porcDoc: porc };
+    });
+    const pagoAvipet = montoReferido - totalGastos - pagoDoctorTotal;
+
+    // 1. Crear historia en "consultas" visible en buscador
+    const dataConsulta = {
+      cedula, propietario, paciente, especie, raza, telefono,
+      doctor,
+      formaPago,
+      formaPagoLabel: fpLabel,
+      serviciosRealizados,
+      montoVenta:    montoReferido,
+      montoInsumos:  totalGastos,
+      pagoDoctor:    pagoDoctorTotal,
+      pagoAvipet,
+      tratamiento:   motivo,
+      esReferido:    true,
+      estadoReferido: 'pendiente',
+      fecha:         serverTimestamp(),
+      fechaSimple,
+    };
+    const consultaRef = await addDoc(collection(db, 'consultas'), dataConsulta);
+
+    // 2. Guardar en "espera" (sala de espera) con referencia a la consulta
+    await addDoc(collection(db, 'espera'), {
+      cedula, propietario, paciente, especie, raza, telefono,
+      motivoConsulta:  motivo,
+      doctor,
+      formaPago,
+      formaPagoLabel:  fpLabel,
+      serviciosReferido: _rfServicios,
+      montoReferido,
+      consultaId:      consultaRef.id,
+      esReferido:      true,
+      fechaIngreso:    serverTimestamp(),
+      fechaSimple,
+      estado:          'en_espera'
+    });
+
+    document.getElementById('modalFichaReferido').style.display = 'none';
+    await Swal.fire({ icon:'success', title:'✅ Registrado', text:`${paciente} está en sala de espera y aparece en el buscador.`, timer:2500, showConfirmButton:false });
+  } catch(e) {
+    errEl.textContent = 'Error al guardar: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Registrar en Espera'; }
+  }
 };
 
 window.eliminarDeSalaEspera = async (id) => {

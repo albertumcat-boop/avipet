@@ -306,6 +306,26 @@ window.migrarRecetasAFirestore = async () => {
   } catch(e) { Swal.fire({icon:'error', title:'Error', text:e.message}); }
 };
 
+// Inserta un servicio con precio ya conocido (usado al cargar referido) sin abrir modales
+window.insertarServicioReferido = async (nombre, precio, porc) => {
+  if (!nombre) return;
+  // Llamar insertarServicio para que cree la fila en la tabla
+  await window.insertarServicio(nombre);
+  // Sobreescribir precio en la última fila agregada
+  const filas = document.querySelectorAll('.servicio-principal');
+  if (filas.length > 0) {
+    const ultima = filas[filas.length - 1];
+    const inputPrecio = ultima.querySelector('input[type="number"], input.precio-serv, td:nth-child(2) input');
+    if (inputPrecio) {
+      inputPrecio.value = precio;
+      inputPrecio.dispatchEvent(new Event('input', { bubbles: true }));
+      inputPrecio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    // También actualizar via renderizarTablaMaestra si existe
+    if (typeof window.renderizarTablaMaestra === 'function') window.renderizarTablaMaestra();
+  }
+};
+
 window.insertarServicio = async (v) => {
   if (!v) return;
   const visual=document.getElementById('visualizacionServicios');
@@ -708,7 +728,12 @@ window.guardarFirebase = async (imp) => {
     if(!esValido){if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;}return alert("PIN incorrecto.");}
   }
   // ── Forma de pago ─────────────────────────────────────────
-  const { value: formaPagoElegida } = await Swal.fire({
+  // Si viene de un referido ya pre-asignado, saltar el Swal
+  let formaPagoElegida;
+  if (window._formaPagoPreset) {
+    formaPagoElegida = window._formaPagoPreset.value;
+  } else {
+  const { value: _fpVal } = await Swal.fire({
     title: '💳 Forma de pago',
     html:
       '<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">' +
@@ -737,8 +762,11 @@ window.guardarFirebase = async (imp) => {
       return v;
     }
   });
+  formaPagoElegida = _fpVal;
+  } // end else (no preset)
   if (!formaPagoElegida) { if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;} return; }
-  const _labelFormaPago = { dolares:'Dólares', movil:'Pago Móvil / Tarjeta', cashea:'Cashea' }[formaPagoElegida] || formaPagoElegida;
+  const _labelFormaPago = window._formaPagoPreset?.label || ({ dolares:'Dólares', movil:'Pago Móvil / Tarjeta', cashea:'Cashea' }[formaPagoElegida] || formaPagoElegida);
+  window._formaPagoPreset = null; // limpiar preset tras uso
 
   try{
     const leerImg=(a)=>new Promise(res=>{const r=new FileReader();r.readAsDataURL(a);r.onload=e=>res(e.target.result);r.onerror=()=>res("");});
@@ -811,6 +839,34 @@ window.guardarFirebase = async (imp) => {
       document.getElementById('bannerModoEdicion')?.classList.add('hidden');
       alert("✅ Consulta actualizada con éxito!");
     } else {
+      // ── Verificar duplicado del mismo día ──────────────────
+      const hoy = `${new Date().getDate()}/${new Date().getMonth()+1}/${new Date().getFullYear()}`;
+      const qDup = query(collection(db,'consultas'), where('cedula','==',data.cedula), where('fechaSimple','==',hoy));
+      const snapDup = await getDocs(qDup);
+      const normStr = s => (s||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+      const duplicado = snapDup.docs.find(dx => normStr(dx.data().paciente) === normStr(data.paciente));
+      if (duplicado) {
+        const resDup = await Swal.fire({
+          icon: 'warning',
+          title: '⚠️ Historia ya guardada hoy',
+          html: `<p style="font-size:13px;">Ya existe una historia de <b>${data.paciente}</b> guardada el día de hoy.</p><p style="font-size:12px;color:#64748b;margin-top:8px;">¿Deseas reemplazar la anterior o guardar como nueva consulta?</p>`,
+          showDenyButton: true,
+          showCancelButton: true,
+          confirmButtonText: '🔄 Reemplazar',
+          denyButtonText: '➕ Nueva Consulta',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#dc2626',
+        });
+        if (resDup.isDismissed) { if(btn?.tagName==='BUTTON'){btn.disabled=false;btn.innerText=textoOrig;} return; }
+        if (resDup.isConfirmed) {
+          await updateDoc(doc(db,'consultas',duplicado.id), {...data, ultimaEdicion:serverTimestamp(), editadoPor:nombreDoctor});
+          window._editandoConsultaId = duplicado.id;
+          document.getElementById('bannerModoEdicion')?.classList.add('hidden');
+          alert('✅ Consulta reemplazada con éxito!');
+          return;
+        }
+        // Si eligió "Nueva Consulta" continúa el addDoc normal
+      }
       const nuevoRef = await addDoc(collection(db,"consultas"),data);
       // Si se guardó desde Test, quedar en modo edición para que la historia no cree duplicado
       if (window._modoGuardarTest) {
