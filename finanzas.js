@@ -1189,7 +1189,7 @@ window.verResumenSemanalPelu = async () => {
     let totalBruto=0, totalPelu=0, totalAyuExt=0, totalAvipet=0, pendiente=0;
     let perrosConAyu=0, perrosSinAyu=0;
     let totalPeluUSD=0, totalPeluBS=0, totalAvipetUSD=0, totalAvipetBS=0;
-    let totalBrutoUSD=0, totalBrutoBS=0;
+    let totalBrutoUSD=0, totalBrutoBS=0, totalBrutoCashea=0;
     let totalAyuExtUSD=0, totalAyuExtBS=0;
     let rows = '';
 
@@ -1211,11 +1211,12 @@ window.verResumenSemanalPelu = async () => {
 
       // Acumular por moneda para el desglose USD/Bs
       const modoPagoR = r.modoPago || 'usd';
-      if (modoPagoR === 'bs') {
+      if (modoPagoR === 'bs' || modoPagoR === 'cashea') {
         totalPeluBS      += pagPelu;
         totalAvipetBS    += neto;
         totalBrutoBS     += precio;
         totalAyuExtBS    += pagAx;
+        if (modoPagoR === 'cashea') totalBrutoCashea += precio;
       } else if (modoPagoR === 'mixto') {
         totalPeluUSD     += pagPelu / 2;
         totalPeluBS      += pagPelu / 2;
@@ -1264,9 +1265,12 @@ window.verResumenSemanalPelu = async () => {
       var labelPago = 'PEND';
       if (r.estatusPago === 'pagado') {
         if (modoPago === 'bs') {
-          labelPago = '$' + precio.toFixed(2) + ' (Bs)';
+          labelPago = '$' + precio.toFixed(2) + ' Bs';
+        } else if (modoPago === 'cashea') {
+          const fee10 = precio * 0.10;
+          labelPago = '$' + precio.toFixed(2) + ' Bs<br><span style="color:#0f766e;font-size:7px;">Cashea -10% = -$' + fee10.toFixed(2) + '</span>';
         } else if (modoPago === 'mixto') {
-          labelPago = '$' + (precio/2).toFixed(2) + '$ + $' + (precio/2).toFixed(2) + '(Bs)';
+          labelPago = '$' + (precio/2).toFixed(2) + ' USD + $' + (precio/2).toFixed(2) + ' Bs';
         } else {
           labelPago = '$' + precio.toFixed(2) + ' USD';
         }
@@ -1329,9 +1333,9 @@ window.verResumenSemanalPelu = async () => {
     servicios.forEach(function(r2) {
       if (parseFloat(r2.pagoAyudante1||0) > 0) {
         var mp = r2.modoPago || 'usd';
-        if (mp === 'bs') { ayu1BS += 2; }           // $2 en Bs
-        else if (mp === 'mixto') { ayu1USD += 1; ayu1BS += 1; } // $1 USD + $1 en Bs
-        else { ayu1USD += 2; }                       // $2 USD
+        if (mp === 'bs' || mp === 'cashea') { ayu1BS += 2; }
+        else if (mp === 'mixto') { ayu1USD += 1; ayu1BS += 1; }
+        else { ayu1USD += 2; }
       }
     });
     htmlModal += '<div style="background:#eff6ff;border-radius:12px;padding:10px;">';
@@ -1379,13 +1383,20 @@ window.verResumenSemanalPelu = async () => {
 
     htmlModal += '<div style="background:#1e293b;border-radius:10px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Bruto semana</p>';
-    if (totalBrutoUSD > 0 && totalBrutoBS > 0) {
+    if (totalBrutoUSD > 0) {
       htmlModal += '<p style="font-size:15px;font-weight:900;color:#fff;margin:2px 0;">$' + totalBrutoUSD.toFixed(2) + ' USD</p>';
-      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fbbf24;margin:2px 0;">$' + totalBrutoBS.toFixed(2) + ' en Bs</p>';
-    } else if (totalBrutoBS > 0) {
-      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fbbf24;margin:2px 0;">$' + totalBrutoBS.toFixed(2) + ' en Bs</p>';
-    } else {
-      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fff;margin:2px 0;">$' + totalBrutoUSD.toFixed(2) + ' USD</p>';
+    }
+    const totalBsBruto = totalBrutoBS - totalBrutoCashea;
+    if (totalBsBruto > 0) {
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fbbf24;margin:2px 0;">$' + totalBsBruto.toFixed(2) + ' Bs</p>';
+    }
+    if (totalBrutoCashea > 0) {
+      const feeCashea = totalBrutoCashea * 0.10;
+      htmlModal += '<p style="font-size:14px;font-weight:900;color:#2dd4bf;margin:2px 0;">$' + totalBrutoCashea.toFixed(2) + ' Cashea (Bs)</p>';
+      htmlModal += '<p style="font-size:9px;color:#99f6e4;margin:0 0 2px 0;">-10% comisión = -$' + feeCashea.toFixed(2) + ' → neto $' + (totalBrutoCashea - feeCashea).toFixed(2) + '</p>';
+    }
+    if (totalBrutoUSD === 0 && totalBrutoBS === 0) {
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#fff;margin:2px 0;">$0.00</p>';
     }
     htmlModal += '</div></div>';
 
