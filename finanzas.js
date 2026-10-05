@@ -635,6 +635,7 @@ window.mostrarDashboardPelu = async () => {
         const bs=parseFloat(r.montoPagadoBS||0);
         if(r.modoPago==='bs'){ cobradoBS+=bs; }
         else if(r.modoPago==='mixto'){ cobradoUSD+=usd||0; cobradoBS+=bs||0; if(!usd&&!bs){ cobradoUSD+=precio; } }
+        else if(r.modoPago==='cashea'){ cobradoBS+=bs||precio; }
         else { cobradoUSD+=usd||precio; }
       } else { pendiente+=precio; }
       if(a1>0) perrosConAyu++;
@@ -813,7 +814,7 @@ window.mostrarDashboardPelu = async () => {
         const pagado=r.estatusPago==='pagado';
         const tieneA1=a1>0, tieneAx=ax>0;
 
-        const modoLabel = r.modoPago==='bs'?'Bs':r.modoPago==='mixto'?'Mixto':'USD';
+        const modoLabel = r.modoPago==='bs'?'Bs':r.modoPago==='mixto'?'Mixto':r.modoPago==='cashea'?'Cashea':'USD';
         const peluBruto=(precio*0.40).toFixed(2);
         const avBruto=(precio*0.60).toFixed(2);
 
@@ -1132,7 +1133,7 @@ window.pagarRegistroPeluFinanzas = async (idDoc, paciente, precio) => {
   if (!modoPago) return;
 
   const p = parseFloat(precio);
-  const montoPagadoUSD = modoPago === 'bs'    ? 0     : modoPago === 'mixto' ? p / 2 : p;
+  const montoPagadoUSD = (modoPago === 'bs' || modoPago === 'cashea') ? 0 : modoPago === 'mixto' ? p / 2 : p;
   const montoPagadoBS  = modoPago === 'usd'   ? 0     : modoPago === 'mixto' ? p / 2 : p;
 
   try {

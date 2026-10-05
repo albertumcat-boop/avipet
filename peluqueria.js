@@ -716,7 +716,7 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
     // ── PASO 2: Ingresar monto (siempre en USD) ──
     const labelModo = modo === 'usd'    ? '💵 Monto en Dólares ($)' :
                       modo === 'bs'     ? '🟡 Monto en Dólares ($ equivalente en Bs)' :
-                      modo === 'cashea' ? '🟣 Monto en Dólares ($) vía Cashea' :
+                      modo === 'cashea' ? '🟣 Monto en Bolívares ($ equivalente) vía Cashea' :
                                          '💵 Cuánto pagó en USD';
     const labelModo2 = modo === 'mixto' ? '🟡 Cuánto pagó en Bs (monto en $)' : '';
 
@@ -775,10 +775,10 @@ window.togglePagoPeluqueria = async (idServicio, estatusActual) => {
       guardar.montoPagadoBS  = m1;
       txtConfirm = `$${m1.toFixed(2)} en Bolívares`;
     } else if (modo === 'cashea') {
-      guardar.montoPagadoUSD = m1;
-      guardar.montoPagadoBS  = 0;
+      guardar.montoPagadoUSD = 0;
+      guardar.montoPagadoBS  = m1;
       guardar.formaPago = 'cashea';
-      txtConfirm = `$${m1.toFixed(2)} vía Cashea`;
+      txtConfirm = `$${m1.toFixed(2)} vía Cashea (Bs)`;
     } else {
       guardar.montoPagadoUSD = m1;
       guardar.montoPagadoBS  = m2;
