@@ -503,15 +503,22 @@ window.descargarReporte = () => {
   let totalDolares = 0, totalMovil = 0, totalCashea = 0, totalBrutoDoc = 0;
   Object.keys(r.porDoctor).sort().forEach(doc => {
     const g = r.porDoctor[doc];
+    const casheaFeeDoc = g.casheaFeeDoc || 0;
+    const comisionNeta = g.comision - casheaFeeDoc;
     const netoDoc = g.bruto - g.insumos - g.comision;
-    const casheaDoc = g.casheaFee || 0;
     totalBrutoDoc += g.bruto;
     txt += '\n  ' + doc.toUpperCase() + '\n';
     txt += '    Atenciones : ' + g.consultas.length + '\n';
     txt += '    Bruto      : $' + g.bruto.toFixed(2) + '\n';
     txt += '    Insumos    : $' + g.insumos.toFixed(2) + '\n';
     txt += '    Comision   : $' + g.comision.toFixed(2) + '\n';
-    txt += '    Neto       : $' + netoDoc.toFixed(2) + '\n';
+    if (casheaFeeDoc > 0) {
+      txt += '    Fee Cashea : -$' + casheaFeeDoc.toFixed(2) + ' (10% sobre su parte)\n';
+      txt += '    TOTAL DOC  : $' + comisionNeta.toFixed(2) + '\n';
+    } else {
+      txt += '    TOTAL DOC  : $' + g.comision.toFixed(2) + '\n';
+    }
+    txt += '    Neto Avipet: $' + netoDoc.toFixed(2) + '\n';
     if (g.formasPago) {
       const fp = g.formasPago;
       if (fp.dolares > 0)  { txt += '    Dolares    : $' + fp.dolares.toFixed(2) + '\n'; totalDolares += fp.dolares; }
