@@ -722,18 +722,16 @@ window._rfGuardar = async () => {
     const now         = new Date();
     const fechaSimple = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
 
-    // Calcular montos desde servicios
-    let totalGastos = 0, pagoDoctorTotal = 0;
+    // Calcular montos desde servicios (referido no tiene insumos propios)
+    let pagoDoctorTotal = 0;
     const serviciosRealizados = _rfServicios.map(s => {
-      const porc  = parseFloat(s.porc) || 30;
+      const porc   = parseFloat(s.porc) || 30;
       const precio = parseFloat(s.precio) || 0;
-      const doc   = precio * porc / 100;
-      const gas   = precio - doc;
-      pagoDoctorTotal += doc;
-      totalGastos     += gas;
+      pagoDoctorTotal += precio * porc / 100;
       return { nombre: s.nombre, precio, porcDoc: porc };
     });
-    const pagoAvipet = montoReferido - totalGastos - pagoDoctorTotal;
+    const totalGastos = 0;
+    const pagoAvipet  = montoReferido - pagoDoctorTotal;
 
     // 1. Crear historia en "consultas" visible en buscador
     const dataConsulta = {
