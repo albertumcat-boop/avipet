@@ -488,26 +488,41 @@ window.descargarReporte = () => {
   txt += 'Periodo : ' + r.periodo + (r.filtroDoctor ? ' | Doctor: ' + r.filtroDoctor : '') + '\n';
   txt += 'Generado: ' + fechaStr + ' a las ' + hora + '\n';
   txt += '----------------------------------------\n';
+  const casheaFeeTotal = r.casheaFeeTotal || 0;
+  const netoReal = r.netoAvipet - casheaFeeTotal;
   txt += 'RESUMEN GLOBAL\n';
   txt += '  Bruto cobrado   : $' + r.brutoTotal.toFixed(2) + '\n';
   txt += '  Insumos gastados: $' + r.insumosTotal.toFixed(2) + '\n';
   txt += '  Comisiones doc. : $' + r.comisionTotal.toFixed(2) + '\n';
-  txt += '  NETO AVIPET     : $' + r.netoAvipet.toFixed(2) + '\n';
+  if (casheaFeeTotal > 0) {
+    txt += '  Fee Cashea -10% : -$' + casheaFeeTotal.toFixed(2) + '\n';
+  }
+  txt += '  NETO AVIPET     : $' + netoReal.toFixed(2) + '\n';
   txt += '----------------------------------------\n';
   txt += 'DESGLOSE POR DOCTOR\n';
+  let totalDolares = 0, totalMovil = 0, totalCashea = 0, totalBrutoDoc = 0;
   Object.keys(r.porDoctor).sort().forEach(doc => {
     const g = r.porDoctor[doc];
+    const netoDoc = g.bruto - g.insumos - g.comision;
+    const casheaDoc = g.casheaFee || 0;
+    totalBrutoDoc += g.bruto;
     txt += '\n  ' + doc.toUpperCase() + '\n';
     txt += '    Atenciones : ' + g.consultas.length + '\n';
     txt += '    Bruto      : $' + g.bruto.toFixed(2) + '\n';
     txt += '    Insumos    : $' + g.insumos.toFixed(2) + '\n';
     txt += '    Comision   : $' + g.comision.toFixed(2) + '\n';
-    txt += '    Neto       : $' + (g.bruto - g.insumos - g.comision).toFixed(2) + '\n';
+    txt += '    Neto       : $' + netoDoc.toFixed(2) + '\n';
     if (g.formasPago) {
       const fp = g.formasPago;
-      if (fp.dolares > 0)  txt += '    Dolares    : $' + fp.dolares.toFixed(2) + '\n';
-      if (fp.movil > 0)    txt += '    Pago Movil : $' + fp.movil.toFixed(2) + '\n';
-      if (fp.cashea > 0)   txt += '    Cashea     : $' + fp.cashea.toFixed(2) + '\n';
+      if (fp.dolares > 0)  { txt += '    Dolares    : $' + fp.dolares.toFixed(2) + '\n'; totalDolares += fp.dolares; }
+      if (fp.movil > 0)    { txt += '    Pago Movil : $' + fp.movil.toFixed(2) + '\n';   totalMovil   += fp.movil;   }
+      if (fp.cashea > 0)   {
+        const fee = fp.cashea * 0.10;
+        txt += '    Cashea     : $' + fp.cashea.toFixed(2) + ' (Bs)\n';
+        txt += '    Fee Cashea : -$' + fee.toFixed(2) + ' (10% comision)\n';
+        txt += '    Neto Cashea: $' + (fp.cashea - fee).toFixed(2) + '\n';
+        totalCashea += fp.cashea;
+      }
     }
     const servicios = Object.entries(g.servicios).sort((a,b) => b[1].count - a[1].count);
     if (servicios.length) {
@@ -515,6 +530,29 @@ window.descargarReporte = () => {
       servicios.forEach(([nom, sd]) => { txt += '      - ' + nom + ' x' + sd.count + ' = $' + sd.total.toFixed(2) + '\n'; });
     }
   });
+  txt += '\n========================================\n';
+  txt += '              TOTALES COBRADOS\n';
+  txt += '========================================\n';
+  if (totalDolares > 0)  txt += '  Dolares (USD)  : $' + totalDolares.toFixed(2) + '\n';
+  if (totalMovil > 0)    txt += '  Pago Movil (Bs): $' + totalMovil.toFixed(2) + '\n';
+  if (totalCashea > 0) {
+    const feeTotal = totalCashea * 0.10;
+    txt += '  Cashea bruto   : $' + totalCashea.toFixed(2) + '\n';
+    txt += '  Fee -10%       : -$' + feeTotal.toFixed(2) + '\n';
+    txt += '  Cashea neto    : $' + (totalCashea - feeTotal).toFixed(2) + '\n';
+  }
+  const totalBs = totalMovil + totalCashea;
+  const totalBsNeto = totalMovil + totalCashea * 0.90;
+  if (totalBs > 0) {
+    txt += '  .........................\n';
+    txt += '  TOTAL EN BS (NETO)  : $' + totalBsNeto.toFixed(2) + '\n';
+  }
+  if (totalDolares > 0) {
+    txt += '  TOTAL EN USD        : $' + totalDolares.toFixed(2) + '\n';
+  }
+  const totalGeneral = totalDolares + totalBsNeto;
+  txt += '  .........................\n';
+  txt += '  TOTAL GENERAL       : $' + totalGeneral.toFixed(2) + '\n';
   txt += '\n========================================\n';
   txt += '           AVIPET — avipet.vercel.app\n';
   txt += '========================================\n';
