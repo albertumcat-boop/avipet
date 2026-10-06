@@ -633,7 +633,7 @@ window.abrirFichaReferido = async () => {
       if (dat.activo === false) return;
       const cat = (dat.categoria || 'OTROS').toUpperCase();
       if (!grupos[cat]) grupos[cat] = [];
-      grupos[cat].push({ nombre: d.id, precio: parseFloat(dat.precioVenta || 0), porc: parseFloat(dat.porcDoc || 30) });
+      grupos[cat].push({ nombre: d.id, precio: parseFloat(dat.precioVenta || 0), porc: parseFloat(dat.porcDoc || 30), insumos: dat.insumos || [] });
     });
     sel.innerHTML = '<option value="">+ Agregar servicio...</option>';
     Object.entries(grupos).sort().forEach(([cat, servicios]) => {
@@ -722,16 +722,26 @@ window._rfGuardar = async () => {
     const now         = new Date();
     const fechaSimple = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
 
-    // Calcular montos desde servicios (referido no tiene insumos propios)
-    let pagoDoctorTotal = 0;
+    // Calcular montos desde servicios incluyendo insumos de cada servicio
+    let totalGastos = 0, pagoDoctorTotal = 0;
+    const detalleInsumos = [];
     const serviciosRealizados = _rfServicios.map(s => {
       const porc   = parseFloat(s.porc) || 30;
       const precio = parseFloat(s.precio) || 0;
-      pagoDoctorTotal += precio * porc / 100;
+      // Sumar costos de insumos asociados al servicio
+      let costoInsumos = 0;
+      (s.insumos || []).forEach(ins => {
+        const cant  = parseFloat(ins.cant) || 0;
+        const costo = parseFloat(ins.costo) || 0;
+        costoInsumos += cant * costo;
+        detalleInsumos.push({ nombre: ins.nombre || '', cant, costo });
+      });
+      totalGastos     += costoInsumos;
+      const utilidad   = Math.max(0, precio - costoInsumos);
+      pagoDoctorTotal += utilidad * (porc / 100);
       return { nombre: s.nombre, precio, porcDoc: porc };
     });
-    const totalGastos = 0;
-    const pagoAvipet  = montoReferido - pagoDoctorTotal;
+    const pagoAvipet = montoReferido - totalGastos - pagoDoctorTotal;
 
     // 1. Crear historia en "consultas" visible en buscador
     const dataConsulta = {
@@ -740,9 +750,10 @@ window._rfGuardar = async () => {
       formaPago,
       formaPagoLabel: fpLabel,
       serviciosRealizados,
-      montoVenta:    montoReferido,
-      montoInsumos:  totalGastos,
-      pagoDoctor:    pagoDoctorTotal,
+      montoVenta:          montoReferido,
+      montoInsumos:        totalGastos,
+      listaDetalladaInsumos: detalleInsumos,
+      pagoDoctor:          pagoDoctorTotal,
       pagoAvipet,
       tratamiento:   motivo,
       esReferido:    true,
