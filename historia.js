@@ -1555,17 +1555,14 @@ window._filtrarSelector = (selectId, texto) => {
     if (el.tagName === 'OPTION') {
       if (!el.value) { el.hidden = false; return; }
       const label = (el.textContent || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-      el.hidden = q && !label.includes(q);
+      el.hidden = q ? !label.includes(q) : false;
     } else {
-      // optgroup: mostrar si al menos una opcion coincide
       const visible = Array.from(el.querySelectorAll('option')).some(o => !o.hidden);
       el.hidden = q ? !visible : false;
     }
   });
-  if (q) {
-    const firstVisible = Array.from(sel.querySelectorAll('option')).find(o => o.value && !o.hidden);
-    if (firstVisible) sel.value = firstVisible.value;
-  }
+  // Resetear a placeholder para que al elegir cualquier opcion siempre dispare onchange
+  sel.value = '';
 };
 
 // --- FUNCIONES DE AJUSTES (movidas aqui para garantizar carga) ---
