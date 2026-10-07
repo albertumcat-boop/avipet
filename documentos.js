@@ -6,7 +6,7 @@
 import { db } from './firebase-config.js';
 import {
   collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc,
-  query, orderBy, Timestamp
+  query, orderBy, where, onSnapshot, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ── Constantes ──────────────────────────────────────────────────────
@@ -383,6 +383,9 @@ window.iniciarDocumentos = async () => {
 
   _renderSelectEmp();
   _renderSelectTipo();
+
+  // Cargar permisos/documentos de la empresa
+  window.permisosCargar?.();
 };
 
 // Llamadas desde los selects vía _llamarFuncion
@@ -516,4 +519,250 @@ window.docToggleModalTipo = () => document.getElementById('docModalTipo')?.class
 window.docToggleHistorial = () => {
   const sec = document.getElementById('docHistorialSec');
   if (sec) sec.classList.toggle('hidden');
+};
+
+// =====================================================================
+// PERMISOS Y DOCUMENTOS DE LA EMPRESA — vencimientos con fotos
+// Colección Firestore: permisos_empresa
+// =====================================================================
+
+const COL_PERMISOS = 'permisos_empresa';
+
+// Convierte imagen a base64 comprimida
+async function _comprimirPermFoto(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Días hasta una fecha (negativo = ya venció)
+function _diasHasta(fechaStr) {
+  if (!fechaStr) return null;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const venc = new Date(fechaStr + 'T00:00:00');
+  return Math.round((venc - hoy) / 86400000);
+}
+
+// Renderiza la lista de permisos
+function _renderPermisos(lista) {
+  const cont = document.getElementById('permisosLista');
+  if (!cont) return;
+  if (!lista.length) {
+    cont.innerHTML = '<p class="text-[10px] text-slate-400 italic text-center py-3">Sin documentos registrados. Presiona + Agregar.</p>';
+    return;
+  }
+  lista.sort((a, b) => (a.fechaVencimiento||'9999') < (b.fechaVencimiento||'9999') ? -1 : 1);
+  cont.innerHTML = lista.map(p => {
+    const dias = _diasHasta(p.fechaVencimiento);
+    let badge = '', cardBorder = 'border-slate-100';
+    if (dias === null) {
+      badge = '';
+    } else if (dias < 0) {
+      badge = `<span style="background:#dc2626;color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:20px;">VENCIDO</span>`;
+      cardBorder = 'border-red-300 bg-red-50';
+    } else if (dias <= 30) {
+      badge = `<span style="background:#f59e0b;color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:20px;">Vence en ${dias}d</span>`;
+      cardBorder = 'border-amber-300 bg-amber-50';
+    } else {
+      badge = `<span style="background:#16a34a;color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:20px;">${dias}d restantes</span>`;
+    }
+    const fechaLabel = p.fechaVencimiento
+      ? new Date(p.fechaVencimiento + 'T00:00:00').toLocaleDateString('es-VE',{day:'2-digit',month:'short',year:'numeric'})
+      : 'Sin fecha';
+    const fotoBtn = p.foto
+      ? `<button onclick="window.permisosVerFoto('${p.id}')" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:3px 8px;font-size:8px;font-weight:900;cursor:pointer;">📷 Ver foto</button>`
+      : '';
+    return `<div class="rounded-xl border ${cardBorder} p-3 flex items-start gap-2">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+          <p style="font-size:11px;font-weight:900;color:#1e293b;margin:0;">${p.nombre}</p>
+          ${badge}
+        </div>
+        ${p.descripcion ? `<p style="font-size:9px;color:#64748b;margin:0 0 2px 0;">${p.descripcion}</p>` : ''}
+        <p style="font-size:9px;color:#94a3b8;margin:0;">📅 ${fechaLabel}</p>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+        ${fotoBtn}
+        <button onclick="window.permisosModalAbrir('${p.id}')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:3px 8px;font-size:8px;font-weight:900;cursor:pointer;">✏️</button>
+        <button onclick="window.permisosEliminar('${p.id}')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:3px 8px;font-size:8px;font-weight:900;cursor:pointer;">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Cache en memoria para evitar getDoc al editar
+let _permisosCache = {};
+
+// Cargar desde Firestore — sin orderBy para evitar índice y ser más rápido
+window.permisosCargar = async () => {
+  try {
+    const snap = await getDocs(collection(db, COL_PERMISOS));
+    const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Guardar en cache por id
+    _permisosCache = {};
+    lista.forEach(p => { _permisosCache[p.id] = p; });
+    _renderPermisos(lista);
+    return lista;
+  } catch(e) {
+    console.warn('[permisos]', e);
+    _renderPermisos([]);
+    return [];
+  }
+};
+
+// Verificar vencimientos (llamar al abrir la sección o en el inicio)
+window.permisosChequearVencimientos = async () => {
+  try {
+    const snap = await getDocs(collection(db, COL_PERMISOS));
+    const proximos = [];
+    snap.docs.forEach(d => {
+      const p = d.data();
+      const dias = _diasHasta(p.fechaVencimiento);
+      if (dias !== null && dias <= 30) proximos.push({ nombre: p.nombre, dias });
+    });
+    if (!proximos.length) return;
+    const lista = proximos.map(p =>
+      p.dias < 0 ? `• ${p.nombre}: <b>VENCIDO</b>` : `• ${p.nombre}: vence en <b>${p.dias} días</b>`
+    ).join('<br>');
+    Swal?.fire({
+      icon: 'warning',
+      title: '⚠️ Documentos por vencer',
+      html: lista,
+      confirmButtonColor: '#f59e0b',
+      confirmButtonText: 'Ver documentos'
+    });
+  } catch(e) { console.warn('[permisos check]', e); }
+};
+
+// Abrir modal (nuevo o editar) — usa cache local, sin llamada a Firestore
+window.permisosModalAbrir = (id) => {
+  document.getElementById('permNombre').value      = '';
+  document.getElementById('permDescripcion').value = '';
+  document.getElementById('permFecha').value       = '';
+  document.getElementById('permEditId').value      = '';
+  document.getElementById('permFotoData').value    = '';
+  document.getElementById('permFotoInput').value   = '';
+  const prev = document.getElementById('permFotoPreview');
+  if (prev) { prev.src = ''; prev.classList.add('hidden'); }
+
+  if (id && _permisosCache[id]) {
+    const p = _permisosCache[id];
+    document.getElementById('permNombre').value      = p.nombre      || '';
+    document.getElementById('permDescripcion').value = p.descripcion || '';
+    document.getElementById('permFecha').value       = p.fechaVencimiento || '';
+    document.getElementById('permEditId').value      = id;
+    if (p.foto) {
+      document.getElementById('permFotoData').value = p.foto;
+      if (prev) { prev.src = p.foto; prev.classList.remove('hidden'); }
+    }
+  }
+  document.getElementById('permisosModal')?.classList.remove('hidden');
+};
+
+window.permisosModalCerrar = () => document.getElementById('permisosModal')?.classList.add('hidden');
+
+// Guardar (nuevo o editar) — foto ya está procesada en permFotoData, no recomprimir
+window.permisosGuardar = async () => {
+  const nombre = document.getElementById('permNombre')?.value.trim();
+  if (!nombre) { alert('El nombre es obligatorio.'); return; }
+  const descripcion      = document.getElementById('permDescripcion')?.value.trim();
+  const fechaVencimiento = document.getElementById('permFecha')?.value;
+  const editId           = document.getElementById('permEditId')?.value;
+  const foto             = document.getElementById('permFotoData')?.value || '';
+
+  const datos = { nombre, descripcion, fechaVencimiento, foto, actualizadoEn: new Date().toISOString() };
+  try {
+    if (editId) {
+      await setDoc(doc(db, COL_PERMISOS, editId), datos, { merge: true });
+    } else {
+      datos.creadoEn = new Date().toISOString();
+      await addDoc(collection(db, COL_PERMISOS), datos);
+    }
+    window.permisosModalCerrar();
+    window.permisosCargar();
+    Swal?.fire({ icon:'success', title:'Guardado', timer:1200, showConfirmButton:false });
+  } catch(e) { alert('Error al guardar: ' + e.message); }
+};
+
+// Eliminar
+window.permisosEliminar = async (id) => {
+  const conf = await Swal?.fire({ title:'¿Eliminar este documento?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', confirmButtonText:'Sí, eliminar', cancelButtonText:'Cancelar' });
+  if (!conf?.isConfirmed) return;
+  try {
+    await deleteDoc(doc(db, COL_PERMISOS, id));
+    window.permisosCargar();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+// Ver foto en modal — usa cache local
+window.permisosVerFoto = (id) => {
+  try {
+    const p = _permisosCache[id];
+    if (!p?.foto) return;
+    Swal?.fire({ title: p.nombre, imageUrl: p.foto, imageWidth: '100%', showConfirmButton: true, confirmButtonText: 'Cerrar' });
+  } catch(e) { console.warn(e); }
+};
+
+window.permisosEscanearQR = async () => {
+  const sessionKey = 'PERM_' + Date.now();
+  const url = `${window.location.origin}${window.location.pathname}?mode=mobile&ci=${sessionKey}&tipo=permiso`;
+  let _unsubPerm = null;
+
+  const qrContainerId = 'permQRContainer_' + Date.now();
+
+  const { isConfirmed } = await Swal.fire({
+    title: '📷 Escanear QR',
+    html:
+      '<p style="font-size:11px;color:#475569;margin-bottom:12px;">Escanea con el teléfono para subir o tomar una foto del documento.</p>' +
+      '<div id="' + qrContainerId + '" style="display:flex;justify-content:center;margin-bottom:12px;"></div>' +
+      '<div id="permQRStatus" style="font-size:11px;color:#6366f1;font-weight:700;min-height:18px;text-align:center;">Esperando foto del teléfono...</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Usar esta foto',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#6366f1',
+    didOpen: () => {
+      const qrDiv = document.getElementById(qrContainerId);
+      if (qrDiv && window.QRCode) new window.QRCode(qrDiv, { text: url, width: 160, height: 160 });
+      const inicio = new Date();
+      const q = query(
+        collection(db, 'transferencias_fotos'),
+        where('ci', '==', sessionKey),
+        where('tipo', '==', 'permiso')
+      );
+      _unsubPerm = onSnapshot(q, snap => {
+        snap.forEach(docSnap => {
+          const d = docSnap.data();
+          if (!d.url) return;
+          if (d.fecha?.toDate && d.fecha.toDate() < inicio) return;
+          window._permQRFotoUrl = d.url;
+          const statusEl = document.getElementById('permQRStatus');
+          if (statusEl) statusEl.innerHTML = '<span style="color:#16a34a;">✅ Foto recibida — haz clic en Usar esta foto</span>';
+        });
+      });
+    },
+    willClose: () => { if (_unsubPerm) { _unsubPerm(); _unsubPerm = null; } }
+  });
+
+  if (isConfirmed && window._permQRFotoUrl) {
+    const prev = document.getElementById('permFotoPreview');
+    const dataField = document.getElementById('permFotoData');
+    if (prev) { prev.src = window._permQRFotoUrl; prev.classList.remove('hidden'); }
+    if (dataField) dataField.value = window._permQRFotoUrl;
+    window._permQRFotoUrl = null;
+  }
 };

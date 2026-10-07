@@ -1546,109 +1546,114 @@ window.cancelarEdicion = () => {
   _limpiarFormularioHistoria();
 };
 
+// Buscador en tiempo real para selectores desplegables (servicios y medicamentos)
+window._filtrarSelector = (selectId, texto) => {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const q = texto.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  sel.querySelectorAll('option, optgroup').forEach(el => {
+    if (el.tagName === 'OPTION') {
+      if (!el.value) { el.hidden = false; return; }
+      const label = (el.textContent || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      el.hidden = q && !label.includes(q);
+    } else {
+      // optgroup: mostrar si al menos una opcion coincide
+      const visible = Array.from(el.querySelectorAll('option')).some(o => !o.hidden);
+      el.hidden = q ? !visible : false;
+    }
+  });
+  if (q) {
+    const firstVisible = Array.from(sel.querySelectorAll('option')).find(o => o.value && !o.hidden);
+    if (firstVisible) sel.value = firstVisible.value;
+  }
+};
+
 // --- FUNCIONES DE AJUSTES (movidas aqui para garantizar carga) ---
 window.cargarSelectorServicios = async () => {
   const sel = document.getElementById('selectorServicios');
   if (!sel) return;
 
-  try {
-    const snap = await getDocs(collection(db, "servicios_maestro"));
-    if (snap.empty) return;
+  // Inyectar buscador encima del selector si no existe
+  if (!document.getElementById('buscarServicio')) {
+    const inp = document.createElement('input');
+    inp.id = 'buscarServicio';
+    inp.type = 'text';
+    inp.placeholder = '🔍 Buscar servicio...';
+    inp.className = 'w-full mb-1 p-1 border border-slate-300 rounded text-xs';
+    inp.oninput = () => window._filtrarSelector('selectorServicios', inp.value);
+    sel.parentNode.insertBefore(inp, sel);
+  }
 
-    // Construir mapa de todos los servicios de Firebase: id → data
-    // Normaliza acentos para evitar duplicados (ej: ECOGRAFIA vs ECOGRAFÍA)
-    const _normKey = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
-    const serviciosFirebase = {};
+  // Inyectar buscador de medicamentos si no existe
+  const selMed = document.getElementById('selectorMedicamentos');
+  if (selMed && !document.getElementById('buscarMedicamento')) {
+    const inp2 = document.createElement('input');
+    inp2.id = 'buscarMedicamento';
+    inp2.type = 'text';
+    inp2.placeholder = '🔍 Buscar medicamento...';
+    inp2.className = 'w-full mb-1 p-1 border border-slate-300 rounded text-xs';
+    inp2.oninput = () => window._filtrarSelector('selectorMedicamentos', inp2.value);
+    selMed.parentNode.insertBefore(inp2, selMed);
+  }
+
+  // Opciones especiales con logica propia (no vienen de Firestore)
+  const ESPECIALES = [
+    { value: 'CIRUGÍA PERSONALIZADA', label: 'CIRUGÍA (ESPECIFICAR TIPO Y PRECIO)', grupo: 'CIRUGIAS' },
+  ];
+
+  try {
+    const snap = await getDocs(collection(db, 'servicios_maestro'));
+
+    // Agrupar servicios activos por categoria
+    const grupos = {};
     snap.forEach(d => {
       const data = d.data();
       if (data.activo === false) return;
-      const key = _normKey(d.id);
-      const existing = serviciosFirebase[key];
-      // Si ya existe una entrada con mismo nombre normalizado, conservar la de mayor precio
-      if (!existing || parseFloat(data.precioVenta||0) > parseFloat(existing.precioVenta||0)) {
-        serviciosFirebase[key] = { id: d.id, ...data };
-      }
-    });
-
-    // 1. Actualizar options que ya existen en el selector HTML (sin moverlos ni duplicarlos)
-    Array.from(sel.querySelectorAll('option')).forEach(opt => {
-      const key = _normKey(opt.value);
-      if (serviciosFirebase[key]) {
-        // Solo actualizar el textContent sin precio y guardar precio en dataset
-        opt.textContent = serviciosFirebase[key].id;
-        opt.dataset.precioFirebase = parseFloat(serviciosFirebase[key].precioVenta||0).toFixed(2);
-        opt.dataset.porcFirebase   = parseFloat(serviciosFirebase[key].porcDoc||30);
-        delete serviciosFirebase[key]; // marcar como ya procesado
-      }
-    });
-
-    // 2. Los servicios que quedaron (nuevos, no estaban en el HTML) → agregar en su categoría
-    const nuevos = Object.values(serviciosFirebase);
-    console.log('[AVIPET] Servicios nuevos (no en HTML):', nuevos.map(s=>s.id+'→'+s.categoria));
-    if (nuevos.length === 0) return;
-
-    // Agrupar por categoría
-    const porCat = {};
-    nuevos.forEach(s => {
-      const cat = (s.categoria || 'OTROS').toUpperCase();
-      if (!porCat[cat]) porCat[cat] = [];
-      porCat[cat].push(s);
-    });
-
-    Object.entries(porCat).sort().forEach(([cat, servicios]) => {
-      // Buscar optgroup existente limpiando emojis del label
-      const _limpiar = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
-      let grp = Array.from(sel.querySelectorAll('optgroup'))
-        .find(g => _limpiar(g.label) === _limpiar(cat) || _limpiar(g.label).includes(_limpiar(cat)) || _limpiar(cat).includes(_limpiar(g.label)));
-
-      if (!grp) {
-        grp = document.createElement('optgroup');
-        grp.label = cat;
-        sel.appendChild(grp);
-      }
-
-      servicios.forEach(s => {
-        const yaExiste = Array.from(sel.querySelectorAll('option'))
-          .some(o => _normKey(o.value) === _normKey(s.id));
-        if (yaExiste) return;
-        const opt = document.createElement('option');
-        opt.value                  = s.id;
-        opt.textContent            = s.id;
-        opt.dataset.firebase       = 'true';
-        opt.dataset.precioFirebase = parseFloat(s.precioVenta||0).toFixed(2);
-        opt.dataset.porcFirebase   = parseFloat(s.porcDoc||30);
-        grp.appendChild(opt);
+      const cat = (data.categoria || 'OTROS').toUpperCase();
+      if (!grupos[cat]) grupos[cat] = [];
+      grupos[cat].push({
+        id: d.id,
+        precioVenta: parseFloat(data.precioVenta || 0),
+        porcDoc:     parseFloat(data.porcDoc || 30),
       });
     });
 
-    // Ordenar alfabéticamente dentro de cada optgroup DESPUÉS de agregar todos los servicios
-    Array.from(sel.querySelectorAll('optgroup')).forEach(grp => {
-      Array.from(grp.querySelectorAll('option'))
-        .sort((a, b) => a.textContent.localeCompare(b.textContent, 'es'))
-        .forEach(o => grp.appendChild(o));
+    // Reconstruir selector completo desde Firestore
+    sel.innerHTML = '<option value="">-- SELECCIONE UN SERVICIO --</option>';
+
+    Object.entries(grupos).sort(([a],[b]) => a.localeCompare(b,'es')).forEach(([cat, servicios]) => {
+      const grp = document.createElement('optgroup');
+      grp.label = cat;
+      servicios.sort((a,b) => a.id.localeCompare(b.id,'es')).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value                  = s.id;
+        opt.textContent            = s.id;
+        opt.dataset.precioFirebase = s.precioVenta.toFixed(2);
+        opt.dataset.porcFirebase   = s.porcDoc;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
     });
+
+    // Agregar opciones especiales al final
+    ESPECIALES.forEach(e => {
+      let grp = Array.from(sel.querySelectorAll('optgroup')).find(g => g.label === e.grupo);
+      if (!grp) {
+        grp = document.createElement('optgroup');
+        grp.label = e.grupo;
+        sel.appendChild(grp);
+      }
+      const opt = document.createElement('option');
+      opt.value       = e.value;
+      opt.textContent = e.label;
+      grp.appendChild(opt);
+    });
+
+    console.log('[AVIPET] Selector reconstruido desde Firestore:', snap.size, 'servicios');
 
   } catch(e) {
     console.warn('Error cargando selector servicios:', e);
   }
-
-  // Asegurar que OXÍGENO existe en Firestore
-  try {
-    const oxSnap = await getDoc(doc(db, 'servicios_maestro', 'OXÍGENO'));
-    if (!oxSnap.exists()) {
-      await setDoc(doc(db, 'servicios_maestro', 'OXÍGENO'), {
-        precioVenta: 10,
-        porcDoc: 30,
-        categoria: 'CIRUGÍAS',
-        insumos: [],
-        esReferido: false,
-        activo: true,
-        esHora: true,
-        creadoEn: serverTimestamp()
-      });
-      console.log('[AVIPET] OXÍGENO creado en servicios_maestro');
-    }
-  } catch(e) { console.warn('[AVIPET] No se pudo verificar OXÍGENO:', e); }
 };
 
 // --- ABRIR MODAL NUEVO SERVICIO ---------------------------
