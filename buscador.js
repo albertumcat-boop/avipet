@@ -205,7 +205,8 @@ function _renderizarTarjeta(consulta) {
  (consulta.edad ? '<p style="font-size:9px;color:#64748b;">Edad: <b>' + consulta.edad + '</b></p>' : '') +
  (consulta.peso ? '<p style="font-size:9px;color:#64748b;">Peso: <b>' + consulta.peso + ' kg</b></p>' : '') +
  (consulta.sexo ? '<p style="font-size:9px;color:#64748b;">Sexo: <b>' + consulta.sexo + '</b></p>' : '') +
- (consulta.color ? '<p style="font-size:9px;color:#64748b;">Color: <b>' + consulta.color + '</b></p>' : '');
+ (consulta.color ? '<p style="font-size:9px;color:#64748b;">Color: <b>' + consulta.color + '</b></p>' : '') +
+ '<p style="font-size:9px;color:#1d4ed8;margin-top:4px;">👨‍⚕️ <b>' + doctor + '</b></p>';
  infoDiv.appendChild(mascotaDiv);
 
  body.appendChild(infoDiv);
