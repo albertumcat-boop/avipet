@@ -495,23 +495,26 @@ async function _emitirEnAclas(items, cliente, monedaPago, totalUSD, tasaBCV) {
 
 async function _modoManual() {
   const { value } = await Swal.fire({
-    title: '📟 Ingresa los datos de la Aclas',
-    html: `<p class="text-[11px] text-slate-500 mb-3">El bridge no está activo. Emite la factura en la máquina Aclas y escribe los números aquí.</p>
-      <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1">N° Factura</label>
-      <input id="manualFact" type="number" class="swal2-input" placeholder="Ej: 44921">
-      <label class="text-[9px] font-bold text-slate-400 uppercase block mb-1 mt-2">N° Control</label>
-      <input id="manualCtrl" type="text" class="swal2-input" placeholder="Ej: ZZN0020855">`,
+    title: '🧾 Datos del Ticket',
+    html: `<p style="font-size:11px;color:#64748b;margin-bottom:12px;">
+             Emite el ticket de la tiquera y registra los números aquí.
+           </p>
+           <label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:4px;">N° de Ticket (Consecutivo)</label>
+           <input id="manualFact" type="number" class="swal2-input" placeholder="Ej: 1045" min="1">
+           <label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;margin:10px 0 4px;">N° de Control (de la tiquera impresa)</label>
+           <input id="manualCtrl" type="text" class="swal2-input" placeholder="Ej: 00-0001045">`,
     showCancelButton: true,
-    confirmButtonText: 'Registrar',
+    confirmButtonText: '✅ Registrar Ticket',
+    cancelButtonText: 'Cancelar',
     confirmButtonColor: '#1d4ed8',
     preConfirm: () => {
       const nf = document.getElementById('manualFact')?.value.trim();
       const nc = document.getElementById('manualCtrl')?.value.trim();
-      if (!nf) { Swal.showValidationMessage('El N° de Factura es obligatorio'); return false; }
-      return { numeroFactura: parseInt(nf), numeroControl: nc || '' };
+      if (!nf) { Swal.showValidationMessage('El N° de Ticket es obligatorio'); return false; }
+      return { numeroFactura: parseInt(nf), numeroControl: nc || nf };
     }
   });
-  return value; // undefined si canceló
+  return value;
 }
 
 // ─── EMITIR FACTURA ─────────────────────────────────────
@@ -729,7 +732,7 @@ window.emitirFactura = async () => {
     cargarHistorialFacturas();
 
     // Modal resumen para máquina fiscal
-    _mostrarResumenMaquinaFiscal(facturaRef.id, numeroFactura, numeroControl, carritoEmitido, totalesEmitidos);
+    _mostrarResumenTiquera(facturaRef.id, numeroFactura, numeroControl, carritoEmitido, totalesEmitidos);
 
   } catch(e) {
     console.error(e);
@@ -746,7 +749,7 @@ function _esc(str) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function _mostrarResumenMaquinaFiscal(facturaId, numeroFactura, numeroControl, carrito, totales) {
+function _mostrarResumenTiquera(facturaId, numeroFactura, numeroControl, carrito, totales) {
   let filas = carrito.map(item => {
     const sub = (item.precio * item.cantidad).toFixed(2);
     return `<tr style="border-bottom:1px solid #f1f5f9;">
@@ -759,8 +762,8 @@ function _mostrarResumenMaquinaFiscal(facturaId, numeroFactura, numeroControl, c
   }).join('');
 
   const html = `<div style="text-align:left;">
-    <p style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:8px;">
-      📋 Ingresa esta información en la máquina fiscal:
+    <p style="font-size:9px;font-weight:900;color:#16a34a;text-transform:uppercase;margin-bottom:8px;">
+      ✅ Ticket registrado — Resumen de la venta:
     </p>
     <div style="background:#f8fafc;border-radius:10px;padding:8px;margin-bottom:10px;overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;min-width:340px;">
@@ -794,25 +797,18 @@ function _mostrarResumenMaquinaFiscal(facturaId, numeroFactura, numeroControl, c
       </div>
     </div>
     <div style="background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:10px;">
-      <p style="font-size:10px;font-weight:900;color:#334155;margin:0 0 6px;">Nº del Ticket emitido por la Máquina Fiscal:</p>
-      <input id="inputTicketFiscal" type="text" placeholder="Ej: 00001234"
-        style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:15px;font-weight:900;text-align:center;outline:none;box-sizing:border-box;color:#1e293b;">
+      <p style="font-size:10px;font-weight:900;color:#334155;margin:0 0 6px;">🧾 Ticket #${numeroFactura} · N° Control: ${numeroControl || '—'}</p>
+      <p style="font-size:9px;color:#64748b;margin:0;">Emite el ticket de la tiquera con estos datos y entrégalo al cliente.</p>
     </div>
   </div>`;
 
   Swal.fire({
-    title: `🖨️ Factura #${numeroFactura} Emitida`,
+    title: `🧾 Ticket #${numeroFactura} Registrado`,
     html, width: 560,
-    showCancelButton: true,
-    confirmButtonText:  '✅ Registrar Ticket y Finalizar',
-    cancelButtonText:   'Omitir Ticket',
-    confirmButtonColor: '#1d4ed8',
-    preConfirm: () => ({ ticket: document.getElementById('inputTicketFiscal')?.value.trim() || null })
-  }).then(async result => {
-    if (result.isConfirmed && result.value?.ticket) {
-      try { await updateDoc(doc(db,'facturas',facturaId), { ticketFiscal: result.value.ticket }); } catch(_) {}
-    }
-    Swal.fire({ icon:'success', title:`✅ Factura #${numeroFactura} registrada`, timer:2200, showConfirmButton:false });
+    confirmButtonText:  '✅ Listo',
+    confirmButtonColor: '#16a34a',
+  }).then(() => {
+    Swal.fire({ icon:'success', title:`✅ Ticket #${numeroFactura} guardado`, timer:1800, showConfirmButton:false });
   });
 }
 
