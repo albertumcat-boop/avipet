@@ -356,6 +356,7 @@ window.mostrarDashboardVet = async () => {
           '<p style="font-size:9px;font-weight:900;color:#64748b;margin:0;text-transform:uppercase;">Comisión' + (g.casheaFeeDoc>0?' (neto Cashea)':'') + '</p>' +
           (g.casheaFeeDoc > 0
             ? '<p style="font-size:12px;font-weight:700;color:#94a3b8;margin:0;font-family:monospace;text-decoration:line-through;">$'+g.comision.toFixed(2)+'</p>' +
+              '<p style="font-size:9px;color:#7c3aed;margin:0;">🟣 -$'+g.casheaFeeDoc.toFixed(2)+' (su 10% Cashea)</p>' +
               '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+(g.comision-g.casheaFeeDoc).toFixed(2)+'</p>'
             : '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+g.comision.toFixed(2)+'</p>') +
         '</div>';
@@ -404,7 +405,7 @@ window.mostrarDashboardVet = async () => {
       miniRes.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:6px;border-top:1px solid '+col.borde+';';
       miniRes.innerHTML =
         '<span style="font-size:8px;color:#92400e;font-weight:700;">Insumos: $'+g.insumos.toFixed(2)+'</span>' +
-        (g.casheaFeeDoc > 0 ? '<span style="font-size:8px;color:#7c3aed;font-weight:700;">🟣 Doc paga Cashea: -$'+g.casheaFeeDoc.toFixed(2)+'</span>' : '') +
+        (g.casheaFeeDoc > 0 ? '<span style="font-size:8px;color:#7c3aed;font-weight:700;">🟣 Su 10% Cashea (de $'+g.casheaFee.toFixed(2)+' total): -$'+g.casheaFeeDoc.toFixed(2)+'</span>' : '') +
         '<span style="font-size:8px;color:#16a34a;font-weight:700;">Avipet: $'+netoDocAvipet.toFixed(2)+'</span>';
       secDoc.appendChild(miniRes);
 
@@ -513,7 +514,7 @@ window.descargarReporte = () => {
     txt += '    Insumos    : $' + g.insumos.toFixed(2) + '\n';
     txt += '    Comision   : $' + g.comision.toFixed(2) + '\n';
     if (casheaFeeDoc > 0) {
-      txt += '    Fee Cashea : -$' + casheaFeeDoc.toFixed(2) + ' (10% sobre su parte)\n';
+      txt += '    Fee Cashea : -$' + casheaFeeDoc.toFixed(2) + ' (su 10% de $' + g.casheaFee.toFixed(2) + ' total)\n';
       txt += '    TOTAL DOC  : $' + comisionNeta.toFixed(2) + '\n';
     } else {
       txt += '    TOTAL DOC  : $' + g.comision.toFixed(2) + '\n';
