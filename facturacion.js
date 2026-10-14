@@ -651,7 +651,7 @@ window.emitirFactura = async () => {
         emailReceptor:        emailReceptor,
         esConsumidorFinal:    _esConsumidorFinal,
         propietario:          _clienteActual?.propietario || '',
-        cedulaCliente:        _clienteActual?.cedula      || _clienteActual?.cedula || cedulaReceptor,
+        cedulaCliente:        _clienteActual?.cedula || cedulaReceptor,
         lineas,
         totalBaseImponible:   totales.totalBase,
         totalIVA:             totales.totalIVA,
@@ -664,10 +664,9 @@ window.emitirFactura = async () => {
         totalVES:             totales.totalVES,
         condicionPago:        'contado',
         estado:               'emitida',
-        // Alias para Libro de Ventas (cargarLibroVentas los espera con estos nombres)
+        // Alias para Libro de Ventas
         nombreCliente:        nomReceptor || _clienteActual?.propietario || 'Consumidor Final',
         rifCliente:           rifReceptor,
-        cedulaCliente:        cedulaReceptor,
         telefonoCliente:      telefonoReceptor,
         totalUSD:             totales.totalUSD,
         baseImponible16:      totales.grupos[16]?.base || 0,
@@ -805,11 +804,142 @@ function _mostrarResumenTiquera(facturaId, numeroFactura, numeroControl, carrito
   Swal.fire({
     title: `🧾 Ticket #${numeroFactura} Registrado`,
     html, width: 560,
-    confirmButtonText:  '✅ Listo',
-    confirmButtonColor: '#16a34a',
-  }).then(() => {
-    Swal.fire({ icon:'success', title:`✅ Ticket #${numeroFactura} guardado`, timer:1800, showConfirmButton:false });
+    showCancelButton: true,
+    confirmButtonText:  '🖨️ Imprimir Ticket',
+    cancelButtonText:   'Cerrar',
+    confirmButtonColor: '#1d4ed8',
+  }).then(result => {
+    if (result.isConfirmed) _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, _monedaPago, _clienteActual?.propietario || '');
+    else Swal.fire({ icon:'success', title:`✅ Ticket #${numeroFactura} guardado`, timer:1500, showConfirmButton:false });
   });
+}
+
+// ─── IMPRESIÓN TICKET TÉRMICO (80mm) ──────────────────────
+function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, monedaPago, clienteNombre) {
+  const cfg   = _configFiscal;
+  const ahora = new Date();
+  const fecha = ahora.toLocaleDateString('es-VE');
+  const hora  = ahora.toLocaleTimeString('es-VE', { hour:'2-digit', minute:'2-digit' });
+  const pago  = monedaPago || _monedaPago;
+
+  const lineas = carrito.map(i => {
+    const sub = (i.precio * i.cantidad).toFixed(2);
+    return `<tr>
+      <td style="text-align:left;padding:1px 0;word-break:break-word;">${_esc(i.descripcion)}</td>
+      <td style="text-align:center;padding:1px 4px;white-space:nowrap;">${_esc(i.cantidad)}</td>
+      <td style="text-align:right;padding:1px 0;white-space:nowrap;">$${parseFloat(i.precio).toFixed(2)}</td>
+      <td style="text-align:right;padding:1px 0;white-space:nowrap;font-weight:900;">$${_esc(sub)}</td>
+    </tr>`;
+  }).join('');
+
+  // IVA dinámico — una fila por alícuota usada
+  const ivaRows = Object.entries(totales.grupos || {})
+    .filter(([aliq, g]) => parseFloat(aliq) > 0 && g.base > 0)
+    .map(([aliq, g]) =>
+      `<tr><td colspan="3" style="text-align:right;">Base ${_esc(aliq)}%:</td><td style="text-align:right;">$${g.base.toFixed(2)}</td></tr>
+       <tr><td colspan="3" style="text-align:right;">IVA ${_esc(aliq)}%:</td><td style="text-align:right;">$${g.iva.toFixed(2)}</td></tr>`
+    ).join('');
+
+  // Exentos/0% si existen
+  const base0 = totales.grupos?.[0]?.base || 0;
+  const base0Row = base0 > 0
+    ? `<tr><td colspan="3" style="text-align:right;">Exento/0%:</td><td style="text-align:right;">$${base0.toFixed(2)}</td></tr>`
+    : '';
+
+  const igtfRow = totales.igtf > 0
+    ? `<tr><td colspan="3" style="text-align:right;">IGTF (${_esc(cfg.alicuotaIGTF||3)}%):</td><td style="text-align:right;">$${totales.igtf.toFixed(2)}</td></tr>`
+    : '';
+
+  const clienteRow = clienteNombre
+    ? `<div style="font-size:9px;">Cliente: <b>${_esc(clienteNombre)}</b></div>`
+    : '';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Ticket #${_esc(numeroFactura)}</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Courier New', monospace; font-size: 11px; width: 72mm; color: #000; background:#fff; }
+    .center { text-align: center; }
+    .bold   { font-weight: 900; }
+    .hr     { border-top: 1px dashed #000; margin: 4px 0; }
+    table   { width: 100%; border-collapse: collapse; }
+    td      { vertical-align: top; font-size: 10px; }
+    .total-row td { font-weight: 900; font-size: 12px; border-top: 1px dashed #000; padding-top: 3px; }
+    @media print {
+      @page { margin: 0; size: 80mm auto; }
+      body  { width: 72mm; }
+    }
+  </style></head><body>
+  <div class="center bold" style="font-size:16px;letter-spacing:2px;">AVIPET</div>
+  <div class="center" style="font-size:9px;">${_esc(cfg.razonSocial || '')}</div>
+  <div class="center" style="font-size:9px;">${_esc(cfg.rifEmisor || '')}</div>
+  <div class="center" style="font-size:9px;">${_esc(cfg.direccionFiscal || '')}</div>
+  <div class="hr"></div>
+  <div style="display:flex;justify-content:space-between;font-size:9px;">
+    <span>Ticket: <b>#${_esc(numeroFactura)}</b></span>
+    <span>${_esc(fecha)} ${_esc(hora)}</span>
+  </div>
+  <div style="font-size:9px;">N° Control: ${_esc(numeroControl || '—')}</div>
+  ${clienteRow}
+  <div style="font-size:9px;">Pago: <b>${_esc(pago)}</b></div>
+  <div class="hr"></div>
+  <table>
+    <thead><tr style="border-bottom:1px dashed #000;">
+      <th style="text-align:left;font-size:9px;">Descripción</th>
+      <th style="text-align:center;font-size:9px;">Cant</th>
+      <th style="text-align:right;font-size:9px;">P/U</th>
+      <th style="text-align:right;font-size:9px;">Total</th>
+    </tr></thead>
+    <tbody>${lineas}</tbody>
+  </table>
+  <div class="hr"></div>
+  <table>
+    ${ivaRows}
+    ${base0Row}
+    ${igtfRow}
+    <tr class="total-row">
+      <td colspan="3" style="text-align:right;font-size:13px;">TOTAL USD:</td>
+      <td style="text-align:right;font-size:13px;">$${totales.totalUSD.toFixed(2)}</td>
+    </tr>
+    <tr><td colspan="3" style="text-align:right;font-size:9px;">Total Bs:</td>
+      <td style="text-align:right;font-size:9px;">Bs ${totales.totalVES.toFixed(2)}</td></tr>
+  </table>
+  <div class="hr"></div>
+  <div class="center" style="font-size:9px;margin-top:4px;">¡Gracias por su preferencia!</div>
+  <div class="center" style="font-size:8px;color:#555;margin-top:2px;">Este ticket no es una factura fiscal.</div>
+  <br><br>
+  </body></html>`;
+
+  const win = window.open('', '_blank', 'width=340,height=600');
+  if (!win) { alert('Permite ventanas emergentes para imprimir el ticket.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); win.close(); }, 400);
+}
+
+// Reconstruye totales desde un doc de factura guardado y abre ticket
+function _imprimirTicketDesdeFactura(f) {
+  const carrito = (f.lineas || []).map(l => ({
+    descripcion: l.descripcion, precio: parseFloat(l.precioUnitario || 0),
+    cantidad: parseInt(l.cantidad || 1), alicuotaIVA: parseFloat(l.alicuotaIVA ?? 16)
+  }));
+  const grupos = {};
+  (f.lineas || []).forEach(l => {
+    const aliq = parseFloat(l.alicuotaIVA ?? 16);
+    if (!grupos[aliq]) grupos[aliq] = { base: 0, iva: 0 };
+    grupos[aliq].base += parseFloat(l.baseImponible || 0);
+    grupos[aliq].iva  += parseFloat(l.montoIVA || 0);
+  });
+  const totales = {
+    grupos,
+    totalBase: parseFloat(f.totalBaseImponible || 0),
+    totalIVA:  parseFloat(f.totalIVA || 0),
+    igtf:      f.igtf?.aplica ? parseFloat(f.igtf.monto || 0) : 0,
+    totalUSD:  parseFloat(f.totalMoneda || f.totalUSD || 0),
+    totalVES:  parseFloat(f.totalVES || 0),
+  };
+  _imprimirTicketTermico(f.numeroFactura, f.numeroControl, carrito, totales, f.moneda, f.nombreCliente || f.propietario || '');
 }
 
 // ─── ESCÁNER CÁMARA — modo multi-scan (html5-qrcode) ──
@@ -964,8 +1094,11 @@ window.verDetalleFactura = (f) => {
       </div>
     </div>`,
     width: 520,
-    confirmButtonText: 'Cerrar', confirmButtonColor: '#1d4ed8'
-  });
+    showCancelButton: true,
+    confirmButtonText: '🖨️ Reimprimir Ticket',
+    cancelButtonText: 'Cerrar',
+    confirmButtonColor: '#1d4ed8',
+  }).then(r => { if (r.isConfirmed) _imprimirTicketDesdeFactura(f); });
 };
 
 // ─── CONFIGURACIÓN FISCAL ──────────────────────────────
