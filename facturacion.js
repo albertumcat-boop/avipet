@@ -905,11 +905,6 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
       <td style="text-align:right;font-size:9px;">Bs ${totales.totalVES.toFixed(2)}</td></tr>
   </table>
   <div class="hr"></div>
-  <div class="center" style="margin:4px 0;">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('AVIPET|F'+_esc(numeroFactura)+'|'+_esc(fecha)+'|$'+totales.totalUSD.toFixed(2))}" width="80" height="80" alt="QR" style="display:block;margin:0 auto;">
-    <div style="font-size:7px;color:#555;margin-top:2px;">Ticket #${_esc(numeroFactura)}</div>
-  </div>
-  <div class="hr"></div>
   <div class="center" style="font-size:9px;margin-top:4px;">¡Gracias por su preferencia!</div>
   <div class="center" style="font-size:8px;color:#555;margin-top:2px;">Este ticket no es una factura fiscal.</div>
   <br><br>
@@ -1365,7 +1360,6 @@ window.cargarLibroCompras = async function() {
       const fotoBtn = f.fotoURL
         ? `<a href="${_esc(f.fotoURL)}" target="_blank" class="text-blue-600 font-black text-[8px] underline">Ver foto</a>`
         : `<button onclick="window._subirFotoCompra('${_esc(f._docId)}','${_esc(f._col)}')" class="text-[7px] font-black bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-700 border border-slate-200 rounded px-1 py-0.5">📷 Subir</button>`;
-      const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent('AVIPET-COMPRA|'+f._docId+'|'+f.nroFactura+'|'+f.nombreProveedor)}`;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="border px-2 py-1">${f.fechaSimple||''}</td>
@@ -1378,7 +1372,6 @@ window.cargarLibroCompras = async function() {
         <td class="border px-2 py-1 text-right font-bold">${_fmtMoney(f.totalCompra)}</td>
         <td class="border px-2 py-1 text-center"><span class="text-[7px] px-1 py-0.5 rounded ${f._fuente==='fiscal'?'bg-blue-100 text-blue-700':'bg-slate-100 text-slate-500'}">${f._fuente}</span></td>
         <td class="border px-2 py-1 text-center">${fotoBtn}</td>
-        <td class="border px-2 py-1 text-center"><img src="${qrURL}" width="36" height="36" alt="QR" loading="lazy"></td>
       `;
       tr.querySelector('td:nth-child(3)').textContent = f.nombreProveedor || '';
       rows += tr.outerHTML;
@@ -1390,7 +1383,7 @@ window.cargarLibroCompras = async function() {
       <td class="border px-2 py-1"></td>
       <td class="border px-2 py-1 text-right">${_fmtMoney(totIVA)}</td>
       <td class="border px-2 py-1 text-right">${_fmtMoney(totTotal)}</td>
-      <td colspan="3"></td>
+      <td colspan="2"></td>
     </tr>`;
 
     tablaEl.innerHTML = `
@@ -1407,7 +1400,6 @@ window.cargarLibroCompras = async function() {
             <th class="border px-2 py-1">Total $</th>
             <th class="border px-2 py-1">Fuente</th>
             <th class="border px-2 py-1">Foto</th>
-            <th class="border px-2 py-1">QR</th>
           </tr>
         </thead>
         <tbody>${rows}${totRow}</tbody>
