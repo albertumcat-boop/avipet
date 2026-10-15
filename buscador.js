@@ -172,6 +172,7 @@ function _renderizarTarjeta(consulta) {
  '<div class="text-right">' +
  '<p class="text-white font-black text-[11px]">' + fecha + '</p>' +
  '<p class="text-blue-200 text-[9px]">' + (consulta.propietario || '---') + '</p>' +
+ (doctor && doctor !== '---' ? '<p class="text-blue-100 text-[9px] font-black mt-0.5">👨‍⚕️ ' + doctor + '</p>' : '') +
  '</div>';
  card.appendChild(header);
 
