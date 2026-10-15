@@ -814,7 +814,7 @@ function _mostrarResumenTiquera(facturaId, numeroFactura, numeroControl, carrito
   });
 }
 
-// ─── IMPRESIÓN TICKET TÉRMICO (80mm) ──────────────────────
+// ─── IMPRESIÓN TICKET TÉRMICO (58mm) ──────────────────────
 function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, monedaPago, clienteNombre) {
   const cfg   = _configFiscal;
   const ahora = new Date();
@@ -866,8 +866,8 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
     td      { vertical-align: top; font-size: 10px; }
     .total-row td { font-weight: 900; font-size: 12px; border-top: 1px dashed #000; padding-top: 3px; }
     @media print {
-      @page { margin: 0; size: 80mm auto; }
-      body  { width: 72mm; }
+      @page { margin: 0; size: 58mm auto; }
+      body  { width: 52mm; }
     }
   </style></head><body>
   <div class="center bold" style="font-size:16px;letter-spacing:2px;">AVIPET</div>
