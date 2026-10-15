@@ -825,10 +825,10 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   const lineas = carrito.map(i => {
     const sub = (i.precio * i.cantidad).toFixed(2);
     return `<tr>
-      <td style="text-align:left;padding:1px 0;word-break:break-word;">${_esc(i.descripcion)}</td>
-      <td style="text-align:center;padding:1px 4px;white-space:nowrap;">${_esc(i.cantidad)}</td>
-      <td style="text-align:right;padding:1px 0;white-space:nowrap;">$${parseFloat(i.precio).toFixed(2)}</td>
-      <td style="text-align:right;padding:1px 0;white-space:nowrap;font-weight:900;">$${_esc(sub)}</td>
+      <td class="col-desc" style="padding:1px 0;">${_esc(i.descripcion)}</td>
+      <td class="col-cant" style="padding:1px 2px;">${_esc(i.cantidad)}</td>
+      <td class="col-pu"   style="padding:1px 0;">$${parseFloat(i.precio).toFixed(2)}</td>
+      <td class="col-tot"  style="padding:1px 0;font-weight:900;">$${_esc(sub)}</td>
     </tr>`;
   }).join('');
 
@@ -858,17 +858,18 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   <title>Ticket #${_esc(numeroFactura)}</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: 'Courier New', monospace; font-size: 11px; width: 72mm; color: #000; background:#fff; }
+    @page { margin: 0; size: 58mm auto; }
+    body { font-family: 'Courier New', monospace; font-size: 10px; width: 52mm; color: #000; background:#fff; word-break: break-word; overflow-wrap: break-word; }
     .center { text-align: center; }
     .bold   { font-weight: 900; }
-    .hr     { border-top: 1px dashed #000; margin: 4px 0; }
-    table   { width: 100%; border-collapse: collapse; }
-    td      { vertical-align: top; font-size: 10px; }
-    .total-row td { font-weight: 900; font-size: 12px; border-top: 1px dashed #000; padding-top: 3px; }
-    @media print {
-      @page { margin: 0; size: 58mm auto; }
-      body  { width: 52mm; }
-    }
+    .hr     { border-top: 1px dashed #000; margin: 3px 0; }
+    table   { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    td      { vertical-align: top; font-size: 9px; word-break: break-word; }
+    .total-row td { font-weight: 900; font-size: 11px; border-top: 1px dashed #000; padding-top: 3px; }
+    .col-desc { width: 55%; }
+    .col-cant { width: 12%; text-align: center; }
+    .col-pu   { width: 15%; text-align: right; }
+    .col-tot  { width: 18%; text-align: right; }
   </style></head><body>
   <div class="center bold" style="font-size:16px;letter-spacing:2px;">AVIPET</div>
   <div class="center" style="font-size:9px;">${_esc(cfg.razonSocial || '')}</div>
@@ -885,10 +886,10 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   <div class="hr"></div>
   <table>
     <thead><tr style="border-bottom:1px dashed #000;">
-      <th style="text-align:left;font-size:9px;">Descripción</th>
-      <th style="text-align:center;font-size:9px;">Cant</th>
-      <th style="text-align:right;font-size:9px;">P/U</th>
-      <th style="text-align:right;font-size:9px;">Total</th>
+      <th class="col-desc" style="text-align:left;font-size:9px;">Descripción</th>
+      <th class="col-cant" style="font-size:9px;">Qty</th>
+      <th class="col-pu"   style="font-size:9px;">P/U</th>
+      <th class="col-tot"  style="font-size:9px;">Total</th>
     </tr></thead>
     <tbody>${lineas}</tbody>
   </table>
@@ -910,7 +911,7 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   <br><br>
   </body></html>`;
 
-  const win = window.open('', '_blank', 'width=340,height=600');
+  const win = window.open('', '_blank', 'width=230,height=700');
   if (!win) { alert('Permite ventanas emergentes para imprimir el ticket.'); return; }
   win.document.write(html);
   win.document.close();
@@ -1774,10 +1775,13 @@ window.imprimirLibro = function(tipo) {
   const w = window.open('','_blank','width=900,height=700');
   w.document.write(`<!doctype html><html><head><meta charset="utf-8">
     <title>Libro de ${tipo === 'ventas' ? 'Ventas' : 'Compras'} — AVIPET</title>
-    <style>body{font-family:Arial,sans-serif;font-size:9px;margin:20px}
-    table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:3px 5px}
-    th{background:#eee;font-weight:bold}tr:nth-child(even){background:#f9f9f9}
-    @media print{body{margin:5mm}}</style></head><body>
+    <style>
+    body{font-family:Arial,sans-serif;font-size:8px;margin:10px}
+    table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:2px 4px}
+    th{background:#e2e8f0;font-weight:bold;font-size:8px}tr:nth-child(even){background:#f8fafc}
+    @page{size:A4 landscape;margin:8mm}
+    @media print{body{margin:0;font-size:7.5px}th,td{padding:1px 3px}}
+    </style></head><body>
     <h2 style="font-size:12px;margin-bottom:8px">LIBRO DE ${tipo === 'ventas' ? 'VENTAS' : 'COMPRAS'} — AVIPET</h2>
     ${tabla.outerHTML}
     <script>window.print();</script></body></html>`);
