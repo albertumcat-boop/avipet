@@ -1357,9 +1357,14 @@ window.cargarLibroCompras = async function() {
 
     let rows = '';
     filas.forEach(f => {
-      const fotoBtn = f.fotoURL
+      const uploadURL = `https://avipet.vercel.app/subir-foto.html?col=${encodeURIComponent(f._col)}&id=${encodeURIComponent(f._docId)}`;
+      const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=64x64&data=${encodeURIComponent(uploadURL)}`;
+      const fotoCell = f.fotoURL
         ? `<a href="${_esc(f.fotoURL)}" target="_blank" class="text-blue-600 font-black text-[8px] underline">Ver foto</a>`
-        : `<button onclick="window._subirFotoCompra('${_esc(f._docId)}','${_esc(f._col)}')" class="text-[7px] font-black bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-700 border border-slate-200 rounded px-1 py-0.5">📷 Subir</button>`;
+        : `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+             <img src="${qrSrc}" width="48" height="48" alt="QR subir foto" loading="lazy" title="Escanea con el teléfono para subir la foto">
+             <span style="font-size:6px;color:#94a3b8;">📱 foto</span>
+           </div>`;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="border px-2 py-1">${f.fechaSimple||''}</td>
@@ -1371,7 +1376,7 @@ window.cargarLibroCompras = async function() {
         <td class="border px-2 py-1 text-right">${_fmtMoney(f.ivaCompra)}</td>
         <td class="border px-2 py-1 text-right font-bold">${_fmtMoney(f.totalCompra)}</td>
         <td class="border px-2 py-1 text-center"><span class="text-[7px] px-1 py-0.5 rounded ${f._fuente==='fiscal'?'bg-blue-100 text-blue-700':'bg-slate-100 text-slate-500'}">${f._fuente}</span></td>
-        <td class="border px-2 py-1 text-center">${fotoBtn}</td>
+        <td class="border px-2 py-1 text-center">${fotoCell}</td>
       `;
       tr.querySelector('td:nth-child(3)').textContent = f.nombreProveedor || '';
       rows += tr.outerHTML;
