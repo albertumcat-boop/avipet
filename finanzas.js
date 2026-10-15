@@ -156,6 +156,8 @@ window.mostrarMenuFinanzas = async () => {
     { tab:'peluqueria',  label:'Peluqueria',         color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff', desc:'Servicios, ayudantes, cobros', deuda: deudaPelu },
     { tab:'cashea',      label:'Cashea',             color:'#0f766e', bg:'#f0fdfa', border:'#99f6e4', desc:'Ventas financiadas — cobro los martes', deuda: 0 },
     { tab:'deudas',      label:'Deudas y Prestamos', color:'#dc2626', bg:'#fef2f2', border:'#fca5a5', desc:'Prestamos pendientes',          deuda: deudaTotal },
+    { tab:'rentabilidad', label:'Rentabilidad',        color:'#0369a1', bg:'#f0f9ff', border:'#bae6fd', desc:'Análisis por servicio y doctor', deuda: 0 },
+    { tab:'directorio',   label:'Directorio Clientes', color:'#065f46', bg:'#f0fdf4', border:'#bbf7d0', desc:'Historial y frecuencia de visitas', deuda: 0 },
   ];
 
   const wrap = document.createElement('div');
@@ -189,6 +191,8 @@ window.mostrarMenuFinanzas = async () => {
         else if (tab === 'peluqueria') { _tabFinanzas='peluqueria'; window.mostrarDashboardPelu(); }
         else if (tab === 'cashea') { window.mostrarDashboardCashea(); }
         else if (tab === 'deudas') { window.abrirModuloDeudas(); }
+        else if (tab === 'rentabilidad') { window.abrirAnalisisRentabilidad(); }
+        else if (tab === 'directorio') { window.abrirDirectorioClientes(); }
       };
     })(b.tab);
     wrap.appendChild(btn);
@@ -1548,6 +1552,204 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
 }
 
 console.log("finanzas.js v13 -- AyuExt con desglose USD/Bs");
+
+// =========================================================
+// ANÁLISIS DE RENTABILIDAD POR SERVICIO Y DOCTOR
+// =========================================================
+window.abrirAnalisisRentabilidad = async function() {
+  const btn = document.getElementById('btnAnalisisRent');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Calculando...'; }
+  try {
+    const [snapCons, snapFact] = await Promise.all([
+      getDocs(query(collection(db,'consultas'))),
+      getDocs(query(collection(db,'facturas')))
+    ]);
+
+    // Rentabilidad por servicio
+    const porServicio = {};
+    snapCons.forEach(d => {
+      const c = d.data();
+      const key = (c.servicio || 'Consulta General').toUpperCase();
+      if (!porServicio[key]) porServicio[key] = { total: 0, count: 0, doctor: {} };
+      const monto = parseFloat(c.montoVenta || 0);
+      porServicio[key].total += monto;
+      porServicio[key].count++;
+      const doc = (c.doctor || 'Sin asignar').toUpperCase();
+      if (!porServicio[key].doctor[doc]) porServicio[key].doctor[doc] = 0;
+      porServicio[key].doctor[doc] += monto;
+    });
+
+    // Rentabilidad por doctor
+    const porDoctor = {};
+    snapCons.forEach(d => {
+      const c = d.data();
+      const dr = (c.doctor || 'Sin asignar').toUpperCase();
+      if (!porDoctor[dr]) porDoctor[dr] = { total: 0, count: 0 };
+      porDoctor[dr].total += parseFloat(c.montoVenta || 0);
+      porDoctor[dr].count++;
+    });
+
+    const sortedSvc = Object.entries(porServicio).sort(([,a],[,b]) => b.total - a.total).slice(0,15);
+    const sortedDoc = Object.entries(porDoctor).sort(([,a],[,b]) => b.total - a.total);
+
+    // Total facturado
+    let totalFacturado = 0;
+    snapFact.forEach(d => { totalFacturado += parseFloat(d.data().totalMoneda||0); });
+
+    const filasServ = sortedSvc.map(([nombre, s]) =>
+      `<tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:4px 8px;font-size:10px;font-weight:bold;">${nombre}</td>
+        <td style="padding:4px 8px;text-align:center;font-size:10px;">${s.count}</td>
+        <td style="padding:4px 8px;text-align:right;font-size:10px;font-weight:bold;color:#1d4ed8;">$${s.total.toFixed(2)}</td>
+        <td style="padding:4px 8px;text-align:right;font-size:10px;color:#16a34a;">$${s.count ? (s.total/s.count).toFixed(2) : '0.00'}</td>
+      </tr>`).join('');
+
+    const filasDoc = sortedDoc.map(([nombre, d]) =>
+      `<tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:4px 8px;font-size:10px;font-weight:bold;">👨‍⚕️ ${nombre}</td>
+        <td style="padding:4px 8px;text-align:center;font-size:10px;">${d.count}</td>
+        <td style="padding:4px 8px;text-align:right;font-size:10px;font-weight:bold;color:#1d4ed8;">$${d.total.toFixed(2)}</td>
+        <td style="padding:4px 8px;text-align:right;font-size:10px;color:#16a34a;">$${d.count ? (d.total/d.count).toFixed(2) : '0.00'}</td>
+      </tr>`).join('');
+
+    Swal.fire({
+      title: '📊 Análisis de Rentabilidad',
+      html: `<div style="text-align:left;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">TOTAL FACTURADO</div>
+            <div style="font-size:16px;font-weight:900;color:#1d4ed8;">$${totalFacturado.toFixed(2)}</div>
+          </div>
+          <div style="background:#f0fdf4;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">CONSULTAS TOTALES</div>
+            <div style="font-size:16px;font-weight:900;color:#16a34a;">${snapCons.size}</div>
+          </div>
+        </div>
+        <p style="font-size:10px;font-weight:900;color:#334155;margin-bottom:6px;text-transform:uppercase;">🏆 Top Servicios</p>
+        <div style="max-height:200px;overflow-y:auto;margin-bottom:12px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#1e293b;color:#fff;position:sticky;top:0;">
+              <th style="padding:4px 8px;font-size:9px;text-align:left;">Servicio</th>
+              <th style="padding:4px 8px;font-size:9px;">Casos</th>
+              <th style="padding:4px 8px;font-size:9px;">Total $</th>
+              <th style="padding:4px 8px;font-size:9px;">Prom. $</th>
+            </tr></thead>
+            <tbody>${filasServ}</tbody>
+          </table>
+        </div>
+        <p style="font-size:10px;font-weight:900;color:#334155;margin-bottom:6px;text-transform:uppercase;">👨‍⚕️ Por Doctor</p>
+        <div style="max-height:160px;overflow-y:auto;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#1e293b;color:#fff;position:sticky;top:0;">
+              <th style="padding:4px 8px;font-size:9px;text-align:left;">Doctor</th>
+              <th style="padding:4px 8px;font-size:9px;">Casos</th>
+              <th style="padding:4px 8px;font-size:9px;">Total $</th>
+              <th style="padding:4px 8px;font-size:9px;">Prom. $</th>
+            </tr></thead>
+            <tbody>${filasDoc}</tbody>
+          </table>
+        </div>
+      </div>`,
+      width: 560,
+      confirmButtonText: 'Cerrar', confirmButtonColor: '#1d4ed8'
+    });
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📊 Rentabilidad'; }
+  }
+};
+
+// =========================================================
+// DIRECTORIO DE CLIENTES CON ESTADÍSTICAS
+// =========================================================
+window.abrirDirectorioClientes = async function() {
+  const btn = document.getElementById('btnDirectorioClientes');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Cargando...'; }
+  try {
+    const snap = await getDocs(query(collection(db,'consultas')));
+    const clientes = {};
+    snap.forEach(d => {
+      const c = d.data();
+      const ci = (c.cedula || '').trim();
+      if (!ci) return;
+      if (!clientes[ci]) {
+        clientes[ci] = {
+          ci, nombre: c.propietario||'', telefono: c.telefono||'',
+          mascotas: new Set(), visitas: 0, totalGastado: 0, ultimaVisita: ''
+        };
+      }
+      clientes[ci].visitas++;
+      clientes[ci].totalGastado += parseFloat(c.montoVenta || 0);
+      if (c.paciente) clientes[ci].mascotas.add(c.paciente);
+      if (c.fechaSimple && c.fechaSimple > clientes[ci].ultimaVisita)
+        clientes[ci].ultimaVisita = c.fechaSimple;
+    });
+
+    const lista = Object.values(clientes).sort((a,b) => b.totalGastado - a.totalGastado);
+
+    const filas = lista.map(cl =>
+      `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer;" class="hover:bg-slate-50">
+        <td style="padding:4px 8px;font-size:10px;font-weight:bold;" data-nom></td>
+        <td style="padding:4px 8px;font-size:10px;color:#64748b;">${cl.ci}</td>
+        <td style="padding:4px 8px;font-size:10px;">${cl.visitas}</td>
+        <td style="padding:4px 8px;font-size:10px;text-align:right;font-weight:bold;color:#1d4ed8;">$${cl.totalGastado.toFixed(2)}</td>
+        <td style="padding:4px 8px;font-size:10px;color:#64748b;" data-mas></td>
+        <td style="padding:4px 8px;font-size:10px;color:#64748b;">${cl.ultimaVisita||'—'}</td>
+      </tr>`).join('');
+
+    await Swal.fire({
+      title: `👥 Directorio de Clientes (${lista.length})`,
+      html: `<div style="text-align:left;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+          <div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">CLIENTES</div>
+            <div style="font-size:16px;font-weight:900;color:#1d4ed8;">${lista.length}</div>
+          </div>
+          <div style="background:#f0fdf4;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">TOTAL GENERADO</div>
+            <div style="font-size:14px;font-weight:900;color:#16a34a;">$${lista.reduce((s,c)=>s+c.totalGastado,0).toFixed(2)}</div>
+          </div>
+          <div style="background:#fef3c7;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">PROM. POR CLIENTE</div>
+            <div style="font-size:14px;font-weight:900;color:#d97706;">$${lista.length ? (lista.reduce((s,c)=>s+c.totalGastado,0)/lista.length).toFixed(2) : '0.00'}</div>
+          </div>
+        </div>
+        <div style="max-height:350px;overflow-y:auto;" id="dirClientesTabla">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#1e293b;color:#fff;position:sticky;top:0;">
+              <th style="padding:4px 8px;font-size:9px;text-align:left;">Nombre</th>
+              <th style="padding:4px 8px;font-size:9px;">CI</th>
+              <th style="padding:4px 8px;font-size:9px;">Visitas</th>
+              <th style="padding:4px 8px;font-size:9px;">Total $</th>
+              <th style="padding:4px 8px;font-size:9px;">Mascotas</th>
+              <th style="padding:4px 8px;font-size:9px;">Última visita</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+      </div>`,
+      width: 700,
+      confirmButtonText: 'Cerrar', confirmButtonColor: '#1d4ed8',
+      didOpen: () => {
+        // Rellenar datos de usuario via textContent (anti-XSS)
+        const rows = document.querySelectorAll('#dirClientesTabla tbody tr');
+        rows.forEach((tr, idx) => {
+          const cl = lista[idx];
+          if (!cl) return;
+          const nomEl = tr.querySelector('[data-nom]');
+          const masEl = tr.querySelector('[data-mas]');
+          if (nomEl) nomEl.textContent = cl.nombre || '—';
+          if (masEl) masEl.textContent = [...cl.mascotas].join(', ') || '—';
+        });
+      }
+    });
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '👥 Directorio'; }
+  }
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULO DEUDAS / PRESTAMOS

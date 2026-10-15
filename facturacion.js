@@ -1147,7 +1147,7 @@ console.log('✅ facturacion.js v1 — módulo de facturación fiscal AVIPET');
 
 // ─── TAB SWITCHING ────────────────────────────────────────
 window.showFacTab = function(tab) {
-  const tabs = ['facturar','libro-ventas','libro-compras','notas','retenciones'];
+  const tabs = ['facturar','libro-ventas','libro-compras','notas','retenciones','cxc','cotizaciones'];
   tabs.forEach(t => {
     const sec = document.getElementById('sec-' + t);
     const btn = document.getElementById('ftab-' + t);
@@ -1163,6 +1163,8 @@ window.showFacTab = function(tab) {
   if (tab === 'libro-ventas')  _initSelectoresLibro('lv');
   if (tab === 'libro-compras') _initSelectoresLibro('lc');
   if (tab === 'retenciones')   _initSelectoresRet();
+  if (tab === 'cxc')           window.cargarCxC('pendiente');
+  if (tab === 'cotizaciones')  window.cargarCotizaciones();
 };
 
 // ─── HELPERS COMUNES ──────────────────────────────────────
@@ -1738,4 +1740,258 @@ window.imprimirLibro = function(tipo) {
     ${tabla.outerHTML}
     <script>window.print();</script></body></html>`);
   w.document.close();
+};
+
+// =========================================================
+// CUENTAS POR COBRAR (CxC)
+// =========================================================
+
+window.guardarCxC = async function() {
+  const ci      = document.getElementById('cxcCI')?.value.trim();
+  const nombre  = document.getElementById('cxcNombre')?.value.trim();
+  const monto   = parseFloat(document.getElementById('cxcMonto')?.value) || 0;
+  const concepto= document.getElementById('cxcConcepto')?.value.trim();
+  const vence   = document.getElementById('cxcFechaVence')?.value;
+  const tel     = document.getElementById('cxcTelefono')?.value.trim();
+
+  if (!nombre || monto <= 0) { alert('Nombre y monto son obligatorios.'); return; }
+
+  try {
+    await addDoc(collection(db, 'cuentas_por_cobrar'), {
+      ci: ci || '', nombre, monto, concepto: concepto || '',
+      telefono: tel || '',
+      fechaVence: vence ? new Date(vence + 'T12:00:00').toLocaleDateString('es-VE') : '',
+      estado: 'pendiente',
+      fechaRegistro: new Date().toLocaleDateString('es-VE'),
+      ts: serverTimestamp()
+    });
+    Swal.fire({ icon:'success', title:'Deuda registrada ✓', timer:1500, showConfirmButton:false });
+    ['cxcCI','cxcNombre','cxcMonto','cxcConcepto','cxcFechaVence','cxcTelefono'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    window.cargarCxC('pendiente');
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.cargarCxC = async function(filtro = 'pendiente') {
+  const listaEl   = document.getElementById('cxcLista');
+  const resumenEl = document.getElementById('cxcResumen');
+  if (!listaEl) return;
+  listaEl.innerHTML = '<p class="text-center text-slate-400 text-[10px] italic py-4">Cargando...</p>';
+
+  try {
+    const snap = await getDocs(query(collection(db, 'cuentas_por_cobrar'), orderBy('ts','desc'), limit(200)));
+    let docs = [];
+    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    if (filtro === 'pendiente') docs = docs.filter(d => d.estado !== 'cobrado');
+
+    const totalPendiente = docs.filter(d => d.estado !== 'cobrado').reduce((s,d) => s + (d.monto||0), 0);
+    const totalCobrado   = docs.filter(d => d.estado === 'cobrado').reduce((s,d) => s + (d.monto||0), 0);
+
+    resumenEl.innerHTML = `
+      <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+        <div class="text-[8px] font-bold text-red-500 uppercase">Por Cobrar</div>
+        <div class="text-[15px] font-black text-red-700">$${totalPendiente.toFixed(2)}</div>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+        <div class="text-[8px] font-bold text-emerald-500 uppercase">Cobrado</div>
+        <div class="text-[15px] font-black text-emerald-700">$${totalCobrado.toFixed(2)}</div>
+      </div>`;
+
+    if (!docs.length) {
+      listaEl.innerHTML = '<p class="text-center text-slate-400 text-[10px] italic py-6">Sin deudas registradas.</p>';
+      return;
+    }
+
+    listaEl.innerHTML = '';
+    docs.forEach(d => {
+      const div = document.createElement('div');
+      const cobrado = d.estado === 'cobrado';
+      div.className = `border ${cobrado ? 'border-emerald-100 bg-emerald-50' : 'border-red-100 bg-red-50'} rounded-xl p-3 mb-2`;
+      div.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div class="flex-1 min-w-0 mr-2">
+            <p class="text-[11px] font-black text-slate-800 uppercase truncate" data-nom></p>
+            <p class="text-[9px] text-slate-500 mt-0.5" data-conc></p>
+            <p class="text-[8px] text-slate-400">${d.fechaRegistro||''} ${d.fechaVence ? '· Vence: '+d.fechaVence : ''}</p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-[13px] font-black ${cobrado ? 'text-emerald-600' : 'text-red-600'}">$${parseFloat(d.monto||0).toFixed(2)}</p>
+            ${!cobrado ? `<button data-id="${d.id}" class="btn-cobrar text-[8px] font-black bg-emerald-500 text-white px-2 py-1 rounded-lg mt-1 hover:bg-emerald-600">✓ Cobrar</button>` : '<span class="text-[8px] text-emerald-600 font-bold">COBRADO</span>'}
+          </div>
+        </div>
+        ${d.telefono ? `<p class="text-[8px] text-blue-500 mt-1">📞 ${d.telefono}</p>` : ''}`;
+      div.querySelector('[data-nom]').textContent = d.nombre || '—';
+      div.querySelector('[data-conc]').textContent = d.concepto || '';
+      div.querySelector('.btn-cobrar')?.addEventListener('click', () => window.marcarCobrado(d.id));
+      listaEl.appendChild(div);
+    });
+  } catch(e) { listaEl.innerHTML = `<p class="text-red-600 text-xs p-2">${e.message}</p>`; }
+};
+
+window.marcarCobrado = async function(id) {
+  const conf = await Swal.fire({
+    title: '¿Confirmar cobro?', icon: 'question',
+    showCancelButton: true, confirmButtonText: 'Sí, marcar cobrado',
+    confirmButtonColor: '#16a34a'
+  });
+  if (!conf.isConfirmed) return;
+  try {
+    await updateDoc(doc(db, 'cuentas_por_cobrar', id), {
+      estado: 'cobrado', fechaCobro: new Date().toLocaleDateString('es-VE')
+    });
+    Swal.fire({ icon:'success', title:'¡Cobrado! ✓', timer:1200, showConfirmButton:false });
+    window.cargarCxC('pendiente');
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+// =========================================================
+// COTIZACIONES / PRESUPUESTOS
+// =========================================================
+
+let _cotItems = [];
+
+window.agregarItemCotizacion = function() {
+  const desc   = document.getElementById('cotItemDesc')?.value.trim();
+  const precio = parseFloat(document.getElementById('cotItemPrecio')?.value) || 0;
+  if (!desc || precio <= 0) { alert('Descripción y precio requeridos.'); return; }
+  _cotItems.push({ desc, precio });
+  document.getElementById('cotItemDesc').value  = '';
+  document.getElementById('cotItemPrecio').value = '';
+  _renderCotItems();
+};
+
+function _renderCotItems() {
+  const el = document.getElementById('cotItems');
+  const totalEl = document.getElementById('cotTotal');
+  if (!el) return;
+  el.innerHTML = '';
+  let total = 0;
+  _cotItems.forEach((item, idx) => {
+    total += item.precio;
+    const div = document.createElement('div');
+    div.className = 'flex justify-between items-center text-[10px] py-1 border-b border-slate-100';
+    div.innerHTML = `<span class="flex-1 truncate" data-desc></span><span class="font-bold text-blue-700 mx-2">$${item.precio.toFixed(2)}</span>
+      <button data-idx="${idx}" class="text-red-400 hover:text-red-600 font-black text-[9px]">✕</button>`;
+    div.querySelector('[data-desc]').textContent = item.desc;
+    div.querySelector('[data-idx]').addEventListener('click', () => { _cotItems.splice(idx,1); _renderCotItems(); });
+    el.appendChild(div);
+  });
+  if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
+}
+
+window.guardarCotizacion = async function() {
+  const nombre   = document.getElementById('cotNombre')?.value.trim();
+  const telefono = document.getElementById('cotTelefono')?.value.trim();
+  const mascota  = document.getElementById('cotMascota')?.value.trim();
+  const nota     = document.getElementById('cotNota')?.value.trim();
+  if (!nombre || !_cotItems.length) { alert('Nombre y al menos un ítem son requeridos.'); return; }
+  const total = _cotItems.reduce((s,i) => s + i.precio, 0);
+  try {
+    await addDoc(collection(db,'cotizaciones'), {
+      nombre, telefono: telefono||'', mascota: mascota||'',
+      items: _cotItems, total, nota: nota||'',
+      estado: 'pendiente',
+      fecha: new Date().toLocaleDateString('es-VE'),
+      ts: serverTimestamp()
+    });
+    Swal.fire({ icon:'success', title:'Cotización guardada ✓', timer:1500, showConfirmButton:false });
+    _cotItems = [];
+    _renderCotItems();
+    ['cotNombre','cotTelefono','cotMascota','cotNota'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    window.cargarCotizaciones();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.imprimirCotizacion = function() {
+  const nombre   = document.getElementById('cotNombre')?.value.trim() || 'Cliente';
+  const telefono = document.getElementById('cotTelefono')?.value.trim() || '';
+  const mascota  = document.getElementById('cotMascota')?.value.trim() || '';
+  const nota     = document.getElementById('cotNota')?.value.trim() || '';
+  const cfg      = _configFiscal;
+  const fecha    = new Date().toLocaleDateString('es-VE');
+  if (!_cotItems.length) { alert('Agrega ítems antes de imprimir.'); return; }
+  const total = _cotItems.reduce((s,i) => s + i.precio, 0);
+
+  const filas = _cotItems.map(i =>
+    `<tr><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;">${_esc(i.desc)}</td>
+     <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:bold;">$${i.precio.toFixed(2)}</td></tr>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cotización — AVIPET</title>
+  <style>body{font-family:Arial,sans-serif;font-size:11px;max-width:210mm;margin:10mm auto;color:#0f172a}
+  table{width:100%;border-collapse:collapse}th{background:#1e293b;color:#fff;padding:4px 8px;text-align:left}
+  @media print{@page{margin:10mm}}</style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px;">
+    <div><h1 style="font-size:20px;font-weight:900;margin:0;">${_esc(cfg.razonSocial||'AVIPET')}</h1>
+    <p style="margin:2px 0;font-size:10px;color:#64748b;">${_esc(cfg.rifEmisor||'')} — ${_esc(cfg.direccionFiscal||'')}</p></div>
+    <div style="text-align:right;"><h2 style="font-size:14px;font-weight:900;color:#1d4ed8;margin:0;">COTIZACIÓN</h2>
+    <p style="margin:2px 0;font-size:10px;color:#64748b;">Fecha: ${fecha}</p></div>
+  </div>
+  <div style="background:#f8fafc;border-radius:8px;padding:10px;margin-bottom:14px;">
+    <p style="margin:2px 0;font-weight:bold;">Cliente: ${_esc(nombre)}</p>
+    ${mascota ? `<p style="margin:2px 0;font-size:10px;">Mascota: ${_esc(mascota)}</p>` : ''}
+    ${telefono ? `<p style="margin:2px 0;font-size:10px;">Tel: ${_esc(telefono)}</p>` : ''}
+  </div>
+  <table><thead><tr><th>Descripción del Servicio / Producto</th><th style="text-align:right;width:100px;">Precio</th></tr></thead>
+  <tbody>${filas}</tbody></table>
+  <div style="text-align:right;margin-top:10px;font-size:15px;font-weight:900;color:#1d4ed8;">TOTAL: $${total.toFixed(2)}</div>
+  ${nota ? `<div style="margin-top:14px;font-size:10px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:8px;"><b>Condiciones:</b> ${_esc(nota)}</div>` : ''}
+  <script>window.print();</script></body></html>`;
+
+  const w = window.open('','_blank','width=800,height=600');
+  if (!w) { alert('Permite ventanas emergentes.'); return; }
+  w.document.write(html); w.document.close();
+};
+
+window.cargarCotizaciones = async function() {
+  const el = document.getElementById('cotLista');
+  if (!el) return;
+  el.innerHTML = '<p class="text-center text-slate-400 text-[10px] italic py-4">Cargando...</p>';
+  try {
+    const snap = await getDocs(query(collection(db,'cotizaciones'), orderBy('ts','desc'), limit(30)));
+    if (snap.empty) { el.innerHTML = '<p class="text-center text-slate-400 text-[10px] italic py-6">Sin cotizaciones aún.</p>'; return; }
+    el.innerHTML = '';
+    snap.forEach(d => {
+      const c = d.data();
+      const div = document.createElement('div');
+      div.className = 'border border-slate-100 rounded-xl p-3 mb-2 hover:border-blue-200 cursor-pointer transition-all';
+      div.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[11px] font-black text-slate-800 uppercase" data-nom></p>
+            <p class="text-[9px] text-slate-400">${c.fecha||''} ${c.mascota ? '· '+c.mascota : ''}</p>
+            <p class="text-[9px] text-slate-500">${(c.items||[]).length} ítems</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[13px] font-black text-blue-700">$${parseFloat(c.total||0).toFixed(2)}</p>
+            ${c.telefono ? `<p class="text-[8px] text-blue-400">📞 ${c.telefono}</p>` : ''}
+          </div>
+        </div>`;
+      div.querySelector('[data-nom]').textContent = c.nombre || '—';
+      div.onclick = () => window.verDetalleCotizacion(c);
+      el.appendChild(div);
+    });
+  } catch(e) { el.innerHTML = `<p class="text-red-600 text-xs p-2">${e.message}</p>`; }
+};
+
+window.verDetalleCotizacion = function(c) {
+  const filas = (c.items||[]).map(i =>
+    `<tr><td style="padding:4px 8px;border-bottom:1px solid #f1f5f9;font-size:11px;">${_esc(i.desc)}</td>
+     <td style="padding:4px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:bold;">$${i.precio.toFixed(2)}</td></tr>`
+  ).join('');
+  Swal.fire({
+    title: `Cotización — ${c.nombre}`,
+    html: `<div style="text-align:left;font-size:11px;">
+      <p style="color:#64748b;margin-bottom:8px;">${c.fecha||''} ${c.mascota ? '· Mascota: '+c.mascota : ''}</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#1e293b;color:#fff;"><th style="padding:4px 8px;text-align:left;font-size:10px;">Descripción</th><th style="padding:4px 8px;text-align:right;font-size:10px;">Precio</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <p style="text-align:right;font-size:16px;font-weight:900;color:#1d4ed8;margin-top:10px;">TOTAL: $${parseFloat(c.total||0).toFixed(2)}</p>
+      ${c.nota ? `<p style="font-size:10px;color:#64748b;margin-top:8px;">📝 ${_esc(c.nota)}</p>` : ''}
+    </div>`,
+    width: 450,
+    confirmButtonText: 'Cerrar', confirmButtonColor: '#1d4ed8'
+  });
 };

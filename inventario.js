@@ -497,6 +497,174 @@ window._asociarInsumoAServicios = async (nombre, costo) => {
 };
 console.log(" inventario.js v12 -- agregar insumo con selector de servicios");
 
+// =========================================================
+// AJUSTE POR CONTEO FÍSICO
+// =========================================================
+window.abrirAjusteConteo = async function() {
+  const cache = window._inventarioCache || [];
+  if (!cache.length) { alert('Carga el inventario primero.'); return; }
+
+  const filas = cache.map(p => `
+    <tr>
+      <td style="padding:4px 6px;font-size:10px;font-weight:bold;" data-id="${p.id}">${p.nombre}</td>
+      <td style="padding:4px 6px;text-align:center;font-size:10px;color:#64748b;">${p.cantidadStock||0} ${p.unidad||'und'}</td>
+      <td style="padding:4px 6px;text-align:center;">
+        <input type="number" data-ajuste="${p.id}" min="0" step="1"
+          value="${p.cantidadStock||0}"
+          style="width:60px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 4px;text-align:center;font-size:11px;">
+      </td>
+    </tr>`).join('');
+
+  const result = await Swal.fire({
+    title: '📦 Ajuste por Conteo Físico',
+    html: `<p style="font-size:10px;color:#64748b;margin-bottom:10px;">
+      Ingresa el conteo real de cada producto. Solo se guardan los que cambien.
+    </p>
+    <div style="max-height:350px;overflow-y:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#1e293b;color:#fff;position:sticky;top:0;">
+          <th style="padding:4px 6px;text-align:left;font-size:9px;">Producto</th>
+          <th style="padding:4px 6px;font-size:9px;">Sistema</th>
+          <th style="padding:4px 6px;font-size:9px;">Conteo Real</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>`,
+    width: 500,
+    showCancelButton: true,
+    confirmButtonText: '✅ Aplicar Ajuste',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#1d4ed8',
+    preConfirm: () => {
+      const ajustes = [];
+      document.querySelectorAll('[data-ajuste]').forEach(inp => {
+        const id      = inp.dataset.ajuste;
+        const nuevo   = parseInt(inp.value) || 0;
+        const prod    = cache.find(p => p.id === id);
+        const actual  = prod ? (prod.cantidadStock || 0) : 0;
+        if (nuevo !== actual) ajustes.push({ id, nombre: prod?.nombre||id, actual, nuevo, diff: nuevo - actual });
+      });
+      return ajustes;
+    }
+  });
+
+  if (!result.isConfirmed || !result.value.length) return;
+  const ajustes = result.value;
+
+  const confirmHtml = ajustes.map(a =>
+    `<p style="font-size:11px;color:${a.diff>0?'#16a34a':'#dc2626'};">
+      ${a.nombre}: ${a.actual} → <b>${a.nuevo}</b> (${a.diff>0?'+':''}${a.diff})
+    </p>`).join('');
+
+  const conf = await Swal.fire({
+    title: `Confirmar ${ajustes.length} ajuste(s)`,
+    html: confirmHtml, width: 420,
+    showCancelButton: true, confirmButtonText: 'Confirmar',
+    confirmButtonColor: '#1d4ed8'
+  });
+  if (!conf.isConfirmed) return;
+
+  try {
+    for (const a of ajustes) {
+      await updateDoc(doc(db,'inventario',a.id), {
+        cantidadStock: a.nuevo, ultimaActualizacion: serverTimestamp()
+      });
+      await addDoc(collection(db,'movimientos_inventario'), {
+        productoId: a.id, productoNombre: a.nombre,
+        tipo: 'AJUSTE-CONTEO',
+        cantidad: Math.abs(a.diff),
+        diferencia: a.diff,
+        stockAnterior: a.actual, stockResultante: a.nuevo,
+        fecha: serverTimestamp()
+      });
+    }
+    Swal.fire({ icon:'success', title:`${ajustes.length} ajuste(s) aplicados ✓`, timer:2000, showConfirmButton:false });
+    window.cargarInventario();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+// =========================================================
+// COBERTURA + VALORACIÓN DEL INVENTARIO
+// =========================================================
+window.mostrarAnalisisInventario = async function() {
+  const cache = window._inventarioCache || [];
+  if (!cache.length) { alert('Carga el inventario primero.'); return; }
+
+  // Ventas de últimos 30 días desde movimientos_inventario
+  const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
+  let movSnap;
+  try {
+    movSnap = await getDocs(query(collection(db,'movimientos_inventario'), where('tipo','==','SALIDA-FACTURA'), orderBy('fecha','desc'), limit(500)));
+  } catch(e) { movSnap = { docs: [] }; }
+
+  const ventasPorId = {};
+  movSnap.docs?.forEach(d => {
+    const m = d.data();
+    if (!ventasPorId[m.productoId]) ventasPorId[m.productoId] = 0;
+    ventasPorId[m.productoId] += (m.cantidad || 0);
+  });
+
+  let valorTotal = 0, valorCosto = 0;
+  const filas = cache.map(p => {
+    const stock  = parseFloat(p.cantidadStock || 0);
+    const pv     = parseFloat(p.precioVenta || 0);
+    const pc     = parseFloat(p.costoCompra || 0);
+    const vendidos30 = ventasPorId[p.id] || 0;
+    const vendidosDia = vendidos30 / 30;
+    const coberturaDias = vendidosDia > 0 ? Math.floor(stock / vendidosDia) : (stock > 0 ? 999 : 0);
+    const margen = pc > 0 ? ((pv - pc) / pc * 100) : 0;
+    valorTotal += stock * pv;
+    valorCosto += stock * pc;
+
+    const colCob = coberturaDias <= 7 ? '#dc2626' : coberturaDias <= 15 ? '#d97706' : '#16a34a';
+    const cobText = coberturaDias >= 999 ? 'Sin ventas' : `${coberturaDias}d`;
+    return `<tr style="border-bottom:1px solid #f1f5f9;">
+      <td style="padding:4px 6px;font-size:10px;font-weight:bold;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${p.nombre}</td>
+      <td style="padding:4px 6px;text-align:center;font-size:10px;">${stock}</td>
+      <td style="padding:4px 6px;text-align:right;font-size:10px;">$${pv.toFixed(2)}</td>
+      <td style="padding:4px 6px;text-align:right;font-size:10px;color:#16a34a;">$${(stock*pv).toFixed(2)}</td>
+      <td style="padding:4px 6px;text-align:center;font-size:10px;font-weight:bold;color:${colCob};">${cobText}</td>
+      <td style="padding:4px 6px;text-align:center;font-size:10px;color:${margen>30?'#16a34a':margen>10?'#d97706':'#dc2626'};">${margen.toFixed(0)}%</td>
+    </tr>`;
+  }).join('');
+
+  Swal.fire({
+    title: '📊 Análisis de Inventario',
+    html: `<div style="text-align:left;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:8px;color:#64748b;font-weight:bold;">VALOR VENTA</div>
+          <div style="font-size:14px;font-weight:900;color:#1d4ed8;">$${valorTotal.toFixed(2)}</div>
+        </div>
+        <div style="background:#f0fdf4;border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:8px;color:#64748b;font-weight:bold;">VALOR COSTO</div>
+          <div style="font-size:14px;font-weight:900;color:#16a34a;">$${valorCosto.toFixed(2)}</div>
+        </div>
+        <div style="background:#fefce8;border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:8px;color:#64748b;font-weight:bold;">UTILIDAD BRUTA</div>
+          <div style="font-size:14px;font-weight:900;color:#d97706;">$${(valorTotal-valorCosto).toFixed(2)}</div>
+        </div>
+      </div>
+      <div style="max-height:340px;overflow-y:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#1e293b;color:#fff;position:sticky;top:0;">
+            <th style="padding:4px 6px;text-align:left;font-size:9px;">Producto</th>
+            <th style="padding:4px 6px;font-size:9px;">Stock</th>
+            <th style="padding:4px 6px;font-size:9px;">P/Venta</th>
+            <th style="padding:4px 6px;font-size:9px;">Valor $</th>
+            <th style="padding:4px 6px;font-size:9px;">Cobertura</th>
+            <th style="padding:4px 6px;font-size:9px;">Margen</th>
+          </tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+      <p style="font-size:8px;color:#94a3b8;margin-top:6px;">Cobertura = días de stock según ventas de los últimos 30 días. Margen = (precio venta - costo) / costo.</p>
+    </div>`,
+    width: 620,
+    confirmButtonText: 'Cerrar', confirmButtonColor: '#1d4ed8'
+  });
+};
+
 // ─── ESCÁNER CÁMARA PARA INVENTARIO ──────────────────────
 let _html5QrInv = null;
 
@@ -706,5 +874,112 @@ window.cerrarEscanerInventario = async function() {
     try { await _html5QrInv.stop(); } catch(_) {}
     try { _html5QrInv.clear(); } catch(_) {}
     _html5QrInv = null;
+  }
+};
+
+// =========================================================
+// LIBRO MENSUAL DE INVENTARIO
+// =========================================================
+window.abrirLibroMensualInventario = async function() {
+  // Generar lista de los últimos 6 meses para selector
+  const meses = [];
+  const hoy = new Date();
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    meses.push({ value: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: d.toLocaleDateString('es-VE',{month:'long',year:'numeric'}) });
+  }
+
+  const { value: mesElegido } = await Swal.fire({
+    title: '📋 Libro Mensual de Inventario',
+    html: `<label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;">Selecciona el mes:</label>
+      <select id="selMesLibro" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-size:11px;font-weight:700;">
+        ${meses.map(m=>`<option value="${m.value}">${m.label}</option>`).join('')}
+      </select>`,
+    confirmButtonText: 'Ver Libro',
+    confirmButtonColor: '#1d4ed8',
+    showCancelButton: true,
+    preConfirm: () => document.getElementById('selMesLibro').value
+  });
+  if (!mesElegido) return;
+
+  Swal.fire({ title:'⏳ Generando libro...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+
+  try {
+    const [snapInv, snapMov] = await Promise.all([
+      getDocs(query(collection(db,'inventario'), orderBy('nombre'))),
+      getDocs(query(collection(db,'movimientos_inventario')))
+    ]);
+
+    const productos = {};
+    snapInv.forEach(d => { productos[d.id] = { id:d.id, ...d.data() }; });
+
+    // Filtrar movimientos del mes
+    const movMes = [];
+    snapMov.forEach(d => {
+      const m = d.data();
+      const fecha = (m.fecha || '').substring(0,7);
+      if (fecha === mesElegido) movMes.push(m);
+    });
+
+    // Agrupar movimientos por producto
+    const resumen = {};
+    movMes.forEach(m => {
+      const pid = m.productoId || m.nombre || '?';
+      if (!resumen[pid]) resumen[pid] = { nombre: m.nombre||pid, entradas:0, salidas:0, ajustes:0, costo:0 };
+      const cant = parseInt(m.cantidad || 0);
+      if (m.tipo === 'ENTRADA' || m.tipo === 'ENTRADA-COMPRA') resumen[pid].entradas += cant;
+      else if (m.tipo === 'SALIDA-FACTURA' || m.tipo === 'SALIDA') resumen[pid].salidas += cant;
+      else if (m.tipo === 'AJUSTE-CONTEO') resumen[pid].ajustes += parseInt(m.diferencia || m.cantidad || 0);
+    });
+
+    const filas = Object.values(resumen).map(r =>
+      `<tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:4px 8px;font-size:9px;font-weight:bold;">${r.nombre}</td>
+        <td style="padding:4px 8px;font-size:9px;text-align:center;color:#16a34a;font-weight:900;">${r.entradas}</td>
+        <td style="padding:4px 8px;font-size:9px;text-align:center;color:#dc2626;font-weight:900;">${r.salidas}</td>
+        <td style="padding:4px 8px;font-size:9px;text-align:center;color:#d97706;">${r.ajustes !== 0 ? (r.ajustes>0?'+':'')+r.ajustes : '—'}</td>
+        <td style="padding:4px 8px;font-size:9px;text-align:center;font-weight:900;">${r.entradas-r.salidas}</td>
+      </tr>`
+    ).join('') || '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94a3b8;font-size:10px;">Sin movimientos este mes</td></tr>';
+
+    const mesLabel = meses.find(m=>m.value===mesElegido)?.label || mesElegido;
+    const totalEntradas = Object.values(resumen).reduce((s,r)=>s+r.entradas,0);
+    const totalSalidas  = Object.values(resumen).reduce((s,r)=>s+r.salidas,0);
+
+    Swal.fire({
+      title: `📋 Libro: ${mesLabel}`,
+      html: `<div style="text-align:left;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+          <div style="background:#f0fdf4;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">ENTRADAS</div>
+            <div style="font-size:18px;font-weight:900;color:#16a34a;">${totalEntradas}</div>
+          </div>
+          <div style="background:#fef2f2;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">SALIDAS</div>
+            <div style="font-size:18px;font-weight:900;color:#dc2626;">${totalSalidas}</div>
+          </div>
+          <div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">MOVIMIENTOS</div>
+            <div style="font-size:18px;font-weight:900;color:#1d4ed8;">${movMes.length}</div>
+          </div>
+        </div>
+        <div style="max-height:380px;overflow-y:auto;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#1e293b;color:#fff;position:sticky;top:0;">
+              <th style="padding:4px 8px;font-size:9px;text-align:left;">Producto</th>
+              <th style="padding:4px 8px;font-size:9px;">Entradas</th>
+              <th style="padding:4px 8px;font-size:9px;">Salidas</th>
+              <th style="padding:4px 8px;font-size:9px;">Ajuste</th>
+              <th style="padding:4px 8px;font-size:9px;">Neto</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+      </div>`,
+      width: 560,
+      confirmButtonText: 'Cerrar', confirmButtonColor: '#1d4ed8'
+    });
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
   }
 };

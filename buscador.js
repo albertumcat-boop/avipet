@@ -654,3 +654,95 @@ function _renderizarTarjetaTV(c, tipoDoc) {
 }
 
 console.log(" buscador.js v5 — filtros, paginacion, servicios e insumos separados");
+
+// =========================================================
+// CLIENTES RECURRENTES / FRECUENCIA DE VISITAS
+// =========================================================
+window.abrirClientesRecurrentes = async function() {
+  Swal.fire({ title:'⏳ Calculando...', text:'Analizando frecuencia de visitas', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+  try {
+    const snap = await getDocs(query(collection(db,'consultas')));
+    const clientes = {};
+    snap.forEach(d => {
+      const c = d.data();
+      const ci = (c.cedula||'').trim();
+      if (!ci) return;
+      if (!clientes[ci]) clientes[ci] = { ci, nombre: c.propietario||'', telefono: c.telefono||'', visitas: 0, fechas: [] };
+      clientes[ci].visitas++;
+      if (c.fechaSimple) clientes[ci].fechas.push(c.fechaSimple);
+    });
+
+    const lista = Object.values(clientes)
+      .filter(c => c.visitas >= 2)
+      .sort((a,b) => b.visitas - a.visitas);
+
+    // Calcular intervalo promedio entre visitas
+    lista.forEach(c => {
+      c.fechas.sort();
+      if (c.fechas.length >= 2) {
+        const diffs = [];
+        for (let i=1; i<c.fechas.length; i++) {
+          const d1 = new Date(c.fechas[i-1]), d2 = new Date(c.fechas[i]);
+          diffs.push((d2 - d1) / 86400000);
+        }
+        c.intervalo = Math.round(diffs.reduce((s,x)=>s+x,0)/diffs.length);
+      } else { c.intervalo = null; }
+      c.ultimaVisita = c.fechas[c.fechas.length-1] || '—';
+    });
+
+    const filas = lista.slice(0,50).map(c => {
+      const color = c.visitas >= 10 ? '#16a34a' : c.visitas >= 5 ? '#1d4ed8' : '#64748b';
+      const badge = c.visitas >= 10 ? '⭐' : c.visitas >= 5 ? '🔵' : '';
+      return `<tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:4px 8px;font-size:10px;font-weight:bold;color:${color};" data-nom>${badge}</td>
+        <td style="padding:4px 8px;font-size:10px;text-align:center;font-weight:900;color:${color};">${c.visitas}</td>
+        <td style="padding:4px 8px;font-size:10px;color:#64748b;">${c.intervalo ? c.intervalo+' días' : '—'}</td>
+        <td style="padding:4px 8px;font-size:10px;color:#64748b;">${c.ultimaVisita}</td>
+      </tr>`;
+    }).join('');
+
+    await Swal.fire({
+      title: `🔄 Clientes Recurrentes (${lista.length})`,
+      html: `<div style="text-align:left;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+          <div style="background:#f0fdf4;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">⭐ FIELES (+10)</div>
+            <div style="font-size:18px;font-weight:900;color:#16a34a;">${lista.filter(c=>c.visitas>=10).length}</div>
+          </div>
+          <div style="background:#eff6ff;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">🔵 REGULARES (+5)</div>
+            <div style="font-size:18px;font-weight:900;color:#1d4ed8;">${lista.filter(c=>c.visitas>=5&&c.visitas<10).length}</div>
+          </div>
+          <div style="background:#f8fafc;border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:8px;color:#64748b;font-weight:bold;">OCASIONALES</div>
+            <div style="font-size:18px;font-weight:900;color:#64748b;">${lista.filter(c=>c.visitas<5).length}</div>
+          </div>
+        </div>
+        <div style="max-height:380px;overflow-y:auto;" id="tablaRecurrentes">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#1e293b;color:#fff;position:sticky;top:0;">
+              <th style="padding:4px 8px;font-size:9px;text-align:left;">Nombre</th>
+              <th style="padding:4px 8px;font-size:9px;">Visitas</th>
+              <th style="padding:4px 8px;font-size:9px;">Intervalo</th>
+              <th style="padding:4px 8px;font-size:9px;">Última</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+      </div>`,
+      width: 520,
+      confirmButtonText: 'Cerrar', confirmButtonColor: '#1d4ed8',
+      didOpen: () => {
+        const rows = document.querySelectorAll('#tablaRecurrentes tbody tr');
+        rows.forEach((tr, idx) => {
+          const cl = lista[idx];
+          if (!cl) return;
+          const nomEl = tr.querySelector('[data-nom]');
+          if (nomEl) nomEl.textContent = (cl.nombre || cl.ci) + (nomEl.textContent || '');
+        });
+      }
+    });
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};

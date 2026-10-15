@@ -87,6 +87,14 @@
       class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100">
       🔒 Retenciones
     </button>
+    <button id="ftab-cxc" onclick="window.showFacTab('cxc')"
+      class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      💳 Ctas. x Cobrar
+    </button>
+    <button id="ftab-cotizaciones" onclick="window.showFacTab('cotizaciones')"
+      class="shrink-0 px-3 py-2 rounded-lg font-black text-[9px] uppercase transition-all text-slate-500 hover:bg-slate-100">
+      📄 Cotizaciones
+    </button>
   </div>
 </div>
 
@@ -523,6 +531,127 @@
         class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700 shadow transition-all">
         Guardar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CUENTAS POR COBRAR ══════════════════════════════ -->
+<div id="sec-cxc" class="hidden max-w-7xl mx-auto px-4 pb-8 pt-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    <!-- Registrar deuda -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider mb-3">💳 Registrar Cuenta por Cobrar</h2>
+      <div class="space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-black text-slate-400 uppercase">CI / RIF Cliente</label>
+            <input id="cxcCI" type="text" placeholder="V-XXXXXXXX" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+          </div>
+          <div>
+            <label class="text-[9px] font-black text-slate-400 uppercase">Nombre</label>
+            <input id="cxcNombre" type="text" placeholder="Nombre del cliente" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-slate-400 uppercase">Concepto</label>
+          <input id="cxcConcepto" type="text" placeholder="Ej: Consulta Firulais + medicamentos" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-black text-slate-400 uppercase">Monto ($)</label>
+            <input id="cxcMonto" type="number" step="0.01" placeholder="0.00" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+          </div>
+          <div>
+            <label class="text-[9px] font-black text-slate-400 uppercase">Fecha límite</label>
+            <input id="cxcFechaVence" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-slate-400 uppercase">Teléfono</label>
+          <input id="cxcTelefono" type="text" placeholder="04XX-XXXXXXX" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+        </div>
+        <button onclick="window.guardarCxC()"
+          class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700 shadow transition-all mt-2">
+          💳 Registrar Deuda
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista CxC -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider">📋 Deudas Pendientes</h2>
+        <div class="flex gap-1">
+          <button onclick="window.cargarCxC('pendiente')" class="bg-red-100 text-red-700 px-2 py-1 rounded-lg font-black text-[8px] uppercase">Pendientes</button>
+          <button onclick="window.cargarCxC('todas')" class="bg-slate-100 text-slate-500 px-2 py-1 rounded-lg font-black text-[8px] uppercase">Todas</button>
+        </div>
+      </div>
+      <div id="cxcResumen" class="grid grid-cols-2 gap-2 mb-3"></div>
+      <div id="cxcLista"><p class="text-center text-slate-400 text-[10px] italic py-6">Cargando...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COTIZACIONES ══════════════════════════════════════ -->
+<div id="sec-cotizaciones" class="hidden max-w-7xl mx-auto px-4 pb-8 pt-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    <!-- Nueva cotización -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider mb-3">📄 Nueva Cotización</h2>
+      <div class="space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-black text-slate-400 uppercase">Cliente</label>
+            <input id="cotNombre" type="text" placeholder="Nombre del cliente" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+          </div>
+          <div>
+            <label class="text-[9px] font-black text-slate-400 uppercase">Teléfono</label>
+            <input id="cotTelefono" type="text" placeholder="04XX-XXXXXXX" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-slate-400 uppercase">Mascota</label>
+          <input id="cotMascota" type="text" placeholder="Nombre y especie" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[11px] mt-1">
+        </div>
+        <div class="border border-dashed border-slate-300 rounded-xl p-3">
+          <div class="flex gap-2 mb-2">
+            <input id="cotItemDesc" type="text" placeholder="Servicio o producto" class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-[11px]">
+            <input id="cotItemPrecio" type="number" step="0.01" placeholder="$0.00" class="w-20 border border-slate-200 rounded-lg px-2 py-1.5 text-[11px]">
+            <button onclick="window.agregarItemCotizacion()"
+              class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-black text-[10px] hover:bg-blue-700">+</button>
+          </div>
+          <div id="cotItems" class="space-y-1 max-h-32 overflow-y-auto"></div>
+          <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
+            <span class="text-[9px] font-black text-slate-400 uppercase">Total</span>
+            <span id="cotTotal" class="text-[14px] font-black text-blue-700">$0.00</span>
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-slate-400 uppercase">Nota / Condiciones</label>
+          <textarea id="cotNota" rows="2" placeholder="Ej: Precio válido por 15 días. No incluye hospitalizacion." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-[10px] mt-1 resize-none"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="window.guardarCotizacion()"
+            class="bg-blue-600 text-white py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700 shadow transition-all">
+            💾 Guardar
+          </button>
+          <button onclick="window.imprimirCotizacion()"
+            class="border-2 border-blue-600 text-blue-600 py-2.5 rounded-xl font-black text-[10px] uppercase hover:bg-blue-50 transition-all">
+            🖨️ Imprimir
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial cotizaciones -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider">📋 Cotizaciones Recientes</h2>
+        <button onclick="window.cargarCotizaciones()" class="text-[8px] font-black text-blue-500 uppercase">↺ Actualizar</button>
+      </div>
+      <div id="cotLista"><p class="text-center text-slate-400 text-[10px] italic py-6">Cargando...</p></div>
     </div>
   </div>
 </div>
