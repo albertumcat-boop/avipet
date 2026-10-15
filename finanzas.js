@@ -1560,32 +1560,45 @@ window.abrirAnalisisRentabilidad = async function() {
   const btn = document.getElementById('btnAnalisisRent');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Calculando...'; }
   try {
-    const [snapCons, snapFact] = await Promise.all([
+    const [snapCons, snapPelu, snapFact] = await Promise.all([
       getDocs(query(collection(db,'consultas'))),
+      getDocs(query(collection(db,'servicios_estetica'))),
       getDocs(query(collection(db,'facturas')))
     ]);
 
-    // Rentabilidad por servicio
+    // Rentabilidad por servicio (veterinaria + peluquería)
     const porServicio = {};
     snapCons.forEach(d => {
       const c = d.data();
       const key = (c.servicio || 'Consulta General').toUpperCase();
-      if (!porServicio[key]) porServicio[key] = { total: 0, count: 0, doctor: {} };
+      if (!porServicio[key]) porServicio[key] = { total: 0, count: 0, origen: '🏥' };
       const monto = parseFloat(c.montoVenta || 0);
       porServicio[key].total += monto;
       porServicio[key].count++;
-      const doc = (c.doctor || 'Sin asignar').toUpperCase();
-      if (!porServicio[key].doctor[doc]) porServicio[key].doctor[doc] = 0;
-      porServicio[key].doctor[doc] += monto;
+    });
+    snapPelu.forEach(d => {
+      const c = d.data();
+      const key = ('✂️ ' + (c.servicio || c.tipoServicio || 'Estética')).toUpperCase();
+      if (!porServicio[key]) porServicio[key] = { total: 0, count: 0, origen: '✂️' };
+      const monto = parseFloat(c.montoTotal || c.precio || 0);
+      porServicio[key].total += monto;
+      porServicio[key].count++;
     });
 
-    // Rentabilidad por doctor
+    // Rentabilidad por doctor/estilista
     const porDoctor = {};
     snapCons.forEach(d => {
       const c = d.data();
-      const dr = (c.doctor || 'Sin asignar').toUpperCase();
+      const dr = ('🏥 ' + (c.doctor || 'Sin asignar')).toUpperCase();
       if (!porDoctor[dr]) porDoctor[dr] = { total: 0, count: 0 };
       porDoctor[dr].total += parseFloat(c.montoVenta || 0);
+      porDoctor[dr].count++;
+    });
+    snapPelu.forEach(d => {
+      const c = d.data();
+      const dr = ('✂️ ' + (c.peluquera || c.estilista || 'Estética')).toUpperCase();
+      if (!porDoctor[dr]) porDoctor[dr] = { total: 0, count: 0 };
+      porDoctor[dr].total += parseFloat(c.montoTotal || c.precio || 0);
       porDoctor[dr].count++;
     });
 
@@ -1667,23 +1680,28 @@ window.abrirDirectorioClientes = async function() {
   const btn = document.getElementById('btnDirectorioClientes');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Cargando...'; }
   try {
-    const snap = await getDocs(query(collection(db,'consultas')));
+    const [snapCons, snapPelu] = await Promise.all([
+      getDocs(query(collection(db,'consultas'))),
+      getDocs(query(collection(db,'servicios_estetica')))
+    ]);
     const clientes = {};
-    snap.forEach(d => {
-      const c = d.data();
-      const ci = (c.cedula || '').trim();
+    const _merge = (ci, nombre, telefono, monto, mascota, fecha) => {
       if (!ci) return;
-      if (!clientes[ci]) {
-        clientes[ci] = {
-          ci, nombre: c.propietario||'', telefono: c.telefono||'',
-          mascotas: new Set(), visitas: 0, totalGastado: 0, ultimaVisita: ''
-        };
-      }
+      if (!clientes[ci]) clientes[ci] = { ci, nombre:'', telefono:'', mascotas: new Set(), visitas:0, totalGastado:0, ultimaVisita:'' };
+      if (nombre && !clientes[ci].nombre) clientes[ci].nombre = nombre;
+      if (telefono && !clientes[ci].telefono) clientes[ci].telefono = telefono;
       clientes[ci].visitas++;
-      clientes[ci].totalGastado += parseFloat(c.montoVenta || 0);
-      if (c.paciente) clientes[ci].mascotas.add(c.paciente);
-      if (c.fechaSimple && c.fechaSimple > clientes[ci].ultimaVisita)
-        clientes[ci].ultimaVisita = c.fechaSimple;
+      clientes[ci].totalGastado += monto;
+      if (mascota) clientes[ci].mascotas.add(mascota);
+      if (fecha && fecha > clientes[ci].ultimaVisita) clientes[ci].ultimaVisita = fecha;
+    };
+    snapCons.forEach(d => {
+      const c = d.data();
+      _merge((c.cedula||'').trim(), c.propietario||'', c.telefono||'', parseFloat(c.montoVenta||0), c.paciente, c.fechaSimple);
+    });
+    snapPelu.forEach(d => {
+      const c = d.data();
+      _merge((c.cedulaCliente||'').trim(), c.duenio||'', c.telefono||'', parseFloat(c.montoTotal||c.precio||0), c.mascota||c.nombreMascota, c.fechaSimple);
     });
 
     const lista = Object.values(clientes).sort((a,b) => b.totalGastado - a.totalGastado);
