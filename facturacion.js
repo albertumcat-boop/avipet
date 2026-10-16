@@ -859,9 +859,9 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
 
   const cli = (typeof cliente === 'object' && cliente) ? cliente : { propietario: cliente || '' };
   const clienteRow = cli.propietario
-    ? `<div style="font-size:9px;">Cliente: <b>${_esc(cli.propietario)}</b></div>` +
-      (cli.cedula   ? `<div style="font-size:8.5px;">C.I.: ${_esc(cli.cedula)}</div>` : '') +
-      (cli.telefono ? `<div style="font-size:8.5px;">Tlf.: ${_esc(cli.telefono)}</div>` : '')
+    ? `<div style="font-size:11px;font-weight:700;">Cliente: <b>${_esc(cli.propietario)}</b></div>` +
+      (cli.cedula   ? `<div style="font-size:11px;font-weight:700;">C.I.: ${_esc(cli.cedula)}</div>` : '') +
+      (cli.telefono ? `<div style="font-size:11px;font-weight:700;">Tlf.: ${_esc(cli.telefono)}</div>` : '')
     : '';
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -869,36 +869,35 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     @page { margin: 0; size: 58mm auto; }
-    body { font-family: 'Courier New', monospace; font-size: 10px; width: 52mm; color: #000; background:#fff; word-break: break-word; overflow-wrap: break-word; }
+    body { font-family: 'Courier New', monospace; font-size: 12px; font-weight: 700; width: 52mm; color: #000; background:#fff; word-break: break-word; overflow-wrap: break-word; line-height: 1.5; }
     .center { text-align: center; }
-    .bold   { font-weight: 900; }
-    .hr     { border-top: 1px dashed #000; margin: 3px 0; }
+    .hr     { border-top: 1.5px dashed #000; margin: 4px 0; }
     table   { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    td      { vertical-align: top; font-size: 9px; word-break: break-word; }
-    .total-row td { font-weight: 900; font-size: 11px; border-top: 1px dashed #000; padding-top: 3px; }
+    td      { vertical-align: top; font-size: 11px; font-weight: 700; word-break: break-word; padding: 1px 0; }
+    .total-row td { font-weight: 900; font-size: 14px; border-top: 1.5px dashed #000; padding-top: 4px; }
     .col-desc { width: 50%; }
     .col-cant { width: 10%; text-align: center; }
     .col-pu   { width: 18%; text-align: right; white-space: nowrap; }
     .col-tot  { width: 22%; text-align: right; white-space: nowrap; }
   </style></head><body>
-  <div class="center bold" style="font-size:13px;font-weight:900;letter-spacing:1px;line-height:1.3;">${_esc(cfg.razonSocial || 'AVICOLA PETARE C.A')}</div>
-  <div class="center" style="font-size:9px;">${_esc(cfg.rifEmisor || '')}</div>
-  <div class="center" style="font-size:9px;">${_esc(cfg.direccionFiscal || '')}</div>
+  <div class="center" style="font-size:15px;font-weight:900;letter-spacing:1px;line-height:1.3;">${_esc(cfg.razonSocial || 'AVICOLA PETARE C.A')}</div>
+  <div class="center" style="font-size:11px;font-weight:700;">${_esc(cfg.rifEmisor || '')}</div>
+  <div class="center" style="font-size:10px;font-weight:700;">${_esc(cfg.direccionFiscal || '')}</div>
   <div class="hr"></div>
-  <div style="display:flex;justify-content:space-between;font-size:9px;">
+  <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;">
     <span>Ticket: <b>#${_esc(numeroFactura)}</b></span>
     <span>${_esc(fecha)} ${_esc(hora)}</span>
   </div>
-  <div style="font-size:9px;">N° Control: ${_esc(numeroControl || '—')}</div>
+  <div style="font-size:11px;font-weight:700;">N° Control: <b>${_esc(numeroControl || '—')}</b></div>
   ${clienteRow}
-  <div style="font-size:9px;">Pago: <b>${_esc(pago)}</b></div>
+  <div style="font-size:11px;font-weight:700;">Pago: <b>${_esc(pago)}</b></div>
   <div class="hr"></div>
   <table>
-    <thead><tr style="border-bottom:1px dashed #000;">
-      <th class="col-desc" style="text-align:left;font-size:9px;">Descripción</th>
-      <th class="col-cant" style="font-size:9px;">Qty</th>
-      <th class="col-pu"   style="font-size:9px;">P/U</th>
-      <th class="col-tot"  style="font-size:9px;">Total</th>
+    <thead><tr style="border-bottom:1.5px dashed #000;">
+      <th class="col-desc" style="text-align:left;font-size:10px;font-weight:900;">Descripción</th>
+      <th class="col-cant" style="font-size:10px;font-weight:900;">Qty</th>
+      <th class="col-pu"   style="font-size:10px;font-weight:900;">P/U</th>
+      <th class="col-tot"  style="font-size:10px;font-weight:900;">Total</th>
     </tr></thead>
     <tbody>${lineas}</tbody>
   </table>
@@ -908,15 +907,15 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
     ${base0Row}
     ${igtfRow}
     <tr class="total-row">
-      <td colspan="3" style="text-align:right;font-size:13px;">TOTAL USD:</td>
-      <td style="text-align:right;font-size:13px;">$${totales.totalUSD.toFixed(2)}</td>
+      <td colspan="3" style="text-align:right;font-size:14px;">TOTAL USD:</td>
+      <td style="text-align:right;font-size:14px;">$${totales.totalUSD.toFixed(2)}</td>
     </tr>
-    <tr><td colspan="3" style="text-align:right;font-size:9px;">Total Bs:</td>
-      <td style="text-align:right;font-size:9px;">Bs ${totales.totalVES.toFixed(2)}</td></tr>
+    <tr><td colspan="3" style="text-align:right;font-size:11px;font-weight:700;">Total Bs:</td>
+      <td style="text-align:right;font-size:11px;font-weight:700;">Bs ${totales.totalVES.toFixed(2)}</td></tr>
   </table>
   <div class="hr"></div>
-  <div class="center" style="font-size:9px;margin-top:4px;">¡Gracias por su preferencia!</div>
-  <div class="center" style="font-size:8px;color:#555;margin-top:2px;">Este ticket no es una factura fiscal.</div>
+  <div class="center" style="font-size:11px;font-weight:700;margin-top:4px;">¡Gracias por su preferencia!</div>
+  <div class="center" style="font-size:10px;font-weight:700;margin-top:2px;">Este ticket no es una factura fiscal.</div>
   <br><br>
   </body></html>`;
 
