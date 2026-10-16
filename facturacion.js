@@ -95,7 +95,8 @@ window.buscarClienteFact = async () => {
         descripcion: 'CONSULTA VETERINARIA' + (r.paciente ? ` — ${r.paciente.toUpperCase()}` : ''),
         precio: parseFloat(r.montoVenta || 0),
         propietario: r.propietario || '', cedula: r.cedula || '',
-        telefono: r.telefono || '', alicuotaIVA: 16
+        telefono: r.telefono || '',
+        alicuotaIVA: 0   // Servicios médico-veterinarios: EXENTOS de IVA
       });
     });
 
@@ -104,10 +105,11 @@ window.buscarClienteFact = async () => {
       if (r.facturado) return;
       servicios.push({
         id: d.id, tipo: 'peluqueria',
-        descripcion: (r.servicio || 'SERVICIO ESTÉTICA') + (r.paciente ? ` — ${r.paciente.toUpperCase()}` : ''),
-        precio: parseFloat(r.precioTotal || 0),
+        descripcion: (r.servicio || 'SERVICIO ESTÉTICA') + (r.mascota ? ` — ${r.mascota.toUpperCase()}` : ''),
+        precio: parseFloat(r.montoTotal || r.precioTotal || r.precio || 0),
         propietario: r.duenio || '', cedula: r.cedulaCliente || '',
-        telefono: r.telefono || '', alicuotaIVA: 16
+        telefono: r.telefono || '',
+        alicuotaIVA: 16  // Peluquería: gravado 16%
       });
     });
 
@@ -125,7 +127,6 @@ window.buscarClienteFact = async () => {
     // Auto-rellenar campos del receptor con datos de la consulta
     const panelRIF = document.getElementById('panelRIF');
     if (panelRIF) {
-      // Cambiar a modo "Con RIF" para mostrar los campos
       _esConsumidorFinal = false;
       document.getElementById('btnConsumidorFinal')?.classList.replace('bg-blue-600','bg-slate-100');
       document.getElementById('btnConsumidorFinal')?.classList.replace('text-white','text-slate-500');
@@ -134,7 +135,6 @@ window.buscarClienteFact = async () => {
       document.getElementById('btnConRIF')?.classList.replace('text-slate-500','text-white');
       document.getElementById('btnConRIF')?.classList.add('shadow');
       panelRIF.classList.remove('hidden');
-
       const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
       set('inputRIFReceptor',     `V-${primero.cedula}`);
       set('inputCedulaReceptor',  `V-${primero.cedula}`);
@@ -142,29 +142,34 @@ window.buscarClienteFact = async () => {
       set('inputTelefonoReceptor',primero.telefono);
     }
 
-    _serviciosHoy = servicios; // expuesto para botones inline
+    // ── AUTO-AGREGAR todos los servicios al carrito ──
+    _carrito = _carrito.filter(i => i.tipo === 'producto'); // conservar productos ya agregados
+    servicios.forEach(s => {
+      if (!_carrito.find(i => i.id === s.id && i.tipo === s.tipo)) {
+        _carrito.push({ ...s, cantidad: 1, bloqueado: true });
+      }
+    });
+    _renderCarrito();
+
+    _serviciosHoy = servicios;
     cont.innerHTML = '';
-    servicios.forEach((s, idx) => {
+    // Mostrar resumen de lo que se cargó (solo lectura)
+    servicios.forEach(s => {
       const div = document.createElement('div');
-      div.className = 'flex items-center justify-between bg-white border border-slate-200 rounded-lg p-3 mb-2 hover:border-blue-300 transition-all';
-      const icono = s.tipo === 'consulta' ? '🏥' : '✂️';
-      const tipoLabel = s.tipo === 'consulta' ? 'Veterinaria' : 'Peluquería';
-      // Estructura HTML solo con datos seguros (números y emojis)
+      div.className = 'flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2';
+      const icono     = s.tipo === 'consulta' ? '🏥' : '✂️';
+      const tipoLabel = s.tipo === 'consulta' ? 'Veterinaria · Exento' : 'Peluquería · IVA 16%';
+      const ivaChip   = s.alicuotaIVA === 0
+        ? '<span class="text-[8px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">EXENTO</span>'
+        : `<span class="text-[8px] font-black bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">IVA ${s.alicuotaIVA}%</span>`;
       div.innerHTML = `
         <div class="flex-1">
           <p class="text-[11px] font-black text-slate-800 uppercase leading-tight" data-desc></p>
-          <p class="text-[9px] text-slate-400 mt-0.5">${icono} ${tipoLabel} · IVA ${s.alicuotaIVA}%</p>
+          <div class="flex items-center gap-1 mt-0.5">${icono} <span class="text-[9px] text-slate-400">${tipoLabel}</span>${ivaChip}</div>
         </div>
-        <div class="flex items-center gap-2 ml-2">
-          <span class="text-[13px] font-black text-blue-700">$${s.precio.toFixed(2)}</span>
-          <button data-idx="${idx}"
-            class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase hover:bg-blue-700 shadow transition-all">
-            + Agregar
-          </button>
-        </div>`;
-      // Datos del usuario via textContent para evitar XSS
+        <span class="text-[13px] font-black text-emerald-700 ml-2">$${s.precio.toFixed(2)}</span>
+        <span class="text-[9px] text-emerald-600 font-black ml-2">✓ En carrito</span>`;
       div.querySelector('[data-desc]').textContent = s.descripcion;
-      div.querySelector('[data-idx]').addEventListener('click', () => window.agregarServicioAlCarrito(_serviciosHoy[idx]));
       cont.appendChild(div);
     });
 
@@ -346,7 +351,12 @@ function _renderCarrito() {
         <div class="flex-1 min-w-0">
           <p class="text-[10px] font-black text-slate-800 uppercase leading-tight truncate" data-desc></p>
           <div class="flex items-center gap-1 mt-1">
-            <span class="text-[8px] text-slate-400">${_modoSinIVA ? 'Sin desglose IVA' : `IVA ${item.alicuotaIVA}%`}</span>
+            ${_modoSinIVA
+              ? '<span class="text-[8px] text-slate-400">Sin desglose IVA</span>'
+              : item.alicuotaIVA === 0
+                ? '<span class="text-[8px] font-black bg-emerald-50 text-emerald-600 px-1 rounded">EXENTO</span>'
+                : `<span class="text-[8px] font-black bg-amber-50 text-amber-600 px-1 rounded">IVA ${item.alicuotaIVA}%</span>`
+            }
             <button data-edit class="text-[8px] text-blue-500 underline ml-1">$${item.precio.toFixed(2)} 🔐</button>
           </div>
         </div>
