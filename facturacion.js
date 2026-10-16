@@ -45,6 +45,15 @@ async function _cargarConfigFiscal() {
     };
 
     if (snapTasa.exists()) _tasaBCV = parseFloat(snapTasa.data().valor || 1);
+    // Fallback: usar tasa guardada en localStorage por main.js si Firestore devuelve 1
+    if (_tasaBCV <= 1) {
+      const ls = parseFloat(localStorage.getItem('tasaDolarAvipet') || 0);
+      if (ls > 1) _tasaBCV = ls;
+    }
+    // Mantener tasa actualizada en tiempo real
+    onSnapshot(doc(db, 'configuracion', 'tasa'), snap => {
+      if (snap.exists()) { const v = parseFloat(snap.data().valor || 0); if (v > 1) _tasaBCV = v; }
+    });
     if (snapSistema.exists()) _masterKey = snapSistema.data().masterKey || null;
 
     const rifDisplay = document.getElementById('rifEmisorDisplay');
@@ -494,27 +503,15 @@ async function _emitirEnAclas(items, cliente, monedaPago, totalUSD, tasaBCV) {
 }
 
 async function _modoManual() {
-  const { value } = await Swal.fire({
-    title: '🧾 Datos del Ticket',
-    html: `<p style="font-size:11px;color:#64748b;margin-bottom:12px;">
-             Emite el ticket de la tiquera y registra los números aquí.
-           </p>
-           <label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:4px;">N° de Ticket (Consecutivo)</label>
-           <input id="manualFact" type="number" class="swal2-input" placeholder="Ej: 1045" min="1">
-           <label style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;margin:10px 0 4px;">N° de Control (de la tiquera impresa)</label>
-           <input id="manualCtrl" type="text" class="swal2-input" placeholder="Ej: 00-0001045">`,
-    showCancelButton: true,
-    confirmButtonText: '✅ Registrar Ticket',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#1d4ed8',
-    preConfirm: () => {
-      const nf = document.getElementById('manualFact')?.value.trim();
-      const nc = document.getElementById('manualCtrl')?.value.trim();
-      if (!nf) { Swal.showValidationMessage('El N° de Ticket es obligatorio'); return false; }
-      return { numeroFactura: parseInt(nf), numeroControl: nc || nf };
-    }
+  // Auto-incremento en Firestore — sin diálogo
+  const contRef = doc(db, 'configuracion', 'contadores');
+  let next;
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(contRef);
+    next = (snap.exists() ? parseInt(snap.data().tickets || 0) : 0) + 1;
+    tx.set(contRef, { tickets: next }, { merge: true });
   });
-  return value;
+  return { numeroFactura: next, numeroControl: String(next) };
 }
 
 // ─── EMITIR FACTURA ─────────────────────────────────────
@@ -809,13 +806,13 @@ function _mostrarResumenTiquera(facturaId, numeroFactura, numeroControl, carrito
     cancelButtonText:   'Cerrar',
     confirmButtonColor: '#1d4ed8',
   }).then(result => {
-    if (result.isConfirmed) _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, _monedaPago, _clienteActual?.propietario || '');
+    if (result.isConfirmed) _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, _monedaPago, _clienteActual);
     else Swal.fire({ icon:'success', title:`✅ Ticket #${numeroFactura} guardado`, timer:1500, showConfirmButton:false });
   });
 }
 
 // ─── IMPRESIÓN TICKET TÉRMICO (58mm) ──────────────────────
-function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, monedaPago, clienteNombre) {
+function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, monedaPago, cliente) {
   const cfg   = _configFiscal;
   const ahora = new Date();
   const fecha = ahora.toLocaleDateString('es-VE');
@@ -850,8 +847,11 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
     ? `<tr><td colspan="3" style="text-align:right;">IGTF (${_esc(cfg.alicuotaIGTF||3)}%):</td><td style="text-align:right;">$${totales.igtf.toFixed(2)}</td></tr>`
     : '';
 
-  const clienteRow = clienteNombre
-    ? `<div style="font-size:9px;">Cliente: <b>${_esc(clienteNombre)}</b></div>`
+  const cli = (typeof cliente === 'object' && cliente) ? cliente : { propietario: cliente || '' };
+  const clienteRow = cli.propietario
+    ? `<div style="font-size:9px;">Cliente: <b>${_esc(cli.propietario)}</b></div>` +
+      (cli.cedula   ? `<div style="font-size:8.5px;">C.I.: ${_esc(cli.cedula)}</div>` : '') +
+      (cli.telefono ? `<div style="font-size:8.5px;">Tlf.: ${_esc(cli.telefono)}</div>` : '')
     : '';
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -866,13 +866,12 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
     table   { width: 100%; border-collapse: collapse; table-layout: fixed; }
     td      { vertical-align: top; font-size: 9px; word-break: break-word; }
     .total-row td { font-weight: 900; font-size: 11px; border-top: 1px dashed #000; padding-top: 3px; }
-    .col-desc { width: 55%; }
-    .col-cant { width: 12%; text-align: center; }
-    .col-pu   { width: 15%; text-align: right; }
-    .col-tot  { width: 18%; text-align: right; }
+    .col-desc { width: 50%; }
+    .col-cant { width: 10%; text-align: center; }
+    .col-pu   { width: 18%; text-align: right; white-space: nowrap; }
+    .col-tot  { width: 22%; text-align: right; white-space: nowrap; }
   </style></head><body>
-  <div class="center bold" style="font-size:16px;letter-spacing:2px;">AVIPET</div>
-  <div class="center" style="font-size:9px;">${_esc(cfg.razonSocial || '')}</div>
+  <div class="center bold" style="font-size:13px;font-weight:900;letter-spacing:1px;line-height:1.3;">${_esc(cfg.razonSocial || 'AVICOLA PETARE C.A')}</div>
   <div class="center" style="font-size:9px;">${_esc(cfg.rifEmisor || '')}</div>
   <div class="center" style="font-size:9px;">${_esc(cfg.direccionFiscal || '')}</div>
   <div class="hr"></div>
@@ -940,7 +939,7 @@ function _imprimirTicketDesdeFactura(f) {
     totalUSD:  parseFloat(f.totalMoneda || f.totalUSD || 0),
     totalVES:  parseFloat(f.totalVES || 0),
   };
-  _imprimirTicketTermico(f.numeroFactura, f.numeroControl, carrito, totales, f.moneda, f.nombreCliente || f.propietario || '');
+  _imprimirTicketTermico(f.numeroFactura, f.numeroControl, carrito, totales, f.moneda, { propietario: f.nombreCliente || f.propietario || '', cedula: f.cedulaCliente || f.rifReceptor || '', telefono: f.telefonoReceptor || '' });
 }
 
 // ─── ESCÁNER CÁMARA — modo multi-scan (html5-qrcode) ──
