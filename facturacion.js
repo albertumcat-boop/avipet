@@ -957,76 +957,100 @@ function _imprimirTicketDesdeFactura(f) {
   _imprimirTicketTermico(f.numeroFactura, f.numeroControl, carrito, totales, f.moneda, { propietario: f.nombreCliente || f.propietario || '', cedula: f.cedulaCliente || f.rifReceptor || '', telefono: f.telefonoReceptor || '' });
 }
 
-// ─── ESCÁNER CÁMARA — ZXing multi-scan ─────────────────
-// ZXing soporta EAN-13, Code-128, QR, UPC-A, etc.
-let _zxingReader = null;
+// ─── ESCÁNER CÁMARA — multi-scan robusto ───────────────
+let _scanStream  = null;   // MediaStream activo
+let _zxingReader = null;   // instancia ZXing (fallback)
+let _scanLoop    = false;  // flag para el loop de BarcodeDetector
 let _lastScanned = '';
 let _lastScannedTs = 0;
-let _scanCount = 0;
+let _scanCount   = 0;
+
+function _onCodigoDetectado(codigo, estadoEl) {
+  if (!codigo) return;
+  const now = Date.now();
+  if (codigo === _lastScanned && now - _lastScannedTs < 2000) return;
+  _lastScanned   = codigo;
+  _lastScannedTs = now;
+  _scanCount++;
+  if (navigator.vibrate) navigator.vibrate(80);
+  const inp = document.getElementById('inputBarcode');
+  if (inp) inp.value = codigo;
+  window.agregarProductoAlCarrito(codigo);
+  if (estadoEl) estadoEl.textContent = `✅ ${_scanCount} código(s) escaneado(s). Apunta al siguiente o cierra.`;
+}
+
+async function _pararEscaner() {
+  _scanLoop = false;
+  if (_zxingReader) { try { _zxingReader.reset(); } catch(_) {} _zxingReader = null; }
+  if (_scanStream)  { _scanStream.getTracks().forEach(t => t.stop()); _scanStream = null; }
+  const v = document.getElementById('qr-video');
+  if (v) v.srcObject = null;
+}
 
 window.abrirEscaner = async function() {
   const modal    = document.getElementById('modalEscaner');
   const estadoEl = document.getElementById('escanerEstado');
-  if (!modal) return;
+  const video    = document.getElementById('qr-video');
+  if (!modal || !video) return;
 
-  // Resetear escáner anterior si quedó abierto
-  if (_zxingReader) {
-    try { _zxingReader.reset(); } catch(_) {}
-    _zxingReader = null;
-  }
+  await _pararEscaner();
   _scanCount = 0;
   modal.classList.remove('hidden');
-  estadoEl.textContent = 'Iniciando cámara...';
+  estadoEl.textContent = 'Solicitando permiso de cámara...';
 
   try {
-    const ZXing = window.ZXing;
-    if (!ZXing) throw new Error('Librería de escaneo no cargó. Recarga la página.');
-
-    _zxingReader = new ZXing.BrowserMultiFormatReader();
-
-    // Buscar cámara trasera (environment)
-    let deviceId = undefined;
-    try {
-      const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
-      if (devices && devices.length) {
-        const back = devices.find(d => /back|rear|environment/i.test(d.label));
-        deviceId = back ? back.deviceId : devices[devices.length - 1].deviceId;
-      }
-    } catch(_) {}
-
-    await _zxingReader.decodeFromVideoDevice(deviceId, 'qr-video', (result, err) => {
-      if (!result) return;
-      const codigo = result.getText();
-      if (!codigo) return;
-
-      const now = Date.now();
-      if (codigo === _lastScanned && now - _lastScannedTs < 2000) return;
-      _lastScanned    = codigo;
-      _lastScannedTs  = now;
-      _scanCount++;
-
-      // Feedback vibración en móvil
-      if (navigator.vibrate) navigator.vibrate(80);
-
-      const inp = document.getElementById('inputBarcode');
-      if (inp) inp.value = codigo;
-      window.agregarProductoAlCarrito(codigo);
-      estadoEl.textContent = `✅ ${_scanCount} producto${_scanCount > 1 ? 's' : ''} escaneado${_scanCount > 1 ? 's' : ''}. Apunta al siguiente o cierra.`;
+    // Obtener stream con cámara trasera preferida
+    _scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
     });
+    video.srcObject = _scanStream;
+    video.setAttribute('playsinline', 'true');
+    await video.play();
+    estadoEl.textContent = 'Apunta el código de barras dentro del rectángulo.';
 
-    estadoEl.textContent = 'Apunta el código de barras dentro del rectángulo. La cámara queda abierta para varios productos.';
+    // ── BarcodeDetector nativo (Chrome Android 83+) — más rápido y preciso
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector({
+        formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','itf','code_93']
+      });
+      _scanLoop = true;
+      const tick = async () => {
+        if (!_scanLoop) return;
+        if (video.readyState >= 2) {
+          try {
+            const found = await detector.detect(video);
+            if (found.length) _onCodigoDetectado(found[0].rawValue, estadoEl);
+          } catch(_) {}
+        }
+        if (_scanLoop) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+
+    } else {
+      // ── ZXing fallback (iOS Safari, Firefox, etc.)
+      const ZXing = window.ZXing;
+      if (!ZXing) throw new Error('Librería de escaneo no disponible. Recarga la página.');
+      _zxingReader = new ZXing.BrowserMultiFormatReader();
+      // decodeFromStream recibe el MediaStream directamente — más fiable que decodeFromVideoDevice
+      _zxingReader.decodeFromStream(_scanStream, video, (result) => {
+        if (result) _onCodigoDetectado(result.getText(), estadoEl);
+      });
+    }
+
   } catch(e) {
-    estadoEl.textContent = '⚠️ ' + (e.message || 'No se pudo acceder a la cámara. Verifica los permisos del navegador.');
+    console.error('[ESCANER]', e);
+    const msg = e.name === 'NotAllowedError'
+      ? 'Permiso de cámara denegado. Ve a Ajustes del navegador y permite el acceso a la cámara.'
+      : (e.message || 'No se pudo acceder a la cámara.');
+    estadoEl.textContent = '⚠️ ' + msg;
   }
 };
 
-window.cerrarEscaner = function() {
+window.cerrarEscaner = async function() {
   const modal = document.getElementById('modalEscaner');
   if (modal) modal.classList.add('hidden');
-  if (_zxingReader) {
-    try { _zxingReader.reset(); } catch(_) {}
-    _zxingReader = null;
-  }
+  await _pararEscaner();
 };
 
 // ─── LECTOR CÓDIGO DE BARRAS ───────────────────────────
