@@ -957,59 +957,75 @@ function _imprimirTicketDesdeFactura(f) {
   _imprimirTicketTermico(f.numeroFactura, f.numeroControl, carrito, totales, f.moneda, { propietario: f.nombreCliente || f.propietario || '', cedula: f.cedulaCliente || f.rifReceptor || '', telefono: f.telefonoReceptor || '' });
 }
 
-// ─── ESCÁNER CÁMARA — modo multi-scan (html5-qrcode) ──
-// La cámara queda abierta: cada código agrega el producto al carrito.
-// Se filtra el mismo código por 2 s para no duplicar el mismo scan.
-let _html5Qr = null;
+// ─── ESCÁNER CÁMARA — ZXing multi-scan ─────────────────
+// ZXing soporta EAN-13, Code-128, QR, UPC-A, etc.
+let _zxingReader = null;
 let _lastScanned = '';
 let _lastScannedTs = 0;
 let _scanCount = 0;
 
 window.abrirEscaner = async function() {
-  const modal = document.getElementById('modalEscaner');
+  const modal    = document.getElementById('modalEscaner');
   const estadoEl = document.getElementById('escanerEstado');
   if (!modal) return;
+
+  // Resetear escáner anterior si quedó abierto
+  if (_zxingReader) {
+    try { _zxingReader.reset(); } catch(_) {}
+    _zxingReader = null;
+  }
   _scanCount = 0;
   modal.classList.remove('hidden');
   estadoEl.textContent = 'Iniciando cámara...';
 
   try {
-    _html5Qr = new Html5Qrcode('qr-reader');
-    const cameras = await Html5Qrcode.getCameras();
-    if (!cameras || !cameras.length) throw new Error('No se encontró cámara en este dispositivo.');
+    const ZXing = window.ZXing;
+    if (!ZXing) throw new Error('Librería de escaneo no cargó. Recarga la página.');
 
-    const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+    _zxingReader = new ZXing.BrowserMultiFormatReader();
 
-    await _html5Qr.start(
-      cam.id,
-      { fps: 10, qrbox: { width: 250, height: 180 }, aspectRatio: 1.4 },
-      (decodedText) => {
-        const now = Date.now();
-        // Ignorar si es el mismo código dentro de 2 segundos
-        if (decodedText === _lastScanned && now - _lastScannedTs < 2000) return;
-        _lastScanned = decodedText;
-        _lastScannedTs = now;
-        _scanCount++;
+    // Buscar cámara trasera (environment)
+    let deviceId = undefined;
+    try {
+      const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
+      if (devices && devices.length) {
+        const back = devices.find(d => /back|rear|environment/i.test(d.label));
+        deviceId = back ? back.deviceId : devices[devices.length - 1].deviceId;
+      }
+    } catch(_) {}
 
-        document.getElementById('inputBarcode').value = decodedText;
-        window.agregarProductoAlCarrito(decodedText);
-        estadoEl.textContent = `✅ ${_scanCount} producto${_scanCount > 1 ? 's' : ''} agregado${_scanCount > 1 ? 's' : ''}. Apunta al siguiente o cierra.`;
-      },
-      () => {}
-    );
-    estadoEl.textContent = 'Apunta la cámara al código de barras del producto. La cámara queda abierta para escanear varios.';
+    await _zxingReader.decodeFromVideoDevice(deviceId, 'qr-video', (result, err) => {
+      if (!result) return;
+      const codigo = result.getText();
+      if (!codigo) return;
+
+      const now = Date.now();
+      if (codigo === _lastScanned && now - _lastScannedTs < 2000) return;
+      _lastScanned    = codigo;
+      _lastScannedTs  = now;
+      _scanCount++;
+
+      // Feedback vibración en móvil
+      if (navigator.vibrate) navigator.vibrate(80);
+
+      const inp = document.getElementById('inputBarcode');
+      if (inp) inp.value = codigo;
+      window.agregarProductoAlCarrito(codigo);
+      estadoEl.textContent = `✅ ${_scanCount} producto${_scanCount > 1 ? 's' : ''} escaneado${_scanCount > 1 ? 's' : ''}. Apunta al siguiente o cierra.`;
+    });
+
+    estadoEl.textContent = 'Apunta el código de barras dentro del rectángulo. La cámara queda abierta para varios productos.';
   } catch(e) {
-    estadoEl.textContent = '⚠️ ' + (e.message || 'No se pudo acceder a la cámara. Verifica los permisos.');
+    estadoEl.textContent = '⚠️ ' + (e.message || 'No se pudo acceder a la cámara. Verifica los permisos del navegador.');
   }
 };
 
-window.cerrarEscaner = async function() {
+window.cerrarEscaner = function() {
   const modal = document.getElementById('modalEscaner');
   if (modal) modal.classList.add('hidden');
-  if (_html5Qr) {
-    try { await _html5Qr.stop(); } catch(_) {}
-    try { _html5Qr.clear(); } catch(_) {}
-    _html5Qr = null;
+  if (_zxingReader) {
+    try { _zxingReader.reset(); } catch(_) {}
+    _zxingReader = null;
   }
 };
 

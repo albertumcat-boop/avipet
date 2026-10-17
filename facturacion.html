@@ -6,7 +6,7 @@
   <title>AVIPET — Facturación</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { background:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; color:#0f172a; }
@@ -475,9 +475,15 @@
       <button onclick="window.cerrarEscaner()"
         class="bg-red-500 hover:bg-red-600 text-white font-black text-[11px] px-3 py-1 rounded-lg transition-colors">✕ Listo</button>
     </div>
-    <div id="qr-reader" class="w-full" style="min-height:260px"></div>
+    <div class="relative w-full bg-black" style="min-height:260px;">
+      <video id="qr-video" class="w-full" style="display:block;object-fit:cover;min-height:260px;" autoplay muted playsinline></video>
+      <!-- guía de encuadre -->
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+        <div style="width:80%;height:80px;border:2.5px solid rgba(99,102,241,0.85);border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,0.35);"></div>
+      </div>
+    </div>
     <div id="escanerEstado" class="px-4 py-3 text-center text-[11px] text-slate-500 font-medium">
-      Apunta la cámara al código de barras. La cámara queda abierta para varios productos.
+      Apunta el código de barras dentro del rectángulo.
     </div>
   </div>
 </div>
