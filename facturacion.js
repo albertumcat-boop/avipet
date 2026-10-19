@@ -881,15 +881,15 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   const pago  = monedaPago || _monedaPago;
 
   const lineas = carrito.map(i => {
-    const sub = (i.precio * i.cantidad).toFixed(2);
+    const subBs = (i.precio * i.cantidad * tasaActual).toFixed(2);
     const ivaTag = i.alicuotaIVA > 0 ? `${i.alicuotaIVA}%` : 'E';
     const descLine = i.cantidad > 1
-      ? `${_esc(i.descripcion)} <span style="font-size:8px;font-weight:700;">(${ivaTag})</span><br><span style="font-size:9px;">$${parseFloat(i.precio).toFixed(2)} c/u</span>`
+      ? `${_esc(i.descripcion)} <span style="font-size:8px;font-weight:700;">(${ivaTag})</span><br><span style="font-size:9px;">Bs ${(parseFloat(i.precio) * tasaActual).toFixed(2)} c/u</span>`
       : `${_esc(i.descripcion)} <span style="font-size:8px;font-weight:700;">(${ivaTag})</span>`;
     return `<tr>
       <td class="col-desc" style="padding:1px 0;">${descLine}</td>
       <td class="col-cant" style="padding:1px 2px;text-align:center;">${_esc(i.cantidad)}</td>
-      <td class="col-tot"  style="padding:1px 0;text-align:right;font-weight:900;white-space:nowrap;">$${sub}</td>
+      <td class="col-tot"  style="padding:1px 0;text-align:right;font-weight:900;white-space:nowrap;">Bs ${subBs}</td>
     </tr>`;
   }).join('');
 
@@ -897,18 +897,18 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   const ivaRows = Object.entries(totales.grupos || {})
     .filter(([aliq, g]) => parseFloat(aliq) > 0 && g.base > 0)
     .map(([aliq, g]) =>
-      `<tr><td colspan="2" style="text-align:right;">Base ${_esc(aliq)}%:</td><td style="text-align:right;">$${g.base.toFixed(2)}</td></tr>
-       <tr><td colspan="2" style="text-align:right;">IVA ${_esc(aliq)}%:</td><td style="text-align:right;">$${g.iva.toFixed(2)}</td></tr>`
+      `<tr><td colspan="2" style="text-align:right;">Base ${_esc(aliq)}%:</td><td style="text-align:right;">Bs ${(g.base * tasaActual).toFixed(2)}</td></tr>
+       <tr><td colspan="2" style="text-align:right;">IVA ${_esc(aliq)}%:</td><td style="text-align:right;">Bs ${(g.iva * tasaActual).toFixed(2)}</td></tr>`
     ).join('');
 
   // Exentos/0% si existen
   const base0 = totales.grupos?.[0]?.base || 0;
   const base0Row = base0 > 0
-    ? `<tr><td colspan="2" style="text-align:right;">Exento/0%:</td><td style="text-align:right;">$${base0.toFixed(2)}</td></tr>`
+    ? `<tr><td colspan="2" style="text-align:right;">Exento/0%:</td><td style="text-align:right;">Bs ${(base0 * tasaActual).toFixed(2)}</td></tr>`
     : '';
 
   const igtfRow = totales.igtf > 0
-    ? `<tr><td colspan="2" style="text-align:right;">IGTF (${_esc(cfg.alicuotaIGTF||3)}%):</td><td style="text-align:right;">$${totales.igtf.toFixed(2)}</td></tr>`
+    ? `<tr><td colspan="2" style="text-align:right;">IGTF (${_esc(cfg.alicuotaIGTF||3)}%):</td><td style="text-align:right;">Bs ${(totales.igtf * tasaActual).toFixed(2)}</td></tr>`
     : '';
 
   const cli = (typeof cliente === 'object' && cliente) ? cliente : { propietario: cliente || '' };
@@ -959,12 +959,10 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
     ${base0Row}
     ${igtfRow}
     <tr class="total-row">
-      <td colspan="2" style="text-align:right;font-size:14px;">TOTAL USD:</td>
-      <td style="text-align:right;font-size:14px;white-space:nowrap;">$${totales.totalUSD.toFixed(2)}</td>
+      <td colspan="2" style="text-align:right;font-size:14px;">TOTAL Bs:</td>
+      <td style="text-align:right;font-size:14px;white-space:nowrap;">Bs ${totalVESActual.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
     </tr>
-    <tr><td colspan="2" style="text-align:right;font-size:9px;color:#666;">Tasa BCV: ${tasaActual.toFixed(2)} Bs/$1</td><td></td></tr>
-    <tr><td colspan="2" style="text-align:right;font-size:11px;font-weight:700;">Total Bs:</td>
-      <td style="text-align:right;font-size:11px;font-weight:700;">Bs ${totalVESActual.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>
+    <tr><td colspan="2" style="text-align:right;font-size:9px;color:#666;">Tasa BCV: ${tasaActual.toFixed(2)} Bs/$1</td><td style="text-align:right;font-size:9px;color:#666;">$${totales.totalUSD.toFixed(2)}</td></tr>
   </table>
   <div class="hr"></div>
   <div class="center" style="font-size:11px;font-weight:700;margin-top:4px;">¡Gracias por su preferencia!</div>
