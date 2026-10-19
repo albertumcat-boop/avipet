@@ -1085,7 +1085,8 @@ async function _cargarServiciosMaestro() {
         nombre: d.id,
         precio: parseFloat(dat.precioVenta || 0),
         alicuotaIVA: parseFloat(dat.alicuotaIVA ?? 0),
-        categoria: (dat.categoria || 'OTROS').toUpperCase()
+        categoria: (dat.categoria || 'OTROS').toUpperCase(),
+        bundle: dat.bundle || null   // { nombre, precio } — producto vinculado
       });
     });
     _catalogoServs.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
@@ -1296,8 +1297,28 @@ function _agregarItemDesdeCatalogo(item) {
       bloqueado: false
     });
   }
+  // Si tiene producto vinculado (bundle), agregar como línea separada exenta
+  if (item.bundle?.nombre) {
+    const bundleId = 'bundle_' + item.bundle.nombre.replace(/\s+/g,'_').toLowerCase();
+    const bundleExistente = _carrito.find(i => i.id === bundleId);
+    if (bundleExistente) {
+      bundleExistente.cantidad++;
+    } else {
+      _carrito.push({
+        id: bundleId, tipo: 'producto',
+        descripcion: item.bundle.nombre.toUpperCase(),
+        precio: item.bundle.precio,
+        cantidad: 1,
+        alicuotaIVA: 0,
+        bloqueado: false
+      });
+    }
+  }
   _renderCarrito();
-  Swal.fire({ icon:'success', title:`✅ ${item.nombre}`, timer:700, showConfirmButton:false, toast:true, position:'top-end' });
+  const msg = item.bundle?.nombre
+    ? `✅ ${item.nombre} + ${item.bundle.nombre}`
+    : `✅ ${item.nombre}`;
+  Swal.fire({ icon:'success', title: msg, timer:900, showConfirmButton:false, toast:true, position:'top-end' });
 }
 
 window.agregarServicioCustom = function() {

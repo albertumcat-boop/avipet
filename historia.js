@@ -2162,6 +2162,17 @@ window.renderizarTablaMaestra = async () => {
               '<input id="es_inpCosto" type="number" placeholder="$0.00" step="0.01" min="0" style="width:75px;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:10px;font-weight:700;outline:none;">'+
               '<button id="es_btnAddMan" type="button" style="background:#10b981;color:white;border:none;border-radius:8px;padding:6px 12px;font-weight:900;font-size:10px;cursor:pointer;white-space:nowrap;">+ Manual</button>'+
               '</div></div>'+
+              // ── Producto Vinculado (Bundle) ─────────────────────
+              '<div style="border-top:2px solid #dbeafe;padding-top:10px;margin-top:2px;">'+
+              '<p style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;margin:0 0 6px 0;">📦 Producto vinculado al carrito</p>'+
+              '<p style="font-size:8px;color:#94a3b8;margin:0 0 8px 0;">Al agregar este servicio en Facturación, se sumará automáticamente el producto seleccionado como línea separada.</p>'+
+              '<div style="display:grid;grid-template-columns:1fr 90px;gap:6px;align-items:end;">'+
+              '<div><label style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:3px;">Producto del inventario</label>'+
+              '<input id="es_bundle_nombre" type="text" list="es_bundle_lista" value="'+(dataServ.bundle?.nombre||'')+'" placeholder="Buscar producto..." style="width:100%;border:2px solid #bfdbfe;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:700;outline:none;box-sizing:border-box;">'+
+              '<datalist id="es_bundle_lista"></datalist></div>'+
+              '<div><label style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:3px;">Precio ($)</label>'+
+              '<input id="es_bundle_precio" type="number" step="0.01" min="0" value="'+(dataServ.bundle?.precio||0)+'" placeholder="0.00" style="width:100%;border:2px solid #bfdbfe;border-radius:8px;padding:6px;font-size:11px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '</div></div>'+
               // ── Pregunta Extra ──────────────────────────────────
               '<div style="border-top:2px solid #f3e8ff;padding-top:10px;margin-top:2px;">'+
               '<p style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 8px 0;">❓ Pregunta extra al guardar</p>'+
@@ -2180,6 +2191,24 @@ window.renderizarTablaMaestra = async () => {
             showCancelButton:true, confirmButtonText:'Guardar todo', confirmButtonColor:'#f59e0b',
             didOpen: () => {
               document.getElementById('esc').addEventListener('change',function(){ document.getElementById('escn').style.display=this.value==='__nueva__'?'block':'none'; });
+
+              // Poblar datalist de productos para bundle
+              getDocs(query(collection(db,'inventario'), orderBy('nombre'))).then(snapInvB => {
+                const dl = document.getElementById('es_bundle_lista');
+                if (!dl) return;
+                snapInvB.docs.forEach(d => {
+                  const opt = document.createElement('option');
+                  opt.value = (d.data().nombre || d.id);
+                  opt.dataset.precio = d.data().precioVenta || 0;
+                  opt.dataset.docid  = d.id;
+                  dl.appendChild(opt);
+                });
+                // Al elegir del datalist, auto-rellenar precio
+                document.getElementById('es_bundle_nombre').addEventListener('input', function() {
+                  const opt = Array.from(dl.options).find(o => o.value === this.value);
+                  if (opt) document.getElementById('es_bundle_precio').value = parseFloat(opt.dataset.precio||0).toFixed(2);
+                });
+              }).catch(() => {});
 
               // Función para refrescar el dropdown de insumo afectado en Pregunta Extra
               const refreshPqInsumo = () => {
@@ -2228,6 +2257,8 @@ window.renderizarTablaMaestra = async () => {
               const cn=document.getElementById('escn').value.trim().toUpperCase();
               const c=cs==='__nueva__'?cn:cs;
               const esRef = document.getElementById('es_ref_edit')?.checked || false;
+              const bundleNombre = document.getElementById('es_bundle_nombre')?.value.trim() || '';
+              const bundlePrecio = parseFloat(document.getElementById('es_bundle_precio')?.value) || 0;
               const pqActiva = document.getElementById('es_pq_activa')?.checked || false;
               const pqTexto  = document.getElementById('es_pq_texto')?.value.trim() || '¿Cuánto se utilizó?';
               const pqInsumo = document.getElementById('es_pq_insumo')?.value || '';
@@ -2237,12 +2268,12 @@ window.renderizarTablaMaestra = async () => {
               if(p<=0){Swal.showValidationMessage('El precio debe ser mayor a 0');return false;}
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
               document.querySelectorAll('#es_listaIns input[type="number"]').forEach((inp,i)=>{ if(listaIns[i]) listaIns[i].costo=parseFloat(inp.value)||0; });
-              return {n,p,pc,c,esRef,insumos:listaIns,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
+              return {n,p,pc,c,esRef,insumos:listaIns,bundle:bundleNombre?{nombre:bundleNombre,precio:bundlePrecio}:null,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
             }
           });
           if(!res.isConfirmed) return;
           const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, insumos:nuevosInsumos,
-                 pqActiva, pqTexto, pqInsumo, pqPote, pqCC} = res.value;
+                 bundle:nuevoBundle, pqActiva, pqTexto, pqInsumo, pqPote, pqCC} = res.value;
           try {
             const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
             const dataOld = snapOld.exists()?snapOld.data():{};
@@ -2250,6 +2281,7 @@ window.renderizarTablaMaestra = async () => {
               ...dataOld,
               precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat,
               esReferido:nuevoEsRef, insumos:nuevosInsumos,
+              bundle: nuevoBundle || null,
               preguntaActiva:pqActiva, preguntaTexto:pqTexto, preguntaInsumo:pqInsumo,
               preguntaCostoPote:pqPote, preguntaCostoCC:pqCC,
               actualizadoEn:serverTimestamp()
