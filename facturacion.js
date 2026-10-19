@@ -444,6 +444,25 @@ function _calcularTotales() {
   return { grupos, totalBase, totalIVA, igtf, subtotalConIVA, totalUSD, totalVES, tasa: _tasaBCV };
 }
 
+window._editarTasaManual = async () => {
+  const { value } = await Swal.fire({
+    title: 'Tasa BCV',
+    input: 'number',
+    inputValue: _tasaBCV > 1 ? _tasaBCV : '',
+    inputPlaceholder: 'Ej: 47.50',
+    showCancelButton: true,
+    confirmButtonText: 'Aplicar',
+    cancelButtonText: 'Cancelar',
+    inputAttributes: { step: '0.01', min: '1' }
+  });
+  if (value && parseFloat(value) > 1) {
+    _tasaBCV = parseFloat(value);
+    localStorage.setItem('tasaDolarAvipet', _tasaBCV);
+    setDoc(doc(db, 'configuracion', 'tasa'), { valor: _tasaBCV, actualizado: serverTimestamp() }).catch(() => {});
+    _recalcularTotales();
+  }
+};
+
 function _renderTotales(t) {
   const el = id => document.getElementById(id);
 

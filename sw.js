@@ -4,7 +4,7 @@
 // Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v77';
+const CACHE_V = 'avipet-v78';
 
 const APP_SHELL = [
   '/',
@@ -35,6 +35,7 @@ const ES_EXTERNO = url =>
   url.includes('firebaseapp.com') ||
   url.includes('googleapis.com') ||
   url.includes('dolarapi.com') ||
+  url.includes('pydolarve.org') ||
   url.includes('er-api.com') ||
   url.includes('gstatic.com') ||
   url.includes('cdn.') ||
