@@ -180,6 +180,11 @@
         </button>
       </div>
       <div id="carritoItems" class="min-h-[80px]"></div>
+      <!-- Botón agregar servicio extra -->
+      <button onclick="window.abrirCatalogoServicios()"
+        class="w-full mt-3 border-2 border-dashed border-blue-300 text-blue-500 py-2 rounded-xl font-black text-[9px] uppercase hover:border-blue-500 hover:bg-blue-50 transition-all">
+        ➕ Agregar servicio / medicamento
+      </button>
     </div>
 
     <!-- TOTALES -->
@@ -484,6 +489,67 @@
     </div>
     <div id="escanerEstado" class="px-4 py-3 text-center text-[11px] text-slate-500 font-medium">
       Apunta el código de barras dentro del rectángulo.
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CATÁLOGO SERVICIOS / MEDICAMENTOS ══════════ -->
+<div id="modalCatalogo" class="hidden fixed inset-0 z-[9997] flex items-center justify-center p-4"
+  style="background:rgba(0,0,0,0.7)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col" style="max-height:85vh;">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+      <span class="font-black text-[12px] text-slate-800 uppercase">➕ Agregar al carrito</span>
+      <button onclick="window.cerrarCatalogoServicios()"
+        class="bg-red-500 hover:bg-red-600 text-white font-black text-[11px] px-3 py-1 rounded-lg">✕ Cerrar</button>
+    </div>
+    <!-- Tabs -->
+    <div class="flex border-b border-slate-100 shrink-0">
+      <button id="tabServiciosCat" onclick="window.switchTabCatalogo('servicios')"
+        class="flex-1 py-2.5 text-[10px] font-black uppercase tracking-wide bg-blue-600 text-white transition-all">
+        🏥 Servicios
+      </button>
+      <button id="tabMedicamentosCat" onclick="window.switchTabCatalogo('medicamentos')"
+        class="flex-1 py-2.5 text-[10px] font-black uppercase tracking-wide bg-slate-100 text-slate-500 transition-all">
+        💊 Medicamentos / Insumos
+      </button>
+    </div>
+    <!-- Buscador -->
+    <div class="px-4 pt-3 shrink-0">
+      <input id="inputBuscadorCatalogo" type="text" placeholder="Buscar..."
+        oninput="window.filtrarCatalogo(this.value)"
+        class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold focus:border-blue-500 bg-white transition-all">
+    </div>
+    <!-- Servicio personalizado (solo en tab servicios) -->
+    <div id="panelServicioCustom" class="px-4 pt-2 shrink-0">
+      <div class="flex gap-2 items-end">
+        <div class="flex-1">
+          <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Nombre del servicio</p>
+          <input id="inputServicioCustomNombre" type="text" placeholder="Ej: Aplicación inyectable"
+            class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-bold focus:border-blue-400">
+        </div>
+        <div style="width:70px">
+          <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">Precio $</p>
+          <input id="inputServicioCustomPrecio" type="number" min="0" step="0.01" placeholder="0.00"
+            class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-bold focus:border-blue-400">
+        </div>
+        <div style="width:60px">
+          <p class="text-[8px] text-slate-400 font-bold uppercase mb-1">IVA %</p>
+          <select id="selectServicioCustomIVA"
+            class="w-full border border-slate-200 rounded-lg px-1 py-1.5 text-[10px] font-bold focus:border-blue-400">
+            <option value="0">0% Exento</option>
+            <option value="16" selected>16%</option>
+          </select>
+        </div>
+        <button onclick="window.agregarServicioCustom()"
+          class="bg-blue-600 text-white px-2 py-1.5 rounded-lg font-black text-[10px] hover:bg-blue-700 shrink-0">
+          ＋
+        </button>
+      </div>
+    </div>
+    <!-- Lista resultados -->
+    <div id="listaCatalogo" class="overflow-y-auto px-4 py-3 space-y-2 flex-1">
+      <p class="text-center text-slate-400 text-[10px] italic py-6">Cargando...</p>
     </div>
   </div>
 </div>

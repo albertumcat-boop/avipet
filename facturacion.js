@@ -1068,6 +1068,139 @@ function _initBarcodeReader() {
   document.getElementById('seccionBarcode')?.addEventListener('click', () => input.focus());
 }
 
+// ─── CATÁLOGO SERVICIOS / MEDICAMENTOS ─────────────────
+// Servicios estándar predefinidos (se pueden ampliar)
+const _SERVICIOS_CATALOGO = [
+  { nombre: 'Consulta Veterinaria',        precio: 20,  alicuotaIVA: 0  },
+  { nombre: 'Consulta de Vacunación',      precio: 5,   alicuotaIVA: 0  },
+  { nombre: 'Ecografía',                   precio: 35,  alicuotaIVA: 0  },
+  { nombre: 'Rayos X',                     precio: 30,  alicuotaIVA: 0  },
+  { nombre: 'Cirugía menor',               precio: 50,  alicuotaIVA: 0  },
+  { nombre: 'Hospitalización (por día)',   precio: 40,  alicuotaIVA: 0  },
+  { nombre: 'Aplicación inyectable',       precio: 3,   alicuotaIVA: 16 },
+  { nombre: 'Baño y secado',               precio: 15,  alicuotaIVA: 16 },
+  { nombre: 'Corte de uñas',               precio: 5,   alicuotaIVA: 16 },
+  { nombre: 'Peluquería completa',         precio: 25,  alicuotaIVA: 16 },
+  { nombre: 'Desparasitación externa',     precio: 10,  alicuotaIVA: 16 },
+];
+
+let _catalogoTab        = 'servicios';  // 'servicios' | 'medicamentos'
+let _catalogoMeds       = [];           // cache de inventario cargado
+
+window.abrirCatalogoServicios = async function() {
+  document.getElementById('modalCatalogo')?.classList.remove('hidden');
+  document.getElementById('inputBuscadorCatalogo').value = '';
+  await window.switchTabCatalogo('servicios');
+};
+
+window.cerrarCatalogoServicios = function() {
+  document.getElementById('modalCatalogo')?.classList.add('hidden');
+};
+
+window.switchTabCatalogo = async function(tab) {
+  _catalogoTab = tab;
+  const tS = document.getElementById('tabServiciosCat');
+  const tM = document.getElementById('tabMedicamentosCat');
+  const pC = document.getElementById('panelServicioCustom');
+
+  if (tab === 'servicios') {
+    tS.className = tS.className.replace('bg-slate-100 text-slate-500','bg-blue-600 text-white');
+    tM.className = tM.className.replace('bg-blue-600 text-white','bg-slate-100 text-slate-500');
+    if (pC) pC.classList.remove('hidden');
+  } else {
+    tM.className = tM.className.replace('bg-slate-100 text-slate-500','bg-blue-600 text-white');
+    tS.className = tS.className.replace('bg-blue-600 text-white','bg-slate-100 text-slate-500');
+    if (pC) pC.classList.add('hidden');
+    if (!_catalogoMeds.length) await _cargarMedicamentos();
+  }
+  window.filtrarCatalogo(document.getElementById('inputBuscadorCatalogo')?.value || '');
+};
+
+async function _cargarMedicamentos() {
+  try {
+    const snap = await getDocs(query(collection(db,'inventario'), orderBy('nombre')));
+    _catalogoMeds = snap.docs.map(d => ({
+      id: d.id,
+      nombre: d.data().nombre || '—',
+      precio: parseFloat(d.data().precioVenta || 0),
+      alicuotaIVA: parseFloat(d.data().alicuotaIVA ?? 16),
+      stock: parseFloat(d.data().cantidadStock || 0)
+    }));
+  } catch(e) { console.error(e); _catalogoMeds = []; }
+}
+
+window.filtrarCatalogo = function(q) {
+  const lista = document.getElementById('listaCatalogo');
+  if (!lista) return;
+  const termino = (q || '').toLowerCase().trim();
+  const items = _catalogoTab === 'servicios' ? _SERVICIOS_CATALOGO : _catalogoMeds;
+  const filtrados = termino
+    ? items.filter(i => i.nombre.toLowerCase().includes(termino))
+    : items;
+
+  if (!filtrados.length) {
+    lista.innerHTML = '<p class="text-center text-slate-400 text-[10px] italic py-6">Sin resultados.</p>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  filtrados.forEach((item, idx) => {
+    const ivaChip = item.alicuotaIVA === 0
+      ? '<span class="text-[7px] font-black bg-emerald-50 text-emerald-600 px-1 rounded">EXENTO</span>'
+      : `<span class="text-[7px] font-black bg-amber-50 text-amber-600 px-1 rounded">IVA ${item.alicuotaIVA}%</span>`;
+    const stockTag = _catalogoTab === 'medicamentos'
+      ? `<span class="text-[7px] text-slate-400 ml-1">Stock: ${item.stock}</span>` : '';
+    const div = document.createElement('div');
+    div.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 hover:border-blue-300 transition-all';
+    div.innerHTML = `
+      <div class="flex-1 min-w-0 mr-2">
+        <p class="text-[11px] font-black text-slate-800 truncate" data-nombre></p>
+        <div class="flex items-center gap-1 mt-0.5">${ivaChip}${stockTag}</div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <input type="number" value="${item.precio.toFixed(2)}" min="0" step="0.01"
+          data-precio-input
+          class="w-16 border border-slate-200 rounded-lg px-1.5 py-1 text-[10px] font-black text-blue-700 text-right focus:border-blue-400">
+        <button data-agregar class="bg-blue-600 text-white px-2.5 py-1.5 rounded-lg font-black text-[10px] hover:bg-blue-700 transition-all">+</button>
+      </div>`;
+    div.querySelector('[data-nombre]').textContent = item.nombre;
+    div.querySelector('[data-agregar]').onclick = () => {
+      const precio = parseFloat(div.querySelector('[data-precio-input]').value) || item.precio;
+      _agregarItemDesdeCatalogo({ ...item, precio });
+    };
+    lista.appendChild(div);
+  });
+};
+
+function _agregarItemDesdeCatalogo(item) {
+  const id = item.id || ('srv_' + item.nombre.replace(/\s+/g,'_').toLowerCase());
+  const existente = _carrito.find(i => i.id === id);
+  if (existente) {
+    existente.cantidad++;
+  } else {
+    _carrito.push({
+      id, tipo: _catalogoTab === 'medicamentos' ? 'producto' : 'servicio_extra',
+      descripcion: item.nombre.toUpperCase(),
+      precio: item.precio,
+      cantidad: 1,
+      alicuotaIVA: item.alicuotaIVA,
+      bloqueado: false
+    });
+  }
+  _renderCarrito();
+  Swal.fire({ icon:'success', title:`✅ ${item.nombre}`, timer:700, showConfirmButton:false, toast:true, position:'top-end' });
+}
+
+window.agregarServicioCustom = function() {
+  const nombre = document.getElementById('inputServicioCustomNombre')?.value.trim();
+  const precio = parseFloat(document.getElementById('inputServicioCustomPrecio')?.value) || 0;
+  const iva    = parseFloat(document.getElementById('selectServicioCustomIVA')?.value) || 0;
+  if (!nombre) { Swal.fire({ icon:'warning', title:'Escribe el nombre del servicio', timer:1500, showConfirmButton:false }); return; }
+  _agregarItemDesdeCatalogo({ nombre, precio, alicuotaIVA: iva });
+  document.getElementById('inputServicioCustomNombre').value = '';
+  document.getElementById('inputServicioCustomPrecio').value = '';
+};
+
 // ─── HISTORIAL DE FACTURAS ─────────────────────────────
 window.cargarHistorialFacturas = async () => {
   const cont = document.getElementById('historialFacturasLista');
