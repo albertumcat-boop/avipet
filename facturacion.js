@@ -812,7 +812,10 @@ function _mostrarResumenTiquera(facturaId, numeroFactura, numeroControl, carrito
   let filas = carrito.map(item => {
     const sub = (item.precio * item.cantidad).toFixed(2);
     return `<tr style="border-bottom:1px solid #f1f5f9;">
-      <td style="padding:4px 8px;font-size:10px;text-align:left;">${_esc(item.descripcion)}</td>
+      <td style="padding:4px 8px;font-size:10px;text-align:left;">
+        ${item.categoria === 'medicamento' ? '<div style="font-size:8px;font-weight:900;color:#7c3aed;">APLICACIÓN</div>' : (item.categoria === 'servicio' || item.tipo === 'consulta' || item.tipo === 'peluqueria') ? '<div style="font-size:8px;font-weight:900;color:#0284c7;">VETERINARIA</div>' : ''}
+        ${_esc(item.descripcion)}
+      </td>
       <td style="padding:4px 8px;font-size:10px;text-align:center;">${_esc(item.cantidad)}</td>
       <td style="padding:4px 8px;font-size:10px;text-align:right;">Bs ${(item.precio * totales.tasa).toFixed(2)}</td>
       <td style="padding:4px 8px;font-size:10px;text-align:center;">${_esc(item.alicuotaIVA)}%</td>
@@ -893,6 +896,7 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
     const pUnitBs = i.cantidad > 1 ? `<div style="font-size:9px;">${fmtBs(parseFloat(i.precio)*tasaActual)} c/u</div>` : '';
     return `<tr>
       <td class="col-desc" style="padding:2px 0;">
+        ${i.categoria === 'medicamento' ? '<div style="font-size:7px;font-weight:900;letter-spacing:0.5px;">APLICACIÓN</div>' : (i.categoria === 'servicio' || i.tipo === 'consulta' || i.tipo === 'peluqueria') ? '<div style="font-size:7px;font-weight:900;letter-spacing:0.5px;">VETERINARIA</div>' : ''}
         <div style="white-space:normal;word-break:break-word;">${_esc(i.descripcion)} <span style="font-size:8px;">(${ivaTag})</span></div>
         ${pUnitBs}
       </td>
