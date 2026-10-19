@@ -57,7 +57,7 @@ async function _cargarConfigFiscal() {
     onSnapshot(doc(db, 'configuracion', 'tasa'), snap => {
       if (snap.exists()) {
         const v = parseFloat(snap.data().valor || 0);
-        if (v > 1) { _tasaBCV = v; _recalcularTotales(); }
+        if (v > 1) { _tasaBCV = v; if (typeof _renderCarrito === 'function') _renderCarrito(); }
       }
     });
     // Intentar obtener tasa fresca desde API BCV al cargar
@@ -74,7 +74,7 @@ async function _cargarConfigFiscal() {
             _tasaBCV = tasa;
             localStorage.setItem('tasaDolarAvipet', tasa);
             setDoc(doc(db, 'configuracion', 'tasa'), { valor: tasa, actualizado: serverTimestamp() }).catch(() => {});
-            _recalcularTotales();
+            if (typeof _renderCarrito === 'function') _renderCarrito();
           }
         }
       } catch (_) {}
@@ -459,7 +459,7 @@ window._editarTasaManual = async () => {
     _tasaBCV = parseFloat(value);
     localStorage.setItem('tasaDolarAvipet', _tasaBCV);
     setDoc(doc(db, 'configuracion', 'tasa'), { valor: _tasaBCV, actualizado: serverTimestamp() }).catch(() => {});
-    _recalcularTotales();
+    _renderCarrito();
   }
 };
 
