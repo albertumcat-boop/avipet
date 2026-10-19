@@ -975,7 +975,7 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
         TOTAL: ${fmtBs(totalVESActual)}
       </td>
     </tr>
-    <tr><td colspan="3" style="text-align:center;font-size:9px;color:#666;">Tasa BCV: ${tasaActual.toFixed(2)} Bs/$1 — $${totales.totalUSD.toFixed(2)}</td></tr>
+    <tr><td colspan="3" style="text-align:center;font-size:11px;font-weight:700;">Tasa: ${tasaActual.toFixed(2)} — $${totales.totalUSD.toFixed(2)}</td></tr>
   </table>
   <div class="hr"></div>
   <div class="center" style="font-size:11px;font-weight:700;margin-top:4px;">¡Gracias por su preferencia!</div>

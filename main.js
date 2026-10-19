@@ -435,14 +435,19 @@ window.cargarListaEspera = () => {
       return;
     }
     cont.innerHTML = "";
-    items.forEach(p => {
+    items.forEach((p, idx) => {
+      const num = idx + 1;
       const div = document.createElement('div');
       div.className = "border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2 mb-2";
       div.innerHTML = `
-        <div>
-          <p class="font-bold uppercase text-[11px] text-slate-700">${p.paciente}</p>
-          <p class="text-[9px] text-slate-500">${p.propietario} · CI: ${p.cedula}</p>
-          <p class="text-[9px] text-slate-400">${p.telefono || ''} ${p.especie ? '· '+p.especie : ''}</p>
+        <div class="flex items-start gap-2">
+          <span class="text-[18px] font-black text-blue-600 leading-none w-6 shrink-0">${num}</span>
+          <div>
+            <p class="font-bold uppercase text-[11px] text-slate-700">${p.paciente}</p>
+            <p class="text-[9px] text-slate-500">${p.propietario} · CI: ${p.cedula}</p>
+            ${p.telefono ? `<p class="text-[10px] font-black text-blue-700">📞 ${p.telefono}</p>` : ''}
+            ${p.especie ? `<p class="text-[9px] text-slate-400">${p.especie}</p>` : ''}
+          </div>
         </div>
         <div class="flex gap-2">
           <button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase"
