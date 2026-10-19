@@ -65,11 +65,11 @@ async function _cargarConfigFiscal() {
       try {
         const ctrl = new AbortController();
         const tid = setTimeout(() => ctrl.abort(), 4000);
-        const res = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv', { signal: ctrl.signal });
+        const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: ctrl.signal });
         clearTimeout(tid);
         const data = await res.json();
-        if (data?.monitors?.bcv) {
-          const tasa = parseFloat(data.monitors.bcv.price);
+        if (data?.promedio) {
+          const tasa = parseFloat(data.promedio);
           if (tasa > 1) {
             _tasaBCV = tasa;
             localStorage.setItem('tasaDolarAvipet', tasa);
