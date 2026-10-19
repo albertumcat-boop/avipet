@@ -474,10 +474,10 @@ function _renderTotales(t) {
         if (!g.base) return;
         desglose.insertAdjacentHTML('beforeend', `
           <div class="flex justify-between text-[10px] text-slate-500">
-            <span>Base imponible ${aliq}%:</span><span class="font-bold">$${g.base.toFixed(2)}</span>
+            <span>Base imponible ${aliq}%:</span><span class="font-bold">Bs ${(g.base * t.tasa).toFixed(2)}</span>
           </div>
           <div class="flex justify-between text-[10px] text-slate-500">
-            <span>IVA ${aliq}%:</span><span class="font-bold text-emerald-600">$${g.iva.toFixed(2)}</span>
+            <span>IVA ${aliq}%:</span><span class="font-bold text-emerald-600">Bs ${(g.iva * t.tasa).toFixed(2)}</span>
           </div>`);
       });
     }
@@ -489,14 +489,14 @@ function _renderTotales(t) {
   if (rowBase) rowBase.style.display = _modoSinIVA ? 'none' : 'flex';
   if (rowIVA)  rowIVA.style.display  = _modoSinIVA ? 'none' : 'flex';
 
-  if (el('totalIVADisplay'))  el('totalIVADisplay').textContent  = `$${t.totalIVA.toFixed(2)}`;
-  if (el('totalBaseDisplay')) el('totalBaseDisplay').textContent = `$${t.totalBase.toFixed(2)}`;
+  if (el('totalIVADisplay'))  el('totalIVADisplay').textContent  = `Bs ${(t.totalIVA * t.tasa).toFixed(2)}`;
+  if (el('totalBaseDisplay')) el('totalBaseDisplay').textContent = `Bs ${(t.totalBase * t.tasa).toFixed(2)}`;
 
   const igtfRow = el('igtfRow');
   if (igtfRow) {
     igtfRow.style.display = t.igtf > 0 ? 'flex' : 'none';
     const igtfD = el('igtfDisplay');
-    if (igtfD) igtfD.textContent = `$${t.igtf.toFixed(2)}`;
+    if (igtfD) igtfD.textContent = `Bs ${(t.igtf * t.tasa).toFixed(2)}`;
   }
 
   if (el('totalUSDDisplay')) el('totalUSDDisplay').textContent = `$${t.totalUSD.toFixed(2)}`;
