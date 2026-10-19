@@ -1139,15 +1139,43 @@ window.switchTabCatalogo = async function(tab) {
 
 async function _cargarInventarioCompleto() {
   try {
-    const snap = await getDocs(query(collection(db,'inventario'), orderBy('nombre')));
-    _catalogoInv = snap.docs.map(d => ({
-      id: d.id,
-      nombre: d.data().nombre || '—',
-      precio: parseFloat(d.data().precioVenta || 0),
-      alicuotaIVA: parseFloat(d.data().alicuotaIVA ?? 16),
-      stock: parseFloat(d.data().cantidadStock || 0),
-      categoria: (d.data().categoria || '').toLowerCase()
-    }));
+    // Cargar inventario (productos físicos) + medicamentos_maestro (de historia clínica)
+    const [snapInv, snapMed] = await Promise.all([
+      getDocs(query(collection(db,'inventario'), orderBy('nombre'))),
+      getDocs(collection(db,'medicamentos_maestro'))
+    ]);
+
+    _catalogoInv = [];
+
+    snapInv.docs.forEach(d => {
+      _catalogoInv.push({
+        id: d.id,
+        nombre: d.data().nombre || d.id,
+        precio: parseFloat(d.data().precioVenta || 0),
+        alicuotaIVA: parseFloat(d.data().alicuotaIVA ?? 16),
+        stock: parseFloat(d.data().cantidadStock || 0),
+        categoria: (d.data().categoria || '').toLowerCase(),
+        fuente: 'inventario'
+      });
+    });
+
+    snapMed.docs.forEach(d => {
+      const dat = d.data();
+      // Evitar duplicados si ya está en inventario con mismo nombre
+      const yaExiste = _catalogoInv.some(i => i.nombre.toLowerCase() === (dat.nombre || d.id).toLowerCase());
+      if (yaExiste) return;
+      _catalogoInv.push({
+        id: 'med_' + d.id,
+        nombre: dat.nombre || d.id,
+        precio: parseFloat(dat.precioCliente || dat.precio || 0),
+        alicuotaIVA: 0,   // medicamentos: exento
+        stock: null,
+        categoria: 'medicamento',
+        fuente: 'historia'
+      });
+    });
+
+    _catalogoInv.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
   } catch(e) { console.error(e); _catalogoInv = []; }
 }
 
@@ -1178,7 +1206,7 @@ window.filtrarCatalogo = function(q) {
     const ivaChip = item.alicuotaIVA === 0
       ? '<span class="text-[7px] font-black bg-emerald-50 text-emerald-600 px-1 rounded">EXENTO</span>'
       : `<span class="text-[7px] font-black bg-amber-50 text-amber-600 px-1 rounded">IVA ${item.alicuotaIVA}%</span>`;
-    const stockTag = _catalogoTab === 'medicamentos'
+    const stockTag = (item.stock !== null && item.stock !== undefined)
       ? `<span class="text-[7px] text-slate-400 ml-1">Stock: ${item.stock}</span>` : '';
     const div = document.createElement('div');
     div.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 hover:border-blue-300 transition-all';
