@@ -377,6 +377,12 @@ function _renderCarrito() {
       div.className = 'border-b border-slate-100 py-2.5 flex items-start gap-2';
       div.innerHTML = `
         <div class="flex-1 min-w-0">
+          ${item.categoria === 'medicamento'
+            ? '<span class="text-[7px] font-black uppercase tracking-wide text-violet-500">APLICACIÓN</span>'
+            : (item.tipo === 'consulta' || item.tipo === 'peluqueria' || item.categoria === 'servicio')
+              ? '<span class="text-[7px] font-black uppercase tracking-wide text-sky-500">VETERINARIA</span>'
+              : ''
+          }
           <p class="text-[10px] font-black text-slate-800 uppercase leading-tight truncate" data-desc></p>
           <div class="flex items-center gap-1 mt-1">
             ${_modoSinIVA
@@ -1338,6 +1344,7 @@ function _agregarItemDesdeCatalogo(item) {
   } else {
     _carrito.push({
       id, tipo: _catalogoTab === 'medicamentos' ? 'producto' : 'servicio_extra',
+      categoria: _catalogoTab === 'medicamentos' ? 'medicamento' : 'servicio',
       descripcion: item.nombre.toUpperCase(),
       precio: item.precio,
       cantidad: 1,
