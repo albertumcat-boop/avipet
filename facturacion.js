@@ -600,12 +600,12 @@ window.emitirFactura = async () => {
   const confirmHTML = `<div style="text-align:left;font-size:11px;color:#334155;line-height:1.8;">
     <p><b>Receptor:</b> ${_esConsumidorFinal ? 'Consumidor Final' : rifReceptor}</p>
     <hr style="margin:6px 0;border-color:#e2e8f0;">
-    <p><b>Base imponible:</b> $${totales.totalBase.toFixed(2)}</p>
-    <p><b>IVA:</b> $${totales.totalIVA.toFixed(2)}</p>
-    ${totales.igtf > 0 ? `<p><b>IGTF (${_configFiscal.alicuotaIGTF}%):</b> $${totales.igtf.toFixed(2)}</p>` : ''}
+    <p><b>Base imponible:</b> Bs ${(totales.totalBase * totales.tasa).toFixed(2)}</p>
+    <p><b>IVA:</b> Bs ${(totales.totalIVA * totales.tasa).toFixed(2)}</p>
+    ${totales.igtf > 0 ? `<p><b>IGTF (${_configFiscal.alicuotaIGTF}%):</b> Bs ${(totales.igtf * totales.tasa).toFixed(2)}</p>` : ''}
     <hr style="margin:6px 0;border-color:#e2e8f0;">
-    <p style="font-size:16px;font-weight:900;color:#1d4ed8;"><b>TOTAL: $${totales.totalUSD.toFixed(2)}</b></p>
-    <p style="font-size:10px;color:#94a3b8;">Bs ${totales.totalVES.toFixed(2)} · Tasa ${totales.tasa.toFixed(2)}</p>
+    <p style="font-size:16px;font-weight:900;color:#1d4ed8;"><b>TOTAL: Bs ${totales.totalVES.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</b></p>
+    <p style="font-size:10px;color:#94a3b8;">$${totales.totalUSD.toFixed(2)} · Tasa ${totales.tasa.toFixed(2)}</p>
   </div>`;
 
   const conf = await Swal.fire({
@@ -808,9 +808,9 @@ function _mostrarResumenTiquera(facturaId, numeroFactura, numeroControl, carrito
     return `<tr style="border-bottom:1px solid #f1f5f9;">
       <td style="padding:4px 8px;font-size:10px;text-align:left;">${_esc(item.descripcion)}</td>
       <td style="padding:4px 8px;font-size:10px;text-align:center;">${_esc(item.cantidad)}</td>
-      <td style="padding:4px 8px;font-size:10px;text-align:right;">$${item.precio.toFixed(2)}</td>
+      <td style="padding:4px 8px;font-size:10px;text-align:right;">Bs ${(item.precio * totales.tasa).toFixed(2)}</td>
       <td style="padding:4px 8px;font-size:10px;text-align:center;">${_esc(item.alicuotaIVA)}%</td>
-      <td style="padding:4px 8px;font-size:10px;text-align:right;font-weight:900;">$${sub}</td>
+      <td style="padding:4px 8px;font-size:10px;text-align:right;font-weight:900;">Bs ${(parseFloat(sub) * totales.tasa).toFixed(2)}</td>
     </tr>`;
   }).join('');
 
@@ -833,20 +833,20 @@ function _mostrarResumenTiquera(facturaId, numeroFactura, numeroControl, carrito
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
       <div style="background:#eff6ff;border-radius:8px;padding:8px;">
         <p style="font-size:9px;color:#64748b;font-weight:700;margin:0 0 2px;">Base Imponible</p>
-        <p style="font-size:16px;font-weight:900;color:#1d4ed8;margin:0;">$${totales.totalBase.toFixed(2)}</p>
+        <p style="font-size:16px;font-weight:900;color:#1d4ed8;margin:0;">Bs ${(totales.totalBase * totales.tasa).toFixed(2)}</p>
       </div>
       <div style="background:#f0fdf4;border-radius:8px;padding:8px;">
         <p style="font-size:9px;color:#64748b;font-weight:700;margin:0 0 2px;">IVA Total</p>
-        <p style="font-size:16px;font-weight:900;color:#16a34a;margin:0;">$${totales.totalIVA.toFixed(2)}</p>
+        <p style="font-size:16px;font-weight:900;color:#16a34a;margin:0;">Bs ${(totales.totalIVA * totales.tasa).toFixed(2)}</p>
       </div>
       ${totales.igtf > 0 ? `<div style="background:#fefce8;border-radius:8px;padding:8px;">
         <p style="font-size:9px;color:#64748b;font-weight:700;margin:0 0 2px;">IGTF</p>
-        <p style="font-size:16px;font-weight:900;color:#ca8a04;margin:0;">$${totales.igtf.toFixed(2)}</p>
+        <p style="font-size:16px;font-weight:900;color:#ca8a04;margin:0;">Bs ${(totales.igtf * totales.tasa).toFixed(2)}</p>
       </div>` : ''}
       <div style="background:#1d4ed8;border-radius:8px;padding:8px;${totales.igtf === 0 ? 'grid-column:span 2;' : ''}">
         <p style="font-size:9px;color:#bfdbfe;font-weight:700;margin:0 0 2px;">TOTAL A COBRAR</p>
-        <p style="font-size:20px;font-weight:900;color:#fff;margin:0;">$${totales.totalUSD.toFixed(2)}</p>
-        <p style="font-size:8px;color:#bfdbfe;margin:0;">Bs ${totales.totalVES.toFixed(2)}</p>
+        <p style="font-size:20px;font-weight:900;color:#fff;margin:0;">Bs ${totales.totalVES.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
+        <p style="font-size:8px;color:#bfdbfe;margin:0;">$${totales.totalUSD.toFixed(2)} · Tasa ${totales.tasa.toFixed(2)}</p>
       </div>
     </div>
     <div style="background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:10px;">
