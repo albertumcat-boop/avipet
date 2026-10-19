@@ -251,17 +251,23 @@
         </button>
       </div>
       <div id="panelRIF" class="hidden space-y-2 fade-in">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-[9px] font-bold text-slate-400 uppercase">RIF / CI del Receptor</label>
-            <input id="inputRIFReceptor" type="text" placeholder="J-XXXXXXXXX o V-XXXXXXXX"
-              class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
+        <div>
+          <label class="text-[9px] font-bold text-slate-400 uppercase">RIF / Cédula del Receptor</label>
+          <div class="flex items-end gap-1">
+            <select id="prefijoCedulaReceptor"
+              class="border-b-2 border-slate-200 py-1 text-[11px] font-black bg-transparent focus:border-blue-500 w-14 shrink-0"
+              onchange="window._sincronizarRIF()">
+              <option>V-</option>
+              <option>J-</option>
+              <option>E-</option>
+              <option>G-</option>
+              <option>P-</option>
+            </select>
+            <input id="inputCedulaReceptor" type="text" placeholder="12345678"
+              class="flex-1 border-b-2 border-slate-200 py-1 px-1 text-[11px] font-bold focus:border-blue-500 bg-transparent"
+              oninput="window._sincronizarRIF()">
           </div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-400 uppercase">Cédula</label>
-            <input id="inputCedulaReceptor" type="text" placeholder="V-XXXXXXXX"
-              class="w-full border-b-2 border-slate-200 py-1 px-0 text-[11px] font-bold focus:border-blue-500 bg-transparent">
-          </div>
+          <input id="inputRIFReceptor" type="hidden">
         </div>
         <div>
           <label class="text-[9px] font-bold text-slate-400 uppercase">Nombre / Razón Social</label>

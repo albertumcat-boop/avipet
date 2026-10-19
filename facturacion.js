@@ -165,7 +165,9 @@ window.buscarClienteFact = async () => {
       panelRIF.classList.remove('hidden');
       const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
       set('inputRIFReceptor',     `V-${primero.cedula}`);
-      set('inputCedulaReceptor',  `V-${primero.cedula}`);
+      set('inputCedulaReceptor',  primero.cedula);
+      const selPref = document.getElementById('prefijoCedulaReceptor');
+      if (selPref) selPref.value = 'V-';
       set('inputNomReceptor',     primero.propietario);
       set('inputTelefonoReceptor',primero.telefono);
     }
@@ -525,6 +527,13 @@ window.cambiarMonedaPago = (moneda) => {
 };
 
 // ─── RECEPTOR ──────────────────────────────────────────
+window._sincronizarRIF = () => {
+  const prefijo = document.getElementById('prefijoCedulaReceptor')?.value || 'V-';
+  const numero  = (document.getElementById('inputCedulaReceptor')?.value || '').replace(/[^0-9]/g,'');
+  const campo   = document.getElementById('inputRIFReceptor');
+  if (campo) campo.value = numero ? prefijo + numero : '';
+};
+
 window.toggleConsumidorFinal = () => {
   _esConsumidorFinal = !_esConsumidorFinal;
   document.getElementById('panelRIF')?.classList.toggle('hidden', _esConsumidorFinal);
