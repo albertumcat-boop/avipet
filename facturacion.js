@@ -44,22 +44,41 @@ async function _cargarConfigFiscal() {
       serieId: 'A', alicuotaIGTF: 3, esContribuyenteEspecial: true
     };
 
-    if (snapTasa.exists()) _tasaBCV = parseFloat(snapTasa.data().valor || 1);
-    // Fallback: usar tasa guardada en localStorage por main.js si Firestore devuelve 1
-    if (_tasaBCV <= 1) {
-      const ls = parseFloat(localStorage.getItem('tasaDolarAvipet') || 0);
-      if (ls > 1) _tasaBCV = ls;
+    // Prioridad: Firestore → localStorage → 1
+    if (snapTasa.exists()) {
+      const fsVal = parseFloat(snapTasa.data().valor || 0);
+      if (fsVal > 1) _tasaBCV = fsVal;
     }
-    // Mantener tasa actualizada en tiempo real
+    if (_tasaBCV <= 1) {
+      const lsInit = parseFloat(localStorage.getItem('tasaDolarAvipet') || 0);
+      if (lsInit > 1) _tasaBCV = lsInit;
+    }
+    // Mantener tasa actualizada en tiempo real desde Firestore
     onSnapshot(doc(db, 'configuracion', 'tasa'), snap => {
       if (snap.exists()) {
         const v = parseFloat(snap.data().valor || 0);
-        if (v > 1) {
-          _tasaBCV = v;
-          _recalcularTotales(); // refrescar display con la tasa real
-        }
+        if (v > 1) { _tasaBCV = v; _recalcularTotales(); }
       }
     });
+    // Intentar obtener tasa fresca desde API BCV al cargar
+    (async () => {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 4000);
+        const res = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv', { signal: ctrl.signal });
+        clearTimeout(tid);
+        const data = await res.json();
+        if (data?.monitors?.bcv) {
+          const tasa = parseFloat(data.monitors.bcv.price);
+          if (tasa > 1) {
+            _tasaBCV = tasa;
+            localStorage.setItem('tasaDolarAvipet', tasa);
+            setDoc(doc(db, 'configuracion', 'tasa'), { valor: tasa, actualizado: serverTimestamp() }).catch(() => {});
+            _recalcularTotales();
+          }
+        }
+      } catch (_) {}
+    })();
     if (snapSistema.exists()) _masterKey = snapSistema.data().masterKey || null;
 
     const rifDisplay = document.getElementById('rifEmisorDisplay');
