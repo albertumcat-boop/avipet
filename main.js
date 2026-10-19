@@ -772,7 +772,7 @@ window._rfGuardar = async () => {
     await addDoc(collection(db, 'espera'), {
       cedula, propietario, paciente, especie, raza, telefono,
       motivoConsulta:  motivo,
-      doctor,
+      doctorAsignado: doctor,
       formaPago,
       formaPagoLabel:  fpLabel,
       serviciosReferido: _rfServicios,
