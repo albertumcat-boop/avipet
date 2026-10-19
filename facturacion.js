@@ -52,7 +52,13 @@ async function _cargarConfigFiscal() {
     }
     // Mantener tasa actualizada en tiempo real
     onSnapshot(doc(db, 'configuracion', 'tasa'), snap => {
-      if (snap.exists()) { const v = parseFloat(snap.data().valor || 0); if (v > 1) _tasaBCV = v; }
+      if (snap.exists()) {
+        const v = parseFloat(snap.data().valor || 0);
+        if (v > 1) {
+          _tasaBCV = v;
+          _recalcularTotales(); // refrescar display con la tasa real
+        }
+      }
     });
     if (snapSistema.exists()) _masterKey = snapSistema.data().masterKey || null;
 

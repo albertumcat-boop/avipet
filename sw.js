@@ -4,7 +4,7 @@
 // Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v75';
+const CACHE_V = 'avipet-v76';
 
 const APP_SHELL = [
   '/',
