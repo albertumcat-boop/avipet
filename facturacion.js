@@ -1137,42 +1137,63 @@ window.switchTabCatalogo = async function(tab) {
   window.filtrarCatalogo(document.getElementById('inputBuscadorCatalogo')?.value || '');
 };
 
+// Medicamentos hardcodeados de historia clínica (CONFIG_MEDICAMENTOS)
+const _MEDS_HISTORIA = [
+  "Piroyet","Enrofloxacina","Sulfatrim","Dexametasona","Carprofen","Flunixin",
+  "Metadol","Complejo B","Suero hiperinmune","Bromuro de hioscina","Fenobarbital",
+  "Gastrine","Ranitidina","Metoclopramida","Furosemina","Vit K","Eritrogen",
+  "Aminovit","Oxitetraciclina","Pimobendan","Ceftriaxona","Adrenalina / Epin",
+  "Artrosan","Lisavac","Soroglobulin","Infervac"
+];
+
 async function _cargarInventarioCompleto() {
   try {
-    // Cargar inventario (productos físicos) + medicamentos_maestro (de historia clínica)
+    // Cargar inventario (productos físicos) + medicamentos_maestro (personalizados)
     const [snapInv, snapMed] = await Promise.all([
       getDocs(query(collection(db,'inventario'), orderBy('nombre'))),
       getDocs(collection(db,'medicamentos_maestro'))
     ]);
 
     _catalogoInv = [];
+    const nombresYa = new Set();
 
+    // 1. Inventario físico (prioridad máxima)
     snapInv.docs.forEach(d => {
+      const nombre = (d.data().nombre || d.id).trim();
       _catalogoInv.push({
-        id: d.id,
-        nombre: d.data().nombre || d.id,
+        id: d.id, nombre,
         precio: parseFloat(d.data().precioVenta || 0),
         alicuotaIVA: parseFloat(d.data().alicuotaIVA ?? 16),
         stock: parseFloat(d.data().cantidadStock || 0),
         categoria: (d.data().categoria || '').toLowerCase(),
         fuente: 'inventario'
       });
+      nombresYa.add(nombre.toLowerCase());
     });
 
-    snapMed.docs.forEach(d => {
-      const dat = d.data();
-      // Evitar duplicados si ya está en inventario con mismo nombre
-      const yaExiste = _catalogoInv.some(i => i.nombre.toLowerCase() === (dat.nombre || d.id).toLowerCase());
-      if (yaExiste) return;
+    // 2. Lista hardcodeada de historia clínica
+    _MEDS_HISTORIA.forEach(nombre => {
+      if (nombresYa.has(nombre.toLowerCase())) return;
       _catalogoInv.push({
-        id: 'med_' + d.id,
-        nombre: dat.nombre || d.id,
-        precio: parseFloat(dat.precioCliente || dat.precio || 0),
-        alicuotaIVA: 0,   // medicamentos: exento
-        stock: null,
-        categoria: 'medicamento',
-        fuente: 'historia'
+        id: 'mh_' + nombre, nombre,
+        precio: 0, alicuotaIVA: 0,
+        stock: null, categoria: 'medicamento', fuente: 'historia'
       });
+      nombresYa.add(nombre.toLowerCase());
+    });
+
+    // 3. Medicamentos_maestro guardados manualmente (OTRO)
+    snapMed.docs.forEach(d => {
+      const dat  = d.data();
+      const nombre = (dat.nombre || d.id).trim();
+      if (nombresYa.has(nombre.toLowerCase())) return;
+      _catalogoInv.push({
+        id: 'med_' + d.id, nombre,
+        precio: parseFloat(dat.precioCliente || dat.precio || 0),
+        alicuotaIVA: 0, stock: null,
+        categoria: 'medicamento', fuente: 'historia'
+      });
+      nombresYa.add(nombre.toLowerCase());
     });
 
     _catalogoInv.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
