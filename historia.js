@@ -2166,13 +2166,22 @@ window.renderizarTablaMaestra = async () => {
               '<div style="border-top:2px solid #dbeafe;padding-top:10px;margin-top:2px;">'+
               '<p style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;margin:0 0 6px 0;">📦 Producto vinculado al carrito</p>'+
               '<p style="font-size:8px;color:#94a3b8;margin:0 0 8px 0;">Al agregar este servicio en Facturación, se sumará automáticamente el producto seleccionado como línea separada.</p>'+
-              '<div style="display:grid;grid-template-columns:1fr 90px;gap:6px;align-items:end;">'+
+              '<div style="display:grid;grid-template-columns:1fr 90px;gap:6px;align-items:end;margin-bottom:6px;">'+
               '<div><label style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:3px;">Producto del inventario</label>'+
               '<input id="es_bundle_nombre" type="text" list="es_bundle_lista" value="'+(dataServ.bundle?.nombre||'')+'" placeholder="Buscar producto..." style="width:100%;border:2px solid #bfdbfe;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:700;outline:none;box-sizing:border-box;">'+
               '<datalist id="es_bundle_lista"></datalist></div>'+
-              '<div><label style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:3px;">Precio ($)</label>'+
+              '<div><label style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:3px;">Precio producto ($)</label>'+
               '<input id="es_bundle_precio" type="number" step="0.01" min="0" value="'+(dataServ.bundle?.precio||0)+'" placeholder="0.00" style="width:100%;border:2px solid #bfdbfe;border-radius:8px;padding:6px;font-size:11px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '</div>'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#eff6ff;border-radius:8px;padding:7px;">'+
+              '<div><label style="font-size:8px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:3px;">Precio servicio en factura ($)</label>'+
+              '<input id="es_bundle_precio_serv" type="number" step="0.01" min="0" value="'+(dataServ.bundle?.precioServicio ?? '')+'" placeholder="Igual al precio arriba" style="width:100%;border:2px solid #bfdbfe;border-radius:8px;padding:6px;font-size:11px;font-weight:900;outline:none;box-sizing:border-box;">'+
+              '<p style="font-size:8px;color:#94a3b8;margin:3px 0 0 0;">Solo afecta la factura. Historia Clínica sigue usando el precio arriba.</p></div>'+
+              '<div style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;">'+
+              '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;">Total cliente</p>'+
+              '<p id="es_bundle_total" style="font-size:16px;font-weight:900;color:#1d4ed8;margin:0;">$0.00</p>'+
               '</div></div>'+
+              '</div>'+
               // ── Pregunta Extra ──────────────────────────────────
               '<div style="border-top:2px solid #f3e8ff;padding-top:10px;margin-top:2px;">'+
               '<p style="font-size:9px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 8px 0;">❓ Pregunta extra al guardar</p>'+
@@ -2204,10 +2213,21 @@ window.renderizarTablaMaestra = async () => {
                   dl.appendChild(opt);
                 });
                 // Al elegir del datalist, auto-rellenar precio
+                const actualizarTotalBundle = () => {
+                  const ps = parseFloat(document.getElementById('es_bundle_precio_serv')?.value) || parseFloat(document.getElementById('esp')?.value) || 0;
+                  const pp = parseFloat(document.getElementById('es_bundle_precio')?.value) || 0;
+                  const el = document.getElementById('es_bundle_total');
+                  if (el) el.textContent = '$' + (ps + pp).toFixed(2);
+                };
                 document.getElementById('es_bundle_nombre').addEventListener('input', function() {
                   const opt = Array.from(dl.options).find(o => o.value === this.value);
                   if (opt) document.getElementById('es_bundle_precio').value = parseFloat(opt.dataset.precio||0).toFixed(2);
+                  actualizarTotalBundle();
                 });
+                document.getElementById('es_bundle_precio').addEventListener('input', actualizarTotalBundle);
+                document.getElementById('es_bundle_precio_serv').addEventListener('input', actualizarTotalBundle);
+                document.getElementById('esp').addEventListener('input', actualizarTotalBundle);
+                actualizarTotalBundle();
               }).catch(() => {});
 
               // Función para refrescar el dropdown de insumo afectado en Pregunta Extra
@@ -2259,6 +2279,8 @@ window.renderizarTablaMaestra = async () => {
               const esRef = document.getElementById('es_ref_edit')?.checked || false;
               const bundleNombre = document.getElementById('es_bundle_nombre')?.value.trim() || '';
               const bundlePrecio = parseFloat(document.getElementById('es_bundle_precio')?.value) || 0;
+              const bundlePrecioServRaw = document.getElementById('es_bundle_precio_serv')?.value.trim();
+              const bundlePrecioServ = bundlePrecioServRaw !== '' ? parseFloat(bundlePrecioServRaw) : null;
               const pqActiva = document.getElementById('es_pq_activa')?.checked || false;
               const pqTexto  = document.getElementById('es_pq_texto')?.value.trim() || '¿Cuánto se utilizó?';
               const pqInsumo = document.getElementById('es_pq_insumo')?.value || '';
@@ -2268,7 +2290,8 @@ window.renderizarTablaMaestra = async () => {
               if(p<=0){Swal.showValidationMessage('El precio debe ser mayor a 0');return false;}
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
               document.querySelectorAll('#es_listaIns input[type="number"]').forEach((inp,i)=>{ if(listaIns[i]) listaIns[i].costo=parseFloat(inp.value)||0; });
-              return {n,p,pc,c,esRef,insumos:listaIns,bundle:bundleNombre?{nombre:bundleNombre,precio:bundlePrecio}:null,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
+              const bundleObj = bundleNombre ? { nombre:bundleNombre, precio:bundlePrecio, precioServicio: bundlePrecioServ } : null;
+              return {n,p,pc,c,esRef,insumos:listaIns,bundle:bundleObj,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
             }
           });
           if(!res.isConfirmed) return;

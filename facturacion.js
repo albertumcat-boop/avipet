@@ -1298,7 +1298,12 @@ function _agregarItemDesdeCatalogo(item) {
     });
   }
   // Si tiene producto vinculado (bundle), agregar como línea separada exenta
+  // y ajustar el precio del servicio en el carrito si bundle.precioServicio está definido
   if (item.bundle?.nombre) {
+    if (item.bundle.precioServicio != null) {
+      const srv = _carrito.find(i => i.id === id);
+      if (srv) srv.precio = item.bundle.precioServicio;
+    }
     const bundleId = 'bundle_' + item.bundle.nombre.replace(/\s+/g,'_').toLowerCase();
     const bundleExistente = _carrito.find(i => i.id === bundleId);
     if (bundleExistente) {
