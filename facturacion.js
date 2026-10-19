@@ -385,7 +385,7 @@ function _renderCarrito() {
                 ? '<span class="text-[8px] font-black bg-emerald-50 text-emerald-600 px-1 rounded">EXENTO</span>'
                 : `<span class="text-[8px] font-black bg-amber-50 text-amber-600 px-1 rounded">IVA ${item.alicuotaIVA}%</span>`
             }
-            <button data-edit class="text-[8px] text-blue-500 underline ml-1">$${item.precio.toFixed(2)} 🔐</button>
+            <button data-edit class="text-[8px] text-blue-500 underline ml-1">$${item.precio.toFixed(2)} · Bs ${(item.precio * _tasaBCV).toFixed(2)} 🔐</button>
           </div>
         </div>
         <div class="flex items-center gap-1 shrink-0">
@@ -395,7 +395,7 @@ function _renderCarrito() {
                <button data-inc class="w-5 h-5 bg-slate-200 rounded font-black text-xs leading-none">+</button>`
             : `<span class="text-[11px] font-black w-5 text-center">1</span>`
           }
-          <span class="text-[12px] font-black text-blue-700 w-16 text-right">$${subtotal.toFixed(2)}</span>
+          <span class="text-[12px] font-black text-blue-700 w-16 text-right">Bs ${(subtotal * _tasaBCV).toFixed(2)}</span>
           <button data-del class="text-red-400 hover:text-red-600 font-black text-sm ml-1">✕</button>
         </div>`;
       // Datos de usuario via textContent
