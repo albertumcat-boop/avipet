@@ -837,9 +837,10 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
 
   const lineas = carrito.map(i => {
     const sub = (i.precio * i.cantidad).toFixed(2);
+    const ivaTag = i.alicuotaIVA > 0 ? `${i.alicuotaIVA}%` : 'E';
     const descLine = i.cantidad > 1
-      ? `${_esc(i.descripcion)}<br><span style="font-size:9px;">$${parseFloat(i.precio).toFixed(2)} c/u</span>`
-      : _esc(i.descripcion);
+      ? `${_esc(i.descripcion)} <span style="font-size:8px;font-weight:700;">(${ivaTag})</span><br><span style="font-size:9px;">$${parseFloat(i.precio).toFixed(2)} c/u</span>`
+      : `${_esc(i.descripcion)} <span style="font-size:8px;font-weight:700;">(${ivaTag})</span>`;
     return `<tr>
       <td class="col-desc" style="padding:1px 0;">${descLine}</td>
       <td class="col-cant" style="padding:1px 2px;text-align:center;">${_esc(i.cantidad)}</td>
