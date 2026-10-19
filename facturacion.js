@@ -880,16 +880,18 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   const hora  = ahora.toLocaleTimeString('es-VE', { hour:'2-digit', minute:'2-digit' });
   const pago  = monedaPago || _monedaPago;
 
+  const fmtBs = n => `Bs ${n.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const lineas = carrito.map(i => {
-    const subBs = (i.precio * i.cantidad * tasaActual).toFixed(2);
+    const subBs = fmtBs(i.precio * i.cantidad * tasaActual);
     const ivaTag = i.alicuotaIVA > 0 ? `${i.alicuotaIVA}%` : 'E';
-    const descLine = i.cantidad > 1
-      ? `${_esc(i.descripcion)} <span style="font-size:8px;font-weight:700;">(${ivaTag})</span><br><span style="font-size:9px;">Bs ${(parseFloat(i.precio) * tasaActual).toFixed(2)} c/u</span>`
-      : `${_esc(i.descripcion)} <span style="font-size:8px;font-weight:700;">(${ivaTag})</span>`;
+    const pUnitBs = i.cantidad > 1 ? `<div style="font-size:9px;">${fmtBs(parseFloat(i.precio)*tasaActual)} c/u</div>` : '';
     return `<tr>
-      <td class="col-desc" style="padding:1px 0;">${descLine}</td>
-      <td class="col-cant" style="padding:1px 2px;text-align:center;">${_esc(i.cantidad)}</td>
-      <td class="col-tot"  style="padding:1px 0;text-align:right;font-weight:900;white-space:nowrap;">Bs ${subBs}</td>
+      <td class="col-desc" style="padding:2px 0;">
+        <div style="white-space:normal;word-break:break-word;">${_esc(i.descripcion)} <span style="font-size:8px;">(${ivaTag})</span></div>
+        ${pUnitBs}
+      </td>
+      <td class="col-cant" style="padding:2px 2px;text-align:center;vertical-align:top;">${_esc(i.cantidad)}</td>
+      <td class="col-tot"  style="padding:2px 0;text-align:right;font-weight:900;vertical-align:top;">${subBs}</td>
     </tr>`;
   }).join('');
 
@@ -897,18 +899,18 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   const ivaRows = Object.entries(totales.grupos || {})
     .filter(([aliq, g]) => parseFloat(aliq) > 0 && g.base > 0)
     .map(([aliq, g]) =>
-      `<tr><td colspan="2" style="text-align:right;">Base ${_esc(aliq)}%:</td><td style="text-align:right;">Bs ${(g.base * tasaActual).toFixed(2)}</td></tr>
-       <tr><td colspan="2" style="text-align:right;">IVA ${_esc(aliq)}%:</td><td style="text-align:right;">Bs ${(g.iva * tasaActual).toFixed(2)}</td></tr>`
+      `<tr><td colspan="2" style="text-align:right;font-size:10px;">Base ${_esc(aliq)}%:</td><td style="text-align:right;font-size:10px;">${fmtBs(g.base*tasaActual)}</td></tr>
+       <tr><td colspan="2" style="text-align:right;font-size:10px;">IVA ${_esc(aliq)}%:</td><td style="text-align:right;font-size:10px;">${fmtBs(g.iva*tasaActual)}</td></tr>`
     ).join('');
 
   // Exentos/0% si existen
   const base0 = totales.grupos?.[0]?.base || 0;
   const base0Row = base0 > 0
-    ? `<tr><td colspan="2" style="text-align:right;">Exento/0%:</td><td style="text-align:right;">Bs ${(base0 * tasaActual).toFixed(2)}</td></tr>`
+    ? `<tr><td colspan="2" style="text-align:right;font-size:10px;">Exento/0%:</td><td style="text-align:right;font-size:10px;">${fmtBs(base0*tasaActual)}</td></tr>`
     : '';
 
   const igtfRow = totales.igtf > 0
-    ? `<tr><td colspan="2" style="text-align:right;">IGTF (${_esc(cfg.alicuotaIGTF||3)}%):</td><td style="text-align:right;">Bs ${(totales.igtf * tasaActual).toFixed(2)}</td></tr>`
+    ? `<tr><td colspan="2" style="text-align:right;font-size:10px;">IGTF (${_esc(cfg.alicuotaIGTF||3)}%):</td><td style="text-align:right;font-size:10px;">${fmtBs(totales.igtf*tasaActual)}</td></tr>`
     : '';
 
   const cli = (typeof cliente === 'object' && cliente) ? cliente : { propietario: cliente || '' };
@@ -923,15 +925,15 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     @page { margin: 0; size: 58mm auto; }
-    body { font-family: 'Courier New', monospace; font-size: 12px; font-weight: 700; width: 52mm; color: #000; background:#fff; word-break: break-word; overflow-wrap: break-word; line-height: 1.5; }
+    body { font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; width: 52mm; color: #000; background:#fff; overflow-wrap: break-word; line-height: 1.4; }
     .center { text-align: center; }
     .hr     { border-top: 1.5px dashed #000; margin: 4px 0; }
     table   { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    td      { vertical-align: top; font-size: 11px; font-weight: 700; word-break: break-word; padding: 1px 0; }
-    .total-row td { font-weight: 900; font-size: 14px; border-top: 1.5px dashed #000; padding-top: 4px; }
-    .col-desc { width: 66%; }
-    .col-cant { width: 8%;  text-align: center; }
-    .col-tot  { width: 26%; text-align: right; white-space: nowrap; }
+    td      { vertical-align: top; font-size: 10px; font-weight: 700; word-break: break-word; padding: 1px 0; }
+    .total-row td { font-weight: 900; font-size: 13px; border-top: 1.5px dashed #000; padding-top: 4px; }
+    .col-desc { width: 55%; }
+    .col-cant { width: 7%;  text-align: center; }
+    .col-tot  { width: 38%; text-align: right; word-break: break-word; }
   </style></head><body>
   <div class="center" style="font-size:15px;font-weight:900;letter-spacing:1px;line-height:1.3;">${_esc(cfg.razonSocial || 'AVICOLA PETARE C.A')}</div>
   <div class="center" style="font-size:11px;font-weight:700;">${_esc(cfg.rifEmisor || '')}</div>
@@ -958,11 +960,12 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
     ${ivaRows}
     ${base0Row}
     ${igtfRow}
-    <tr class="total-row">
-      <td colspan="2" style="text-align:right;font-size:14px;">TOTAL Bs:</td>
-      <td style="text-align:right;font-size:14px;white-space:nowrap;">Bs ${totalVESActual.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+    <tr style="border-top:1.5px dashed #000;">
+      <td colspan="3" style="text-align:center;font-size:13px;font-weight:900;padding-top:4px;">
+        TOTAL: ${fmtBs(totalVESActual)}
+      </td>
     </tr>
-    <tr><td colspan="2" style="text-align:right;font-size:9px;color:#666;">Tasa BCV: ${tasaActual.toFixed(2)} Bs/$1</td><td style="text-align:right;font-size:9px;color:#666;">$${totales.totalUSD.toFixed(2)}</td></tr>
+    <tr><td colspan="3" style="text-align:center;font-size:9px;color:#666;">Tasa BCV: ${tasaActual.toFixed(2)} Bs/$1 — $${totales.totalUSD.toFixed(2)}</td></tr>
   </table>
   <div class="hr"></div>
   <div class="center" style="font-size:11px;font-weight:700;margin-top:4px;">¡Gracias por su preferencia!</div>
