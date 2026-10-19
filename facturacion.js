@@ -1071,7 +1071,7 @@ function _initBarcodeReader() {
 // ─── CATÁLOGO SERVICIOS / MEDICAMENTOS ─────────────────
 let _catalogoTab      = 'servicios';
 let _catalogoServs    = [];   // cache de servicios_maestro
-let _catalogoMeds     = [];   // cache de inventario
+let _catalogoInv      = [];   // cache completo de inventario (se filtra por tab)
 
 async function _cargarServiciosMaestro() {
   try {
@@ -1095,9 +1095,9 @@ async function _cargarServiciosMaestro() {
 window.abrirCatalogoServicios = async function() {
   document.getElementById('modalCatalogo')?.classList.remove('hidden');
   document.getElementById('inputBuscadorCatalogo').value = '';
-  // Cargar datos frescos siempre
+  // Datos frescos siempre al abrir
   _catalogoServs = [];
-  _catalogoMeds  = [];
+  _catalogoInv   = [];
   await window.switchTabCatalogo('servicios');
 };
 
@@ -1107,50 +1107,63 @@ window.cerrarCatalogoServicios = function() {
 
 window.switchTabCatalogo = async function(tab) {
   _catalogoTab = tab;
-  const tS = document.getElementById('tabServiciosCat');
-  const tM = document.getElementById('tabMedicamentosCat');
-  const pC = document.getElementById('panelServicioCustom');
+  const tabs = {
+    servicios:    document.getElementById('tabServiciosCat'),
+    medicamentos: document.getElementById('tabMedicamentosCat'),
+    alimentos:    document.getElementById('tabAlimentosCat'),
+  };
+  const pC   = document.getElementById('panelServicioCustom');
   const lista = document.getElementById('listaCatalogo');
 
-  // Activar tab visual
-  const activo   = 'bg-blue-600 text-white';
-  const inactivo = 'bg-slate-100 text-slate-500';
-  if (tab === 'servicios') {
-    tS.className = tS.className.replace(inactivo, activo);
-    tM.className = tM.className.replace(activo, inactivo);
-    if (pC) pC.classList.remove('hidden');
-  } else {
-    tM.className = tM.className.replace(inactivo, activo);
-    tS.className = tS.className.replace(activo, inactivo);
-    if (pC) pC.classList.add('hidden');
+  // Actualizar apariencia de tabs
+  Object.entries(tabs).forEach(([key, btn]) => {
+    if (!btn) return;
+    btn.className = btn.className
+      .replace('bg-blue-600 text-white', 'bg-slate-100 text-slate-500')
+      .replace('bg-slate-100 text-slate-500', 'bg-slate-100 text-slate-500');
+  });
+  if (tabs[tab]) {
+    tabs[tab].className = tabs[tab].className
+      .replace('bg-slate-100 text-slate-500', 'bg-blue-600 text-white');
   }
+  if (pC) pC.classList.toggle('hidden', tab !== 'servicios');
+
+  if (lista) lista.innerHTML = '<p class="text-center text-blue-500 text-[10px] italic animate-pulse py-6">Cargando...</p>';
 
   // Cargar datos si no están en cache
-  if (lista) lista.innerHTML = '<p class="text-center text-blue-500 text-[10px] italic animate-pulse py-6">Cargando...</p>';
   if (tab === 'servicios' && !_catalogoServs.length) await _cargarServiciosMaestro();
-  if (tab === 'medicamentos' && !_catalogoMeds.length) await _cargarMedicamentos();
+  if ((tab === 'medicamentos' || tab === 'alimentos') && !_catalogoInv.length) await _cargarInventarioCompleto();
 
   window.filtrarCatalogo(document.getElementById('inputBuscadorCatalogo')?.value || '');
 };
 
-async function _cargarMedicamentos() {
+async function _cargarInventarioCompleto() {
   try {
     const snap = await getDocs(query(collection(db,'inventario'), orderBy('nombre')));
-    _catalogoMeds = snap.docs.map(d => ({
+    _catalogoInv = snap.docs.map(d => ({
       id: d.id,
       nombre: d.data().nombre || '—',
       precio: parseFloat(d.data().precioVenta || 0),
       alicuotaIVA: parseFloat(d.data().alicuotaIVA ?? 16),
-      stock: parseFloat(d.data().cantidadStock || 0)
+      stock: parseFloat(d.data().cantidadStock || 0),
+      categoria: (d.data().categoria || '').toLowerCase()
     }));
-  } catch(e) { console.error(e); _catalogoMeds = []; }
+  } catch(e) { console.error(e); _catalogoInv = []; }
+}
+
+function _esAlimento(item) {
+  return item.categoria.includes('aliment') || item.categoria.includes('comida') || item.categoria.includes('food');
 }
 
 window.filtrarCatalogo = function(q) {
   const lista = document.getElementById('listaCatalogo');
   if (!lista) return;
   const termino = (q || '').toLowerCase().trim();
-  const items = _catalogoTab === 'servicios' ? _catalogoServs : _catalogoMeds;
+  const items = _catalogoTab === 'servicios'
+    ? _catalogoServs
+    : _catalogoTab === 'alimentos'
+      ? _catalogoInv.filter(_esAlimento)
+      : _catalogoInv.filter(i => !_esAlimento(i));
   const filtrados = termino
     ? items.filter(i => i.nombre.toLowerCase().includes(termino))
     : items;
