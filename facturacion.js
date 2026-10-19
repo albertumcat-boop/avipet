@@ -1137,13 +1137,34 @@ window.switchTabCatalogo = async function(tab) {
   window.filtrarCatalogo(document.getElementById('inputBuscadorCatalogo')?.value || '');
 };
 
-// Medicamentos hardcodeados de historia clínica (CONFIG_MEDICAMENTOS)
+// Medicamentos hardcodeados de historia clínica (CONFIG_MEDICAMENTOS) con sus precios
 const _MEDS_HISTORIA = [
-  "Piroyet","Enrofloxacina","Sulfatrim","Dexametasona","Carprofen","Flunixin",
-  "Metadol","Complejo B","Suero hiperinmune","Bromuro de hioscina","Fenobarbital",
-  "Gastrine","Ranitidina","Metoclopramida","Furosemina","Vit K","Eritrogen",
-  "Aminovit","Oxitetraciclina","Pimobendan","Ceftriaxona","Adrenalina / Epin",
-  "Artrosan","Lisavac","Soroglobulin","Infervac"
+  { nombre:"Piroyet",           precio:10 },
+  { nombre:"Enrofloxacina",     precio:5  },
+  { nombre:"Sulfatrim",         precio:5  },
+  { nombre:"Dexametasona",      precio:4  },
+  { nombre:"Carprofen",         precio:10 },
+  { nombre:"Flunixin",          precio:5  },
+  { nombre:"Metadol",           precio:5  },
+  { nombre:"Complejo B",        precio:5  },
+  { nombre:"Suero hiperinmune", precio:10 },  // precio por ml — editable
+  { nombre:"Bromuro de hioscina", precio:10 },
+  { nombre:"Fenobarbital",      precio:5  },
+  { nombre:"Gastrine",          precio:7  },
+  { nombre:"Ranitidina",        precio:5  },
+  { nombre:"Metoclopramida",    precio:5  },
+  { nombre:"Furosemina",        precio:5  },
+  { nombre:"Vit K",             precio:5  },
+  { nombre:"Eritrogen",         precio:5  },
+  { nombre:"Aminovit",          precio:10 },
+  { nombre:"Oxitetraciclina",   precio:5  },
+  { nombre:"Pimobendan",        precio:0  },
+  { nombre:"Ceftriaxona",       precio:12 },
+  { nombre:"Adrenalina / Epin", precio:14 },
+  { nombre:"Artrosan",          precio:20 },
+  { nombre:"Lisavac",           precio:5  },
+  { nombre:"Soroglobulin",      precio:25 },
+  { nombre:"Infervac",          precio:0  },
 ];
 
 async function _cargarInventarioCompleto() {
@@ -1171,15 +1192,24 @@ async function _cargarInventarioCompleto() {
       nombresYa.add(nombre.toLowerCase());
     });
 
-    // 2. Lista hardcodeada de historia clínica
-    _MEDS_HISTORIA.forEach(nombre => {
-      if (nombresYa.has(nombre.toLowerCase())) return;
+    // 2. Lista hardcodeada de historia clínica (con precios de CONFIG_MEDICAMENTOS)
+    // Si el medicamento ya existe en inventario con precio 0, actualiza el precio
+    _MEDS_HISTORIA.forEach(item => {
+      const key = item.nombre.toLowerCase();
+      if (nombresYa.has(key)) {
+        // Si existe pero con precio 0, aplicar el precio de _MEDS_HISTORIA
+        if (item.precio > 0) {
+          const existing = _catalogoInv.find(i => i.nombre.toLowerCase() === key);
+          if (existing && existing.precio === 0) existing.precio = item.precio;
+        }
+        return;
+      }
       _catalogoInv.push({
-        id: 'mh_' + nombre, nombre,
-        precio: 0, alicuotaIVA: 0,
+        id: 'mh_' + item.nombre, nombre: item.nombre,
+        precio: item.precio, alicuotaIVA: 0,
         stock: null, categoria: 'medicamento', fuente: 'historia'
       });
-      nombresYa.add(nombre.toLowerCase());
+      nombresYa.add(key);
     });
 
     // 3. Medicamentos_maestro guardados manualmente (OTRO)
