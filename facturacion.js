@@ -598,7 +598,7 @@ window.emitirFactura = async () => {
     }));
 
     const stockItems = _carrito
-      .filter(i => i.tipo === 'producto')
+      .filter(i => i.tipo === 'producto' && !i.id.startsWith('bundle_'))
       .map(i => ({ id: i.id, cantidad: i.cantidad, nombre: i.descripcion }));
 
     // ── PASO 1: Emitir en la Aclas (bridge) o modo manual ──
