@@ -710,8 +710,8 @@ window.emitirFactura = async () => {
         });
       });
 
-      // Marcar consultas y peluquería como facturadas
-      _carrito.filter(i => i.tipo !== 'producto').forEach(i => {
+      // Marcar consultas y peluquería como facturadas (solo las que vienen de Firestore)
+      _carrito.filter(i => i.tipo === 'consulta' || i.tipo === 'peluqueria').forEach(i => {
         const col = i.tipo === 'consulta' ? 'consultas' : 'servicios_estetica';
         tx.update(doc(db, col, i.id), { facturado: true, facturaId: facturaRef.id });
       });
