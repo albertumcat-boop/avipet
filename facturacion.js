@@ -829,8 +829,9 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
   const cfg   = _configFiscal;
   const ahora = new Date();
   const fecha = ahora.toLocaleDateString('es-VE');
-  // Recalcular Bs con la tasa actual (por si la tasa llegó después de calcular totales)
-  const tasaActual = _tasaBCV > 1 ? _tasaBCV : (totales.tasa || 1);
+  // Recalcular Bs con la tasa más reciente disponible
+  const lsTasa = parseFloat(localStorage.getItem('tasaDolarAvipet') || 0);
+  const tasaActual = _tasaBCV > 1 ? _tasaBCV : (lsTasa > 1 ? lsTasa : (totales.tasa || 1));
   const totalVESActual = totales.totalUSD * tasaActual;
   const hora  = ahora.toLocaleTimeString('es-VE', { hour:'2-digit', minute:'2-digit' });
   const pago  = monedaPago || _monedaPago;
@@ -917,6 +918,7 @@ function _imprimirTicketTermico(numeroFactura, numeroControl, carrito, totales, 
       <td colspan="2" style="text-align:right;font-size:14px;">TOTAL USD:</td>
       <td style="text-align:right;font-size:14px;white-space:nowrap;">$${totales.totalUSD.toFixed(2)}</td>
     </tr>
+    <tr><td colspan="2" style="text-align:right;font-size:9px;color:#666;">Tasa BCV: ${tasaActual.toFixed(2)} Bs/$1</td><td></td></tr>
     <tr><td colspan="2" style="text-align:right;font-size:11px;font-weight:700;">Total Bs:</td>
       <td style="text-align:right;font-size:11px;font-weight:700;">Bs ${totalVESActual.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>
   </table>
