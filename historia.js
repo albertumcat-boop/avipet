@@ -2140,11 +2140,18 @@ window.renderizarTablaMaestra = async () => {
             html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre</label>'+
               '<input id="esn" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>'+
-              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Precio ($)</label>'+
               '<input id="esp" type="number" step="0.50" min="0" value="'+precioActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">% Doctor</label>'+
-              '<input id="espc" type="number" step="0.5" min="0" max="100" value="'+porcActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div></div>'+
+              '<input id="espc" type="number" step="0.5" min="0" max="100" value="'+porcActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">IVA %</label>'+
+              '<select id="es_iva" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;background:#fff;box-sizing:border-box;">'+
+              '<option value="0"'+(( (dataServ.alicuotaIVA??0)==0 )?' selected':'')+'>0% Exento</option>'+
+              '<option value="8"'+(( (dataServ.alicuotaIVA??0)==8 )?' selected':'')+'>8%</option>'+
+              '<option value="16"'+(( (dataServ.alicuotaIVA??0)==16 )?' selected':'')+'>16%</option>'+
+              '</select></div>'+
+              '</div>'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Categoria</label>'+
               '<select id="esc" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;outline:none;background:#fff;box-sizing:border-box;">'+optsHtml+'</select>'+
               '<input id="escn" type="text" placeholder="Nueva categoria..." style="display:none;width:100%;border:2px solid #3b82f6;border-radius:10px;padding:8px;font-size:12px;font-weight:700;text-transform:uppercase;outline:none;box-sizing:border-box;margin-top:6px;"></div>'+
@@ -2277,6 +2284,7 @@ window.renderizarTablaMaestra = async () => {
               const cn=document.getElementById('escn').value.trim().toUpperCase();
               const c=cs==='__nueva__'?cn:cs;
               const esRef = document.getElementById('es_ref_edit')?.checked || false;
+              const ivaServ = parseFloat(document.getElementById('es_iva')?.value) || 0;
               const bundleNombre = document.getElementById('es_bundle_nombre')?.value.trim() || '';
               const bundlePrecio = parseFloat(document.getElementById('es_bundle_precio')?.value) || 0;
               const bundlePrecioServRaw = document.getElementById('es_bundle_precio_serv')?.value.trim();
@@ -2291,11 +2299,11 @@ window.renderizarTablaMaestra = async () => {
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
               document.querySelectorAll('#es_listaIns input[type="number"]').forEach((inp,i)=>{ if(listaIns[i]) listaIns[i].costo=parseFloat(inp.value)||0; });
               const bundleObj = bundleNombre ? { nombre:bundleNombre, precio:bundlePrecio, precioServicio: bundlePrecioServ } : null;
-              return {n,p,pc,c,esRef,insumos:listaIns,bundle:bundleObj,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
+              return {n,p,pc,c,esRef,iva:ivaServ,insumos:listaIns,bundle:bundleObj,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
             }
           });
           if(!res.isConfirmed) return;
-          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, insumos:nuevosInsumos,
+          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, iva:nuevoIva, insumos:nuevosInsumos,
                  bundle:nuevoBundle, pqActiva, pqTexto, pqInsumo, pqPote, pqCC} = res.value;
           try {
             const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
@@ -2303,7 +2311,7 @@ window.renderizarTablaMaestra = async () => {
             const dataNueva = {
               ...dataOld,
               precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat,
-              esReferido:nuevoEsRef, insumos:nuevosInsumos,
+              alicuotaIVA:nuevoIva, esReferido:nuevoEsRef, insumos:nuevosInsumos,
               bundle: nuevoBundle || null,
               preguntaActiva:pqActiva, preguntaTexto:pqTexto, preguntaInsumo:pqInsumo,
               preguntaCostoPote:pqPote, preguntaCostoCC:pqCC,
