@@ -71,9 +71,13 @@ async function _cargarConfigFiscal() {
         if (data?.promedio) {
           const tasa = parseFloat(data.promedio);
           if (tasa > 1) {
+            const tasaAnterior = _tasaBCV;
             _tasaBCV = tasa;
             localStorage.setItem('tasaDolarAvipet', tasa);
-            setDoc(doc(db, 'configuracion', 'tasa'), { valor: tasa, actualizado: serverTimestamp() }).catch(() => {});
+            // Solo guarda en Firestore si cambió más de 0.10 Bs (evita writes innecesarios)
+            if (Math.abs(tasa - tasaAnterior) > 0.10) {
+              setDoc(doc(db, 'configuracion', 'tasa'), { valor: tasa, actualizado: serverTimestamp() }).catch(() => {});
+            }
             if (typeof _renderCarrito === 'function') _renderCarrito();
           }
         }
