@@ -555,29 +555,6 @@ window.toggleConsumidorFinal = () => {
   }
 };
 
-// ─── BRIDGE ACLAS ────────────────────────────────────────
-const BRIDGE_URL = 'http://localhost:3001';
-
-async function _bridgeHealth() {
-  try {
-    const r = await fetch(`${BRIDGE_URL}/health`, { signal: AbortSignal.timeout(2500) });
-    const d = await r.json();
-    return d.aclas?.ok === true;
-  } catch { return false; }
-}
-
-async function _emitirEnAclas(items, cliente, monedaPago, totalUSD, tasaBCV) {
-  const r = await fetch(`${BRIDGE_URL}/factura`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ items, cliente, monedaPago, totalUSD, tasaBCV }),
-    signal: AbortSignal.timeout(15000)
-  });
-  const d = await r.json();
-  if (!d.ok) throw new Error(d.error || 'Error desconocido del bridge');
-  return d; // { numeroFactura, numeroControl }
-}
-
 async function _modoManual() {
   // Auto-incremento en Firestore — sin diálogo
   const contRef = doc(db, 'configuracion', 'contadores');
@@ -664,40 +641,11 @@ window.emitirFactura = async () => {
       .filter(i => i.tipo === 'producto' && !i.id.startsWith('bundle_'))
       .map(i => ({ id: i.id, cantidad: i.cantidad, nombre: i.descripcion }));
 
-    // ── PASO 1: Emitir en la Aclas (bridge) o modo manual ──
-    let numeroFactura, numeroControl, modoAclas;
-    if (btn) btn.textContent = '🔌 Conectando con Aclas...';
-
-    const bridgeActivo = await _bridgeHealth();
-    if (bridgeActivo) {
-      if (btn) btn.textContent = '🖨️ Imprimiendo en Aclas...';
-      const itemsAclas = _carrito.map(i => ({
-        descripcion:  i.descripcion,
-        precioUSD:    i.precio,
-        cantidad:     i.cantidad,
-        alicuotaIVA:  i.alicuotaIVA ?? 16
-      }));
-      const cliente = _esConsumidorFinal ? null : {
-        rif:    document.getElementById('inputRIFReceptor')?.value.trim(),
-        nombre: document.getElementById('inputNomReceptor')?.value.trim()
-      };
-      const resp = await _emitirEnAclas(itemsAclas, cliente, _monedaPago, totales.totalUSD, _tasaBCV);
-      numeroFactura = resp.numeroFactura;
-      numeroControl = resp.numeroControl;
-      modoAclas     = true;
-    } else {
-      // Bridge no disponible — modo manual
-      if (btn) btn.disabled = false;
-      const manual = await _modoManual();
-      if (!manual) {
-        if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
-        return;
-      }
-      if (btn) btn.disabled = true;
-      numeroFactura = manual.numeroFactura;
-      numeroControl = manual.numeroControl;
-      modoAclas     = false;
-    }
+    // ── PASO 1: Número de factura (modo manual) ──
+    if (btn) btn.textContent = '⏳ Generando número...';
+    const manual = await _modoManual();
+    const numeroFactura = manual.numeroFactura;
+    const numeroControl = manual.numeroControl;
 
     if (btn) btn.textContent = '💾 Guardando en Firestore...';
 
@@ -711,7 +659,7 @@ window.emitirFactura = async () => {
       tx.set(facturaRef, {
         numeroFactura,
         numeroControl:        String(numeroControl),
-        modoEmision:          modoAclas ? 'aclas' : 'manual',
+        modoEmision:          'manual',
         serieId,
         rifEmisor:            _configFiscal.rifEmisor,
         razonSocialEmisor:    _configFiscal.razonSocial   || 'AVIPET',
@@ -747,7 +695,7 @@ window.emitirFactura = async () => {
         baseImponible8:       totales.grupos[8]?.base  || 0,
         iva8:                 totales.grupos[8]?.iva   || 0,
         baseImponible0:       totales.grupos[0]?.base  || 0,
-        ticketFiscal:         modoAclas ? 'aclas-auto' : 'manual',
+        ticketFiscal:         'manual',
         fechaEmision:         serverTimestamp(),
         fechaSimple:          new Date().toLocaleDateString('es-VE'),
         horaEmision:          new Date().toLocaleTimeString('es-VE', { hour:'2-digit', minute:'2-digit' })
