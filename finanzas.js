@@ -1270,6 +1270,12 @@ window.verResumenSemanalPelu = async () => {
     let totalPeluUSD=0, totalPeluBS=0, totalAvipetUSD=0, totalAvipetBS=0;
     let totalBrutoUSD=0, totalBrutoBS=0, totalBrutoCashea=0;
     let totalAyuExtUSD=0, totalAyuExtBS=0;
+    // Netos reales (después de IVA y Cashea)
+    let netoPeluReal=0, netoAvipetReal=0, netoAyuExtReal=0;
+    // Totales de descuentos
+    let totalIvaPelu=0, totalCasheaPelu=0;
+    let totalIvaExt=0,  totalCasheaExt=0;
+    let totalIvaAv=0,   totalCasheaAv=0;
     let rows = '';
 
     servicios.forEach(function(r) {
@@ -1280,6 +1286,8 @@ window.verResumenSemanalPelu = async () => {
       const neto    = parseFloat(r.ingresoAvipet||0);
       const pagado  = r.estatusPago === 'pagado';
       const tieneA1 = pagA1 > 0;
+      const modoPagoR = r.modoPago || 'usd';
+      const esCashea = modoPagoR === 'cashea';
 
       totalBruto  += precio;
       totalPelu   += pagPelu;
@@ -1288,71 +1296,79 @@ window.verResumenSemanalPelu = async () => {
       if (!pagado) pendiente += precio;
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
-      // Acumular por moneda para el desglose USD/Bs
-      const modoPagoR = r.modoPago || 'usd';
-      if (modoPagoR === 'bs' || modoPagoR === 'cashea') {
-        totalPeluBS      += pagPelu;
-        totalAvipetBS    += neto;
-        totalBrutoBS     += precio;
-        totalAyuExtBS    += pagAx;
-        if (modoPagoR === 'cashea') totalBrutoCashea += precio;
+      // Descuentos por renglón
+      const peluIVA    = parseFloat((pagPelu * IVA_PELU).toFixed(2));
+      const peluCashea = esCashea ? parseFloat((pagPelu * CASHEA_FEE).toFixed(2)) : 0;
+      const peluNeto   = parseFloat((pagPelu - peluIVA - peluCashea).toFixed(2));
+
+      const axIVA      = parseFloat((pagAx * IVA_PELU).toFixed(2));
+      const axCashea   = esCashea ? parseFloat((pagAx * CASHEA_FEE).toFixed(2)) : 0;
+      const axNeto     = parseFloat((pagAx - axIVA - axCashea).toFixed(2));
+
+      const avIVA      = parseFloat((neto * IVA_PELU).toFixed(2));
+      const avCashea   = esCashea ? parseFloat((neto * CASHEA_FEE).toFixed(2)) : 0;
+      const avNeto     = parseFloat((neto - avIVA - avCashea).toFixed(2));
+
+      netoPeluReal    += peluNeto;
+      netoAyuExtReal  += axNeto;
+      netoAvipetReal  += avNeto;
+      totalIvaPelu    += peluIVA;   totalCasheaPelu += peluCashea;
+      totalIvaExt     += axIVA;     totalCasheaExt  += axCashea;
+      totalIvaAv      += avIVA;     totalCasheaAv   += avCashea;
+
+      // Acumular por moneda
+      if (modoPagoR === 'bs' || esCashea) {
+        totalPeluBS   += peluNeto; totalAvipetBS += avNeto;
+        totalBrutoBS  += precio;   totalAyuExtBS += axNeto;
+        if (esCashea) totalBrutoCashea += precio;
       } else if (modoPagoR === 'mixto') {
-        totalPeluUSD     += pagPelu / 2;
-        totalPeluBS      += pagPelu / 2;
-        totalAvipetUSD   += neto / 2;
-        totalAvipetBS    += neto / 2;
-        totalBrutoUSD    += precio / 2;
-        totalBrutoBS     += precio / 2;
-        totalAyuExtUSD   += pagAx / 2;
-        totalAyuExtBS    += pagAx / 2;
+        totalPeluUSD  += peluNeto/2; totalPeluBS   += peluNeto/2;
+        totalAvipetUSD+= avNeto/2;   totalAvipetBS += avNeto/2;
+        totalBrutoUSD += precio/2;   totalBrutoBS  += precio/2;
+        totalAyuExtUSD+= axNeto/2;   totalAyuExtBS += axNeto/2;
       } else {
-        totalPeluUSD     += pagPelu;
-        totalAvipetUSD   += neto;
-        totalBrutoUSD    += precio;
-        totalAyuExtUSD   += pagAx;
+        totalPeluUSD  += peluNeto; totalAvipetUSD+= avNeto;
+        totalBrutoUSD += precio;   totalAyuExtUSD+= axNeto;
       }
 
-      // Desglose de la resta
       const peluBruto   = parseFloat((precio * 0.40).toFixed(2));
       const avipetBruto = parseFloat((precio * 0.60).toFixed(2));
-
       const colorEst = pagado ? '#16a34a' : '#dc2626';
-      const iconPago = pagado ? 'PAGADO' : 'PENDIENTE';
+
+      // Celda Miguelina con descuentos visibles
+      function _celdaPersona(bruto, resta1label, resta1, ivaAmt, casheaAmt, netoFinal, color) {
+        let html = '$' + bruto.toFixed(2);
+        if (resta1 > 0) html += ' −$' + resta1.toFixed(2) + ' ('+resta1label+')';
+        html += '<br><span style="color:#92400e;font-size:7px;">−IVA $' + ivaAmt.toFixed(2) + '</span>';
+        if (casheaAmt > 0) html += '<span style="color:#7c3aed;font-size:7px;"> −Cashea $' + casheaAmt.toFixed(2) + '</span>';
+        html += '<br><b style="font-size:9px;color:'+color+';">= $' + netoFinal.toFixed(2) + '</b>';
+        return '<td style="padding:4px 6px;text-align:center;color:'+color+';font-weight:700;font-size:8px;line-height:1.5;">' + html + '</td>';
+      }
 
       rows += '<tr style="border-bottom:1px solid #f1f5f9;font-size:9px;">';
       rows += '<td style="padding:4px 6px;color:#64748b;">' + (r.fechaSimple||'---') + '</td>';
       rows += '<td style="padding:4px 6px;font-weight:700;text-transform:uppercase;">' + (r.paciente||'---') + '</td>';
       rows += '<td style="padding:4px 6px;text-align:center;font-weight:700;">$' + precio.toFixed(2) + '</td>';
-      // Columna peluquera — solo muestra fórmula en modo normal (pagPelu>0)
-      if (tieneA1 && pagPelu > 0) {
-        rows += '<td style="padding:4px 6px;text-align:center;color:#7c3aed;font-weight:700;font-size:8px;">$' + peluBruto.toFixed(2) + ' - $1 = <b>$' + pagPelu.toFixed(2) + '</b></td>';
-      } else {
-        rows += '<td style="padding:4px 6px;text-align:center;color:#7c3aed;font-weight:700;">$' + pagPelu.toFixed(2) + '</td>';
-      }
+      // Miguelina
+      rows += _celdaPersona(peluBruto, tieneA1?'ayu':'', tieneA1?1:0, peluIVA, peluCashea, peluNeto, '#7c3aed');
+      // Ayu1 (exonerado — sin descuentos)
       rows += '<td style="padding:4px 6px;text-align:center;color:#2563eb;font-weight:700;">' + (tieneA1 ? '$'+pagA1.toFixed(2) : '&mdash;') + '</td>';
-      // Columna Extra
-      rows += '<td style="padding:4px 6px;text-align:center;color:#ea580c;font-weight:700;">' + (pagAx > 0 ? '$'+pagAx.toFixed(2) : '&mdash;') + '</td>';
-      // Columna Avipet — muestra deducción real (precio*0.60 - neto)
-      var deducAvipet = parseFloat((avipetBruto - neto).toFixed(2));
-      if (tieneA1 && deducAvipet > 0) {
-        rows += '<td style="padding:4px 6px;text-align:center;color:#16a34a;font-weight:700;font-size:8px;">$' + avipetBruto.toFixed(2) + ' - $' + deducAvipet.toFixed(2) + ' = <b>$' + neto.toFixed(2) + '</b></td>';
+      // Extra
+      if (pagAx > 0) {
+        rows += _celdaPersona(pagAx, '', 0, axIVA, axCashea, axNeto, '#ea580c');
       } else {
-        rows += '<td style="padding:4px 6px;text-align:center;color:#16a34a;font-weight:700;">$' + neto.toFixed(2) + '</td>';
+        rows += '<td style="padding:4px 6px;text-align:center;color:#ea580c;font-weight:700;">&mdash;</td>';
       }
-      // Columna pago — monto en dolares con etiqueta Bs o USD
+      // Avipet
+      rows += _celdaPersona(avipetBruto, tieneA1?'ayu':'', tieneA1?1:0, avIVA, avCashea, avNeto, '#16a34a');
+      // Pago
       var modoPago = r.modoPago || '';
       var labelPago = 'PEND';
       if (r.estatusPago === 'pagado') {
-        if (modoPago === 'bs') {
-          labelPago = '$' + precio.toFixed(2) + ' Bs';
-        } else if (modoPago === 'cashea') {
-          const fee10 = precio * 0.10;
-          labelPago = '$' + precio.toFixed(2) + ' Bs<br><span style="color:#0f766e;font-size:7px;">Cashea -10% = -$' + fee10.toFixed(2) + '</span>';
-        } else if (modoPago === 'mixto') {
-          labelPago = '$' + (precio/2).toFixed(2) + ' USD + $' + (precio/2).toFixed(2) + ' Bs';
-        } else {
-          labelPago = '$' + precio.toFixed(2) + ' USD';
-        }
+        if (modoPago === 'bs') labelPago = '$' + precio.toFixed(2) + ' Bs';
+        else if (esCashea) { const fee10=precio*0.10; labelPago = '$'+precio.toFixed(2)+' Bs<br><span style="color:#0f766e;font-size:7px;">Cashea -10% = -$'+fee10.toFixed(2)+'</span>'; }
+        else if (modoPago === 'mixto') labelPago = '$'+(precio/2).toFixed(2)+' USD + $'+(precio/2).toFixed(2)+' Bs';
+        else labelPago = '$' + precio.toFixed(2) + ' USD';
       }
       rows += '<td style="padding:4px 6px;text-align:center;color:' + colorEst + ';font-weight:900;font-size:8px;">' + labelPago + '</td>';
       rows += '<td style="padding:4px 6px;text-align:center;display:flex;gap:4px;align-items:center;">' +
@@ -1404,6 +1420,8 @@ window.verResumenSemanalPelu = async () => {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$' + totalPelu.toFixed(2) + ' USD</p>';
     }
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p>';
+    if (totalIvaPelu > 0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:2px 0;">−IVA 16%: −$' + totalIvaPelu.toFixed(2) + '</p>';
+    if (totalCasheaPelu > 0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:2px 0;">−Cashea 10%: −$' + totalCasheaPelu.toFixed(2) + '</p>';
     htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e');
     htmlModal += '</div>';
 
@@ -1441,6 +1459,8 @@ window.verResumenSemanalPelu = async () => {
     if (totalAyuExtUSD > 0) htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;margin:0;">$' + totalAyuExtUSD.toFixed(2) + ' USD</p>';
     if (totalAyuExtBS  > 0) htmlModal += '<p style="font-size:14px;font-weight:900;color:#92400e;margin:0;">$' + totalAyuExtBS.toFixed(2) + ' en Bs</p>';
     if (totalAyuExtUSD===0 && totalAyuExtBS===0) htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;margin:0;">$0.00</p>';
+    if (totalIvaExt > 0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:2px 0;">−IVA 16%: −$' + totalIvaExt.toFixed(2) + '</p>';
+    if (totalCasheaExt > 0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:2px 0;">−Cashea 10%: −$' + totalCasheaExt.toFixed(2) + '</p>';
     htmlModal += _desglosDeuda(totalAyuExtUSD, totalAyuExtBS, deudasEquipo['ayuext']||0, '#ea580c', '#92400e');
     htmlModal += '</div>';
 
@@ -1454,6 +1474,8 @@ window.verResumenSemanalPelu = async () => {
     } else {
       htmlModal += '<p style="font-size:15px;font-weight:900;color:#16a34a;margin:2px 0;">$' + totalAvipetUSD.toFixed(2) + ' USD</p>';
     }
+    if (totalIvaAv > 0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:2px 0;">−IVA 16%: −$' + totalIvaAv.toFixed(2) + '</p>';
+    if (totalCasheaAv > 0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:2px 0;">−Cashea 10%: −$' + totalCasheaAv.toFixed(2) + '</p>';
     htmlModal += '</div>';
 
     htmlModal += '<div style="background:#fef2f2;border-radius:10px;padding:8px;text-align:center;">';
