@@ -1387,14 +1387,13 @@ window.verResumenSemanalPelu = async () => {
 
 
     // Helper: descuenta la deuda SOLO del monto en Bs
-    // ganado_bs = lo que ganó en Bs (en dólares), ganado_usd = lo que ganó en USD
-    function _desglosDeuda(ganado_usd, ganado_bs, deuda, colorUSD, colorBS) {
+    function _desglosDeuda(ganado_usd, ganado_bs, deuda, colorUSD, colorBS, personaId) {
       if (deuda <= 0) return '';
       const neto_bs = Math.max(0, ganado_bs - deuda);
       return '<div style="border-top:1px solid #fca5a5;margin-top:6px;padding-top:6px;">' +
-        '<div style="display:flex;justify-content:space-between;margin-bottom:2px;">' +
-          '<p style="font-size:8px;color:#dc2626;margin:0;">Debe (Bs):</p>' +
-          '<p style="font-size:8px;font-weight:900;color:#dc2626;margin:0;">-$'+deuda.toFixed(2)+'</p>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">' +
+          '<p style="font-size:8px;color:#dc2626;margin:0;">Debe (Bs): <b>-$'+deuda.toFixed(2)+'</b></p>' +
+          (personaId ? '<button onclick="window._abonarDeuda(\''+personaId+'\','+deuda+')" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:2px 7px;font-size:8px;font-weight:900;cursor:pointer;">Abonar</button>' : '') +
         '</div>' +
         '<div style="background:#dc2626;border-radius:6px;padding:3px 6px;display:flex;justify-content:space-between;">' +
           '<p style="font-size:8px;font-weight:900;color:#fff;margin:0;">Cobra en Bs:</p>' +
@@ -1422,7 +1421,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:9px;color:#94a3b8;">40% - $1/perro con ayu</p>';
     if (totalIvaPelu > 0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:2px 0;">−IVA 16%: −$' + totalIvaPelu.toFixed(2) + '</p>';
     if (totalCasheaPelu > 0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:2px 0;">−Cashea 10%: −$' + totalCasheaPelu.toFixed(2) + '</p>';
-    htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e');
+    htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e', 'peluquera');
     htmlModal += '</div>';
 
     // Desglose ayu1: $2 por mascota (=$1 pelu + $1 avipet) en la moneda que pagó
@@ -1448,7 +1447,7 @@ window.verResumenSemanalPelu = async () => {
     }
     // Desglose deuda Ayu1
     var totalAyu1 = ayu1USD + ayu1BS;
-    htmlModal += _desglosDeuda(ayu1USD, ayu1BS, deudasEquipo['ayu1']||0, '#2563eb', '#92400e');
+    htmlModal += _desglosDeuda(ayu1USD, ayu1BS, deudasEquipo['ayu1']||0, '#2563eb', '#92400e', 'ayu1');
     htmlModal += '</div></div>';
 
     // Fila 2 de cards — 4 columnas (con Extra separado)
@@ -1461,7 +1460,7 @@ window.verResumenSemanalPelu = async () => {
     if (totalAyuExtUSD===0 && totalAyuExtBS===0) htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;margin:0;">$0.00</p>';
     if (totalIvaExt > 0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:2px 0;">−IVA 16%: −$' + totalIvaExt.toFixed(2) + '</p>';
     if (totalCasheaExt > 0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:2px 0;">−Cashea 10%: −$' + totalCasheaExt.toFixed(2) + '</p>';
-    htmlModal += _desglosDeuda(totalAyuExtUSD, totalAyuExtBS, deudasEquipo['ayuext']||0, '#ea580c', '#92400e');
+    htmlModal += _desglosDeuda(totalAyuExtUSD, totalAyuExtBS, deudasEquipo['ayuext']||0, '#ea580c', '#92400e', 'ayuext');
     htmlModal += '</div>';
 
     htmlModal += '<div style="background:#f0fdf4;border-radius:10px;padding:8px;text-align:center;">';
@@ -1602,7 +1601,78 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   if (netoDiv) netoDiv.innerHTML = '';
 }
 
-console.log("finanzas.js v13 -- AyuExt con desglose USD/Bs");
+// ─── ABONAR DEUDA DESDE RESUMEN SEMANAL ──────────────────────
+window._abonarDeuda = async function(personaId, totalDeuda) {
+  const nombres = { peluquera:'Miguelina', ayu1:'Adriani', ayuext:'Daniel' };
+  const nombre = nombres[personaId] || personaId;
+
+  const { value: montoStr, isConfirmed } = await Swal.fire({
+    title: 'Abonar deuda — ' + nombre,
+    html: '<p style="color:#64748b;font-size:13px;margin-bottom:12px;">Deuda total: <b style="color:#dc2626;">$' + totalDeuda.toFixed(2) + '</b></p>' +
+          '<input id="swal-abono" type="number" min="0.01" max="'+totalDeuda+'" step="0.01" placeholder="Monto a descontar ($)" ' +
+          'style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:16px;font-weight:700;text-align:center;">',
+    showCancelButton: true,
+    confirmButtonText: 'Descontar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#16a34a',
+    cancelButtonColor: '#6b7280',
+    preConfirm: () => {
+      const v = parseFloat(document.getElementById('swal-abono').value);
+      if (!v || v <= 0) { Swal.showValidationMessage('Ingresa un monto mayor a $0'); return false; }
+      if (v > totalDeuda) { Swal.showValidationMessage('No puede ser mayor a la deuda ($'+totalDeuda.toFixed(2)+')'); return false; }
+      return v;
+    }
+  });
+
+  if (!isConfirmed || !montoStr) return;
+  const abono = parseFloat(montoStr);
+
+  try {
+    // Cargar docs de deuda de esta persona, ordenados por fecha asc (pagar los más viejos primero)
+    const snapD = await getDocs(collection(db, 'deudas'));
+    const docs = [];
+    snapD.forEach(d => {
+      const r = d.data();
+      if (r.estado !== 'pagado' && r.personaId === personaId) {
+        docs.push({ id: d.id, monto: parseFloat(r.monto||0), fecha: r.fecha?.seconds||0 });
+      }
+    });
+    docs.sort((a,b) => a.fecha - b.fecha);
+
+    const batch = writeBatch(db);
+    let restante = abono;
+    for (const doc2 of docs) {
+      if (restante <= 0) break;
+      if (restante >= doc2.monto) {
+        // Cubre esta deuda completa
+        batch.update(doc(db, 'deudas', doc2.id), { estado: 'pagado', montoPagado: doc2.monto });
+        restante -= doc2.monto;
+      } else {
+        // Abono parcial — reduce el monto
+        batch.update(doc(db, 'deudas', doc2.id), { monto: parseFloat((doc2.monto - restante).toFixed(2)) });
+        restante = 0;
+      }
+    }
+    await batch.commit();
+
+    const resto = parseFloat((totalDeuda - abono).toFixed(2));
+    await Swal.fire({
+      icon: 'success',
+      title: 'Abono registrado',
+      html: '<p>Se descontaron <b style="color:#16a34a;">$'+abono.toFixed(2)+'</b> de la deuda de '+nombre+'.</p>' +
+            (resto > 0 ? '<p style="color:#dc2626;">Deuda restante: <b>$'+resto.toFixed(2)+'</b></p>' : '<p style="color:#16a34a;"><b>¡Deuda saldada!</b></p>'),
+      confirmButtonColor: '#16a34a'
+    });
+
+    // Reabrir resumen semanal actualizado
+    Swal.close();
+    window.verResumenSemanalPelu && window.verResumenSemanalPelu();
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};
+
+console.log("finanzas.js v14 -- Abonar deuda desde resumen semanal");
 
 // =========================================================
 // ANÁLISIS DE RENTABILIDAD POR SERVICIO Y DOCTOR
