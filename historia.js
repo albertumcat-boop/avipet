@@ -1297,11 +1297,129 @@ window.enviarAColaEspera=async()=>{
     }
   }catch(e){console.error(e);alert("❌ Error: "+e.message);}
 };
-window.cargarListaEspera=async()=>{const cont=document.getElementById('listaEspera');if(!cont)return;cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";try{const snap=await getDocs(collection(db,"espera"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>{const oa=a.orden??a.fechaIngreso?.seconds??0;const ob=b.orden??b.fechaIngreso?.seconds??0;return oa-ob;});if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}// Asignar orden a docs que no lo tienen
-const batch1=writeBatch(db);let needsBatch=false;filtrados.forEach((p,idx)=>{if(p.orden==null){batch1.update(doc(db,"espera",p.id),{orden:idx});p.orden=idx;needsBatch=true;}});if(needsBatch)await batch1.commit();cont.innerHTML="";filtrados.forEach((p,idx)=>{const div=document.createElement('div');div.className="border rounded-lg p-2 bg-slate-50 flex justify-between items-center gap-2 mb-2";const docAsig=p.doctorAsignado||"Sin asignar";const colorDoc=docAsig.includes("Darwin")?"text-blue-600":docAsig.includes("Joan")?"text-emerald-600":"text-slate-500";const btnArriba=idx>0?`<button title="Subir" class="text-slate-500 hover:text-blue-600 text-[16px] leading-none font-black" onclick="window._moverEspera('${p.id}',${idx},'arriba')">▲</button>`:`<span class="w-4"></span>`;const btnAbajo=idx<filtrados.length-1?`<button title="Bajar" class="text-slate-500 hover:text-blue-600 text-[16px] leading-none font-black" onclick="window._moverEspera('${p.id}',${idx},'abajo')">▼</button>`:`<span class="w-4"></span>`;div.innerHTML=`<div class="flex items-center gap-1 shrink-0"><div class="flex flex-col items-center">${btnArriba}${btnAbajo}</div><span class="text-[20px] font-black text-blue-600 leading-none w-6">${idx+1}</span></div><div class="flex-1 min-w-0"><p class="font-bold uppercase text-[11px] text-slate-800">${p.paciente}</p><p class="text-[9px] text-slate-500">${p.propietario} . CI: ${p.cedula}</p>${p.telefono?`<p class="text-[10px] font-black text-emerald-700">📞 ${p.telefono}</p>`:''}<p class="text-[8px] font-black ${colorDoc} uppercase">${docAsig}</p></div><div class="flex gap-2 shrink-0"><button class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button><button class="bg-red-500 text-white text-[10px] px-3 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">Eliminar</button></div>`;cont.appendChild(div);});// Guardar lista para uso en _moverEspera
-window._listaEsperaActual=filtrados;}catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}};
+window.cargarListaEspera=async()=>{
+  const cont=document.getElementById('listaEspera');
+  if(!cont)return;
+  cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>Cargando...</p>";
+  try{
+    const snap=await getDocs(collection(db,"espera"));
+    const items=[];
+    snap.forEach(d=>items.push({id:d.id,...d.data()}));
+    const filtrados=items.filter(i=>i.estado==="en_espera").sort((a,b)=>{
+      const oa=a.orden??a.fechaIngreso?.seconds??0;
+      const ob=b.orden??b.fechaIngreso?.seconds??0;
+      return oa-ob;
+    });
+    if(!filtrados.length){cont.innerHTML="<p class='text-center text-slate-400 text-[10px]'>No hay pacientes en espera.</p>";return;}
+    // Normalizar orden secuencial si hay huecos o valores nulos
+    const batch1=writeBatch(db);let needsBatch=false;
+    filtrados.forEach((p,idx)=>{
+      if(p.orden!==idx){batch1.update(doc(db,"espera",p.id),{orden:idx});p.orden=idx;needsBatch=true;}
+    });
+    if(needsBatch)await batch1.commit();
+    window._listaEsperaActual=filtrados;
+    cont.innerHTML='';
 
-window._moverEspera=async(idPaciente,idx,direccion)=>{const lista=window._listaEsperaActual||[];const idxDestino=direccion==='arriba'?idx-1:idx+1;if(idxDestino<0||idxDestino>=lista.length)return;const pOrigen=lista[idx];const pDestino=lista[idxDestino];const nombreOrigen=pOrigen.paciente||'este paciente';const nombreDestino=pDestino.paciente||'el otro paciente';const pos1=idx+1;const pos2=idxDestino+1;const {isConfirmed}=await Swal.fire({title:'¿Mover paciente?',html:`<p class="text-sm">Cambiar <b>${nombreOrigen}</b> (pos. ${pos1}) con <b>${nombreDestino}</b> (pos. ${pos2})</p>`,icon:'question',showCancelButton:true,confirmButtonText:'Sí, mover',cancelButtonText:'Cancelar',confirmButtonColor:'#2563eb'});if(!isConfirmed)return;try{const ordenOrigen=pOrigen.orden??idx;const ordenDestino=pDestino.orden??idxDestino;const batch=writeBatch(db);batch.update(doc(db,"espera",pOrigen.id),{orden:ordenDestino});batch.update(doc(db,"espera",pDestino.id),{orden:ordenOrigen});await batch.commit();await window.cargarListaEspera();}catch(e){console.error(e);Swal.fire('Error','No se pudo mover el paciente.','error');}};
+    // Separar por doctor
+    const darwin=filtrados.filter(p=>(p.doctorAsignado||'').toLowerCase().includes('darwin'));
+    const joan=filtrados.filter(p=>(p.doctorAsignado||'').toLowerCase().includes('joan'));
+    const sinDoc=filtrados.filter(p=>!((p.doctorAsignado||'').toLowerCase().includes('darwin')||(p.doctorAsignado||'').toLowerCase().includes('joan')));
+
+    function _horaIngreso(p){
+      const s=p.fechaIngreso?.seconds||p.timestamp?.seconds||0;
+      if(!s)return'';
+      return new Date(s*1000).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
+    }
+
+    function _renderColumna(lista,titulo,colorHdr,colorNum){
+      const col=document.createElement('div');
+      col.className='flex-1 min-w-0';
+      const hdr=document.createElement('p');
+      hdr.className=`text-[9px] font-black uppercase mb-2 text-center ${colorHdr}`;
+      hdr.textContent=titulo+' ('+lista.length+')';
+      col.appendChild(hdr);
+      if(!lista.length){
+        const v=document.createElement('p');
+        v.className='text-center text-slate-300 text-[9px] italic';v.textContent='Sin pacientes';col.appendChild(v);return col;
+      }
+      lista.forEach(p=>{
+        const idx=filtrados.indexOf(p);
+        const docAsig=p.doctorAsignado||'Sin asignar';
+        const hora=_horaIngreso(p);
+        const btnArriba=idx>0?`<button title="Subir" class="text-slate-400 hover:text-blue-600 text-[14px] leading-none font-black" onclick="window._moverEspera(${idx},'arriba')">▲</button>`:`<span class="inline-block w-4"></span>`;
+        const btnAbajo=idx<filtrados.length-1?`<button title="Bajar" class="text-slate-400 hover:text-blue-600 text-[14px] leading-none font-black" onclick="window._moverEspera(${idx},'abajo')">▼</button>`:`<span class="inline-block w-4"></span>`;
+        const card=document.createElement('div');
+        card.className='border rounded-lg p-2 bg-slate-50 mb-2';
+        card.innerHTML=`<div class="flex items-start gap-1">
+          <div class="flex flex-col items-center shrink-0">${btnArriba}${btnAbajo}</div>
+          <span class="text-[18px] font-black ${colorNum} leading-none w-5 shrink-0">${idx+1}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-start">
+              <p class="font-black uppercase text-[11px] text-slate-800 leading-tight">${p.paciente}</p>
+              ${hora?`<span class="text-[8px] font-black text-slate-400 shrink-0 ml-1">⏱ ${hora}</span>`:''}
+            </div>
+            <p class="text-[9px] text-slate-500">${p.propietario}${p.cedula?' · CI: '+p.cedula:''}</p>
+            ${p.telefono?`<p class="text-[9px] font-black text-emerald-700">📞 ${p.telefono}</p>`:''}
+          </div>
+        </div>
+        <div class="flex gap-1 mt-2">
+          <button class="flex-1 bg-blue-600 text-white text-[9px] py-1 rounded font-black uppercase" onclick="window.abrirPacienteDesdeEspera('${p.id}','${docAsig}')">Atender</button>
+          <button class="bg-red-500 text-white text-[9px] px-2 py-1 rounded font-black uppercase" onclick="window.eliminarDeSalaEspera('${p.id}')">✕</button>
+        </div>`;
+        col.appendChild(card);
+      });
+      return col;
+    }
+
+    // Layout dos columnas + fila sin asignar
+    const grid=document.createElement('div');
+    grid.className='flex gap-3';
+    grid.appendChild(_renderColumna(darwin,'🩺 Darwin','text-blue-600','text-blue-600'));
+    grid.appendChild(_renderColumna(joan,'🩺 Joan','text-emerald-600','text-emerald-600'));
+    cont.appendChild(grid);
+
+    if(sinDoc.length){
+      const sep=document.createElement('p');
+      sep.className='text-[9px] font-black text-slate-400 uppercase mt-3 mb-1';sep.textContent='Sin doctor asignado';
+      cont.appendChild(sep);
+      sinDoc.forEach(p=>{
+        const idx=filtrados.indexOf(p);
+        const hora=_horaIngreso(p);
+        const card=document.createElement('div');
+        card.className='border rounded-lg p-2 bg-slate-50 mb-2 flex items-center gap-2';
+        card.innerHTML=`<span class="text-[14px] font-black text-slate-400">${idx+1}</span>
+        <div class="flex-1"><p class="font-black uppercase text-[10px] text-slate-700">${p.paciente}</p>
+        ${hora?`<span class="text-[8px] text-slate-400">⏱ ${hora}</span>`:''}
+        </div>
+        <button class="bg-blue-600 text-white text-[9px] px-2 py-1 rounded font-black" onclick="window.abrirPacienteDesdeEspera('${p.id}','')">Atender</button>
+        <button class="bg-red-500 text-white text-[9px] px-2 py-1 rounded font-black" onclick="window.eliminarDeSalaEspera('${p.id}')">✕</button>`;
+        cont.appendChild(card);
+      });
+    }
+  }catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}
+};
+
+window._moverEspera=async(idx,direccion)=>{
+  const lista=window._listaEsperaActual||[];
+  const idxDest=direccion==='arriba'?idx-1:idx+1;
+  if(idxDest<0||idxDest>=lista.length)return;
+  const pA=lista[idx], pB=lista[idxDest];
+  const {isConfirmed}=await Swal.fire({
+    title:'¿Mover paciente?',
+    html:`<p class="text-sm">Cambiar <b>${pA.paciente}</b> (pos. ${idx+1}) con <b>${pB.paciente}</b> (pos. ${idxDest+1})</p>`,
+    icon:'question',showCancelButton:true,confirmButtonText:'Sí, mover',cancelButtonText:'Cancelar',confirmButtonColor:'#2563eb'
+  });
+  if(!isConfirmed)return;
+  try{
+    // Intercambiar en el array y reasignar orden secuencialmente
+    const nueva=[...lista];
+    nueva[idx]=pB; nueva[idxDest]=pA;
+    const batch=writeBatch(db);
+    nueva.forEach((p,i)=>batch.update(doc(db,'espera',p.id),{orden:i}));
+    await batch.commit();
+    await window.cargarListaEspera();
+  }catch(e){console.error(e);Swal.fire('Error','No se pudo mover el paciente.','error');}
+};
 
 window.abrirPacienteDesdeEspera=async(idEspera, doctorAsignado)=>{try{const snap=await getDoc(doc(db,"espera",idEspera));if(!snap.exists()){alert("Registro no encontrado.");return;}const d=snap.data();
   // Verificar si el doctor activo es el correcto

@@ -17,6 +17,7 @@ let _filtroDoctor = '';
 let _ultimoResumenVet = null;
 
 const CASHEA_FEE = 0.10; // 10% comisión Cashea sobre monto pagado con Cashea
+const IVA_PELU   = 0.16; // 16% IVA peluquería — aplica a peluquera, avipet y ayu. extra (no a ayu. principal)
 
 // ─── PERIODO ──────────────────────────────────────────────
 function _getFechasRango() {
@@ -290,12 +291,14 @@ window.mostrarDashboardVet = async () => {
       }
       else g.formasPago.otro += v;
 
-      // Agrupar servicios realizados
+      // Agrupar servicios realizados separando Cashea
+      const esCashea = fp === 'cashea';
       (c.serviciosRealizados||[]).forEach(function(s){
         const nombre=(s.nombre||'Servicio').trim().toUpperCase();
-        if(!g.servicios[nombre]) g.servicios[nombre]={count:0,total:0};
-        g.servicios[nombre].count++;
-        g.servicios[nombre].total+=parseFloat(s.precio||0);
+        const key = nombre + (esCashea ? '||cashea' : '||normal');
+        if(!g.servicios[key]) g.servicios[key]={nombre, count:0, total:0, cashea:esCashea};
+        g.servicios[key].count++;
+        g.servicios[key].total+=parseFloat(s.precio||0);
       });
     });
     // El fee Cashea se divide: el doctor absorbe 10% de su comisión, Avipet absorbe el resto
@@ -386,14 +389,18 @@ window.mostrarDashboardVet = async () => {
         const grid = document.createElement('div');
         grid.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
         serviciosOrdenados.forEach(function(entry) {
-          const nombre=entry[0], data=entry[1];
+          const data=entry[1];
+          const fee = data.cashea ? data.total * CASHEA_FEE : 0;
           const fila = document.createElement('div');
-          fila.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:7px;padding:5px 8px;';
+          fila.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:'+(data.cashea?'#faf5ff':'#fff')+';border-radius:7px;padding:5px 8px;border-left:3px solid '+(data.cashea?'#7c3aed':col.color)+';';
           fila.innerHTML =
-            '<span style="font-size:10px;font-weight:700;color:#1e293b;text-transform:uppercase;">'+nombre+'</span>' +
+            '<div>' +
+              '<span style="font-size:10px;font-weight:700;color:#1e293b;text-transform:uppercase;">'+data.nombre+'</span>' +
+              (data.cashea ? '<span style="font-size:8px;font-weight:900;color:#7c3aed;margin-left:5px;">🟣 Cashea −'+( CASHEA_FEE*100).toFixed(0)+'% (−$'+fee.toFixed(2)+')</span>' : '') +
+            '</div>' +
             '<div style="display:flex;gap:8px;align-items:center;">' +
               '<span style="font-size:10px;color:#64748b;font-weight:700;">x '+data.count+'</span>' +
-              '<span style="font-size:10px;font-weight:900;color:'+col.color+';font-family:monospace;">$'+data.total.toFixed(2)+'</span>' +
+              '<span style="font-size:10px;font-weight:900;color:'+(data.cashea?'#7c3aed':col.color)+';font-family:monospace;">$'+data.total.toFixed(2)+'</span>' +
             '</div>';
           grid.appendChild(fila);
         });
@@ -657,8 +664,9 @@ window.mostrarDashboardPelu = async () => {
     let bruto=0, pPelu=0, pAyu1=0, pAyuExt=0, neto=0, pendiente=0;
     let cobradoUSD=0, cobradoBS=0, ayuUSD=0, ayuBS=0;
     let perrosConAyu=0;
-    // Fees Cashea por persona (10% de su parte en servicios pagados con Cashea)
+    // Fees Cashea e IVA por persona
     let casheaFeePeluquera=0, casheaFeeAyuExt=0, casheaFeeAvipetPelu=0;
+    let ivaFeePeluquera=0, ivaFeeAyuExt=0, ivaFeeAvipetPelu=0;
     const fpPeluTotales = { dolares:0, movil:0, cashea:0, otro:0 };
     servicios.forEach(function(r){
       const precio=parseFloat(r.precioTotal||0);
@@ -667,14 +675,18 @@ window.mostrarDashboardPelu = async () => {
       const ax=parseFloat(r.pagoAyudanteExtra||0);
       const n=parseFloat(r.ingresoAvipet||0);
       bruto+=precio; pPelu+=pa; pAyu1+=a1; pAyuExt+=ax; neto+=n;
-      // Acumular por forma de pago + fees Cashea compartidos
+      // IVA 16% — aplica siempre a peluquera, avipet y ayu. extra (no a ayu. principal)
+      ivaFeePeluquera  += pa * IVA_PELU;
+      ivaFeeAyuExt     += ax * IVA_PELU;
+      ivaFeeAvipetPelu += n  * IVA_PELU;
+      // Acumular por forma de pago + fees Cashea
       const fp = r.formaPago || 'otro';
       if (fp === 'dolares') fpPeluTotales.dolares += precio;
       else if (fp === 'movil') fpPeluTotales.movil += precio;
       else if (fp === 'cashea') {
         fpPeluTotales.cashea += precio;
         casheaFeePeluquera  += pa * CASHEA_FEE;
-        // Ayudante principal (ayu1) no se le descuenta Cashea
+        // Ayudante principal (ayu1) no se le descuenta Cashea ni IVA
         casheaFeeAyuExt     += ax * CASHEA_FEE;
         casheaFeeAvipetPelu += n  * CASHEA_FEE;
       }
@@ -691,9 +703,10 @@ window.mostrarDashboardPelu = async () => {
       if(a1>0) perrosConAyu++;
     });
     const casheaFeePeluTotal = casheaFeePeluquera + casheaFeeAyuExt + casheaFeeAvipetPelu;
-    const netoAvipetPelu = neto - casheaFeeAvipetPelu;
-    const pPeluAjustado  = pPelu  - casheaFeePeluquera;
-    const pAyuExtAjustado= pAyuExt- casheaFeeAyuExt;
+    const ivaFeePeluTotal    = ivaFeePeluquera + ivaFeeAyuExt + ivaFeeAvipetPelu;
+    const netoAvipetPelu = neto - casheaFeeAvipetPelu - ivaFeeAvipetPelu;
+    const pPeluAjustado  = pPelu  - casheaFeePeluquera - ivaFeePeluquera;
+    const pAyuExtAjustado= pAyuExt- casheaFeeAyuExt   - ivaFeeAyuExt;
     const pagoAyu1Real = perrosConAyu * 2;
     // Cobrado Ayudante 1 equivalente: como se descuenta $1 por pelu y $1 por Avipet,
     // se calcula proporcional al modo de pago de cada servicio
@@ -709,8 +722,22 @@ window.mostrarDashboardPelu = async () => {
     fila1.innerHTML =
       _tarjeta('Bruto', '$'+bruto.toFixed(2), '#f8fafc', '#1e293b', servicios.length+' servicio'+(servicios.length!==1?'s':'')) +
       _tarjeta('Pendiente', '$'+pendiente.toFixed(2), '#fef2f2', '#dc2626', 'sin cobrar') +
-      _tarjeta('Neto Avipet', '$'+netoAvipetPelu.toFixed(2), '#f0fdf4', '#16a34a', casheaFeeAvipetPelu > 0 ? '-$'+casheaFeeAvipetPelu.toFixed(2)+' Cashea ya descontado' : '60% - $1/perro c/ayu');
+      _tarjeta('Neto Avipet', '$'+netoAvipetPelu.toFixed(2), '#f0fdf4', '#16a34a',
+        (ivaFeeAvipetPelu>0?'−IVA $'+ivaFeeAvipetPelu.toFixed(2)+' ':'')+(casheaFeeAvipetPelu>0?'−Cashea $'+casheaFeeAvipetPelu.toFixed(2):''));
     contenedor.appendChild(fila1);
+
+    // ── IVA 16% (siempre visible si hay servicios) ───────────────────────────
+    if (ivaFeePeluTotal > 0) {
+      const filaIva = document.createElement('div');
+      filaIva.style.cssText = 'background:#fef9c3;border:1.5px solid #fde68a;border-radius:10px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;';
+      filaIva.innerHTML =
+        '<div>' +
+          '<p style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;margin:0;">🧾 IVA 16% — peluquera, avipet y ayu. extra</p>' +
+          '<p style="font-size:8px;color:#94a3b8;margin:2px 0 0 0;">Ayu. principal exonerado. Pelu: −$'+ivaFeePeluquera.toFixed(2)+' · Extra: −$'+ivaFeeAyuExt.toFixed(2)+' · Avipet: −$'+ivaFeeAvipetPelu.toFixed(2)+'</p>' +
+        '</div>' +
+        '<p style="font-size:18px;font-weight:900;color:#92400e;font-family:monospace;margin:0;white-space:nowrap;">-$'+ivaFeePeluTotal.toFixed(2)+'</p>';
+      contenedor.appendChild(filaIva);
+    }
 
     // ── Cashea (compacto, solo si aplica) ────────────────────────────────────
     if (casheaFeePeluTotal > 0) {
@@ -801,8 +828,10 @@ window.mostrarDashboardPelu = async () => {
     const fila3 = document.createElement('div');
     fila3.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;';
     fila3.innerHTML =
-      _tarjetaConDeuda('Miguelina', '$'+pPeluAjustado.toFixed(2), '#faf5ff', '#7c3aed', casheaFeePeluquera>0?'bruto $'+pPelu.toFixed(2)+' -10% Cashea':'40% – $1/c/ayu', deudaPelu) +
-      _tarjetaConDeuda('Ayu. Extra', '$'+pAyuExtAjustado.toFixed(2), '#fff7ed', '#ea580c', casheaFeeAyuExt>0?'bruto $'+pAyuExt.toFixed(2)+' -10% Cashea':'hizo todo solo', deudaAyuExt);
+      _tarjetaConDeuda('Miguelina', '$'+pPeluAjustado.toFixed(2), '#faf5ff', '#7c3aed',
+        'bruto $'+pPelu.toFixed(2)+(ivaFeePeluquera>0?' −IVA $'+ivaFeePeluquera.toFixed(2):'')+(casheaFeePeluquera>0?' −Cashea $'+casheaFeePeluquera.toFixed(2):''), deudaPelu) +
+      _tarjetaConDeuda('Ayu. Extra', '$'+pAyuExtAjustado.toFixed(2), '#fff7ed', '#ea580c',
+        'bruto $'+pAyuExt.toFixed(2)+(ivaFeeAyuExt>0?' −IVA $'+ivaFeeAyuExt.toFixed(2):'')+(casheaFeeAyuExt>0?' −Cashea $'+casheaFeeAyuExt.toFixed(2):''), deudaAyuExt);
     equipoDiv.appendChild(fila3);
 
     // Ayudante principal
