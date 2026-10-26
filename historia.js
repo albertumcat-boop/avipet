@@ -1328,14 +1328,17 @@ window.cargarListaEspera=async()=>{
     function _horaIngreso(p){
       const s=p.fechaIngreso?.seconds||p.timestamp?.seconds||0;
       if(!s)return'';
-      return new Date(s*1000).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
+      const d=new Date(s*1000);
+      const fecha=d.toLocaleDateString('es-VE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+      const hora=d.toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
+      return fecha+' '+hora;
     }
 
     function _renderColumna(subLista,titulo,colorHdr,colorNum,docKey){
       const col=document.createElement('div');
       col.className='flex-1 min-w-0';
       const hdr=document.createElement('p');
-      hdr.className=`text-[9px] font-black uppercase mb-2 text-center ${colorHdr}`;
+      hdr.className=`text-[13px] font-black uppercase mb-2 text-center ${colorHdr}`;
       hdr.textContent=titulo+' ('+subLista.length+')';
       col.appendChild(hdr);
       if(!subLista.length){
