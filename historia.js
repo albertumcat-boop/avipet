@@ -1331,28 +1331,32 @@ window.cargarListaEspera=async()=>{
       return new Date(s*1000).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
     }
 
-    function _renderColumna(lista,titulo,colorHdr,colorNum){
+    function _renderColumna(subLista,titulo,colorHdr,colorNum,docKey){
       const col=document.createElement('div');
       col.className='flex-1 min-w-0';
       const hdr=document.createElement('p');
       hdr.className=`text-[9px] font-black uppercase mb-2 text-center ${colorHdr}`;
-      hdr.textContent=titulo+' ('+lista.length+')';
+      hdr.textContent=titulo+' ('+subLista.length+')';
       col.appendChild(hdr);
-      if(!lista.length){
+      if(!subLista.length){
         const v=document.createElement('p');
         v.className='text-center text-slate-300 text-[9px] italic';v.textContent='Sin pacientes';col.appendChild(v);return col;
       }
-      lista.forEach(p=>{
-        const idx=filtrados.indexOf(p);
+      subLista.forEach((p,idxLocal)=>{
         const docAsig=p.doctorAsignado||'Sin asignar';
         const hora=_horaIngreso(p);
-        const btnArriba=idx>0?`<button title="Subir" class="text-slate-400 hover:text-blue-600 text-[14px] leading-none font-black" onclick="window._moverEspera(${idx},'arriba')">▲</button>`:`<span class="inline-block w-4"></span>`;
-        const btnAbajo=idx<filtrados.length-1?`<button title="Bajar" class="text-slate-400 hover:text-blue-600 text-[14px] leading-none font-black" onclick="window._moverEspera(${idx},'abajo')">▼</button>`:`<span class="inline-block w-4"></span>`;
+        // Botones usan idxLocal dentro de la columna del doctor
+        const btnArriba=idxLocal>0
+          ?`<button title="Subir" class="text-slate-400 hover:text-blue-600 text-[14px] leading-none font-black" onclick="window._moverEspera(${idxLocal},'arriba','${docKey}')">▲</button>`
+          :`<span class="inline-block w-4"></span>`;
+        const btnAbajo=idxLocal<subLista.length-1
+          ?`<button title="Bajar" class="text-slate-400 hover:text-blue-600 text-[14px] leading-none font-black" onclick="window._moverEspera(${idxLocal},'abajo','${docKey}')">▼</button>`
+          :`<span class="inline-block w-4"></span>`;
         const card=document.createElement('div');
         card.className='border rounded-lg p-2 bg-slate-50 mb-2';
         card.innerHTML=`<div class="flex items-start gap-1">
           <div class="flex flex-col items-center shrink-0">${btnArriba}${btnAbajo}</div>
-          <span class="text-[18px] font-black ${colorNum} leading-none w-5 shrink-0">${idx+1}</span>
+          <span class="text-[18px] font-black ${colorNum} leading-none w-5 shrink-0">${idxLocal+1}</span>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-start">
               <p class="font-black uppercase text-[11px] text-slate-800 leading-tight">${p.paciente}</p>
@@ -1374,8 +1378,8 @@ window.cargarListaEspera=async()=>{
     // Layout dos columnas + fila sin asignar
     const grid=document.createElement('div');
     grid.className='flex gap-3';
-    grid.appendChild(_renderColumna(darwin,'🩺 Darwin','text-blue-600','text-blue-600'));
-    grid.appendChild(_renderColumna(joan,'🩺 Joan','text-emerald-600','text-emerald-600'));
+    grid.appendChild(_renderColumna(darwin,'🩺 Darwin','text-blue-600','text-blue-600','darwin'));
+    grid.appendChild(_renderColumna(joan,'🩺 Joan','text-emerald-600','text-emerald-600','joan'));
     cont.appendChild(grid);
 
     if(sinDoc.length){
@@ -1399,21 +1403,24 @@ window.cargarListaEspera=async()=>{
   }catch(e){console.error(e);cont.innerHTML="<p class='text-center text-red-500 text-[10px]'>Error al cargar.</p>";}
 };
 
-window._moverEspera=async(idx,direccion)=>{
+window._moverEspera=async(idxLocal,direccion,docKey)=>{
   const lista=window._listaEsperaActual||[];
-  const idxDest=direccion==='arriba'?idx-1:idx+1;
-  if(idxDest<0||idxDest>=lista.length)return;
-  const pA=lista[idx], pB=lista[idxDest];
+  // Operar solo dentro de la columna del doctor
+  const subLista=docKey?lista.filter(p=>(p.doctorAsignado||'').toLowerCase().includes(docKey)):lista;
+  const idxDestLocal=direccion==='arriba'?idxLocal-1:idxLocal+1;
+  if(idxDestLocal<0||idxDestLocal>=subLista.length)return;
+  const pA=subLista[idxLocal], pB=subLista[idxDestLocal];
   const {isConfirmed}=await Swal.fire({
     title:'¿Mover paciente?',
-    html:`<p class="text-sm">Cambiar <b>${pA.paciente}</b> (pos. ${idx+1}) con <b>${pB.paciente}</b> (pos. ${idxDest+1})</p>`,
+    html:`<p class="text-sm">Cambiar <b>${pA.paciente}</b> (pos. ${idxLocal+1}) con <b>${pB.paciente}</b> (pos. ${idxDestLocal+1})</p>`,
     icon:'question',showCancelButton:true,confirmButtonText:'Sí, mover',cancelButtonText:'Cancelar',confirmButtonColor:'#2563eb'
   });
   if(!isConfirmed)return;
   try{
-    // Intercambiar en el array y reasignar orden secuencialmente
+    // Intercambiar en la lista global y reasignar orden secuencialmente
     const nueva=[...lista];
-    nueva[idx]=pB; nueva[idxDest]=pA;
+    const gi=lista.indexOf(pA), gj=lista.indexOf(pB);
+    nueva[gi]=pB; nueva[gj]=pA;
     const batch=writeBatch(db);
     nueva.forEach((p,i)=>batch.update(doc(db,'espera',p.id),{orden:i}));
     await batch.commit();
