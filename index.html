@@ -53,7 +53,8 @@
  .animate-fadeIn { animation:fadeIn .3s ease-out; }
  @media print {
  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
- .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print):not(.obs-print):not(#datosDoctorTest),#hTratamiento,.no-imprimir,#btnFacturacionFloat { display:none !important; }
+ .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print):not(.obs-print):not(#datosDoctorTest):not(#hTratamientoPrint):not(#printExamenCont):not(#printTestCont),#hTratamiento,.no-imprimir,#btnFacturacionFloat { display:none !important; }
+ #hTratamientoPrint { display:block !important; }
  span.resultado-print { display:inline !important; visibility:visible !important; }
  .obs-print { display:block !important; visibility:visible !important; }
  .obs-textarea { display:none !important; }
@@ -272,6 +273,10 @@
  <div id="printExamenCont" class="hidden print:block mt-4 text-center">
  <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Anexos</p>
  <div id="printHistoriaGallery" class="flex flex-wrap gap-3 justify-center"></div>
+ </div>
+ <div id="printTestCont" class="hidden mt-4 text-center">
+ <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Evidencia Test / Cassette</p>
+ <div id="printTestGallery" class="flex flex-wrap gap-3 justify-center"></div>
  </div>
 
  <div class="no-print mt-4 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">

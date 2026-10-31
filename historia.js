@@ -916,9 +916,9 @@ window.guardarFirebase = async (imp) => {
       }
       window._modoAutoImprimir = false;
     } else {
+      if(imp) window.imprimirDocumento();
       _limpiarFormularioHistoria();
       _limpiarNotasInternas();
-      if(imp) window.imprimirDocumento();
     }
   }catch(e){
     console.error("Error guardando:",e);
@@ -1148,7 +1148,34 @@ window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emer
 window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
 
 // --- IMPRIMIR ---
-window.imprimirDocumento=()=>{const doctor=document.getElementById('selectDoctor')?.value.toUpperCase()||"";const hTrat=document.getElementById('hTratamiento');const hPrint=document.getElementById('hTratamientoPrint');if(hTrat&&hPrint)hPrint.innerText=hTrat.value;try{const galPrev=document.getElementById('previewHistoriaGallery');const galPrint=document.getElementById('printHistoriaGallery');const contP=document.getElementById('printExamenCont');if(galPrev&&galPrint&&contP){galPrint.innerHTML="";const imgs=galPrev.querySelectorAll('img');imgs.forEach(img=>{const w=document.createElement('div');w.className="max-w-[45%] border border-slate-300 rounded-lg overflow-hidden";w.innerHTML=`<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;galPrint.appendChild(w);});contP.classList.toggle('hidden',imgs.length===0);}}catch(e){console.warn(e);}setTimeout(()=>window.print(),500);};
+window.imprimirDocumento=()=>{
+  const hTrat=document.getElementById('hTratamiento');
+  const hPrint=document.getElementById('hTratamientoPrint');
+  if(hTrat&&hPrint)hPrint.innerText=hTrat.value;
+  try{
+    // Fotos historia/examen
+    const galPrev=document.getElementById('previewHistoriaGallery');
+    const galPrint=document.getElementById('printHistoriaGallery');
+    const contP=document.getElementById('printExamenCont');
+    if(galPrev&&galPrint&&contP){
+      galPrint.innerHTML="";
+      const imgs=galPrev.querySelectorAll('img');
+      imgs.forEach(img=>{const w=document.createElement('div');w.className="max-w-[45%] border border-slate-300 rounded-lg overflow-hidden";w.innerHTML=`<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;galPrint.appendChild(w);});
+      contP.classList.toggle('hidden',imgs.length===0);
+    }
+    // Fotos test/cassette
+    const galTestPrev=document.getElementById('previewTestGallery');
+    const galTestPrint=document.getElementById('printTestGallery');
+    const contT=document.getElementById('printTestCont');
+    if(galTestPrev&&galTestPrint&&contT){
+      galTestPrint.innerHTML="";
+      const imgsT=galTestPrev.querySelectorAll('img');
+      imgsT.forEach(img=>{const w=document.createElement('div');w.className="max-w-[45%] border border-slate-300 rounded-lg overflow-hidden";w.innerHTML=`<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;galTestPrint.appendChild(w);});
+      contT.classList.toggle('hidden',imgsT.length===0);
+    }
+  }catch(e){console.warn(e);}
+  setTimeout(()=>window.print(),500);
+};
 window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamiento')?.value||"";const paciente=document.getElementById('hNombre')?.value||"";const prop=document.getElementById('hProp')?.value||"";const urlExamen=document.getElementById('pUrlExamen')?.value||"";const win=window.open("","_blank","width=800,height=600");if(!win)return;win.document.write(`<html><head><title>Receta - AVIPET</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;}.header{border-bottom:3px solid #3b82f6;padding-bottom:10px;margin-bottom:20px;}h1{font-size:24px;margin:0;color:#1e3a8a;}.content{background:#f8fafc;padding:20px;border-radius:8px;border:1px solid #e2e8f0;min-height:200px;}pre{white-space:pre-wrap;font-size:14px;line-height:1.6;margin:0;}</style></head><body><div class="header"><h1>AVIPET - Centro Veterinario</h1><h2 style="font-size:13px;color:#64748b;margin:5px 0;">Paciente: <b>${paciente}</b> | Propietario: ${prop}</h2></div><div class="content"><pre>${texto}</pre></div>${urlExamen?`<div style="margin-top:20px;text-align:center;"><img src="${urlExamen}" style="max-width:350px;border-radius:10px;border:1px solid #ddd;"></div>`:''}<div style="margin-top:30px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #eee;padding-top:10px;">Documento generado por AVIPET.</div></body></html>`);win.document.close();win.onload=()=>setTimeout(()=>{win.focus();win.print();},300);};
 
 // --- HOJA DE VACUNAS ---

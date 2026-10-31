@@ -906,7 +906,7 @@ window.mostrarDashboardPelu = async () => {
               '<p style="font-size:9px;color:#64748b;margin:2px 0;">'+(r.duenio||'')+(r.duenio?' &middot; ':'')+''+(r.fechaSimple||'')+'</p>' +
             '</div>' +
             '<div style="text-align:right;">' +
-              '<p style="font-size:13px;font-weight:900;color:#1e293b;margin:0;font-family:monospace;">$'+precio.toFixed(2)+'</p>' +
+              '<p style="font-size:13px;font-weight:900;color:#1e293b;margin:0;font-family:monospace;">$'+precio.toFixed(2)+(r.modoPago==='bs'||r.modoPago==='cashea'?' <span style="font-size:9px;color:#92400e;">(Bs)</span>':'')+'</p>' +
               '<p style="font-size:9px;font-weight:900;color:'+(pagado?'#16a34a':'#dc2626')+';margin:0;">'+(pagado?'PAGADO '+modoLabel:'PENDIENTE')+'</p>' +
             '</div>' +
           '</div>' +
