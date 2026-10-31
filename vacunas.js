@@ -154,11 +154,11 @@ window.imprimirHojaTest = () => {
   const galTestPrev  = document.getElementById('previewTestGallery');
   const galTestPrint = document.getElementById('printTestGalleryVac');
   const contT        = document.getElementById('printTestContVac');
-  console.log('[TEST-PRINT] galTestPrev:', galTestPrev, '| galTestPrint:', galTestPrint, '| contT:', contT);
+  const _dbg = `galTestPrev: ${galTestPrev ? 'OK' : 'NULL'} | galTestPrint: ${galTestPrint ? 'OK' : 'NULL'} | contT: ${contT ? 'OK' : 'NULL'}`;
   if (galTestPrev && galTestPrint && contT) {
     galTestPrint.innerHTML = '';
     const imgsT = galTestPrev.querySelectorAll('img');
-    console.log('[TEST-PRINT] imgsT.length:', imgsT.length, Array.from(imgsT).map(i => i.src?.substring(0,30)));
+    alert(`[DEBUG] ${_dbg}\nimgs encontradas: ${imgsT.length}\nSrc[0]: ${imgsT[0]?.src?.substring(0,50) || 'ninguna'}`);
     imgsT.forEach(img => {
       const w = document.createElement('div');
       w.style.cssText = 'display:inline-block;max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;vertical-align:top;margin:4px;';
@@ -170,7 +170,8 @@ window.imprimirHojaTest = () => {
       galTestPrint.appendChild(w);
     });
     contT.classList.toggle('hidden', imgsT.length === 0);
-    console.log('[TEST-PRINT] contT.hidden:', contT.classList.contains('hidden'));
+  } else {
+    alert(`[DEBUG] ${_dbg} — algún elemento no encontrado`);
   }
 
   const _cleanup = () => {
@@ -456,4 +457,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
 };
 
-console.log("✅ vacunas.js v9 — debug logs en imprimirHojaTest");
+console.log("✅ vacunas.js v10 — debug alert en imprimirHojaTest");
