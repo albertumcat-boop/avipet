@@ -644,7 +644,13 @@ window.permisosChequearVencimientos = async () => {
       title: '⚠️ Documentos por vencer',
       html: lista,
       confirmButtonColor: '#f59e0b',
-      confirmButtonText: 'Ver documentos'
+      confirmButtonText: 'Ver documentos',
+      showCancelButton: true,
+      cancelButtonText: 'Cerrar'
+    }).then(res => {
+      if (res.isConfirmed && typeof window.showTab === 'function') {
+        window.showTab('personal');
+      }
     });
   } catch(e) { console.warn('[permisos check]', e); }
 };
