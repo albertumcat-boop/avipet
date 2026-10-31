@@ -345,30 +345,42 @@ window.guardarTestRapido = async () => {
   });
 
   const dVal = id => document.getElementById(id)?.value?.trim() || '';
+  const ahora = new Date();
+  const fechaSimple = dVal('hv_fecha') || `${ahora.getDate().toString().padStart(2,'0')}/${(ahora.getMonth()+1).toString().padStart(2,'0')}/${ahora.getFullYear()}`;
+  const resumenTests = filas.map(f => `${f.antigeno}: ${f.resultado}${f.observacion ? ' — '+f.observacion : ''}`).join(' | ');
+  const doctorNombre = window.doctorVerificado || document.getElementById('dtNombre')?.textContent || '';
+
   const docData = {
-    tipo:         'test_rapido',
-    cedula:       hvCedula,
-    paciente:     hvPaciente,
-    propietario:  dVal('hv_propietario'),
-    telefono:     dVal('hv_telefono'),
-    direccion:    dVal('hv_direccion'),
-    especie:      dVal('hv_especie'),
-    raza:         dVal('hv_raza'),
-    edad:         dVal('hv_edad'),
-    sexo:         dVal('hv_sexo'),
-    color:        dVal('hv_color'),
-    peso:         dVal('hv_peso'),
-    fechaNacimiento: dVal('hv_fechaNacimiento'),
-    fecha:        dVal('hv_fecha') || new Date().toLocaleDateString('es-VE'),
-    doctor:       window.doctorVerificado || document.getElementById('dtNombre')?.textContent || 'Médico Veterinario',
-    tests:        filas,
-    fotoUrl:      document.getElementById('pUrlTest')?.value || '',
-    fechaGuardado: serverTimestamp()
+    tipo:              'test_rapido',
+    cedula:            hvCedula,
+    paciente:          hvPaciente,
+    propietario:       dVal('hv_propietario'),
+    telefono:          dVal('hv_telefono'),
+    direccion:         dVal('hv_direccion'),
+    especie:           dVal('hv_especie'),
+    raza:              dVal('hv_raza'),
+    edad:              dVal('hv_edad'),
+    sexo:              dVal('hv_sexo'),
+    color:             dVal('hv_color'),
+    peso:              dVal('hv_peso'),
+    fechaNacimiento:   dVal('hv_fechaNacimiento'),
+    fechaSimple:       fechaSimple,
+    fecha:             serverTimestamp(),
+    doctor:            doctorNombre,
+    doctorNombre:      doctorNombre,
+    tratamiento:       resumenTests,
+    tests:             filas,
+    fotoUrl:           document.getElementById('pUrlTest')?.value || '',
+    montoVenta:        0,
+    montoInsumos:      0,
+    serviciosRealizados: [],
+    esMuestra:         false,
+    vacunaPagadaAnteriormente: false
   };
 
   try {
-    await addDoc(collection(db, 'tests_rapidos'), docData);
-    await Swal.fire({ icon:'success', title:'Test guardado', text:`Test de ${hvPaciente} guardado correctamente en Firestore.`, timer:2000, showConfirmButton:false });
+    await addDoc(collection(db, 'consultas'), docData);
+    await Swal.fire({ icon:'success', title:'Test guardado', text:`Test de ${hvPaciente} guardado. Aparecerá en el buscador de historial.`, timer:2500, showConfirmButton:false });
   } catch(e) {
     console.error('[guardarTestRapido]', e);
     await Swal.fire({ icon:'error', title:'Error al guardar', text: e.message, confirmButtonColor:'#1d4ed8' });
@@ -457,4 +469,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
 };
 
-console.log("✅ vacunas.js v10 — debug alert en imprimirHojaTest");
+console.log("✅ vacunas.js v11 — guardarTestRapido guarda en consultas, debug alert print");
