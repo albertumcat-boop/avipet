@@ -380,4 +380,33 @@ window.imprimirHojaTestSeguro = async () => {
   window.imprimirHojaTest();
 };
 
-console.log("✅ vacunas.js v5 — stand-by borrador, imprimir sin modal de pago, imágenes test en print");
+// ─── ABRIR HOJA DE VACUNAS DESDE BUSCADOR ───────────────────
+window.abrirHojaVacunasDesdeBuscador = (consulta) => {
+  // Ocultar todas las secciones visibles
+  ['sectionHistoria','sectionBuscador','sectionFinanzas','sectionInventario',
+   'sectionPeluqueria','sectionAlmuerzo','sectionDocumentos'].forEach(id => {
+    document.getElementById(id)?.classList.add('hidden');
+  });
+  // Mostrar hoja de vacunas
+  const sec = document.getElementById('sectionHojaVacunas');
+  if (sec) { sec.classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); }
+
+  // Llenar campos hv_* desde el objeto consulta
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+  set('hv_propietario',    consulta.propietario);
+  set('hv_cedula',         consulta.cedula);
+  set('hv_telefono',       consulta.telefono);
+  set('hv_direccion',      consulta.direccion);
+  set('hv_especie',        consulta.especie);
+  set('hv_raza',           consulta.raza);
+  set('hv_paciente',       consulta.paciente);
+  set('hv_edad',           consulta.edad);
+  set('hv_sexo',           consulta.sexo);
+  set('hv_color',          consulta.color);
+  set('hv_peso',           consulta.peso);
+  set('hv_fechaNacimiento',consulta.fechaNacimiento);
+  const f = new Date();
+  set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
+};
+
+console.log("✅ vacunas.js v6 — abrirHojaVacunasDesdeBuscador, stand-by borrador, imprimir sin modal de pago");

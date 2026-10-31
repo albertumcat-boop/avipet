@@ -1155,7 +1155,10 @@ window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getEleme
 window.imprimirDocumento=(onAfter)=>{
   const hTrat=document.getElementById('hTratamiento');
   const hPrint=document.getElementById('hTratamientoPrint');
+  // Copiar ahora y también en beforeprint (doble seguridad)
   if(hTrat&&hPrint)hPrint.innerText=hTrat.value;
+  const _bpCb=()=>{if(hTrat&&hPrint)hPrint.innerText=hTrat.value;window.removeEventListener('beforeprint',_bpCb);};
+  window.addEventListener('beforeprint',_bpCb);
   try{
     // Fotos historia/examen
     const galPrev=document.getElementById('previewHistoriaGallery');

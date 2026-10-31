@@ -319,13 +319,15 @@ function _renderizarTarjeta(consulta) {
 
  const btnVacunas = document.createElement('button');
  btnVacunas.className = 'flex-1 bg-emerald-500 text-white py-2 rounded-xl font-black text-[9px] uppercase hover:bg-emerald-600 transition-all';
- btnVacunas.textContent = 'Ver Vacunas';
+ btnVacunas.textContent = 'Ver Hoja Vacuna/Test';
  btnVacunas.addEventListener('click', function() {
  if (typeof window.abrirHojaVacunasDesdeBuscador === 'function') {
- window.abrirHojaVacunasDesdeBuscador(consulta);
+   window.abrirHojaVacunasDesdeBuscador(consulta);
  } else {
- window.showTab('historia');
- setTimeout(() => window.autocompletarPorCedula(consulta.cedula), 500);
+   // Fallback: mostrar sectionHojaVacunas directamente
+   document.querySelectorAll('section[id^="section"]').forEach(s => s.classList.add('hidden'));
+   document.getElementById('sectionHojaVacunas')?.classList.remove('hidden');
+   window.scrollTo({top:0,behavior:'smooth'});
  }
  });
  btnDiv.appendChild(btnVacunas);
