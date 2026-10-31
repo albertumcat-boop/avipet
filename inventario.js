@@ -389,9 +389,10 @@ window.repararCategorias = async () => {
     const batch = (await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")).writeBatch(db);
     let cnt = 0;
     snap.forEach(d => {
-      const data = d.data();
-      if (!data.categoria) {
-        batch.update(d.ref, { categoria: _cat(d.id) });
+      const correcta = _cat(d.id);
+      const actual = (d.data().categoria || '').toUpperCase().trim();
+      if (actual !== correcta) {
+        batch.update(d.ref, { categoria: correcta });
         cnt++;
       }
     });
