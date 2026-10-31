@@ -137,7 +137,7 @@ window.imprimirHojaVacunas = () => {
 // IMPRIMIR HOJA DE TEST RÁPIDO
 // (con fecha de nacimiento incluida)
 // ─────────────────────────────────────────────
-window.imprimirHojaTest = () => {
+window.imprimirHojaTest = async () => {
   const sel = document.getElementById('selectorTipoFormato');
   if (sel) sel.value = 'test_rapido';
   window.cambiarTipoFormato('test_rapido');
@@ -154,11 +154,23 @@ window.imprimirHojaTest = () => {
   const galTestPrev  = document.getElementById('previewTestGallery');
   const galTestPrint = document.getElementById('printTestGalleryVac');
   const contT        = document.getElementById('printTestContVac');
-  const _dbg = `galTestPrev: ${galTestPrev ? 'OK' : 'NULL'} | galTestPrint: ${galTestPrint ? 'OK' : 'NULL'} | contT: ${contT ? 'OK' : 'NULL'}`;
+  const imgsT = galTestPrev ? galTestPrev.querySelectorAll('img') : [];
+  await Swal.fire({
+    icon: 'info',
+    title: 'DEBUG imprimirHojaTest',
+    html: `<p style="font-size:11px;text-align:left;">
+      galTestPrev: <b>${galTestPrev ? 'OK' : 'NULL'}</b><br>
+      galTestPrint: <b>${galTestPrint ? 'OK' : 'NULL'}</b><br>
+      contT: <b>${contT ? 'OK' : 'NULL'}</b><br>
+      imgs encontradas: <b>${imgsT.length}</b><br>
+      src[0]: <b>${imgsT[0]?.src?.substring(0,40) || 'ninguna'}</b>
+    </p>`,
+    confirmButtonText: 'OK — continuar',
+    confirmButtonColor: '#1d4ed8'
+  });
+
   if (galTestPrev && galTestPrint && contT) {
     galTestPrint.innerHTML = '';
-    const imgsT = galTestPrev.querySelectorAll('img');
-    alert(`[DEBUG] ${_dbg}\nimgs encontradas: ${imgsT.length}\nSrc[0]: ${imgsT[0]?.src?.substring(0,50) || 'ninguna'}`);
     imgsT.forEach(img => {
       const w = document.createElement('div');
       w.style.cssText = 'display:inline-block;max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;vertical-align:top;margin:4px;';
@@ -170,8 +182,6 @@ window.imprimirHojaTest = () => {
       galTestPrint.appendChild(w);
     });
     contT.classList.toggle('hidden', imgsT.length === 0);
-  } else {
-    alert(`[DEBUG] ${_dbg} — algún elemento no encontrado`);
   }
 
   const _cleanup = () => {
@@ -437,7 +447,7 @@ window.imprimirHojaTestSeguro = async () => {
   window.cambiarTipoFormato('test_rapido');
   const sel = document.getElementById('selectorTipoFormato');
   if (sel) sel.value = 'test_rapido';
-  window.imprimirHojaTest();
+  await window.imprimirHojaTest();
 };
 
 // ─── ABRIR HOJA DE VACUNAS DESDE BUSCADOR ───────────────────
@@ -469,4 +479,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
 };
 
-console.log("✅ vacunas.js v11 — guardarTestRapido guarda en consultas, debug alert print");
+console.log("✅ vacunas.js v12 — imprimirHojaTest async + Swal debug + SW v111");

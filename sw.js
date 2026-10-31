@@ -1,10 +1,10 @@
 // =========================================================
-// AVIPET — Service Worker v11
+// AVIPET — Service Worker v12
 // Estrategia: cache-first para archivos propios, network-only para CDN/Firebase
 // Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v110';
+const CACHE_V = 'avipet-v111';
 
 const APP_SHELL = [
   '/',
