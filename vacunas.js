@@ -201,9 +201,11 @@ window.imprimirHojaTest = () => {
     const total = allImgs.length;
     if (total === 0) { safePrint(); return; }
     allImgs.forEach(img => {
-      if (img.complete && img.naturalWidth > 0) { loaded++; if (loaded >= total) safePrint(); }
+      if (img.complete && img.naturalWidth > 0) { loaded++; }
       else { img.onload = () => { loaded++; if (loaded >= total) safePrint(); }; img.onerror = () => { loaded++; if (loaded >= total) safePrint(); }; }
     });
+    // Si todas ya estaban completas (data URLs), esperar un frame para que el browser repinte
+    if (loaded >= total) { setTimeout(safePrint, 300); return; }
     // Fallback: imprimir aunque no carguen todas (máximo 3s)
     setTimeout(safePrint, 3000);
   }
