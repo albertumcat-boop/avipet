@@ -960,9 +960,15 @@ function _calcularEdadDesdeFechaNac(fechaNac) {
     if (dias < 0)  { meses--; dias += 30; }
     if (meses < 0) { anios--; meses += 12; }
     let edadStr = '';
-    if (anios > 0)       edadStr = anios + (anios === 1 ? ' año' : ' años');
-    else if (meses > 0)  edadStr = meses + (meses === 1 ? ' mes' : ' meses');
-    else                 edadStr = dias + ' días';
+    if (anios > 0) {
+      edadStr = anios + (anios === 1 ? ' año' : ' años');
+      if (meses > 0) edadStr += ' ' + meses + (meses === 1 ? ' mes' : ' meses');
+    } else if (meses > 0) {
+      edadStr = meses + (meses === 1 ? ' mes' : ' meses');
+      if (dias > 0) edadStr += ' ' + dias + (dias === 1 ? ' día' : ' días');
+    } else {
+      edadStr = dias + (dias === 1 ? ' día' : ' días');
+    }
     const inp = document.getElementById('hEdad');
     if (inp) inp.value = edadStr;
   } catch(e) { console.warn('Error calculando edad:', e); }
