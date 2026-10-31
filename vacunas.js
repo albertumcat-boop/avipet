@@ -161,9 +161,12 @@ window.imprimirHojaTest = () => {
     imgCont = document.createElement('div');
     imgCont.id = '_testImgPrintCont';
   }
-  imgCont.style.cssText = 'text-align:center;margin-top:16px;page-break-inside:avoid;';
+  imgCont.style.cssText = 'display:block;text-align:center;margin-top:16px;page-break-inside:avoid;';
   imgCont.innerHTML = '';
-  if (hv) hv.appendChild(imgCont);
+  // Insertar ANTES del footer para que quede dentro del área de impresión
+  const hvFooter = hv?.querySelector('footer');
+  if (hvFooter) hv.insertBefore(imgCont, hvFooter);
+  else if (hv) hv.appendChild(imgCont);
 
   if (imgs.length > 0) {
     imgCont.innerHTML = '<p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>';
@@ -205,8 +208,8 @@ window.imprimirHojaTest = () => {
       if (img.complete && img.naturalWidth > 0) { loaded++; }
       else { img.onload = () => { loaded++; if (loaded >= total) safePrint(); }; img.onerror = () => { loaded++; if (loaded >= total) safePrint(); }; }
     });
-    // Si todas ya estaban completas (data URLs), esperar un frame para que el browser repinte
-    if (loaded >= total) { setTimeout(safePrint, 300); return; }
+    // Si todas ya estaban completas (data URLs), esperar 800ms para que el browser repinte
+    if (loaded >= total) { setTimeout(safePrint, 800); return; }
     // Fallback: imprimir aunque no carguen todas (máximo 3s)
     setTimeout(safePrint, 3000);
   }
@@ -347,7 +350,8 @@ window.guardarTestRapido = async () => {
     const hvCedula = document.getElementById('hv_cedula')?.value.trim();
     const hvPaciente = document.getElementById('hv_paciente')?.value.trim();
     if (hvCedula && hvPaciente) {
-      await Swal.fire({ icon:'info', title:'Sin historia clínica', text:'El test fue generado directamente desde la tarjeta. Para guardarlo en el historial, carga primero el paciente desde Historia Clínica.', confirmButtonColor:'#1d4ed8' });
+      // Datos cargados desde la tarjeta directa — no hay historia activa para guardar
+      await Swal.fire({ icon:'info', title:'Test sin historia vinculada', text:'Este test fue generado desde la tarjeta directa. Para guardarlo en Firestore, carga el paciente desde Historia Clínica. Puedes usar "Imprimir Certificado" sin necesidad de guardar.', confirmButtonColor:'#1d4ed8', confirmButtonText:'Entendido' });
       return;
     }
     await Swal.fire({
