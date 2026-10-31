@@ -68,7 +68,7 @@
  input,textarea,select { border:none !important; border-bottom:1px solid #94a3b8 !important; box-shadow:none !important; background:transparent !important; color:#0f172a !important; font-weight:700 !important; }
  .print\:hidden { display:none !important; }
  .resultado-print { display:inline !important; }
- #printExamenCont:not(.hidden),#printTestCont:not(.hidden) { display:block !important; page-break-inside:avoid; margin-top:8px; text-align:center; }
+ #printExamenCont:not(.hidden),#printTestCont:not(.hidden),#printTestContVac:not(.hidden) { display:block !important; page-break-inside:avoid; margin-top:8px; text-align:center; }
  .foto-anexo { max-width:100% !important; max-height:350px !important; object-fit:contain; border:1px solid #e2e8f0; border-radius:12px; }
  /* Historia: layout ordenado */
  #sectionHistoria .grid.grid-cols-1.md\:grid-cols-2 { display:grid !important; grid-template-columns:1fr 1fr !important; }
@@ -536,6 +536,12 @@
  <button onclick="window.guardarTestRapido()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase"> Guardar Test</button>
  <button onclick="window.imprimirHojaTestSeguro()" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-black text-xs uppercase"> Imprimir Certificado</button>
  </div>
+ </div>
+
+ <!-- Contenedor de impresión de imágenes del test (mismo patrón que printTestCont en sectionHistoria) -->
+ <div id="printTestContVac" class="hidden mt-4 text-center">
+ <p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>
+ <div id="printTestGalleryVac" class="flex flex-wrap gap-3 justify-center"></div>
  </div>
 
  <footer class="pt-2">

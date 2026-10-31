@@ -150,49 +150,30 @@ window.imprimirHojaTest = () => {
   if (hv)   hv.classList.remove('hidden');
   if (hist) hist.classList.add('hidden');
 
-  // Usar beforeprint/afterprint para garantizar que imágenes estén en el DOM en el momento exacto
-  const _setupImgCont = () => {
-    const galPrev = document.getElementById('previewTestGallery');
-    const imgs    = galPrev ? Array.from(galPrev.querySelectorAll('img')).filter(i => i.src && !i.src.endsWith(window.location.href)) : [];
-
-    let imgCont = document.getElementById('_testImgPrintCont');
-    if (!imgCont) {
-      imgCont = document.createElement('div');
-      imgCont.id = '_testImgPrintCont';
-    }
-    imgCont.style.cssText = 'display:block;text-align:center;margin-top:16px;page-break-inside:avoid;';
-    imgCont.innerHTML = '';
-
-    const hvFooter = hv?.querySelector('footer');
-    if (hvFooter) hv.insertBefore(imgCont, hvFooter);
-    else if (hv) hv.appendChild(imgCont);
-
-    if (imgs.length > 0) {
-      imgCont.innerHTML = '<p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>';
-      const flex = document.createElement('div');
-      flex.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
-      imgs.forEach(img => {
-        const w = document.createElement('div');
-        w.style.cssText = 'max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;';
-        const newImg = document.createElement('img');
-        newImg.src = img.src;
-        newImg.style.cssText = 'width:100%;max-height:280px;object-fit:contain;display:block;';
-        w.appendChild(newImg);
-        flex.appendChild(w);
-      });
-      imgCont.appendChild(flex);
-    }
-  };
+  // Mismo patrón que imprimirDocumento en historia.js para printTestGallery
+  const galTestPrev  = document.getElementById('previewTestGallery');
+  const galTestPrint = document.getElementById('printTestGalleryVac');
+  const contT        = document.getElementById('printTestContVac');
+  if (galTestPrev && galTestPrint && contT) {
+    galTestPrint.innerHTML = '';
+    const imgsT = galTestPrev.querySelectorAll('img');
+    imgsT.forEach(img => {
+      const w = document.createElement('div');
+      w.className = 'max-w-[45%] border border-slate-300 rounded-lg overflow-hidden';
+      w.innerHTML = `<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;
+      galTestPrint.appendChild(w);
+    });
+    contT.classList.toggle('hidden', imgsT.length === 0);
+  }
 
   const _cleanup = () => {
-    document.getElementById('_testImgPrintCont')?.remove();
+    if (contT) contT.classList.add('hidden');
+    if (galTestPrint) galTestPrint.innerHTML = '';
     if (hist) hist.classList.remove('hidden');
     if (hv)   hv.classList.add('hidden');
     window.removeEventListener('afterprint', _cleanup);
   };
-
   window.addEventListener('afterprint', _cleanup);
-  _setupImgCont();
   window.print();
 };
 
@@ -468,4 +449,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
 };
 
-console.log("✅ vacunas.js v7 — beforeprint/afterprint para imágenes, selector de doctor, guardar desde tarjeta");
+console.log("✅ vacunas.js v8 — printTestContVac patrón idéntico a historia clínica");
