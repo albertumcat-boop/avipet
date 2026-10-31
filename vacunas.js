@@ -317,7 +317,12 @@ window.imprimirHojaVacunasSeguro = async () => {
     }
     _poblarCamposVacunaDesdeHistoria();
   }
-  window.imprimirHojaVacunas();
+  const formato = document.getElementById('selectorTipoFormato')?.value;
+  if (formato === 'test_rapido') {
+    await window.imprimirHojaTest();
+  } else {
+    window.imprimirHojaVacunas();
+  }
 };
 
 // ─── GUARDAR TEST SIN BORRAR HISTORIA ────────────────────
@@ -479,4 +484,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
 };
 
-console.log("✅ vacunas.js v12 — imprimirHojaTest async + Swal debug + SW v111");
+console.log("✅ vacunas.js v13 — imprimirHojaVacunasSeguro enruta segun formato selector");
