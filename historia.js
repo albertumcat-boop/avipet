@@ -11,7 +11,7 @@ import {
   getDocs, query, where, orderBy, limit,
   onSnapshot, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-console.log("✅ historia.js v45 -- imprimirDocumento usa Swal+boton para evitar bloqueo Chrome");
+console.log("✅ historia.js v46 -- imprimirDocumento setTimeout 400ms para que Swal cierre antes de print");
 // Expuesta en window para que los handlers inline de index.html puedan llamarla
 window.respaldarProgresoLocal = () => {
   try {
@@ -1198,7 +1198,7 @@ window.imprimirDocumento=(onAfter)=>{
     showCancelButton:true,
     cancelButtonText:'Cerrar',
     allowOutsideClick:false
-  }).then(r=>{if(r.isConfirmed)window.print();});
+  }).then(r=>{if(r.isConfirmed)setTimeout(()=>window.print(),400);});
 };
 window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamiento')?.value||"";const paciente=document.getElementById('hNombre')?.value||"";const prop=document.getElementById('hProp')?.value||"";const urlExamen=document.getElementById('pUrlExamen')?.value||"";const win=window.open("","_blank","width=800,height=600");if(!win)return;win.document.write(`<html><head><title>Receta - AVIPET</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;}.header{border-bottom:3px solid #3b82f6;padding-bottom:10px;margin-bottom:20px;}h1{font-size:24px;margin:0;color:#1e3a8a;}.content{background:#f8fafc;padding:20px;border-radius:8px;border:1px solid #e2e8f0;min-height:200px;}pre{white-space:pre-wrap;font-size:14px;line-height:1.6;margin:0;}</style></head><body><div class="header"><h1>AVIPET - Centro Veterinario</h1><h2 style="font-size:13px;color:#64748b;margin:5px 0;">Paciente: <b>${paciente}</b> | Propietario: ${prop}</h2></div><div class="content"><pre>${texto}</pre></div>${urlExamen?`<div style="margin-top:20px;text-align:center;"><img src="${urlExamen}" style="max-width:350px;border-radius:10px;border:1px solid #ddd;"></div>`:''}<div style="margin-top:30px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #eee;padding-top:10px;">Documento generado por AVIPET.</div></body></html>`);win.document.close();win.onload=()=>setTimeout(()=>{win.focus();win.print();},300);};
 
