@@ -524,10 +524,10 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
       galeria.innerHTML = '';
       fotos.forEach(url => {
         if (!url) return;
-        const img = document.createElement('img');
-        img.src = url;
-        img.className = 'h-24 w-auto rounded-lg object-contain border border-slate-300 cursor-pointer';
-        galeria.appendChild(img);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative w-20 h-20 border-2 border-blue-500 rounded-lg overflow-hidden shadow-sm bg-white';
+        wrapper.innerHTML = `<img src="${url}" class="w-full h-full object-cover"><button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] px-1.5 font-bold" onclick="this.parentElement.remove();window.sincronizarHiddenTest()">X</button>`;
+        galeria.appendChild(wrapper);
         const pUrl = document.getElementById('pUrlTest');
         if (pUrl) pUrl.value = url;
       });
@@ -536,4 +536,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   }
 };
 
-console.log("✅ vacunas.js v15 — abrirHojaVacunasDesdeBuscador restaura tests y fotos");
+console.log("✅ vacunas.js v16 — fotos restauradas con boton X para eliminar");
