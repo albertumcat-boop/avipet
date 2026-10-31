@@ -69,7 +69,9 @@
  .print\:hidden { display:none !important; }
  .resultado-print { display:inline !important; }
  #printExamenCont:not(.hidden),#printTestCont:not(.hidden),#printTestContVac:not(.hidden) { display:block !important; page-break-inside:avoid; margin-top:8px; text-align:center; }
- .foto-anexo { max-width:100% !important; max-height:350px !important; object-fit:contain; border:1px solid #e2e8f0; border-radius:12px; }
+ .foto-anexo { max-width:100% !important; max-height:180px !important; object-fit:contain; border:1px solid #e2e8f0; border-radius:8px; }
+ #printExamenCont .flex, #printTestCont .flex, #printTestContVac .flex, #printHistoriaGallery, #printTestGallery, #printTestGalleryVac { display:flex !important; flex-wrap:wrap !important; gap:6px !important; justify-content:center !important; }
+ #printExamenCont .flex > div, #printTestCont .flex > div, #printTestContVac .flex > div, #printHistoriaGallery > div, #printTestGallery > div, #printTestGalleryVac > div { max-width:30% !important; }
  /* Historia: layout ordenado */
  #sectionHistoria .grid.grid-cols-1.md\:grid-cols-2 { display:grid !important; grid-template-columns:1fr 1fr !important; }
  #sectionHistoria .grid.grid-cols-1.md\:grid-cols-2 > div { page-break-inside:avoid; }
