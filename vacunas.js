@@ -465,7 +465,75 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_peso',           consulta.peso);
   set('hv_fechaNacimiento',consulta.fechaNacimiento);
   const f = new Date();
-  set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
+  set('hv_fecha', consulta.fechaSimple || `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
+
+  // Si hay tests guardados, restaurar formato test_rapido
+  const tests = consulta.testsRealizados || consulta.tests || [];
+  if (tests.length > 0 || consulta.tipo === 'test_rapido') {
+    const sel = document.getElementById('selectorTipoFormato');
+    if (sel) sel.value = 'test_rapido';
+    window.cambiarTipoFormato('test_rapido');
+
+    // Limpiar tabla y restaurar filas
+    const tabla = document.getElementById('cuerpoTablaCertificado');
+    if (tabla) {
+      tabla.innerHTML = '';
+      tests.forEach(t => {
+        const nombre = t.nombre || t.antigeno || '';
+        if (!nombre) return;
+        const fila = document.createElement('tr');
+        fila.className = 'border-b border-slate-400 bg-white';
+        const resultado = t.resultado || '---';
+        const color = resultado.includes('POSITIVO') ? '#dc2626' : resultado.includes('NEGATIVO') ? '#16a34a' : 'black';
+        const nota = t.nota || t.observacion || '';
+        fila.innerHTML = `
+          <td class="px-3 py-2 font-bold uppercase italic text-slate-800 align-top"><span>${nombre}</span></td>
+          <td class="px-2 py-2 text-center border-l border-r border-slate-200 relative align-top">
+            <select class="print:hidden font-black text-[11px] border rounded p-1 uppercase outline-none bg-white w-full cursor-pointer"
+                    onchange="const e=this.parentElement.querySelector('.resultado-print');const v=this.value;e.innerText=v;const c=v.includes('POSITIVO')?'#dc2626':v.includes('NEGATIVO')?'#16a34a':'black';this.style.color=c;e.style.color=c;">
+              <option value="---">---</option>
+              <option value="NEGATIVO (-)">NEGATIVO (-)</option>
+              <option value="POSITIVO (+)">POSITIVO (+)</option>
+              <option value="INVALIDO">INVALIDO</option>
+            </select>
+            <span class="resultado-print font-black text-[12px] uppercase text-center" style="display:none;color:${color};">${resultado}</span>
+          </td>
+          <td class="px-2 py-2 border-l border-slate-300 align-top">
+            <textarea rows="2" class="obs-textarea w-full outline-none text-[10px] bg-transparent italic resize-none overflow-hidden"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';this.parentElement.querySelector('.obs-print').innerText=this.value;">${nota}</textarea>
+            <span class="obs-print text-[10px] italic whitespace-pre-wrap break-words" style="display:none;">${nota}</span>
+          </td>
+          <td class="no-print p-1 w-8 align-top"><button onclick="this.closest('tr').remove()" class="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button></td>`;
+        // Set select value to match saved result
+        const selectEl = fila.querySelector('select');
+        if (selectEl) {
+          selectEl.value = resultado;
+          selectEl.style.color = color;
+        }
+        tabla.appendChild(fila);
+      });
+    }
+  }
+
+  // Restaurar fotos del test
+  const fotos = consulta.fotosTest || (consulta.fotoUrl ? [consulta.fotoUrl] : []);
+  if (fotos.length > 0) {
+    const galeria = document.getElementById('previewTestGallery');
+    const cont = document.getElementById('previewTestContainer');
+    if (galeria) {
+      galeria.innerHTML = '';
+      fotos.forEach(url => {
+        if (!url) return;
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'h-24 w-auto rounded-lg object-contain border border-slate-300 cursor-pointer';
+        galeria.appendChild(img);
+        const pUrl = document.getElementById('pUrlTest');
+        if (pUrl) pUrl.value = url;
+      });
+    }
+    if (cont) cont.classList.remove('hidden');
+  }
 };
 
-console.log("✅ vacunas.js v14 — imprimirHojaTest sync + setTimeout 500ms como historia.js");
+console.log("✅ vacunas.js v15 — abrirHojaVacunasDesdeBuscador restaura tests y fotos");
