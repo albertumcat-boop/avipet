@@ -155,30 +155,30 @@ window.imprimirHojaTest = () => {
   const galPrev   = document.getElementById('previewTestGallery');
   const imgs      = galPrev ? Array.from(galPrev.querySelectorAll('img')).filter(i => i.src && i.src !== window.location.href) : [];
 
-  if (bloqTests) {
-    let imgCont = document.getElementById('_testImgPrintCont');
-    if (!imgCont) {
-      imgCont = document.createElement('div');
-      imgCont.id = '_testImgPrintCont';
-      imgCont.style.cssText = 'text-align:center;margin-top:10px;page-break-inside:avoid;';
-      bloqTests.appendChild(imgCont);
-    }
-    imgCont.innerHTML = '';
-    if (imgs.length > 0) {
-      imgCont.innerHTML = '<p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>';
-      const flex = document.createElement('div');
-      flex.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
-      imgs.forEach(img => {
-        const w = document.createElement('div');
-        w.style.cssText = 'max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;';
-        const newImg = document.createElement('img');
-        newImg.src = img.src;
-        newImg.style.cssText = 'width:100%;max-height:280px;object-fit:contain;display:block;';
-        w.appendChild(newImg);
-        flex.appendChild(w);
-      });
-      imgCont.appendChild(flex);
-    }
+  // Contenedor de imágenes: lo sacamos del bloqueTests (que tiene hidden) y lo ponemos directo en hv
+  let imgCont = document.getElementById('_testImgPrintCont');
+  if (!imgCont) {
+    imgCont = document.createElement('div');
+    imgCont.id = '_testImgPrintCont';
+  }
+  imgCont.style.cssText = 'text-align:center;margin-top:16px;page-break-inside:avoid;';
+  imgCont.innerHTML = '';
+  if (hv) hv.appendChild(imgCont);
+
+  if (imgs.length > 0) {
+    imgCont.innerHTML = '<p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>';
+    const flex = document.createElement('div');
+    flex.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
+    imgs.forEach(img => {
+      const w = document.createElement('div');
+      w.style.cssText = 'max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;';
+      const newImg = document.createElement('img');
+      newImg.src = img.src;
+      newImg.style.cssText = 'width:100%;max-height:280px;object-fit:contain;display:block;';
+      w.appendChild(newImg);
+      flex.appendChild(w);
+    });
+    imgCont.appendChild(flex);
   }
 
   // Esperar a que las imágenes carguen antes de imprimir
@@ -187,6 +187,7 @@ window.imprimirHojaTest = () => {
     setTimeout(() => {
       if (hist) hist.classList.remove('hidden');
       if (hv)   hv.classList.add('hidden');
+      imgCont?.remove();
     }, 500);
   };
 
