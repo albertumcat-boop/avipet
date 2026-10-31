@@ -137,54 +137,38 @@ window.imprimirHojaVacunas = () => {
 // IMPRIMIR HOJA DE TEST RÁPIDO
 // (con fecha de nacimiento incluida)
 // ─────────────────────────────────────────────
-window.imprimirHojaTest = async () => {
+window.imprimirHojaTest = () => {
   const sel = document.getElementById('selectorTipoFormato');
   if (sel) sel.value = 'test_rapido';
   window.cambiarTipoFormato('test_rapido');
 
   const hv   = document.getElementById('sectionHojaVacunas');
   const hist = document.getElementById('sectionHistoria');
-  const sec  = document.getElementById('sectionHojaTest');
 
-  if (sec)  sec.classList.add('hidden');
   if (hv)   hv.classList.remove('hidden');
   if (hist) hist.classList.add('hidden');
 
-  // Mismo patrón que imprimirDocumento en historia.js para printTestGallery
-  const galTestPrev  = document.getElementById('previewTestGallery');
-  const galTestPrint = document.getElementById('printTestGalleryVac');
-  const contT        = document.getElementById('printTestContVac');
-  const imgsT = galTestPrev ? galTestPrev.querySelectorAll('img') : [];
-  await Swal.fire({
-    icon: 'info',
-    title: 'DEBUG imprimirHojaTest',
-    html: `<p style="font-size:11px;text-align:left;">
-      galTestPrev: <b>${galTestPrev ? 'OK' : 'NULL'}</b><br>
-      galTestPrint: <b>${galTestPrint ? 'OK' : 'NULL'}</b><br>
-      contT: <b>${contT ? 'OK' : 'NULL'}</b><br>
-      imgs encontradas: <b>${imgsT.length}</b><br>
-      src[0]: <b>${imgsT[0]?.src?.substring(0,40) || 'ninguna'}</b>
-    </p>`,
-    confirmButtonText: 'OK — continuar',
-    confirmButtonColor: '#1d4ed8'
-  });
-
-  if (galTestPrev && galTestPrint && contT) {
-    galTestPrint.innerHTML = '';
-    imgsT.forEach(img => {
-      const w = document.createElement('div');
-      w.style.cssText = 'display:inline-block;max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;vertical-align:top;margin:4px;';
-      const newImg = document.createElement('img');
-      newImg.src = img.src;
-      newImg.className = 'foto-anexo';
-      newImg.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;';
-      w.appendChild(newImg);
-      galTestPrint.appendChild(w);
-    });
-    contT.classList.toggle('hidden', imgsT.length === 0);
-  }
+  // Copiar imágenes — mismo patrón que imprimirDocumento en historia.js
+  try {
+    const galTestPrev  = document.getElementById('previewTestGallery');
+    const galTestPrint = document.getElementById('printTestGalleryVac');
+    const contT        = document.getElementById('printTestContVac');
+    if (galTestPrev && galTestPrint && contT) {
+      galTestPrint.innerHTML = '';
+      const imgsT = galTestPrev.querySelectorAll('img');
+      imgsT.forEach(img => {
+        const w = document.createElement('div');
+        w.className = 'max-w-[45%] border border-slate-300 rounded-lg overflow-hidden';
+        w.innerHTML = `<img src="${img.src}" class="w-full h-auto max-h-[300px] object-contain foto-anexo">`;
+        galTestPrint.appendChild(w);
+      });
+      contT.classList.toggle('hidden', imgsT.length === 0);
+    }
+  } catch(e) { console.warn('[imprimirHojaTest] imgs:', e); }
 
   const _cleanup = () => {
+    const contT = document.getElementById('printTestContVac');
+    const galTestPrint = document.getElementById('printTestGalleryVac');
     if (contT) contT.classList.add('hidden');
     if (galTestPrint) galTestPrint.innerHTML = '';
     if (hist) hist.classList.remove('hidden');
@@ -192,7 +176,7 @@ window.imprimirHojaTest = async () => {
     window.removeEventListener('afterprint', _cleanup);
   };
   window.addEventListener('afterprint', _cleanup);
-  window.print();
+  setTimeout(() => window.print(), 500);
 };
 
 // ─────────────────────────────────────────────
@@ -452,7 +436,7 @@ window.imprimirHojaTestSeguro = async () => {
   window.cambiarTipoFormato('test_rapido');
   const sel = document.getElementById('selectorTipoFormato');
   if (sel) sel.value = 'test_rapido';
-  await window.imprimirHojaTest();
+  window.imprimirHojaTest();
 };
 
 // ─── ABRIR HOJA DE VACUNAS DESDE BUSCADOR ───────────────────
@@ -484,4 +468,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
 };
 
-console.log("✅ vacunas.js v13 — imprimirHojaVacunasSeguro enruta segun formato selector");
+console.log("✅ vacunas.js v14 — imprimirHojaTest sync + setTimeout 500ms como historia.js");
