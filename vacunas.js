@@ -4,7 +4,7 @@
 
 import { db } from './firebase-config.js';
 import {
-  collection, getDocs, query, where, orderBy, limit
+  collection, getDocs, addDoc, query, where, orderBy, limit, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ─────────────────────────────────────────────
@@ -150,70 +150,50 @@ window.imprimirHojaTest = () => {
   if (hv)   hv.classList.remove('hidden');
   if (hist) hist.classList.add('hidden');
 
-  // Copiar imágenes del test al documento para que aparezcan al imprimir
-  const bloqTests = document.getElementById('bloqueTests');
-  const galPrev   = document.getElementById('previewTestGallery');
-  const imgs      = galPrev ? Array.from(galPrev.querySelectorAll('img')).filter(i => i.src && i.src !== window.location.href) : [];
+  // Usar beforeprint/afterprint para garantizar que imágenes estén en el DOM en el momento exacto
+  const _setupImgCont = () => {
+    const galPrev = document.getElementById('previewTestGallery');
+    const imgs    = galPrev ? Array.from(galPrev.querySelectorAll('img')).filter(i => i.src && !i.src.endsWith(window.location.href)) : [];
 
-  // Contenedor de imágenes: lo sacamos del bloqueTests (que tiene hidden) y lo ponemos directo en hv
-  let imgCont = document.getElementById('_testImgPrintCont');
-  if (!imgCont) {
-    imgCont = document.createElement('div');
-    imgCont.id = '_testImgPrintCont';
-  }
-  imgCont.style.cssText = 'display:block;text-align:center;margin-top:16px;page-break-inside:avoid;';
-  imgCont.innerHTML = '';
-  // Insertar ANTES del footer para que quede dentro del área de impresión
-  const hvFooter = hv?.querySelector('footer');
-  if (hvFooter) hv.insertBefore(imgCont, hvFooter);
-  else if (hv) hv.appendChild(imgCont);
+    let imgCont = document.getElementById('_testImgPrintCont');
+    if (!imgCont) {
+      imgCont = document.createElement('div');
+      imgCont.id = '_testImgPrintCont';
+    }
+    imgCont.style.cssText = 'display:block;text-align:center;margin-top:16px;page-break-inside:avoid;';
+    imgCont.innerHTML = '';
 
-  if (imgs.length > 0) {
-    imgCont.innerHTML = '<p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>';
-    const flex = document.createElement('div');
-    flex.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
-    imgs.forEach(img => {
-      const w = document.createElement('div');
-      w.style.cssText = 'max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;';
-      const newImg = document.createElement('img');
-      newImg.src = img.src;
-      newImg.style.cssText = 'width:100%;max-height:280px;object-fit:contain;display:block;';
-      w.appendChild(newImg);
-      flex.appendChild(w);
-    });
-    imgCont.appendChild(flex);
-  }
+    const hvFooter = hv?.querySelector('footer');
+    if (hvFooter) hv.insertBefore(imgCont, hvFooter);
+    else if (hv) hv.appendChild(imgCont);
 
-  // Esperar a que las imágenes carguen antes de imprimir
-  const _doPrint = () => {
-    window.print();
-    setTimeout(() => {
-      if (hist) hist.classList.remove('hidden');
-      if (hv)   hv.classList.add('hidden');
-      imgCont?.remove();
-    }, 500);
+    if (imgs.length > 0) {
+      imgCont.innerHTML = '<p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>';
+      const flex = document.createElement('div');
+      flex.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
+      imgs.forEach(img => {
+        const w = document.createElement('div');
+        w.style.cssText = 'max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;';
+        const newImg = document.createElement('img');
+        newImg.src = img.src;
+        newImg.style.cssText = 'width:100%;max-height:280px;object-fit:contain;display:block;';
+        w.appendChild(newImg);
+        flex.appendChild(w);
+      });
+      imgCont.appendChild(flex);
+    }
   };
 
-  if (imgs.length === 0) {
-    _doPrint();
-  } else {
-    // Verificar que todas las imágenes estén cargadas (importante para URLs de Firebase)
-    const allImgs = document.getElementById('_testImgPrintCont')?.querySelectorAll('img') || [];
-    let printed = false;
-    const safePrint = () => { if (!printed) { printed = true; _doPrint(); } };
-    let loaded = 0;
-    const total = allImgs.length;
-    if (total === 0) { safePrint(); return; }
-    allImgs.forEach(img => {
-      if (img.complete && img.naturalWidth > 0) { loaded++; }
-      else { img.onload = () => { loaded++; if (loaded >= total) safePrint(); }; img.onerror = () => { loaded++; if (loaded >= total) safePrint(); }; }
-    });
-    // Si todas ya estaban completas (data URLs), esperar 800ms para que el browser repinte
-    if (loaded >= total) { setTimeout(safePrint, 800); return; }
-    // Fallback: imprimir aunque no carguen todas (máximo 3s)
-    setTimeout(safePrint, 3000);
-  }
+  const _cleanup = () => {
+    document.getElementById('_testImgPrintCont')?.remove();
+    if (hist) hist.classList.remove('hidden');
+    if (hv)   hv.classList.add('hidden');
+    window.removeEventListener('afterprint', _cleanup);
+  };
 
+  window.addEventListener('afterprint', _cleanup);
+  _setupImgCont();
+  window.print();
 };
 
 // ─────────────────────────────────────────────
@@ -345,28 +325,67 @@ window.imprimirHojaVacunasSeguro = async () => {
 window.guardarTestRapido = async () => {
   const cedula  = document.getElementById('hCI')?.value.trim();
   const nombre  = document.getElementById('hNombre')?.value.trim();
-  if (!cedula || !nombre) {
-    // Si tiene datos en la tarjeta (modo directo), no hay historia que guardar — solo confirmar
-    const hvCedula = document.getElementById('hv_cedula')?.value.trim();
-    const hvPaciente = document.getElementById('hv_paciente')?.value.trim();
-    if (hvCedula && hvPaciente) {
-      // Datos cargados desde la tarjeta directa — no hay historia activa para guardar
-      await Swal.fire({ icon:'info', title:'Test sin historia vinculada', text:'Este test fue generado desde la tarjeta directa. Para guardarlo en Firestore, carga el paciente desde Historia Clínica. Puedes usar "Imprimir Certificado" sin necesidad de guardar.', confirmButtonColor:'#1d4ed8', confirmButtonText:'Entendido' });
-      return;
-    }
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Paciente no identificado',
-      text: 'Ingresa la cédula y el nombre de la mascota en Historia Clínica antes de guardar el test.',
-      confirmButtonColor: '#1d4ed8'
-    });
+
+  // Modo Historia Clínica activa — guardar dentro de la consulta
+  if (cedula && nombre) {
+    window._modoGuardarTest = true;
+    await window.guardarFirebase(false);
     return;
   }
-  window._modoGuardarTest = true;
-  await window.guardarFirebase(false);
+
+  // Modo tarjeta directa — los datos del paciente están en hv_*
+  const hvCedula    = document.getElementById('hv_cedula')?.value.trim();
+  const hvPaciente  = document.getElementById('hv_paciente')?.value.trim();
+
+  if (!hvCedula || !hvPaciente) {
+    await Swal.fire({ icon:'warning', title:'Paciente no identificado', text:'Ingresa la cédula del paciente en el campo CÉDULA del formulario.', confirmButtonColor:'#1d4ed8' });
+    return;
+  }
+
+  // Recoger filas de test del DOM
+  const filas = [];
+  document.querySelectorAll('#cuerpoTablaCertificado tr').forEach(tr => {
+    const antigenoEl = tr.querySelector('td:first-child span, td:first-child input');
+    const resultadoEl = tr.querySelector('.resultado-print');
+    const obsEl = tr.querySelector('.obs-print');
+    filas.push({
+      antigeno:   antigenoEl?.value?.trim() || antigenoEl?.textContent?.trim() || '',
+      resultado:  resultadoEl?.textContent?.trim() || '---',
+      observacion: obsEl?.textContent?.trim() || ''
+    });
+  });
+
+  const dVal = id => document.getElementById(id)?.value?.trim() || '';
+  const docData = {
+    tipo:         'test_rapido',
+    cedula:       hvCedula,
+    paciente:     hvPaciente,
+    propietario:  dVal('hv_propietario'),
+    telefono:     dVal('hv_telefono'),
+    direccion:    dVal('hv_direccion'),
+    especie:      dVal('hv_especie'),
+    raza:         dVal('hv_raza'),
+    edad:         dVal('hv_edad'),
+    sexo:         dVal('hv_sexo'),
+    color:        dVal('hv_color'),
+    peso:         dVal('hv_peso'),
+    fechaNacimiento: dVal('hv_fechaNacimiento'),
+    fecha:        dVal('hv_fecha') || new Date().toLocaleDateString('es-VE'),
+    doctor:       window.doctorVerificado || document.getElementById('dtNombre')?.textContent || 'Médico Veterinario',
+    tests:        filas,
+    fotoUrl:      document.getElementById('pUrlTest')?.value || '',
+    fechaGuardado: serverTimestamp()
+  };
+
+  try {
+    await addDoc(collection(db, 'tests_rapidos'), docData);
+    await Swal.fire({ icon:'success', title:'Test guardado', text:`Test de ${hvPaciente} guardado correctamente en Firestore.`, timer:2000, showConfirmButton:false });
+  } catch(e) {
+    console.error('[guardarTestRapido]', e);
+    await Swal.fire({ icon:'error', title:'Error al guardar', text: e.message, confirmButtonColor:'#1d4ed8' });
+  }
 };
 
-// ─── IMPRIMIR TEST — guarda automáticamente primero ──────
 // ─── IMPRIMIR TEST — solo imprime, sin guardar ni pedir forma de pago ───
 window.imprimirHojaTestSeguro = async () => {
   const hvCedula  = document.getElementById('hv_cedula')?.value.trim();
@@ -381,6 +400,39 @@ window.imprimirHojaTestSeguro = async () => {
     }
     _poblarCamposVacunaDesdeHistoria();
   }
+
+  // Si no hay doctor autenticado, ofrecer selector rápido antes de imprimir
+  if (!window.doctorVerificado) {
+    const res = await Swal.fire({
+      title: 'Médico Responsable',
+      text: 'Selecciona el médico que firma este certificado:',
+      input: 'select',
+      inputOptions: { 'Darwin Sandoval': 'DR. DARWIN SANDOVAL', 'Joan Silva': 'DR. JOAN SILVA', '': 'Continuar sin médico' },
+      inputPlaceholder: 'Selecciona...',
+      confirmButtonText: 'Continuar',
+      confirmButtonColor: '#1d4ed8',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar'
+    });
+    if (res.isDismissed) return;
+    if (res.value) {
+      // Poblar datos del doctor en el DOM temporalmente para la impresión
+      const DATOS = {
+        'Darwin Sandoval': { nombre: 'DR. DARWIN SANDOVAL', credenciales: 'MPPS: 12073 · CMVMIR: 444 · INSAI: 808119259834', telefono: '+58 412-388-5533' },
+        'Joan Silva':      { nombre: 'DR. JOAN SILVA',      credenciales: 'CMV: 830 · MSAS: 6567',                               telefono: '+58 412-759-7195' }
+      };
+      const d = DATOS[res.value];
+      if (d) {
+        const dtN = document.getElementById('dtNombre');
+        const dtC = document.getElementById('dtCredenciales');
+        const dtT = document.getElementById('dtTelefono');
+        if (dtN) dtN.textContent = d.nombre;
+        if (dtC) dtC.textContent = d.credenciales;
+        if (dtT) dtT.textContent = d.telefono;
+      }
+    }
+  }
+
   window.cambiarTipoFormato('test_rapido');
   const sel = document.getElementById('selectorTipoFormato');
   if (sel) sel.value = 'test_rapido';
@@ -416,4 +468,4 @@ window.abrirHojaVacunasDesdeBuscador = (consulta) => {
   set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
 };
 
-console.log("✅ vacunas.js v6 — abrirHojaVacunasDesdeBuscador, stand-by borrador, imprimir sin modal de pago");
+console.log("✅ vacunas.js v7 — beforeprint/afterprint para imágenes, selector de doctor, guardar desde tarjeta");
