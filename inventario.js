@@ -368,9 +368,101 @@ window.actualizarCostoInsumo = async (idInsumo, valor) => {
 
 window.eliminarInsumoIndividual=async(idInsumo,nombreInsumo)=>{const clave=prompt('Eliminar '+nombreInsumo+' - CLAVE MAESTRA:');if(!clave)return;await window._masterKeyReady;if(clave.trim()!==MASTER_KEY()){alert('Clave incorrecta.');return;}if(!confirm('Eliminar '+nombreInsumo+'. Confirmas?'))return;try{await deleteDoc(doc(db,'insumos_maestro',idInsumo));alert('Eliminado.');window.renderizarTablaInsumos();}catch(e){console.error(e);alert('Error: '+e.message);}};
 
-// INICIALIZAR BD 
+// REPARAR CATEGORÍAS — asigna categoria a todos los servicios sin ella
+window.repararCategorias = async () => {
+  function _cat(nombre) {
+    const n = nombre.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if (n.startsWith('VACUNA'))    return 'VACUNAS';
+    if (n.startsWith('CONSULTA'))  return 'CONSULTAS';
+    if (n.startsWith('ECOGRAFIA')) return 'ECOGRAFIA';
+    if (n.startsWith('EUTANASIA') || n.startsWith('OXIGENO') || n.startsWith('CIRUGIA')) return 'CIRUGIAS';
+    if (n.startsWith('HEMATOLOGIA') || n.startsWith('QUIMICA') || n.startsWith('EXAMEN') ||
+        n.startsWith('CITOLOGIA')   || n.startsWith('DESCARTE') || n.startsWith('DISTEMPER') ||
+        n.startsWith('PARVO')       || n.startsWith('FILARIA')   || n.startsWith('SIDA') ||
+        n.startsWith('TEST')        || n.startsWith('PERFIL')    || n.startsWith('RASPADO') ||
+        n.startsWith('REFERIDO')    || n.startsWith('TOMA DE MUESTRA')) return 'LABORATORIO';
+    return 'OTROS PROCEDIMIENTOS';
+  }
+  try {
+    Swal.fire({title:'Reparando categorías...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+    const snap = await getDocs(collection(db, 'servicios_maestro'));
+    const batch = (await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")).writeBatch(db);
+    let cnt = 0;
+    snap.forEach(d => {
+      const data = d.data();
+      if (!data.categoria) {
+        batch.update(d.ref, { categoria: _cat(d.id) });
+        cnt++;
+      }
+    });
+    if (cnt > 0) await batch.commit();
+    Swal.close();
+    Swal.fire({icon:'success', title:'Categorías reparadas', text:`${cnt} servicios actualizados.`, timer:2500, showConfirmButton:false});
+    window.renderizarTablaMaestra && window.renderizarTablaMaestra();
+  } catch(e) { Swal.close(); alert('Error: '+e.message); }
+};
+
+// INICIALIZAR BD
 window.inicializarBaseDeDatosCompleta=async()=>{const clave=prompt("CLAVE MAESTRA:");if(!clave)return;await window._masterKeyReady;if(clave.trim()!==MASTER_KEY()){alert("Clave incorrecta.");return;}if(!confirm("Inicializar catalogo de servicios en Firebase?"))return;
-const SERVICIOS_DEFAULT={"CONSULTA GENERAL":{precioVenta:30,porcDoc:40},"CONSULTA OFTALMOLOGICA":{precioVenta:80,porcDoc:12.5},"CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40},"ABSCESO":{precioVenta:25,porcDoc:50},"ECOGRAFIA":{precioVenta:30,porcDoc:40},"COLOCACION VIA":{precioVenta:15,porcDoc:50},"ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50},"TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50},"VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50},"VACUNA PUPPY":{precioVenta:40,porcDoc:50},"VACUNA ANTIRRABICA":{precioVenta:30,porcDoc:50},"VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50},"VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50},"VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50},"VACUNA BIOVETA":{precioVenta:60,porcDoc:50},"HEMATOLOGIA COMPLETA":{precioVenta:23,porcDoc:34.78},"QUIMICA SANGUINEA":{precioVenta:60,porcDoc:50},"DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50},"DISTEMPER":{precioVenta:35,porcDoc:50},"PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"FILARIASIS":{precioVenta:40,porcDoc:50},"SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50},"TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50},"HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50},"EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50},"CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50},"RASPADO PIEL":{precioVenta:10,porcDoc:50},"PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5},"EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50},"EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50},"EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50},"EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50},"REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50},"REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50},"REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50},"REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50},"REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50},"REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50},"CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40},"CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40},"CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40}};
+const SERVICIOS_DEFAULT={
+  "CONSULTA GENERAL":{precioVenta:30,porcDoc:40,categoria:"CONSULTAS"},
+  "CONSULTA OFTALMOLOGICA":{precioVenta:80,porcDoc:12.5,categoria:"CONSULTAS"},
+  "CONSULTA DE EMERGENCIA":{precioVenta:40,porcDoc:40,categoria:"CONSULTAS"},
+  "CONSULTA CAMADA 3-4 CACHORROS":{precioVenta:50,porcDoc:40,categoria:"CONSULTAS"},
+  "CONSULTA CAMADA HASTA 8 CACHORROS":{precioVenta:80,porcDoc:40,categoria:"CONSULTAS"},
+  "CONSULTA CAMADA MAS DE 8 CACHORROS":{precioVenta:100,porcDoc:40,categoria:"CONSULTAS"},
+  "ECOGRAFIA":{precioVenta:30,porcDoc:40,categoria:"ECOGRAFIA"},
+  "VACUNA SEXTUPLE":{precioVenta:40,porcDoc:50,categoria:"VACUNAS"},
+  "VACUNA PUPPY":{precioVenta:40,porcDoc:50,categoria:"VACUNAS"},
+  "VACUNA ANTIRRABICA":{precioVenta:30,porcDoc:50,categoria:"VACUNAS"},
+  "VACUNA KC (TOS DE LAS PERRERAS)":{precioVenta:45,porcDoc:50,categoria:"VACUNAS"},
+  "VACUNA TRIPLE FELINA":{precioVenta:45,porcDoc:50,categoria:"VACUNAS"},
+  "VACUNA QUINTUPLE FELINA":{precioVenta:50,porcDoc:50,categoria:"VACUNAS"},
+  "VACUNA BIOVETA":{precioVenta:60,porcDoc:50,categoria:"VACUNAS"},
+  "HEMATOLOGIA COMPLETA":{precioVenta:23,porcDoc:34.78,categoria:"LABORATORIO"},
+  "QUIMICA SANGUINEA":{precioVenta:60,porcDoc:50,categoria:"LABORATORIO"},
+  "DESCARTE HEMOPARASITO":{precioVenta:50,porcDoc:50,categoria:"LABORATORIO"},
+  "DISTEMPER":{precioVenta:35,porcDoc:50,categoria:"LABORATORIO"},
+  "PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50,categoria:"LABORATORIO"},
+  "FILARIASIS":{precioVenta:40,porcDoc:50,categoria:"LABORATORIO"},
+  "SIDA - LEUCEMIA":{precioVenta:40,porcDoc:50,categoria:"LABORATORIO"},
+  "TEST HELICOBACTER PYLORI AG":{precioVenta:40,porcDoc:50,categoria:"LABORATORIO"},
+  "HEMATOLOGIA + QUIMICA + HEMOPARASITOS":{precioVenta:110,porcDoc:50,categoria:"LABORATORIO"},
+  "EXAMEN DE HECES":{precioVenta:10,porcDoc:50,categoria:"LABORATORIO"},
+  "EXAMENES DE ORINA":{precioVenta:10,porcDoc:50,categoria:"LABORATORIO"},
+  "CITOLOGIA 1 OIDO":{precioVenta:15,porcDoc:50,categoria:"LABORATORIO"},
+  "CITOLOGIA 2 OIDOS":{precioVenta:20,porcDoc:50,categoria:"LABORATORIO"},
+  "CITOLOGIA FLUIDOS, SECRECIONES":{precioVenta:15,porcDoc:50,categoria:"LABORATORIO"},
+  "RASPADO PIEL":{precioVenta:10,porcDoc:50,categoria:"LABORATORIO"},
+  "PERFIL ANEMICO":{precioVenta:25,porcDoc:17.5,categoria:"LABORATORIO"},
+  "TOMA DE MUESTRA SANGRE":{precioVenta:10,porcDoc:50,categoria:"LABORATORIO"},
+  "DESCARTE HEMOPARASITO ANAP ERL FIL BAB":{precioVenta:60,porcDoc:50,categoria:"LABORATORIO"},
+  "REFERIDO: EXAMEN DE HECES":{precioVenta:10,porcDoc:50,categoria:"LABORATORIO"},
+  "REFERIDO: EXAMENES DE ORINA":{precioVenta:10,porcDoc:50,categoria:"LABORATORIO"},
+  "REFERIDO: CULTIVOS":{precioVenta:30,porcDoc:50,categoria:"LABORATORIO"},
+  "REFERIDO: DESCARTE HEMOPARASITO":{precioVenta:40,porcDoc:50,categoria:"LABORATORIO"},
+  "REFERIDO: DESCARTE HEMOPARASITO ANAP ERL":{precioVenta:55,porcDoc:50,categoria:"LABORATORIO"},
+  "REFERIDO: DISTEMPER":{precioVenta:35,porcDoc:50,categoria:"LABORATORIO"},
+  "REFERIDO: PARVOVIRUS - CORONAVIRUS":{precioVenta:35,porcDoc:50,categoria:"LABORATORIO"},
+  "EUTANASIA HASTA 5KG":{precioVenta:80,porcDoc:50,categoria:"CIRUGIAS"},
+  "EUTANASIA HASTA 15KG":{precioVenta:110,porcDoc:50,categoria:"CIRUGIAS"},
+  "EUTANASIA HASTA 25KG":{precioVenta:140,porcDoc:50,categoria:"CIRUGIAS"},
+  "EUTANASIA HASTA 35KG":{precioVenta:170,porcDoc:50,categoria:"CIRUGIAS"},
+  "ABSCESO":{precioVenta:25,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "COLOCACION VIA":{precioVenta:15,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "COLOCACION VIA PERDIDA":{precioVenta:20,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "ADMINISTRACION MEDICINA":{precioVenta:10,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "ASPIRADO GANGLIONAR":{precioVenta:20,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "CURA HERIDA TIPO 1":{precioVenta:20,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "CURA HERIDA TIPO 2":{precioVenta:30,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "CURA HERIDA TIPO 3":{precioVenta:40,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "INDUCCION ANESTESICA":{precioVenta:30,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "LIMPIEZA PROFUDA OIDOS":{precioVenta:15,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "QUITAR PUNTOS":{precioVenta:10,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"},
+  "CREMACION CON CENIZAS":{precioVenta:80,porcDoc:0,categoria:"OTROS PROCEDIMIENTOS"},
+  "DISPOSICION":{precioVenta:30,porcDoc:0,categoria:"OTROS PROCEDIMIENTOS"},
+  "KG ADICIONAL":{precioVenta:5,porcDoc:50,categoria:"OTROS PROCEDIMIENTOS"}
+};
 try{Swal.fire({title:'Inicializando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});let cnt=0;for(const[nombre,datos]of Object.entries(SERVICIOS_DEFAULT)){await setDoc(doc(db,"servicios_maestro",nombre),{...datos,actualizadoEn:serverTimestamp()},{merge:true});cnt++;}Swal.close();alert(`${cnt} servicios inicializados.`);window.renderizarTablaMaestra();}catch(e){Swal.close();console.error(e);alert("Error: "+e.message);}};
 
 // CAMBIAR SUB-TAB CONFIG 
