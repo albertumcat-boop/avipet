@@ -571,7 +571,8 @@ function _actualizarBadgeSesion() {
   }
 }
 
-window._actualizarBadgeSesion = _actualizarBadgeSesion;
+window._actualizarBadgeSesion  = _actualizarBadgeSesion;
+window._actualizarDatosDoctor  = _actualizarDatosDoctor;
 
 // ─── CONFIGURAR CLAVE MAESTRA (primera vez o cambio) ─────
 window.configurarClaveMaestra = async () => {
@@ -617,4 +618,4 @@ window.configurarClaveMaestra = async () => {
   }
 };
 
-console.log("✅ seguridad.js v6 — configurarClaveMaestra");
+console.log("✅ seguridad.js v7 — expone _actualizarDatosDoctor en window");

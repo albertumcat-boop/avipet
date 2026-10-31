@@ -922,6 +922,8 @@ window.addEventListener('DOMContentLoaded', () => {
         window.doctorActivoId = 'DR_JOAN';
       }
       _aplicarPermisoDoctor(true);
+      if (typeof window._actualizarDatosDoctor === 'function') window._actualizarDatosDoctor(_doctorGuardado);
+      if (typeof window._actualizarBadgeSesion === 'function') window._actualizarBadgeSesion();
       _bannerPendiente.remove();
       console.log('[AVIPET] Sesión del doctor reconfirmada:', _doctorGuardado);
     };
@@ -983,4 +985,4 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(() => { window.respaldarProgresoLocal?.(); }, 30000);
 });
 
-console.log("✅ main.js v15 — auto-backup 30s, banner offline/online");
+console.log("✅ main.js v16 — reconfirmación doctor llama _actualizarDatosDoctor");
