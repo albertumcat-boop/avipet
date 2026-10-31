@@ -909,6 +909,7 @@ window.guardarFirebase = async (imp) => {
       } catch(eInv) { console.warn("Error descontando stock:", eInv); }
     }
     localStorage.removeItem('respaldo_historia_activa');
+    window._limpiarBorradorVacuna?.(); // borrador vacuna/test anclado exitosamente
     if (window._modoGuardarTest) {
       window._modoGuardarTest = false;
       if (!window._modoAutoImprimir) {
@@ -916,9 +917,12 @@ window.guardarFirebase = async (imp) => {
       }
       window._modoAutoImprimir = false;
     } else {
-      if(imp) window.imprimirDocumento();
-      _limpiarFormularioHistoria();
-      _limpiarNotasInternas();
+      if(imp) {
+        window.imprimirDocumento(() => { _limpiarFormularioHistoria(); _limpiarNotasInternas(); });
+      } else {
+        _limpiarFormularioHistoria();
+        _limpiarNotasInternas();
+      }
     }
   }catch(e){
     console.error("Error guardando:",e);
@@ -1148,7 +1152,7 @@ window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emer
 window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
 
 // --- IMPRIMIR ---
-window.imprimirDocumento=()=>{
+window.imprimirDocumento=(onAfter)=>{
   const hTrat=document.getElementById('hTratamiento');
   const hPrint=document.getElementById('hTratamientoPrint');
   if(hTrat&&hPrint)hPrint.innerText=hTrat.value;
@@ -1174,6 +1178,7 @@ window.imprimirDocumento=()=>{
       contT.classList.toggle('hidden',imgsT.length===0);
     }
   }catch(e){console.warn(e);}
+  if(onAfter){const _cb=()=>{window.removeEventListener('afterprint',_cb);onAfter();};window.addEventListener('afterprint',_cb);}
   setTimeout(()=>window.print(),500);
 };
 window.imprimirRecetaLimpia=()=>{const texto=document.getElementById('hTratamiento')?.value||"";const paciente=document.getElementById('hNombre')?.value||"";const prop=document.getElementById('hProp')?.value||"";const urlExamen=document.getElementById('pUrlExamen')?.value||"";const win=window.open("","_blank","width=800,height=600");if(!win)return;win.document.write(`<html><head><title>Receta - AVIPET</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;}.header{border-bottom:3px solid #3b82f6;padding-bottom:10px;margin-bottom:20px;}h1{font-size:24px;margin:0;color:#1e3a8a;}.content{background:#f8fafc;padding:20px;border-radius:8px;border:1px solid #e2e8f0;min-height:200px;}pre{white-space:pre-wrap;font-size:14px;line-height:1.6;margin:0;}</style></head><body><div class="header"><h1>AVIPET - Centro Veterinario</h1><h2 style="font-size:13px;color:#64748b;margin:5px 0;">Paciente: <b>${paciente}</b> | Propietario: ${prop}</h2></div><div class="content"><pre>${texto}</pre></div>${urlExamen?`<div style="margin-top:20px;text-align:center;"><img src="${urlExamen}" style="max-width:350px;border-radius:10px;border:1px solid #ddd;"></div>`:''}<div style="margin-top:30px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #eee;padding-top:10px;">Documento generado por AVIPET.</div></body></html>`);win.document.close();win.onload=()=>setTimeout(()=>{win.focus();win.print();},300);};
@@ -1493,6 +1498,7 @@ window._cancelarModoReferido = () => {
 };
 
 function _limpiarFormularioHistoria() {
+  window._limpiarBorradorVacuna?.();
   // Resetear modo referido
   window._esConsultaReferida = false;
   document.getElementById('bannerModoReferido')?.remove();

@@ -138,8 +138,6 @@ window.imprimirHojaVacunas = () => {
 // (con fecha de nacimiento incluida)
 // ─────────────────────────────────────────────
 window.imprimirHojaTest = () => {
-  // Usar sectionHojaVacunas con formato test_rapido — mismo mecanismo que funciona para vacunas.
-  // guardarFirebase ya pobló los campos hv_* antes de llamar esta función.
   const sel = document.getElementById('selectorTipoFormato');
   if (sel) sel.value = 'test_rapido';
   window.cambiarTipoFormato('test_rapido');
@@ -152,30 +150,137 @@ window.imprimirHojaTest = () => {
   if (hv)   hv.classList.remove('hidden');
   if (hist) hist.classList.add('hidden');
 
-  window.print();
+  // Copiar imágenes del test al documento para que aparezcan al imprimir
+  const bloqTests = document.getElementById('bloqueTests');
+  const galPrev   = document.getElementById('previewTestGallery');
+  const imgs      = galPrev ? Array.from(galPrev.querySelectorAll('img')).filter(i => i.src && i.src !== window.location.href) : [];
 
-  setTimeout(() => {
-    if (hist) hist.classList.remove('hidden');
-    if (hv)   hv.classList.add('hidden');
-  }, 500);
+  if (bloqTests) {
+    let imgCont = document.getElementById('_testImgPrintCont');
+    if (!imgCont) {
+      imgCont = document.createElement('div');
+      imgCont.id = '_testImgPrintCont';
+      imgCont.style.cssText = 'text-align:center;margin-top:10px;page-break-inside:avoid;';
+      bloqTests.appendChild(imgCont);
+    }
+    imgCont.innerHTML = '';
+    if (imgs.length > 0) {
+      imgCont.innerHTML = '<p style="font-size:10px;font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Evidencia / Cassette</p>';
+      const flex = document.createElement('div');
+      flex.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
+      imgs.forEach(img => {
+        const w = document.createElement('div');
+        w.style.cssText = 'max-width:45%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;';
+        const newImg = document.createElement('img');
+        newImg.src = img.src;
+        newImg.style.cssText = 'width:100%;max-height:280px;object-fit:contain;display:block;';
+        w.appendChild(newImg);
+        flex.appendChild(w);
+      });
+      imgCont.appendChild(flex);
+    }
+  }
 
+  // Esperar a que las imágenes carguen antes de imprimir
+  const _doPrint = () => {
+    window.print();
+    setTimeout(() => {
+      if (hist) hist.classList.remove('hidden');
+      if (hv)   hv.classList.add('hidden');
+    }, 500);
+  };
+
+  if (imgs.length === 0) {
+    _doPrint();
+  } else {
+    // Verificar que todas las imágenes estén cargadas (importante para URLs de Firebase)
+    const allImgs = document.getElementById('_testImgPrintCont')?.querySelectorAll('img') || [];
+    let printed = false;
+    const safePrint = () => { if (!printed) { printed = true; _doPrint(); } };
+    let loaded = 0;
+    const total = allImgs.length;
+    if (total === 0) { safePrint(); return; }
+    allImgs.forEach(img => {
+      if (img.complete && img.naturalWidth > 0) { loaded++; if (loaded >= total) safePrint(); }
+      else { img.onload = () => { loaded++; if (loaded >= total) safePrint(); }; img.onerror = () => { loaded++; if (loaded >= total) safePrint(); }; }
+    });
+    // Fallback: imprimir aunque no carguen todas (máximo 3s)
+    setTimeout(safePrint, 3000);
+  }
+
+};
+
+// ─────────────────────────────────────────────
+// PERSISTENCIA STAND-BY DE VACUNA/TEST
+// Los datos quedan en DOM y en localStorage hasta que guardarFirebase los ancle
+// ─────────────────────────────────────────────
+function _guardarBorradorVacuna(tipo) {
+  try {
+    const dVal = (id) => document.getElementById(id)?.value || '';
+    const campos = {};
+    ['hv_cedula','hv_paciente','hv_propietario','hv_especie','hv_raza',
+     'hv_edad','hv_sexo','hv_color','hv_peso','hv_telefono',
+     'hv_direccion','hv_fechaNacimiento','hv_fecha'].forEach(id => { campos[id] = dVal(id); });
+    // Capturar filas de tests si aplica
+    if (tipo === 'test') {
+      const filas = [];
+      document.querySelectorAll('#bloqueTests .fila-test').forEach(fila => {
+        filas.push(fila.outerHTML);
+      });
+      campos._filasTest = filas;
+    }
+    // Capturar filas de vacunas si aplica
+    if (tipo === 'vacuna') {
+      const filas = [];
+      document.querySelectorAll('#bloqueVacunas .fila-vacuna').forEach(fila => {
+        filas.push(fila.outerHTML);
+      });
+      campos._filasVacuna = filas;
+    }
+    campos._tipo = tipo;
+    campos._ts   = Date.now();
+    localStorage.setItem('avipet_borrador_vacuna', JSON.stringify(campos));
+  } catch(e) { console.warn('[borrador vacuna]', e); }
+}
+
+function _mostrarBadgePendiente() {
+  if (document.getElementById('_badgePendienteVacuna')) return;
+  const badge = document.createElement('div');
+  badge.id = '_badgePendienteVacuna';
+  badge.style.cssText = 'position:fixed;bottom:70px;right:16px;z-index:9000;background:#f59e0b;color:#fff;padding:8px 14px;border-radius:12px;font-size:10px;font-weight:900;text-transform:uppercase;box-shadow:0 4px 16px rgba(0,0,0,.25);cursor:pointer;';
+  badge.innerHTML = '📋 Vacunación/Test en stand-by<br><span style="font-size:9px;font-weight:600;opacity:.85;">Se ancla al guardar la historia</span>';
+  badge.onclick = () => { document.getElementById('sectionHojaVacunas')?.classList.remove('hidden'); document.getElementById('sectionHistoria')?.classList.add('hidden'); };
+  document.body.appendChild(badge);
+}
+
+window._limpiarBorradorVacuna = () => {
+  localStorage.removeItem('avipet_borrador_vacuna');
+  document.getElementById('_badgePendienteVacuna')?.remove();
 };
 
 // ─────────────────────────────────────────────
 // VOLVER A HISTORIA
 // ─────────────────────────────────────────────
 window.volverAHistoriaDesdeTest = () => {
+  const tipo = document.getElementById('selectorTipoFormato')?.value === 'test_rapido' ? 'test' : 'vacuna';
+  _guardarBorradorVacuna(tipo);
   document.getElementById('sectionHojaTest')?.classList.add('hidden');
-  const hist = document.getElementById('sectionHistoria');
-  if (hist) hist.classList.remove('hidden');
-  else if (typeof window.showTab === 'function') window.showTab('historia');
-};
-
-window.volverAHistoriaDesdeVacunas = () => {
   document.getElementById('sectionHojaVacunas')?.classList.add('hidden');
   const hist = document.getElementById('sectionHistoria');
   if (hist) hist.classList.remove('hidden');
   else if (typeof window.showTab === 'function') window.showTab('historia');
+  _mostrarBadgePendiente();
+  Swal?.fire({ icon:'success', title:'Datos en stand-by', text:'Se anclarán automáticamente al guardar la historia clínica.', timer:2000, showConfirmButton:false, toast:true, position:'bottom-end' });
+};
+
+window.volverAHistoriaDesdeVacunas = () => {
+  _guardarBorradorVacuna('vacuna');
+  document.getElementById('sectionHojaVacunas')?.classList.add('hidden');
+  const hist = document.getElementById('sectionHistoria');
+  if (hist) hist.classList.remove('hidden');
+  else if (typeof window.showTab === 'function') window.showTab('historia');
+  _mostrarBadgePendiente();
+  Swal?.fire({ icon:'success', title:'Datos en stand-by', text:'Se anclarán automáticamente al guardar la historia clínica.', timer:2000, showConfirmButton:false, toast:true, position:'bottom-end' });
 };
 
 // ─── BORRAR FECHA DE NACIMIENTO ───
@@ -191,26 +296,41 @@ window.borrarFechaNacVacuna = () => {
   el.dispatchEvent(new Event('change'));
 };
 
-// ─── IMPRIMIR VACUNAS — guarda automáticamente primero ───
+// ─── HELPER: copiar campos de historia a tarjeta sin cambiar vista ───
+function _poblarCamposVacunaDesdeHistoria() {
+  const dVal = (id) => document.getElementById(id)?.value?.trim() || "";
+  const set  = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+  set('hv_propietario',    dVal('hProp'));
+  set('hv_cedula',         dVal('hCI'));
+  set('hv_telefono',       dVal('hTlf'));
+  set('hv_direccion',      dVal('hDir'));
+  set('hv_especie',        dVal('hEspecie'));
+  set('hv_raza',           dVal('hRaza'));
+  set('hv_paciente',       dVal('hNombre'));
+  set('hv_edad',           dVal('hEdad'));
+  set('hv_sexo',           dVal('hSexo'));
+  set('hv_color',          dVal('hColor'));
+  set('hv_peso',           dVal('hPeso'));
+  set('hv_fechaNacimiento',dVal('hFechaNac'));
+  if (!document.getElementById('hv_fecha')?.value) {
+    const f = new Date();
+    set('hv_fecha', `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()}`);
+  }
+}
+
+// ─── IMPRIMIR VACUNAS — solo imprime, sin guardar ni pedir forma de pago ───
 window.imprimirHojaVacunasSeguro = async () => {
+  const hvCedula  = document.getElementById('hv_cedula')?.value.trim();
+  const hvPaciente = document.getElementById('hv_paciente')?.value.trim();
   const cedula = document.getElementById('hCI')?.value.trim();
   const nombre = document.getElementById('hNombre')?.value.trim();
-  if (!cedula || !nombre) {
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Paciente no identificado',
-      text: 'Ingresa la cédula y el nombre de la mascota en Historia Clínica antes de imprimir.',
-      confirmButtonColor: '#1d4ed8'
-    });
-    return;
-  }
-  window._modoGuardarTest = true;
-  window._modoAutoImprimir = true;
-  await window.guardarFirebase(false);
-  if (window._modoGuardarTest) { // sigue true = save falló (early return)
-    window._modoGuardarTest = false;
-    window._modoAutoImprimir = false;
-    return;
+
+  if (!hvCedula && !hvPaciente) {
+    if (!cedula || !nombre) {
+      await Swal.fire({ icon:'warning', title:'Paciente no identificado', text:'Carga el paciente desde Historia Clínica primero.', confirmButtonColor:'#1d4ed8' });
+      return;
+    }
+    _poblarCamposVacunaDesdeHistoria();
   }
   window.imprimirHojaVacunas();
 };
@@ -240,39 +360,24 @@ window.guardarTestRapido = async () => {
 };
 
 // ─── IMPRIMIR TEST — guarda automáticamente primero ──────
+// ─── IMPRIMIR TEST — solo imprime, sin guardar ni pedir forma de pago ───
 window.imprimirHojaTestSeguro = async () => {
+  const hvCedula  = document.getElementById('hv_cedula')?.value.trim();
+  const hvPaciente = document.getElementById('hv_paciente')?.value.trim();
   const cedula = document.getElementById('hCI')?.value.trim();
   const nombre = document.getElementById('hNombre')?.value.trim();
 
-  // Si los campos de historia están vacíos pero la tarjeta tiene datos (autocompletado directo), imprimir sin guardar
-  if (!cedula || !nombre) {
-    const hvCedula  = document.getElementById('hv_cedula')?.value.trim();
-    const hvPaciente = document.getElementById('hv_paciente')?.value.trim();
-    if (hvCedula && hvPaciente) {
-      // Tiene datos en la tarjeta — imprimir directamente en modo test_rapido
-      window.cambiarTipoFormato('test_rapido');
-      const sel = document.getElementById('selectorTipoFormato');
-      if (sel) sel.value = 'test_rapido';
-      window.imprimirHojaTest();
+  if (!hvCedula && !hvPaciente) {
+    if (!cedula || !nombre) {
+      await Swal.fire({ icon:'warning', title:'Paciente no identificado', text:'Ingresa la cédula en el campo CÉDULA de la tarjeta o carga el paciente desde Historia Clínica.', confirmButtonColor:'#1d4ed8' });
       return;
     }
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Paciente no identificado',
-      text: 'Ingresa la cédula en el campo CÉDULA de la tarjeta y espera el autocompletado, o carga el paciente desde Historia Clínica.',
-      confirmButtonColor: '#1d4ed8'
-    });
-    return;
+    _poblarCamposVacunaDesdeHistoria();
   }
-  window._modoGuardarTest = true;
-  window._modoAutoImprimir = true;
-  await window.guardarFirebase(false);
-  if (window._modoGuardarTest) { // sigue true = save falló (early return)
-    window._modoGuardarTest = false;
-    window._modoAutoImprimir = false;
-    return;
-  }
+  window.cambiarTipoFormato('test_rapido');
+  const sel = document.getElementById('selectorTipoFormato');
+  if (sel) sel.value = 'test_rapido';
   window.imprimirHojaTest();
 };
 
-console.log("✅ vacunas.js v3 cargado — guardarTestRapido sin borrar historia");
+console.log("✅ vacunas.js v5 — stand-by borrador, imprimir sin modal de pago, imágenes test en print");

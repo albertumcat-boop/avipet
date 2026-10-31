@@ -3,7 +3,7 @@
 import { db } from './firebase-config.js';
 import {
  collection, addDoc, doc, getDoc, setDoc, updateDoc,
- deleteDoc, getDocs, query, where, orderBy, serverTimestamp, onSnapshot
+ deleteDoc, getDocs, query, where, orderBy, serverTimestamp, onSnapshot, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const MASTER_KEY = () => window.MASTER_KEY_SISTEMA;
@@ -386,7 +386,7 @@ window.repararCategorias = async () => {
   try {
     Swal.fire({title:'Reparando categorías...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
     const snap = await getDocs(collection(db, 'servicios_maestro'));
-    const batch = (await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")).writeBatch(db);
+    const batch = writeBatch(db);
     let cnt = 0;
     snap.forEach(d => {
       const correcta = _cat(d.id);
@@ -588,7 +588,7 @@ window._asociarInsumoAServicios = async (nombre, costo) => {
   if (cnt>0) await Swal.fire({icon:'success',title:'Listo',html:'<b>'+nombre+'</b> agregado a <b>'+cnt+'</b> servicio(s)',timer:2000,showConfirmButton:false});
  } catch(e){console.warn('Error asociando insumo:',e);}
 };
-console.log(" inventario.js v12 -- agregar insumo con selector de servicios");
+console.log(" inventario.js v13 -- writeBatch importado estaticamente, repararCategorias fix");
 
 // =========================================================
 // AJUSTE POR CONTEO FÍSICO

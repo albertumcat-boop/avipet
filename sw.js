@@ -4,7 +4,7 @@
 // Garantiza que la app cargue offline y que el respaldo localStorage sea leíble
 // =========================================================
 
-const CACHE_V = 'avipet-v104';
+const CACHE_V = 'avipet-v110';
 
 const APP_SHELL = [
   '/',
@@ -95,17 +95,37 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Demás archivos propios: cache-first con actualización en background
+  // Demás archivos propios: network-first para JS/CSS (deploys inmediatos), cache-first para el resto
+  const esScript = event.request.url.match(/\.(js|css)(\?|$)/);
+  if (esScript) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_V).then(c => c.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
   event.respondWith(
     caches.open(CACHE_V).then(async cache => {
       const cached = await cache.match(event.request);
-      const networkFetch = fetch(event.request).then(response => {
-        if (response && response.ok && event.request.method === 'GET') {
-          cache.put(event.request, response.clone());
+      if (cached) {
+        // Actualizar en background sin bloquear
+        fetch(event.request).then(response => {
+          if (response && response.ok) cache.put(event.request, response);
+        }).catch(() => {});
+        return cached;
+      }
+      return fetch(event.request).then(response => {
+        if (response && response.ok) {
+          const clone = response.clone();
+          cache.put(event.request, clone);
         }
         return response;
       }).catch(() => null);
-      return cached || networkFetch;
     })
   );
 });

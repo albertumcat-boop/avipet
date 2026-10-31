@@ -53,7 +53,7 @@
  .animate-fadeIn { animation:fadeIn .3s ease-out; }
  @media print {
  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
- .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print):not(.obs-print):not(#datosDoctorTest):not(#hTratamientoPrint):not(#printExamenCont):not(#printTestCont),#hTratamiento,.no-imprimir,#btnFacturacionFloat { display:none !important; }
+ .no-print,button,nav,#loginSection,.finanzas-ocultar,.menu-desplegable,.hidden:not(.resultado-print):not(.obs-print):not(#datosDoctorTest):not(#hTratamientoPrint),#hTratamiento,.no-imprimir,#btnFacturacionFloat { display:none !important; }
  #hTratamientoPrint { display:block !important; }
  span.resultado-print { display:inline !important; visibility:visible !important; }
  .obs-print { display:block !important; visibility:visible !important; }
@@ -67,7 +67,7 @@
  input,textarea,select { border:none !important; box-shadow:none !important; background:transparent !important; color:black !important; font-weight:bold !important; }
  .print\:hidden { display:none !important; }
  .resultado-print { display:inline !important; }
- #printExamenCont,#printTestCont { display:block !important; page-break-inside:avoid; margin-top:8px; text-align:center; }
+ #printExamenCont:not(.hidden),#printTestCont:not(.hidden) { display:block !important; page-break-inside:avoid; margin-top:8px; text-align:center; }
  .foto-anexo { max-width:100% !important; max-height:350px !important; object-fit:contain; border:1px solid #e2e8f0; border-radius:12px; }
  body { background-color:white !important; margin:0.3cm !important; }
  }
