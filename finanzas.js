@@ -674,7 +674,7 @@ window.mostrarDashboardPelu = async () => {
       const a1=parseFloat(r.pagoAyudante1||0);
       const ax=parseFloat(r.pagoAyudanteExtra||0);
       const n=parseFloat(r.ingresoAvipet||0);
-      const ca=parseFloat(r.cargoAdmin||0);
+      const ca=parseFloat(r.cargoAdmin||0) || parseFloat((precio*0.12).toFixed(2));
       bruto+=precio; pPelu+=pa; pAyu1+=a1; pAyuExt+=ax; neto+=n; totalAdmin+=ca;
       // IVA 16% extraído (÷1.16) — aplica a peluquera, avipet split y ayu. extra (no a ayu. principal ni a cargo admin)
       ivaFeePeluquera  += pa - (pa / (1 + IVA_PELU));
@@ -1299,7 +1299,7 @@ window.verResumenSemanalPelu = async () => {
       const modoPagoR = r.modoPago || 'usd';
       const esCashea = modoPagoR === 'cashea';
 
-      const adminAmtMes = parseFloat(r.cargoAdmin||0);
+      const adminAmtMes = parseFloat(r.cargoAdmin||0) || parseFloat((precio*0.12).toFixed(2));
       totalBruto    += precio;
       totalPelu     += pagPelu;
       totalAyuExt   += pagAx;
@@ -1344,7 +1344,7 @@ window.verResumenSemanalPelu = async () => {
       }
 
       const peluBruto   = pagPelu;
-      const adminAmt    = parseFloat(r.cargoAdmin || 0);
+      const adminAmt    = parseFloat(r.cargoAdmin || 0) || parseFloat((precio*0.12).toFixed(2));
       const colorEst = pagado ? '#16a34a' : '#dc2626';
 
       // Celda Miguelina con descuentos visibles
