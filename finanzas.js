@@ -1668,7 +1668,7 @@ window._abonarDeuda = async function(personaId, totalDeuda) {
     }
   });
 
-  if (!isConfirmed || !montoStr) return;
+  if (!isConfirmed || !montoStr || isNaN(parseFloat(montoStr))) return;
   const abono = parseFloat(montoStr);
 
   try {
@@ -1682,6 +1682,10 @@ window._abonarDeuda = async function(personaId, totalDeuda) {
       }
     });
     docs.sort((a,b) => a.fecha - b.fecha);
+
+    if (docs.length === 0) {
+      return Swal.fire({ icon:'warning', title:'Sin deudas registradas', text:'No se encontraron deudas pendientes para '+nombre+' en el sistema.', confirmButtonColor:'#f59e0b' });
+    }
 
     const batch = writeBatch(db);
     let restante = abono;
