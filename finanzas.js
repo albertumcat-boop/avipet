@@ -1308,10 +1308,11 @@ window.verResumenSemanalPelu = async () => {
       if (!pagado) pendiente += precio;
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
-      // Descuentos por renglón
-      const peluIVA    = parseFloat((pagPelu - pagPelu / (1 + IVA_PELU)).toFixed(2));
-      const peluCashea = esCashea ? parseFloat((pagPelu * CASHEA_FEE).toFixed(2)) : 0;
-      const peluNeto   = parseFloat((pagPelu - peluIVA - peluCashea).toFixed(2));
+      // Descuentos por renglón — IVA sobre neto real (bruto − pago a ayu1)
+      const pagPeluNet = parseFloat((pagPelu - pagA1).toFixed(2));
+      const peluIVA    = parseFloat((pagPeluNet - pagPeluNet / (1 + IVA_PELU)).toFixed(2));
+      const peluCashea = esCashea ? parseFloat((pagPeluNet * CASHEA_FEE).toFixed(2)) : 0;
+      const peluNeto   = parseFloat((pagPeluNet - peluIVA - peluCashea).toFixed(2));
 
       const axIVA      = parseFloat((pagAx - pagAx / (1 + IVA_PELU)).toFixed(2));
       const axCashea   = esCashea ? parseFloat((pagAx * CASHEA_FEE).toFixed(2)) : 0;
@@ -1460,23 +1461,28 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 6px 0;letter-spacing:.05em;">Distribución del equipo</p>';
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">';
 
-    // Miguelina
-    const totalNetoPeluModal = totalPelu - totalIvaPelu - totalCasheaPelu;
+    // Miguelina — neto real = bruto − Adriani − IVA − Cashea
+    const ayu1Total = perrosConAyu * 2;
+    const totalNetoPeluModal = totalPelu - ayu1Total - totalIvaPelu - totalCasheaPelu;
+    const tasa = parseFloat(window.tasaDolarHoy) || 1;
     htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 4px 0;">Miguelina</p>';
     if (totalPeluUSD > 0 && totalPeluBS > 0) {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$'+totalPeluUSD.toFixed(2)+' USD</p>';
-      htmlModal += '<p style="font-size:15px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalPeluBS.toFixed(2)+' en Bs</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalPeluBS.toFixed(2)+' USD en Bs</p>';
+      htmlModal += '<p style="font-size:10px;font-weight:700;color:#b45309;margin:1px 0;">≈ Bs '+(totalPeluBS*tasa).toFixed(2)+' (tasa '+tasa.toFixed(2)+')</p>';
     } else if (totalPeluBS > 0) {
-      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalPeluBS.toFixed(2)+' en Bs</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalNetoPeluModal.toFixed(2)+' USD en Bs</p>';
+      htmlModal += '<p style="font-size:12px;font-weight:700;color:#b45309;margin:1px 0;">≈ Bs '+(totalNetoPeluModal*tasa).toFixed(2)+' (tasa '+tasa.toFixed(2)+')</p>';
     } else {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$'+totalNetoPeluModal.toFixed(2)+' USD</p>';
     }
     htmlModal += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #ddd6fe;">';
     htmlModal += '<p style="font-size:8px;color:#64748b;margin:1px 0;">Split bruto: <b>$'+totalPelu.toFixed(2)+'</b></p>';
-    if (perrosConAyu>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−Ayudante x'+perrosConAyu+': <b>−$'+(perrosConAyu*2).toFixed(2)+'</b></p>';
-    if (totalIvaPelu>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−IVA (÷1.16): <b>−$'+totalIvaPelu.toFixed(2)+'</b></p>';
+    if (perrosConAyu>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−Ayudante x'+perrosConAyu+': <b>−$'+ayu1Total.toFixed(2)+'</b></p>';
+    if (totalIvaPelu>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−IVA (÷1.16 sobre neto): <b>−$'+totalIvaPelu.toFixed(2)+'</b></p>';
     if (totalCasheaPelu>0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:1px 0;">−Cashea 10%: <b>−$'+totalCasheaPelu.toFixed(2)+'</b></p>';
+    htmlModal += '<p style="font-size:9px;font-weight:900;color:#7c3aed;margin:3px 0 0 0;">Neto: <b>$'+totalNetoPeluModal.toFixed(2)+'</b></p>';
     htmlModal += '</div>';
     htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e', 'peluquera');
     htmlModal += '</div>';
