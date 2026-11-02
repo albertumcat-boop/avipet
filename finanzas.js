@@ -1299,11 +1299,11 @@ window.verResumenSemanalPelu = async () => {
       const modoPagoR = r.modoPago || 'usd';
       const esCashea = modoPagoR === 'cashea';
 
-      // IVA y Cashea sobre bruto total; Admin sobre neto post-IVA-Cashea
-      const ivaRec     = parseFloat((precio - precio / (1 + IVA_PELU)).toFixed(2));
-      const casheaRec  = esCashea ? parseFloat((precio * CASHEA_FEE).toFixed(2)) : 0;
+      // IVA, Cashea y Admin extraídos como fees incluidos en el precio (÷1.16, ÷1.10, ÷1.12)
+      const ivaRec     = parseFloat((precio - precio / 1.16).toFixed(2));
+      const casheaRec  = esCashea ? parseFloat((precio - precio / 1.10).toFixed(2)) : 0;
       const netoPostIC = parseFloat((precio - ivaRec - casheaRec).toFixed(2));
-      const adminAmtMes= parseFloat((netoPostIC * 0.12).toFixed(2));
+      const adminAmtMes= parseFloat((netoPostIC - netoPostIC / 1.12).toFixed(2));
 
       totalBruto    += precio;
       totalPelu     += pagPelu;
@@ -1453,12 +1453,12 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:17px;font-weight:900;color:#1e293b;margin:2px 0;font-family:monospace;">$'+totalBruto.toFixed(2)+'</p>';
     htmlModal += '</div>';
     htmlModal += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#b45309;text-transform:uppercase;margin:0;">−IVA 16% (÷1.16)</p>';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#b45309;text-transform:uppercase;margin:0;">−IVA 16% extraído ÷1.16</p>';
     htmlModal += '<p style="font-size:17px;font-weight:900;color:#b45309;margin:2px 0;font-family:monospace;">−$'+totalIvaGlobalMes.toFixed(2)+'</p>';
     htmlModal += '<p style="font-size:7px;color:#92400e;margin:0;">sobre bruto</p>';
     htmlModal += '</div>';
     htmlModal += '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0;">−Cashea 10%</p>';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0;">−Cashea 10% extraído ÷1.10</p>';
     htmlModal += '<p style="font-size:17px;font-weight:900;color:#7c3aed;margin:2px 0;font-family:monospace;">−$'+totalCasheaGlobalMes.toFixed(2)+'</p>';
     htmlModal += '<p style="font-size:7px;color:#7c3aed;margin:0;">sobre bruto</p>';
     htmlModal += '</div></div>';
@@ -1467,7 +1467,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#ea580c;text-transform:uppercase;margin:0;">−12% Admin</p>';
     htmlModal += '<p style="font-size:17px;font-weight:900;color:#ea580c;margin:2px 0;font-family:monospace;">−$'+totalAdminMes.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#fb923c;margin:0;">post IVA+Cashea</p>';
+    htmlModal += '<p style="font-size:7px;color:#fb923c;margin:0;">extraído ÷1.12</p>';
     htmlModal += '</div>';
     htmlModal += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Distribuible</p>';
