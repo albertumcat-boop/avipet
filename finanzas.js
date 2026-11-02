@@ -1090,11 +1090,11 @@ window.editarRegistroPelu = async (idDoc) => {
   else if (tieneAyu1) modoActual = 'pelu_ayu1';
 
   const modos = [
-    { val:'solo_pelu',      label:'Solo Peluquera',                        desc:'Pelu 40% / Avipet 60%' },
-    { val:'pelu_ayu1',      label:'Peluquera + Adriani',                   desc:'(Pelu 40%-$1) / Adriani $2 / (Avipet 60%-$1)' },
-    { val:'extra_solo',     label:'Daniel SOLO (sin Adriani)',              desc:'Daniel 40% / Avipet 60%' },
-    { val:'extra_con_ayu1', label:'Daniel + Adriani',                      desc:'(Daniel 40%-$1) / Adriani $2 / (Avipet 60%-$1)' },
-    { val:'tridente',       label:'Tridente (Pelu + Daniel + Avipet)',      desc:'33.33% c/u (sin Adriani)' },
+    { val:'solo_pelu',      label:'Solo Peluquera',                        desc:'−12% admin · Pelu 50% / Avipet 50%' },
+    { val:'pelu_ayu1',      label:'Peluquera + Adriani',                   desc:'−12% admin · (Pelu+$2)/2 · Adriani $2 · (Avipet−$2)/2' },
+    { val:'extra_solo',     label:'Daniel SOLO (sin Adriani)',              desc:'−12% admin · Daniel 50% / Avipet 50%' },
+    { val:'extra_con_ayu1', label:'Daniel + Adriani',                      desc:'−12% admin · (Daniel+$2)/2 · Adriani $2 · (Avipet−$2)/2' },
+    { val:'tridente',       label:'Tridente (Pelu + Daniel + Avipet)',      desc:'−12% admin · Pelu 1/3 · Daniel 1/3 · Avipet 1/3' },
   ];
 
   const opsModo = modos.map(m =>
@@ -1514,12 +1514,22 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += _desglosDeuda(ayu1USD, ayu1BS, deudasEquipo['ayu1']||0, '#2563eb', '#92400e', 'ayu1');
     htmlModal += '</div>';
     if (hayExtra) {
+      const totalNetoExtModal = totalAyuExt - totalIvaExt - totalCasheaExt;
       htmlModal += '<div style="background:#fff7ed;border-radius:10px;padding:8px;border:2px solid #fed7aa;">';
       htmlModal += '<p style="font-size:8px;font-weight:900;color:#ea580c;text-transform:uppercase;margin:0;">Daniel (extra)</p>';
-      if (totalAyuExtUSD>0) htmlModal += '<p style="font-size:16px;font-weight:900;color:#ea580c;margin:2px 0;">$'+totalAyuExtUSD.toFixed(2)+' USD</p>';
-      if (totalAyuExtBS>0)  htmlModal += '<p style="font-size:14px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalAyuExtBS.toFixed(2)+' Bs</p>';
-      if (totalIvaExt>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:2px 0;">−IVA: −$'+totalIvaExt.toFixed(2)+'</p>';
-      if (totalCasheaExt>0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:2px 0;">−Cashea: −$'+totalCasheaExt.toFixed(2)+'</p>';
+      if (totalAyuExtUSD>0 && totalAyuExtBS>0) {
+        htmlModal += '<p style="font-size:18px;font-weight:900;color:#ea580c;margin:2px 0;">$'+totalAyuExtUSD.toFixed(2)+' USD</p>';
+        htmlModal += '<p style="font-size:15px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalAyuExtBS.toFixed(2)+' en Bs</p>';
+      } else if (totalAyuExtBS>0) {
+        htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalAyuExtBS.toFixed(2)+' en Bs</p>';
+      } else {
+        htmlModal += '<p style="font-size:18px;font-weight:900;color:#ea580c;margin:2px 0;">$'+totalNetoExtModal.toFixed(2)+' USD</p>';
+      }
+      htmlModal += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #fed7aa;">';
+      htmlModal += '<p style="font-size:8px;color:#64748b;margin:1px 0;">Split bruto: <b>$'+totalAyuExt.toFixed(2)+'</b></p>';
+      if (totalIvaExt>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−IVA (÷1.16): <b>−$'+totalIvaExt.toFixed(2)+'</b></p>';
+      if (totalCasheaExt>0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:1px 0;">−Cashea 10%: <b>−$'+totalCasheaExt.toFixed(2)+'</b></p>';
+      htmlModal += '</div>';
       htmlModal += _desglosDeuda(totalAyuExtUSD, totalAyuExtBS, deudasEquipo['ayuext']||0, '#ea580c', '#92400e', 'ayuext');
       htmlModal += '</div>';
     }
