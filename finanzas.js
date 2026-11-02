@@ -1299,7 +1299,12 @@ window.verResumenSemanalPelu = async () => {
       const modoPagoR = r.modoPago || 'usd';
       const esCashea = modoPagoR === 'cashea';
 
-      const adminAmtMes = parseFloat(r.cargoAdmin||0) || parseFloat((precio*0.12).toFixed(2));
+      // IVA y Cashea sobre bruto total; Admin sobre neto post-IVA-Cashea
+      const ivaRec     = parseFloat((precio - precio / (1 + IVA_PELU)).toFixed(2));
+      const casheaRec  = esCashea ? parseFloat((precio * CASHEA_FEE).toFixed(2)) : 0;
+      const netoPostIC = parseFloat((precio - ivaRec - casheaRec).toFixed(2));
+      const adminAmtMes= parseFloat((netoPostIC * 0.12).toFixed(2));
+
       totalBruto    += precio;
       totalPelu     += pagPelu;
       totalAyuExt   += pagAx;
@@ -1308,15 +1313,15 @@ window.verResumenSemanalPelu = async () => {
       if (!pagado) pendiente += precio;
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
-      // IVA sobre bruto total de tienda; Cashea sobre split de cada persona
-      const totalIVARec  = parseFloat((precio - precio / (1 + IVA_PELU)).toFixed(2));
-      const peluIVA    = parseFloat((totalIVARec * (pagPelu / precio)).toFixed(2));
-      const axIVA      = pagAx > 0 ? parseFloat((totalIVARec * (pagAx / precio)).toFixed(2)) : 0;
-      const avIVA      = parseFloat((totalIVARec - peluIVA - axIVA).toFixed(2));
+      // Distribuir IVA y Cashea proporcionalmente entre pelu/avipet/ayuExtra
+      const ratio = precio > 0 ? 1 / precio : 0;
+      const peluIVA    = parseFloat((ivaRec    * (pagPelu * ratio)).toFixed(2));
+      const axIVA      = pagAx > 0 ? parseFloat((ivaRec    * (pagAx * ratio)).toFixed(2)) : 0;
+      const avIVA      = parseFloat((ivaRec    - peluIVA - axIVA).toFixed(2));
 
-      const peluCashea = esCashea ? parseFloat((pagPelu * CASHEA_FEE).toFixed(2)) : 0;
-      const axCashea   = esCashea ? parseFloat((pagAx  * CASHEA_FEE).toFixed(2)) : 0;
-      const avCashea   = esCashea ? parseFloat((neto   * CASHEA_FEE).toFixed(2)) : 0;
+      const peluCashea = esCashea ? parseFloat((casheaRec * (pagPelu * ratio)).toFixed(2)) : 0;
+      const axCashea   = esCashea && pagAx > 0 ? parseFloat((casheaRec * (pagAx * ratio)).toFixed(2)) : 0;
+      const avCashea   = esCashea ? parseFloat((casheaRec - peluCashea - axCashea).toFixed(2)) : 0;
 
       const peluNeto   = parseFloat((pagPelu - peluIVA - peluCashea).toFixed(2));
       const axNeto     = parseFloat((pagAx   - axIVA   - axCashea  ).toFixed(2));
@@ -1419,8 +1424,9 @@ window.verResumenSemanalPelu = async () => {
       '</div>';
     }
 
-    const totalIvaGlobalMes = totalIvaPelu + totalIvaExt + totalIvaAv;
-    const distribuibleMes = totalBruto - totalAdminMes - totalIvaGlobalMes;
+    const totalIvaGlobalMes  = totalIvaPelu + totalIvaExt + totalIvaAv;
+    const totalCasheaGlobalMes = totalCasheaPelu + totalCasheaExt + totalCasheaAv;
+    const distribuibleMes = totalBruto - totalIvaGlobalMes - totalCasheaGlobalMes - totalAdminMes;
     const netoAvipetTotal = totalAdminMes + netoAvipetReal;
 
     let htmlModal = '';
@@ -1450,7 +1456,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#b45309;text-transform:uppercase;margin:0;">−IVA 16% extraído (÷1.16)</p>';
     const totalIvaGlobal = totalIvaGlobalMes;
     htmlModal += '<p style="font-size:15px;font-weight:900;color:#b45309;margin:2px 0;font-family:monospace;">−$'+totalIvaGlobal.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#92400e;margin:0;">Pelu −$'+totalIvaPelu.toFixed(2)+' · Av −$'+totalIvaAv.toFixed(2)+(totalIvaExt>0?' · Ext −$'+totalIvaExt.toFixed(2):'')+'</p>';
+    htmlModal += '<p style="font-size:7px;color:#92400e;margin:0;">Pelu −$'+totalIvaPelu.toFixed(2)+' · Av −$'+totalIvaAv.toFixed(2)+(totalIvaExt>0?' · Ext −$'+totalIvaExt.toFixed(2):'')+' · Cashea −$'+totalCasheaGlobalMes.toFixed(2)+'</p>';
     htmlModal += '</div>';
     htmlModal += '<div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0;">Pendiente</p>';
