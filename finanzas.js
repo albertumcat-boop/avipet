@@ -1409,9 +1409,14 @@ window.verResumenSemanalPelu = async () => {
     const pagoAyu1Real = perrosConAyu * 2;
 
     // Helper deuda
-    function _desglosDeuda(ganado_usd, ganado_bs, deuda, colorUSD, colorBS, personaId) {
+    const _tasa = parseFloat(window.tasaDolarHoy) || 1;
+    function _desglosDeuda(ganado_usd, ganado_bs, deuda, colorUSD, colorBS, personaId, netoUSDparaBS) {
       if (deuda <= 0) return '';
       const neto_bs = Math.max(0, ganado_bs - deuda);
+      // Si cobra en Bs: mostrar equivalente en Bs del neto USD
+      const bsLabel = netoUSDparaBS > 0
+        ? 'Bs ' + (netoUSDparaBS * _tasa).toFixed(2) + ' (tasa ' + _tasa.toFixed(2) + ')'
+        : '$' + neto_bs.toFixed(2);
       return '<div style="border-top:1px solid #fca5a5;margin-top:6px;padding-top:6px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">' +
           '<p style="font-size:8px;color:#dc2626;margin:0;">Debe (Bs): <b>-$'+deuda.toFixed(2)+'</b></p>' +
@@ -1419,7 +1424,7 @@ window.verResumenSemanalPelu = async () => {
         '</div>' +
         '<div style="background:#dc2626;border-radius:6px;padding:3px 6px;display:flex;justify-content:space-between;">' +
           '<p style="font-size:8px;font-weight:900;color:#fff;margin:0;">Cobra en Bs:</p>' +
-          '<p style="font-size:11px;font-weight:900;color:#fff;margin:0;">$'+neto_bs.toFixed(2)+'</p>' +
+          '<p style="font-size:11px;font-weight:900;color:#fff;margin:0;">'+bsLabel+'</p>' +
         '</div>' +
       '</div>';
     }
@@ -1475,16 +1480,13 @@ window.verResumenSemanalPelu = async () => {
     // Miguelina — neto real = bruto − Adriani − IVA − Cashea
     const ayu1Total = perrosConAyu * 2;
     const totalNetoPeluModal = totalPelu - ayu1Total - totalIvaPelu - totalCasheaPelu;
-    const tasa = parseFloat(window.tasaDolarHoy) || 1;
     htmlModal += '<div style="background:#f5f3ff;border-radius:12px;padding:10px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 4px 0;">Miguelina</p>';
     if (totalPeluUSD > 0 && totalPeluBS > 0) {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$'+totalPeluUSD.toFixed(2)+' USD</p>';
-      htmlModal += '<p style="font-size:15px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalPeluBS.toFixed(2)+' USD en Bs</p>';
-      htmlModal += '<p style="font-size:10px;font-weight:700;color:#b45309;margin:1px 0;">≈ Bs '+(totalPeluBS*tasa).toFixed(2)+' (tasa '+tasa.toFixed(2)+')</p>';
+      htmlModal += '<p style="font-size:15px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalPeluBS.toFixed(2)+' en Bs</p>';
     } else if (totalPeluBS > 0) {
-      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalNetoPeluModal.toFixed(2)+' USD en Bs</p>';
-      htmlModal += '<p style="font-size:12px;font-weight:700;color:#b45309;margin:1px 0;">≈ Bs '+(totalNetoPeluModal*tasa).toFixed(2)+' (tasa '+tasa.toFixed(2)+')</p>';
+      htmlModal += '<p style="font-size:18px;font-weight:900;color:#92400e;margin:2px 0;">$'+totalNetoPeluModal.toFixed(2)+' en Bs</p>';
     } else {
       htmlModal += '<p style="font-size:18px;font-weight:900;color:#7c3aed;margin:2px 0;">$'+totalNetoPeluModal.toFixed(2)+' USD</p>';
     }
@@ -1495,7 +1497,7 @@ window.verResumenSemanalPelu = async () => {
     if (totalCasheaPelu>0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:1px 0;">−Cashea 10%: <b>−$'+totalCasheaPelu.toFixed(2)+'</b></p>';
     htmlModal += '<p style="font-size:9px;font-weight:900;color:#7c3aed;margin:3px 0 0 0;">Neto: <b>$'+totalNetoPeluModal.toFixed(2)+'</b></p>';
     htmlModal += '</div>';
-    htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e', 'peluquera');
+    htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e', 'peluquera', totalNetoPeluModal);
     htmlModal += '</div>';
 
     // Avipet
