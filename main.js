@@ -106,6 +106,9 @@ window.tasaDolarHoy = parseFloat(localStorage.getItem('tasaDolarAvipet')) || 440
           if (typeof window.calcularPrecioFinalAvipet === 'function') window.calcularPrecioFinalAvipet();
           if (window.inventarioCache && typeof window.renderListaInventario === 'function')
             window.renderListaInventario(window.inventarioCache);
+          // Si el resumen semanal está abierto, refrescarlo con la nueva tasa
+          if (typeof _llamarFuncion === 'function' && Swal.isVisible())
+            _llamarFuncion('verResumenSemanalPelu');
         }
       }
     });
