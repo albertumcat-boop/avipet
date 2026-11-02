@@ -367,13 +367,13 @@ window.guardarPeluqueriaPro = async () => {
       let pagoPeluEsta=0, pagoAyu1Esta=0, pagoAyuExtEsta=0, ingresoAvipetEsta=0, cargoAdminEsta=0;
       {const _adm=precioEsta*0.12,_res=precioEsta-_adm; cargoAdminEsta=_adm;
       if(extraSolo){
-        if(aplicaAyu1){ pagoAyuExtEsta=(_res+1)/2; ingresoAvipetEsta=(_res-1)/2; pagoAyu1Esta=1; }
+        if(aplicaAyu1){ pagoAyuExtEsta=(_res+2)/2; ingresoAvipetEsta=(_res-2)/2; pagoAyu1Esta=2; }
         else { pagoAyuExtEsta=_res/2; ingresoAvipetEsta=_res/2; }
       } else if(tieneAyuExt){
         const p=_res/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
       } else {
         if(aplicaAyu1){
-          pagoPeluEsta=(_res+1)/2; ingresoAvipetEsta=(_res-1)/2; pagoAyu1Esta=1;
+          pagoPeluEsta=(_res+2)/2; ingresoAvipetEsta=(_res-2)/2; pagoAyu1Esta=2;
         } else {
           pagoPeluEsta=_res/2; ingresoAvipetEsta=_res/2;
         }
@@ -1037,7 +1037,7 @@ window.recalcularTotalPelu = () => {
     const _adm=cobro*0.12, _res=cobro-_adm;
     if (exSolo) {
       if (chkA1) chkA1.disabled = false;
-      if (ayu1Act && cobro >= 10) { aex = (_res + 1) / 2; a1 = 1; }
+      if (ayu1Act && cobro >= 10) { aex = (_res + 2) / 2; a1 = 2; }
       else { aex = _res / 2; }
     } else if (ayuExt) {
       if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
@@ -1045,7 +1045,7 @@ window.recalcularTotalPelu = () => {
       aex  = _res / 3;
     } else {
       if (chkA1) chkA1.disabled = false;
-      if (ayu1Act && cobro >= 10) { pelu = (_res + 1) / 2; a1 = 1; }
+      if (ayu1Act && cobro >= 10) { pelu = (_res + 2) / 2; a1 = 2; }
       else { pelu = _res / 2; }
     }
 
@@ -1060,13 +1060,13 @@ window.recalcularTotalPelu = () => {
     totalCobro = precioBase;
     const _adm0=precioBase*0.12, _res0=precioBase-_adm0;
     if (exSolo) {
-      if (ayu1Act && precioBase >= 10) { totalAex = (_res0 + 1) / 2; totalA1 = 1; }
+      if (ayu1Act && precioBase >= 10) { totalAex = (_res0 + 2) / 2; totalA1 = 2; }
       else { totalAex = _res0 / 2; }
     } else if (ayuExt) {
       totalPelu = _res0 / 3;
       totalAex  = _res0 / 3;
     } else {
-      if (ayu1Act && precioBase >= 10) { totalPelu = (_res0 + 1) / 2; totalA1 = 1; }
+      if (ayu1Act && precioBase >= 10) { totalPelu = (_res0 + 2) / 2; totalA1 = 2; }
       else { totalPelu = _res0 / 2; }
     }
   }
