@@ -1308,11 +1308,10 @@ window.verResumenSemanalPelu = async () => {
       if (!pagado) pendiente += precio;
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
-      // Descuentos por renglón — IVA sobre neto real (bruto − pago a ayu1)
-      const pagPeluNet = parseFloat((pagPelu - pagA1).toFixed(2));
-      const peluIVA    = parseFloat((pagPeluNet - pagPeluNet / (1 + IVA_PELU)).toFixed(2));
-      const peluCashea = esCashea ? parseFloat((pagPeluNet * CASHEA_FEE).toFixed(2)) : 0;
-      const peluNeto   = parseFloat((pagPeluNet - peluIVA - peluCashea).toFixed(2));
+      // IVA sobre bruto de peluquera (antes de descontar Adriani)
+      const peluIVA    = parseFloat((pagPelu - pagPelu / (1 + IVA_PELU)).toFixed(2));
+      const peluCashea = esCashea ? parseFloat((pagPelu * CASHEA_FEE).toFixed(2)) : 0;
+      const peluNeto   = parseFloat((pagPelu - peluIVA - peluCashea).toFixed(2));
 
       const axIVA      = parseFloat((pagAx - pagAx / (1 + IVA_PELU)).toFixed(2));
       const axCashea   = esCashea ? parseFloat((pagAx * CASHEA_FEE).toFixed(2)) : 0;
