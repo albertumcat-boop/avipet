@@ -676,9 +676,9 @@ window.mostrarDashboardPelu = async () => {
       const n=parseFloat(r.ingresoAvipet||0);
       bruto+=precio; pPelu+=pa; pAyu1+=a1; pAyuExt+=ax; neto+=n;
       // IVA 16% — aplica siempre a peluquera, avipet y ayu. extra (no a ayu. principal)
-      ivaFeePeluquera  += pa * IVA_PELU;
-      ivaFeeAyuExt     += ax * IVA_PELU;
-      ivaFeeAvipetPelu += n  * IVA_PELU;
+      ivaFeePeluquera  += pa - (pa / (1 + IVA_PELU));
+      ivaFeeAyuExt     += ax - (ax / (1 + IVA_PELU));
+      ivaFeeAvipetPelu += n  - (n  / (1 + IVA_PELU));
       // Acumular por forma de pago + fees Cashea
       const fp = r.formaPago || 'otro';
       if (fp === 'dolares') fpPeluTotales.dolares += precio;
@@ -1297,15 +1297,15 @@ window.verResumenSemanalPelu = async () => {
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
       // Descuentos por renglón
-      const peluIVA    = parseFloat((pagPelu * IVA_PELU).toFixed(2));
+      const peluIVA    = parseFloat((pagPelu - pagPelu / (1 + IVA_PELU)).toFixed(2));
       const peluCashea = esCashea ? parseFloat((pagPelu * CASHEA_FEE).toFixed(2)) : 0;
       const peluNeto   = parseFloat((pagPelu - peluIVA - peluCashea).toFixed(2));
 
-      const axIVA      = parseFloat((pagAx * IVA_PELU).toFixed(2));
+      const axIVA      = parseFloat((pagAx - pagAx / (1 + IVA_PELU)).toFixed(2));
       const axCashea   = esCashea ? parseFloat((pagAx * CASHEA_FEE).toFixed(2)) : 0;
       const axNeto     = parseFloat((pagAx - axIVA - axCashea).toFixed(2));
 
-      const avIVA      = parseFloat((neto * IVA_PELU).toFixed(2));
+      const avIVA      = parseFloat((neto - neto / (1 + IVA_PELU)).toFixed(2));
       const avCashea   = esCashea ? parseFloat((neto * CASHEA_FEE).toFixed(2)) : 0;
       const avNeto     = parseFloat((neto - avIVA - avCashea).toFixed(2));
 
