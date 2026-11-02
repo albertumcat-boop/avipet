@@ -16,7 +16,7 @@ let _rangoHasta   = '';
 let _filtroDoctor = '';
 let _ultimoResumenVet = null;
 
-const CASHEA_FEE = 0.10; // 10% comisión Cashea sobre monto pagado con Cashea
+const CASHEA_FEE = 0.08; // 8% comisión Cashea sobre monto pagado con Cashea
 const IVA_PELU   = 0.16; // 16% IVA peluquería — aplica a peluquera, avipet y ayu. extra (no a ayu. principal)
 
 // ─── PERIODO ──────────────────────────────────────────────
@@ -536,7 +536,7 @@ window.descargarReporte = () => {
       if (fp.dolares > 0)  { txt += '    Dolares    : $' + fp.dolares.toFixed(2) + '\n'; totalDolares += fp.dolares; }
       if (fp.movil > 0)    { txt += '    Pago Movil : $' + fp.movil.toFixed(2) + '\n';   totalMovil   += fp.movil;   }
       if (fp.cashea > 0)   {
-        const fee = fp.cashea * 0.10;
+        const fee = fp.cashea * CASHEA_FEE;
         txt += '    Cashea     : $' + fp.cashea.toFixed(2) + ' (Bs)\n';
         txt += '    Fee Cashea : -$' + fee.toFixed(2) + ' (10% comision)\n';
         txt += '    Neto Cashea: $' + (fp.cashea - fee).toFixed(2) + '\n';
@@ -555,7 +555,7 @@ window.descargarReporte = () => {
   if (totalDolares > 0)  txt += '  Dolares (USD)  : $' + totalDolares.toFixed(2) + '\n';
   if (totalMovil > 0)    txt += '  Pago Movil (Bs): $' + totalMovil.toFixed(2) + '\n';
   if (totalCashea > 0) {
-    const feeTotal = totalCashea * 0.10;
+    const feeTotal = totalCashea * CASHEA_FEE;
     txt += '  Cashea bruto   : $' + totalCashea.toFixed(2) + '\n';
     txt += '  Fee -10%       : -$' + feeTotal.toFixed(2) + '\n';
     txt += '  Cashea neto    : $' + (totalCashea - feeTotal).toFixed(2) + '\n';
@@ -1387,7 +1387,7 @@ window.verResumenSemanalPelu = async () => {
       var labelPago = 'PEND';
       if (r.estatusPago === 'pagado') {
         if (modoPago === 'bs') labelPago = '$' + precio.toFixed(2) + ' Bs';
-        else if (esCashea) { const fee10=precio*0.10; labelPago = '$'+precio.toFixed(2)+' Bs<br><span style="color:#0f766e;font-size:7px;">Cashea -10% = -$'+fee10.toFixed(2)+'</span>'; }
+        else if (esCashea) { const fee10=precio*CASHEA_FEE; labelPago = '$'+precio.toFixed(2)+' Bs<br><span style="color:#0f766e;font-size:7px;">Cashea -'+(CASHEA_FEE*100).toFixed(0)+'% = -$'+fee10.toFixed(2)+'</span>'; }
         else if (modoPago === 'mixto') labelPago = '$'+(precio/2).toFixed(2)+' USD + $'+(precio/2).toFixed(2)+' Bs';
         else labelPago = '$' + precio.toFixed(2) + ' USD';
       }
@@ -1541,7 +1541,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;flex:0 0 auto;">Cobros:</p>';
     if (totalBrutoUSD>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#16a34a;margin:0;">💵 $'+totalBrutoUSD.toFixed(2)+' USD</p>';
     if (totalBsBruto>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#b45309;margin:0;">🪙 $'+totalBsBruto.toFixed(2)+' Bs</p>';
-    if (totalBrutoCashea>0){const fc=totalBrutoCashea*0.10;htmlModal+='<p style="font-size:12px;font-weight:900;color:#0891b2;margin:0;">🟣 $'+totalBrutoCashea.toFixed(2)+' Cashea <span style="font-size:8px;color:#64748b;">(−$'+fc.toFixed(2)+')</span></p>';}
+    if (totalBrutoCashea>0){const fc=totalBrutoCashea*CASHEA_FEE;htmlModal+='<p style="font-size:12px;font-weight:900;color:#0891b2;margin:0;">🟣 $'+totalBrutoCashea.toFixed(2)+' Cashea <span style="font-size:8px;color:#64748b;">(−'+(CASHEA_FEE*100).toFixed(0)+'% = −$'+fc.toFixed(2)+')</span></p>';}
     htmlModal += '</div>';
 
     // Tabla detallada
