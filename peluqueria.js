@@ -284,10 +284,12 @@ window.guardarPeluqueriaPro = async () => {
 
   let precioFinal=tipoServ==='solo_unas'?precioUnas:(base+ajuste);
   const tieneAyu1=document.getElementById('pAyudante1')?.checked,tieneAyuExt=document.getElementById('pAyudanteExtra')?.checked,extraSolo=document.getElementById('pExtraSolo')?.checked,montoAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||2;
+  const ADMIN_PORC=0.12;
   let pagoPelu=0,pagoAyu1=0,pagoAyuExt=0,ingresoAvipet=0;
-  if(extraSolo){pagoAyuExt=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;if(tieneAyu1){pagoAyuExt-=1;pagoAyu1=montoAyu1;ingresoAvipet-=1;}}
-  else if(tieneAyuExt){const p=precioFinal/3;pagoPelu=p;pagoAyuExt=p;ingresoAvipet=p;}
-  else{pagoPelu=precioFinal*0.40;ingresoAvipet=precioFinal*0.60;if(tieneAyu1){pagoPelu-=montoAyu1;pagoAyu1=montoAyu1;}}
+  {const _adm=precioFinal*ADMIN_PORC,_res=precioFinal-_adm;
+  if(extraSolo){pagoAyuExt=_res*0.40;ingresoAvipet=_res*0.60;if(tieneAyu1){pagoAyuExt-=1;pagoAyu1=montoAyu1;ingresoAvipet-=1;}}
+  else if(tieneAyuExt){const p=_res/3;pagoPelu=p;pagoAyuExt=p;ingresoAvipet=p;}
+  else{if(tieneAyu1){pagoPelu=(_res+montoAyu1)/2;ingresoAvipet=(_res-montoAyu1)/2;pagoAyu1=montoAyu1;}else{pagoPelu=_res/2;ingresoAvipet=_res/2;}}}
 
   // PIN — calcular total real sumando precios individuales
   const totalAcumulado = mascotas.reduce((sum, pet) => {
@@ -362,20 +364,20 @@ window.guardarPeluqueriaPro = async () => {
       // Recalcular comisiones con el precio individual
       // Si precio < $10 se quita al ayudante (ej: corte de uñas)
       const aplicaAyu1 = tieneAyu1 && precioEsta >= 10;
-      let pagoPeluEsta=0, pagoAyu1Esta=0, pagoAyuExtEsta=0, ingresoAvipetEsta=0;
+      let pagoPeluEsta=0, pagoAyu1Esta=0, pagoAyuExtEsta=0, ingresoAvipetEsta=0, cargoAdminEsta=0;
+      {const _adm=precioEsta*0.12,_res=precioEsta-_adm; cargoAdminEsta=_adm;
       if(extraSolo){
-        pagoAyuExtEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
+        pagoAyuExtEsta=_res*0.40; ingresoAvipetEsta=_res*0.60;
         if(aplicaAyu1){ pagoAyuExtEsta-=1; pagoAyu1Esta=2; ingresoAvipetEsta-=1; }
       } else if(tieneAyuExt){
-        const p=precioEsta/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
+        const p=_res/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
       } else {
-        pagoPeluEsta=precioEsta*0.40; ingresoAvipetEsta=precioEsta*0.60;
         if(aplicaAyu1){
-          pagoPeluEsta      -= 1;
-          ingresoAvipetEsta -= 1;
-          pagoAyu1Esta       = 2;
+          pagoPeluEsta=(_res+2)/2; ingresoAvipetEsta=(_res-2)/2; pagoAyu1Esta=2;
+        } else {
+          pagoPeluEsta=_res/2; ingresoAvipetEsta=_res/2;
         }
-      }
+      }}
 
       const idFid=`${cedula}-${mascota}`.toLowerCase().replace(/\s+/g,'');
       const fidRef=doc(db,"fidelidad_peluqueria",idFid);
@@ -390,6 +392,7 @@ window.guardarPeluqueriaPro = async () => {
         precioTotal:precioEsta,visitaNumero:nuevaVis,
         fecha:serverTimestamp(),fechaSimple,hora,tipo:"PELUQUERIA",servicio:tipoServ,
         pagoPeluquera:pagoPeluEsta,pagoAyudante1:pagoAyu1Esta,pagoAyudanteExtra:pagoAyuExtEsta,
+        cargoAdmin:cargoAdminEsta,
         ingresoAvipet:esPremio?0:ingresoAvipetEsta,
         estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,
         montoPagadoUSD:0,montoPagadoBS:0,modoPago:'',
@@ -1031,23 +1034,19 @@ window.recalcularTotalPelu = () => {
     const cobro = precioInd !== null ? precioInd : precioBase;
 
     let pelu = 0, a1 = 0, aex = 0;
+    const _adm=cobro*0.12, _res=cobro-_adm;
     if (exSolo) {
-      // Ayudante Extra cobra 40% — Ayudante Principal puede cobrar además $2/perro
-      aex = cobro * 0.40;
+      aex = _res * 0.40;
       if (chkA1) chkA1.disabled = false;
       if (ayu1Act && cobro >= 10) { aex -= 1; a1 = 2; }
     } else if (ayuExt) {
-      // Tridente: pelu + extra + avipet a partes iguales, sin ayudante principal
       if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
-      pelu = cobro / 3;
-      aex  = cobro / 3;
+      pelu = _res / 3;
+      aex  = _res / 3;
     } else {
       if (chkA1) chkA1.disabled = false;
-      pelu = cobro * 0.40;
-      if (ayu1Act && cobro >= 10) {
-        pelu -= 1;
-        a1 = 2;
-      }
+      if (ayu1Act && cobro >= 10) { pelu = (_res + 2) / 2; a1 = 2; }
+      else { pelu = _res / 2; }
     }
 
     totalCobro += cobro;
@@ -1059,15 +1058,16 @@ window.recalcularTotalPelu = () => {
   // Si no hay ninguna mascota con nombre, usar el precio base solo
   if (totalCobro === 0) {
     totalCobro = precioBase;
+    const _adm0=precioBase*0.12, _res0=precioBase-_adm0;
     if (exSolo) {
-      totalAex = precioBase * 0.40;
+      totalAex = _res0 * 0.40;
       if (ayu1Act && precioBase >= 10) { totalAex -= 1; totalA1 = 2; }
     } else if (ayuExt) {
-      totalPelu = precioBase / 3;
-      totalAex  = precioBase / 3;
+      totalPelu = _res0 / 3;
+      totalAex  = _res0 / 3;
     } else {
-      totalPelu = precioBase * 0.40;
-      if (ayu1Act && precioBase >= 10) { totalPelu -= 1; totalA1 = 2; }
+      if (ayu1Act && precioBase >= 10) { totalPelu = (_res0 + 2) / 2; totalA1 = 2; }
+      else { totalPelu = _res0 / 2; }
     }
   }
 
