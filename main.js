@@ -102,8 +102,7 @@ window.tasaDolarHoy = parseFloat(localStorage.getItem('tasaDolarAvipet')) || 440
         if (tasaFS > 0 && tasaFS !== window.tasaDolarHoy) {
           window.tasaDolarHoy = tasaFS;
           localStorage.setItem('tasaDolarAvipet', tasaFS);
-          const d = document.getElementById('displayTasa');
-          if (d) d.innerText = tasaFS.toFixed(2);
+          _mostrarTasa(tasaFS);
           if (typeof window.calcularPrecioFinalAvipet === 'function') window.calcularPrecioFinalAvipet();
           if (window.inventarioCache && typeof window.renderListaInventario === 'function')
             window.renderListaInventario(window.inventarioCache);
@@ -136,13 +135,20 @@ window.ajustarTasaDolar = async () => {
   }
 };
 
+function _mostrarTasa(val) {
+  const t = parseFloat(val) || 0;
+  ['displayTasa','calcTasaMostrar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = id === 'calcTasaMostrar' ? 'Tasa: ' + t.toFixed(2) : t.toFixed(2);
+  });
+}
+
 function _aplicarYGuardarTasa() {
   localStorage.setItem('tasaDolarAvipet', window.tasaDolarHoy);
   // Persistir en Firestore para sincronizar todos los dispositivos
   setDoc(doc(db, "configuracion", "tasa"), { valor: window.tasaDolarHoy, actualizado: serverTimestamp() })
     .catch(e => console.warn('[AVIPET] Error guardando tasa en Firestore:', e));
-  const d = document.getElementById('displayTasa');
-  if (d) d.innerText = window.tasaDolarHoy.toFixed(2);
+  _mostrarTasa(window.tasaDolarHoy);
   if (typeof window.calcularPrecioFinalAvipet === 'function') window.calcularPrecioFinalAvipet();
   if (window.inventarioCache && typeof window.renderListaInventario === 'function')
     window.renderListaInventario(window.inventarioCache);
@@ -869,8 +875,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Verificar permisos/documentos próximos a vencer (5s para que Firebase esté listo)
   setTimeout(() => window.permisosChequearVencimientos?.(), 5000);
 
-  const dt = document.getElementById('displayTasa');
-  if (dt) dt.innerText = window.tasaDolarHoy.toFixed(2);
+  _mostrarTasa(window.tasaDolarHoy);
 
   // Restaurar sesión del doctor si recargó la página — requiere reconfirmar PIN
   const _doctorGuardado = sessionStorage.getItem('avipet_doctor');
