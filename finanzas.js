@@ -16,7 +16,7 @@ let _rangoHasta   = '';
 let _filtroDoctor = '';
 let _ultimoResumenVet = null;
 
-const CASHEA_FEE = 0.08; // 8% comisión Cashea sobre monto pagado con Cashea
+const CASHEA_FEE = 0.10; // 10% comisión Cashea sobre monto pagado con Cashea
 const IVA_PELU   = 0.16; // 16% IVA peluquería — aplica a peluquera, avipet y ayu. extra (no a ayu. principal)
 
 // ─── PERIODO ──────────────────────────────────────────────
