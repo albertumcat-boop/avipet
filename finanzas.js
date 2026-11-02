@@ -1415,7 +1415,7 @@ window.verResumenSemanalPelu = async () => {
       const neto_bs = Math.max(0, ganado_bs - deuda);
       // Si cobra en Bs: mostrar equivalente en Bs del neto USD
       const bsLabel = netoUSDparaBS > 0
-        ? 'Bs ' + (netoUSDparaBS * _tasa).toFixed(2)
+        ? 'Bs ' + (netoUSDparaBS * _tasa).toFixed(2) + ' (tasa ' + _tasa.toFixed(2) + ')'
         : '$' + neto_bs.toFixed(2);
       return '<div style="border-top:1px solid #fca5a5;margin-top:6px;padding-top:6px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">' +
