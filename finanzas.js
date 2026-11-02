@@ -1436,6 +1436,13 @@ window.verResumenSemanalPelu = async () => {
 
     let htmlModal = '';
 
+    // ── Barra de tasa ────────────────────────────────────────────────────────
+    const _tasaActual = parseFloat(window.tasaDolarHoy) || 1;
+    htmlModal += '<div style="display:flex;align-items:center;justify-content:space-between;background:#f1f5f9;border-radius:8px;padding:5px 10px;margin-bottom:8px;">';
+    htmlModal += '<span style="font-size:9px;color:#475569;">💱 Tasa del día: <b style="color:#0f172a;">'+_tasaActual.toFixed(2)+' Bs/$</b></span>';
+    htmlModal += '<button onclick="window._editarTasaManual&&window._editarTasaManual();setTimeout(()=>_llamarFuncion(\'verResumenSemanalPelu\'),400);" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:8px;font-weight:900;cursor:pointer;">Actualizar tasa</button>';
+    htmlModal += '</div>';
+
     // ── BLOQUE 1: Resumen global ─────────────────────────────────────────────
     htmlModal += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin:0 0 8px 0;letter-spacing:.05em;">Resumen — '+servicios.length+' servicio'+(servicios.length!==1?'s':'')+' · Con ayu: '+perrosConAyu+' · Sin ayu: '+perrosSinAyu+'</p>';
