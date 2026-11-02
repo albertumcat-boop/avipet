@@ -6,7 +6,7 @@
 import { db } from './firebase-config.js';
 import {
   collection, addDoc, getDocs, query, where,
-  updateDoc, deleteDoc, doc, getDoc, setDoc, serverTimestamp
+  updateDoc, deleteDoc, doc, getDoc, setDoc, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let _tabFinanzas  = null;
