@@ -1424,36 +1424,36 @@ window.verResumenSemanalPelu = async () => {
     let htmlModal = '';
 
     // ── BLOQUE 1: Resumen global ─────────────────────────────────────────────
-    htmlModal += '<div style="background:#0f172a;border-radius:12px;padding:10px 12px;margin-bottom:8px;">';
-    htmlModal += '<p style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0 0 8px 0;">Resumen — '+servicios.length+' servicio'+(servicios.length!==1?'s':'')+' · Con ayu: '+perrosConAyu+' · Sin ayu: '+perrosSinAyu+'</p>';
+    htmlModal += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin:0 0 8px 0;letter-spacing:.05em;">Resumen — '+servicios.length+' servicio'+(servicios.length!==1?'s':'')+' · Con ayu: '+perrosConAyu+' · Sin ayu: '+perrosSinAyu+'</p>';
     // Fila: Bruto | 12% Admin | Distribuible
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">';
-    htmlModal += '<div style="background:#1e293b;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin:0;">Bruto cobrado</p>';
-    htmlModal += '<p style="font-size:17px;font-weight:900;color:#fff;margin:2px 0;font-family:monospace;">$'+totalBruto.toFixed(2)+'</p>';
+    htmlModal += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;">Bruto cobrado</p>';
+    htmlModal += '<p style="font-size:17px;font-weight:900;color:#1e293b;margin:2px 0;font-family:monospace;">$'+totalBruto.toFixed(2)+'</p>';
     htmlModal += '</div>';
-    htmlModal += '<div style="background:#451a03;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#fed7aa;text-transform:uppercase;margin:0;">−12% Admin</p>';
-    htmlModal += '<p style="font-size:17px;font-weight:900;color:#fb923c;margin:2px 0;font-family:monospace;">−$'+totalAdminMes.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#fed7aa;margin:0;">retiene Avipet</p>';
+    htmlModal += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#ea580c;text-transform:uppercase;margin:0;">−12% Admin</p>';
+    htmlModal += '<p style="font-size:17px;font-weight:900;color:#ea580c;margin:2px 0;font-family:monospace;">−$'+totalAdminMes.toFixed(2)+'</p>';
+    htmlModal += '<p style="font-size:7px;color:#fb923c;margin:0;">retiene Avipet</p>';
     htmlModal += '</div>';
-    htmlModal += '<div style="background:#1e3a5f;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#bfdbfe;text-transform:uppercase;margin:0;">Distribuible</p>';
-    htmlModal += '<p style="font-size:17px;font-weight:900;color:#60a5fa;margin:2px 0;font-family:monospace;">$'+distribuibleMes.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#bfdbfe;margin:0;">split 50/50</p>';
+    htmlModal += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Distribuible</p>';
+    htmlModal += '<p style="font-size:17px;font-weight:900;color:#2563eb;margin:2px 0;font-family:monospace;">$'+distribuibleMes.toFixed(2)+'</p>';
+    htmlModal += '<p style="font-size:7px;color:#3b82f6;margin:0;">split 50/50</p>';
     htmlModal += '</div></div>';
     // Fila: IVA | Pendiente
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
-    htmlModal += '<div style="background:#422006;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#fed7aa;text-transform:uppercase;margin:0;">−IVA 16% extraído (÷1.16)</p>';
+    htmlModal += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#b45309;text-transform:uppercase;margin:0;">−IVA 16% extraído (÷1.16)</p>';
     const totalIvaGlobal = totalIvaPelu+totalIvaExt+totalIvaAv;
-    htmlModal += '<p style="font-size:15px;font-weight:900;color:#fb923c;margin:2px 0;font-family:monospace;">−$'+totalIvaGlobal.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#fed7aa;margin:0;">Pelu −$'+totalIvaPelu.toFixed(2)+' · Av −$'+totalIvaAv.toFixed(2)+(totalIvaExt>0?' · Ext −$'+totalIvaExt.toFixed(2):'')+'</p>';
+    htmlModal += '<p style="font-size:15px;font-weight:900;color:#b45309;margin:2px 0;font-family:monospace;">−$'+totalIvaGlobal.toFixed(2)+'</p>';
+    htmlModal += '<p style="font-size:7px;color:#92400e;margin:0;">Pelu −$'+totalIvaPelu.toFixed(2)+' · Av −$'+totalIvaAv.toFixed(2)+(totalIvaExt>0?' · Ext −$'+totalIvaExt.toFixed(2):'')+'</p>';
     htmlModal += '</div>';
-    htmlModal += '<div style="background:#3f0000;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#fca5a5;text-transform:uppercase;margin:0;">Pendiente</p>';
-    htmlModal += '<p style="font-size:15px;font-weight:900;color:#f87171;margin:2px 0;font-family:monospace;">$'+pendiente.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#fca5a5;margin:0;">sin cobrar</p>';
+    htmlModal += '<div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0;">Pendiente</p>';
+    htmlModal += '<p style="font-size:15px;font-weight:900;color:#dc2626;margin:2px 0;font-family:monospace;">$'+pendiente.toFixed(2)+'</p>';
+    htmlModal += '<p style="font-size:7px;color:#ef4444;margin:0;">sin cobrar</p>';
     htmlModal += '</div></div></div>';
 
     // ── BLOQUE 2: Distribución por persona ──────────────────────────────────
@@ -1537,11 +1537,11 @@ window.verResumenSemanalPelu = async () => {
 
     // Cobros en monedas
     const totalBsBruto = totalBrutoBS - totalBrutoCashea;
-    htmlModal += '<div style="background:#1e293b;border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin:0;flex:0 0 auto;">Cobros:</p>';
-    if (totalBrutoUSD>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#4ade80;margin:0;">💵 $'+totalBrutoUSD.toFixed(2)+' USD</p>';
-    if (totalBsBruto>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#fbbf24;margin:0;">🪙 $'+totalBsBruto.toFixed(2)+' Bs</p>';
-    if (totalBrutoCashea>0){const fc=totalBrutoCashea*0.10;htmlModal+='<p style="font-size:12px;font-weight:900;color:#2dd4bf;margin:0;">🟣 $'+totalBrutoCashea.toFixed(2)+' Cashea <span style="font-size:7px;color:#99f6e4;">(−$'+fc.toFixed(2)+')</span></p>';}
+    htmlModal += '<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;flex:0 0 auto;">Cobros:</p>';
+    if (totalBrutoUSD>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#16a34a;margin:0;">💵 $'+totalBrutoUSD.toFixed(2)+' USD</p>';
+    if (totalBsBruto>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#b45309;margin:0;">🪙 $'+totalBsBruto.toFixed(2)+' Bs</p>';
+    if (totalBrutoCashea>0){const fc=totalBrutoCashea*0.10;htmlModal+='<p style="font-size:12px;font-weight:900;color:#0891b2;margin:0;">🟣 $'+totalBrutoCashea.toFixed(2)+' Cashea <span style="font-size:8px;color:#64748b;">(−$'+fc.toFixed(2)+')</span></p>';}
     htmlModal += '</div>';
 
     // Tabla detallada
