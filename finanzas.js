@@ -1308,18 +1308,19 @@ window.verResumenSemanalPelu = async () => {
       if (!pagado) pendiente += precio;
       if (tieneA1) perrosConAyu++; else perrosSinAyu++;
 
-      // IVA sobre bruto de peluquera (antes de descontar Adriani)
-      const peluIVA    = parseFloat((pagPelu - pagPelu / (1 + IVA_PELU)).toFixed(2));
+      // IVA sobre bruto total de tienda; Cashea sobre split de cada persona
+      const totalIVARec  = parseFloat((precio - precio / (1 + IVA_PELU)).toFixed(2));
+      const peluIVA    = parseFloat((totalIVARec * (pagPelu / precio)).toFixed(2));
+      const axIVA      = pagAx > 0 ? parseFloat((totalIVARec * (pagAx / precio)).toFixed(2)) : 0;
+      const avIVA      = parseFloat((totalIVARec - peluIVA - axIVA).toFixed(2));
+
       const peluCashea = esCashea ? parseFloat((pagPelu * CASHEA_FEE).toFixed(2)) : 0;
+      const axCashea   = esCashea ? parseFloat((pagAx  * CASHEA_FEE).toFixed(2)) : 0;
+      const avCashea   = esCashea ? parseFloat((neto   * CASHEA_FEE).toFixed(2)) : 0;
+
       const peluNeto   = parseFloat((pagPelu - peluIVA - peluCashea).toFixed(2));
-
-      const axIVA      = parseFloat((pagAx - pagAx / (1 + IVA_PELU)).toFixed(2));
-      const axCashea   = esCashea ? parseFloat((pagAx * CASHEA_FEE).toFixed(2)) : 0;
-      const axNeto     = parseFloat((pagAx - axIVA - axCashea).toFixed(2));
-
-      const avIVA      = parseFloat((neto - neto / (1 + IVA_PELU)).toFixed(2));
-      const avCashea   = esCashea ? parseFloat((neto * CASHEA_FEE).toFixed(2)) : 0;
-      const avNeto     = parseFloat((neto - avIVA - avCashea).toFixed(2));
+      const axNeto     = parseFloat((pagAx   - axIVA   - axCashea  ).toFixed(2));
+      const avNeto     = parseFloat((neto    - avIVA   - avCashea  ).toFixed(2));
 
       netoPeluReal    += peluNeto;
       netoAyuExtReal  += axNeto;
@@ -1418,7 +1419,8 @@ window.verResumenSemanalPelu = async () => {
       '</div>';
     }
 
-    const distribuibleMes = totalBruto - totalAdminMes;
+    const totalIvaGlobalMes = totalIvaPelu + totalIvaExt + totalIvaAv;
+    const distribuibleMes = totalBruto - totalAdminMes - totalIvaGlobalMes;
     const netoAvipetTotal = totalAdminMes + netoAvipetReal;
 
     let htmlModal = '';
@@ -1446,7 +1448,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
     htmlModal += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#b45309;text-transform:uppercase;margin:0;">−IVA 16% extraído (÷1.16)</p>';
-    const totalIvaGlobal = totalIvaPelu+totalIvaExt+totalIvaAv;
+    const totalIvaGlobal = totalIvaGlobalMes;
     htmlModal += '<p style="font-size:15px;font-weight:900;color:#b45309;margin:2px 0;font-family:monospace;">−$'+totalIvaGlobal.toFixed(2)+'</p>';
     htmlModal += '<p style="font-size:7px;color:#92400e;margin:0;">Pelu −$'+totalIvaPelu.toFixed(2)+' · Av −$'+totalIvaAv.toFixed(2)+(totalIvaExt>0?' · Ext −$'+totalIvaExt.toFixed(2):'')+'</p>';
     htmlModal += '</div>';
@@ -1479,7 +1481,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #ddd6fe;">';
     htmlModal += '<p style="font-size:8px;color:#64748b;margin:1px 0;">Split bruto: <b>$'+totalPelu.toFixed(2)+'</b></p>';
     if (perrosConAyu>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−Ayudante x'+perrosConAyu+': <b>−$'+ayu1Total.toFixed(2)+'</b></p>';
-    if (totalIvaPelu>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−IVA (÷1.16 sobre neto): <b>−$'+totalIvaPelu.toFixed(2)+'</b></p>';
+    if (totalIvaPelu>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−IVA (prop. bruto): <b>−$'+totalIvaPelu.toFixed(2)+'</b></p>';
     if (totalCasheaPelu>0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:1px 0;">−Cashea 10%: <b>−$'+totalCasheaPelu.toFixed(2)+'</b></p>';
     htmlModal += '<p style="font-size:9px;font-weight:900;color:#7c3aed;margin:3px 0 0 0;">Neto: <b>$'+totalNetoPeluModal.toFixed(2)+'</b></p>';
     htmlModal += '</div>';
@@ -1493,7 +1495,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #bbf7d0;">';
     htmlModal += '<p style="font-size:8px;color:#15803d;margin:1px 0;">+12% Admin: <b>$'+totalAdminMes.toFixed(2)+'</b></p>';
     htmlModal += '<p style="font-size:8px;color:#64748b;margin:1px 0;">Split bruto: <b>$'+totalAvipet.toFixed(2)+'</b></p>';
-    if (totalIvaAv>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−IVA (÷1.16): <b>−$'+totalIvaAv.toFixed(2)+'</b></p>';
+    if (totalIvaAv>0) htmlModal += '<p style="font-size:8px;color:#92400e;margin:1px 0;">−IVA (prop. bruto): <b>−$'+totalIvaAv.toFixed(2)+'</b></p>';
     if (totalCasheaAv>0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:1px 0;">−Cashea 10%: <b>−$'+totalCasheaAv.toFixed(2)+'</b></p>';
     htmlModal += '</div></div></div>';
 
