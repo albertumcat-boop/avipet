@@ -1434,33 +1434,37 @@ window.verResumenSemanalPelu = async () => {
     // ── BLOQUE 1: Resumen global ─────────────────────────────────────────────
     htmlModal += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin:0 0 8px 0;letter-spacing:.05em;">Resumen — '+servicios.length+' servicio'+(servicios.length!==1?'s':'')+' · Con ayu: '+perrosConAyu+' · Sin ayu: '+perrosSinAyu+'</p>';
-    // Fila: Bruto | 12% Admin | Distribuible
+    // Fila 1: Bruto | −IVA | −Cashea
     htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">';
     htmlModal += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;">Bruto cobrado</p>';
     htmlModal += '<p style="font-size:17px;font-weight:900;color:#1e293b;margin:2px 0;font-family:monospace;">$'+totalBruto.toFixed(2)+'</p>';
     htmlModal += '</div>';
+    htmlModal += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#b45309;text-transform:uppercase;margin:0;">−IVA 16% (÷1.16)</p>';
+    htmlModal += '<p style="font-size:17px;font-weight:900;color:#b45309;margin:2px 0;font-family:monospace;">−$'+totalIvaGlobalMes.toFixed(2)+'</p>';
+    htmlModal += '<p style="font-size:7px;color:#92400e;margin:0;">sobre bruto</p>';
+    htmlModal += '</div>';
+    htmlModal += '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:8px;text-align:center;">';
+    htmlModal += '<p style="font-size:7px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0;">−Cashea 10%</p>';
+    htmlModal += '<p style="font-size:17px;font-weight:900;color:#7c3aed;margin:2px 0;font-family:monospace;">−$'+totalCasheaGlobalMes.toFixed(2)+'</p>';
+    htmlModal += '<p style="font-size:7px;color:#7c3aed;margin:0;">sobre bruto</p>';
+    htmlModal += '</div></div>';
+    // Fila 2: −12% Admin | Distribuible | Pendiente
+    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">';
     htmlModal += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#ea580c;text-transform:uppercase;margin:0;">−12% Admin</p>';
     htmlModal += '<p style="font-size:17px;font-weight:900;color:#ea580c;margin:2px 0;font-family:monospace;">−$'+totalAdminMes.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#fb923c;margin:0;">retiene Avipet</p>';
+    htmlModal += '<p style="font-size:7px;color:#fb923c;margin:0;">post IVA+Cashea</p>';
     htmlModal += '</div>';
     htmlModal += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Distribuible</p>';
     htmlModal += '<p style="font-size:17px;font-weight:900;color:#2563eb;margin:2px 0;font-family:monospace;">$'+distribuibleMes.toFixed(2)+'</p>';
     htmlModal += '<p style="font-size:7px;color:#3b82f6;margin:0;">split 50/50</p>';
-    htmlModal += '</div></div>';
-    // Fila: IVA | Pendiente
-    htmlModal += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
-    htmlModal += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center;">';
-    htmlModal += '<p style="font-size:7px;font-weight:900;color:#b45309;text-transform:uppercase;margin:0;">−IVA 16% extraído (÷1.16)</p>';
-    const totalIvaGlobal = totalIvaGlobalMes;
-    htmlModal += '<p style="font-size:15px;font-weight:900;color:#b45309;margin:2px 0;font-family:monospace;">−$'+totalIvaGlobal.toFixed(2)+'</p>';
-    htmlModal += '<p style="font-size:7px;color:#92400e;margin:0;">Pelu −$'+totalIvaPelu.toFixed(2)+' · Av −$'+totalIvaAv.toFixed(2)+(totalIvaExt>0?' · Ext −$'+totalIvaExt.toFixed(2):'')+' · Cashea −$'+totalCasheaGlobalMes.toFixed(2)+'</p>';
     htmlModal += '</div>';
     htmlModal += '<div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:8px;text-align:center;">';
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0;">Pendiente</p>';
-    htmlModal += '<p style="font-size:15px;font-weight:900;color:#dc2626;margin:2px 0;font-family:monospace;">$'+pendiente.toFixed(2)+'</p>';
+    htmlModal += '<p style="font-size:17px;font-weight:900;color:#dc2626;margin:2px 0;font-family:monospace;">$'+pendiente.toFixed(2)+'</p>';
     htmlModal += '<p style="font-size:7px;color:#ef4444;margin:0;">sin cobrar</p>';
     htmlModal += '</div></div></div>';
 
