@@ -1718,7 +1718,7 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   const tasa = parseFloat(window.tasaDolarHoy) || 1;
   const neto = comision - casheaFeeDoc;
   const rows = servicios.map(s =>
-    `<div class="row"><span>${s.nombre}${s.cashea?' 🟣':''} x${s.count}</span><span class="val">$${s.total.toFixed(2)}</span></div>`
+    `<div class="row"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span class="val">$${s.total.toFixed(2)}</span></div>`
   ).join('');
   const fps = [
     { l:'Dólares', v: formasPago.dolares },
