@@ -1476,23 +1476,6 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<button onclick="window.ajustarTasaDolar&&window.ajustarTasaDolar().then(()=>setTimeout(()=>_llamarFuncion(\'verResumenSemanalPelu\'),300));" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:8px;font-weight:900;cursor:pointer;">Actualizar tasa</button>';
     htmlModal += '</div>';
 
-    // Guardar datos de impresión en window para acceso limpio desde onclick
-    window._peluPrintData = {
-      miguelina: { neto: totalNetoPeluModal, desglose: [
-        {label:'Split bruto', val:'$'+totalPelu.toFixed(2)},
-        ...(perrosConAyu>0?[{label:'-Ayudante x'+perrosConAyu, val:'-$'+(perrosConAyu*2).toFixed(2)}]:[]),
-        ...(totalIvaPelu>0?[{label:'-IVA prop.', val:'-$'+totalIvaPelu.toFixed(2)}]:[]),
-        ...(totalCasheaPelu>0?[{label:'-Cashea 10%', val:'-$'+totalCasheaPelu.toFixed(2)}]:[]),
-      ]},
-      adriani: perrosConAyu > 0 ? { neto: ayu1USD+ayu1BS, desglose: [
-        {label:'Mascotas x $2', val:perrosConAyu+' × $2'},
-      ]} : null,
-      daniel: hayExtra ? { neto: totalAyuExt-totalIvaExt-totalCasheaExt, desglose: [
-        {label:'Split bruto', val:'$'+totalAyuExt.toFixed(2)},
-        ...(totalIvaExt>0?[{label:'-IVA prop.', val:'-$'+totalIvaExt.toFixed(2)}]:[]),
-        ...(totalCasheaExt>0?[{label:'-Cashea 10%', val:'-$'+totalCasheaExt.toFixed(2)}]:[]),
-      ]} : null,
-    };
     htmlModal += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">';
     htmlModal += '<button onclick="var d=window._peluPrintData.miguelina;window._imprimirReportePeluqueria(\'Miguelina\',d.neto,d.desglose);" style="flex:1;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Miguelina</button>';
     if (perrosConAyu > 0) {
@@ -1674,6 +1657,24 @@ window.verResumenSemanalPelu = async () => {
       });
       htmlModal += '</div>';
     }
+
+    // Datos para los botones de impresión (aquí ya están todas las variables)
+    window._peluPrintData = {
+      miguelina: { neto: totalNetoPeluModal, desglose: [
+        {label:'Split bruto', val:'$'+totalPelu.toFixed(2)},
+        ...(perrosConAyu>0?[{label:'-Ayudante x'+perrosConAyu, val:'-$'+(perrosConAyu*2).toFixed(2)}]:[]),
+        ...(totalIvaPelu>0?[{label:'-IVA prop.', val:'-$'+totalIvaPelu.toFixed(2)}]:[]),
+        ...(totalCasheaPelu>0?[{label:'-Cashea 10%', val:'-$'+totalCasheaPelu.toFixed(2)}]:[]),
+      ]},
+      adriani: perrosConAyu > 0 ? { neto: ayu1USD+ayu1BS, desglose: [
+        {label:'Mascotas x $2', val:perrosConAyu+' × $2'},
+      ]} : null,
+      daniel: hayExtra ? { neto: totalAyuExt-totalIvaExt-totalCasheaExt, desglose: [
+        {label:'Split bruto', val:'$'+totalAyuExt.toFixed(2)},
+        ...(totalIvaExt>0?[{label:'-IVA prop.', val:'-$'+totalIvaExt.toFixed(2)}]:[]),
+        ...(totalCasheaExt>0?[{label:'-Cashea 10%', val:'-$'+totalCasheaExt.toFixed(2)}]:[]),
+      ]} : null,
+    };
 
     Swal.fire({
       title: 'Resumen Semanal Peluqueria',
