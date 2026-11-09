@@ -389,31 +389,44 @@ window.mostrarDashboardVet = async () => {
 
       // Desglose de servicios
       const serviciosOrdenados = Object.entries(g.servicios).sort(function(a,b){ return b[1].count - a[1].count; });
+      const comisionRate = g.bruto > 0 ? g.comision / g.bruto : 0;
       if (serviciosOrdenados.length > 0) {
         const titServ = document.createElement('p');
         titServ.style.cssText = 'font-size:8px;font-weight:900;color:'+col.color+';text-transform:uppercase;margin:0 0 5px 0;letter-spacing:.05em;';
         titServ.textContent = 'Servicios realizados';
         secDoc.appendChild(titServ);
 
-        const grid = document.createElement('div');
-        grid.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
-        serviciosOrdenados.forEach(function(entry) {
-          const data=entry[1];
-          const fee = data.cashea ? data.total * CASHEA_FEE : 0;
-          const fila = document.createElement('div');
-          fila.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:'+(data.cashea?'#faf5ff':'#fff')+';border-radius:7px;padding:5px 8px;border-left:3px solid '+(data.cashea?'#7c3aed':col.color)+';';
-          fila.innerHTML =
-            '<div>' +
-              '<span style="font-size:10px;font-weight:700;color:#1e293b;text-transform:uppercase;">'+data.nombre+'</span>' +
-              (data.cashea ? '<span style="font-size:8px;font-weight:900;color:#7c3aed;margin-left:5px;">🟣 Cashea −'+( CASHEA_FEE*100).toFixed(0)+'% (−$'+fee.toFixed(2)+')</span>' : '') +
-            '</div>' +
-            '<div style="display:flex;gap:8px;align-items:center;">' +
-              '<span style="font-size:10px;color:#64748b;font-weight:700;">x '+data.count+'</span>' +
-              '<span style="font-size:10px;font-weight:900;color:'+(data.cashea?'#7c3aed':col.color)+';font-family:monospace;">$'+data.total.toFixed(2)+'</span>' +
-            '</div>';
-          grid.appendChild(fila);
+        // Tabla con cabecera
+        const tabla = document.createElement('table');
+        tabla.style.cssText = 'width:100%;border-collapse:collapse;font-size:9px;';
+        tabla.innerHTML =
+          '<thead><tr style="background:'+col.color+';color:#fff;">' +
+            '<th style="padding:5px 6px;text-align:left;border-radius:6px 0 0 0;">Servicio</th>' +
+            '<th style="padding:5px 6px;text-align:center;">x</th>' +
+            '<th style="padding:5px 6px;text-align:right;">Bruto</th>' +
+            '<th style="padding:5px 6px;text-align:right;">−IVA</th>' +
+            '<th style="padding:5px 6px;text-align:right;">−Cashea</th>' +
+            '<th style="padding:5px 6px;text-align:right;border-radius:0 6px 0 0;">Comisión</th>' +
+          '</tr></thead><tbody>';
+
+        serviciosOrdenados.forEach(function(entry, idx) {
+          const data = entry[1];
+          const iva       = parseFloat((data.total - data.total / 1.16).toFixed(2));
+          const casheaFee = data.cashea ? parseFloat((data.total * CASHEA_FEE).toFixed(2)) : 0;
+          const comisServ = parseFloat((data.total * comisionRate).toFixed(2));
+          const bg = idx % 2 === 0 ? '#f8fafc' : '#fff';
+          tabla.querySelector('tbody').innerHTML +=
+            '<tr style="background:'+(data.cashea?'#faf5ff':bg)+';border-left:3px solid '+(data.cashea?'#7c3aed':col.color)+';">' +
+              '<td style="padding:5px 6px;font-weight:700;color:#1e293b;text-transform:uppercase;font-size:9px;">'+data.nombre+'</td>' +
+              '<td style="padding:5px 6px;text-align:center;color:#64748b;font-weight:700;">'+data.count+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:#1e293b;">$'+data.total.toFixed(2)+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;color:#b45309;font-family:monospace;">−$'+iva.toFixed(2)+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;color:#7c3aed;font-family:monospace;">'+(casheaFee>0?'−$'+casheaFee.toFixed(2):'—')+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:'+col.color+';">$'+comisServ.toFixed(2)+'</td>' +
+            '</tr>';
         });
-        secDoc.appendChild(grid);
+        tabla.innerHTML += '</tbody>';
+        secDoc.appendChild(tabla);
       } else {
         secDoc.innerHTML += '<p style="font-size:9px;color:#94a3b8;font-style:italic;">Sin servicios detallados</p>';
       }
