@@ -909,10 +909,9 @@ window.mostrarDashboardPelu = async () => {
 
     // Botones accion
     const acciones = document.createElement('div');
-    acciones.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;';
+    acciones.style.cssText = 'display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:14px;';
     acciones.innerHTML =
-      '<button onclick="_llamarFuncion(\'verResumenSemanalPelu\')" style="background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">Resumen Semanal</button>' +
-      '<button onclick="_llamarFuncion(\'ajustarPagoPeluqueria\')" style="background:#f59e0b;color:#fff;border:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">Ajustar Pagos</button>';
+      '<button onclick="_llamarFuncion(\'verResumenSemanalPelu\')" style="background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;">Resumen Semanal</button>';
     contenedor.appendChild(acciones);
 
     // Lista detalle
