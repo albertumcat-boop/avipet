@@ -1728,28 +1728,32 @@ function _imprimirTiquera(htmlBody) {
 }
 
 window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, casheaFeeDoc, servicios, formasPago, consultas) {
-  const tasa = parseFloat(window.tasaDolarHoy) || 1;
-  const neto = comision - casheaFeeDoc;
+  const tasa   = parseFloat(window.tasaDolarHoy) || 1;
+  const ivaDoc = parseFloat((comision - comision / 1.16).toFixed(2));
+  const neto   = parseFloat((comision - ivaDoc - casheaFeeDoc).toFixed(2));
   const rows = servicios.map(s =>
-    `<div class="row"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span class="val">$${s.total.toFixed(2)}</span></div>`
+    `<div class="row" style="font-size:9px;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span>$${s.total.toFixed(2)}</span></div>`
   ).join('');
   const fps = [
-    { l:'Dólares', v: formasPago.dolares },
-    { l:'Pago Móvil', v: formasPago.movil },
+    { l:'Dolares', v: formasPago.dolares },
+    { l:'Pago Movil', v: formasPago.movil },
     { l:'Cashea', v: formasPago.cashea },
     { l:'Otro', v: formasPago.otro },
   ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
   const body = `
   <div class="c"><b>REPORTE VETERINARIA</b></div>
-  <div class="c" style="font-size:9px;">${nombre} · ${consultas} atención${consultas!==1?'es':''}</div>
+  <div class="c" style="font-size:9px;">${nombre}</div>
+  <div class="c" style="font-size:9px;">${consultas} atención${consultas!==1?'es':''}</div>
   <div class="hr"></div>
-  <div class="row"><span class="lbl">Bruto cobrado</span><span class="val">$${bruto.toFixed(2)}</span></div>
-  <div class="row"><span class="lbl">Insumos</span><span>-$${insumos.toFixed(2)}</span></div>
-  <div class="row"><span class="lbl">Comisión bruta</span><span>$${comision.toFixed(2)}</span></div>
-  ${casheaFeeDoc>0?`<div class="row"><span class="lbl">-10% Cashea doc.</span><span>-$${casheaFeeDoc.toFixed(2)}</span></div>`:''}
+  <div class="row"><span class="lbl">Bruto cobrado</span><span><b>$${bruto.toFixed(2)}</b></span></div>
+  <div class="row"><span class="lbl">-Insumos</span><span>-$${insumos.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">Comision bruta</span><span>$${comision.toFixed(2)}</span></div>
   <div class="hr"></div>
-  <div class="row"><span><b>COMISION NETA</b></span><span class="val">$${neto.toFixed(2)}</span></div>
-  <div class="row"><span class="lbl">≈ Bs</span><span>${(neto*tasa).toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">-IVA (÷1.16)</span><span>-$${ivaDoc.toFixed(2)}</span></div>
+  ${casheaFeeDoc>0?`<div class="row"><span class="lbl">-Cashea 10%</span><span>-$${casheaFeeDoc.toFixed(2)}</span></div>`:''}
+  <div class="hr"></div>
+  <div class="row"><span><b>NETO DOCTOR</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
+  <div class="row"><span class="lbl">En Bs (${tasa.toFixed(0)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
   <div class="hr"></div>
   ${rows ? rows + '<div class="hr"></div>' : ''}
   ${fps}`;
