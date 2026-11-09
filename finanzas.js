@@ -366,8 +366,17 @@ window.mostrarDashboardVet = async () => {
               '<p style="font-size:9px;color:#7c3aed;margin:0;">🟣 -$'+g.casheaFeeDoc.toFixed(2)+' (su 10% Cashea)</p>' +
               '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+(g.comision-g.casheaFeeDoc).toFixed(2)+'</p>'
             : '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+g.comision.toFixed(2)+'</p>') +
+          '<button id="btnPrint_'+pid+'" style="margin-top:4px;background:'+col.color+';color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Tiquera</button>' +
         '</div>';
       secDoc.appendChild(cabDoc);
+      // Conectar botón de tiquera en cabecera
+      (function(nd, gd) {
+        const btnCab = secDoc.querySelector('#btnPrint_'+pid);
+        if (btnCab) btnCab.onclick = function() {
+          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, cashea:s.cashea }));
+          window._imprimirReporteDoctor(nd, gd.comision, gd.bruto, gd.insumos, gd.casheaFeeDoc, servArr, gd.formasPago, gd.consultas.length);
+        };
+      })(nombreDoc, g);
 
       // Deuda si aplica
       if (deuda > 0) {
@@ -450,6 +459,17 @@ window.mostrarDashboardVet = async () => {
         secDoc.appendChild(fpDiv);
       }
 
+      // Botón imprimir doctor
+      const btnImpDoc = document.createElement('button');
+      btnImpDoc.textContent = '🖨️ Tiquera';
+      btnImpDoc.style.cssText = 'width:100%;margin-top:8px;padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;letter-spacing:.03em;';
+      (function(nd, gd) {
+        btnImpDoc.onclick = function() {
+          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, cashea:s.cashea }));
+          window._imprimirReporteDoctor(nd, gd.comision, gd.bruto, gd.insumos, gd.casheaFeeDoc, servArr, gd.formasPago, gd.consultas.length);
+        };
+      })(nombreDoc, g);
+      secDoc.appendChild(btnImpDoc);
       contenedor.appendChild(secDoc);
     });
 
@@ -1440,7 +1460,34 @@ window.verResumenSemanalPelu = async () => {
     const _tasaActual = parseFloat(window.tasaDolarHoy) || 1;
     htmlModal += '<div style="display:flex;align-items:center;justify-content:space-between;background:#f1f5f9;border-radius:8px;padding:5px 10px;margin-bottom:8px;">';
     htmlModal += '<span style="font-size:9px;color:#475569;">💱 Tasa del día: <b style="color:#0f172a;">'+_tasaActual.toFixed(2)+' Bs/$</b></span>';
-    htmlModal += '<button onclick="window._editarTasaManual&&window._editarTasaManual();setTimeout(()=>_llamarFuncion(\'verResumenSemanalPelu\'),400);" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:8px;font-weight:900;cursor:pointer;">Actualizar tasa</button>';
+    htmlModal += '<button onclick="window.ajustarTasaDolar&&window.ajustarTasaDolar().then(()=>setTimeout(()=>_llamarFuncion(\'verResumenSemanalPelu\'),300));" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:8px;font-weight:900;cursor:pointer;">Actualizar tasa</button>';
+    htmlModal += '</div>';
+
+    // Guardar datos de impresión en window para acceso limpio desde onclick
+    window._peluPrintData = {
+      miguelina: { neto: totalNetoPeluModal, desglose: [
+        {label:'Split bruto', val:'$'+totalPelu.toFixed(2)},
+        ...(perrosConAyu>0?[{label:'-Ayudante x'+perrosConAyu, val:'-$'+(perrosConAyu*2).toFixed(2)}]:[]),
+        ...(totalIvaPelu>0?[{label:'-IVA prop.', val:'-$'+totalIvaPelu.toFixed(2)}]:[]),
+        ...(totalCasheaPelu>0?[{label:'-Cashea 10%', val:'-$'+totalCasheaPelu.toFixed(2)}]:[]),
+      ]},
+      adriani: perrosConAyu > 0 ? { neto: ayu1USD+ayu1BS, desglose: [
+        {label:'Mascotas x $2', val:perrosConAyu+' × $2'},
+      ]} : null,
+      daniel: hayExtra ? { neto: totalAyuExt-totalIvaExt-totalCasheaExt, desglose: [
+        {label:'Split bruto', val:'$'+totalAyuExt.toFixed(2)},
+        ...(totalIvaExt>0?[{label:'-IVA prop.', val:'-$'+totalIvaExt.toFixed(2)}]:[]),
+        ...(totalCasheaExt>0?[{label:'-Cashea 10%', val:'-$'+totalCasheaExt.toFixed(2)}]:[]),
+      ]} : null,
+    };
+    htmlModal += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">';
+    htmlModal += '<button onclick="var d=window._peluPrintData.miguelina;window._imprimirReportePeluqueria(\'Miguelina\',d.neto,d.desglose);" style="flex:1;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Miguelina</button>';
+    if (perrosConAyu > 0) {
+      htmlModal += '<button onclick="var d=window._peluPrintData.adriani;window._imprimirReportePeluqueria(\'Adriani\',d.neto,d.desglose);" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Adriani</button>';
+    }
+    if (hayExtra) {
+      htmlModal += '<button onclick="var d=window._peluPrintData.daniel;window._imprimirReportePeluqueria(\'Daniel (Extra)\',d.neto,d.desglose);" style="flex:1;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Daniel</button>';
+    }
     htmlModal += '</div>';
 
     // ── BLOQUE 1: Resumen global ─────────────────────────────────────────────
@@ -1624,6 +1671,91 @@ window.verResumenSemanalPelu = async () => {
     });
 
   } catch(e) { console.error(e); alert('Error: '+e.message); }
+};
+
+// ─── IMPRIMIR EN TIQUERA 58mm ────────────────────────────
+function _imprimirTiquera(htmlBody) {
+  const cfg = JSON.parse(localStorage.getItem('avipetConfigFiscal') || '{}');
+  const razon = cfg.razonSocial || 'AVIPET';
+  const dir   = cfg.direccionFiscal || '';
+  const rif   = cfg.rifEmisor || '';
+  const tasa  = parseFloat(window.tasaDolarHoy) || 1;
+  const ahora = new Date();
+  const fecha = ahora.toLocaleDateString('es-VE');
+  const hora  = ahora.toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    @page { margin:0; size:58mm auto; }
+    body { font-family:'Courier New',monospace; font-size:11px; font-weight:700; width:52mm; color:#000; background:#fff; line-height:1.4; overflow-wrap:break-word; }
+    .c { text-align:center; }
+    .r { text-align:right; }
+    .hr { border-top:1.5px dashed #000; margin:4px 0; }
+    .row { display:flex; justify-content:space-between; }
+    .lbl { font-size:9px; color:#555; }
+    .val { font-weight:900; }
+  </style></head><body>
+  <div class="c"><b>${razon}</b></div>
+  ${rif ? `<div class="c" style="font-size:9px;">RIF: ${rif}</div>` : ''}
+  ${dir ? `<div class="c" style="font-size:9px;">${dir}</div>` : ''}
+  <div class="hr"></div>
+  <div class="c" style="font-size:9px;">${fecha} ${hora} · Tasa: ${tasa.toFixed(2)} Bs/$</div>
+  <div class="hr"></div>
+  ${htmlBody}
+  <div class="hr"></div>
+  <div class="c" style="font-size:9px;">— Reporte interno —</div>
+  <br><br>
+  </body></html>`;
+  const win = window.open('','_blank','width=230,height=700');
+  if (!win) { alert('Permite ventanas emergentes para imprimir.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); win.close(); }, 400);
+}
+
+window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, casheaFeeDoc, servicios, formasPago, consultas) {
+  const tasa = parseFloat(window.tasaDolarHoy) || 1;
+  const neto = comision - casheaFeeDoc;
+  const rows = servicios.map(s =>
+    `<div class="row"><span>${s.nombre}${s.cashea?' 🟣':''} x${s.count}</span><span class="val">$${s.total.toFixed(2)}</span></div>`
+  ).join('');
+  const fps = [
+    { l:'Dólares', v: formasPago.dolares },
+    { l:'Pago Móvil', v: formasPago.movil },
+    { l:'Cashea', v: formasPago.cashea },
+    { l:'Otro', v: formasPago.otro },
+  ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
+  const body = `
+  <div class="c"><b>REPORTE VETERINARIA</b></div>
+  <div class="c" style="font-size:9px;">${nombre} · ${consultas} atención${consultas!==1?'es':''}</div>
+  <div class="hr"></div>
+  <div class="row"><span class="lbl">Bruto cobrado</span><span class="val">$${bruto.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">Insumos</span><span>-$${insumos.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">Comisión bruta</span><span>$${comision.toFixed(2)}</span></div>
+  ${casheaFeeDoc>0?`<div class="row"><span class="lbl">-10% Cashea doc.</span><span>-$${casheaFeeDoc.toFixed(2)}</span></div>`:''}
+  <div class="hr"></div>
+  <div class="row"><span><b>COMISION NETA</b></span><span class="val">$${neto.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">≈ Bs</span><span>${(neto*tasa).toFixed(2)}</span></div>
+  <div class="hr"></div>
+  ${rows ? rows + '<div class="hr"></div>' : ''}
+  ${fps}`;
+  _imprimirTiquera(body);
+};
+
+window._imprimirReportePeluqueria = function(persona, monto, desglose, tasa) {
+  const t = parseFloat(tasa||window.tasaDolarHoy) || 1;
+  const bs = (monto * t).toFixed(2);
+  const desgloseHtml = desglose.map(d=>`<div class="row"><span class="lbl">${d.label}</span><span>${d.val}</span></div>`).join('');
+  const body = `
+  <div class="c"><b>REPORTE PELUQUERIA</b></div>
+  <div class="c" style="font-size:9px;">${persona}</div>
+  <div class="hr"></div>
+  ${desgloseHtml}
+  <div class="hr"></div>
+  <div class="row"><span><b>NETO</b></span><span class="val">$${monto.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">≈ Bs</span><span>${bs}</span></div>`;
+  _imprimirTiquera(body);
 };
 
 // ─── CONTADOR DE MAQUINAS ─────────────────────────────────
