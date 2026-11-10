@@ -478,7 +478,7 @@ window.mostrarDashboardVet = async () => {
       btnImpDoc.style.cssText = 'width:100%;margin-top:8px;padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;letter-spacing:.03em;';
       (function(nd, gd) {
         btnImpDoc.onclick = function() {
-          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, cashea:s.cashea }));
+          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, comisionDoc:s.comisionDoc||0, cashea:s.cashea }));
           window._imprimirReporteDoctor(nd, gd.comision, gd.bruto, gd.insumos, gd.casheaFeeDoc, servArr, gd.formasPago, gd.consultas.length);
         };
       })(nombreDoc, g);
