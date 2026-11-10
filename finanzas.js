@@ -1728,11 +1728,9 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   const tasa        = parseFloat(window.tasaDolarHoy) || 1;
   const ivaDoc      = parseFloat((comision - comision / 1.16).toFixed(2));
   const neto        = parseFloat((comision - ivaDoc - casheaFeeDoc).toFixed(2));
-  const comisRate   = bruto > 0 ? comision / bruto : 0;
-  const rows = servicios.map(s => {
-    const comisServ = parseFloat((s.total * comisRate).toFixed(2));
-    return `<div class="row" style="font-size:9px;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span>$${comisServ.toFixed(2)}</span></div>`;
-  }).join('');
+  const rows = servicios.map(s =>
+    `<div style="font-size:9px;">${s.nombre}${s.cashea?' (C)':''} x${s.count}</div>`
+  ).join('');
   const fps = [
     { l:'Dolares', v: formasPago.dolares },
     { l:'Pago Movil', v: formasPago.movil },
