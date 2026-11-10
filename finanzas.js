@@ -1699,13 +1699,13 @@ function _imprimirTiquera(htmlBody) {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    @page { margin:2mm 3mm; size:58mm auto; }
-    body { font-family:'Courier New',monospace; font-size:11px; font-weight:700; width:52mm; color:#000; background:#fff; line-height:1.4; overflow-wrap:break-word; padding:0 2mm; }
+    @page { margin:0; size:58mm auto; }
+    body { font-family:'Courier New',monospace; font-size:11px; font-weight:700; width:52mm; color:#000; background:#fff; line-height:1.4; overflow-wrap:break-word; padding:2mm 3mm; }
     .c { text-align:center; }
     .r { text-align:right; }
     .hr { border-top:1.5px dashed #000; margin:4px 0; }
     .row { display:flex; justify-content:space-between; }
-    .lbl { font-size:9px; color:#555; }
+    .lbl { font-size:9px; font-weight:700; color:#000; }
     .val { font-weight:900; }
   </style></head><body>
   <div class="c"><b>${razon}</b></div>
