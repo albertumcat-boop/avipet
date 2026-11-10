@@ -376,7 +376,7 @@ window.mostrarDashboardVet = async () => {
       (function(nd, gd) {
         const btnCab = secDoc.querySelector('#btnPrint_'+pid);
         if (btnCab) btnCab.onclick = function() {
-          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, cashea:s.cashea }));
+          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, comisionDoc:s.comisionDoc||0, cashea:s.cashea }));
           window._imprimirReporteDoctor(nd, gd.comision, gd.bruto, gd.insumos, gd.casheaFeeDoc, servArr, gd.formasPago, gd.consultas.length);
         };
       })(nombreDoc, g);
