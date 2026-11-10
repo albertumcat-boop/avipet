@@ -404,14 +404,12 @@ window.mostrarDashboardVet = async () => {
             '<th style="padding:5px 6px;text-align:left;border-radius:6px 0 0 0;">Servicio</th>' +
             '<th style="padding:5px 6px;text-align:center;">x</th>' +
             '<th style="padding:5px 6px;text-align:right;">Bruto</th>' +
-            '<th style="padding:5px 6px;text-align:right;">−IVA</th>' +
             '<th style="padding:5px 6px;text-align:right;">−Cashea</th>' +
             '<th style="padding:5px 6px;text-align:right;border-radius:0 6px 0 0;">Comisión</th>' +
           '</tr></thead><tbody>';
 
         serviciosOrdenados.forEach(function(entry, idx) {
           const data = entry[1];
-          const iva       = parseFloat((data.total - data.total / 1.16).toFixed(2));
           const casheaFee = data.cashea ? parseFloat((data.total * CASHEA_FEE).toFixed(2)) : 0;
           const comisServ = parseFloat((data.total * comisionRate).toFixed(2));
           const bg = idx % 2 === 0 ? '#f8fafc' : '#fff';
@@ -420,7 +418,6 @@ window.mostrarDashboardVet = async () => {
               '<td style="padding:5px 6px;font-weight:700;color:#1e293b;text-transform:uppercase;font-size:9px;">'+data.nombre+'</td>' +
               '<td style="padding:5px 6px;text-align:center;color:#64748b;font-weight:700;">'+data.count+'</td>' +
               '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:#1e293b;">$'+data.total.toFixed(2)+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;color:#b45309;font-family:monospace;">−$'+iva.toFixed(2)+'</td>' +
               '<td style="padding:5px 6px;text-align:right;color:#7c3aed;font-family:monospace;">'+(casheaFee>0?'−$'+casheaFee.toFixed(2):'—')+'</td>' +
               '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:'+col.color+';">$'+comisServ.toFixed(2)+'</td>' +
             '</tr>';
@@ -1747,8 +1744,7 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   <div class="hr"></div>
   <div class="row"><span class="lbl">Bruto cobrado</span><span><b>$${bruto.toFixed(2)}</b></span></div>
   <div class="row"><span class="lbl">-Insumos</span><span>-$${insumos.toFixed(2)}</span></div>
-  <div class="row"><span class="lbl">Comision bruta</span><span>$${comision.toFixed(2)}</span></div>
-  <div class="hr"></div>
+  <div class="row"><span class="lbl">Comision</span><span>$${comision.toFixed(2)}</span></div>
   <div class="row"><span class="lbl">-IVA (÷1.16)</span><span>-$${ivaDoc.toFixed(2)}</span></div>
   ${casheaFeeDoc>0?`<div class="row"><span class="lbl">-Cashea 10%</span><span>-$${casheaFeeDoc.toFixed(2)}</span></div>`:''}
   <div class="hr"></div>
