@@ -293,12 +293,15 @@ window.mostrarDashboardVet = async () => {
 
       // Agrupar servicios realizados separando Cashea
       const esCashea = fp === 'cashea';
+      const rateConsulta = v > 0 ? p / v : 0; // comisión real de ESTA consulta
       (c.serviciosRealizados||[]).forEach(function(s){
         const nombre=(s.nombre||'Servicio').trim().toUpperCase();
         const key = nombre + (esCashea ? '||cashea' : '||normal');
-        if(!g.servicios[key]) g.servicios[key]={nombre, count:0, total:0, cashea:esCashea};
+        const precio = parseFloat(s.precio||0);
+        if(!g.servicios[key]) g.servicios[key]={nombre, count:0, total:0, comisionDoc:0, cashea:esCashea};
         g.servicios[key].count++;
-        g.servicios[key].total+=parseFloat(s.precio||0);
+        g.servicios[key].total      += precio;
+        g.servicios[key].comisionDoc += parseFloat((precio * rateConsulta).toFixed(2));
       });
     });
     // El fee Cashea se divide: el doctor absorbe 10% de su comisión, Avipet absorbe el resto
@@ -411,7 +414,7 @@ window.mostrarDashboardVet = async () => {
         serviciosOrdenados.forEach(function(entry, idx) {
           const data = entry[1];
           const casheaFee = data.cashea ? parseFloat((data.total * CASHEA_FEE).toFixed(2)) : 0;
-          const comisServ = parseFloat((data.total * comisionRate).toFixed(2));
+          const comisServ = parseFloat((data.comisionDoc || 0).toFixed(2));
           const bg = idx % 2 === 0 ? '#f8fafc' : '#fff';
           tabla.querySelector('tbody').innerHTML +=
             '<tr style="background:'+(data.cashea?'#faf5ff':bg)+';border-left:3px solid '+(data.cashea?'#7c3aed':col.color)+';">' +
@@ -1729,7 +1732,7 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   const ivaDoc      = parseFloat((comision - comision / 1.16).toFixed(2));
   const neto        = parseFloat((comision - ivaDoc - casheaFeeDoc).toFixed(2));
   const rows = servicios.map(s =>
-    `<div style="font-size:9px;">${s.nombre}${s.cashea?' (C)':''} x${s.count}</div>`
+    `<div class="row" style="font-size:9px;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span>$${(s.comisionDoc||0).toFixed(2)}</span></div>`
   ).join('');
   const fps = [
     { l:'Dolares', v: formasPago.dolares },
