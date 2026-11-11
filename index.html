@@ -1657,13 +1657,18 @@ if (evidenciaId) {
 </style>
 <script>
   // Chrome ignora @media print en elementos position:fixed — forzar via JS
+  var _FIXED_HIDE_IDS = ['btnFacturacionFloat', '_banner_conexion', 'bannerModoReferido'];
   window.addEventListener('beforeprint', function() {
-    var b = document.getElementById('btnFacturacionFloat');
-    if (b) b.style.setProperty('display', 'none', 'important');
+    _FIXED_HIDE_IDS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.setProperty('display', 'none', 'important');
+    });
   });
   window.addEventListener('afterprint', function() {
-    var b = document.getElementById('btnFacturacionFloat');
-    if (b) b.style.removeProperty('display');
+    _FIXED_HIDE_IDS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.removeProperty('display');
+    });
   });
 </script>
 </body>
