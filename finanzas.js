@@ -1496,13 +1496,27 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<button onclick="window.ajustarTasaDolar&&window.ajustarTasaDolar().then(()=>setTimeout(()=>_llamarFuncion(\'verResumenSemanalPelu\'),300));" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:8px;font-weight:900;cursor:pointer;">Actualizar tasa</button>';
     htmlModal += '</div>';
 
-    htmlModal += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">';
-    htmlModal += '<button onclick="var d=window._peluPrintData.miguelina;window._imprimirReportePeluqueria(\'Miguelina\',d.neto,d.desglose);" style="flex:1;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Miguelina</button>';
+    // ── Descuentos manuales ─────────────────────────────────────────────────
+    htmlModal += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:8px 10px;margin-bottom:8px;">';
+    htmlModal += '<p style="font-size:8px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0 0 6px 0;">Descuento a descontar en tiquera ($)</p>';
+    htmlModal += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    htmlModal += '<div style="flex:1;min-width:80px;"><p style="font-size:7px;color:#7c3aed;font-weight:900;margin:0 0 2px 0;">MIGUELINA</p><input id="descPeluMig" type="number" min="0" step="0.01" value="'+(deudasEquipo['peluquera']>0?deudasEquipo['peluquera'].toFixed(2):'0')+'" style="width:100%;border:1.5px solid #e9d5ff;border-radius:6px;padding:4px 6px;font-size:11px;font-weight:900;color:#7c3aed;text-align:center;"></div>';
     if (perrosConAyu > 0) {
-      htmlModal += '<button onclick="var d=window._peluPrintData.adriani;window._imprimirReportePeluqueria(\'Adriani\',d.neto,d.desglose);" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Adriani</button>';
+      htmlModal += '<div style="flex:1;min-width:80px;"><p style="font-size:7px;color:#2563eb;font-weight:900;margin:0 0 2px 0;">ADRIANI</p><input id="descPeluAyu1" type="number" min="0" step="0.01" value="'+(deudasEquipo['ayu1']>0?deudasEquipo['ayu1'].toFixed(2):'0')+'" style="width:100%;border:1.5px solid #bfdbfe;border-radius:6px;padding:4px 6px;font-size:11px;font-weight:900;color:#2563eb;text-align:center;"></div>';
     }
     if (hayExtra) {
-      htmlModal += '<button onclick="var d=window._peluPrintData.daniel;window._imprimirReportePeluqueria(\'Daniel (Extra)\',d.neto,d.desglose);" style="flex:1;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Daniel</button>';
+      htmlModal += '<div style="flex:1;min-width:80px;"><p style="font-size:7px;color:#ea580c;font-weight:900;margin:0 0 2px 0;">DANIEL</p><input id="descPeluExt" type="number" min="0" step="0.01" value="'+(deudasEquipo['ayuext']>0?deudasEquipo['ayuext'].toFixed(2):'0')+'" style="width:100%;border:1.5px solid #fed7aa;border-radius:6px;padding:4px 6px;font-size:11px;font-weight:900;color:#ea580c;text-align:center;"></div>';
+    }
+    htmlModal += '</div></div>';
+
+    // ── Botones de impresión ─────────────────────────────────────────────────
+    htmlModal += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">';
+    htmlModal += '<button onclick="(function(){var d=window._peluPrintData.miguelina;var desc=parseFloat(document.getElementById(\'descPeluMig\').value||0);var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Miguelina\',d.neto-desc,desgl);})()" style="flex:1;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Miguelina</button>';
+    if (perrosConAyu > 0) {
+      htmlModal += '<button onclick="(function(){var d=window._peluPrintData.adriani;var desc=parseFloat(document.getElementById(\'descPeluAyu1\').value||0);var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Adriani\',d.neto-desc,desgl);})()" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Adriani</button>';
+    }
+    if (hayExtra) {
+      htmlModal += '<button onclick="(function(){var d=window._peluPrintData.daniel;var desc=parseFloat(document.getElementById(\'descPeluExt\').value||0);var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Daniel (Extra)\',d.neto-desc,desgl);})()" style="flex:1;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Daniel</button>';
     }
     htmlModal += '</div>';
 
