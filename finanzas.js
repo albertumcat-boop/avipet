@@ -1502,16 +1502,6 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<button onclick="window.ajustarTasaDolar&&window.ajustarTasaDolar().then(()=>setTimeout(()=>_llamarFuncion(\'verResumenSemanalPelu\'),300));" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:8px;font-weight:900;cursor:pointer;">Actualizar tasa</button>';
     htmlModal += '</div>';
 
-    // ── Botones de impresión ─────────────────────────────────────────────────
-    htmlModal += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">';
-    htmlModal += '<button onclick="(function(){var d=window._peluPrintData.miguelina;var el=document.getElementById(\'descDeuda_peluquera\');var desc=el?parseFloat(el.value||0):0;var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Miguelina\',d.neto-desc,desgl);})()" style="flex:1;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Miguelina</button>';
-    if (perrosConAyu > 0) {
-      htmlModal += '<button onclick="(function(){var d=window._peluPrintData.adriani;var el=document.getElementById(\'descDeuda_ayu1\');var desc=el?parseFloat(el.value||0):0;var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Adriani\',d.neto-desc,desgl);})()" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Adriani</button>';
-    }
-    if (hayExtra) {
-      htmlModal += '<button onclick="(function(){var d=window._peluPrintData.daniel;var el=document.getElementById(\'descDeuda_ayuext\');var desc=el?parseFloat(el.value||0):0;var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Daniel (Extra)\',d.neto-desc,desgl);})()" style="flex:1;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Daniel</button>';
-    }
-    htmlModal += '</div>';
 
     // ── BLOQUE 1: Resumen global ─────────────────────────────────────────────
     htmlModal += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px;">';
@@ -1575,6 +1565,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:9px;font-weight:900;color:#7c3aed;margin:3px 0 0 0;">Neto: <b>$'+totalNetoPeluModal.toFixed(2)+'</b></p>';
     htmlModal += '</div>';
     htmlModal += _desglosDeuda(totalPeluUSD, totalPeluBS, deudasEquipo['peluquera']||0, '#7c3aed', '#92400e', 'peluquera', totalNetoPeluModal);
+    htmlModal += '<button onclick="(function(){var d=window._peluPrintData.miguelina;var el=document.getElementById(\'descDeuda_peluquera\');var desc=el?parseFloat(el.value||0):0;var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Miguelina\',d.neto-desc,desgl);})()" style="width:100%;margin-top:6px;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Miguelina</button>';
     htmlModal += '</div>';
 
     // Avipet
@@ -1608,6 +1599,7 @@ window.verResumenSemanalPelu = async () => {
     else if (ayu1BS>0){htmlModal+='<p style="font-size:16px;font-weight:900;color:#92400e;margin:2px 0;">$'+ayu1BS.toFixed(2)+' Bs</p>';}
     else{htmlModal+='<p style="font-size:16px;font-weight:900;color:#2563eb;margin:2px 0;">$'+ayu1USD.toFixed(2)+' USD</p>';}
     htmlModal += _desglosDeuda(ayu1USD, ayu1BS, deudasEquipo['ayu1']||0, '#2563eb', '#92400e', 'ayu1');
+    htmlModal += '<button onclick="(function(){var d=window._peluPrintData.adriani;var el=document.getElementById(\'descDeuda_ayu1\');var desc=el?parseFloat(el.value||0):0;var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Adriani\',d.neto-desc,desgl);})()" style="width:100%;margin-top:6px;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Adriani</button>';
     htmlModal += '</div>';
     if (hayExtra) {
       const totalNetoExtModal = totalAyuExt - totalIvaExt - totalCasheaExt;
@@ -1627,6 +1619,7 @@ window.verResumenSemanalPelu = async () => {
       if (totalCasheaExt>0) htmlModal += '<p style="font-size:8px;color:#7c3aed;margin:1px 0;">−Cashea 10%: <b>−$'+totalCasheaExt.toFixed(2)+'</b></p>';
       htmlModal += '</div>';
       htmlModal += _desglosDeuda(totalAyuExtUSD, totalAyuExtBS, deudasEquipo['ayuext']||0, '#ea580c', '#92400e', 'ayuext');
+      htmlModal += '<button onclick="(function(){var d=window._peluPrintData.daniel;var el=document.getElementById(\'descDeuda_ayuext\');var desc=el?parseFloat(el.value||0):0;var desgl=[...d.desglose];if(desc>0)desgl.push({label:\'-Descuento\',val:\'-$\'+desc.toFixed(2)});window._imprimirReportePeluqueria(\'Daniel (Extra)\',d.neto-desc,desgl);})()" style="width:100%;margin-top:6px;background:#ea580c;color:#fff;border:none;border-radius:8px;padding:7px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Imprimir Daniel</button>';
       htmlModal += '</div>';
     }
     htmlModal += '</div>';
