@@ -1571,7 +1571,7 @@ window.verResumenSemanalPelu = async () => {
       }
     });
     var totalAyu1 = ayu1USD + ayu1BS;
-    const hayExtra = totalAyuExtUSD+totalAyuExtBS > 0;
+    var hayExtra = totalAyuExtUSD+totalAyuExtBS > 0;
     htmlModal += '<div style="display:grid;grid-template-columns:'+(hayExtra?'1fr 1fr':'1fr')+';gap:6px;margin-bottom:6px;">';
     htmlModal += '<div style="background:#eff6ff;border-radius:10px;padding:8px;">';
     htmlModal += '<p style="font-size:8px;font-weight:900;color:#2563eb;text-transform:uppercase;margin:0;">Adriani (ayudante)</p>';
