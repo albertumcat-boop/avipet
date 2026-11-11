@@ -120,12 +120,33 @@ function _tarjeta(label, valor, bg, colorVal, sub) {
   '</div>';
 }
 
+// ─── AUTO-FETCH TASA (silencioso, igual que facturación) ──
+async function _autoFetchTasa() {
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: ctrl.signal });
+    clearTimeout(tid);
+    const data = await res.json();
+    const tasa = parseFloat(data?.promedio || data?.price || 0);
+    if (tasa > 1) {
+      const tasaAnterior = window.tasaDolarHoy;
+      window.tasaDolarHoy = tasa;
+      localStorage.setItem('tasaDolarAvipet', tasa);
+      if (Math.abs(tasa - tasaAnterior) > 0.10) {
+        setDoc(doc(db, 'configuracion', 'tasa'), { valor: tasa, actualizado: serverTimestamp() }).catch(()=>{});
+      }
+    }
+  } catch (_) {}
+}
+
 // ─── MENU PRINCIPAL ───────────────────────────────────────
 window.mostrarMenuFinanzas = async () => {
   _tabFinanzas = null;
   const listaDiv = document.getElementById('listaReporte');
   if (!listaDiv) return;
   listaDiv.innerHTML = '<p style="text-align:center;padding:12px;font-size:10px;color:#94a3b8;font-weight:700;">Cargando...</p>';
+  _autoFetchTasa();
 
   // Consultar deudas pendientes para mostrar alertas
   // personaId: darwin, joan, peluquera, ayu1, ayuext
