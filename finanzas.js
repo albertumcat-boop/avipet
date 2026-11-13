@@ -1753,7 +1753,10 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   const ivaDoc      = parseFloat((comision - comision / 1.16).toFixed(2));
   const neto        = parseFloat((comision - ivaDoc - casheaFeeDoc).toFixed(2));
   const rows = servicios.map(s =>
-    `<div style="display:flex;justify-content:space-between;font-size:9px;margin:1px 0;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span style="text-align:right;"><span style="color:#64748b;font-size:8px;">$${(s.total||0).toFixed(2)} bruto</span> <b>$${((s.comisionDoc||0)).toFixed(2)}</b></span></div>`
+    `<div style="margin:2px 0;font-size:9px;">` +
+    `<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">${s.nombre}${s.cashea?' (C)':''} x${s.count}</span></div>` +
+    `<div style="display:flex;justify-content:space-between;font-size:8px;"><span style="color:#64748b;">bruto $${(s.total||0).toFixed(2)}</span><span><b>doc $${(s.comisionDoc||0).toFixed(2)}</b></span></div>` +
+    `</div>`
   ).join('');
   const fps = [
     { l:'Dolares', v: formasPago.dolares },
