@@ -1753,7 +1753,7 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   const ivaDoc      = parseFloat((comision - comision / 1.16).toFixed(2));
   const neto        = parseFloat((comision - ivaDoc - casheaFeeDoc).toFixed(2));
   const rows = servicios.map(s =>
-    `<div class="row" style="font-size:9px;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span>$${(s.comisionDoc||0).toFixed(2)}</span></div>`
+    `<div style="display:flex;justify-content:space-between;font-size:9px;margin:1px 0;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span><span style="text-align:right;"><span style="color:#64748b;font-size:8px;">$${(s.total||0).toFixed(2)} bruto</span> <b>$${((s.comisionDoc||0)).toFixed(2)}</b></span></div>`
   ).join('');
   const fps = [
     { l:'Dolares', v: formasPago.dolares },
@@ -1773,7 +1773,7 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   ${casheaFeeDoc>0?`<div class="row"><span class="lbl">-Cashea 10%</span><span>-$${casheaFeeDoc.toFixed(2)}</span></div>`:''}
   <div class="hr"></div>
   <div class="row"><span><b>NETO DOCTOR</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
-  <div class="row"><span class="lbl">En Bs (${tasa.toFixed(0)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
+  <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
   <div class="hr"></div>
   ${rows ? rows + '<div class="hr"></div>' : ''}
   ${fps}`;
