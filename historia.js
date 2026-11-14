@@ -340,6 +340,8 @@ window.insertarServicio = async (v) => {
       const d = snap.data();
       precioFinal = parseFloat(d.precioVenta)||0;
       porcServ    = parseFloat(d.porcDoc ?? d.porcentajeDoc ?? 30);
+      window._servicioBaseIVA     = d.montoBaseIVA != null ? parseFloat(d.montoBaseIVA) : precioFinal;
+      window._servicioAlicuotaIVA = d.alicuotaIVA  != null ? parseFloat(d.alicuotaIVA)  : 16;
       if (d.insumos && d.insumos.length > 0) {
         insumosFirebase = d.insumos;
         console.log('[AVIPET] Insumos Firebase para',v,':', d.insumos.map(i=>i.nombre+'(bloq:'+i.bloqueado+')'));
@@ -560,7 +562,7 @@ window.insertarServicio = async (v) => {
   if(visual){if(visual.innerText.includes("Sin servicios"))visual.innerHTML="";const badge=document.createElement('div');badge.id="badge-"+grupoID;badge.className="bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200 mb-1 flex items-center gap-2";badge.innerHTML=`<span></span><span class="flex-1">${nombreFinal}</span>`;visual.appendChild(badge);}
   document.getElementById('contenedorInsumos').classList.remove('hidden');
   const cuerpo=document.getElementById('listaInsumosDinamica');
-  const ft=document.createElement('tr');ft.className="bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioFinal);ft.setAttribute('data-porc',porcServ);
+  const ft=document.createElement('tr');ft.className="bg-slate-50 border-b-2 border-slate-200 text-slate-700 font-black servicio-principal";ft.setAttribute('data-grupo',grupoID);ft.setAttribute('data-precio',precioFinal);ft.setAttribute('data-porc',porcServ);ft.setAttribute('data-base-iva', window._servicioBaseIVA ?? precioFinal);ft.setAttribute('data-alicuota-iva', window._servicioAlicuotaIVA ?? 16);window._servicioBaseIVA=null;window._servicioAlicuotaIVA=null;
   ft.innerHTML=`<td colspan="3" class="p-2 text-[11px] uppercase">${nombreFinal} ($${precioFinal.toFixed(2)})<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2 text-[9px] border border-blue-200">${porcServ.toFixed(1)}% DOC</span></td><td class="p-2 text-center"><button onclick="window.eliminarServicioCompleto('${grupoID}',${precioFinal},event)" class="text-red-500 font-bold text-[11px]">X</button></td>`;
   cuerpo.appendChild(ft);
 
@@ -894,7 +896,7 @@ window.guardarFirebase = async (imp) => {
     }
     // Usa % individual de cada servicio (porcGlobal eliminado)
     const montoVentaTotal=parseFloat(document.getElementById('precioVenta')?.value)||0;let totalGastos=0,pagoDoctorTotal=0;const detalleInsumos=[];const serviciosRealizados=[];
-    document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=parseFloat(fila.getAttribute('data-porc'))||0;const nomServ=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();serviciosRealizados.push({nombre:nomServ,precio:precioServ});let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[??]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
+    document.querySelectorAll('.servicio-principal').forEach(fila=>{const grupoID=fila.getAttribute('data-grupo');const precioServ=parseFloat(fila.getAttribute('data-precio'))||0;const pEfect=parseFloat(fila.getAttribute('data-porc'))||0;const nomServ=(fila.querySelector('td')?.innerText||'').replace(/[🔹💊]/g,'').split('(')[0].trim();serviciosRealizados.push({nombre:nomServ,precio:precioServ,montoBaseIVA:parseFloat(fila.getAttribute('data-base-iva')??precioServ),alicuotaIVA:parseFloat(fila.getAttribute('data-alicuota-iva')??16)});let gastosGrupo=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{const cant=parseFloat(ins.querySelector('.i-cant')?.value)||0;const costo=parseFloat(ins.querySelector('.i-cost')?.value)||0;gastosGrupo+=cant*costo;detalleInsumos.push({nombre:ins.cells[0].innerText.replace(/[??]/g,'').trim(),cant,costo});});totalGastos+=gastosGrupo;const util=Math.max(0,precioServ-gastosGrupo);pagoDoctorTotal+=util*(pEfect/100);});
     let montoVacunaPendiente=0,gastosVacunas=0,pagoDoctorVacunas=0;if(window.vacunaPagadaAnteriormente){document.querySelectorAll('.servicio-principal').forEach(fila=>{if(normalizarNombre(fila.innerText).includes("vacuna")){const pv=parseFloat(fila.getAttribute('data-precio'))||0;const pe=parseFloat(fila.getAttribute('data-porc'))||0;const gid=fila.getAttribute('data-grupo');let gv=0;document.querySelectorAll(`.${gid}.insumo-fila`).forEach(ins=>{const c=parseFloat(ins.querySelector('.i-cant')?.value)||0;const co=parseFloat(ins.querySelector('.i-cost')?.value)||0;gv+=c*co;});montoVacunaPendiente+=pv;gastosVacunas+=gv;pagoDoctorVacunas+=Math.max(0,pv-gv)*(pe/100);}});}
     const montoVentaFinal=window.vacunaPagadaAnteriormente?Math.max(0,montoVentaTotal-montoVacunaPendiente):montoVentaTotal;const gastosFinal=window.vacunaPagadaAnteriormente?Math.max(0,totalGastos-gastosVacunas):totalGastos;const pagoDoctorFinal=window.vacunaPagadaAnteriormente?Math.max(0,pagoDoctorTotal-pagoDoctorVacunas):pagoDoctorTotal;
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
@@ -2413,11 +2415,13 @@ window.renderizarTablaMaestra = async () => {
             html: '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;">'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre</label>'+
               '<input id="esn" type="text" value="'+idActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:12px;font-weight:900;text-transform:uppercase;outline:none;box-sizing:border-box;"></div>'+
-              '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Precio ($)</label>'+
               '<input id="esp" type="number" step="0.50" min="0" value="'+precioActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">% Doctor</label>'+
               '<input id="espc" type="number" step="0.5" min="0" max="100" value="'+porcActual+'" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
+              '<div><label style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:4px;" title="Monto del precio sujeto a IVA. El resto es exento (medicina).">Base IVA ($)</label>'+
+              '<input id="es_base_iva" type="number" step="0.50" min="0" value="'+(dataServ.montoBaseIVA ?? precioActual)+'" style="width:100%;border:2px solid #bfdbfe;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;box-sizing:border-box;" placeholder="'+precioActual+'"></div>'+
               '<div><label style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">IVA %</label>'+
               '<select id="es_iva" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:8px;font-size:13px;font-weight:900;outline:none;background:#fff;box-sizing:border-box;">'+
               '<option value="0"'+(( (dataServ.alicuotaIVA??0)==0 )?' selected':'')+'>0% Exento</option>'+
@@ -2558,6 +2562,7 @@ window.renderizarTablaMaestra = async () => {
               const c=cs==='__nueva__'?cn:cs;
               const esRef = document.getElementById('es_ref_edit')?.checked || false;
               const ivaServ = parseFloat(document.getElementById('es_iva')?.value) || 0;
+              const baseIvaServ = parseFloat(document.getElementById('es_base_iva')?.value ?? p) || p;
               const bundleNombre = document.getElementById('es_bundle_nombre')?.value.trim() || '';
               const bundlePrecio = parseFloat(document.getElementById('es_bundle_precio')?.value) || 0;
               const bundlePrecioServRaw = document.getElementById('es_bundle_precio_serv')?.value.trim();
@@ -2572,11 +2577,11 @@ window.renderizarTablaMaestra = async () => {
               if(cs==='__nueva__'&&!cn){Swal.showValidationMessage('Escribe la categoria');return false;}
               document.querySelectorAll('#es_listaIns input[type="number"]').forEach((inp,i)=>{ if(listaIns[i]) listaIns[i].costo=parseFloat(inp.value)||0; });
               const bundleObj = bundleNombre ? { nombre:bundleNombre, precio:bundlePrecio, precioServicio: bundlePrecioServ } : null;
-              return {n,p,pc,c,esRef,iva:ivaServ,insumos:listaIns,bundle:bundleObj,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
+              return {n,p,pc,c,esRef,iva:ivaServ,baseIva:baseIvaServ,insumos:listaIns,bundle:bundleObj,pqActiva,pqTexto,pqInsumo,pqPote,pqCC};
             }
           });
           if(!res.isConfirmed) return;
-          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, iva:nuevoIva, insumos:nuevosInsumos,
+          const {n:nuevoNom, p:nuevoPrecio, pc:nuevoPorcDoc, c:nuevaCat, esRef:nuevoEsRef, iva:nuevoIva, baseIva:nuevoBaseIva, insumos:nuevosInsumos,
                  bundle:nuevoBundle, pqActiva, pqTexto, pqInsumo, pqPote, pqCC} = res.value;
           try {
             const snapOld = await getDoc(doc(db,"servicios_maestro",idActual));
@@ -2584,7 +2589,7 @@ window.renderizarTablaMaestra = async () => {
             const dataNueva = {
               ...dataOld,
               precioVenta:nuevoPrecio, porcDoc:nuevoPorcDoc, categoria:nuevaCat,
-              alicuotaIVA:nuevoIva, esReferido:nuevoEsRef, insumos:nuevosInsumos,
+              alicuotaIVA:nuevoIva, montoBaseIVA:nuevoBaseIva, esReferido:nuevoEsRef, insumos:nuevosInsumos,
               bundle: nuevoBundle || null,
               preguntaActiva:pqActiva, preguntaTexto:pqTexto, preguntaInsumo:pqInsumo,
               preguntaCostoPote:pqPote, preguntaCostoCC:pqCC,

@@ -319,10 +319,13 @@ window.mostrarDashboardVet = async () => {
         const nombre=(s.nombre||'Servicio').trim().toUpperCase();
         const key = nombre + (esCashea ? '||cashea' : '||normal');
         const precio = parseFloat(s.precio||0);
-        if(!g.servicios[key]) g.servicios[key]={nombre, count:0, total:0, comisionDoc:0, cashea:esCashea};
+        const baseIVA    = parseFloat(s.montoBaseIVA ?? precio);
+        const alicuota   = parseFloat(s.alicuotaIVA  ?? 16);
+        if(!g.servicios[key]) g.servicios[key]={nombre, count:0, total:0, comisionDoc:0, baseIVADoc:0, alicuotaIVA:alicuota, cashea:esCashea};
         g.servicios[key].count++;
         g.servicios[key].total      += precio;
         g.servicios[key].comisionDoc += parseFloat((precio * rateConsulta).toFixed(2));
+        g.servicios[key].baseIVADoc  += parseFloat((baseIVA * rateConsulta).toFixed(2));
       });
     });
     // Acumular porciones de cirugías en equipo para doctores ayudantes
@@ -1799,14 +1802,25 @@ function _imprimirTiquera(htmlBody) {
 
 window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, casheaFeeDoc, servicios, formasPago, consultas) {
   const tasa        = parseFloat(window.tasaDolarHoy) || 1;
-  const ivaDoc      = parseFloat((comision - comision / 1.16).toFixed(2));
+  // Calcular IVA desde la base gravable por servicio (si existe); fallback al método anterior
+  const hayBaseIVA  = servicios.some(s => s.baseIVADoc != null);
+  const ivaDoc      = hayBaseIVA
+    ? parseFloat(servicios.reduce((sum, s) => {
+        const base = s.baseIVADoc != null ? s.baseIVADoc : (s.comisionDoc || 0);
+        const aliq = s.alicuotaIVA != null ? s.alicuotaIVA : 16;
+        return sum + base * aliq / 100;
+      }, 0).toFixed(2))
+    : parseFloat((comision - comision / 1.16).toFixed(2));
   const neto        = parseFloat((comision - ivaDoc - casheaFeeDoc).toFixed(2));
-  const rows = servicios.map(s =>
-    `<div style="margin:2px 0;font-size:9px;">` +
+  const rows = servicios.map(s => {
+    const ivaServDoc = s.baseIVADoc != null
+      ? parseFloat((s.baseIVADoc * (s.alicuotaIVA ?? 16) / 100).toFixed(2))
+      : null;
+    return `<div style="margin:2px 0;font-size:9px;">` +
     `<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">${s.nombre}${s.cashea?' (C)':''} x${s.count}</span></div>` +
-    `<div style="display:flex;justify-content:space-between;font-size:8px;"><span style="color:#64748b;">bruto $${(s.total||0).toFixed(2)}</span><span><b>doc $${(s.comisionDoc||0).toFixed(2)}</b></span></div>` +
-    `</div>`
-  ).join('');
+    `<div style="display:flex;justify-content:space-between;font-size:8px;"><span style="color:#64748b;">bruto $${(s.total||0).toFixed(2)}</span><span><b>doc $${(s.comisionDoc||0).toFixed(2)}</b>${ivaServDoc!=null?' <span style="color:#f59e0b;">iva $'+ivaServDoc.toFixed(2)+'</span>':''}</span></div>` +
+    `</div>`;
+  }).join('');
   const fps = [
     { l:'Dolares', v: formasPago.dolares },
     { l:'Pago Movil', v: formasPago.movil },
@@ -1821,7 +1835,7 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   <div class="row"><span class="lbl">Bruto cobrado</span><span><b>$${bruto.toFixed(2)}</b></span></div>
   <div class="row"><span class="lbl">-Insumos</span><span>-$${insumos.toFixed(2)}</span></div>
   <div class="row"><span class="lbl">Comision</span><span>$${comision.toFixed(2)}</span></div>
-  <div class="row"><span class="lbl">-IVA (÷1.16)</span><span>-$${ivaDoc.toFixed(2)}</span></div>
+  ${ivaDoc>0?`<div class="row"><span class="lbl">-IVA</span><span>-$${ivaDoc.toFixed(2)}</span></div>`:`<div class="row"><span class="lbl" style="color:#16a34a;">IVA exento</span><span style="color:#16a34a;">$0.00</span></div>`}
   ${casheaFeeDoc>0?`<div class="row"><span class="lbl">-Cashea 10%</span><span>-$${casheaFeeDoc.toFixed(2)}</span></div>`:''}
   <div class="hr"></div>
   <div class="row"><span><b>NETO DOCTOR</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
@@ -1833,9 +1847,10 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
 };
 
 // Tiqueta individual por doctor en cirugía de equipo
-window._imprimirTiquetaCirugiaDoctor = function(nombreDoctor, parte, nombreCirugia, precioTotal) {
+window._imprimirTiquetaCirugiaDoctor = function(nombreDoctor, parte, nombreCirugia, precioTotal, alicuotaIVA) {
   const tasa = parseFloat(window.tasaDolarHoy) || 1;
-  const ivaDoc = parseFloat((parte - parte / 1.16).toFixed(2));
+  const aliq = alicuotaIVA != null ? parseFloat(alicuotaIVA) : 16;
+  const ivaDoc = parseFloat((parte * aliq / 100).toFixed(2));
   const neto = parseFloat((parte - ivaDoc).toFixed(2));
   const partes = precioTotal > 0 ? Math.round(precioTotal / parte) : '?';
   const body = `
@@ -1847,7 +1862,7 @@ window._imprimirTiquetaCirugiaDoctor = function(nombreDoctor, parte, nombreCirug
   <div class="row"><span class="lbl">÷ ${partes} partes</span><span style="color:#64748b;font-size:8px;">(doctores + Avipet)</span></div>
   <div class="hr"></div>
   <div class="row"><span class="lbl">Bruto doctor</span><span><b>$${parte.toFixed(2)}</b></span></div>
-  <div class="row"><span class="lbl">-IVA (÷1.16)</span><span>-$${ivaDoc.toFixed(2)}</span></div>
+  ${aliq>0?`<div class="row"><span class="lbl">-IVA ${aliq}%</span><span>-$${ivaDoc.toFixed(2)}</span></div>`:`<div class="row"><span class="lbl" style="color:#16a34a;">IVA exento</span><span style="color:#16a34a;">$0.00</span></div>`}
   <div class="hr"></div>
   <div class="row"><span><b>NETO</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
   <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>`;
