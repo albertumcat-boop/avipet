@@ -260,10 +260,33 @@ function _renderizarTarjeta(consulta) {
  body.appendChild(insDiv);
  }
 
- // FINANZAS
+ // FINANZAS — calculos IVA y ganancia doctor
  const _fpLabel = consulta.formaPagoLabel || consulta.formaPago || '';
  const _fpColors = {dolares:'#15803d:#f0fdf4', movil:'#1d4ed8:#eff6ff', cashea:'#7c3aed:#faf5ff'};
  const [_fpColor, _fpBg] = (_fpColors[consulta.formaPago]||'#64748b:#f8fafc').split(':');
+
+ // IVA por servicio (nuevo modelo) o fallback al 16% sobre comision
+ const _servicios = consulta.serviciosRealizados || [];
+ const _porcServ = parseFloat(consulta.porcServ || 0);
+ const _rateDoc = _porcServ / 100;
+ const _ventaNum = parseFloat(consulta.montoVenta || 0);
+ const _comisionDoc = _rateDoc > 0 ? _ventaNum * _rateDoc : null;
+ const _hayBaseIVA = _servicios.some(function(s){ return s.montoBaseIVA != null; });
+ let _ivaDoc = 0;
+ if (_hayBaseIVA && _rateDoc > 0) {
+   _ivaDoc = _servicios.reduce(function(sum, s) {
+     const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio || 0)) * _rateDoc;
+     const aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
+     return sum + base * aliq / 100;
+   }, 0);
+ } else if (_comisionDoc != null) {
+   // fallback: 16% sobre comision del doctor
+   _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
+ }
+ const _esCashea = consulta.formaPago === 'cashea';
+ const _casheaFeeDoc = (_esCashea && _comisionDoc != null) ? _comisionDoc * 0.035 : 0;
+ const _doctorNeto = _comisionDoc != null ? (_comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
+
  const finDiv = document.createElement('div');
  finDiv.className = 'grid grid-cols-3 gap-2 mt-2';
  finDiv.innerHTML =
@@ -286,6 +309,26 @@ function _renderizarTarjeta(consulta) {
  '</select>' +
  '</div>';
  body.appendChild(finDiv);
+
+ // Segunda fila: IVA · Cashea · Dr. Ganó
+ const finDiv2 = document.createElement('div');
+ finDiv2.style.cssText = 'display:grid;grid-template-columns:' + (_esCashea ? '1fr 1fr 1fr' : '1fr 1fr') + ';gap:6px;margin-top:4px;';
+ finDiv2.innerHTML =
+ '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px;text-align:center;">' +
+ '<p style="font-size:7px;font-weight:900;color:#ef4444;text-transform:uppercase;margin:0 0 2px 0;">IVA descontado</p>' +
+ '<p style="font-size:12px;font-weight:900;color:#dc2626;font-family:monospace;">$' + _ivaDoc.toFixed(2) + '</p>' +
+ '</div>' +
+ (_esCashea
+   ? '<div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;padding:6px;text-align:center;">' +
+     '<p style="font-size:7px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 2px 0;">Fee Cashea</p>' +
+     '<p style="font-size:12px;font-weight:900;color:#7c3aed;font-family:monospace;">$' + _casheaFeeDoc.toFixed(2) + '</p>' +
+     '</div>'
+   : '') +
+ '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:6px;text-align:center;">' +
+ '<p style="font-size:7px;font-weight:900;color:#15803d;text-transform:uppercase;margin:0 0 2px 0;">Dr. Ganó</p>' +
+ '<p style="font-size:12px;font-weight:900;color:#15803d;font-family:monospace;">' + (_doctorNeto != null ? '$' + _doctorNeto.toFixed(2) : '---') + '</p>' +
+ '</div>';
+ body.appendChild(finDiv2);
 
  // VACUNAS 
  if (Array.isArray(consulta.vacunasAplicadas) && consulta.vacunasAplicadas.length > 0) {
