@@ -314,8 +314,8 @@ window.agregarInsumoMaestro = async () => {
  if (!nombre) { alert('Escribe el nombre del insumo.'); return; }
  if (costoIngresado <= 0) { alert('Escribe el costo del insumo.'); return; }
  try {
- const snap = await getDocs(query(collection(db, "insumos_maestro"), where("nombre", "==", nombre)));
- if (!snap.empty) { alert('Ya existe un insumo con ese nombre.'); return; }
+ const snapExiste = await getDoc(doc(db, "insumos_maestro", nombre));
+ if (snapExiste.exists()) { alert('Ya existe un insumo con ese nombre.'); return; }
  const MARGEN=0.20; const tasa=window.tasaDolarHoy||36;
  var htmlMoneda='<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
  htmlMoneda+='<button id="btnMonedaUSD" type="button" style="width:100%;padding:12px;border-radius:10px;border:2px solid #bfdbfe;background:#eff6ff;font-weight:900;font-size:12px;color:#1d4ed8;cursor:pointer;">Dolares (USD)</button>';
@@ -332,7 +332,7 @@ window.agregarInsumoMaestro = async () => {
  const usosEfectivos=await _calcularUsosInsumo(nombre,costoUSD);
  if(!usosEfectivos)return;
  const costoPorUso=costoUSD/usosEfectivos;
- await addDoc(collection(db,"insumos_maestro"),{nombre,costoTotal:costoUSD,costoOriginalBS:moneda==='bs'?costoIngresado:null,costo:parseFloat(costoPorUso.toFixed(4)),usosEstimados:usosEfectivos,margenSeguridad:MARGEN,creadoEn:serverTimestamp()});
+ await setDoc(doc(db,"insumos_maestro",nombre),{nombre,costoTotal:costoUSD,costoOriginalBS:moneda==='bs'?costoIngresado:null,costo:parseFloat(costoPorUso.toFixed(4)),usosEstimados:usosEfectivos,margenSeguridad:MARGEN,creadoEn:serverTimestamp()});
  const inpN=document.getElementById('nuevoInsumoNombre');const inpC=document.getElementById('nuevoInsumoCosto');if(inpN)inpN.value='';if(inpC)inpC.value='';
  await window.renderizarTablaInsumos();
  await Swal.fire({icon:'success',title:'Insumo agregado',html:'<b>'+nombre+'</b><br>$'+costoPorUso.toFixed(4)+' por servicio, '+usosEfectivos+' usos',timer:2000,showConfirmButton:false});
