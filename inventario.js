@@ -188,7 +188,7 @@ async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
  if(u>0&&p>0){const ef=Math.floor((u/p)*(1-MARGEN));txt.textContent=(u/p).toFixed(0)+' usos, margen 20%: '+ef+' efectivos, $'+(costoUSD/ef).toFixed(4)+'/servicio';box.style.display='block';} };
  document.getElementById('q_unidades')?.addEventListener('input', calc); document.getElementById('q_porServicio')?.addEventListener('input', calc);
  },
- preConfirm: () => { const u=parseFloat(document.getElementById('q_unidades')?.value)||0; const p=parseFloat(document.getElementById('q_porServicio')?.value)||1; if(u<=0){Swal.showValidationMessage('Ingresa las unidades del paquete');return false;} return Math.floor((u/p)*(1-MARGEN)); }
+ preConfirm: () => { const u=parseFloat(document.getElementById('q_unidades')?.value)||0; const p=parseFloat(document.getElementById('q_porServicio')?.value)||1; if(u<=0){Swal.showValidationMessage('Ingresa las unidades del paquete');return false;} return Math.max(1,Math.floor((u/p)*(1-MARGEN))); }
  });
  if (!res.isConfirmed) return null; usos = res.value;
  } else if (tipo === 'volumen') {
@@ -204,7 +204,7 @@ async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
  if(ml>0){const ef=Math.floor((ml/mls)*(1-MARGEN));txt.textContent=(ml/mls).toFixed(0)+' usos, margen 20%: '+ef+' efectivos, $'+(costoUSD/ef).toFixed(4)+'/servicio';box.style.display='block';} };
  document.getElementById('q_ml')?.addEventListener('input', calc); document.getElementById('q_mlServicio')?.addEventListener('input', calc);
  },
- preConfirm: () => { const ml=parseFloat(document.getElementById('q_ml')?.value)||0; const mls=parseFloat(document.getElementById('q_mlServicio')?.value)||5; if(ml<=0){Swal.showValidationMessage('Ingresa los ml del frasco');return false;} return Math.floor((ml/mls)*(1-MARGEN)); }
+ preConfirm: () => { const ml=parseFloat(document.getElementById('q_ml')?.value)||0; const mls=parseFloat(document.getElementById('q_mlServicio')?.value)||5; if(ml<=0){Swal.showValidationMessage('Ingresa los ml del frasco');return false;} return Math.max(1,Math.floor((ml/mls)*(1-MARGEN))); }
  });
  if (!res.isConfirmed) return null; usos = res.value;
  } else if (tipo === 'tiempo') {
@@ -220,7 +220,7 @@ async function _calcularUsosInsumo(nombreInsumo, costoUSD) {
  if(m>0&&sm>0){const ef=Math.floor(m*sm*(1-MARGEN));txt.textContent=(m*sm).toFixed(0)+' usos, margen 20%: '+ef+' efectivos, $'+(costoUSD/ef).toFixed(4)+'/servicio';box.style.display='block';} };
  document.getElementById('q_meses')?.addEventListener('input', calc); document.getElementById('q_serviciosMes')?.addEventListener('input', calc);
  },
- preConfirm: () => { const m=parseFloat(document.getElementById('q_meses')?.value)||0; const sm=parseFloat(document.getElementById('q_serviciosMes')?.value)||0; if(m<=0||sm<=0){Swal.showValidationMessage('Completa los dos campos');return false;} return Math.floor(m*sm*(1-MARGEN)); }
+ preConfirm: () => { const m=parseFloat(document.getElementById('q_meses')?.value)||0; const sm=parseFloat(document.getElementById('q_serviciosMes')?.value)||0; if(m<=0||sm<=0){Swal.showValidationMessage('Completa los dos campos');return false;} return Math.max(1,Math.floor(m*sm*(1-MARGEN))); }
  });
  if (!res.isConfirmed) return null; usos = res.value;
  }
