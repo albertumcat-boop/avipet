@@ -325,6 +325,21 @@ window.mostrarDashboardVet = async () => {
         g.servicios[key].comisionDoc += parseFloat((precio * rateConsulta).toFixed(2));
       });
     });
+    // Acumular porciones de cirugías en equipo para doctores ayudantes
+    // (el doctor principal ya tiene su porción en pagoDoctor; aquí sumamos la del resto del equipo)
+    const cirugiaEquipoAcum = {}; // { doctorNombre: { total, cirugias: [{nombre, parte}] } }
+    consultas.forEach(function(c) {
+      if (!c.cirugiaEquipo) return;
+      const eq = c.cirugiaEquipo;
+      const doctorPrincipal = (c.doctor || '').trim();
+      (eq.doctores || []).forEach(function(doc) {
+        if (doc === doctorPrincipal) return; // el principal ya está en pagoDoctor
+        if (!cirugiaEquipoAcum[doc]) cirugiaEquipoAcum[doc] = { total: 0, cirugias: [] };
+        cirugiaEquipoAcum[doc].total += parseFloat(eq.partePorDoctor || 0);
+        cirugiaEquipoAcum[doc].cirugias.push({ nombre: eq.nombre || 'CIRUGÍA', parte: parseFloat(eq.partePorDoctor || 0) });
+      });
+    });
+
     // El fee Cashea se divide: el doctor absorbe 10% de su comisión, Avipet absorbe el resto
     const casheaFeeDocTotal = Object.values(porDoctor).reduce((s, g) => s + g.casheaFeeDoc, 0);
     const casheaFeeAvipet   = casheaFeeTotal - casheaFeeDocTotal;
@@ -491,6 +506,40 @@ window.mostrarDashboardVet = async () => {
         });
         fpDiv.appendChild(fpRow);
         secDoc.appendChild(fpDiv);
+      }
+
+      // Cirugías en equipo donde este doctor fue ayudante
+      const eqAcum = cirugiaEquipoAcum[nombreDoc];
+      if (eqAcum && eqAcum.total > 0) {
+        const eqDiv = document.createElement('div');
+        eqDiv.style.cssText = 'margin-top:8px;padding:8px 10px;background:#fef9c3;border:2px solid #fde047;border-radius:10px;';
+        const eqTit = document.createElement('p');
+        eqTit.style.cssText = 'font-size:9px;font-weight:900;color:#854d0e;text-transform:uppercase;margin:0 0 5px 0;';
+        eqTit.textContent = '🔪 Cirugías en equipo (ayudante)';
+        eqDiv.appendChild(eqTit);
+        eqAcum.cirugias.forEach(function(cir) {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;justify-content:space-between;font-size:9px;color:#1e293b;';
+          row.innerHTML = '<span>' + cir.nombre + '</span><span style="font-weight:900;font-family:monospace;">$' + cir.parte.toFixed(2) + '</span>';
+          eqDiv.appendChild(row);
+        });
+        const totRow = document.createElement('div');
+        totRow.style.cssText = 'display:flex;justify-content:space-between;font-size:10px;font-weight:900;color:#854d0e;border-top:1px solid #fde047;margin-top:4px;padding-top:4px;';
+        totRow.innerHTML = '<span>TOTAL CIRUGÍAS</span><span style="font-family:monospace;">$' + eqAcum.total.toFixed(2) + '</span>';
+        eqDiv.appendChild(totRow);
+        // Botón tiqueta para cada cirugía de equipo
+        eqAcum.cirugias.forEach(function(cir) {
+          const btnCir = document.createElement('button');
+          btnCir.textContent = '🖨️ Tique — ' + cir.nombre;
+          btnCir.style.cssText = 'width:100%;margin-top:5px;padding:6px;background:#854d0e;color:#fff;border:none;border-radius:7px;font-size:9px;font-weight:900;cursor:pointer;';
+          (function(ndoc, ncir, pcir) {
+            btnCir.onclick = function() {
+              window._imprimirTiquetaCirugiaDoctor(ndoc, pcir, ncir, pcir * Math.round(1 / (pcir / (pcir || 1))));
+            };
+          })(nombreDoc, cir.nombre, cir.parte);
+          eqDiv.appendChild(btnCir);
+        });
+        secDoc.appendChild(eqDiv);
       }
 
       // Botón imprimir doctor
@@ -1780,6 +1829,28 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   <div class="hr"></div>
   ${rows ? rows + '<div class="hr"></div>' : ''}
   ${fps}`;
+  _imprimirTiquera(body);
+};
+
+// Tiqueta individual por doctor en cirugía de equipo
+window._imprimirTiquetaCirugiaDoctor = function(nombreDoctor, parte, nombreCirugia, precioTotal) {
+  const tasa = parseFloat(window.tasaDolarHoy) || 1;
+  const ivaDoc = parseFloat((parte - parte / 1.16).toFixed(2));
+  const neto = parseFloat((parte - ivaDoc).toFixed(2));
+  const partes = precioTotal > 0 ? Math.round(precioTotal / parte) : '?';
+  const body = `
+  <div class="c"><b>CIRUGÍA — REPARTO</b></div>
+  <div class="c" style="font-size:9px;">${nombreDoctor}</div>
+  <div class="hr"></div>
+  <div class="row"><span class="lbl">${nombreCirugia}</span></div>
+  <div class="row"><span class="lbl">Total paciente</span><span>$${precioTotal.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">÷ ${partes} partes</span><span style="color:#64748b;font-size:8px;">(doctores + Avipet)</span></div>
+  <div class="hr"></div>
+  <div class="row"><span class="lbl">Bruto doctor</span><span><b>$${parte.toFixed(2)}</b></span></div>
+  <div class="row"><span class="lbl">-IVA (÷1.16)</span><span>-$${ivaDoc.toFixed(2)}</span></div>
+  <div class="hr"></div>
+  <div class="row"><span><b>NETO</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
+  <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>`;
   _imprimirTiquera(body);
 };
 

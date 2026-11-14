@@ -1663,11 +1663,18 @@ if (evidenciaId) {
       var el = document.getElementById(id);
       if (el) el.style.setProperty('display', 'none', 'important');
     });
+    // SweetAlert2 toasts/modales son position:fixed — Chrome los imprime aunque el timer los oculte despues
+    document.querySelectorAll('.swal2-container').forEach(function(el) {
+      el.style.setProperty('display', 'none', 'important');
+    });
   });
   window.addEventListener('afterprint', function() {
     _FIXED_HIDE_IDS.forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.style.removeProperty('display');
+    });
+    document.querySelectorAll('.swal2-container').forEach(function(el) {
+      el.style.removeProperty('display');
     });
   });
 </script>

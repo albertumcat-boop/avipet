@@ -386,32 +386,101 @@ window.insertarServicio = async (v) => {
     window._gusGrav = null; window._gusPrecio = null;
   }
   else if(v === 'CIRUGÍA PERSONALIZADA' || vLimpio === 'cirugiapersonalizada') {
+    const doctorGuardia = (document.getElementById('selectDoctor')?.value || window.doctorVerificado || '').trim();
+    const _doctoresFijos = ['Darwin Sandoval', 'Joan Silva'];
+    const _recalcCir = () => {
+      const precio = parseFloat(document.getElementById('sw_precioCirugia')?.value) || 0;
+      const checks = document.querySelectorAll('.sw_cir_doc_check:checked');
+      const nDoc = checks.length;
+      const partes = nDoc + 1; // doctores + Avipet
+      const parte = partes > 0 ? precio / partes : 0;
+      const tbody = document.getElementById('sw_cir_tabla_body');
+      if (!tbody) return;
+      let rows = '';
+      checks.forEach(ch => { rows += `<tr><td style="padding:3px 6px;font-size:10px;">${ch.value}</td><td style="padding:3px 6px;font-size:10px;font-weight:900;text-align:right;">$${parte.toFixed(2)}</td></tr>`; });
+      rows += `<tr style="color:#94a3b8;"><td style="padding:3px 6px;font-size:10px;">Avipet</td><td style="padding:3px 6px;font-size:10px;text-align:right;">$${parte.toFixed(2)}</td></tr>`;
+      tbody.innerHTML = rows;
+    };
+    const _htmlDocsFijos = _doctoresFijos.map(nombre => {
+      const esGuardia = nombre === doctorGuardia;
+      return `<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:${esGuardia?'#eff6ff':'#f8fafc'};border:2px solid ${esGuardia?'#bfdbfe':'#e2e8f0'};cursor:${esGuardia?'default':'pointer'};margin-bottom:6px;">` +
+        `<input type="checkbox" class="sw_cir_doc_check" value="${nombre}" ${esGuardia?'checked disabled':''}` +
+        ` style="width:15px;height:15px;accent-color:#1d4ed8;" onchange="(function(){${esGuardia?'':''}_recalcCirModal()})()">` +
+        `<span style="font-size:11px;font-weight:900;color:#1e293b;">${nombre}${esGuardia?' <span style=\'font-size:9px;color:#64748b;font-weight:400\'>(guardia)</span>':''}</span>` +
+        `</label>`;
+    }).join('');
     const resCir = await Swal.fire({
       title: '🔪 Cirugía',
+      width: 420,
       html:
         '<div style="text-align:left;">' +
           '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Tipo de cirugía</label>' +
           '<input id="sw_tipoCirugia" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;margin-bottom:14px;" placeholder="Ej: CASTRACIÓN, PIOMETRA, FRACTURA...">' +
           '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Precio ($)</label>' +
-          '<input id="sw_precioCirugia" type="number" step="0.50" min="0" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:18px;font-weight:900;outline:none;" placeholder="0.00">' +
+          '<input id="sw_precioCirugia" type="number" step="0.50" min="0" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:18px;font-weight:900;outline:none;margin-bottom:16px;" placeholder="0.00" oninput="_recalcCirModal()">' +
+          '<div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-bottom:8px;">' +
+            '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:8px;">Equipo quirúrgico</label>' +
+            _htmlDocsFijos +
+            '<div id="sw_cir_invitados"></div>' +
+            '<button type="button" onclick="_agregarInvitadoCir()" style="font-size:10px;color:#1d4ed8;font-weight:700;background:none;border:none;cursor:pointer;padding:4px 0;margin-top:4px;">+ Agregar doctor invitado</button>' +
+          '</div>' +
+          '<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:10px;">' +
+            '<thead><tr style="background:#f1f5f9;"><th style="padding:4px 6px;text-align:left;">Participante</th><th style="padding:4px 6px;text-align:right;">Parte</th></tr></thead>' +
+            '<tbody id="sw_cir_tabla_body"></tbody>' +
+          '</table>' +
         '</div>',
       confirmButtonText: '✅ Agregar',
       confirmButtonColor: '#1d4ed8',
       showCancelButton: true,
       cancelButtonText: 'Cancelar',
-      didOpen: () => { document.getElementById('sw_tipoCirugia')?.focus(); },
+      didOpen: () => {
+        document.getElementById('sw_tipoCirugia')?.focus();
+        window._recalcCirModal = _recalcCir;
+        window._agregarInvitadoCir = () => {
+          const cont = document.getElementById('sw_cir_invitados');
+          if (!cont) return;
+          const idx = cont.querySelectorAll('.sw_cir_inv_row').length;
+          const div = document.createElement('div');
+          div.className = 'sw_cir_inv_row';
+          div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+          div.innerHTML = `<input type="checkbox" class="sw_cir_doc_check" value="" style="width:15px;height:15px;accent-color:#1d4ed8;" onchange="_recalcCirModal()">` +
+            `<input type="text" class="sw_cir_inv_nombre" placeholder="Nombre del doctor invitado" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;outline:none;" oninput="this.previousElementSibling.value=this.value;_recalcCirModal()">` +
+            `<button type="button" onclick="this.parentElement.remove();_recalcCirModal()" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900;">×</button>`;
+          cont.appendChild(div);
+        };
+        _recalcCir();
+      },
       preConfirm: () => {
         const tipo = document.getElementById('sw_tipoCirugia')?.value.trim().toUpperCase();
         const precio = parseFloat(document.getElementById('sw_precioCirugia')?.value) || 0;
         if (!tipo) { Swal.showValidationMessage('Escribe el tipo de cirugía'); return false; }
         if (precio <= 0) { Swal.showValidationMessage('Ingresa un precio mayor a 0'); return false; }
-        return { tipo, precio };
+        const doctoresEquipo = [];
+        document.querySelectorAll('.sw_cir_doc_check:checked').forEach(ch => {
+          if (ch.value) doctoresEquipo.push(ch.value);
+        });
+        if (!doctoresEquipo.length) { Swal.showValidationMessage('Debe haber al menos un doctor'); return false; }
+        return { tipo, precio, doctoresEquipo };
       }
     });
-    if (resCir.isDismissed) { document.getElementById('selectorServicios').value = ''; return; }
+    if (resCir.isDismissed) { document.getElementById('selectorServicios').value = ''; window._cirugiaEquipo = null; return; }
     nombreFinal = 'CIRUGÍA: ' + resCir.value.tipo;
     precioFinal = resCir.value.precio;
-    porcServ = 50;
+    const _equipoDoc = resCir.value.doctoresEquipo;
+    const _partes = _equipoDoc.length + 1; // doctores + Avipet
+    porcServ = parseFloat((100 / _partes).toFixed(4));
+    // Guardar para incluir en Firestore y mostrar tiquetas después de guardar
+    if (_equipoDoc.length > 1) {
+      window._cirugiaEquipo = {
+        nombre: nombreFinal,
+        precio: precioFinal,
+        doctores: _equipoDoc,
+        partePorDoctor: parseFloat((precioFinal / _partes).toFixed(2)),
+        parteAvipet: parseFloat((precioFinal / _partes).toFixed(2))
+      };
+    } else {
+      window._cirugiaEquipo = null;
+    }
   }
   else if(vLimpio==="oxigeno"||v.toUpperCase()==="OXÍGENO"||v.toUpperCase()==="OXIGENO") {
     const pphFb = precioFinal || 10;
@@ -830,7 +899,7 @@ window.guardarFirebase = async (imp) => {
     const montoVentaFinal=window.vacunaPagadaAnteriormente?Math.max(0,montoVentaTotal-montoVacunaPendiente):montoVentaTotal;const gastosFinal=window.vacunaPagadaAnteriormente?Math.max(0,totalGastos-gastosVacunas):totalGastos;const pagoDoctorFinal=window.vacunaPagadaAnteriormente?Math.max(0,pagoDoctorTotal-pagoDoctorVacunas):pagoDoctorTotal;
     const leerTablaVac=()=>{const res={vacunas:[],desparasitaciones:[]};try{const tablas=document.querySelector('#bloqueVacunas')?.querySelectorAll('table');tablas?.[0]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const vacuna=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||vacuna)res.vacunas.push({fecha,vacuna,peso,proxima,firma});});tablas?.[1]?.querySelectorAll('tbody tr').forEach(tr=>{const c=tr.querySelectorAll('td');if(c.length<5)return;const fecha=c[0].querySelector('input')?.value.trim()||"";const producto=c[1].querySelector('input')?.value.trim()||"";const peso=c[2].querySelector('input')?.value.trim()||"";const proxima=c[3].querySelector('input')?.value.trim()||"";const firma=c[4].querySelector('input')?.value.trim()||"";if(fecha||producto)res.desparasitaciones.push({fecha,producto,peso,proxima,firma});});}catch(e){console.warn(e);}return res;};const datosVac=leerTablaVac();
     const getFotos=(id)=>{const g=document.getElementById(id);if(!g)return[];return Array.from(g.querySelectorAll('img')).map(img=>img.src).filter(Boolean);};const fotosH=getFotos('previewHistoriaGallery');const fotosT=getFotos('previewTestGallery');const dInput=(id)=>document.getElementById(id)?.value?.trim()||"";
-    const data={cedula:(String(dInput('hCI')||'').replace(/[.\-\s]/g,'').trim().toUpperCase()||'SIN-CI'),propietario:dInput('hProp')||'',paciente:dInput('hNombre'),esReferido:window._esConsultaReferida||false,especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),formaPago:formaPagoElegida,formaPagoLabel:_labelFormaPago,fecha:serverTimestamp(),fechaSimple:(function(){var _n=new Date();return _n.getDate()+"/"+((_n.getMonth()+1))+"/"+_n.getFullYear();})()};
+    const data={cedula:(String(dInput('hCI')||'').replace(/[.\-\s]/g,'').trim().toUpperCase()||'SIN-CI'),propietario:dInput('hProp')||'',paciente:dInput('hNombre'),esReferido:window._esConsultaReferida||false,especie:dInput('hEspecie'),raza:dInput('hRaza'),sexo:dInput('hSexo'),edad:dInput('hEdad'),peso:dInput('hPeso'),color:dInput('hColor'),telefono:dInput('hTlf'),correo:dInput('hMail'),direccion:dInput('hDir'),fechaNacimiento:dInput('hFechaNac'),alerta:document.getElementById('hAlerta')?.checked||false,doctor:nombreDoctor,urlExamen:fotosH.length>0?fotosH[fotosH.length-1]:urlFoto,urlFotoTest:fotosT.length>0?fotosT[fotosT.length-1]:urlTest,fotosHistoria:fotosH,fotosTest:fotosT,testsRealizados:listaTests,vacunasAplicadas:datosVac.vacunas,desparasitacionesAplicadas:datosVac.desparasitaciones,montoVenta:montoVentaFinal,montoInsumos:gastosFinal,pagoDoctor:pagoDoctorFinal,pagoAvipet:montoVentaFinal-gastosFinal-pagoDoctorFinal,vacunaPagadaAnteriormente:window.vacunaPagadaAnteriormente||false,listaDetalladaInsumos:detalleInsumos,serviciosRealizados:serviciosRealizados,tratamiento:dInput('hTratamiento'),formaPago:formaPagoElegida,formaPagoLabel:_labelFormaPago,cirugiaEquipo:window._cirugiaEquipo||null,fecha:serverTimestamp(),fechaSimple:(function(){var _n=new Date();return _n.getDate()+"/"+((_n.getMonth()+1))+"/"+_n.getFullYear();})()};
     const esEdicion = !!window._editandoConsultaId;
     if (esEdicion) {
       const idEditar = window._editandoConsultaId;
@@ -917,6 +986,25 @@ window.guardarFirebase = async (imp) => {
       }
       window._modoAutoImprimir = false;
     } else {
+      // Si hubo cirugía en equipo, mostrar tiquetas individuales por doctor
+      if (window._cirugiaEquipo && typeof window._imprimirTiquetaCirugiaDoctor === 'function') {
+        const _eq = window._cirugiaEquipo;
+        window._cirugiaEquipo = null;
+        const _btns = _eq.doctores.map(doc =>
+          `<button onclick="window._imprimirTiquetaCirugiaDoctor('${doc.replace(/'/g,"\\'")}',${_eq.partePorDoctor},'${_eq.nombre.replace(/'/g,"\\'")}',${_eq.precio})"` +
+          ` style="display:block;width:100%;margin-bottom:8px;padding:10px;background:#1d4ed8;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:900;cursor:pointer;">` +
+          `🖨️ Tique — ${doc}</button>`
+        ).join('');
+        await Swal.fire({
+          title: '🔪 Cirugía en equipo',
+          html: `<p style="font-size:12px;color:#475569;margin-bottom:14px;">Imprime el tique de cada doctor participante.</p>${_btns}`,
+          confirmButtonText: 'Listo',
+          confirmButtonColor: '#16a34a',
+          showCancelButton: false
+        });
+      } else {
+        window._cirugiaEquipo = null;
+      }
       if(imp) {
         window.imprimirDocumento(() => { _limpiarFormularioHistoria(); _limpiarNotasInternas(); });
       } else {
