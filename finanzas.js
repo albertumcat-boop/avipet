@@ -1773,19 +1773,19 @@ function _imprimirTiquera(htmlBody) {
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     @page { margin:0; size:58mm auto; }
-    body { font-family:'Courier New',monospace; font-size:11px; font-weight:700; width:52mm; color:#000; background:#fff; line-height:1.4; overflow-wrap:break-word; padding:2mm 3mm; }
+    body { font-family:'Courier New',monospace; font-size:12px; font-weight:900; width:52mm; color:#000; background:#fff; line-height:1.5; overflow-wrap:break-word; padding:2mm 3mm; }
     .c { text-align:center; }
     .r { text-align:right; }
     .hr { border-top:1.5px dashed #000; margin:4px 0; }
-    .row { display:flex; justify-content:space-between; }
-    .lbl { font-size:9px; font-weight:700; color:#000; }
+    .row { display:flex; justify-content:space-between; font-size:12px; font-weight:900; }
+    .lbl { font-size:11px; font-weight:900; color:#000; }
     .val { font-weight:900; }
   </style></head><body>
   <div class="c"><b>${razon}</b></div>
-  ${rif ? `<div class="c" style="font-size:9px;">RIF: ${rif}</div>` : ''}
-  ${dir ? `<div class="c" style="font-size:9px;">${dir}</div>` : ''}
+  ${rif ? `<div class="c" style="font-size:11px;font-weight:900;">RIF: ${rif}</div>` : ''}
+  ${dir ? `<div class="c" style="font-size:11px;font-weight:900;">${dir}</div>` : ''}
   <div class="hr"></div>
-  <div class="c" style="font-size:9px;">${fecha} ${hora} · Tasa: ${tasa.toFixed(2)} Bs/$</div>
+  <div class="c" style="font-size:11px;font-weight:900;">${fecha} ${hora} · Tasa: ${tasa.toFixed(2)} Bs/$</div>
   <div class="hr"></div>
   ${htmlBody}
   <div class="hr"></div>
@@ -1816,9 +1816,9 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
     const ivaServDoc = s.baseIVADoc != null
       ? parseFloat((s.baseIVADoc * (s.alicuotaIVA ?? 16) / 100).toFixed(2))
       : null;
-    return `<div style="margin:2px 0;font-size:9px;">` +
-    `<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">${s.nombre}${s.cashea?' (C)':''} x${s.count}</span></div>` +
-    `<div style="display:flex;justify-content:space-between;font-size:8px;"><span style="color:#64748b;">bruto $${(s.total||0).toFixed(2)}</span><span><b>doc $${(s.comisionDoc||0).toFixed(2)}</b>${ivaServDoc!=null?' <span style="color:#f59e0b;">iva $'+ivaServDoc.toFixed(2)+'</span>':''}</span></div>` +
+    return `<div style="margin:3px 0;font-size:11px;font-weight:900;">` +
+    `<div style="display:flex;justify-content:space-between;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span></div>` +
+    `<div style="display:flex;justify-content:space-between;font-size:11px;"><span>bruto $${(s.total||0).toFixed(2)}</span><span><b>doc $${(s.comisionDoc||0).toFixed(2)}</b>${ivaServDoc!=null?' iva $'+ivaServDoc.toFixed(2):''}  </span></div>` +
     `</div>`;
   }).join('');
   const fps = [
@@ -1829,8 +1829,8 @@ window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, cashe
   ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
   const body = `
   <div class="c"><b>REPORTE VETERINARIA</b></div>
-  <div class="c" style="font-size:9px;">${nombre}</div>
-  <div class="c" style="font-size:9px;">${consultas} atención${consultas!==1?'es':''}</div>
+  <div class="c" style="font-size:11px;font-weight:900;">${nombre}</div>
+  <div class="c" style="font-size:11px;font-weight:900;">${consultas} atención${consultas!==1?'es':''}</div>
   <div class="hr"></div>
   <div class="row"><span class="lbl">Bruto cobrado</span><span><b>$${bruto.toFixed(2)}</b></span></div>
   <div class="row"><span class="lbl">-Insumos</span><span>-$${insumos.toFixed(2)}</span></div>
@@ -1855,7 +1855,7 @@ window._imprimirTiquetaCirugiaDoctor = function(nombreDoctor, parte, nombreCirug
   const partes = precioTotal > 0 ? Math.round(precioTotal / parte) : '?';
   const body = `
   <div class="c"><b>CIRUGÍA — REPARTO</b></div>
-  <div class="c" style="font-size:9px;">${nombreDoctor}</div>
+  <div class="c" style="font-size:11px;font-weight:900;">${nombreDoctor}</div>
   <div class="hr"></div>
   <div class="row"><span class="lbl">${nombreCirugia}</span></div>
   <div class="row"><span class="lbl">Total paciente</span><span>$${precioTotal.toFixed(2)}</span></div>
@@ -1875,7 +1875,7 @@ window._imprimirReportePeluqueria = function(persona, monto, desglose, tasa) {
   const desgloseHtml = desglose.map(d=>`<div class="row"><span class="lbl">${d.label}</span><span>${d.val}</span></div>`).join('');
   const body = `
   <div class="c"><b>REPORTE PELUQUERIA</b></div>
-  <div class="c" style="font-size:9px;">${persona}</div>
+  <div class="c" style="font-size:11px;font-weight:900;">${persona}</div>
   <div class="hr"></div>
   ${desgloseHtml}
   <div class="hr"></div>
