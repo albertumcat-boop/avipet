@@ -2079,15 +2079,25 @@ window.editarInsumosServicio = async (nombreServicio) => {
       bloqueado: ins.bloqueado === true
     }));
 
-    // Cargar insumos_maestro para el selector
-    const snapIns = await getDocs(collection(db, "insumos_maestro"));
-    const insumosMaestro = [];
+    // Cargar catálogo: insumos_maestro + insumos embebidos en todos los servicios
+    const [snapIns, snapServsTodos] = await Promise.all([
+      getDocs(collection(db, "insumos_maestro")),
+      getDocs(collection(db, "servicios_maestro"))
+    ]);
+    const catMap = {};
     snapIns.forEach(d => {
       const r = d.data();
-      const nombre = (r.nombre || d.id || '').trim();
-      if (nombre) insumosMaestro.push({ nombre, costo: parseFloat(r.costo||0) });
+      const nombre = (r.nombre || d.id || '').trim().toUpperCase();
+      if (nombre) catMap[nombre] = { nombre, costo: parseFloat(r.costo||0) };
     });
-    insumosMaestro.sort((a,b) => a.nombre.localeCompare(b.nombre));
+    // Agregar insumos embebidos en servicios que no estén en catálogo
+    snapServsTodos.forEach(d => {
+      (d.data().insumos || []).forEach(ins => {
+        const nombre = (ins.nombre || '').trim().toUpperCase();
+        if (nombre && !catMap[nombre]) catMap[nombre] = { nombre, costo: parseFloat(ins.costo||0) };
+      });
+    });
+    const insumosMaestro = Object.values(catMap).sort((a,b) => a.nombre.localeCompare(b.nombre));
     let optsInsumos = '<option value="">-- Seleccionar del catálogo --</option>';
     insumosMaestro.forEach(i => {
       optsInsumos += '<option value="'+i.nombre+'" data-costo="'+i.costo+'">'+i.nombre+' ($'+i.costo.toFixed(2)+')</option>';
@@ -2365,16 +2375,25 @@ window.renderizarTablaMaestra = async () => {
             nombre: ins.nombre, costo: parseFloat(ins.costo||0), bloqueado: ins.bloqueado===true
           }));
 
-          const snapIns = await getDocs(collection(db,"insumos_maestro"));
-          const insumosMaestro = [];
-          snapIns.forEach(d => {
+          const [snapIns2, snapServs2] = await Promise.all([
+            getDocs(collection(db,"insumos_maestro")),
+            getDocs(collection(db,"servicios_maestro"))
+          ]);
+          const catMap2 = {};
+          snapIns2.forEach(d => {
             const rd = d.data();
-            const nom = (rd.nombre||d.id||'').trim();
-            if (nom) insumosMaestro.push({ nombre:nom, costo:parseFloat(rd.costo||0) });
+            const nom = (rd.nombre||d.id||'').trim().toUpperCase();
+            if (nom) catMap2[nom] = { nombre:nom, costo:parseFloat(rd.costo||0) };
           });
-          insumosMaestro.sort((a,b) => a.nombre.localeCompare(b.nombre));
+          snapServs2.forEach(d => {
+            (d.data().insumos||[]).forEach(ins => {
+              const nom = (ins.nombre||'').trim().toUpperCase();
+              if (nom && !catMap2[nom]) catMap2[nom] = { nombre:nom, costo:parseFloat(ins.costo||0) };
+            });
+          });
+          const insumosMaestro2 = Object.values(catMap2).sort((a,b)=>a.nombre.localeCompare(b.nombre));
           let optsIns = '<option value="">-- Seleccionar del catálogo --</option>';
-          insumosMaestro.forEach(i => { optsIns += '<option value="'+i.nombre+'" data-costo="'+i.costo+'">'+i.nombre+' ($'+i.costo.toFixed(2)+')</option>'; });
+          insumosMaestro2.forEach(i => { optsIns += '<option value="'+i.nombre+'" data-costo="'+i.costo+'">'+i.nombre+' ($'+i.costo.toFixed(2)+')</option>'; });
 
           const renderListaIns = () => {
             const cont = document.getElementById('es_listaIns');
