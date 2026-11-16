@@ -468,7 +468,7 @@ try{Swal.fire({title:'Inicializando...',allowOutsideClick:false,didOpen:()=>Swal
 
 // CAMBIAR SUB-TAB CONFIG 
 window.cambiarSubTabConfig = (tab) => {
-  ['servicios','insumos','medicamentos','seguridad','tarifa','compras','empleados'].forEach(t => {
+  ['servicios','insumos','medicamentos','seguridad','tarifa','compras','empleados','general'].forEach(t => {
     const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
     const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
     const activo = t === tab;
@@ -493,6 +493,32 @@ window.cambiarSubTabConfig = (tab) => {
   if (tab === 'medicamentos') _llamarFuncion('renderizarTablaMedicamentos');
   if (tab === 'compras')      { if(typeof window.cargarRegistroCompras==='function') window.cargarRegistroCompras(); else _llamarFuncion('cargarRegistroCompras'); }
   if (tab === 'empleados')   { if(typeof window.cargarEmpleadosTelefono==='function') window.cargarEmpleadosTelefono(); else _llamarFuncion('cargarEmpleadosTelefono'); }
+  if (tab === 'general')     { window._cargarPanelGeneral(); }
+};
+
+window._cargarPanelGeneral = async function() {
+  const inp = document.getElementById('inputFeeCashea');
+  if (!inp) return;
+  try {
+    const snap = await getDoc(doc(db, 'configuracion', 'sistema'));
+    const fee = snap.exists() && snap.data().feeCashea != null ? snap.data().feeCashea : 0.035;
+    inp.value = (fee * 100).toFixed(1);
+    window._feeCashea = fee;
+  } catch(e) { console.warn('[AVIPET] Error cargando feeCashea:', e); }
+};
+
+window.guardarFeeCashea = async function() {
+  const inp = document.getElementById('inputFeeCashea');
+  const msg = document.getElementById('msgFeeCashea');
+  if (!inp) return;
+  const pct = parseFloat(inp.value);
+  if (isNaN(pct) || pct < 0 || pct > 100) { alert('Ingresa un porcentaje válido (0-100).'); return; }
+  const fee = pct / 100;
+  try {
+    await setDoc(doc(db, 'configuracion', 'sistema'), { feeCashea: fee }, { merge: true });
+    window._feeCashea = fee;
+    if (msg) { msg.style.display = 'block'; setTimeout(() => { msg.style.display = 'none'; }, 3000); }
+  } catch(e) { alert('Error guardando: ' + e.message); }
 };
 
 window.calcInvAplicar = () => {

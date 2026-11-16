@@ -6,8 +6,16 @@
 
 import { db } from './firebase-config.js';
 import {
- collection, getDocs, query, where, orderBy, limit, doc, updateDoc, serverTimestamp, deleteDoc
+ collection, getDocs, query, where, orderBy, limit, doc, updateDoc, serverTimestamp, deleteDoc, getDoc, setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Cargar fee de Cashea desde Firestore (fallback 3.5%)
+window._feeCashea = 0.035;
+getDoc(doc(db, 'configuracion', 'sistema')).then(snap => {
+  if (snap.exists() && snap.data().feeCashea != null) {
+    window._feeCashea = parseFloat(snap.data().feeCashea);
+  }
+}).catch(() => {});
 
 const normalizarCedula = (ci) =>
  String(ci || '').replace(/[.\-\s]/g, '').trim().toUpperCase();
@@ -264,7 +272,7 @@ function _renderizarTarjeta(consulta) {
  const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : _precio);
  const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
  const _ivaDoc = _baseIva * _aliq / 100;
- const _cashea = _esCasheaServ ? _bruto * 0.035 : 0;
+ const _cashea = _esCasheaServ ? _bruto * (window._feeCashea||0.035) : 0;
  const _neto = Math.max(0, _bruto - _ivaDoc - _cashea);
  const _desglose = JSON.stringify([
    {k:'Precio servicio', v:'$'+_precio.toFixed(2)},
@@ -273,7 +281,7 @@ function _renderizarTarjeta(consulta) {
    {k:'× '+parseFloat(s.porcDoc).toFixed(1)+'% doc', v:'$'+_bruto.toFixed(2), c:'#93c5fd'},
    {sep:true},
    {k:'- IVA ('+_baseIva.toFixed(2)+'×'+_aliq+'%)', v:'-$'+_ivaDoc.toFixed(2), c:'#fca5a5'},
-   ...(_esCasheaServ ? [{k:'- Fee Cashea (3.5%)', v:'-$'+_cashea.toFixed(2), c:'#c4b5fd'}] : []),
+   ...(_esCasheaServ ? [{k:'- Fee Cashea ('+((window._feeCashea||0.035)*100).toFixed(1)+'%)', v:'-$'+_cashea.toFixed(2), c:'#c4b5fd'}] : []),
    {sep:true},
    {k:'Dr. Neto', v:'$'+_neto.toFixed(2), c:'#86efac', b:true}
  ]);
@@ -338,7 +346,7 @@ function _renderizarTarjeta(consulta) {
      _comisionDoc += _bruto;
      _ivaDoc += _base * _aliq / 100;
    });
-   _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+   _casheaFeeDoc = _esCashea ? _comisionDoc * (window._feeCashea||0.035) : 0;
    _porcServ = _ventaNum > 0 ? (_comisionDoc / _ventaNum * 100) : 0;
  } else {
    // Fallback: usar porcServ global
@@ -355,7 +363,7 @@ function _renderizarTarjeta(consulta) {
      } else {
        _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
      }
-     _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+     _casheaFeeDoc = _esCashea ? _comisionDoc * (window._feeCashea||0.035) : 0;
    }
  }
  const _doctorNeto = _comisionDoc != null ? Math.max(0, _comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
@@ -408,7 +416,7 @@ function _renderizarTarjeta(consulta) {
      {k:'Comisión bruta', v:'$'+(_comisionDoc||0).toFixed(2), c:'#93c5fd'},
      {sep:true},
      {k:'- IVA descontado', v:'-$'+_ivaDoc.toFixed(2), c:'#fca5a5'},
-     ...(_esCashea ? [{k:'- Fee Cashea (3.5%)', v:'-$'+_casheaFeeDoc.toFixed(2), c:'#c4b5fd'}] : []),
+     ...(_esCashea ? [{k:'- Fee Cashea ('+((window._feeCashea||0.035)*100).toFixed(1)+'%)', v:'-$'+_casheaFeeDoc.toFixed(2), c:'#c4b5fd'}] : []),
      {sep:true},
      {k:'Dr. Neto', v:'$'+_doctorNeto.toFixed(2), c:'#86efac', b:true}
    ]);
@@ -573,7 +581,7 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
           _comisionDoc += _bruto;
           _ivaDoc += _base * _aliq / 100;
         });
-        _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+        _casheaFeeDoc = _esCashea ? _comisionDoc * (window._feeCashea||0.035) : 0;
       } else {
         const _porcServ = parseFloat(datos.porcServ || 0);
         const _rateDoc = _porcServ / 100;
@@ -589,7 +597,7 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
           } else {
             _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
           }
-          _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+          _casheaFeeDoc = _esCashea ? _comisionDoc * (window._feeCashea||0.035) : 0;
         }
       }
       const _doctorNeto = _comisionDoc != null ? Math.max(0, _comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
@@ -621,7 +629,7 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
           const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
           const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
           const _ivaS = _baseIva * _aliq / 100;
-          const _casheaS = _esCashea ? _bruto * 0.035 : 0;
+          const _casheaS = _esCashea ? _bruto * (window._feeCashea||0.035) : 0;
           const _netoS = Math.max(0, _bruto - _ivaS - _casheaS);
           const drTd = tr.querySelector('td[data-dr]');
           if (drTd) drTd.textContent = 'Dr: $' + _netoS.toFixed(2);
