@@ -1877,8 +1877,8 @@ window._imprimirReporteDoctorSimple = function(nombre, g) {
   ${casheaDoc>0?`<div class="row" style="color:#7c3aed;"><span class="lbl">−Fee Cashea ${feePct}%</span><span>−$${casheaDoc.toFixed(2)}</span></div>`:''}
   <div class="hr"></div>
   <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
-    <span style="font-size:14px;font-weight:900;">NETO DOCTOR</span>
-    <span style="font-size:22px;font-weight:900;">$${neto.toFixed(2)}</span>
+    <span style="font-size:13px;font-weight:900;">NETO DOCTOR</span>
+    <span style="font-size:16px;font-weight:900;">$${neto.toFixed(2)}</span>
   </div>
   <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
   <div class="hr"></div>
@@ -1906,7 +1906,7 @@ window._imprimirReporteDoctor = function(nombre, g) {
       : (c.fecha || '');
     const pac = c.paciente || '';
     rowsConsultas += `<div style="margin-top:5px;padding-top:4px;border-top:1px dashed #ccc;">`;
-    rowsConsultas += `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:10px;font-weight:900;">#${ci+1} ${fStr} ${pac}</span><span style="font-size:16px;font-weight:900;color:${c.esCashea?'#7c3aed':'#1d4ed8'};">${c.fp==='cashea'?'🟣':''}$${c.neto.toFixed(2)}</span></div>`;
+    rowsConsultas += `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:10px;font-weight:900;">#${ci+1} ${fStr} ${pac}</span><span style="font-size:14px;font-weight:900;color:${c.esCashea?'#7c3aed':'#1d4ed8'};">${c.fp==='cashea'?'🟣':''}$${c.neto.toFixed(2)}</span></div>`;
     c.servicios.forEach(function(s) {
       rowsConsultas += `<div style="margin:1px 0 0 4px;font-size:9px;font-weight:700;">`;
       rowsConsultas += `<div style="display:flex;justify-content:space-between;"><span>${s.nombre}</span><span>Precio $${s.precio.toFixed(2)}</span></div>`;
@@ -1914,7 +1914,7 @@ window._imprimirReporteDoctor = function(nombre, g) {
       rowsConsultas += `<div style="display:flex;justify-content:space-between;"><span>  ${s.porcDoc.toFixed(0)}% doc → Bruto</span><span>$${s.bruto.toFixed(2)}</span></div>`;
       if (s.iva > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#dc2626;"><span>  IVA ${s.aliq}% (base $${s.baseIva.toFixed(2)})</span><span>−$${s.iva.toFixed(2)}</span></div>`;
       if (s.cashea > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#7c3aed;"><span>  Fee Cashea ${feePct}%</span><span>−$${s.cashea.toFixed(2)}</span></div>`;
-      rowsConsultas += `<div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #e2e8f0;margin-top:1px;"><span>  Dr. Neto</span><span>$${s.neto.toFixed(2)}</span></div>`;
+      rowsConsultas += `<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;margin-top:2px;padding-top:1px;"><span style="font-size:10px;font-weight:900;">  Dr. Neto</span><span style="font-size:13px;font-weight:900;">$${s.neto.toFixed(2)}</span></div>`;
       rowsConsultas += `</div>`;
     });
     rowsConsultas += `</div>`;
