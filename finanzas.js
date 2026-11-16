@@ -1930,21 +1930,10 @@ window._imprimirReporteDoctor = function(nombre, g) {
   ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
 
   const body = `
-  <div class="c"><b>REPORTE VETERINARIA</b></div>
+  <div class="c"><b>DESGLOSE DETALLADO</b></div>
   <div class="c" style="font-size:11px;font-weight:900;">${nombre}</div>
   <div class="c" style="font-size:10px;">${numAt} atención${numAt!==1?'es':''}</div>
   <div class="hr"></div>
-  <div class="row"><span class="lbl">Bruto cobrado</span><span><b>$${bruto.toFixed(2)}</b></span></div>
-  <div class="row"><span class="lbl">Insumos totales</span><span>−$${insumos.toFixed(2)}</span></div>
-  <div class="row"><span class="lbl">Comisión bruta</span><span>$${comision.toFixed(2)}</span></div>
-  ${ivaDoc>0?`<div class="row" style="color:#dc2626;"><span class="lbl">−IVA doctor</span><span>−$${ivaDoc.toFixed(2)}</span></div>`:''}
-  ${casheaDoc>0?`<div class="row" style="color:#7c3aed;"><span class="lbl">−Fee Cashea ${feePct}%</span><span>−$${casheaDoc.toFixed(2)}</span></div>`:''}
-  <div class="hr"></div>
-  <div class="row"><span><b>NETO DOCTOR</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
-  <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
-  <div class="hr"></div>
-  ${servResumen ? '<div style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:3px 0;">Resumen por servicio (neto)</div>' + servResumen + '<div class="hr"></div>' : ''}
-  ${fps ? fps + '<div class="hr"></div>' : ''}
   <div style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:3px 0;">Desglose por consulta</div>
   ${rowsConsultas}`;
   _imprimirTiquera(body);
