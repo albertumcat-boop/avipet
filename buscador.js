@@ -558,23 +558,41 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
       card.dataset.consultaJson = JSON.stringify(datos);
       const _esCashea = nuevaFp === 'cashea';
       const _servicios = datos.serviciosRealizados || [];
-      const _porcServ = parseFloat(datos.porcServ || 0);
-      const _rateDoc = _porcServ / 100;
       const _ventaNum = parseFloat(datos.montoVenta || 0);
-      const _comisionDoc = _rateDoc > 0 ? _ventaNum * _rateDoc : null;
-      const _hayBaseIVA = _servicios.some(function(s){ return s.montoBaseIVA != null; });
-      let _ivaDoc = 0;
-      if (_hayBaseIVA) {
-        _ivaDoc = _servicios.reduce(function(sum, s) {
-          const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
-          const aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
-          return sum + base * aliq / 100;
-        }, 0);
-      } else if (_comisionDoc != null) {
-        _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
+      const _hayPorcDoc2 = _servicios.some(function(s){ return s.porcDoc != null; });
+      let _comisionDoc = null, _ivaDoc = 0, _casheaFeeDoc = 0;
+      if (_hayPorcDoc2) {
+        _comisionDoc = 0; _ivaDoc = 0;
+        _servicios.forEach(function(s) {
+          if (s.porcDoc == null) return;
+          const _p = parseFloat(s.precio||0);
+          const _ins = parseFloat(s.costoInsumos||0);
+          const _bruto = Math.max(0, _p - _ins) * parseFloat(s.porcDoc) / 100;
+          const _base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : _p);
+          const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
+          _comisionDoc += _bruto;
+          _ivaDoc += _base * _aliq / 100;
+        });
+        _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+      } else {
+        const _porcServ = parseFloat(datos.porcServ || 0);
+        const _rateDoc = _porcServ / 100;
+        if (_rateDoc > 0) {
+          _comisionDoc = _ventaNum * _rateDoc;
+          const _hayBase2 = _servicios.some(function(s){ return s.montoBaseIVA != null; });
+          if (_hayBase2) {
+            _ivaDoc = _servicios.reduce(function(sum, s) {
+              const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
+              const aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
+              return sum + base * aliq / 100;
+            }, 0);
+          } else {
+            _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
+          }
+          _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+        }
       }
-      const _casheaFeeDoc = (_esCashea && _comisionDoc != null) ? _comisionDoc * 0.035 : 0;
-      const _doctorNeto = _comisionDoc != null ? (_comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
+      const _doctorNeto = _comisionDoc != null ? Math.max(0, _comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
       // Redibujar finDiv2
       const fd2 = document.getElementById('finDiv2_' + consultaId);
       if (fd2) {
