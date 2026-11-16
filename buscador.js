@@ -225,6 +225,7 @@ function _renderizarTarjeta(consulta) {
  // SERVICIOS REALIZADOS (azul) 
  if (Array.isArray(consulta.serviciosRealizados) && consulta.serviciosRealizados.length > 0) {
  const servDiv = document.createElement('div');
+ servDiv.id = 'servDiv_' + consulta.id;
  servDiv.style.cssText = 'border:1px solid #bfdbfe;border-radius:10px;overflow:hidden;margin-top:6px;';
  let htmlServ = '<div style="background:#eff6ff;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;">Servicios Realizados</p></div>';
  htmlServ += '<table style="width:100%;border-collapse:collapse;">';
@@ -238,7 +239,7 @@ function _renderizarTarjeta(consulta) {
  const _ivaDoc = _baseIva * parseFloat(s.porcDoc) / 100 * _aliq / 100;
  const _cashea = _esCasheaServ ? _bruto * 0.035 : 0;
  const _neto = _bruto - _ivaDoc - _cashea;
- drNetoHTML = '<td style="padding:4px 8px;text-align:right;font-size:10px;font-weight:900;color:#15803d;">Dr: $' + Math.max(0, _neto).toFixed(2) + '</td>';
+ drNetoHTML = '<td data-dr="1" style="padding:4px 8px;text-align:right;font-size:10px;font-weight:900;color:#15803d;">Dr: $' + Math.max(0, _neto).toFixed(2) + '</td>';
  }
  htmlServ +=
  '<tr style="border-bottom:1px solid #f1f5f9;">' +
@@ -324,6 +325,7 @@ function _renderizarTarjeta(consulta) {
 
  // Segunda fila: IVA · Cashea · Dr. Ganó
  const finDiv2 = document.createElement('div');
+ finDiv2.id = 'finDiv2_' + consulta.id;
  finDiv2.style.cssText = 'display:grid;grid-template-columns:' + (_esCashea ? '1fr 1fr 1fr' : '1fr 1fr') + ';gap:6px;margin-top:4px;';
  finDiv2.innerHTML =
  '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px;text-align:center;">' +
@@ -440,6 +442,15 @@ function _renderizarTarjeta(consulta) {
    body.appendChild(fotoDiv);
  }
 
+ // Guardar datos para recalculo en vivo al cambiar formaPago
+ card.dataset.consultaJson = JSON.stringify({
+   id: consulta.id,
+   serviciosRealizados: consulta.serviciosRealizados || [],
+   porcServ: consulta.porcServ || 0,
+   montoVenta: consulta.montoVenta || 0,
+   formaPago: consulta.formaPago || ''
+ });
+
  card.appendChild(body);
  return card;
 }
@@ -466,6 +477,66 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
       const titulo = cell.querySelector('p');
       if (titulo) titulo.style.color = color;
       selectEl.style.color = color;
+    }
+    // Recalcular montos en vivo
+    const card = selectEl.closest('[data-consulta-json]');
+    if (card) {
+      const datos = JSON.parse(card.dataset.consultaJson);
+      datos.formaPago = nuevaFp;
+      card.dataset.consultaJson = JSON.stringify(datos);
+      const _esCashea = nuevaFp === 'cashea';
+      const _servicios = datos.serviciosRealizados || [];
+      const _porcServ = parseFloat(datos.porcServ || 0);
+      const _rateDoc = _porcServ / 100;
+      const _ventaNum = parseFloat(datos.montoVenta || 0);
+      const _comisionDoc = _rateDoc > 0 ? _ventaNum * _rateDoc : null;
+      const _hayBaseIVA = _servicios.some(function(s){ return s.montoBaseIVA != null; });
+      let _ivaDoc = 0;
+      if (_hayBaseIVA && _rateDoc > 0) {
+        _ivaDoc = _servicios.reduce(function(sum, s) {
+          const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0)) * _rateDoc;
+          const aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
+          return sum + base * aliq / 100;
+        }, 0);
+      } else if (_comisionDoc != null) {
+        _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
+      }
+      const _casheaFeeDoc = (_esCashea && _comisionDoc != null) ? _comisionDoc * 0.035 : 0;
+      const _doctorNeto = _comisionDoc != null ? (_comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
+      // Redibujar finDiv2
+      const fd2 = document.getElementById('finDiv2_' + consultaId);
+      if (fd2) {
+        fd2.style.gridTemplateColumns = _esCashea ? '1fr 1fr 1fr' : '1fr 1fr';
+        fd2.innerHTML =
+          '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px;text-align:center;">' +
+          '<p style="font-size:7px;font-weight:900;color:#ef4444;text-transform:uppercase;margin:0 0 2px 0;">IVA descontado</p>' +
+          '<p style="font-size:12px;font-weight:900;color:#dc2626;font-family:monospace;">$' + _ivaDoc.toFixed(2) + '</p></div>' +
+          (_esCashea
+            ? '<div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;padding:6px;text-align:center;">' +
+              '<p style="font-size:7px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 2px 0;">Fee Cashea</p>' +
+              '<p style="font-size:12px;font-weight:900;color:#7c3aed;font-family:monospace;">$' + _casheaFeeDoc.toFixed(2) + '</p></div>'
+            : '') +
+          '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:6px;text-align:center;">' +
+          '<p style="font-size:7px;font-weight:900;color:#15803d;text-transform:uppercase;margin:0 0 2px 0;">Dr. Ganó</p>' +
+          '<p style="font-size:12px;font-weight:900;color:#15803d;font-family:monospace;">' + (_doctorNeto != null ? '$' + _doctorNeto.toFixed(2) : '---') + '</p></div>';
+      }
+      // Redibujar montos Dr. por servicio
+      const sd = document.getElementById('servDiv_' + consultaId);
+      if (sd) {
+        const trs = sd.querySelectorAll('table tr');
+        trs.forEach(function(tr, i) {
+          const s = _servicios[i];
+          if (!s || s.porcDoc == null) return;
+          const _bruto = Math.max(0, parseFloat(s.precio||0) - parseFloat(s.costoInsumos||0)) * parseFloat(s.porcDoc) / 100;
+          const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
+          const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
+          const _ivaS = _baseIva * parseFloat(s.porcDoc) / 100 * _aliq / 100;
+          const _casheaS = _esCashea ? _bruto * 0.035 : 0;
+          const _netoS = Math.max(0, _bruto - _ivaS - _casheaS);
+          const drTd = tr.querySelector('td[data-dr]');
+          if (drTd) drTd.textContent = 'Dr: $' + _netoS.toFixed(2);
+        });
+      }
     }
     // Toast discreto
     const t = document.createElement('div');
