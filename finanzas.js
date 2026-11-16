@@ -459,16 +459,8 @@ window.mostrarDashboardVet = async () => {
               (g.casheaFeeDoc>0?'<p style="font-size:9px;color:#7c3aed;margin:0;">🟣 −Cashea $'+g.casheaFeeDoc.toFixed(2)+'</p>':'')+
               '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+Math.max(0,g.comision-g.ivaDocTotal-g.casheaFeeDoc).toFixed(2)+'</p>'
             : '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+g.comision.toFixed(2)+'</p>') +
-          '<button id="btnPrint_'+pid+'" style="margin-top:4px;background:'+col.color+';color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Tiquera</button>' +
         '</div>';
       secDoc.appendChild(cabDoc);
-      // Conectar botón de tiquera en cabecera
-      (function(nd, gd) {
-        const btnCab = secDoc.querySelector('#btnPrint_'+pid);
-        if (btnCab) btnCab.onclick = function() {
-          window._imprimirReporteDoctor(nd, gd);
-        };
-      })(nombreDoc, g);
 
       // Deuda si aplica
       if (deuda > 0) {
@@ -595,14 +587,22 @@ window.mostrarDashboardVet = async () => {
         secDoc.appendChild(eqDiv);
       }
 
-      // Botón imprimir doctor
-      const btnImpDoc = document.createElement('button');
-      btnImpDoc.textContent = '🖨️ Tiquera';
-      btnImpDoc.style.cssText = 'width:100%;margin-top:8px;padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;letter-spacing:.03em;';
+      // Botones imprimir doctor
+      const botonesImp = document.createElement('div');
+      botonesImp.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;';
+      const btnSimple = document.createElement('button');
+      btnSimple.innerHTML = '🖨️ Tiquera';
+      btnSimple.style.cssText = 'padding:8px;background:#f1f5f9;color:'+col.color+';border:2px solid '+col.borde+';border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;';
+      const btnDetallado = document.createElement('button');
+      btnDetallado.innerHTML = '🖨️ Detallado';
+      btnDetallado.style.cssText = 'padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;';
       (function(nd, gd) {
-        btnImpDoc.onclick = function() { window._imprimirReporteDoctor(nd, gd); };
+        btnSimple.onclick    = function() { window._imprimirReporteDoctorSimple(nd, gd); };
+        btnDetallado.onclick = function() { window._imprimirReporteDoctor(nd, gd); };
       })(nombreDoc, g);
-      secDoc.appendChild(btnImpDoc);
+      botonesImp.appendChild(btnSimple);
+      botonesImp.appendChild(btnDetallado);
+      secDoc.appendChild(botonesImp);
       contenedor.appendChild(secDoc);
     });
 
@@ -1846,6 +1846,43 @@ function _imprimirTiquera(htmlBody) {
   win.focus();
   setTimeout(() => { win.print(); win.close(); }, 400);
 }
+
+window._imprimirReporteDoctorSimple = function(nombre, g) {
+  const tasa      = parseFloat(window.tasaDolarHoy) || 1;
+  const comision  = g.comision    || 0;
+  const bruto     = g.bruto       || 0;
+  const insumos   = g.insumos     || 0;
+  const ivaDoc    = g.ivaDocTotal || 0;
+  const casheaDoc = g.casheaFeeDoc|| 0;
+  const neto      = Math.max(0, comision - ivaDoc - casheaDoc);
+  const numAt     = (g.consultas||[]).length;
+  const feePct    = (_getCasheaFee()*100).toFixed(1);
+  const servResumen = Object.values(g.servicios || {}).sort((a,b)=>b.count-a.count).map(s =>
+    `<div class="row"><span class="lbl">${s.nombre}${s.cashea?' 🟣':''} x${s.count}</span><span>$${(s.netoDoc||0).toFixed(2)}</span></div>`
+  ).join('');
+  const fp = g.formasPago || {};
+  const fps = [
+    { l:'Dolares', v: fp.dolares }, { l:'Pago Movil', v: fp.movil },
+    { l:'Cashea', v: fp.cashea },   { l:'Otro', v: fp.otro },
+  ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
+  const body = `
+  <div class="c"><b>REPORTE VETERINARIA</b></div>
+  <div class="c" style="font-size:11px;font-weight:900;">${nombre}</div>
+  <div class="c" style="font-size:10px;">${numAt} atención${numAt!==1?'es':''}</div>
+  <div class="hr"></div>
+  <div class="row"><span class="lbl">Bruto cobrado</span><span><b>$${bruto.toFixed(2)}</b></span></div>
+  <div class="row"><span class="lbl">Insumos</span><span>−$${insumos.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">Comisión bruta</span><span>$${comision.toFixed(2)}</span></div>
+  ${ivaDoc>0?`<div class="row" style="color:#dc2626;"><span class="lbl">−IVA doctor</span><span>−$${ivaDoc.toFixed(2)}</span></div>`:''}
+  ${casheaDoc>0?`<div class="row" style="color:#7c3aed;"><span class="lbl">−Fee Cashea ${feePct}%</span><span>−$${casheaDoc.toFixed(2)}</span></div>`:''}
+  <div class="hr"></div>
+  <div class="row"><span><b>NETO DOCTOR</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
+  <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
+  <div class="hr"></div>
+  ${servResumen ? servResumen + '<div class="hr"></div>' : ''}
+  ${fps}`;
+  _imprimirTiquera(body);
+};
 
 window._imprimirReporteDoctor = function(nombre, g) {
   const tasa       = parseFloat(window.tasaDolarHoy) || 1;
