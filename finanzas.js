@@ -16,7 +16,7 @@ let _rangoHasta   = '';
 let _filtroDoctor = '';
 let _ultimoResumenVet = null;
 
-const CASHEA_FEE = 0.10; // 10% comisión Cashea sobre monto pagado con Cashea
+const _getCasheaFee = () => window._feeCashea || 0.035;
 const IVA_PELU   = 0.16; // 16% IVA peluquería — aplica a peluquera, avipet y ayu. extra (no a ayu. principal)
 
 // ─── PERIODO ──────────────────────────────────────────────
@@ -284,50 +284,100 @@ window.mostrarDashboardVet = async () => {
     contenedor.appendChild(filtroDocDiv);
 
     // ── Agrupar por doctor ───────────────────────────────
-    const porDoctor = {}; // { doctorNombre: { consultas:[], servicios:{}, formasPago:{}, comision, bruto, insumos } }
+    const porDoctor = {};
     let brutoTotal=0, insumosTotal=0, comisionTotal=0, casheaFeeTotal=0;
+    const feeCashea = _getCasheaFee();
 
     consultas.forEach(function(c){
       const nombreDoc = (c.doctor||'Sin doctor').trim();
       if (!porDoctor[nombreDoc]) {
-        porDoctor[nombreDoc] = { consultas:[], servicios:{}, formasPago:{dolares:0,movil:0,cashea:0,otro:0}, comision:0, bruto:0, insumos:0, casheaFee:0, casheaFeeDoc:0 };
+        porDoctor[nombreDoc] = { consultas:[], servicios:{}, formasPago:{dolares:0,movil:0,cashea:0,otro:0},
+          comision:0, bruto:0, insumos:0, casheaFee:0, casheaFeeDoc:0, ivaDocTotal:0, consultasDetalle:[] };
       }
       const g = porDoctor[nombreDoc];
       g.consultas.push(c);
-      const v=parseFloat(c.montoVenta||0), ins=parseFloat(c.montoInsumos||0), p=parseFloat(c.pagoDoctor||0);
-      g.bruto+=v; g.insumos+=ins; g.comision+=p;
-      brutoTotal+=v; insumosTotal+=ins; comisionTotal+=p;
+      const v=parseFloat(c.montoVenta||0), ins=parseFloat(c.montoInsumos||0);
+      g.bruto+=v; g.insumos+=ins;
+      brutoTotal+=v; insumosTotal+=ins;
 
-      // Acumular por forma de pago + fee Cashea compartido
       const fp = c.formaPago || 'otro';
+      const esCashea = fp === 'cashea';
       if (fp === 'dolares') g.formasPago.dolares += v;
       else if (fp === 'movil') g.formasPago.movil += v;
-      else if (fp === 'cashea') {
-        g.formasPago.cashea += v;
-        const fee = v * CASHEA_FEE;        // 10% del total de la consulta
-        const feeDoc = p * CASHEA_FEE;     // la parte que absorbe el doctor (10% de su comisión)
-        g.casheaFee += fee;
-        g.casheaFeeDoc += feeDoc;          // cuánto pierde el doctor de su comisión
-        casheaFeeTotal += fee;
-      }
+      else if (fp === 'cashea') { g.formasPago.cashea += v; }
       else g.formasPago.otro += v;
 
-      // Agrupar servicios realizados separando Cashea
-      const esCashea = fp === 'cashea';
-      const rateConsulta = v > 0 ? p / v : 0; // comisión real de ESTA consulta
-      (c.serviciosRealizados||[]).forEach(function(s){
-        const nombre=(s.nombre||'Servicio').trim().toUpperCase();
-        const key = nombre + (esCashea ? '||cashea' : '||normal');
-        const precio = parseFloat(s.precio||0);
-        const baseIVA    = parseFloat(s.montoBaseIVA ?? precio);
-        const alicuota   = parseFloat(s.alicuotaIVA  ?? 16);
-        if(!g.servicios[key]) g.servicios[key]={nombre, count:0, total:0, comisionDoc:0, baseIVADoc:0, alicuotaIVA:alicuota, cashea:esCashea};
-        g.servicios[key].count++;
-        g.servicios[key].total      += precio;
-        g.servicios[key].comisionDoc += parseFloat((precio * rateConsulta).toFixed(2));
-        g.servicios[key].baseIVADoc  += parseFloat((baseIVA * rateConsulta).toFixed(2));
-      });
+      // ── Recalcular comisión con fórmula correcta (igual que buscador) ──
+      const servsConPorcDoc = (c.serviciosRealizados||[]).filter(s => s.porcDoc != null);
+      const hayPorcDoc = servsConPorcDoc.length > 0;
+      let cComision=0, cIva=0, cCashea=0;
+      const detServs = [];
+
+      if (hayPorcDoc) {
+        servsConPorcDoc.forEach(function(s) {
+          const sp = parseFloat(s.precio||0);
+          const si = parseFloat(s.costoInsumos||0);
+          const sPorcDoc = parseFloat(s.porcDoc);
+          const sBruto = Math.max(0, sp - si) * sPorcDoc / 100;
+          const sBase = parseFloat(s.montoBaseIVA ?? sp);
+          const sAliq = parseFloat(s.alicuotaIVA ?? 16);
+          const sIva = sBase * sAliq / 100;
+          const sCashea = esCashea ? sp * feeCashea : 0;
+          const sNeto = Math.max(0, sBruto - sIva - sCashea);
+          cComision += sBruto; cIva += sIva; cCashea += sCashea;
+          detServs.push({ nombre:(s.nombre||'').trim().toUpperCase(), precio:sp, insumos:si,
+            porcDoc:sPorcDoc, bruto:sBruto, baseIva:sBase, aliq:sAliq, iva:sIva,
+            cashea:sCashea, neto:sNeto, esCashea });
+          // Acumular tabla de servicios
+          const key = detServs[detServs.length-1].nombre + (esCashea?'||cashea':'||normal');
+          if(!g.servicios[key]) g.servicios[key]={nombre:detServs[detServs.length-1].nombre, count:0,
+            total:0, comisionDoc:0, ivaDoc:0, casheaDoc:0, netoDoc:0, alicuotaIVA:sAliq, cashea:esCashea};
+          g.servicios[key].count++;
+          g.servicios[key].total += sp;
+          g.servicios[key].comisionDoc += sBruto;
+          g.servicios[key].ivaDoc += sIva;
+          g.servicios[key].casheaDoc += sCashea;
+          g.servicios[key].netoDoc += sNeto;
+        });
+      } else {
+        // Fallback: pagoDoctor guardado
+        const p = parseFloat(c.pagoDoctor||0);
+        cComision = p;
+        if (esCashea) { cCashea = v * feeCashea; }
+        (c.serviciosRealizados||[]).forEach(function(s) {
+          const sp = parseFloat(s.precio||0);
+          const sBase = parseFloat(s.montoBaseIVA ?? sp);
+          const sAliq = parseFloat(s.alicuotaIVA ?? 16);
+          const sIva = sBase * sAliq / 100;
+          const sCashea = esCashea ? sp * feeCashea : 0;
+          const sRate = v > 0 ? p / v : 0;
+          const sBruto = sp * sRate;
+          const sNeto = Math.max(0, sBruto - sIva - sCashea);
+          cIva += sIva;
+          detServs.push({ nombre:(s.nombre||'').trim().toUpperCase(), precio:sp, insumos:0,
+            porcDoc:sRate*100, bruto:sBruto, baseIva:sBase, aliq:sAliq, iva:sIva,
+            cashea:sCashea, neto:sNeto, esCashea });
+          const key = (s.nombre||'').trim().toUpperCase() + (esCashea?'||cashea':'||normal');
+          if(!g.servicios[key]) g.servicios[key]={nombre:(s.nombre||'').trim().toUpperCase(), count:0,
+            total:0, comisionDoc:0, ivaDoc:0, casheaDoc:0, netoDoc:0, alicuotaIVA:sAliq, cashea:esCashea};
+          g.servicios[key].count++;
+          g.servicios[key].total += sp;
+          g.servicios[key].comisionDoc += sBruto;
+          g.servicios[key].ivaDoc += sIva;
+          g.servicios[key].casheaDoc += sCashea;
+          g.servicios[key].netoDoc += sNeto;
+        });
+      }
+
+      g.comision += cComision;
+      g.ivaDocTotal += cIva;
+      g.casheaFeeDoc += cCashea;
+      if (esCashea) { const feeTotal = v * feeCashea; g.casheaFee += feeTotal; casheaFeeTotal += feeTotal; }
+      g.consultasDetalle.push({ fecha:c.fecha||c.fechaRegistro||'', paciente:c.nombreMascota||c.paciente||'', servicios:detServs,
+        comision:cComision, iva:cIva, cashea:cCashea, neto:Math.max(0,cComision-cIva-cCashea), esCashea, fp });
     });
+    consultas.forEach(c => { comisionTotal += (c.serviciosRealizados||[]).filter(s=>s.porcDoc!=null).reduce((sum,s)=>{
+      const sp=parseFloat(s.precio||0),si=parseFloat(s.costoInsumos||0),b=Math.max(0,sp-si)*parseFloat(s.porcDoc)/100; return sum+b;},0) || parseFloat(c.pagoDoctor||0); });
     // Acumular porciones de cirugías en equipo para doctores ayudantes
     // (el doctor principal ya tiene su porción en pagoDoctor; aquí sumamos la del resto del equipo)
     const cirugiaEquipoAcum = {}; // { doctorNombre: { total, cirugias: [{nombre, parte}] } }
@@ -362,8 +412,8 @@ window.mostrarDashboardVet = async () => {
       filaCashea.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;">' +
           '<div>' +
-            '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0;">🟣 Comisión Cashea (' + (CASHEA_FEE*100).toFixed(0) + '%) — compartida</p>' +
-            '<p style="font-size:9px;color:#94a3b8;margin:2px 0 0 0;">Cada quien paga 10% de su parte</p>' +
+            '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0;">🟣 Comisión Cashea (' + (_getCasheaFee()*100).toFixed(1) + '%) — compartida</p>' +
+            '<p style="font-size:9px;color:#94a3b8;margin:2px 0 0 0;">Descontado sobre precio de cada servicio</p>' +
           '</div>' +
           '<p style="font-size:20px;font-weight:900;color:#7c3aed;font-family:monospace;margin:0;">-$'+casheaFeeTotal.toFixed(2)+'</p>' +
         '</div>' +
@@ -402,11 +452,12 @@ window.mostrarDashboardVet = async () => {
           '<p style="font-size:9px;color:#64748b;margin:2px 0 0 0;">'+g.consultas.length+' atención'+(g.consultas.length!==1?'es':'')+' · '+_labelPeriodo()+'</p>' +
         '</div>' +
         '<div style="text-align:right;">' +
-          '<p style="font-size:9px;font-weight:900;color:#64748b;margin:0;text-transform:uppercase;">Comisión' + (g.casheaFeeDoc>0?' (neto Cashea)':'') + '</p>' +
-          (g.casheaFeeDoc > 0
-            ? '<p style="font-size:12px;font-weight:700;color:#94a3b8;margin:0;font-family:monospace;text-decoration:line-through;">$'+g.comision.toFixed(2)+'</p>' +
-              '<p style="font-size:9px;color:#7c3aed;margin:0;">🟣 -$'+g.casheaFeeDoc.toFixed(2)+' (su 10% Cashea)</p>' +
-              '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+(g.comision-g.casheaFeeDoc).toFixed(2)+'</p>'
+          '<p style="font-size:9px;font-weight:900;color:#64748b;margin:0;text-transform:uppercase;">Dr. Neto</p>' +
+          (g.ivaDocTotal > 0 || g.casheaFeeDoc > 0
+            ? '<p style="font-size:10px;font-weight:700;color:#94a3b8;margin:0;font-family:monospace;text-decoration:line-through;">$'+g.comision.toFixed(2)+'</p>' +
+              (g.ivaDocTotal>0?'<p style="font-size:9px;color:#ef4444;margin:0;">−IVA $'+g.ivaDocTotal.toFixed(2)+'</p>':'')+
+              (g.casheaFeeDoc>0?'<p style="font-size:9px;color:#7c3aed;margin:0;">🟣 −Cashea $'+g.casheaFeeDoc.toFixed(2)+'</p>':'')+
+              '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+Math.max(0,g.comision-g.ivaDocTotal-g.casheaFeeDoc).toFixed(2)+'</p>'
             : '<p style="font-size:20px;font-weight:900;color:'+col.color+';margin:0;font-family:monospace;">$'+g.comision.toFixed(2)+'</p>') +
           '<button id="btnPrint_'+pid+'" style="margin-top:4px;background:'+col.color+';color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:9px;font-weight:900;cursor:pointer;">🖨️ Tiquera</button>' +
         '</div>';
@@ -415,8 +466,7 @@ window.mostrarDashboardVet = async () => {
       (function(nd, gd) {
         const btnCab = secDoc.querySelector('#btnPrint_'+pid);
         if (btnCab) btnCab.onclick = function() {
-          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, comisionDoc:s.comisionDoc||0, cashea:s.cashea }));
-          window._imprimirReporteDoctor(nd, gd.comision, gd.bruto, gd.insumos, gd.casheaFeeDoc, servArr, gd.formasPago, gd.consultas.length);
+          window._imprimirReporteDoctor(nd, gd);
         };
       })(nombreDoc, g);
 
@@ -446,22 +496,22 @@ window.mostrarDashboardVet = async () => {
             '<th style="padding:5px 6px;text-align:left;border-radius:6px 0 0 0;">Servicio</th>' +
             '<th style="padding:5px 6px;text-align:center;">x</th>' +
             '<th style="padding:5px 6px;text-align:right;">Bruto</th>' +
+            '<th style="padding:5px 6px;text-align:right;">−IVA</th>' +
             '<th style="padding:5px 6px;text-align:right;">−Cashea</th>' +
-            '<th style="padding:5px 6px;text-align:right;border-radius:0 6px 0 0;">Comisión</th>' +
+            '<th style="padding:5px 6px;text-align:right;border-radius:0 6px 0 0;">Neto Dr.</th>' +
           '</tr></thead><tbody>';
 
         serviciosOrdenados.forEach(function(entry, idx) {
           const data = entry[1];
-          const casheaFee = data.cashea ? parseFloat((data.total * CASHEA_FEE).toFixed(2)) : 0;
-          const comisServ = parseFloat((data.comisionDoc || 0).toFixed(2));
           const bg = idx % 2 === 0 ? '#f8fafc' : '#fff';
           tabla.querySelector('tbody').innerHTML +=
             '<tr style="background:'+(data.cashea?'#faf5ff':bg)+';border-left:3px solid '+(data.cashea?'#7c3aed':col.color)+';">' +
               '<td style="padding:5px 6px;font-weight:700;color:#1e293b;text-transform:uppercase;font-size:9px;">'+data.nombre+'</td>' +
               '<td style="padding:5px 6px;text-align:center;color:#64748b;font-weight:700;">'+data.count+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:#1e293b;">$'+data.total.toFixed(2)+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;color:#7c3aed;font-family:monospace;">'+(casheaFee>0?'−$'+casheaFee.toFixed(2):'—')+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:'+col.color+';">$'+comisServ.toFixed(2)+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;font-family:monospace;color:#64748b;">$'+(data.comisionDoc||0).toFixed(2)+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;color:#ef4444;font-family:monospace;">'+(data.ivaDoc>0?'−$'+data.ivaDoc.toFixed(2):'—')+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;color:#7c3aed;font-family:monospace;">'+(data.casheaDoc>0?'−$'+data.casheaDoc.toFixed(2):'—')+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:'+col.color+';">$'+(data.netoDoc||0).toFixed(2)+'</td>' +
             '</tr>';
         });
         tabla.innerHTML += '</tbody>';
@@ -550,10 +600,7 @@ window.mostrarDashboardVet = async () => {
       btnImpDoc.textContent = '🖨️ Tiquera';
       btnImpDoc.style.cssText = 'width:100%;margin-top:8px;padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;letter-spacing:.03em;';
       (function(nd, gd) {
-        btnImpDoc.onclick = function() {
-          const servArr = Object.values(gd.servicios).map(s => ({ nombre:s.nombre, count:s.count, total:s.total, comisionDoc:s.comisionDoc||0, cashea:s.cashea }));
-          window._imprimirReporteDoctor(nd, gd.comision, gd.bruto, gd.insumos, gd.casheaFeeDoc, servArr, gd.formasPago, gd.consultas.length);
-        };
+        btnImpDoc.onclick = function() { window._imprimirReporteDoctor(nd, gd); };
       })(nombreDoc, g);
       secDoc.appendChild(btnImpDoc);
       contenedor.appendChild(secDoc);
@@ -642,9 +689,9 @@ window.descargarReporte = () => {
       if (fp.dolares > 0)  { txt += '    Dolares    : $' + fp.dolares.toFixed(2) + '\n'; totalDolares += fp.dolares; }
       if (fp.movil > 0)    { txt += '    Pago Movil : $' + fp.movil.toFixed(2) + '\n';   totalMovil   += fp.movil;   }
       if (fp.cashea > 0)   {
-        const fee = fp.cashea * CASHEA_FEE;
+        const fee = fp.cashea * _getCasheaFee();
         txt += '    Cashea     : $' + fp.cashea.toFixed(2) + ' (Bs)\n';
-        txt += '    Fee Cashea : -$' + fee.toFixed(2) + ' (10% comision)\n';
+        txt += '    Fee Cashea : -$' + fee.toFixed(2) + ' (' + (_getCasheaFee()*100).toFixed(1) + '% s/precio)\n';
         txt += '    Neto Cashea: $' + (fp.cashea - fee).toFixed(2) + '\n';
         totalCashea += fp.cashea;
       }
@@ -661,9 +708,9 @@ window.descargarReporte = () => {
   if (totalDolares > 0)  txt += '  Dolares (USD)  : $' + totalDolares.toFixed(2) + '\n';
   if (totalMovil > 0)    txt += '  Pago Movil (Bs): $' + totalMovil.toFixed(2) + '\n';
   if (totalCashea > 0) {
-    const feeTotal = totalCashea * CASHEA_FEE;
+    const feeTotal = totalCashea * _getCasheaFee();
     txt += '  Cashea bruto   : $' + totalCashea.toFixed(2) + '\n';
-    txt += '  Fee -10%       : -$' + feeTotal.toFixed(2) + '\n';
+    txt += '  Fee -' + (_getCasheaFee()*100).toFixed(1) + '%   : -$' + feeTotal.toFixed(2) + '\n';
     txt += '  Cashea neto    : $' + (totalCashea - feeTotal).toFixed(2) + '\n';
   }
   const totalBs = totalMovil + totalCashea;
@@ -792,10 +839,10 @@ window.mostrarDashboardPelu = async () => {
       else if (fp === 'movil') fpPeluTotales.movil += precio;
       else if (fp === 'cashea') {
         fpPeluTotales.cashea += precio;
-        casheaFeePeluquera  += pa * CASHEA_FEE;
+        casheaFeePeluquera  += pa * _getCasheaFee();
         // Ayudante principal (ayu1) no se le descuenta Cashea ni IVA
-        casheaFeeAyuExt     += ax * CASHEA_FEE;
-        casheaFeeAvipetPelu += n  * CASHEA_FEE;
+        casheaFeeAyuExt     += ax * _getCasheaFee();
+        casheaFeeAvipetPelu += n  * _getCasheaFee();
       }
       else fpPeluTotales.otro += precio;
 
@@ -861,7 +908,7 @@ window.mostrarDashboardPelu = async () => {
       filaCasheaPelu.style.cssText = 'background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;';
       filaCasheaPelu.innerHTML =
         '<div>' +
-          '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0;">🟣 Comisión Cashea ('+( CASHEA_FEE*100).toFixed(0)+'%) — compartida</p>' +
+          '<p style="font-size:8px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0;">🟣 Comisión Cashea ('+(_getCasheaFee()*100).toFixed(1)+'%) — compartida</p>' +
           '<p style="font-size:8px;color:#94a3b8;margin:2px 0 0 0;">Cada quien paga el 10% de su parte. Ayu. principal no aplica.</p>' +
         '</div>' +
         '<p style="font-size:18px;font-weight:900;color:#7c3aed;font-family:monospace;margin:0;white-space:nowrap;">-$'+casheaFeePeluTotal.toFixed(2)+'</p>';
@@ -1498,7 +1545,7 @@ window.verResumenSemanalPelu = async () => {
       var labelPago = 'PEND';
       if (r.estatusPago === 'pagado') {
         if (modoPago === 'bs') labelPago = '$' + precio.toFixed(2) + ' Bs';
-        else if (esCashea) { const fee10=precio*CASHEA_FEE; labelPago = '$'+precio.toFixed(2)+' Bs<br><span style="color:#0f766e;font-size:7px;">Cashea -'+(CASHEA_FEE*100).toFixed(0)+'% = -$'+fee10.toFixed(2)+'</span>'; }
+        else if (esCashea) { const fee10=precio*_getCasheaFee(); labelPago = '$'+precio.toFixed(2)+' Bs<br><span style="color:#0f766e;font-size:7px;">Cashea -'+(_getCasheaFee()*100).toFixed(1)+'% = -$'+fee10.toFixed(2)+'</span>'; }
         else if (modoPago === 'mixto') labelPago = '$'+(precio/2).toFixed(2)+' USD + $'+(precio/2).toFixed(2)+' Bs';
         else labelPago = '$' + precio.toFixed(2) + ' USD';
       }
@@ -1682,7 +1729,7 @@ window.verResumenSemanalPelu = async () => {
     htmlModal += '<p style="font-size:7px;font-weight:900;color:#64748b;text-transform:uppercase;margin:0;flex:0 0 auto;">Cobros:</p>';
     if (totalBrutoUSD>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#16a34a;margin:0;">💵 $'+totalBrutoUSD.toFixed(2)+' USD</p>';
     if (totalBsBruto>0) htmlModal += '<p style="font-size:12px;font-weight:900;color:#b45309;margin:0;">🪙 $'+totalBsBruto.toFixed(2)+' Bs</p>';
-    if (totalBrutoCashea>0){const fc=totalBrutoCashea*CASHEA_FEE;htmlModal+='<p style="font-size:12px;font-weight:900;color:#0891b2;margin:0;">🟣 $'+totalBrutoCashea.toFixed(2)+' Cashea <span style="font-size:8px;color:#64748b;">(−'+(CASHEA_FEE*100).toFixed(0)+'% = −$'+fc.toFixed(2)+')</span></p>';}
+    if (totalBrutoCashea>0){const fc=totalBrutoCashea*_getCasheaFee();htmlModal+='<p style="font-size:12px;font-weight:900;color:#0891b2;margin:0;">🟣 $'+totalBrutoCashea.toFixed(2)+' Cashea <span style="font-size:8px;color:#64748b;">(−'+(_getCasheaFee()*100).toFixed(1)+'% = −$'+fc.toFixed(2)+')</span></p>';}
     htmlModal += '</div>';
 
     // Tabla detallada
@@ -1800,49 +1847,69 @@ function _imprimirTiquera(htmlBody) {
   setTimeout(() => { win.print(); win.close(); }, 400);
 }
 
-window._imprimirReporteDoctor = function(nombre, comision, bruto, insumos, casheaFeeDoc, servicios, formasPago, consultas) {
-  const tasa        = parseFloat(window.tasaDolarHoy) || 1;
-  // Calcular IVA desde la base gravable por servicio (si existe); fallback al método anterior
-  const hayBaseIVA  = servicios.some(s => s.baseIVADoc != null);
-  const ivaDoc      = hayBaseIVA
-    ? parseFloat(servicios.reduce((sum, s) => {
-        const base = s.baseIVADoc != null ? s.baseIVADoc : (s.comisionDoc || 0);
-        const aliq = s.alicuotaIVA != null ? s.alicuotaIVA : 16;
-        return sum + base * aliq / 100;
-      }, 0).toFixed(2))
-    : parseFloat((comision - comision / 1.16).toFixed(2));
-  const neto        = parseFloat((comision - ivaDoc - casheaFeeDoc).toFixed(2));
-  const rows = servicios.map(s => {
-    const ivaServDoc = s.baseIVADoc != null
-      ? parseFloat((s.baseIVADoc * (s.alicuotaIVA ?? 16) / 100).toFixed(2))
-      : null;
-    return `<div style="margin:3px 0;font-size:11px;font-weight:900;">` +
-    `<div style="display:flex;justify-content:space-between;"><span>${s.nombre}${s.cashea?' (C)':''} x${s.count}</span></div>` +
-    `<div style="display:flex;justify-content:space-between;font-size:11px;"><span>bruto $${(s.total||0).toFixed(2)}</span><span><b>doc $${(s.comisionDoc||0).toFixed(2)}</b>${ivaServDoc!=null?' iva $'+ivaServDoc.toFixed(2):''}  </span></div>` +
-    `</div>`;
-  }).join('');
+window._imprimirReporteDoctor = function(nombre, g) {
+  const tasa       = parseFloat(window.tasaDolarHoy) || 1;
+  const comision   = g.comision   || 0;
+  const bruto      = g.bruto      || 0;
+  const insumos    = g.insumos    || 0;
+  const ivaDoc     = g.ivaDocTotal|| 0;
+  const casheaDoc  = g.casheaFeeDoc|| 0;
+  const neto       = Math.max(0, comision - ivaDoc - casheaDoc);
+  const numAt      = (g.consultas||[]).length;
+  const feePct     = (_getCasheaFee()*100).toFixed(1);
+
+  // ── Desglose por consulta ───────────────────────────────
+  let rowsConsultas = '';
+  (g.consultasDetalle || []).forEach(function(c, ci) {
+    const fStr = c.fecha && c.fecha.seconds
+      ? new Date(c.fecha.seconds*1000).toLocaleDateString('es-VE',{day:'2-digit',month:'2-digit'})
+      : (c.fecha || '');
+    const pac = c.paciente || '';
+    rowsConsultas += `<div style="margin-top:5px;padding-top:4px;border-top:1px dashed #ccc;">`;
+    rowsConsultas += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:900;"><span>#${ci+1} ${fStr} ${pac}</span><span style="color:${c.esCashea?'#7c3aed':'#1d4ed8'};">${c.fp==='cashea'?'🟣':''} Neto $${c.neto.toFixed(2)}</span></div>`;
+    c.servicios.forEach(function(s) {
+      rowsConsultas += `<div style="margin:1px 0 0 4px;font-size:9px;font-weight:700;">`;
+      rowsConsultas += `<div style="display:flex;justify-content:space-between;"><span>${s.nombre}</span><span>Precio $${s.precio.toFixed(2)}</span></div>`;
+      if (s.insumos > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#92400e;"><span>  Insumos</span><span>−$${s.insumos.toFixed(2)}</span></div>`;
+      rowsConsultas += `<div style="display:flex;justify-content:space-between;"><span>  ${s.porcDoc.toFixed(0)}% doc → Bruto</span><span>$${s.bruto.toFixed(2)}</span></div>`;
+      if (s.iva > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#dc2626;"><span>  IVA ${s.aliq}% (base $${s.baseIva.toFixed(2)})</span><span>−$${s.iva.toFixed(2)}</span></div>`;
+      if (s.cashea > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#7c3aed;"><span>  Fee Cashea ${feePct}%</span><span>−$${s.cashea.toFixed(2)}</span></div>`;
+      rowsConsultas += `<div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #e2e8f0;margin-top:1px;"><span>  Dr. Neto</span><span>$${s.neto.toFixed(2)}</span></div>`;
+      rowsConsultas += `</div>`;
+    });
+    rowsConsultas += `</div>`;
+  });
+
+  // ── Resumen de servicios ────────────────────────────────
+  const servResumen = Object.values(g.servicios || {}).sort((a,b)=>b.count-a.count).map(s =>
+    `<div class="row"><span class="lbl">${s.nombre}${s.cashea?' 🟣':''} x${s.count}</span><span>$${(s.netoDoc||0).toFixed(2)}</span></div>`
+  ).join('');
+
+  // ── Formas de pago ──────────────────────────────────────
+  const fp = g.formasPago || {};
   const fps = [
-    { l:'Dolares', v: formasPago.dolares },
-    { l:'Pago Movil', v: formasPago.movil },
-    { l:'Cashea', v: formasPago.cashea },
-    { l:'Otro', v: formasPago.otro },
+    { l:'Dolares', v: fp.dolares }, { l:'Pago Movil', v: fp.movil },
+    { l:'Cashea', v: fp.cashea },   { l:'Otro', v: fp.otro },
   ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
+
   const body = `
   <div class="c"><b>REPORTE VETERINARIA</b></div>
   <div class="c" style="font-size:11px;font-weight:900;">${nombre}</div>
-  <div class="c" style="font-size:11px;font-weight:900;">${consultas} atención${consultas!==1?'es':''}</div>
+  <div class="c" style="font-size:10px;">${numAt} atención${numAt!==1?'es':''}</div>
   <div class="hr"></div>
   <div class="row"><span class="lbl">Bruto cobrado</span><span><b>$${bruto.toFixed(2)}</b></span></div>
-  <div class="row"><span class="lbl">-Insumos</span><span>-$${insumos.toFixed(2)}</span></div>
-  <div class="row"><span class="lbl">Comision</span><span>$${comision.toFixed(2)}</span></div>
-  ${ivaDoc>0?`<div class="row"><span class="lbl">-IVA</span><span>-$${ivaDoc.toFixed(2)}</span></div>`:`<div class="row"><span class="lbl" style="color:#16a34a;">IVA exento</span><span style="color:#16a34a;">$0.00</span></div>`}
-  ${casheaFeeDoc>0?`<div class="row"><span class="lbl">-Cashea 10%</span><span>-$${casheaFeeDoc.toFixed(2)}</span></div>`:''}
+  <div class="row"><span class="lbl">Insumos totales</span><span>−$${insumos.toFixed(2)}</span></div>
+  <div class="row"><span class="lbl">Comisión bruta</span><span>$${comision.toFixed(2)}</span></div>
+  ${ivaDoc>0?`<div class="row" style="color:#dc2626;"><span class="lbl">−IVA doctor</span><span>−$${ivaDoc.toFixed(2)}</span></div>`:''}
+  ${casheaDoc>0?`<div class="row" style="color:#7c3aed;"><span class="lbl">−Fee Cashea ${feePct}%</span><span>−$${casheaDoc.toFixed(2)}</span></div>`:''}
   <div class="hr"></div>
   <div class="row"><span><b>NETO DOCTOR</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
   <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
   <div class="hr"></div>
-  ${rows ? rows + '<div class="hr"></div>' : ''}
-  ${fps}`;
+  ${servResumen ? '<div style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:3px 0;">Resumen por servicio (neto)</div>' + servResumen + '<div class="hr"></div>' : ''}
+  ${fps ? fps + '<div class="hr"></div>' : ''}
+  <div style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:3px 0;">Desglose por consulta</div>
+  ${rowsConsultas}`;
   _imprimirTiquera(body);
 };
 
