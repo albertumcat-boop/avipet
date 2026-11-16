@@ -12,6 +12,31 @@ import {
 const normalizarCedula = (ci) =>
  String(ci || '').replace(/[.\-\s]/g, '').trim().toUpperCase();
 
+// ── TOOLTIP DESGLOSE DOCTOR ──────────────────────────────
+(function(){
+  const tip = document.createElement('div');
+  tip.id = '_drTip';
+  tip.style.cssText = 'position:fixed;z-index:99999;background:#1e293b;color:#fff;border-radius:12px;padding:10px 14px;font-size:11px;font-family:inherit;line-height:1.7;pointer-events:none;opacity:0;transition:opacity .15s;max-width:230px;box-shadow:0 4px 20px rgba(0,0,0,.35);';
+  document.body.appendChild(tip);
+  document.addEventListener('mousemove', function(e){
+    const el = e.target.closest('[data-desglose]');
+    if (!el) { tip.style.opacity='0'; return; }
+    const lines = JSON.parse(el.dataset.desglose);
+    tip.innerHTML = lines.map(function(l){
+      if (l.sep) return '<div style="border-top:1px solid #334155;margin:4px 0;"></div>';
+      const color = l.c || '#94a3b8';
+      const bold = l.b ? 'font-weight:900;' : '';
+      return '<div style="display:flex;justify-content:space-between;gap:16px;color:'+color+';'+bold+'"><span>'+l.k+'</span><span>'+l.v+'</span></div>';
+    }).join('');
+    const x = Math.min(e.clientX + 12, window.innerWidth - 250);
+    const y = Math.min(e.clientY + 12, window.innerHeight - 200);
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+    tip.style.opacity = '1';
+  });
+  document.addEventListener('mouseleave', function(){ tip.style.opacity='0'; }, true);
+})();
+
 // ESTADO DE PAGINACION 
 let _todosLosRegistros = [];
 let _pagActual = 0;
@@ -233,13 +258,26 @@ function _renderizarTarjeta(consulta) {
  consulta.serviciosRealizados.forEach(function(s) {
  let drNetoHTML = '';
  if (s.porcDoc != null) {
- const _bruto = Math.max(0, parseFloat(s.precio||0) - parseFloat(s.costoInsumos||0)) * parseFloat(s.porcDoc) / 100;
- const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
+ const _precio = parseFloat(s.precio||0);
+ const _ins = parseFloat(s.costoInsumos||0);
+ const _bruto = Math.max(0, _precio - _ins) * parseFloat(s.porcDoc) / 100;
+ const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : _precio);
  const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
  const _ivaDoc = _baseIva * parseFloat(s.porcDoc) / 100 * _aliq / 100;
  const _cashea = _esCasheaServ ? _bruto * 0.035 : 0;
- const _neto = _bruto - _ivaDoc - _cashea;
- drNetoHTML = '<td data-dr="1" style="padding:4px 8px;text-align:right;font-size:10px;font-weight:900;color:#15803d;">Dr: $' + Math.max(0, _neto).toFixed(2) + '</td>';
+ const _neto = Math.max(0, _bruto - _ivaDoc - _cashea);
+ const _desglose = JSON.stringify([
+   {k:'Precio servicio', v:'$'+_precio.toFixed(2)},
+   {k:'- Insumos', v:'-$'+_ins.toFixed(2), c:'#fca5a5'},
+   {k:'Base neta', v:'$'+Math.max(0,_precio-_ins).toFixed(2), c:'#cbd5e1'},
+   {k:'× '+parseFloat(s.porcDoc).toFixed(1)+'% doc', v:'$'+_bruto.toFixed(2), c:'#93c5fd'},
+   {sep:true},
+   {k:'- IVA ('+_baseIva.toFixed(2)+'×'+parseFloat(s.porcDoc).toFixed(0)+'%×'+_aliq+'%)', v:'-$'+_ivaDoc.toFixed(2), c:'#fca5a5'},
+   ...(_esCasheaServ ? [{k:'- Fee Cashea (3.5%)', v:'-$'+_cashea.toFixed(2), c:'#c4b5fd'}] : []),
+   {sep:true},
+   {k:'Dr. Neto', v:'$'+_neto.toFixed(2), c:'#86efac', b:true}
+ ]);
+ drNetoHTML = '<td data-dr="1" data-desglose=\''+_desglose+'\' style="padding:4px 8px;text-align:right;font-size:10px;font-weight:900;color:#15803d;cursor:help;">Dr: $' + _neto.toFixed(2) + '</td>';
  }
  htmlServ +=
  '<tr style="border-bottom:1px solid #f1f5f9;">' +
@@ -277,28 +315,50 @@ function _renderizarTarjeta(consulta) {
  const _fpLabel = consulta.formaPagoLabel || consulta.formaPago || '';
  const _fpColors = {dolares:'#15803d:#f0fdf4', movil:'#1d4ed8:#eff6ff', cashea:'#7c3aed:#faf5ff'};
  const [_fpColor, _fpBg] = (_fpColors[consulta.formaPago]||'#64748b:#f8fafc').split(':');
-
- // IVA por servicio (nuevo modelo) o fallback al 16% sobre comision
- const _servicios = consulta.serviciosRealizados || [];
- const _porcServ = parseFloat(consulta.porcServ || 0);
- const _rateDoc = _porcServ / 100;
- const _ventaNum = parseFloat(consulta.montoVenta || 0);
- const _comisionDoc = _rateDoc > 0 ? _ventaNum * _rateDoc : null;
- const _hayBaseIVA = _servicios.some(function(s){ return s.montoBaseIVA != null; });
- let _ivaDoc = 0;
- if (_hayBaseIVA && _rateDoc > 0) {
-   _ivaDoc = _servicios.reduce(function(sum, s) {
-     const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio || 0)) * _rateDoc;
-     const aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
-     return sum + base * aliq / 100;
-   }, 0);
- } else if (_comisionDoc != null) {
-   // fallback: 16% sobre comision del doctor
-   _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
- }
  const _esCashea = consulta.formaPago === 'cashea';
- const _casheaFeeDoc = (_esCashea && _comisionDoc != null) ? _comisionDoc * 0.035 : 0;
- const _doctorNeto = _comisionDoc != null ? (_comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
+
+ const _servicios = consulta.serviciosRealizados || [];
+ const _ventaNum = parseFloat(consulta.montoVenta || 0);
+
+ // Calcular totales desde per-servicio (porcDoc) si está disponible, si no usar porcServ global
+ const _hayPorcDoc = _servicios.some(function(s){ return s.porcDoc != null; });
+ let _comisionDoc = null, _ivaDoc = 0, _casheaFeeDoc = 0, _porcServ = 0, _rateDoc = 0;
+
+ if (_hayPorcDoc) {
+   // Sumar per-servicio
+   _comisionDoc = 0;
+   _ivaDoc = 0;
+   _servicios.forEach(function(s) {
+     if (s.porcDoc == null) return;
+     const _p = parseFloat(s.precio||0);
+     const _ins = parseFloat(s.costoInsumos||0);
+     const _bruto = Math.max(0, _p - _ins) * parseFloat(s.porcDoc) / 100;
+     const _base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : _p);
+     const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
+     _comisionDoc += _bruto;
+     _ivaDoc += _base * parseFloat(s.porcDoc) / 100 * _aliq / 100;
+   });
+   _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+   _porcServ = _ventaNum > 0 ? (_comisionDoc / _ventaNum * 100) : 0;
+ } else {
+   // Fallback: usar porcServ global
+   _porcServ = parseFloat(consulta.porcServ || 0);
+   _rateDoc = _porcServ / 100;
+   if (_rateDoc > 0) {
+     _comisionDoc = _ventaNum * _rateDoc;
+     const _hayBase = _servicios.some(function(s){ return s.montoBaseIVA != null; });
+     if (_hayBase) {
+       _ivaDoc = _servicios.reduce(function(sum, s) {
+         const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0)) * _rateDoc;
+         return sum + base * parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16) / 100;
+       }, 0);
+     } else {
+       _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
+     }
+     _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
+   }
+ }
+ const _doctorNeto = _comisionDoc != null ? Math.max(0, _comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
 
  const finDiv = document.createElement('div');
  finDiv.className = 'grid grid-cols-3 gap-2 mt-2';
@@ -327,21 +387,33 @@ function _renderizarTarjeta(consulta) {
  const finDiv2 = document.createElement('div');
  finDiv2.id = 'finDiv2_' + consulta.id;
  finDiv2.style.cssText = 'display:grid;grid-template-columns:' + (_esCashea ? '1fr 1fr 1fr' : '1fr 1fr') + ';gap:6px;margin-top:4px;';
- finDiv2.innerHTML =
- '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px;text-align:center;">' +
- '<p style="font-size:7px;font-weight:900;color:#ef4444;text-transform:uppercase;margin:0 0 2px 0;">IVA descontado</p>' +
- '<p style="font-size:12px;font-weight:900;color:#dc2626;font-family:monospace;">$' + _ivaDoc.toFixed(2) + '</p>' +
- '</div>' +
- (_esCashea
-   ? '<div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;padding:6px;text-align:center;">' +
-     '<p style="font-size:7px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 2px 0;">Fee Cashea</p>' +
-     '<p style="font-size:12px;font-weight:900;color:#7c3aed;font-family:monospace;">$' + _casheaFeeDoc.toFixed(2) + '</p>' +
-     '</div>'
-   : '') +
- '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:6px;text-align:center;">' +
- '<p style="font-size:7px;font-weight:900;color:#15803d;text-transform:uppercase;margin:0 0 2px 0;">Dr. Ganó</p>' +
- '<p style="font-size:12px;font-weight:900;color:#15803d;font-family:monospace;">' + (_doctorNeto != null ? '$' + _doctorNeto.toFixed(2) : '---') + '</p>' +
- '</div>';
+ // IVA
+ const _ivaCell = document.createElement('div');
+ _ivaCell.style.cssText = 'background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px;text-align:center;';
+ _ivaCell.innerHTML = '<p style="font-size:7px;font-weight:900;color:#ef4444;text-transform:uppercase;margin:0 0 2px 0;">IVA descontado</p><p style="font-size:12px;font-weight:900;color:#dc2626;font-family:monospace;">$' + _ivaDoc.toFixed(2) + '</p>';
+ finDiv2.appendChild(_ivaCell);
+ // Cashea fee (solo si aplica)
+ if (_esCashea) {
+   const _cashCell = document.createElement('div');
+   _cashCell.style.cssText = 'background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;padding:6px;text-align:center;';
+   _cashCell.innerHTML = '<p style="font-size:7px;font-weight:900;color:#7c3aed;text-transform:uppercase;margin:0 0 2px 0;">Fee Cashea</p><p style="font-size:12px;font-weight:900;color:#7c3aed;font-family:monospace;">$' + _casheaFeeDoc.toFixed(2) + '</p>';
+   finDiv2.appendChild(_cashCell);
+ }
+ // Dr. Ganó con tooltip desglose
+ const _drCell = document.createElement('div');
+ _drCell.style.cssText = 'background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:6px;text-align:center;' + (_doctorNeto != null ? 'cursor:help;' : '');
+ _drCell.innerHTML = '<p style="font-size:7px;font-weight:900;color:#15803d;text-transform:uppercase;margin:0 0 2px 0;">Dr. Ganó</p><p style="font-size:12px;font-weight:900;color:#15803d;font-family:monospace;">' + (_doctorNeto != null ? '$' + _doctorNeto.toFixed(2) : '---') + '</p>';
+ if (_doctorNeto != null) {
+   _drCell.dataset.desglose = JSON.stringify([
+     {k:'Comisión bruta', v:'$'+(_comisionDoc||0).toFixed(2), c:'#93c5fd'},
+     {sep:true},
+     {k:'- IVA descontado', v:'-$'+_ivaDoc.toFixed(2), c:'#fca5a5'},
+     ...(_esCashea ? [{k:'- Fee Cashea (3.5%)', v:'-$'+_casheaFeeDoc.toFixed(2), c:'#c4b5fd'}] : []),
+     {sep:true},
+     {k:'Dr. Neto', v:'$'+_doctorNeto.toFixed(2), c:'#86efac', b:true}
+   ]);
+ }
+ finDiv2.appendChild(_drCell);
  body.appendChild(finDiv2);
 
  // VACUNAS 
