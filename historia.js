@@ -722,7 +722,20 @@ window.calcularTodo = async () => {
   let totalComision=0,totalGastos=0,totalVenta=0;
   // Usa SIEMPRE el % individual del servicio (porcDoc en data-porc)
   // El porcentaje global fue eliminado — cada servicio tiene su propio %
-  document.querySelectorAll('.servicio-principal').forEach(fila=>{const precio=parseFloat(fila.getAttribute('data-precio'))||0;const porc=parseFloat(fila.getAttribute('data-porc'))||0;const grupoID=fila.getAttribute('data-grupo');let gastos=0;document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{gastos+=(parseFloat(ins.querySelector('.i-cant')?.value)||0)*(parseFloat(ins.querySelector('.i-cost')?.value)||0);});totalVenta+=precio;totalGastos+=gastos;const util=precio-gastos;if(util>0)totalComision+=util*(porc/100);});
+  document.querySelectorAll('.servicio-principal').forEach(fila=>{
+    const precio=parseFloat(fila.getAttribute('data-precio'))||0;
+    const porc=parseFloat(fila.getAttribute('data-porc'))||0;
+    const baseIva=parseFloat(fila.getAttribute('data-base-iva')??precio);
+    const alicuota=parseFloat(fila.getAttribute('data-alicuota-iva')??16);
+    const grupoID=fila.getAttribute('data-grupo');
+    let gastos=0;
+    document.querySelectorAll(`.${grupoID}.insumo-fila`).forEach(ins=>{gastos+=(parseFloat(ins.querySelector('.i-cant')?.value)||0)*(parseFloat(ins.querySelector('.i-cost')?.value)||0);});
+    totalVenta+=precio;totalGastos+=gastos;
+    const util=Math.max(0,precio-gastos);
+    const bruto=util*(porc/100);
+    const ivaDoc=baseIva*(porc/100)*(alicuota/100);
+    totalComision+=Math.max(0,bruto-ivaDoc);
+  });
   const iv=document.getElementById('precioVenta');if(iv)iv.value=totalVenta.toFixed(2);
   const ig=document.getElementById('gastoInsumos');if(ig)ig.value=totalGastos.toFixed(2);
   const id=document.getElementById('montoDoctor');if(id)id.innerText=`$ ${totalComision.toFixed(2)}`;
