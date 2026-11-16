@@ -733,7 +733,7 @@ window.calcularTodo = async () => {
     totalVenta+=precio;totalGastos+=gastos;
     const util=Math.max(0,precio-gastos);
     const bruto=util*(porc/100);
-    const ivaDoc=baseIva*(porc/100)*(alicuota/100);
+    const ivaDoc=baseIva*(alicuota/100);
     totalComision+=Math.max(0,bruto-ivaDoc);
   });
   const iv=document.getElementById('precioVenta');if(iv)iv.value=totalVenta.toFixed(2);

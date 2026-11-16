@@ -263,7 +263,7 @@ function _renderizarTarjeta(consulta) {
  const _bruto = Math.max(0, _precio - _ins) * parseFloat(s.porcDoc) / 100;
  const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : _precio);
  const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
- const _ivaDoc = _baseIva * parseFloat(s.porcDoc) / 100 * _aliq / 100;
+ const _ivaDoc = _baseIva * _aliq / 100;
  const _cashea = _esCasheaServ ? _bruto * 0.035 : 0;
  const _neto = Math.max(0, _bruto - _ivaDoc - _cashea);
  const _desglose = JSON.stringify([
@@ -272,7 +272,7 @@ function _renderizarTarjeta(consulta) {
    {k:'Base neta', v:'$'+Math.max(0,_precio-_ins).toFixed(2), c:'#cbd5e1'},
    {k:'× '+parseFloat(s.porcDoc).toFixed(1)+'% doc', v:'$'+_bruto.toFixed(2), c:'#93c5fd'},
    {sep:true},
-   {k:'- IVA ('+_baseIva.toFixed(2)+'×'+parseFloat(s.porcDoc).toFixed(0)+'%×'+_aliq+'%)', v:'-$'+_ivaDoc.toFixed(2), c:'#fca5a5'},
+   {k:'- IVA ('+_baseIva.toFixed(2)+'×'+_aliq+'%)', v:'-$'+_ivaDoc.toFixed(2), c:'#fca5a5'},
    ...(_esCasheaServ ? [{k:'- Fee Cashea (3.5%)', v:'-$'+_cashea.toFixed(2), c:'#c4b5fd'}] : []),
    {sep:true},
    {k:'Dr. Neto', v:'$'+_neto.toFixed(2), c:'#86efac', b:true}
@@ -336,7 +336,7 @@ function _renderizarTarjeta(consulta) {
      const _base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : _p);
      const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
      _comisionDoc += _bruto;
-     _ivaDoc += _base * parseFloat(s.porcDoc) / 100 * _aliq / 100;
+     _ivaDoc += _base * _aliq / 100;
    });
    _casheaFeeDoc = _esCashea ? _comisionDoc * 0.035 : 0;
    _porcServ = _ventaNum > 0 ? (_comisionDoc / _ventaNum * 100) : 0;
@@ -349,7 +349,7 @@ function _renderizarTarjeta(consulta) {
      const _hayBase = _servicios.some(function(s){ return s.montoBaseIVA != null; });
      if (_hayBase) {
        _ivaDoc = _servicios.reduce(function(sum, s) {
-         const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0)) * _rateDoc;
+         const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
          return sum + base * parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16) / 100;
        }, 0);
      } else {
@@ -564,9 +564,9 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
       const _comisionDoc = _rateDoc > 0 ? _ventaNum * _rateDoc : null;
       const _hayBaseIVA = _servicios.some(function(s){ return s.montoBaseIVA != null; });
       let _ivaDoc = 0;
-      if (_hayBaseIVA && _rateDoc > 0) {
+      if (_hayBaseIVA) {
         _ivaDoc = _servicios.reduce(function(sum, s) {
-          const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0)) * _rateDoc;
+          const base = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
           const aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
           return sum + base * aliq / 100;
         }, 0);
@@ -602,7 +602,7 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
           const _bruto = Math.max(0, parseFloat(s.precio||0) - parseFloat(s.costoInsumos||0)) * parseFloat(s.porcDoc) / 100;
           const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
           const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
-          const _ivaS = _baseIva * parseFloat(s.porcDoc) / 100 * _aliq / 100;
+          const _ivaS = _baseIva * _aliq / 100;
           const _casheaS = _esCashea ? _bruto * 0.035 : 0;
           const _netoS = Math.max(0, _bruto - _ivaS - _casheaS);
           const drTd = tr.querySelector('td[data-dr]');
