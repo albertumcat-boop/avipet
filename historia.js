@@ -2338,14 +2338,18 @@ window.renderizarTablaMaestra = async () => {
         f1.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
         f1.innerHTML = '<p style="font-size:11px;font-weight:900;color:#1e293b;text-transform:uppercase;flex:1;">'+r.id+'</p>';
         card.appendChild(f1);
-        // Fila 2: precio + % doc editables
+        // Fila 2: precio + % doc (solo lectura)
+        card.dataset.precioVenta = r.precioVenta || 0;
+        card.dataset.porcDoc = r.porcDoc || r.porcentajeDoc || 30;
         const f2 = document.createElement('div');
         f2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;';
         f2.innerHTML =
-          '<div><label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;">Precio $</label>'+
-          '<input type="number" step="0.50" min="0" value="'+(r.precioVenta||0)+'" data-campo="precioVenta" data-id="'+r.id+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:900;outline:none;box-sizing:border-box;"></div>'+
-          '<div><label style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;display:block;">% Doctor</label>'+
-          '<input type="number" step="0.5" min="0" max="100" value="'+(r.porcDoc||r.porcentajeDoc||30)+'" data-campo="porcDoc" data-id="'+r.id+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:900;outline:none;box-sizing:border.box;"></div>';
+          '<div style="background:#f1f5f9;border-radius:8px;padding:6px 10px;">' +
+          '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin:0 0 2px 0;">Precio $</p>' +
+          '<p style="font-size:14px;font-weight:900;color:#1e293b;margin:0;">$'+(parseFloat(r.precioVenta||0)).toFixed(2)+'</p></div>' +
+          '<div style="background:#f1f5f9;border-radius:8px;padding:6px 10px;">' +
+          '<p style="font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin:0 0 2px 0;">% Doctor</p>' +
+          '<p style="font-size:14px;font-weight:900;color:#2563eb;margin:0;">'+(r.porcDoc||r.porcentajeDoc||30)+'%</p></div>';
         card.appendChild(f2);
         // Fila 3: botones
         const f3 = document.createElement('div');
@@ -2367,10 +2371,10 @@ window.renderizarTablaMaestra = async () => {
           let optsHtml = Array.from(catsSet).sort().map(c => '<option value="'+c+'"'+(c===catActual.toUpperCase()?' selected':'')+'>'+c+'</option>').join('');
           optsHtml += '<option value="__nueva__">+ Nueva categoria...</option>';
 
-          // Leer precio y % actuales del card
+          // Leer precio y % actuales del card (data attributes)
           const cardEl2 = document.querySelector('#tablaServiciosMaestro [data-card-id="'+idActual+'"]');
-          const precioActual = parseFloat(cardEl2?.querySelector('input[data-campo="precioVenta"]')?.value||0);
-          const porcActual   = parseFloat(cardEl2?.querySelector('input[data-campo="porcDoc"]')?.value||30);
+          const precioActual = parseFloat(cardEl2?.dataset.precioVenta||0);
+          const porcActual   = parseFloat(cardEl2?.dataset.porcDoc||30);
 
           // Cargar insumos del servicio y catálogo
           const snapServ = await getDoc(doc(db,"servicios_maestro",idActual));
