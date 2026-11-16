@@ -1876,7 +1876,10 @@ window._imprimirReporteDoctorSimple = function(nombre, g) {
   ${ivaDoc>0?`<div class="row" style="color:#dc2626;"><span class="lbl">−IVA doctor</span><span>−$${ivaDoc.toFixed(2)}</span></div>`:''}
   ${casheaDoc>0?`<div class="row" style="color:#7c3aed;"><span class="lbl">−Fee Cashea ${feePct}%</span><span>−$${casheaDoc.toFixed(2)}</span></div>`:''}
   <div class="hr"></div>
-  <div class="row"><span><b>NETO DOCTOR</b></span><span><b>$${neto.toFixed(2)}</b></span></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
+    <span style="font-size:14px;font-weight:900;">NETO DOCTOR</span>
+    <span style="font-size:22px;font-weight:900;">$${neto.toFixed(2)}</span>
+  </div>
   <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
   <div class="hr"></div>
   ${servResumen ? servResumen + '<div class="hr"></div>' : ''}
@@ -1903,7 +1906,7 @@ window._imprimirReporteDoctor = function(nombre, g) {
       : (c.fecha || '');
     const pac = c.paciente || '';
     rowsConsultas += `<div style="margin-top:5px;padding-top:4px;border-top:1px dashed #ccc;">`;
-    rowsConsultas += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:900;"><span>#${ci+1} ${fStr} ${pac}</span><span style="color:${c.esCashea?'#7c3aed':'#1d4ed8'};">${c.fp==='cashea'?'🟣':''} Neto $${c.neto.toFixed(2)}</span></div>`;
+    rowsConsultas += `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:10px;font-weight:900;">#${ci+1} ${fStr} ${pac}</span><span style="font-size:16px;font-weight:900;color:${c.esCashea?'#7c3aed':'#1d4ed8'};">${c.fp==='cashea'?'🟣':''}$${c.neto.toFixed(2)}</span></div>`;
     c.servicios.forEach(function(s) {
       rowsConsultas += `<div style="margin:1px 0 0 4px;font-size:9px;font-weight:700;">`;
       rowsConsultas += `<div style="display:flex;justify-content:space-between;"><span>${s.nombre}</span><span>Precio $${s.precio.toFixed(2)}</span></div>`;
