@@ -572,11 +572,6 @@ window.insertarServicio = async (v) => {
   if (insumosFirebase && insumosFirebase.length > 0) {
     // Usar SOLO los de Firebase — ya contienen bloqueado:true/false configurado por el admin
     insNuevos = [...insumosFirebase];
-    // Agregar insumos de vacuna base si aplica y no están ya
-    if(vLimpio.includes("vacuna")){
-      const yaHayVial=Array.from(cuerpo.querySelectorAll('td')).some(td=>td.innerText.includes("Vial"));
-      if(!yaHayVial) insNuevos=[...insNuevos,...insumosBaseVacuna];
-    }
   } else {
     // Sin Firebase: usar insumos fijos + recetas como antes
     if(cuerpo.querySelectorAll('.servicio-principal').length===1) insNuevos=[...insumosFijosMedicos];
