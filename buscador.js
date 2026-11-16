@@ -228,10 +228,22 @@ function _renderizarTarjeta(consulta) {
  servDiv.style.cssText = 'border:1px solid #bfdbfe;border-radius:10px;overflow:hidden;margin-top:6px;';
  let htmlServ = '<div style="background:#eff6ff;padding:4px 10px;"><p style="font-size:9px;font-weight:900;color:#1d4ed8;text-transform:uppercase;">Servicios Realizados</p></div>';
  htmlServ += '<table style="width:100%;border-collapse:collapse;">';
+ const _esCasheaServ = consulta.formaPago === 'cashea';
  consulta.serviciosRealizados.forEach(function(s) {
+ let drNetoHTML = '';
+ if (s.porcDoc != null) {
+ const _bruto = Math.max(0, parseFloat(s.precio||0) - parseFloat(s.costoInsumos||0)) * parseFloat(s.porcDoc) / 100;
+ const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
+ const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
+ const _ivaDoc = _baseIva * parseFloat(s.porcDoc) / 100 * _aliq / 100;
+ const _cashea = _esCasheaServ ? _bruto * 0.035 : 0;
+ const _neto = _bruto - _ivaDoc - _cashea;
+ drNetoHTML = '<td style="padding:4px 8px;text-align:right;font-size:10px;font-weight:900;color:#15803d;">Dr: $' + Math.max(0, _neto).toFixed(2) + '</td>';
+ }
  htmlServ +=
  '<tr style="border-bottom:1px solid #f1f5f9;">' +
  '<td style="padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;">' + (s.nombre || '').replace(/^[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}\s]+/u, '').trim() + '</td>' +
+ drNetoHTML +
  '<td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:900;color:#2563eb;">$' + parseFloat(s.precio || 0).toFixed(2) + '</td>' +
  '</tr>';
  });
