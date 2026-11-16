@@ -110,7 +110,6 @@ const CONFIG_PORC = {
 };
 
 const insumosFijosMedicos = [{nombre:"Guantes de examen",costo:0.50},{nombre:"Alcohol",costo:0.10},{nombre:"Algodon",costo:0.10},{nombre:"Hojas - Papeleria",costo:0.10}];
-const insumosBaseVacuna   = [{nombre:"Jeringa 3cc",costo:0.25},{nombre:"Xeruk",costo:0.10},{nombre:"Crema",costo:0.10}];
 
 const CONFIG_MEDICAMENTOS = {
   "Piroyet":{precioCliente:10},"Enrofloxacina":{precioCliente:5},"Sulfatrim":{precioCliente:5},
@@ -575,7 +574,6 @@ window.insertarServicio = async (v) => {
   } else {
     // Sin Firebase: usar insumos fijos + recetas como antes
     if(cuerpo.querySelectorAll('.servicio-principal').length===1) insNuevos=[...insumosFijosMedicos];
-    if(vLimpio.includes("vacuna")){const yaHayVial=Array.from(cuerpo.querySelectorAll('td')).some(td=>td.innerText.includes("Vial"));if(!yaHayVial)insNuevos=[...insNuevos,...insumosBaseVacuna];}
     const lrec=Object.keys(recetas).find(k=>normalizarNombre(k)===vLimpio);
     if(lrec&&recetas[lrec].insumos)insNuevos=[...insNuevos,...recetas[lrec].insumos];
   }
