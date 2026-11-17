@@ -321,7 +321,7 @@ window.mostrarDashboardVet = async () => {
           const sBruto = Math.max(0, sp - si) * sPorcDoc / 100;
           const sBase = parseFloat(s.montoBaseIVA ?? sp);
           const sAliq = parseFloat(s.alicuotaIVA ?? 16);
-          const sIva = sBase * sAliq / 100;
+          const sIva = sBase - sBase / (1 + sAliq / 100);
           const sCashea = esCashea ? sp * feeCashea * sPorcDoc / 100 : 0;
           const sNeto = Math.max(0, sBruto - sIva - sCashea);
           cComision += sBruto; cIva += sIva; cCashea += sCashea;
@@ -347,7 +347,7 @@ window.mostrarDashboardVet = async () => {
           const sp = parseFloat(s.precio||0);
           const sBase = parseFloat(s.montoBaseIVA ?? sp);
           const sAliq = parseFloat(s.alicuotaIVA ?? 16);
-          const sIva = sBase * sAliq / 100;
+          const sIva = sBase - sBase / (1 + sAliq / 100);
           const sRate = v > 0 ? p / v : 0;
           const sCashea = esCashea ? sp * feeCashea * sRate : 0;
           const sBruto = sp * sRate;
@@ -1945,7 +1945,7 @@ window._imprimirReporteDoctor = function(nombre, g) {
 window._imprimirTiquetaCirugiaDoctor = function(nombreDoctor, parte, nombreCirugia, precioTotal, alicuotaIVA) {
   const tasa = parseFloat(window.tasaDolarHoy) || 1;
   const aliq = alicuotaIVA != null ? parseFloat(alicuotaIVA) : 16;
-  const ivaDoc = parseFloat((parte * aliq / 100).toFixed(2));
+  const ivaDoc = parseFloat((parte - parte / (1 + aliq / 100)).toFixed(2));
   const neto = parseFloat((parte - ivaDoc).toFixed(2));
   const partes = precioTotal > 0 ? Math.round(precioTotal / parte) : '?';
   const body = `
