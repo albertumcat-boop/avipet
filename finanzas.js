@@ -1819,13 +1819,14 @@ function _imprimirTiquera(htmlBody) {
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     @page { margin:0; size:58mm auto; }
-    body { font-family:'Courier New',monospace; font-size:12px; font-weight:900; width:52mm; color:#000; background:#fff; line-height:1.5; overflow-wrap:break-word; padding:2mm 3mm; }
+    body { font-family:'Courier New',monospace; font-size:13px; font-weight:900; width:52mm; color:#000; background:#fff; line-height:1.6; overflow-wrap:break-word; padding:2mm 3mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    * { font-weight:900 !important; color:#000 !important; }
     .c { text-align:center; }
     .r { text-align:right; }
-    .hr { border-top:1.5px dashed #000; margin:4px 0; }
-    .row { display:flex; justify-content:space-between; font-size:12px; font-weight:900; }
-    .lbl { font-size:11px; font-weight:900; color:#000; }
-    .val { font-weight:900; }
+    .hr { border-top:2px solid #000; margin:5px 0; }
+    .row { display:flex; justify-content:space-between; font-size:13px; }
+    .lbl { font-size:12px; }
+    .val { }
   </style></head><body>
   <div class="c"><b>${razon}</b></div>
   ${rif ? `<div class="c" style="font-size:11px;font-weight:900;">RIF: ${rif}</div>` : ''}
