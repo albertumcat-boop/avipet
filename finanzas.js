@@ -321,7 +321,7 @@ window.mostrarDashboardVet = async () => {
           const sBruto = Math.max(0, sp - si) * sPorcDoc / 100;
           const sBase = parseFloat(s.montoBaseIVA ?? sp);
           const sAliq = parseFloat(s.alicuotaIVA ?? 16);
-          const sIva = sBase - sBase / (1 + sAliq / 100);
+          const sIva = (sBase - sBase / (1 + sAliq / 100)) * sPorcDoc / 100;
           const sCashea = esCashea ? sp * feeCashea * sPorcDoc / 100 : 0;
           const sNeto = Math.max(0, sBruto - sIva - sCashea);
           cComision += sBruto; cIva += sIva; cCashea += sCashea;
@@ -347,8 +347,8 @@ window.mostrarDashboardVet = async () => {
           const sp = parseFloat(s.precio||0);
           const sBase = parseFloat(s.montoBaseIVA ?? sp);
           const sAliq = parseFloat(s.alicuotaIVA ?? 16);
-          const sIva = sBase - sBase / (1 + sAliq / 100);
           const sRate = v > 0 ? p / v : 0;
+          const sIva = (sBase - sBase / (1 + sAliq / 100)) * sRate;
           const sCashea = esCashea ? sp * feeCashea * sRate : 0;
           const sBruto = sp * sRate;
           const sNeto = Math.max(0, sBruto - sIva - sCashea);
