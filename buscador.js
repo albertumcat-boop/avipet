@@ -272,7 +272,7 @@ function _renderizarTarjeta(consulta) {
  const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : _precio);
  const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
  const _ivaDoc = _baseIva * _aliq / 100;
- const _cashea = _esCasheaServ ? _precio * (window._feeCashea||0.035) : 0;
+ const _cashea = _esCasheaServ ? _precio * (window._feeCashea||0.035) * parseFloat(s.porcDoc) / 100 : 0;
  const _neto = Math.max(0, _bruto - _ivaDoc - _cashea);
  const _desglose = JSON.stringify([
    {k:'Precio servicio', v:'$'+_precio.toFixed(2)},
@@ -345,8 +345,8 @@ function _renderizarTarjeta(consulta) {
      const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
      _comisionDoc += _bruto;
      _ivaDoc += _base * _aliq / 100;
+     if (_esCashea) _casheaFeeDoc += _p * (window._feeCashea||0.035) * parseFloat(s.porcDoc) / 100;
    });
-   _casheaFeeDoc = _esCashea ? _ventaNum * (window._feeCashea||0.035) : 0;
    _porcServ = _ventaNum > 0 ? (_comisionDoc / _ventaNum * 100) : 0;
  } else {
    // Fallback: usar porcServ global
@@ -363,7 +363,7 @@ function _renderizarTarjeta(consulta) {
      } else {
        _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
      }
-     _casheaFeeDoc = _esCashea ? _ventaNum * (window._feeCashea||0.035) : 0;
+     _casheaFeeDoc = _esCashea ? _ventaNum * (window._feeCashea||0.035) * (_porcServ / 100) : 0;
    }
  }
  const _doctorNeto = _comisionDoc != null ? Math.max(0, _comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
@@ -580,8 +580,8 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
           const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
           _comisionDoc += _bruto;
           _ivaDoc += _base * _aliq / 100;
+          if (_esCashea) _casheaFeeDoc += _p * (window._feeCashea||0.035) * parseFloat(s.porcDoc) / 100;
         });
-        _casheaFeeDoc = _esCashea ? _ventaNum * (window._feeCashea||0.035) : 0;
       } else {
         const _porcServ = parseFloat(datos.porcServ || 0);
         const _rateDoc = _porcServ / 100;
@@ -597,7 +597,7 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
           } else {
             _ivaDoc = _comisionDoc - _comisionDoc / 1.16;
           }
-          _casheaFeeDoc = _esCashea ? _ventaNum * (window._feeCashea||0.035) : 0;
+          _casheaFeeDoc = _esCashea ? _ventaNum * (window._feeCashea||0.035) * _rateDoc : 0;
         }
       }
       const _doctorNeto = _comisionDoc != null ? Math.max(0, _comisionDoc - _ivaDoc - _casheaFeeDoc) : null;
@@ -629,7 +629,7 @@ window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
           const _baseIva = parseFloat(s.montoBaseIVA != null ? s.montoBaseIVA : (s.precio||0));
           const _aliq = parseFloat(s.alicuotaIVA != null ? s.alicuotaIVA : 16);
           const _ivaS = _baseIva * _aliq / 100;
-          const _casheaS = _esCashea ? parseFloat(s.precio||0) * (window._feeCashea||0.035) : 0;
+          const _casheaS = _esCashea ? parseFloat(s.precio||0) * (window._feeCashea||0.035) * parseFloat(s.porcDoc) / 100 : 0;
           const _netoS = Math.max(0, _bruto - _ivaS - _casheaS);
           const drTd = tr.querySelector('td[data-dr]');
           if (drTd) drTd.textContent = 'Dr: $' + _netoS.toFixed(2);

@@ -322,7 +322,7 @@ window.mostrarDashboardVet = async () => {
           const sBase = parseFloat(s.montoBaseIVA ?? sp);
           const sAliq = parseFloat(s.alicuotaIVA ?? 16);
           const sIva = sBase * sAliq / 100;
-          const sCashea = esCashea ? sp * feeCashea : 0;
+          const sCashea = esCashea ? sp * feeCashea * sPorcDoc / 100 : 0;
           const sNeto = Math.max(0, sBruto - sIva - sCashea);
           cComision += sBruto; cIva += sIva; cCashea += sCashea;
           detServs.push({ nombre:(s.nombre||'').trim().toUpperCase(), precio:sp, insumos:si,
@@ -343,17 +343,16 @@ window.mostrarDashboardVet = async () => {
         // Fallback: pagoDoctor guardado
         const p = parseFloat(c.pagoDoctor||0);
         cComision = p;
-        if (esCashea) { cCashea = v * feeCashea; }
         (c.serviciosRealizados||[]).forEach(function(s) {
           const sp = parseFloat(s.precio||0);
           const sBase = parseFloat(s.montoBaseIVA ?? sp);
           const sAliq = parseFloat(s.alicuotaIVA ?? 16);
           const sIva = sBase * sAliq / 100;
-          const sCashea = esCashea ? sp * feeCashea : 0;
           const sRate = v > 0 ? p / v : 0;
+          const sCashea = esCashea ? sp * feeCashea * sRate : 0;
           const sBruto = sp * sRate;
           const sNeto = Math.max(0, sBruto - sIva - sCashea);
-          cIva += sIva;
+          cIva += sIva; cCashea += sCashea;
           detServs.push({ nombre:(s.nombre||'').trim().toUpperCase(), precio:sp, insumos:0,
             porcDoc:sRate*100, bruto:sBruto, baseIva:sBase, aliq:sAliq, iva:sIva,
             cashea:sCashea, neto:sNeto, esCashea });
