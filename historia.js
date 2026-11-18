@@ -392,31 +392,30 @@ window.insertarServicio = async (v) => {
     const _recalcCir = () => {
       const precio = parseFloat(document.getElementById('sw_precioCirugia')?.value) || 0;
       const aliq = parseFloat(document.getElementById('sw_cir_iva')?.value) || 0;
-      const feeCashea = window._feeCashea || 0.035;
       const checks = document.querySelectorAll('.sw_cir_doc_check:checked');
       const nDoc = checks.length;
       const partes = nDoc + 1;
       const porcDoc = partes > 0 ? 100 / partes : 0;
       const parte = partes > 0 ? precio / partes : 0;
-      // Totales globales
+      // IVA (precio ya incluye IVA en Venezuela)
       const ivaTotal = aliq > 0 ? (precio - precio / (1 + aliq / 100)) : 0;
-      const casheaTotal = precio * feeCashea;
+      // Insumos: 15% fijo + adicionales (monto fijo en $)
       const ins15 = precio * 0.15;
       let insAdicTotal = 0;
       document.querySelectorAll('.sw_cir_ins_row').forEach(row => {
         insAdicTotal += parseFloat(row.querySelector('.sw_cir_ins_monto')?.value) || 0;
       });
+      // Cargos adicionales (aumentan el precio final)
       let cargosTotal = 0;
       document.querySelectorAll('.sw_cir_cargo_row').forEach(row => {
         cargosTotal += parseFloat(row.querySelector('.sw_cir_cargo_monto')?.value) || 0;
       });
       const insTotal = ins15 + insAdicTotal;
       const precioConCargos = precio + cargosTotal;
-      // Dr. neto
+      // Dr. neto sin Cashea (Cashea se aplica al guardar según forma de pago)
       const brutoDoc = (precioConCargos - insTotal) * porcDoc / 100;
       const ivaDoc = ivaTotal * porcDoc / 100;
-      const casheaDoc = precio * feeCashea * porcDoc / 100;
-      const netoDoc = brutoDoc - ivaDoc - casheaDoc;
+      const netoDoc = brutoDoc - ivaDoc;
       // Actualizar display insumos 15%
       const ins15El = document.getElementById('sw_cir_ins15_val');
       if (ins15El) ins15El.textContent = '$' + ins15.toFixed(2);
@@ -428,12 +427,11 @@ window.insertarServicio = async (v) => {
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;"><span>Precio cirugía</span><span style="font-weight:900;">$${precio.toFixed(2)}</span></div>` +
             (cargosTotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#059669;"><span>+ Cargos adicionales</span><span style="font-weight:900;">+$${cargosTotal.toFixed(2)}</span></div>` : '') +
             (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA (${aliq}%)</span><span style="font-weight:900;">−$${ivaTotal.toFixed(2)}</span></div>` : '') +
-            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Cashea (${(feeCashea*100).toFixed(1)}%)</span><span style="font-weight:900;">−$${casheaTotal.toFixed(2)}</span></div>` +
-            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Insumos</span><span style="font-weight:900;">−$${insTotal.toFixed(2)}</span></div>` +
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Insumos (15%${insAdicTotal > 0 ? ' + $'+insAdicTotal.toFixed(2) : ''})</span><span style="font-weight:900;">−$${insTotal.toFixed(2)}</span></div>` +
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#64748b;border-top:1px solid #e2e8f0;margin-top:3px;"><span>Bruto Dr. (${porcDoc.toFixed(1)}%)</span><span style="font-weight:900;">$${brutoDoc.toFixed(2)}</span></div>` +
-            (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA Dr.</span><span style="font-weight:900;">−$${ivaDoc.toFixed(2)}</span></div>` : '') +
-            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Cashea Dr.</span><span style="font-weight:900;">−$${casheaDoc.toFixed(2)}</span></div>` +
-            `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-top:2px solid #1d4ed8;margin-top:4px;color:#1d4ed8;font-weight:900;"><span>NETO DR.</span><span>$${netoDoc.toFixed(2)}</span></div>`;
+            (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA Dr. (${porcDoc.toFixed(1)}%)</span><span style="font-weight:900;">−$${ivaDoc.toFixed(2)}</span></div>` : '') +
+            `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-top:2px solid #1d4ed8;margin-top:4px;color:#1d4ed8;font-weight:900;"><span>NETO DR.</span><span>$${netoDoc.toFixed(2)}</span></div>` +
+            `<div style="font-size:9px;color:#94a3b8;margin-top:3px;">* Cashea se aplica si la forma de pago es Cashea</div>`;
         } else {
           bd.innerHTML = '<div style="color:#94a3b8;font-size:11px;text-align:center;padding:8px 0;">Ingresa el precio para ver el cálculo</div>';
         }
