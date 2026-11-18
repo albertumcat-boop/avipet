@@ -2758,7 +2758,12 @@ window.renderizarTablaMaestra = async () => {
             } else {
               await setDoc(doc(db,"servicios_maestro",idActual), dataNueva, {merge:true});
             }
-            await Swal.fire({icon:'success',title:'Guardado',html:'<b>'+nuevoNom+'</b><br>$'+nuevoPrecio.toFixed(2)+' · '+nuevoPorcDoc+'% doc · '+nuevaCat+'<br>'+nuevosInsumos.length+' insumo(s)'+(pqActiva?' · ❓ Pregunta ON':''),timer:2000,showConfirmButton:false});
+            // Propagar cambios a historias existentes
+            const _countProp = await window._propagarCambioServicio(idActual, {
+              nombre: nuevoNom, precio: nuevoPrecio, porcDoc: nuevoPorcDoc,
+              alicuotaIVA: nuevoIva, montoBaseIVA: nuevoBaseIva
+            });
+            await Swal.fire({icon:'success',title:'Guardado',html:'<b>'+nuevoNom+'</b><br>$'+nuevoPrecio.toFixed(2)+' · '+nuevoPorcDoc+'% doc · '+nuevaCat+'<br>'+nuevosInsumos.length+' insumo(s)'+(pqActiva?' · ❓ Pregunta ON':'')+(_countProp>0?'<br><span style="font-size:11px;color:#059669;">✅ '+_countProp+' historia(s) actualizadas</span>':''),timer:3000,showConfirmButton:false});
             window.renderizarTablaMaestra(); window.cargarSelectorServicios();
           } catch(e){ Swal.fire({icon:'error',title:'Error',text:e.message}); }
         });
@@ -2775,6 +2780,66 @@ window.renderizarTablaMaestra = async () => {
       cont.appendChild(catDiv);
     });
   } catch(e) { cont.innerHTML = '<p class="text-red-500 text-[9px] text-center italic py-4">Error: '+e.message+'</p>'; }
+};
+
+// Propaga cambios de un servicio maestro a todas las consultas existentes que lo tengan
+window._propagarCambioServicio = async (nombreViejo, datosNuevos) => {
+  const feeCashea = window._feeCashea || 0.035;
+  Swal.fire({ title: 'Actualizando historias...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  try {
+    const snap = await getDocs(collection(db, 'consultas'));
+    const batches = [];
+    let cur = writeBatch(db);
+    let ops = 0;
+    let count = 0;
+    const nomViejoUpper = nombreViejo.trim().toUpperCase();
+    snap.docs.forEach(docSnap => {
+      const d = docSnap.data();
+      const servs = d.serviciosRealizados || [];
+      const hayMatch = servs.some(s => (s.nombre||'').trim().toUpperCase() === nomViejoUpper);
+      if (!hayMatch) return;
+      const esCashea = (d.formaPago||'').toLowerCase().includes('cashea');
+      const newServs = servs.map(s => {
+        if ((s.nombre||'').trim().toUpperCase() !== nomViejoUpper) return s;
+        return {
+          ...s,
+          nombre:       datosNuevos.nombre,
+          precio:       datosNuevos.precio,
+          porcDoc:      datosNuevos.porcDoc,
+          alicuotaIVA:  datosNuevos.alicuotaIVA  ?? s.alicuotaIVA,
+          montoBaseIVA: datosNuevos.montoBaseIVA ?? s.montoBaseIVA ?? datosNuevos.precio,
+        };
+      });
+      // Recalcular totales del documento
+      let nuevoMonto = 0, nuevoIns = 0, nuevoDoc = 0;
+      newServs.forEach(s => {
+        const sp = parseFloat(s.precio||0);
+        const si = parseFloat(s.costoInsumos||0);
+        const aliq = parseFloat(s.alicuotaIVA||0);
+        const base = parseFloat(s.montoBaseIVA||sp);
+        const pd = parseFloat(s.porcDoc||0);
+        nuevoMonto += sp;
+        nuevoIns   += si;
+        const bruto    = Math.max(0, sp - si) * pd / 100;
+        const ivaDoc   = aliq > 0 ? (base - base/(1+aliq/100)) * pd/100 : 0;
+        const cashDoc  = esCashea ? sp * feeCashea * pd/100 : 0;
+        nuevoDoc += bruto - ivaDoc - cashDoc;
+      });
+      cur.update(docSnap.ref, {
+        serviciosRealizados: newServs,
+        montoVenta:   nuevoMonto,
+        montoInsumos: nuevoIns,
+        pagoDoctor:   nuevoDoc,
+        pagoAvipet:   nuevoMonto - nuevoIns - nuevoDoc,
+      });
+      count++; ops++;
+      if (ops >= 490) { batches.push(cur); cur = writeBatch(db); ops = 0; }
+    });
+    if (ops > 0) batches.push(cur);
+    for (const b of batches) await b.commit();
+    Swal.close();
+    return count;
+  } catch(e) { Swal.close(); throw e; }
 };
 
 window.renderizarTablaInsumos = async () => {
@@ -2990,14 +3055,71 @@ window.renderizarTablaInsumos = async () => {
             }
           }
 
+          // Propagar costo del insumo a las consultas existentes
+          let countHistorias = 0;
+          try {
+            Swal.fire({ title: 'Actualizando historias...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const snapConsultas = await getDocs(collection(db, 'consultas'));
+            const feeCashea = window._feeCashea || 0.035;
+            const batches2 = [];
+            let cur2 = writeBatch(db); let ops2 = 0;
+            const nomViejoU = idActual.toUpperCase();
+            const nomActualU = nomActual.toUpperCase();
+            snapConsultas.docs.forEach(docSnap => {
+              const d = docSnap.data();
+              const detalle = d.listaDetalladaInsumos || [];
+              const hayIns = detalle.some(i => (i.nombre||'').toUpperCase() === nomViejoU || (i.nombre||'').toUpperCase() === nomActualU);
+              if (!hayIns) return;
+              const esCashea2 = (d.formaPago||'').toLowerCase().includes('cashea');
+              // Actualizar nombre y costo en el detalle
+              const newDetalle = detalle.map(i => {
+                const n = (i.nombre||'').toUpperCase();
+                if (n === nomViejoU || n === nomActualU) return { ...i, nombre: nuevoNom, costo: nuevoCosto };
+                return i;
+              });
+              // Recalcular costoInsumos por servicio: agrupar detalle por grupoID no es posible,
+              // usamos la suma total para montoInsumos y recalculamos por servicio via serviciosRealizados
+              const servs = d.serviciosRealizados || [];
+              // Recalc montoInsumos desde el nuevo detalle
+              let nuevoMontoIns = 0;
+              newDetalle.forEach(i => { nuevoMontoIns += (parseFloat(i.cant)||1) * (parseFloat(i.costo)||0); });
+              // Recalcular serviciosRealizados.costoInsumos proporcional (asignar el total al primer servicio encontrado o distribuir uniformemente)
+              // Usamos la diferencia para actualizar el costoInsumos de cada servicio que tenga el insumo
+              // Sin info de qué servicio usó qué insumo, actualizamos montoInsumos global y recalculamos pagoDoctor
+              let nuevoMontoVenta = servs.reduce((s,v) => s + parseFloat(v.precio||0), 0);
+              let nuevoDoc = 0;
+              servs.forEach(s => {
+                const sp = parseFloat(s.precio||0);
+                const si = parseFloat(s.costoInsumos||0);
+                const aliq = parseFloat(s.alicuotaIVA||0);
+                const base = parseFloat(s.montoBaseIVA||sp);
+                const pd = parseFloat(s.porcDoc||0);
+                const bruto = Math.max(0, sp - si) * pd/100;
+                const ivaDoc = aliq>0 ? (base - base/(1+aliq/100))*pd/100 : 0;
+                const cashDoc = esCashea2 ? sp*(feeCashea)*pd/100 : 0;
+                nuevoDoc += bruto - ivaDoc - cashDoc;
+              });
+              cur2.update(docSnap.ref, {
+                listaDetalladaInsumos: newDetalle,
+                montoInsumos: nuevoMontoIns,
+                pagoAvipet: nuevoMontoVenta - nuevoMontoIns - nuevoDoc,
+              });
+              countHistorias++; ops2++;
+              if (ops2 >= 490) { batches2.push(cur2); cur2 = writeBatch(db); ops2 = 0; }
+            });
+            if (ops2 > 0) batches2.push(cur2);
+            for (const b of batches2) await b.commit();
+          } catch(_e) { console.warn('Propagación insumo a historias falló:', _e); }
+
           Swal.close();
           console.log('[AVIPET] Insumo editado:', idActual, '→', nuevoNom, '$'+nuevoCosto, 'actualizados:'+actualizados);
           await Swal.fire({
             icon:'success', title:'Insumo actualizado',
             html:'<b>'+nuevoNom+'</b> — $'+nuevoCosto.toFixed(2)+(nuevoBloq?' 🔒':'')+
               (actualizados>0?'<br><span style="font-size:10px;color:#16a34a;">Actualizado en '+actualizados+' servicio(s)</span>':'')+
+              (countHistorias>0?'<br><span style="font-size:10px;color:#059669;">✅ '+countHistorias+' historia(s) actualizadas</span>':'')+
               msgAgregar,
-            timer:2500, showConfirmButton:false
+            timer:3000, showConfirmButton:false
           });
           window.renderizarTablaInsumos();
         } catch(e){ Swal.close(); Swal.fire({icon:'error',title:'Error',text:e.message}); }
