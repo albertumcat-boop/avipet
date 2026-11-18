@@ -374,22 +374,36 @@ window.mostrarDashboardVet = async () => {
       if (esCashea) { const feeTotal = v * feeCashea; g.casheaFee += feeTotal; casheaFeeTotal += feeTotal; }
       g.consultasDetalle.push({ fecha:c.fecha||c.fechaRegistro||'', paciente:c.nombreMascota||c.paciente||'', servicios:detServs,
         comision:cComision, iva:cIva, cashea:cCashea, neto:Math.max(0,cComision-cIva-cCashea), esCashea, fp });
+
+      // Distribuir cirugías en equipo a los doctores ayudantes
+      if (c.cirugiaEquipo) {
+        const eq = c.cirugiaEquipo;
+        const netoXDoc = parseFloat(eq.netoPorParticipante || eq.partePorDoctor || 0);
+        const nomCir = (eq.nombre || 'CIRUGÍA').trim().toUpperCase();
+        (eq.doctores || []).forEach(function(docAy) {
+          if (!docAy || docAy === nombreDoc) return; // principal ya procesado arriba
+          if (!porDoctor[docAy]) {
+            porDoctor[docAy] = { consultas:[], servicios:{}, formasPago:{dolares:0,movil:0,cashea:0,otro:0},
+              comision:0, bruto:0, insumos:0, casheaFee:0, casheaFeeDoc:0, ivaDocTotal:0, consultasDetalle:[], _soloEquipo:true };
+          }
+          const gAy = porDoctor[docAy];
+          const keyCir = nomCir + '||equipo';
+          if (!gAy.servicios[keyCir]) gAy.servicios[keyCir] = {
+            nombre: nomCir, count:0, total:0, comisionDoc:0, ivaDoc:0, casheaDoc:0, netoDoc:0,
+            alicuotaIVA: eq.alicuotaIVA || 0, cashea: esCashea, esEquipoCirugia: true
+          };
+          gAy.servicios[keyCir].count++;
+          gAy.servicios[keyCir].netoDoc += netoXDoc;
+          gAy.servicios[keyCir].comisionDoc += netoXDoc;
+          gAy.comision += netoXDoc;
+        });
+      }
     });
     consultas.forEach(c => { comisionTotal += (c.serviciosRealizados||[]).filter(s=>s.porcDoc!=null).reduce((sum,s)=>{
       const sp=parseFloat(s.precio||0),si=parseFloat(s.costoInsumos||0),b=Math.max(0,sp-si)*parseFloat(s.porcDoc)/100; return sum+b;},0) || parseFloat(c.pagoDoctor||0); });
-    // Acumular porciones de cirugías en equipo para doctores ayudantes
-    // (el doctor principal ya tiene su porción en pagoDoctor; aquí sumamos la del resto del equipo)
-    const cirugiaEquipoAcum = {}; // { doctorNombre: { total, cirugias: [{nombre, parte}] } }
-    consultas.forEach(function(c) {
-      if (!c.cirugiaEquipo) return;
-      const eq = c.cirugiaEquipo;
-      const doctorPrincipal = (c.doctor || '').trim();
-      (eq.doctores || []).forEach(function(doc) {
-        if (doc === doctorPrincipal) return; // el principal ya está en pagoDoctor
-        if (!cirugiaEquipoAcum[doc]) cirugiaEquipoAcum[doc] = { total: 0, cirugias: [] };
-        cirugiaEquipoAcum[doc].total += parseFloat(eq.partePorDoctor || 0);
-        cirugiaEquipoAcum[doc].cirugias.push({ nombre: eq.nombre || 'CIRUGÍA', parte: parseFloat(eq.partePorDoctor || 0) });
-      });
+    // Incluir en comisionTotal las partes de cirugía de doctores ayudantes
+    Object.values(porDoctor).forEach(function(gx) {
+      if (gx._soloEquipo) comisionTotal += gx.comision;
     });
 
     // El fee Cashea se divide: el doctor absorbe 10% de su comisión, Avipet absorbe el resto
@@ -494,15 +508,17 @@ window.mostrarDashboardVet = async () => {
 
         serviciosOrdenados.forEach(function(entry, idx) {
           const data = entry[1];
-          const bg = idx % 2 === 0 ? '#f8fafc' : '#fff';
+          const esEquipo = !!data.esEquipoCirugia;
+          const bg = esEquipo ? '#fef9c3' : (idx % 2 === 0 ? '#f8fafc' : '#fff');
+          const borde = esEquipo ? '#fde047' : (data.cashea ? '#7c3aed' : col.color);
           tabla.querySelector('tbody').innerHTML +=
-            '<tr style="background:'+(data.cashea?'#faf5ff':bg)+';border-left:3px solid '+(data.cashea?'#7c3aed':col.color)+';">' +
-              '<td style="padding:5px 6px;font-weight:700;color:#1e293b;text-transform:uppercase;font-size:9px;">'+data.nombre+'</td>' +
+            '<tr style="background:'+bg+';border-left:3px solid '+borde+';">' +
+              '<td style="padding:5px 6px;font-weight:700;color:#1e293b;text-transform:uppercase;font-size:9px;">'+(esEquipo?'🔪 ':'')+data.nombre+'</td>' +
               '<td style="padding:5px 6px;text-align:center;color:#64748b;font-weight:700;">'+data.count+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;font-family:monospace;color:#64748b;">$'+(data.comisionDoc||0).toFixed(2)+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;color:#ef4444;font-family:monospace;">'+(data.ivaDoc>0?'−$'+data.ivaDoc.toFixed(2):'—')+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;color:#7c3aed;font-family:monospace;">'+(data.casheaDoc>0?'−$'+data.casheaDoc.toFixed(2):'—')+'</td>' +
-              '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:'+col.color+';">$'+(data.netoDoc||0).toFixed(2)+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;font-family:monospace;color:#64748b;">'+(esEquipo?'—':'$'+(data.comisionDoc||0).toFixed(2))+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;color:#ef4444;font-family:monospace;">'+(esEquipo?'—':(data.ivaDoc>0?'−$'+data.ivaDoc.toFixed(2):'—'))+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;color:#7c3aed;font-family:monospace;">'+(esEquipo?'—':(data.casheaDoc>0?'−$'+data.casheaDoc.toFixed(2):'—'))+'</td>' +
+              '<td style="padding:5px 6px;text-align:right;font-weight:900;font-family:monospace;color:'+(esEquipo?'#854d0e':col.color)+';">$'+(data.netoDoc||0).toFixed(2)+'</td>' +
             '</tr>';
         });
         tabla.innerHTML += '</tbody>';
@@ -552,38 +568,12 @@ window.mostrarDashboardVet = async () => {
         secDoc.appendChild(fpDiv);
       }
 
-      // Cirugías en equipo donde este doctor fue ayudante
-      const eqAcum = cirugiaEquipoAcum[nombreDoc];
-      if (eqAcum && eqAcum.total > 0) {
-        const eqDiv = document.createElement('div');
-        eqDiv.style.cssText = 'margin-top:8px;padding:8px 10px;background:#fef9c3;border:2px solid #fde047;border-radius:10px;';
-        const eqTit = document.createElement('p');
-        eqTit.style.cssText = 'font-size:9px;font-weight:900;color:#854d0e;text-transform:uppercase;margin:0 0 5px 0;';
-        eqTit.textContent = '🔪 Cirugías en equipo (ayudante)';
-        eqDiv.appendChild(eqTit);
-        eqAcum.cirugias.forEach(function(cir) {
-          const row = document.createElement('div');
-          row.style.cssText = 'display:flex;justify-content:space-between;font-size:9px;color:#1e293b;';
-          row.innerHTML = '<span>' + cir.nombre + '</span><span style="font-weight:900;font-family:monospace;">$' + cir.parte.toFixed(2) + '</span>';
-          eqDiv.appendChild(row);
-        });
-        const totRow = document.createElement('div');
-        totRow.style.cssText = 'display:flex;justify-content:space-between;font-size:10px;font-weight:900;color:#854d0e;border-top:1px solid #fde047;margin-top:4px;padding-top:4px;';
-        totRow.innerHTML = '<span>TOTAL CIRUGÍAS</span><span style="font-family:monospace;">$' + eqAcum.total.toFixed(2) + '</span>';
-        eqDiv.appendChild(totRow);
-        // Botón tiqueta para cada cirugía de equipo
-        eqAcum.cirugias.forEach(function(cir) {
-          const btnCir = document.createElement('button');
-          btnCir.textContent = '🖨️ Tique — ' + cir.nombre;
-          btnCir.style.cssText = 'width:100%;margin-top:5px;padding:6px;background:#854d0e;color:#fff;border:none;border-radius:7px;font-size:9px;font-weight:900;cursor:pointer;';
-          (function(ndoc, ncir, pcir) {
-            btnCir.onclick = function() {
-              window._imprimirTiquetaCirugiaDoctor(ndoc, pcir, ncir, pcir * Math.round(1 / (pcir / (pcir || 1))));
-            };
-          })(nombreDoc, cir.nombre, cir.parte);
-          eqDiv.appendChild(btnCir);
-        });
-        secDoc.appendChild(eqDiv);
+      // Badge si es doctor que solo participa en cirugías en equipo (sin consultas propias)
+      if (g._soloEquipo) {
+        const badgeEq = document.createElement('div');
+        badgeEq.style.cssText = 'display:inline-block;font-size:8px;font-weight:900;color:#854d0e;background:#fef9c3;border:1px solid #fde047;border-radius:6px;padding:2px 7px;margin-bottom:6px;';
+        badgeEq.textContent = '🔪 Participa solo en cirugías en equipo';
+        secDoc.insertBefore(badgeEq, secDoc.firstChild);
       }
 
       // Botones imprimir doctor
