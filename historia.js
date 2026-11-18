@@ -396,8 +396,7 @@ window.insertarServicio = async (v) => {
       const nDoc = checks.length;
       const partes = nDoc + 1;
       const porcDoc = partes > 0 ? 100 / partes : 0;
-      const parte = partes > 0 ? precio / partes : 0;
-      // IVA (precio ya incluye IVA en Venezuela)
+      // IVA se descuenta del total ANTES de repartir (precio ya incluye IVA en Venezuela)
       const ivaTotal = aliq > 0 ? (precio - precio / (1 + aliq / 100)) : 0;
       // Insumos: 15% fijo + adicionales (monto fijo en $)
       const ins15 = precio * 0.15;
@@ -405,17 +404,15 @@ window.insertarServicio = async (v) => {
       document.querySelectorAll('.sw_cir_ins_row').forEach(row => {
         insAdicTotal += parseFloat(row.querySelector('.sw_cir_ins_monto')?.value) || 0;
       });
-      // Cargos adicionales (aumentan el precio final)
       let cargosTotal = 0;
       document.querySelectorAll('.sw_cir_cargo_row').forEach(row => {
         cargosTotal += parseFloat(row.querySelector('.sw_cir_cargo_monto')?.value) || 0;
       });
       const insTotal = ins15 + insAdicTotal;
       const precioConCargos = precio + cargosTotal;
-      // Dr. neto sin Cashea (Cashea se aplica al guardar según forma de pago)
-      const brutoDoc = (precioConCargos - insTotal) * porcDoc / 100;
-      const ivaDoc = ivaTotal * porcDoc / 100;
-      const netoDoc = brutoDoc - ivaDoc;
+      // Base neta a repartir = precio − IVA − insumos (IVA ya salió del pool, no se descuenta al doctor)
+      const baseNeta = precioConCargos - ivaTotal - insTotal;
+      const netoParticipante = baseNeta * porcDoc / 100;
       // Actualizar display insumos 15%
       const ins15El = document.getElementById('sw_cir_ins15_val');
       if (ins15El) ins15El.textContent = '$' + ins15.toFixed(2);
@@ -423,25 +420,32 @@ window.insertarServicio = async (v) => {
       const bd = document.getElementById('sw_cir_breakdown');
       if (bd) {
         if (precio > 0) {
+          // Filas de participantes para el resumen
+          let filasPartic = '';
+          checks.forEach(ch => {
+            if (ch.value) filasPartic += `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#1e293b;"><span>👨‍⚕️ ${ch.value}</span><span style="font-weight:900;">$${netoParticipante.toFixed(2)}</span></div>`;
+          });
+          filasPartic += `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#64748b;"><span>🏥 Avipet</span><span style="font-weight:900;">$${netoParticipante.toFixed(2)}</span></div>`;
           bd.innerHTML =
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;"><span>Precio cirugía</span><span style="font-weight:900;">$${precio.toFixed(2)}</span></div>` +
             (cargosTotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#059669;"><span>+ Cargos adicionales</span><span style="font-weight:900;">+$${cargosTotal.toFixed(2)}</span></div>` : '') +
             (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA (${aliq}%)</span><span style="font-weight:900;">−$${ivaTotal.toFixed(2)}</span></div>` : '') +
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Insumos (15%${insAdicTotal > 0 ? ' + $'+insAdicTotal.toFixed(2) : ''})</span><span style="font-weight:900;">−$${insTotal.toFixed(2)}</span></div>` +
-            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#64748b;border-top:1px solid #e2e8f0;margin-top:3px;"><span>Bruto Dr. (${porcDoc.toFixed(1)}%)</span><span style="font-weight:900;">$${brutoDoc.toFixed(2)}</span></div>` +
-            (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA Dr. (${porcDoc.toFixed(1)}%)</span><span style="font-weight:900;">−$${ivaDoc.toFixed(2)}</span></div>` : '') +
-            `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-top:2px solid #1d4ed8;margin-top:4px;color:#1d4ed8;font-weight:900;"><span>NETO DR.</span><span>$${netoDoc.toFixed(2)}</span></div>` +
-            `<div style="font-size:9px;color:#94a3b8;margin-top:3px;">* Cashea se aplica si la forma de pago es Cashea</div>`;
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;font-weight:700;color:#1e293b;border-top:1px solid #e2e8f0;margin-top:3px;"><span>Base neta a repartir</span><span>$${baseNeta.toFixed(2)}</span></div>` +
+            `<div style="font-size:10px;color:#64748b;padding:4px 0 2px 0;font-weight:700;">${partes} partes (${porcDoc.toFixed(1)}% c/u):</div>` +
+            filasPartic +
+            `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-top:2px solid #1d4ed8;margin-top:4px;color:#1d4ed8;font-weight:900;"><span>NETO DR.</span><span>$${netoParticipante.toFixed(2)}</span></div>` +
+            `<div style="font-size:9px;color:#94a3b8;margin-top:3px;">* Cashea se descuenta si la forma de pago es Cashea</div>`;
         } else {
           bd.innerHTML = '<div style="color:#94a3b8;font-size:11px;text-align:center;padding:8px 0;">Ingresa el precio para ver el cálculo</div>';
         }
       }
-      // Tabla participantes
+      // Tabla participantes — mostrar neto en lugar de parte bruta
       const tbody = document.getElementById('sw_cir_tabla_body');
       if (!tbody) return;
       let rows = '';
-      checks.forEach(ch => { rows += `<tr><td style="padding:3px 6px;font-size:10px;">${ch.value}</td><td style="padding:3px 6px;font-size:10px;font-weight:900;text-align:right;">$${parte.toFixed(2)}</td></tr>`; });
-      rows += `<tr style="color:#94a3b8;"><td style="padding:3px 6px;font-size:10px;">Avipet</td><td style="padding:3px 6px;font-size:10px;text-align:right;">$${parte.toFixed(2)}</td></tr>`;
+      checks.forEach(ch => { rows += `<tr><td style="padding:3px 6px;font-size:10px;">${ch.value}</td><td style="padding:3px 6px;font-size:10px;font-weight:900;text-align:right;">$${netoParticipante.toFixed(2)}</td></tr>`; });
+      rows += `<tr style="color:#94a3b8;"><td style="padding:3px 6px;font-size:10px;">Avipet</td><td style="padding:3px 6px;font-size:10px;text-align:right;">$${netoParticipante.toFixed(2)}</td></tr>`;
       tbody.innerHTML = rows;
     };
     const _htmlDocsFijos = _doctoresFijos.map(nombre => {
@@ -480,7 +484,7 @@ window.insertarServicio = async (v) => {
             '<button type="button" onclick="_agregarInvitadoCir()" style="font-size:10px;color:#1d4ed8;font-weight:700;background:none;border:none;cursor:pointer;padding:4px 0;margin-top:4px;">+ Agregar doctor invitado</button>' +
           '</div>' +
           '<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:10px;margin-bottom:14px;">' +
-            '<thead><tr style="background:#f1f5f9;"><th style="padding:4px 6px;text-align:left;">Participante</th><th style="padding:4px 6px;text-align:right;">Parte bruta</th></tr></thead>' +
+            '<thead><tr style="background:#f1f5f9;"><th style="padding:4px 6px;text-align:left;">Participante</th><th style="padding:4px 6px;text-align:right;">Neto</th></tr></thead>' +
             '<tbody id="sw_cir_tabla_body"></tbody>' +
           '</table>' +
           '<div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-bottom:14px;">' +
@@ -574,15 +578,21 @@ window.insertarServicio = async (v) => {
     const _cirVal = resCir.value;
     nombreFinal = 'CIRUGÍA: ' + _cirVal.tipo;
     const _precioBase = _cirVal.precio;
+    const _aliq = _cirVal.alicuotaIVA || 0;
     const _cargosTotal = _cirVal.cargosAdicionales.reduce((s, c) => s + c.monto, 0);
     precioFinal = parseFloat((_precioBase + _cargosTotal).toFixed(2));
     const _equipoDoc = _cirVal.doctoresEquipo;
     const _partes = _equipoDoc.length + 1; // doctores + Avipet
     porcServ = parseFloat((100 / _partes).toFixed(4));
     const _ins15 = parseFloat((_precioBase * 0.15).toFixed(2));
-    const _insTotal = parseFloat((_ins15 + _cirVal.insumosAdicionales.reduce((s, i) => s + i.costo, 0)).toFixed(2));
+    const _insAdicTotal = _cirVal.insumosAdicionales.reduce((s, i) => s + i.costo, 0);
+    const _insTotal = parseFloat((_ins15 + _insAdicTotal).toFixed(2));
+    // IVA se descuenta del total antes de repartir
+    const _ivaTotal = _aliq > 0 ? parseFloat((_precioBase - _precioBase / (1 + _aliq / 100)).toFixed(2)) : 0;
+    const _baseNeta = parseFloat((precioFinal - _ivaTotal - _insTotal).toFixed(2));
+    const _netoPorParticipante = parseFloat((_baseNeta / _partes).toFixed(2));
     // Globals para la fila del servicio
-    window._servicioAlicuotaIVA = _cirVal.alicuotaIVA;
+    window._servicioAlicuotaIVA = _aliq;
     window._servicioBaseIVA = _precioBase;
     // Insumos para agregar automáticamente a la tabla
     window._cirugiaInsumosExtra = [
@@ -595,14 +605,17 @@ window.insertarServicio = async (v) => {
         nombre: nombreFinal,
         precio: precioFinal,
         precioBase: _precioBase,
-        alicuotaIVA: _cirVal.alicuotaIVA,
+        alicuotaIVA: _aliq,
+        ivaTotal: _ivaTotal,
         insumos15: _ins15,
         insumosAdicionales: _cirVal.insumosAdicionales,
         cargosAdicionales: _cirVal.cargosAdicionales,
         costoInsumosTotal: _insTotal,
+        baseNeta: _baseNeta,
+        netoPorParticipante: _netoPorParticipante,
         doctores: _equipoDoc,
-        partePorDoctor: parseFloat((precioFinal / _partes).toFixed(2)),
-        parteAvipet: parseFloat((precioFinal / _partes).toFixed(2))
+        partePorDoctor: _netoPorParticipante,
+        parteAvipet: _netoPorParticipante
       };
     } else {
       window._cirugiaEquipo = null;
