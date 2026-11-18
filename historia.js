@@ -396,8 +396,6 @@ window.insertarServicio = async (v) => {
       const nDoc = checks.length;
       const partes = nDoc + 1;
       const porcDoc = partes > 0 ? 100 / partes : 0;
-      // IVA se descuenta del total ANTES de repartir (precio ya incluye IVA en Venezuela)
-      const ivaTotal = aliq > 0 ? (precio - precio / (1 + aliq / 100)) : 0;
       // Insumos: 15% fijo + adicionales (monto fijo en $)
       const ins15 = precio * 0.15;
       let insAdicTotal = 0;
@@ -410,6 +408,8 @@ window.insertarServicio = async (v) => {
       });
       const insTotal = ins15 + insAdicTotal;
       const precioConCargos = precio + cargosTotal;
+      // IVA se extrae del total completo (precio + cargos): en Venezuela todos los precios incluyen IVA
+      const ivaTotal = aliq > 0 ? (precioConCargos - precioConCargos / (1 + aliq / 100)) : 0;
       // Base neta a repartir = precio − IVA − insumos (IVA ya salió del pool, no se descuenta al doctor)
       const baseNeta = precioConCargos - ivaTotal - insTotal;
       const netoParticipante = baseNeta * porcDoc / 100;
@@ -587,8 +587,8 @@ window.insertarServicio = async (v) => {
     const _ins15 = parseFloat((_precioBase * 0.15).toFixed(2));
     const _insAdicTotal = _cirVal.insumosAdicionales.reduce((s, i) => s + i.costo, 0);
     const _insTotal = parseFloat((_ins15 + _insAdicTotal).toFixed(2));
-    // IVA se descuenta del total antes de repartir
-    const _ivaTotal = _aliq > 0 ? parseFloat((_precioBase - _precioBase / (1 + _aliq / 100)).toFixed(2)) : 0;
+    // IVA se extrae del total completo (precio + cargos): todos los precios incluyen IVA en Venezuela
+    const _ivaTotal = _aliq > 0 ? parseFloat((precioFinal - precioFinal / (1 + _aliq / 100)).toFixed(2)) : 0;
     const _baseNeta = parseFloat((precioFinal - _ivaTotal - _insTotal).toFixed(2));
     const _netoPorParticipante = parseFloat((_baseNeta / _partes).toFixed(2));
     // Globals para la fila del servicio
