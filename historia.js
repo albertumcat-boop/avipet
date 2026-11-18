@@ -391,10 +391,54 @@ window.insertarServicio = async (v) => {
     const _doctoresFijos = ['Darwin Sandoval', 'Joan Silva'];
     const _recalcCir = () => {
       const precio = parseFloat(document.getElementById('sw_precioCirugia')?.value) || 0;
+      const aliq = parseFloat(document.getElementById('sw_cir_iva')?.value) || 0;
+      const feeCashea = window._feeCashea || 0.035;
       const checks = document.querySelectorAll('.sw_cir_doc_check:checked');
       const nDoc = checks.length;
-      const partes = nDoc + 1; // doctores + Avipet
+      const partes = nDoc + 1;
+      const porcDoc = partes > 0 ? 100 / partes : 0;
       const parte = partes > 0 ? precio / partes : 0;
+      // Totales globales
+      const ivaTotal = aliq > 0 ? (precio - precio / (1 + aliq / 100)) : 0;
+      const casheaTotal = precio * feeCashea;
+      const ins15 = precio * 0.15;
+      let insAdicTotal = 0;
+      document.querySelectorAll('.sw_cir_ins_row').forEach(row => {
+        insAdicTotal += parseFloat(row.querySelector('.sw_cir_ins_monto')?.value) || 0;
+      });
+      let cargosTotal = 0;
+      document.querySelectorAll('.sw_cir_cargo_row').forEach(row => {
+        cargosTotal += parseFloat(row.querySelector('.sw_cir_cargo_monto')?.value) || 0;
+      });
+      const insTotal = ins15 + insAdicTotal;
+      const precioConCargos = precio + cargosTotal;
+      // Dr. neto
+      const brutoDoc = (precioConCargos - insTotal) * porcDoc / 100;
+      const ivaDoc = ivaTotal * porcDoc / 100;
+      const casheaDoc = precio * feeCashea * porcDoc / 100;
+      const netoDoc = brutoDoc - ivaDoc - casheaDoc;
+      // Actualizar display insumos 15%
+      const ins15El = document.getElementById('sw_cir_ins15_val');
+      if (ins15El) ins15El.textContent = '$' + ins15.toFixed(2);
+      // Breakdown
+      const bd = document.getElementById('sw_cir_breakdown');
+      if (bd) {
+        if (precio > 0) {
+          bd.innerHTML =
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;"><span>Precio cirugía</span><span style="font-weight:900;">$${precio.toFixed(2)}</span></div>` +
+            (cargosTotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#059669;"><span>+ Cargos adicionales</span><span style="font-weight:900;">+$${cargosTotal.toFixed(2)}</span></div>` : '') +
+            (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA (${aliq}%)</span><span style="font-weight:900;">−$${ivaTotal.toFixed(2)}</span></div>` : '') +
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Cashea (${(feeCashea*100).toFixed(1)}%)</span><span style="font-weight:900;">−$${casheaTotal.toFixed(2)}</span></div>` +
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Insumos</span><span style="font-weight:900;">−$${insTotal.toFixed(2)}</span></div>` +
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#64748b;border-top:1px solid #e2e8f0;margin-top:3px;"><span>Bruto Dr. (${porcDoc.toFixed(1)}%)</span><span style="font-weight:900;">$${brutoDoc.toFixed(2)}</span></div>` +
+            (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA Dr.</span><span style="font-weight:900;">−$${ivaDoc.toFixed(2)}</span></div>` : '') +
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Cashea Dr.</span><span style="font-weight:900;">−$${casheaDoc.toFixed(2)}</span></div>` +
+            `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-top:2px solid #1d4ed8;margin-top:4px;color:#1d4ed8;font-weight:900;"><span>NETO DR.</span><span>$${netoDoc.toFixed(2)}</span></div>`;
+        } else {
+          bd.innerHTML = '<div style="color:#94a3b8;font-size:11px;text-align:center;padding:8px 0;">Ingresa el precio para ver el cálculo</div>';
+        }
+      }
+      // Tabla participantes
       const tbody = document.getElementById('sw_cir_tabla_body');
       if (!tbody) return;
       let rows = '';
@@ -412,23 +456,53 @@ window.insertarServicio = async (v) => {
     }).join('');
     const resCir = await Swal.fire({
       title: '🔪 Cirugía',
-      width: 420,
+      width: 520,
       html:
         '<div style="text-align:left;">' +
           '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Tipo de cirugía</label>' +
           '<input id="sw_tipoCirugia" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;margin-bottom:14px;" placeholder="Ej: CASTRACIÓN, PIOMETRA, FRACTURA...">' +
-          '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Precio ($)</label>' +
-          '<input id="sw_precioCirugia" type="number" step="0.50" min="0" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:18px;font-weight:900;outline:none;margin-bottom:16px;" placeholder="0.00" oninput="_recalcCirModal()">' +
+          '<div style="display:flex;gap:10px;margin-bottom:16px;">' +
+            '<div style="flex:1;">' +
+              '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Precio ($)</label>' +
+              '<input id="sw_precioCirugia" type="number" step="0.50" min="0" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:18px;font-weight:900;outline:none;" placeholder="0.00" oninput="_recalcCirModal()">' +
+            '</div>' +
+            '<div style="width:120px;">' +
+              '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">IVA</label>' +
+              '<select id="sw_cir_iva" style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:10px 8px;font-size:13px;font-weight:700;outline:none;background:#fff;" onchange="_recalcCirModal()">' +
+                '<option value="0">0% Exento</option>' +
+                '<option value="8">8%</option>' +
+                '<option value="16" selected>16%</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
           '<div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-bottom:8px;">' +
             '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:8px;">Equipo quirúrgico</label>' +
             _htmlDocsFijos +
             '<div id="sw_cir_invitados"></div>' +
             '<button type="button" onclick="_agregarInvitadoCir()" style="font-size:10px;color:#1d4ed8;font-weight:700;background:none;border:none;cursor:pointer;padding:4px 0;margin-top:4px;">+ Agregar doctor invitado</button>' +
           '</div>' +
-          '<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:10px;">' +
-            '<thead><tr style="background:#f1f5f9;"><th style="padding:4px 6px;text-align:left;">Participante</th><th style="padding:4px 6px;text-align:right;">Parte</th></tr></thead>' +
+          '<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:10px;margin-bottom:14px;">' +
+            '<thead><tr style="background:#f1f5f9;"><th style="padding:4px 6px;text-align:left;">Participante</th><th style="padding:4px 6px;text-align:right;">Parte bruta</th></tr></thead>' +
             '<tbody id="sw_cir_tabla_body"></tbody>' +
           '</table>' +
+          '<div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-bottom:14px;">' +
+            '<label style="font-size:10px;font-weight:900;color:#92400e;text-transform:uppercase;display:block;margin-bottom:8px;">🔒 Insumos</label>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#fffbeb;border:2px solid #fde68a;border-radius:8px;margin-bottom:6px;">' +
+              '<span style="font-size:11px;font-weight:700;color:#92400e;">🔒 Insumos base 15%</span>' +
+              '<span id="sw_cir_ins15_val" style="font-size:11px;font-weight:900;color:#92400e;">$0.00</span>' +
+            '</div>' +
+            '<div id="sw_cir_ins_rows"></div>' +
+            '<button type="button" onclick="_agregarInsCir()" style="font-size:10px;color:#92400e;font-weight:700;background:none;border:none;cursor:pointer;padding:4px 0;margin-top:2px;">+ Agregar insumo adicional</button>' +
+          '</div>' +
+          '<div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-bottom:14px;">' +
+            '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:8px;">Cargos adicionales</label>' +
+            '<div id="sw_cir_cargo_rows"></div>' +
+            '<button type="button" onclick="_agregarCargoCir()" style="font-size:10px;color:#475569;font-weight:700;background:none;border:none;cursor:pointer;padding:4px 0;margin-top:2px;">+ Agregar cargo</button>' +
+          '</div>' +
+          '<div style="border-top:2px solid #e2e8f0;padding-top:10px;">' +
+            '<label style="font-size:10px;font-weight:900;color:#1d4ed8;text-transform:uppercase;display:block;margin-bottom:6px;">Resumen Dr.</label>' +
+            '<div id="sw_cir_breakdown"><div style="color:#94a3b8;font-size:11px;text-align:center;padding:8px 0;">Ingresa el precio para ver el cálculo</div></div>' +
+          '</div>' +
         '</div>',
       confirmButtonText: '✅ Agregar',
       confirmButtonColor: '#1d4ed8',
@@ -440,7 +514,6 @@ window.insertarServicio = async (v) => {
         window._agregarInvitadoCir = () => {
           const cont = document.getElementById('sw_cir_invitados');
           if (!cont) return;
-          const idx = cont.querySelectorAll('.sw_cir_inv_row').length;
           const div = document.createElement('div');
           div.className = 'sw_cir_inv_row';
           div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;';
@@ -449,11 +522,34 @@ window.insertarServicio = async (v) => {
             `<button type="button" onclick="this.parentElement.remove();_recalcCirModal()" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900;">×</button>`;
           cont.appendChild(div);
         };
+        window._agregarInsCir = () => {
+          const cont = document.getElementById('sw_cir_ins_rows');
+          if (!cont) return;
+          const div = document.createElement('div');
+          div.className = 'sw_cir_ins_row';
+          div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+          div.innerHTML = `<input type="text" placeholder="Descripción insumo" style="flex:1;border:2px solid #fde68a;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;outline:none;">` +
+            `<input type="number" step="0.01" min="0" placeholder="$0.00" class="sw_cir_ins_monto" style="width:80px;border:2px solid #fde68a;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:900;outline:none;text-align:right;" oninput="_recalcCirModal()">` +
+            `<button type="button" onclick="this.parentElement.remove();_recalcCirModal()" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900;">×</button>`;
+          cont.appendChild(div);
+        };
+        window._agregarCargoCir = () => {
+          const cont = document.getElementById('sw_cir_cargo_rows');
+          if (!cont) return;
+          const div = document.createElement('div');
+          div.className = 'sw_cir_cargo_row';
+          div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+          div.innerHTML = `<input type="text" placeholder="Descripción cargo" style="flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;outline:none;">` +
+            `<input type="number" step="0.01" min="0" placeholder="$0.00" class="sw_cir_cargo_monto" style="width:80px;border:2px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:900;outline:none;text-align:right;" oninput="_recalcCirModal()">` +
+            `<button type="button" onclick="this.parentElement.remove();_recalcCirModal()" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900;">×</button>`;
+          cont.appendChild(div);
+        };
         _recalcCir();
       },
       preConfirm: () => {
         const tipo = document.getElementById('sw_tipoCirugia')?.value.trim().toUpperCase();
         const precio = parseFloat(document.getElementById('sw_precioCirugia')?.value) || 0;
+        const alicuotaIVA = parseFloat(document.getElementById('sw_cir_iva')?.value) || 0;
         if (!tipo) { Swal.showValidationMessage('Escribe el tipo de cirugía'); return false; }
         if (precio <= 0) { Swal.showValidationMessage('Ingresa un precio mayor a 0'); return false; }
         const doctoresEquipo = [];
@@ -461,20 +557,51 @@ window.insertarServicio = async (v) => {
           if (ch.value) doctoresEquipo.push(ch.value);
         });
         if (!doctoresEquipo.length) { Swal.showValidationMessage('Debe haber al menos un doctor'); return false; }
-        return { tipo, precio, doctoresEquipo };
+        const insumosAdicionales = [];
+        document.querySelectorAll('.sw_cir_ins_row').forEach(row => {
+          const desc = row.querySelector('input[type="text"]')?.value.trim();
+          const monto = parseFloat(row.querySelector('.sw_cir_ins_monto')?.value) || 0;
+          if (desc || monto > 0) insumosAdicionales.push({ nombre: desc || 'Insumo adicional', costo: monto });
+        });
+        const cargosAdicionales = [];
+        document.querySelectorAll('.sw_cir_cargo_row').forEach(row => {
+          const desc = row.querySelector('input[type="text"]')?.value.trim();
+          const monto = parseFloat(row.querySelector('.sw_cir_cargo_monto')?.value) || 0;
+          if (desc || monto > 0) cargosAdicionales.push({ nombre: desc || 'Cargo adicional', monto });
+        });
+        return { tipo, precio, alicuotaIVA, doctoresEquipo, insumosAdicionales, cargosAdicionales };
       }
     });
     if (resCir.isDismissed) { document.getElementById('selectorServicios').value = ''; window._cirugiaEquipo = null; return; }
-    nombreFinal = 'CIRUGÍA: ' + resCir.value.tipo;
-    precioFinal = resCir.value.precio;
-    const _equipoDoc = resCir.value.doctoresEquipo;
+    const _cirVal = resCir.value;
+    nombreFinal = 'CIRUGÍA: ' + _cirVal.tipo;
+    const _precioBase = _cirVal.precio;
+    const _cargosTotal = _cirVal.cargosAdicionales.reduce((s, c) => s + c.monto, 0);
+    precioFinal = parseFloat((_precioBase + _cargosTotal).toFixed(2));
+    const _equipoDoc = _cirVal.doctoresEquipo;
     const _partes = _equipoDoc.length + 1; // doctores + Avipet
     porcServ = parseFloat((100 / _partes).toFixed(4));
+    const _ins15 = parseFloat((_precioBase * 0.15).toFixed(2));
+    const _insTotal = parseFloat((_ins15 + _cirVal.insumosAdicionales.reduce((s, i) => s + i.costo, 0)).toFixed(2));
+    // Globals para la fila del servicio
+    window._servicioAlicuotaIVA = _cirVal.alicuotaIVA;
+    window._servicioBaseIVA = _precioBase;
+    // Insumos para agregar automáticamente a la tabla
+    window._cirugiaInsumosExtra = [
+      { nombre: 'Insumos base 15%', costo: _ins15, bloqueado: true },
+      ..._cirVal.insumosAdicionales.map(i => ({ nombre: i.nombre, costo: i.costo, bloqueado: false }))
+    ];
     // Guardar para incluir en Firestore y mostrar tiquetas después de guardar
     if (_equipoDoc.length > 1) {
       window._cirugiaEquipo = {
         nombre: nombreFinal,
         precio: precioFinal,
+        precioBase: _precioBase,
+        alicuotaIVA: _cirVal.alicuotaIVA,
+        insumos15: _ins15,
+        insumosAdicionales: _cirVal.insumosAdicionales,
+        cargosAdicionales: _cirVal.cargosAdicionales,
+        costoInsumosTotal: _insTotal,
         doctores: _equipoDoc,
         partePorDoctor: parseFloat((precioFinal / _partes).toFixed(2)),
         parteAvipet: parseFloat((precioFinal / _partes).toFixed(2))
@@ -571,6 +698,9 @@ window.insertarServicio = async (v) => {
   if (insumosFirebase && insumosFirebase.length > 0) {
     // Usar SOLO los de Firebase — ya contienen bloqueado:true/false configurado por el admin
     insNuevos = [...insumosFirebase];
+  } else if (vLimpio === 'cirugiapersonalizada' && window._cirugiaInsumosExtra) {
+    insNuevos = [...window._cirugiaInsumosExtra];
+    window._cirugiaInsumosExtra = null;
   } else {
     // Sin Firebase: usar insumos fijos + recetas como antes
     if(cuerpo.querySelectorAll('.servicio-principal').length===1) insNuevos=[...insumosFijosMedicos];
