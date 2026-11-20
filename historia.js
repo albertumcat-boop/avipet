@@ -1424,24 +1424,20 @@ window.imprimirDocumento=(onAfter)=>{
       contT.classList.toggle('hidden',imgsT.length===0);
     }
   }catch(e){console.warn(e);}
-  // Insumos para imprimir
+  // Descuento insumos para imprimir
   try {
     const insPrint = document.getElementById('insumosprint');
     const insTabla = document.getElementById('listaInsumosDinamica');
     if (insPrint && insTabla) {
-      const filas = insTabla.querySelectorAll('tr');
-      let rows = '';
-      filas.forEach(tr => {
+      let totalIns = 0;
+      insTabla.querySelectorAll('tr').forEach(tr => {
         const tds = tr.querySelectorAll('td');
         if (tds.length < 3) return;
-        const nombre = tds[0].textContent.trim();
-        const precio = tds[2].textContent.trim();
-        if (!nombre || nombre === '-') return;
-        rows += `<div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;padding:1px 0;">`
-              + `<span>${nombre}</span><span style="font-weight:700;">${precio}</span></div>`;
+        const val = parseFloat(tds[2].textContent.replace(/[^0-9.]/g, '')) || 0;
+        totalIns += val;
       });
-      if (rows) {
-        insPrint.innerHTML = `<div style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Insumos</div>` + rows;
+      if (totalIns > 0) {
+        insPrint.innerHTML = `<div style="display:flex;justify-content:space-between;font-size:11px;color:#dc2626;padding:2px 0;border-top:1px solid #e2e8f0;margin-top:4px;"><span>Descuento insumos</span><span style="font-weight:900;">-$${totalIns.toFixed(2)}</span></div>`;
       } else {
         insPrint.innerHTML = '';
       }
