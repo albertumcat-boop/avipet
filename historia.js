@@ -1424,6 +1424,29 @@ window.imprimirDocumento=(onAfter)=>{
       contT.classList.toggle('hidden',imgsT.length===0);
     }
   }catch(e){console.warn(e);}
+  // Insumos para imprimir
+  try {
+    const insPrint = document.getElementById('insumosprint');
+    const insTabla = document.getElementById('listaInsumosDinamica');
+    if (insPrint && insTabla) {
+      const filas = insTabla.querySelectorAll('tr');
+      let rows = '';
+      filas.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length < 3) return;
+        const nombre = tds[0].textContent.trim();
+        const precio = tds[2].textContent.trim();
+        if (!nombre || nombre === '-') return;
+        rows += `<div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;padding:1px 0;">`
+              + `<span>${nombre}</span><span style="font-weight:700;">${precio}</span></div>`;
+      });
+      if (rows) {
+        insPrint.innerHTML = `<div style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Insumos</div>` + rows;
+      } else {
+        insPrint.innerHTML = '';
+      }
+    }
+  } catch(e) { console.warn('insumosprint', e); }
   if(onAfter){const _cb=()=>{window.removeEventListener('afterprint',_cb);onAfter();};window.addEventListener('afterprint',_cb);}
   // Swal con botón para crear gesto de usuario fresco (Chrome bloquea window.print() desde async)
   Swal.fire({
