@@ -241,7 +241,7 @@ function _recalcularCombos() {
     // -- HEMATOLOGIA --
     if (n.includes("hematologiacompleta")) {
       const otrosLabs = ["quimica","hemoparasito","heces","orina","perfil","citologia"];
-      const hayOtroLab = nombres.some((o, i) => i !== idx && otrosLabs.some(lab => o.includes(lab)));
+      const hayOtroLab = nombres.some((o, i) => i !== idx && !o.includes("descarte") && otrosLabs.some(lab => o.includes(lab)));
       const precioNuevo  = hayOtroLab ? 20 : 23;
       const precioActual = parseFloat(fila.getAttribute('data-precio')) || 0;
 
