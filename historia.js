@@ -1424,23 +1424,40 @@ window.imprimirDocumento=(onAfter)=>{
       contT.classList.toggle('hidden',imgsT.length===0);
     }
   }catch(e){console.warn(e);}
-  // Descuento insumos para imprimir
+  // Descuentos para imprimir: IVA, Cashea, Insumos
   try {
     const insPrint = document.getElementById('insumosprint');
-    const insTabla = document.getElementById('listaInsumosDinamica');
-    if (insPrint && insTabla) {
+    if (insPrint) {
+      // IVA: extraído del precio (Venezuela — precios incluyen IVA)
+      let totalIVA = 0;
+      let aliqUsada = 0;
+      document.querySelectorAll('.servicio-principal').forEach(fila => {
+        const baseIva = parseFloat(fila.getAttribute('data-base-iva')) || 0;
+        const aliq = parseFloat(fila.getAttribute('data-alicuota-iva')) || 0;
+        if (aliq > 0) { totalIVA += baseIva - baseIva / (1 + aliq / 100); aliqUsada = aliq; }
+      });
+      // Insumos: suma de todos los costos en la tabla
       let totalIns = 0;
-      insTabla.querySelectorAll('tr').forEach(tr => {
+      document.querySelectorAll('#listaInsumosDinamica tr').forEach(tr => {
         const tds = tr.querySelectorAll('td');
         if (tds.length < 3) return;
         const val = parseFloat(tds[2].textContent.replace(/[^0-9.]/g, '')) || 0;
         totalIns += val;
       });
-      if (totalIns > 0) {
-        insPrint.innerHTML = `<div style="display:flex;justify-content:space-between;font-size:11px;color:#dc2626;padding:2px 0;border-top:1px solid #e2e8f0;margin-top:4px;"><span>Descuento insumos</span><span style="font-weight:900;">-$${totalIns.toFixed(2)}</span></div>`;
-      } else {
-        insPrint.innerHTML = '';
-      }
+      // Cashea: fee sobre el monto total si forma de pago es Cashea
+      const esCashea = (window._formaPagoPreset?.id || '').toLowerCase().includes('cashea');
+      const montoTotal = parseFloat(document.getElementById('precioVenta')?.value) || 0;
+      const feeCashea = window._feeCashea || 0.035;
+      const totalCashea = esCashea ? montoTotal * feeCashea : 0;
+
+      let html = '';
+      if (totalIVA > 0)
+        html += `<div style="display:flex;justify-content:space-between;font-size:11px;color:#dc2626;padding:2px 0;border-top:1px solid #e2e8f0;margin-top:4px;"><span>IVA (${aliqUsada}% incluido)</span><span style="font-weight:900;">-$${totalIVA.toFixed(2)}</span></div>`;
+      if (totalCashea > 0)
+        html += `<div style="display:flex;justify-content:space-between;font-size:11px;color:#7c3aed;padding:2px 0;"><span>Cashea (${(feeCashea*100).toFixed(1)}%)</span><span style="font-weight:900;">-$${totalCashea.toFixed(2)}</span></div>`;
+      if (totalIns > 0)
+        html += `<div style="display:flex;justify-content:space-between;font-size:11px;color:#dc2626;padding:2px 0;"><span>Insumos</span><span style="font-weight:900;">-$${totalIns.toFixed(2)}</span></div>`;
+      insPrint.innerHTML = html;
     }
   } catch(e) { console.warn('insumosprint', e); }
   if(onAfter){const _cb=()=>{window.removeEventListener('afterprint',_cb);onAfter();};window.addEventListener('afterprint',_cb);}
