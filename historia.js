@@ -1447,7 +1447,15 @@ window.imprimirDocumento=(onAfter)=>{
       // Cashea: fee sobre el monto total si forma de pago es Cashea
       const esCashea = (window._formaPagoPreset?.id || '').toLowerCase().includes('cashea');
       const montoTotal = parseFloat(document.getElementById('precioVenta')?.value) || 0;
-      const feeCashea = window._feeCashea || 0.035;
+      // Leer fee de Firestore en tiempo real para usar siempre el valor configurado en ajustes
+      let feeCashea = window._feeCashea;
+      if (!feeCashea) {
+        try {
+          const _snap = await getDoc(doc(db, 'configuracion', 'sistema'));
+          feeCashea = _snap.exists() && _snap.data().feeCashea != null ? parseFloat(_snap.data().feeCashea) : 0.035;
+          window._feeCashea = feeCashea;
+        } catch(e) { feeCashea = 0.035; }
+      }
       const totalCashea = esCashea ? montoTotal * feeCashea : 0;
 
       let html = '';
