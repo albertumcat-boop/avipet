@@ -1395,7 +1395,7 @@ window.mostrarInterfazSoloCamara=(ci,tipo)=>{const colorB=tipo==='test'?'bg-emer
 window.procesarSubidaMovil=async(input,ci,tipo)=>{const status=document.getElementById('statusMovil');const files=input.files;if(!files?.length)return;if(status)status.innerText=`? Procesando ${files.length} foto(s)...`;let enviadas=0;try{for(const file of files){const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsDataURL(file);});const comprimida=await comprimirImagen(base64);await addDoc(collection(db,"transferencias_fotos"),{ci,tipo,url:comprimida,fecha:serverTimestamp()});enviadas++;if(status)status.innerText=`? ${enviadas}/${files.length}...`;}if(status)status.innerHTML=`<b class='text-emerald-400'>${enviadas} foto(s) enviada(s)</b>`;}catch(e){if(status)status.innerText="? "+e.message;}};
 
 // --- IMPRIMIR ---
-window.imprimirDocumento=(onAfter)=>{
+window.imprimirDocumento=async(onAfter)=>{
   const hTrat=document.getElementById('hTratamiento');
   const hPrint=document.getElementById('hTratamientoPrint');
   // Copiar ahora y también en beforeprint (doble seguridad)
