@@ -1615,6 +1615,56 @@
     </div>
    </div>
 
+   <!-- ═══ FACTURACIÓN ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>🧾 Facturación Fiscal</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-txt" style="margin-bottom:12px;">Módulo independiente para emitir facturas fiscales según el SENIAT (Opción A — Máquina Fiscal). Se accede desde el <b>botón flotante 🧾 Facturación</b> que aparece en la esquina de la pantalla, o desde el botón azul en el Buscador al ver una consulta.</p>
+
+     <p class="man-h3">⚙️ Configuración Fiscal (primer paso obligatorio)</p>
+     <div class="man-row"><p class="man-lbl">RIF del Emisor</p><p class="man-txt">RIF de la clínica (ej. J-123456789). Sin esto no se puede emitir ninguna factura.</p></div>
+     <div class="man-row"><p class="man-lbl">Razón Social</p><p class="man-txt">Nombre legal de la empresa tal como aparece ante el SENIAT.</p></div>
+     <div class="man-row"><p class="man-lbl">Dirección Fiscal</p><p class="man-txt">Dirección registrada ante el SENIAT.</p></div>
+     <div class="man-row"><p class="man-lbl">Serie</p><p class="man-txt">Letra de la serie de la máquina fiscal (ej. A, B). Se usa para numerar las facturas.</p></div>
+     <div class="man-row"><p class="man-lbl">Alícuota IGTF (%)</p><p class="man-txt">Impuesto a las Grandes Transacciones Financieras. Se aplica sobre pagos en USD si eres Contribuyente Especial. Normalmente 3%.</p></div>
+     <div class="man-row"><p class="man-lbl">Contribuyente Especial</p><p class="man-txt">Activa el cálculo de IGTF. Si marcas esta casilla, los pagos en USD generan IGTF adicional.</p></div>
+
+     <p class="man-h3">🛒 Carrito de Facturación</p>
+     <div class="man-row"><p class="man-lbl">¿Cómo se llena el carrito?</p><p class="man-txt">Al abrir Facturación con una cédula activa, aparecen las consultas del día para ese cliente que aún no han sido facturadas. Se agregan al carrito con el botón <b>+ Agregar al carrito</b>.</p></div>
+     <div class="man-row"><p class="man-lbl">Servicios vs Productos</p><p class="man-txt">Cada ítem del carrito puede ser un servicio (de historia clínica) o un producto del inventario vinculado vía "Producto al carrito" en Ajustes → Servicios.</p></div>
+     <div class="man-row"><p class="man-lbl">Cantidad</p><p class="man-txt">Se puede ajustar la cantidad de cada ítem antes de emitir.</p></div>
+     <div class="man-row"><p class="man-lbl">Eliminar ítem</p><p class="man-txt">Botón × en cada fila del carrito lo saca sin afectar la consulta original.</p></div>
+
+     <p class="man-h3">👤 Datos del Receptor</p>
+     <div class="man-row"><p class="man-lbl">Consumidor Final</p><p class="man-txt">Si el cliente no entrega RIF, se emite a nombre de "CONSUMIDOR FINAL". Es el modo por defecto.</p></div>
+     <div class="man-row"><p class="man-lbl">Con RIF</p><p class="man-txt">Si el cliente entrega su RIF, activa el panel donde se llena RIF, nombre, dirección, cédula, teléfono y correo del receptor para la factura formal.</p></div>
+
+     <p class="man-h3">💳 Método de Pago</p>
+     <div class="man-row"><p class="man-lbl">USD</p><p class="man-txt">Pago en dólares en efectivo. Si eres Contribuyente Especial, genera IGTF.</p></div>
+     <div class="man-row"><p class="man-lbl">Bs VES</p><p class="man-txt">Pago en bolívares. No genera IGTF.</p></div>
+     <div class="man-row"><p class="man-lbl">Mixto</p><p class="man-txt">Parte en USD y parte en Bs. Si eres Contribuyente Especial, el IGTF aplica solo sobre la porción en USD — el sistema te avisa y pide confirmación.</p></div>
+
+     <p class="man-h3">🧮 Cálculos automáticos</p>
+     <span class="man-formula">Base imponible = precio_servicio ÷ (1 + alícuotaIVA/100)</span>
+     <span class="man-formula">IVA = precio_servicio − base_imponible</span>
+     <span class="man-formula">IGTF = (base + IVA) × alícuotaIGTF% → solo si USD y Contribuyente Especial</span>
+     <span class="man-formula">Total Bs = (base + IVA + IGTF) × tasa_BCV</span>
+     <div class="man-row" style="margin-top:8px;"><p class="man-lbl">Servicios exentos de IVA</p><p class="man-txt">Si el servicio tiene alícuota IVA = 0% en Ajustes, la base imponible es el precio completo y el IVA es $0.</p></div>
+
+     <p class="man-h3">✅ Emitir Factura</p>
+     <div class="man-row"><p class="man-lbl">Botón "Emitir Factura"</p><p class="man-txt">Muestra resumen de confirmación (receptor, base, IVA, IGTF, total Bs). Al confirmar: guarda la factura en Firestore colección <code>facturas</code>, registra en <code>auditoria_facturacion</code>, descuenta stock de productos del inventario, y marca las consultas como "facturado" para que no vuelvan a aparecer.</p></div>
+     <div class="man-row"><p class="man-lbl">Número de Factura</p><p class="man-txt">Se ingresa manualmente (el número que marca la máquina fiscal). El sistema lo guarda junto a la factura en Firestore.</p></div>
+
+     <p class="man-h3">📋 Historial de Facturas</p>
+     <div class="man-row"><p class="man-lbl">¿Qué muestra?</p><p class="man-txt">Todas las facturas emitidas del día actual. Muestra número, receptor, total, método de pago y hora.</p></div>
+     <div class="man-row"><p class="man-lbl">Filtro por cédula</p><p class="man-txt">Busca facturas específicas de un cliente por su cédula.</p></div>
+
+     <span class="man-warn">⚠️ La factura en AVIPET es un <b>respaldo digital</b>. El documento fiscal oficial es el que imprime la máquina fiscal. El número de factura debe coincidir con lo que muestra la máquina.</span>
+    </div>
+   </div>
+
    <p style="text-align:center;font-size:9px;color:#cbd5e1;margin-top:24px;padding-top:12px;border-top:1px solid #f1f5f9;">AVIPET · Manual v1.0 · 2024</p>
   </div>
  </div>
