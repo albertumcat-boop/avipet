@@ -601,10 +601,10 @@ window.mostrarDashboardVet = async () => {
       const btnDetallado = document.createElement('button');
       btnDetallado.innerHTML = '🖨️ Detallado';
       btnDetallado.style.cssText = 'padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;';
-      (function(nd, gd) {
-        btnSimple.onclick    = function() { window._imprimirReporteDoctorSimple(nd, gd); };
-        btnDetallado.onclick = function() { window._imprimirReporteDoctor(nd, gd); };
-      })(nombreDoc, g);
+      (function(nd, gd, dd) {
+        btnSimple.onclick    = function() { window._imprimirReporteDoctorSimple(nd, gd, dd); };
+        btnDetallado.onclick = function() { window._imprimirReporteDoctor(nd, gd, dd); };
+      })(nombreDoc, g, deuda);
       botonesImp.appendChild(btnSimple);
       botonesImp.appendChild(btnDetallado);
       secDoc.appendChild(botonesImp);
@@ -1853,7 +1853,7 @@ function _imprimirTiquera(htmlBody) {
   setTimeout(() => { win.print(); win.close(); }, 400);
 }
 
-window._imprimirReporteDoctorSimple = function(nombre, g) {
+window._imprimirReporteDoctorSimple = function(nombre, g, deuda) {
   const tasa      = parseFloat(window.tasaDolarHoy) || 1;
   const comision  = g.comision    || 0;
   const bruto     = g.bruto       || 0;
@@ -1889,11 +1889,12 @@ window._imprimirReporteDoctorSimple = function(nombre, g) {
   <div class="row"><span class="lbl">En Bs (${tasa.toFixed(2)})</span><span><b>${(neto*tasa).toFixed(2)}</b></span></div>
   <div class="hr"></div>
   ${servResumen ? servResumen + '<div class="hr"></div>' : ''}
-  ${fps}`;
+  ${fps}
+  ${deuda>0?`<div class="hr"></div><div class="row" style="color:#dc2626;font-weight:900;"><span class="lbl">⚠️ Deuda pendiente</span><span>$${deuda.toFixed(2)}</span></div>`:''}`;
   _imprimirTiquera(body);
 };
 
-window._imprimirReporteDoctor = function(nombre, g) {
+window._imprimirReporteDoctor = function(nombre, g, deuda) {
   const tasa       = parseFloat(window.tasaDolarHoy) || 1;
   const comision   = g.comision   || 0;
   const bruto      = g.bruto      || 0;
@@ -1944,7 +1945,8 @@ window._imprimirReporteDoctor = function(nombre, g) {
   <div class="c" style="font-size:10px;">${numAt} atención${numAt!==1?'es':''}</div>
   <div class="hr"></div>
   <div style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:3px 0;">Desglose por consulta</div>
-  ${rowsConsultas}`;
+  ${rowsConsultas}
+  ${deuda>0?`<div class="hr"></div><div class="row" style="color:#dc2626;font-weight:900;"><span class="lbl">⚠️ Deuda pendiente</span><span>$${deuda.toFixed(2)}</span></div>`:''}`;
   _imprimirTiquera(body);
 };
 
