@@ -283,12 +283,13 @@ window.guardarPeluqueriaPro = async () => {
   if (mascotas.length === 0) { Swal.fire("[!] ATENCIÓN","Agrega al menos una mascota.","warning"); return; }
 
   let precioFinal=tipoServ==='solo_unas'?precioUnas:(base+ajuste);
-  const tieneAyu1=document.getElementById('pAyudante1')?.checked,tieneAyuExt=document.getElementById('pAyudanteExtra')?.checked,extraSolo=document.getElementById('pExtraSolo')?.checked,montoAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||2;
+  const tieneAyu1=document.getElementById('pAyudante1')?.checked,tieneAyuExt=document.getElementById('pAyudanteExtra')?.checked,montoAyu1=parseFloat(document.getElementById('pMontoAyu1')?.value)||2;
+  const extPeluqueros=(window._externosPelu||[]).filter(e=>e.rol==='peluquero');
+  const extAyudantes=(window._externosPelu||[]).filter(e=>e.rol==='ayudante');
   const ADMIN_PORC=0.12;
   let pagoPelu=0,pagoAyu1=0,pagoAyuExt=0,ingresoAvipet=0;
   {const _adm=precioFinal*ADMIN_PORC,_res=precioFinal-_adm;
-  if(extraSolo){if(tieneAyu1){pagoAyuExt=(_res+2)/2;ingresoAvipet=(_res-2)/2;pagoAyu1=montoAyu1;}else{pagoAyuExt=_res/2;ingresoAvipet=_res/2;}}
-  else if(tieneAyuExt){const p=_res/3;pagoPelu=p;pagoAyuExt=p;ingresoAvipet=p;}
+  if(tieneAyuExt){const nP=1+1+extPeluqueros.length;const sh=_res/(nP+1);pagoPelu=sh;pagoAyuExt=sh;ingresoAvipet=sh;}
   else{if(tieneAyu1){pagoPelu=(_res+montoAyu1)/2;ingresoAvipet=(_res-montoAyu1)/2;pagoAyu1=montoAyu1;}else{pagoPelu=_res/2;ingresoAvipet=_res/2;}}}
 
   // PIN — calcular total real sumando precios individuales
@@ -362,21 +363,23 @@ window.guardarPeluqueriaPro = async () => {
       const precioEsta = pet.precioIndividual !== null ? pet.precioIndividual : precioFinal;
 
       // Recalcular comisiones con el precio individual
-      // Si precio < $10 se quita al ayudante (ej: corte de uñas)
       const aplicaAyu1 = tieneAyu1 && precioEsta >= 10;
       let pagoPeluEsta=0, pagoAyu1Esta=0, pagoAyuExtEsta=0, ingresoAvipetEsta=0, cargoAdminEsta=0;
+      const pagosExtEsta=[]; // {nombre, rol, pago} para cada externo
       {const _adm=precioEsta*0.12,_res=precioEsta-_adm; cargoAdminEsta=_adm;
-      if(extraSolo){
-        if(aplicaAyu1){ pagoAyuExtEsta=(_res+2)/2; ingresoAvipetEsta=(_res-2)/2; pagoAyu1Esta=2; }
-        else { pagoAyuExtEsta=_res/2; ingresoAvipetEsta=_res/2; }
-      } else if(tieneAyuExt){
-        const p=_res/3; pagoPeluEsta=p; pagoAyuExtEsta=p; ingresoAvipetEsta=p;
+      if(tieneAyuExt){
+        const nP=1+1+extPeluqueros.length; const sh=_res/(nP+1);
+        pagoPeluEsta=sh; pagoAyuExtEsta=sh; ingresoAvipetEsta=sh;
+        extPeluqueros.forEach(e=>pagosExtEsta.push({nombre:e.nombre,rol:'peluquero',pago:sh}));
       } else {
-        if(aplicaAyu1){
-          pagoPeluEsta=(_res+2)/2; ingresoAvipetEsta=(_res-2)/2; pagoAyu1Esta=2;
-        } else {
-          pagoPeluEsta=_res/2; ingresoAvipetEsta=_res/2;
-        }
+        let fixedAyu=0;
+        if(aplicaAyu1){ pagoAyu1Esta=2; fixedAyu+=2; }
+        extAyudantes.forEach(e=>{
+          const p=precioEsta>=10?2:0; pagosExtEsta.push({nombre:e.nombre,rol:'ayudante',pago:p}); fixedAyu+=p;
+        });
+        const pool=_res-fixedAyu; const nP=1+extPeluqueros.length; const sh=pool/(nP+1);
+        pagoPeluEsta=sh; ingresoAvipetEsta=sh;
+        extPeluqueros.forEach(e=>pagosExtEsta.push({nombre:e.nombre,rol:'peluquero',pago:sh}));
       }}
 
       const idFid=`${cedula}-${mascota}`.toLowerCase().replace(/\s+/g,'');
@@ -394,6 +397,7 @@ window.guardarPeluqueriaPro = async () => {
         pagoPeluquera:pagoPeluEsta,pagoAyudante1:pagoAyu1Esta,pagoAyudanteExtra:pagoAyuExtEsta,
         cargoAdmin:cargoAdminEsta,
         ingresoAvipet:esPremio?0:ingresoAvipetEsta,
+        externosPelu:pagosExtEsta,
         estatusPago:"pendiente",empleadoRegistro:nombreEmpleado,
         montoPagadoUSD:0,montoPagadoBS:0,modoPago:'',
         formaPago:_fpPelu,formaPagoLabel:_fpPeluLabel,
@@ -461,7 +465,8 @@ function _limpiarPelu(){
     .forEach(id=>{const el=document.getElementById(id);if(el)el.innerText="$ 0.00";});
   const a1=document.getElementById('pAyudante1');
   if(a1){a1.checked=true;a1.disabled=false;}
-  ['pAyudanteExtra','pExtraSolo'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+  const ayuExt=document.getElementById('pAyudanteExtra');if(ayuExt)ayuExt.checked=false;
+  window._externosPelu=[];window._renderExternosPelu();
 
   // Limpiar lista de mascotas — dejar solo la primera fila vacía
   const lista=document.getElementById('listaMascotasPelu');
@@ -995,6 +1000,12 @@ window.imprimirReciboPelu = async (idServicio) => {
       <div class="center"><p class="big">$${parseFloat(d.precioTotal||0).toFixed(2)}</p></div>
       <p class="center"><b>PAGO:</b> ${pagoStr}</p>
       <div class="sep"></div>
+      <p style="font-size:9px;font-weight:bold;">DISTRIBUCIÓN:</p>
+      <p style="font-size:9px;">Miguelina: $${parseFloat(d.pagoPeluquera||0).toFixed(2)}</p>
+      ${parseFloat(d.pagoAyudante1||0)>0?`<p style="font-size:9px;">Adriani: $${parseFloat(d.pagoAyudante1||0).toFixed(2)}</p>`:''}
+      ${parseFloat(d.pagoAyudanteExtra||0)>0?`<p style="font-size:9px;">Tridente: $${parseFloat(d.pagoAyudanteExtra||0).toFixed(2)}</p>`:''}
+      ${(d.externosPelu&&d.externosPelu.length)?d.externosPelu.map(e=>`<p style="font-size:9px;">${e.nombre} (${e.rol==='peluquero'?'Peluquero':'Ayudante'}): $${parseFloat(e.pago||0).toFixed(2)}</p>`).join(''):''}
+      <div class="sep"></div>
       <p class="center" style="font-size:9px;">¡Gracias por visitar AVIPET! 🐾</p>
       <div class="no-print" style="text-align:center;margin-top:10px;"><button onclick="window.print()" style="padding:6px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:900;">Imprimir</button></div>
       </body></html>`);
@@ -1002,73 +1013,139 @@ window.imprimirReciboPelu = async (idServicio) => {
   }catch(e){console.error(e);alert("❌ Error: "+e.message);}
 };
 
+// ─── EXTERNOS DINÁMICOS ───────────────────────────────────
+window._externosPelu = [];
+
+window.abrirModalExterno = async () => {
+  const { value, isConfirmed } = await Swal.fire({
+    title: '➕ Agregar externo',
+    html:
+      '<div style="text-align:left;">' +
+      '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre</label>' +
+      '<input id="sw_ext_nombre" type="text" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;margin-bottom:12px;" placeholder="Nombre del externo">' +
+      '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:6px;">Rol</label>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<label id="lbl_peluquero" style="flex:1;border:2px solid #bfdbfe;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#eff6ff;">' +
+          '<input type="radio" name="sw_ext_rol" value="peluquero" checked style="margin-right:4px;">'+
+          '<span style="font-size:11px;font-weight:900;color:#1d4ed8;">✂️ Peluquero</span>'+
+        '</label>' +
+        '<label id="lbl_ayudante" style="flex:1;border:2px solid #d1fae5;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#f0fdf4;">' +
+          '<input type="radio" name="sw_ext_rol" value="ayudante" style="margin-right:4px;">'+
+          '<span style="font-size:11px;font-weight:900;color:#15803d;">🤝 Ayudante</span>'+
+        '</label>' +
+      '</div>' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Agregar',
+    confirmButtonColor: '#7c3aed',
+    cancelButtonText: 'Cancelar',
+    preConfirm: () => {
+      const nombre = document.getElementById('sw_ext_nombre').value.trim().toUpperCase();
+      const rol = document.querySelector('input[name="sw_ext_rol"]:checked')?.value || 'peluquero';
+      if (!nombre) { Swal.showValidationMessage('Escribe el nombre'); return false; }
+      return { nombre, rol };
+    }
+  });
+  if (!isConfirmed || !value) return;
+  window._externosPelu.push(value);
+  window._renderExternosPelu();
+  window.recalcularTotalPelu();
+};
+
+window.quitarExterno = (idx) => {
+  window._externosPelu.splice(idx, 1);
+  window._renderExternosPelu();
+  window.recalcularTotalPelu();
+};
+
+window._renderExternosPelu = () => {
+  const lista = document.getElementById('pExternosList');
+  if (!lista) return;
+  lista.innerHTML = '';
+  (window._externosPelu || []).forEach((e, i) => {
+    const rolColor = e.rol === 'peluquero' ? '#1d4ed8' : '#15803d';
+    const rolBg    = e.rol === 'peluquero' ? '#eff6ff' : '#f0fdf4';
+    const rolLabel = e.rol === 'peluquero' ? '✂️ Peluquero' : '🤝 Ayudante';
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:'+rolBg+';border:1.5px solid '+(e.rol==='peluquero'?'#bfdbfe':'#bbf7d0')+';border-radius:10px;padding:6px 10px;';
+    div.innerHTML =
+      '<span style="font-size:9px;font-weight:900;color:'+rolColor+';text-transform:uppercase;">'+e.nombre+'</span>' +
+      '<span style="font-size:8px;color:'+rolColor+';background:white;border-radius:999px;padding:2px 7px;font-weight:700;">'+rolLabel+'</span>' +
+      '<button type="button" onclick="window.quitarExterno('+i+')" style="color:#ef4444;font-weight:900;font-size:14px;border:none;background:none;cursor:pointer;line-height:1;">×</button>';
+    lista.appendChild(div);
+  });
+};
+
 // ─── 6. RECALCULAR TOTAL ───
 window.recalcularTotalPelu = () => {
   const tipo   = document.getElementById('pTipoServicio')?.value || 'completo';
   const base   = parseFloat(document.getElementById('pTamano')?.value)  || 0;
   const ajuste = parseFloat(document.getElementById('pAjuste')?.value)  || 0;
-  const exSolo = document.getElementById('pExtraSolo')?.checked;
   const ayu1Act= document.getElementById('pAyudante1')?.checked;
   const ayuExt = document.getElementById('pAyudanteExtra')?.checked;
   const mAyu1  = parseFloat(document.getElementById('pMontoAyu1')?.value) || 0;
   let unas = parseFloat(document.getElementById('pPrecioUnas')?.value);
   if (isNaN(unas) || unas < 0) unas = 0;
 
-  // Precio base del formulario (para mascotas sin precio individual)
-  const precioBase = tipo === 'solo_unas' ? unas : (base + ajuste);
+  const extPeluqueros = (window._externosPelu||[]).filter(e=>e.rol==='peluquero');
+  const extAyudantes  = (window._externosPelu||[]).filter(e=>e.rol==='ayudante');
 
-  // Sumar precio de CADA mascota (individual si tiene, si no el base)
+  const precioBase = tipo === 'solo_unas' ? unas : (base + ajuste);
   const filas = document.querySelectorAll('.mascota-pelu-row');
-  let totalCobro = 0;
-  let totalPelu  = 0;
-  let totalA1    = 0;
-  let totalAex   = 0;
+  let totalCobro = 0, totalPelu = 0, totalA1 = 0, totalAex = 0;
+  const totalExtPelu = new Array(extPeluqueros.length).fill(0);
+  const totalExtAyu  = new Array(extAyudantes.length).fill(0);
 
   const chkA1 = document.getElementById('pAyudante1');
 
+  const _calcPorCobro = (cobro) => {
+    let pelu = 0, a1 = 0, aex = 0;
+    const extP = new Array(extPeluqueros.length).fill(0);
+    const extA = new Array(extAyudantes.length).fill(0);
+    const _adm = cobro * 0.12, _res = cobro - _adm;
+
+    if (ayuExt) {
+      if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
+      // Tridente: Miguelina + Tridente + extPeluqueros + avipet share equally
+      const nPelu = 1 + 1 + extPeluqueros.length;
+      const share = _res / (nPelu + 1);
+      pelu = share; aex = share;
+      extPeluqueros.forEach((_,i) => { extP[i] = share; });
+    } else {
+      if (chkA1) chkA1.disabled = false;
+      // Fixed ayudantes ($2/dog if precio >= 10)
+      let fixedAyu = 0;
+      if (ayu1Act && cobro >= 10) { a1 = 2; fixedAyu += 2; }
+      extAyudantes.forEach((_,i) => {
+        if (cobro >= 10) { extA[i] = 2; fixedAyu += 2; }
+      });
+      const pool = _res - fixedAyu;
+      // Peluqueros split: Miguelina + extPeluqueros + 1 avipet
+      const nPelu = 1 + extPeluqueros.length;
+      const share = pool / (nPelu + 1);
+      pelu = share;
+      extPeluqueros.forEach((_,i) => { extP[i] = share; });
+    }
+    return { pelu, a1, aex, extP, extA };
+  };
+
   filas.forEach(row => {
     const nombre = row.querySelector('.pelu-nombre')?.value.trim();
-    if (!nombre) return; // fila vacía, no contar
-
+    if (!nombre) return;
     const precioInd = parseFloat(row.querySelector('.pelu-precio')?.value) || null;
     const cobro = precioInd !== null ? precioInd : precioBase;
-
-    let pelu = 0, a1 = 0, aex = 0;
-    const _adm=cobro*0.12, _res=cobro-_adm;
-    if (exSolo) {
-      if (chkA1) chkA1.disabled = false;
-      if (ayu1Act && cobro >= 10) { aex = (_res + 2) / 2; a1 = 2; }
-      else { aex = _res / 2; }
-    } else if (ayuExt) {
-      if (chkA1) { chkA1.checked = false; chkA1.disabled = true; }
-      pelu = _res / 3;
-      aex  = _res / 3;
-    } else {
-      if (chkA1) chkA1.disabled = false;
-      if (ayu1Act && cobro >= 10) { pelu = (_res + 2) / 2; a1 = 2; }
-      else { pelu = _res / 2; }
-    }
-
-    totalCobro += cobro;
-    totalPelu  += pelu;
-    totalA1    += a1;
-    totalAex   += aex;
+    const r = _calcPorCobro(cobro);
+    totalCobro += cobro; totalPelu += r.pelu; totalA1 += r.a1; totalAex += r.aex;
+    r.extP.forEach((v,i) => { totalExtPelu[i] += v; });
+    r.extA.forEach((v,i) => { totalExtAyu[i]  += v; });
   });
 
-  // Si no hay ninguna mascota con nombre, usar el precio base solo
   if (totalCobro === 0) {
     totalCobro = precioBase;
-    const _adm0=precioBase*0.12, _res0=precioBase-_adm0;
-    if (exSolo) {
-      if (ayu1Act && precioBase >= 10) { totalAex = (_res0 + 2) / 2; totalA1 = 2; }
-      else { totalAex = _res0 / 2; }
-    } else if (ayuExt) {
-      totalPelu = _res0 / 3;
-      totalAex  = _res0 / 3;
-    } else {
-      if (ayu1Act && precioBase >= 10) { totalPelu = (_res0 + 2) / 2; totalA1 = 2; }
-      else { totalPelu = _res0 / 2; }
-    }
+    const r = _calcPorCobro(precioBase);
+    totalPelu = r.pelu; totalA1 = r.a1; totalAex = r.aex;
+    r.extP.forEach((v,i) => { totalExtPelu[i] = v; });
+    r.extA.forEach((v,i) => { totalExtAyu[i]  = v; });
   }
 
   const setT = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = `$ ${v.toFixed(2)}`; };
@@ -1076,6 +1153,23 @@ window.recalcularTotalPelu = () => {
   setT('pResPeluquera',    totalPelu);
   setT('pResAyudante1',    totalA1);
   setT('pResAyudanteExtra',totalAex);
+
+  // Tridente row visibility
+  const tridenteRow = document.getElementById('rowResTridente');
+  if (tridenteRow) tridenteRow.style.display = ayuExt ? '' : 'none';
+
+  // Externos rows en el resumen
+  const rowExt = document.getElementById('rowResExternos');
+  if (rowExt) {
+    rowExt.innerHTML = '';
+    extPeluqueros.forEach((e,i) => {
+      rowExt.innerHTML += `<div class="flex justify-between items-center"><span style="font-size:9px;font-weight:700;text-transform:uppercase;color:#1d4ed8;">${e.nombre} ✂️:</span><span style="font-size:12px;font-weight:900;color:#1d4ed8;font-family:monospace;">$ ${(totalExtPelu[i]||0).toFixed(2)}</span></div>`;
+    });
+    extAyudantes.forEach((e,i) => {
+      rowExt.innerHTML += `<div class="flex justify-between items-center"><span style="font-size:9px;font-weight:700;text-transform:uppercase;color:#15803d;">${e.nombre} 🤝:</span><span style="font-size:12px;font-weight:900;color:#15803d;font-family:monospace;">$ ${(totalExtAyu[i]||0).toFixed(2)}</span></div>`;
+    });
+  }
+
   const suma = document.getElementById('pResAyudantes');
   if (suma) suma.innerText = `$ ${(totalA1 + totalAex).toFixed(2)}`;
 };

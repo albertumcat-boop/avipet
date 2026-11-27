@@ -788,15 +788,15 @@
  <div class="bg-blue-50/50 p-4 rounded-2xl space-y-3 border border-blue-100 mt-4">
  <h4 class="text-[10px] font-black text-blue-600 uppercase text-center tracking-widest mb-1 italic"> Comisiones de Apoyo</h4>
  <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
- <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pExtraSolo" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Daniel <span class="text-slate-400 font-normal normal-case">(Ayudante Extra)</span></span></label>
- </div>
- <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
  <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pAyudante1" checked onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Adriani <span class="text-slate-400 font-normal normal-case">(Ayudante Principal)</span></span></label>
  <div class="flex items-center gap-1 font-mono text-blue-600 font-bold text-[9px]"><span class="text-slate-400 font-normal">$1×perro×2</span><input type="hidden" id="pMontoAyu1" value="2"></div>
  </div>
  <div class="flex items-center justify-between bg-white p-2 px-3 rounded-lg border border-slate-200">
- <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pAyudanteExtra" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Ayudante Extra (Tridente)</span></label>
+ <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pAyudanteExtra" onchange="_llamarFuncion('recalcularTotalPelu')" class="w-4 h-4 accent-blue-600"><span class="text-[9px] font-black text-slate-600 uppercase">Tridente <span class="text-slate-400 font-normal normal-case">(Ayudante Extra)</span></span></label>
  </div>
+ <!-- Lista dinámica de externos -->
+ <div id="pExternosList" class="space-y-1"></div>
+ <button type="button" onclick="_llamarFuncion('abrirModalExterno')" class="w-full text-[9px] font-black text-purple-600 border border-dashed border-purple-300 rounded-lg px-3 py-2 hover:bg-purple-50 uppercase tracking-wide">+ Agregar Peluquero / Ayudante Externo</button>
  </div>
  </div>
  <div class="space-y-4 flex flex-col justify-between">
@@ -808,7 +808,8 @@
  <div class="space-y-2 mt-4">
  <div class="flex justify-between items-center border-b border-slate-50 pb-1"><span class="text-[9px] font-bold uppercase text-slate-500 italic">Miguelina:</span><span id="pResPeluquera" class="text-lg font-black text-blue-600 font-mono">$ 0.00</span></div>
  <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Adriani ($1×perro×2):</span><span id="pResAyudante1" class="text-sm font-black text-blue-700 font-mono">$ 0.00</span></div>
- <div class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Daniel:</span><span id="pResAyudanteExtra" class="text-sm font-black text-slate-600 font-mono">$ 0.00</span></div>
+ <div id="rowResTridente" class="flex justify-between items-center"><span class="text-[9px] font-bold uppercase text-slate-400 italic">Tridente:</span><span id="pResAyudanteExtra" class="text-sm font-black text-slate-600 font-mono">$ 0.00</span></div>
+ <div id="rowResExternos"></div>
  <span id="pResAyudantes" class="hidden">$ 0.00</span>
  </div>
  </div>
