@@ -256,9 +256,43 @@ function _recalcularCombos() {
     }
   });
 
+  // Combos de Firestore: si todos los servicios del combo están presentes → aplicar precio combo
+  if (window._combosFirestore && window._combosFirestore.length > 0) {
+    window._combosFirestore.forEach(function(combo) {
+      const servsCombo = (combo.servicios||[]).map(s => normalizarNombre(s));
+      if (servsCombo.length < 2) return;
+      const todosPresentes = servsCombo.every(sc => nombres.some(n => n.includes(sc) || sc.includes(n)));
+      if (!todosPresentes) return;
+      // Aplicar precio combo a cada servicio participante (dividido por participantes)
+      const precioCombo = parseFloat(combo.precioCombo || 0);
+      const precioPorPart = precioCombo / servsCombo.length;
+      filas.forEach(function(fila, idx) {
+        const n = nombres[idx];
+        const td = fila.querySelector('td');
+        if (!td) return;
+        const esMiembro = servsCombo.some(sc => n.includes(sc) || sc.includes(n));
+        if (!esMiembro) return;
+        const precioActual = parseFloat(fila.getAttribute('data-precio')) || 0;
+        if (Math.abs(precioActual - precioPorPart) > 0.01) {
+          fila.setAttribute('data-precio', precioPorPart);
+          td.innerHTML = td.innerHTML.replace(/\$\d+\.\d{2}(\s*\(Combo\))?/gi, '$'+precioPorPart.toFixed(2)+' (Combo)');
+        }
+      });
+    });
+  }
+
   // Recalcular totales despues de ajustar precios
   window.calcularTodo();
 }
+
+// Cargar combos de Firestore al iniciar
+(async function() {
+  try {
+    const snap = await getDocs(collection(db, 'combos_servicios'));
+    window._combosFirestore = [];
+    snap.forEach(d => window._combosFirestore.push({ id: d.id, ...d.data() }));
+  } catch(e) { window._combosFirestore = []; }
+})();
 
 window.migrarRecetasAFirestore = async () => {
   const conf = await Swal.fire({
@@ -1436,13 +1470,15 @@ window.imprimirDocumento=async(onAfter)=>{
         const aliq = parseFloat(fila.getAttribute('data-alicuota-iva')) || 0;
         if (aliq > 0) { totalIVA += baseIva - baseIva / (1 + aliq / 100); aliqUsada = aliq; }
       });
-      // Insumos: suma de todos los costos en la tabla
+      // Insumos: suma de todos los costos en la tabla (input o texto)
       let totalIns = 0;
       document.querySelectorAll('#listaInsumosDinamica tr').forEach(tr => {
         const tds = tr.querySelectorAll('td');
         if (tds.length < 3) return;
-        const val = parseFloat(tds[2].textContent.replace(/[^0-9.]/g, '')) || 0;
-        totalIns += val;
+        const inp = tds[2].querySelector('input.i-cost');
+        const cant = parseFloat(tds[1]?.querySelector('input.i-cant')?.value || 1) || 1;
+        const costo = inp ? (parseFloat(inp.value) || 0) : (parseFloat(tds[2].textContent.replace(/[^0-9.]/g, '')) || 0);
+        totalIns += cant * costo;
       });
       // Cashea: fee sobre el monto total si forma de pago es Cashea
       const esCashea = (window._formaPagoPreset?.id || '').toLowerCase().includes('cashea');

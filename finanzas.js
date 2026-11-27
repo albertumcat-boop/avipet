@@ -576,6 +576,22 @@ window.mostrarDashboardVet = async () => {
         secDoc.insertBefore(badgeEq, secDoc.firstChild);
       }
 
+      // Descuento de deuda (si tiene deuda)
+      if (deuda > 0) {
+        const deudaDescDiv = document.createElement('div');
+        deudaDescDiv.style.cssText = 'background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px;margin-top:8px;';
+        const deudaInputId = 'inp_deuda_' + pid;
+        deudaDescDiv.innerHTML =
+          '<p style="font-size:9px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0 0 6px 0;">💳 Descontar deuda del pago</p>' +
+          '<div style="display:flex;gap:6px;align-items:center;">' +
+            '<input id="'+deudaInputId+'" type="number" min="0.01" max="'+deuda.toFixed(2)+'" step="0.01" value="'+deuda.toFixed(2)+'" ' +
+              'style="flex:1;border:1.5px solid #fca5a5;border-radius:6px;padding:5px 8px;font-size:13px;font-weight:900;color:#dc2626;text-align:center;">' +
+            '<button onclick="window._descontarDeudaDoc(\''+pid+'\',\''+nombreDoc+'\','+deuda.toFixed(2)+',\''+deudaInputId+'\')" ' +
+              'style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap;">Descontar e Imprimir</button>' +
+          '</div>';
+        secDoc.appendChild(deudaDescDiv);
+      }
+
       // Botones imprimir doctor
       const botonesImp = document.createElement('div');
       botonesImp.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;';
@@ -2014,6 +2030,85 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   listaDiv.appendChild(resumen);
   if (netoDiv) netoDiv.innerHTML = '';
 }
+
+// ─── DESCONTAR DEUDA DOCTOR VET + IMPRIMIR TICKET ───────────
+window._descontarDeudaDoc = async function(personaId, nombreDoc, totalDeuda, inputId) {
+  const inp = document.getElementById(inputId);
+  const abono = parseFloat(inp?.value) || 0;
+  if (abono <= 0) return Swal.fire({ icon:'warning', title:'Monto inválido', text:'Ingresa un monto mayor a $0' });
+  if (abono > totalDeuda + 0.001) return Swal.fire({ icon:'warning', title:'Monto mayor a la deuda', text:'Máximo: $'+totalDeuda.toFixed(2) });
+
+  const conf = await Swal.fire({
+    icon: 'question',
+    title: 'Descontar deuda',
+    html: '<p>Se descontarán <b style="color:#dc2626;">$'+abono.toFixed(2)+'</b> de la deuda de <b>'+nombreDoc+'</b>.</p>' +
+          '<p style="color:#64748b;font-size:12px;">Deuda restante: $'+(Math.max(0,totalDeuda-abono)).toFixed(2)+'</p>',
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar y descontar',
+    confirmButtonColor: '#dc2626',
+    cancelButtonText: 'Cancelar'
+  });
+  if (!conf.isConfirmed) return;
+
+  try {
+    // Actualizar docs de deuda en Firestore (igual que _abonarDeuda)
+    const snapD = await getDocs(collection(db, 'deudas'));
+    const docsD = [];
+    snapD.forEach(function(d) {
+      const r = d.data();
+      if (r.estado !== 'pagado' && (r.personaId||'').toLowerCase() === personaId) {
+        docsD.push({ id: d.id, monto: parseFloat(r.monto||0), fecha: r.fecha?.seconds||0 });
+      }
+    });
+    docsD.sort(function(a,b){ return a.fecha - b.fecha; });
+
+    const batch = writeBatch(db);
+    let restante = abono;
+    for (const d2 of docsD) {
+      if (restante <= 0) break;
+      if (restante >= d2.monto) {
+        batch.update(doc(db, 'deudas', d2.id), { estado:'pagado', montoPagado: d2.monto });
+        restante -= d2.monto;
+      } else {
+        batch.update(doc(db, 'deudas', d2.id), { monto: parseFloat((d2.monto - restante).toFixed(2)) });
+        restante = 0;
+      }
+    }
+    await batch.commit();
+
+    const deudaRestante = parseFloat((totalDeuda - abono).toFixed(2));
+    // Imprimir ticket de descuento
+    const fecha = new Date();
+    const fechaStr = fecha.getDate()+'/'+(fecha.getMonth()+1)+'/'+fecha.getFullYear();
+    const win = window.open('','_blank','width=400,height=500');
+    if (win) {
+      win.document.write(`<!doctype html><html><head><title>Descuento Deuda</title>
+      <style>body{font-family:'Segoe UI',Arial,sans-serif;padding:24px;color:#1e293b;font-size:12px;}
+      h2{font-size:15px;font-weight:900;text-transform:uppercase;margin:0 0 4px 0;color:#1d4ed8;}
+      .row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #e2e8f0;}
+      .row.total{font-weight:900;font-size:14px;border-top:2px solid #1d4ed8;border-bottom:none;margin-top:4px;color:#1d4ed8;}
+      .row.deuda{color:#dc2626;font-weight:700;}
+      .row.restante{color:#f59e0b;font-weight:700;}
+      .footer{margin-top:16px;font-size:9px;color:#94a3b8;text-align:center;border-top:1px dashed #e2e8f0;padding-top:8px;}
+      </style></head><body>
+      <h2>AVIPET — Descuento de Deuda</h2>
+      <p style="font-size:9px;color:#64748b;margin:0 0 12px 0;">${fechaStr}</p>
+      <div class="row"><span>Doctor</span><span style="font-weight:900;">${nombreDoc}</span></div>
+      <div class="row deuda"><span>Deuda total</span><span>$${totalDeuda.toFixed(2)}</span></div>
+      <div class="row" style="color:#dc2626;"><span>Monto descontado</span><span style="font-weight:900;">-$${abono.toFixed(2)}</span></div>
+      <div class="row restante"><span>Deuda restante</span><span>$${deudaRestante.toFixed(2)}</span></div>
+      <div class="footer">AVIPET · Centro Veterinario · Tienda Avícola Petare</div>
+      </body></html>`);
+      win.document.close();
+      win.onload = function() { setTimeout(function(){ win.focus(); win.print(); }, 300); };
+    }
+
+    await Swal.fire({ icon:'success', title:'Descuento registrado', html:'<p>$'+abono.toFixed(2)+' descontados de la deuda de '+nombreDoc+'.</p>'+(deudaRestante>0?'<p style="color:#dc2626;">Deuda restante: $'+deudaRestante.toFixed(2)+'</p>':'<p style="color:#16a34a;font-weight:900;">¡Deuda saldada!</p>'), confirmButtonColor:'#16a34a' });
+    window.mostrarDashboardVet && window.mostrarDashboardVet();
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};
 
 // ─── ABONAR DEUDA DESDE RESUMEN SEMANAL ──────────────────────
 window._abonarDeuda = async function(personaId, totalDeuda) {

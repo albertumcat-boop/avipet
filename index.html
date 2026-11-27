@@ -1040,6 +1040,8 @@
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">👥 Empleados</button>
  <button onclick="_llamarFuncion('cambiarSubTabConfig','general')" id="btn_subTabGeneral"
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">⚙️ General</button>
+ <button onclick="_llamarFuncion('cambiarSubTabConfig','combos')" id="btn_subTabCombos"
+ style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🔗 Combos</button>
  </div>
 
  <div id="panelClaveMaestra" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between gap-4">
@@ -1157,6 +1159,11 @@
   </div>
  </div>
 
+ <!-- Panel Combos -->
+ <div id="panel_subTabCombos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-4">
+  <p style="text-align:center;color:#94a3b8;font-size:10px;padding:8px 0;">Cargando combos...</p>
+ </div>
+
  </div>
  </section>
 
@@ -1165,10 +1172,6 @@
  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg max-w-3xl mx-auto">
  <div class="flex justify-between items-center mb-4">
  <h2 class="text-xl font-black text-blue-900 uppercase"> Pacientes en Espera</h2>
- <button onclick="window.abrirFichaReferido()"
-  class="bg-purple-600 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-purple-700 transition-all shadow">
-  🔗 Registrar Referido
- </button>
  </div>
  <div id="listaEspera" class="max-h-[70vh] overflow-y-auto text-[11px]"></div>
  </div>

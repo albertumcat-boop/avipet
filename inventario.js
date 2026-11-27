@@ -468,7 +468,7 @@ try{Swal.fire({title:'Inicializando...',allowOutsideClick:false,didOpen:()=>Swal
 
 // CAMBIAR SUB-TAB CONFIG 
 window.cambiarSubTabConfig = (tab) => {
-  ['servicios','insumos','medicamentos','seguridad','tarifa','compras','empleados','general'].forEach(t => {
+  ['servicios','insumos','medicamentos','seguridad','tarifa','compras','empleados','general','combos'].forEach(t => {
     const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
     const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
     const activo = t === tab;
@@ -494,6 +494,7 @@ window.cambiarSubTabConfig = (tab) => {
   if (tab === 'compras')      { if(typeof window.cargarRegistroCompras==='function') window.cargarRegistroCompras(); else _llamarFuncion('cargarRegistroCompras'); }
   if (tab === 'empleados')   { if(typeof window.cargarEmpleadosTelefono==='function') window.cargarEmpleadosTelefono(); else _llamarFuncion('cargarEmpleadosTelefono'); }
   if (tab === 'general')     { window._cargarPanelGeneral(); }
+  if (tab === 'combos')      { window._cargarPanelCombos(); }
 };
 
 window._cargarPanelGeneral = async function() {
@@ -614,6 +615,120 @@ window._asociarInsumoAServicios = async (nombre, costo) => {
   if (cnt>0) await Swal.fire({icon:'success',title:'Listo',html:'<b>'+nombre+'</b> agregado a <b>'+cnt+'</b> servicio(s)',timer:2000,showConfirmButton:false});
  } catch(e){console.warn('Error asociando insumo:',e);}
 };
+// ─── PANEL COMBOS ────────────────────────────────────────────
+window._cargarPanelCombos = async function() {
+  const panel = document.getElementById('panel_subTabCombos');
+  if (!panel) return;
+  panel.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:11px;padding:12px;">Cargando combos...</p>';
+  try {
+    const snap = await getDocs(collection(db, 'combos_servicios'));
+    const combos = [];
+    snap.forEach(d => combos.push({ id: d.id, ...d.data() }));
+
+    let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+      '<p style="font-size:11px;font-weight:900;color:#1d4ed8;text-transform:uppercase;margin:0;">Combos configurados ('+combos.length+')</p>' +
+      '<button onclick="window._nuevoCombo()" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:10px;font-weight:900;cursor:pointer;">+ Nuevo combo</button>' +
+    '</div>';
+
+    if (combos.length === 0) {
+      html += '<p style="text-align:center;color:#94a3b8;font-size:10px;padding:16px;">No hay combos configurados.<br>Crea uno con el botón de arriba.</p>';
+    } else {
+      combos.forEach(function(c) {
+        const servs = (c.servicios||[]).join(', ');
+        html += '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;margin-bottom:8px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">' +
+            '<div>' +
+              '<p style="font-size:11px;font-weight:900;color:#1e293b;margin:0;text-transform:uppercase;">'+c.nombre+'</p>' +
+              '<p style="font-size:9px;color:#64748b;margin:2px 0 0 0;">Servicios: '+servs+'</p>' +
+            '</div>' +
+            '<div style="text-align:right;display:flex;gap:6px;align-items:center;">' +
+              '<p style="font-size:16px;font-weight:900;color:#059669;margin:0;">$'+parseFloat(c.precioCombo||0).toFixed(2)+'</p>' +
+              '<button onclick="window._editarCombo(\''+c.id+'\')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:900;cursor:pointer;">Editar</button>' +
+              '<button onclick="window._eliminarCombo(\''+c.id+'\',\''+c.nombre+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:900;cursor:pointer;">Eliminar</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+    panel.innerHTML = html;
+  } catch(e) {
+    panel.innerHTML = '<p style="color:#dc2626;font-size:10px;">Error: '+e.message+'</p>';
+  }
+};
+
+window._nuevoCombo = async function(existente) {
+  // Cargar lista de servicios para el selector
+  const snapS = await getDocs(collection(db, 'servicios_maestro'));
+  const listaServicios = [];
+  snapS.forEach(d => listaServicios.push(d.id));
+  listaServicios.sort();
+
+  const yaSeleccionados = existente?.servicios || [];
+  const opciones = listaServicios.map(s =>
+    `<option value="${s}" ${yaSeleccionados.includes(s)?'selected':''}>${s}</option>`
+  ).join('');
+
+  const { value, isConfirmed } = await Swal.fire({
+    title: existente ? 'Editar combo' : 'Nuevo combo',
+    width: 500,
+    html:
+      '<div style="text-align:left;">' +
+      '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre del combo</label>' +
+      '<input id="sw_combo_nombre" type="text" value="'+(existente?.nombre||'')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;margin-bottom:12px;" placeholder="Ej: PACK LAB COMPLETO">' +
+      '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Precio del combo ($)</label>' +
+      '<input id="sw_combo_precio" type="number" step="0.50" min="0" value="'+(existente?.precioCombo||'')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:16px;font-weight:900;outline:none;margin-bottom:12px;" placeholder="0.00">' +
+      '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Servicios del combo (selecciona los que aplican)</label>' +
+      '<select id="sw_combo_servs" multiple style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:11px;height:150px;outline:none;">'+opciones+'</select>' +
+      '<p style="font-size:9px;color:#94a3b8;margin:4px 0 0 0;">Mantén Ctrl/Cmd para seleccionar varios.</p>' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: existente ? 'Guardar cambios' : 'Crear combo',
+    confirmButtonColor: '#1d4ed8',
+    cancelButtonText: 'Cancelar',
+    preConfirm: () => {
+      const nombre = document.getElementById('sw_combo_nombre').value.trim().toUpperCase();
+      const precio = parseFloat(document.getElementById('sw_combo_precio').value);
+      const selects = Array.from(document.getElementById('sw_combo_servs').selectedOptions).map(o => o.value);
+      if (!nombre) { Swal.showValidationMessage('Escribe un nombre para el combo'); return false; }
+      if (!precio || precio <= 0) { Swal.showValidationMessage('Ingresa un precio mayor a $0'); return false; }
+      if (selects.length < 2) { Swal.showValidationMessage('Selecciona al menos 2 servicios'); return false; }
+      return { nombre, precio, selects };
+    }
+  });
+  if (!isConfirmed || !value) return;
+
+  try {
+    const datos = { nombre: value.nombre, precioCombo: value.precio, servicios: value.selects };
+    if (existente?.id) {
+      await setDoc(doc(db, 'combos_servicios', existente.id), datos, { merge: true });
+    } else {
+      await addDoc(collection(db, 'combos_servicios'), datos);
+    }
+    Swal.fire({ icon:'success', title:'Combo guardado', timer:1500, showConfirmButton:false });
+    window._cargarPanelCombos();
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'Error', text: e.message });
+  }
+};
+
+window._editarCombo = async function(id) {
+  const snap = await getDoc(doc(db, 'combos_servicios', id));
+  if (!snap.exists()) return;
+  window._nuevoCombo({ id, ...snap.data() });
+};
+
+window._eliminarCombo = async function(id, nombre) {
+  const conf = await Swal.fire({
+    icon:'warning', title:'¿Eliminar combo?',
+    html:'<p>Se eliminará el combo <b>'+nombre+'</b>. Esta acción no se puede deshacer.</p>',
+    showCancelButton:true, confirmButtonText:'Eliminar', confirmButtonColor:'#dc2626', cancelButtonText:'Cancelar'
+  });
+  if (!conf.isConfirmed) return;
+  await deleteDoc(doc(db, 'combos_servicios', id));
+  Swal.fire({ icon:'success', title:'Combo eliminado', timer:1200, showConfirmButton:false });
+  window._cargarPanelCombos();
+};
+
 console.log(" inventario.js v13 -- writeBatch importado estaticamente, repararCategorias fix");
 
 // =========================================================
