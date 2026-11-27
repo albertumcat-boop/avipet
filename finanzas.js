@@ -373,7 +373,8 @@ window.mostrarDashboardVet = async () => {
       g.casheaFeeDoc += cCashea;
       if (esCashea) { const feeTotal = v * feeCashea; g.casheaFee += feeTotal; casheaFeeTotal += feeTotal; }
       g.consultasDetalle.push({ fecha:c.fecha||c.fechaRegistro||'', paciente:c.nombreMascota||c.paciente||'', servicios:detServs,
-        comision:cComision, iva:cIva, cashea:cCashea, neto:Math.max(0,cComision-cIva-cCashea), esCashea, fp });
+        comision:cComision, iva:cIva, cashea:cCashea, neto:Math.max(0,cComision-cIva-cCashea), esCashea, fp,
+        hematologia: c.cirugiaEquipo?.hematologia || false });
 
       // Distribuir cirugías en equipo a los doctores ayudantes
       if (c.cirugiaEquipo) {
@@ -1936,7 +1937,7 @@ window._imprimirReporteDoctor = function(nombre, g, deuda, deduccion) {
     c.servicios.forEach(function(s) {
       rowsConsultas += `<div style="margin:1px 0 0 4px;font-size:9px;font-weight:700;">`;
       rowsConsultas += `<div style="display:flex;justify-content:space-between;"><span>${s.nombre}</span><span>Precio $${s.precio.toFixed(2)}</span></div>`;
-      if (s.insumos > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#92400e;"><span>  Insumos</span><span>−$${s.insumos.toFixed(2)}</span></div>`;
+      if (s.insumos > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#92400e;"><span>  Insumos${c.hematologia?' (inc. Hematología $10)':''}</span><span>−$${s.insumos.toFixed(2)}</span></div>`;
       rowsConsultas += `<div style="display:flex;justify-content:space-between;"><span>  ${s.porcDoc.toFixed(0)}% doc → Bruto</span><span>$${s.bruto.toFixed(2)}</span></div>`;
       if (s.iva > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#dc2626;"><span>  IVA ${s.aliq}% (base $${s.baseIva.toFixed(2)})</span><span>−$${s.iva.toFixed(2)}</span></div>`;
       if (s.cashea > 0) rowsConsultas += `<div style="display:flex;justify-content:space-between;color:#7c3aed;"><span>  Fee Cashea ${feePct}%</span><span>−$${s.cashea.toFixed(2)}</span></div>`;

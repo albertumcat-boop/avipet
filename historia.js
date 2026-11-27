@@ -433,7 +433,8 @@ window.insertarServicio = async (v) => {
       const partes = nDoc + 1;
       const porcDoc = partes > 0 ? 100 / partes : 0;
       const ins15 = precio * 0.15;
-      let insAdicTotal = 0;
+      const hemaCheck = document.getElementById('sw_cir_hema')?.checked ? 10 : 0;
+      let insAdicTotal = hemaCheck;
       document.querySelectorAll('.sw_cir_ins_row').forEach(row => {
         insAdicTotal += parseFloat(row.querySelector('.sw_cir_ins_monto')?.value) || 0;
       });
@@ -463,7 +464,7 @@ window.insertarServicio = async (v) => {
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;"><span>Precio cirugía</span><span style="font-weight:900;">$${precio.toFixed(2)}</span></div>` +
             (cargosTotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#059669;"><span>+ Cargos adicionales</span><span style="font-weight:900;">+$${cargosTotal.toFixed(2)}</span></div>` : '') +
             (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA (${aliq}%)</span><span style="font-weight:900;">−$${ivaTotal.toFixed(2)}</span></div>` : '') +
-            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Insumos (15%${insAdicTotal > 0 ? ' + $'+insAdicTotal.toFixed(2) : ''})</span><span style="font-weight:900;">−$${insTotal.toFixed(2)}</span></div>` +
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Insumos (15%${hemaCheck>0?' + Hematología $10':''}${insAdicTotal-hemaCheck > 0 ? ' + $'+(insAdicTotal-hemaCheck).toFixed(2) : ''})</span><span style="font-weight:900;">−$${insTotal.toFixed(2)}</span></div>` +
             (usaCashea ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#7c3aed;"><span>− Cashea (${(feeCashea*100).toFixed(1)}%)</span><span style="font-weight:900;">−$${casheaTotal.toFixed(2)}</span></div>` : '') +
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;font-weight:700;color:#1e293b;border-top:1px solid #e2e8f0;margin-top:3px;"><span>Base neta a repartir</span><span>$${baseNeta.toFixed(2)}</span></div>` +
             `<div style="font-size:10px;color:#64748b;padding:4px 0 2px 0;font-weight:700;">${partes} partes (${porcDoc.toFixed(1)}% c/u):</div>` +
@@ -529,6 +530,10 @@ window.insertarServicio = async (v) => {
               '<span style="font-size:11px;font-weight:700;color:#92400e;">🔒 Insumos base 15%</span>' +
               '<span id="sw_cir_ins15_val" style="font-size:11px;font-weight:900;color:#92400e;">$0.00</span>' +
             '</div>' +
+            '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fef3c7;border:2px solid #fde68a;border-radius:8px;margin-bottom:6px;cursor:pointer;">' +
+              '<input type="checkbox" id="sw_cir_hema" onchange="_recalcCirModal()" style="width:14px;height:14px;accent-color:#92400e;cursor:pointer;">' +
+              '<span style="font-size:11px;font-weight:900;color:#92400e;">🩸 Hematología — +$10.00</span>' +
+            '</label>' +
             '<div id="sw_cir_ins_rows"></div>' +
             '<button type="button" onclick="_agregarInsCir()" style="font-size:10px;color:#92400e;font-weight:700;background:none;border:none;cursor:pointer;padding:4px 0;margin-top:2px;">+ Agregar insumo adicional</button>' +
           '</div>' +
@@ -609,7 +614,9 @@ window.insertarServicio = async (v) => {
         });
         const usaCashea = document.getElementById('sw_cir_cashea')?.checked || false;
         const feeCashea = usaCashea ? (parseFloat(window._feeCashea) || 0.035) : 0;
-        return { tipo, precio, alicuotaIVA, doctoresEquipo, insumosAdicionales, cargosAdicionales, usaCashea, feeCashea };
+        const hematologia = document.getElementById('sw_cir_hema')?.checked || false;
+        if (hematologia) insumosAdicionales.unshift({ nombre: 'Hematología', costo: 10 });
+        return { tipo, precio, alicuotaIVA, doctoresEquipo, insumosAdicionales, cargosAdicionales, usaCashea, feeCashea, hematologia };
       }
     });
     if (resCir.isDismissed) { document.getElementById('selectorServicios').value = ''; window._cirugiaEquipo = null; return; }
@@ -648,6 +655,7 @@ window.insertarServicio = async (v) => {
         usaCashea: _cirVal.usaCashea,
         casheaTotal: _casheaTotal,
         insumos15: _ins15,
+        hematologia: _cirVal.hematologia || false,
         insumosAdicionales: _cirVal.insumosAdicionales,
         cargosAdicionales: _cirVal.cargosAdicionales,
         costoInsumosTotal: _insTotal,
