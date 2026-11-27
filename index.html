@@ -1442,8 +1442,9 @@
       <tr><td>Monto Base IVA ($)</td><td>Monto del precio sobre el cual se calcula el IVA. Normalmente igual al precio de venta, pero si el servicio está parcialmente exento, se puede ajustar.</td><td>30.00</td></tr>
       <tr><td>Alícuota IVA (%)</td><td>Porcentaje de IVA del servicio. 0 = exento, 8 = reducido, 16 = general.</td><td>16</td></tr>
       <tr><td>Incluye 15% insumos (cirugía)</td><td>Casilla para marcar que este servicio descuenta el 15% del precio como insumos (aplica a cirugías). Fuera de la cirugía personalizada, esta lógica se gestiona en el modal de cirugía.</td><td>✅ para cirugías</td></tr>
-      <tr><td>Producto vinculado al carrito</td><td>Vincula este servicio a un producto del inventario para el módulo de facturación fiscal. No afecta Finanzas ni comisiones.</td><td>Solo para facturación</td></tr>
-      <tr><td>Precio Factura ($)</td><td>Precio del servicio tal como aparece en la factura fiscal (puede diferir del precio de venta normal).</td><td>30.00</td></tr>
+      <tr><td>Producto vinculado al carrito</td><td>Busca un producto del inventario y lo vincula a este servicio. Cuando se factura la consulta, ese producto aparece como línea separada en el carrito de Facturación (útil para facturar el insumo físico, no el servicio). No afecta Finanzas ni comisiones.</td><td>Vial Sextuple → se agrega junto a la vacuna</td></tr>
+      <tr><td>Precio Producto ($)</td><td>Precio del producto vinculado tal como aparece en la factura. Se puede dejar 0 para que herede el precio del inventario.</td><td>8.50</td></tr>
+      <tr><td>Precio Servicio en Factura ($)</td><td>Precio del servicio tal como aparece en la factura fiscal. Puede diferir del precio de Historia Clínica. "Igual al precio arriba" usa el precio de venta normal. Si el SENIAT exige un precio distinto al cliente, se ajusta aquí sin tocar Historia Clínica.</td><td>Dejar "Igual al precio arriba" en la mayoría de los casos</td></tr>
       <tr><td>Insumos del Servicio</td><td>Lista de insumos que consume este servicio. Nombre + costo. Pueden marcarse como "bloqueados" (no editables desde el modal de historia clínica).</td><td>Crema $0.50</td></tr>
      </table>
 
