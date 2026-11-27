@@ -664,22 +664,27 @@ window._nuevoCombo = async function(existente) {
   listaServicios.sort();
 
   const yaSeleccionados = existente?.servicios || [];
-  const opciones = listaServicios.map(s =>
-    `<option value="${s}" ${yaSeleccionados.includes(s)?'selected':''}>${s}</option>`
-  ).join('');
+  // Checkboxes en lugar de <select multiple> (Swal intercepta teclado y rompe multi-select)
+  const checkboxes = listaServicios.map(s => {
+    const chk = yaSeleccionados.includes(s) ? 'checked' : '';
+    const id = 'chk_combo_' + s.replace(/[^a-zA-Z0-9]/g,'_');
+    return `<label style="display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;color:#1e293b;" `+
+           `onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background=''">`+
+           `<input type="checkbox" id="${id}" value="${s}" ${chk} style="width:14px;height:14px;accent-color:#1d4ed8;cursor:pointer;">`+
+           `${s}</label>`;
+  }).join('');
 
   const { value, isConfirmed } = await Swal.fire({
     title: existente ? 'Editar combo' : 'Nuevo combo',
-    width: 500,
+    width: 540,
     html:
       '<div style="text-align:left;">' +
       '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre del combo</label>' +
       '<input id="sw_combo_nombre" type="text" value="'+(existente?.nombre||'')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;text-transform:uppercase;outline:none;margin-bottom:12px;" placeholder="Ej: PACK LAB COMPLETO">' +
       '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Precio del combo ($)</label>' +
       '<input id="sw_combo_precio" type="number" step="0.50" min="0" value="'+(existente?.precioCombo||'')+'" style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:16px;font-weight:900;outline:none;margin-bottom:12px;" placeholder="0.00">' +
-      '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:4px;">Servicios del combo (selecciona los que aplican)</label>' +
-      '<select id="sw_combo_servs" multiple style="width:100%;border:2px solid #e2e8f0;border-radius:8px;padding:6px;font-size:11px;height:150px;outline:none;">'+opciones+'</select>' +
-      '<p style="font-size:9px;color:#94a3b8;margin:4px 0 0 0;">Mantén Ctrl/Cmd para seleccionar varios.</p>' +
+      '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:6px;">Servicios del combo</label>' +
+      '<div id="sw_combo_checks" style="max-height:200px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:8px;padding:6px;">'+checkboxes+'</div>' +
       '</div>',
     showCancelButton: true,
     confirmButtonText: existente ? 'Guardar cambios' : 'Crear combo',
@@ -688,7 +693,7 @@ window._nuevoCombo = async function(existente) {
     preConfirm: () => {
       const nombre = document.getElementById('sw_combo_nombre').value.trim().toUpperCase();
       const precio = parseFloat(document.getElementById('sw_combo_precio').value);
-      const selects = Array.from(document.getElementById('sw_combo_servs').selectedOptions).map(o => o.value);
+      const selects = Array.from(document.querySelectorAll('#sw_combo_checks input[type=checkbox]:checked')).map(c => c.value);
       if (!nombre) { Swal.showValidationMessage('Escribe un nombre para el combo'); return false; }
       if (!precio || precio <= 0) { Swal.showValidationMessage('Ingresa un precio mayor a $0'); return false; }
       if (selects.length < 2) { Swal.showValidationMessage('Selecciona al menos 2 servicios'); return false; }
