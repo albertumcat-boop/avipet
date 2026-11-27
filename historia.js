@@ -426,8 +426,6 @@ window.insertarServicio = async (v) => {
     const _recalcCir = () => {
       const precio = parseFloat(document.getElementById('sw_precioCirugia')?.value) || 0;
       const aliq = parseFloat(document.getElementById('sw_cir_iva')?.value) || 0;
-      const usaCashea = document.getElementById('sw_cir_cashea')?.checked;
-      const feeCashea = usaCashea ? (parseFloat(window._feeCashea) || 0.035) : 0;
       const checks = document.querySelectorAll('.sw_cir_doc_check:checked');
       const nDoc = checks.length;
       const partes = nDoc + 1;
@@ -445,9 +443,8 @@ window.insertarServicio = async (v) => {
       const insTotal = ins15 + insAdicTotal;
       const precioConCargos = precio + cargosTotal;
       const ivaTotal = aliq > 0 ? (precioConCargos - precioConCargos / (1 + aliq / 100)) : 0;
-      const casheaTotal = usaCashea ? precioConCargos * feeCashea : 0;
-      // Base neta = precio − IVA − insumos − Cashea
-      const baseNeta = precioConCargos - ivaTotal - insTotal - casheaTotal;
+      // Cashea se determina al guardar según formaPago — no se calcula aquí
+      const baseNeta = precioConCargos - ivaTotal - insTotal;
       const netoParticipante = baseNeta * porcDoc / 100;
       const ins15El = document.getElementById('sw_cir_ins15_val');
       if (ins15El) ins15El.textContent = '$' + ins15.toFixed(2);
@@ -465,7 +462,6 @@ window.insertarServicio = async (v) => {
             (cargosTotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#059669;"><span>+ Cargos adicionales</span><span style="font-weight:900;">+$${cargosTotal.toFixed(2)}</span></div>` : '') +
             (aliq > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− IVA (${aliq}%)</span><span style="font-weight:900;">−$${ivaTotal.toFixed(2)}</span></div>` : '') +
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#dc2626;"><span>− Insumos (15%${hemaCheck>0?' + Hematología $10':''}${insAdicTotal-hemaCheck > 0 ? ' + $'+(insAdicTotal-hemaCheck).toFixed(2) : ''})</span><span style="font-weight:900;">−$${insTotal.toFixed(2)}</span></div>` +
-            (usaCashea ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#7c3aed;"><span>− Cashea (${(feeCashea*100).toFixed(1)}%)</span><span style="font-weight:900;">−$${casheaTotal.toFixed(2)}</span></div>` : '') +
             `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;font-weight:700;color:#1e293b;border-top:1px solid #e2e8f0;margin-top:3px;"><span>Base neta a repartir</span><span>$${baseNeta.toFixed(2)}</span></div>` +
             `<div style="font-size:10px;color:#64748b;padding:4px 0 2px 0;font-weight:700;">${partes} partes (${porcDoc.toFixed(1)}% c/u):</div>` +
             filasPartic +
@@ -510,10 +506,6 @@ window.insertarServicio = async (v) => {
               '</select>' +
             '</div>' +
           '</div>' +
-          '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#faf5ff;border:2px solid #e9d5ff;border-radius:10px;cursor:pointer;margin-bottom:14px;">' +
-            '<input type="checkbox" id="sw_cir_cashea" onchange="_recalcCirModal()" style="width:15px;height:15px;accent-color:#7c3aed;">' +
-            '<span style="font-size:11px;font-weight:900;color:#7c3aed;">🟣 Pago por Cashea — descontar comisión (<span id="sw_cir_cashea_pct">' + ((parseFloat(window._feeCashea)||0.035)*100).toFixed(1) + '%</span>)</span>' +
-          '</label>' +
           '<div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-bottom:8px;">' +
             '<label style="font-size:10px;font-weight:900;color:#475569;text-transform:uppercase;display:block;margin-bottom:8px;">Equipo quirúrgico</label>' +
             _htmlDocsFijos +
@@ -612,11 +604,9 @@ window.insertarServicio = async (v) => {
           const monto = parseFloat(row.querySelector('.sw_cir_cargo_monto')?.value) || 0;
           if (desc || monto > 0) cargosAdicionales.push({ nombre: desc || 'Cargo adicional', monto });
         });
-        const usaCashea = document.getElementById('sw_cir_cashea')?.checked || false;
-        const feeCashea = usaCashea ? (parseFloat(window._feeCashea) || 0.035) : 0;
         const hematologia = document.getElementById('sw_cir_hema')?.checked || false;
         if (hematologia) insumosAdicionales.unshift({ nombre: 'Hematología', costo: 10 });
-        return { tipo, precio, alicuotaIVA, doctoresEquipo, insumosAdicionales, cargosAdicionales, usaCashea, feeCashea, hematologia };
+        return { tipo, precio, alicuotaIVA, doctoresEquipo, insumosAdicionales, cargosAdicionales, hematologia };
       }
     });
     if (resCir.isDismissed) { document.getElementById('selectorServicios').value = ''; window._cirugiaEquipo = null; return; }
@@ -633,8 +623,8 @@ window.insertarServicio = async (v) => {
     const _insAdicTotal = _cirVal.insumosAdicionales.reduce((s, i) => s + i.costo, 0);
     const _insTotal = parseFloat((_ins15 + _insAdicTotal).toFixed(2));
     const _ivaTotal = _aliq > 0 ? parseFloat((precioFinal - precioFinal / (1 + _aliq / 100)).toFixed(2)) : 0;
-    const _casheaTotal = _cirVal.usaCashea ? parseFloat((precioFinal * (_cirVal.feeCashea || 0.035)).toFixed(2)) : 0;
-    const _baseNeta = parseFloat((precioFinal - _ivaTotal - _insTotal - _casheaTotal).toFixed(2));
+    // Cashea se aplica según formaPago al guardar, no aquí
+    const _baseNeta = parseFloat((precioFinal - _ivaTotal - _insTotal).toFixed(2));
     const _netoPorParticipante = parseFloat((_baseNeta / _partes).toFixed(2));
     // Globals para la fila del servicio
     window._servicioAlicuotaIVA = _aliq;
@@ -652,8 +642,6 @@ window.insertarServicio = async (v) => {
         precioBase: _precioBase,
         alicuotaIVA: _aliq,
         ivaTotal: _ivaTotal,
-        usaCashea: _cirVal.usaCashea,
-        casheaTotal: _casheaTotal,
         insumos15: _ins15,
         hematologia: _cirVal.hematologia || false,
         insumosAdicionales: _cirVal.insumosAdicionales,
