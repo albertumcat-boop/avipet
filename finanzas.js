@@ -601,10 +601,10 @@ window.mostrarDashboardVet = async () => {
       const btnDetallado = document.createElement('button');
       btnDetallado.innerHTML = '🖨️ Detallado';
       btnDetallado.style.cssText = 'padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;';
-      (function(nd, gd, dd) {
-        btnSimple.onclick    = function() { window._imprimirReporteDoctorSimple(nd, gd, dd); };
-        btnDetallado.onclick = function() { window._imprimirReporteDoctor(nd, gd, dd); };
-      })(nombreDoc, g, deuda);
+      (function(nd, gd, dd, dc) {
+        btnSimple.onclick    = function() { window._imprimirReporteDoctorSimple(nd, gd, dd, dc); };
+        btnDetallado.onclick = function() { window._imprimirReporteDoctor(nd, gd, dd, dc); };
+      })(nombreDoc, g, deuda, (window._deduccionDoc && window._deduccionDoc[pid]) || 0);
       botonesImp.appendChild(btnSimple);
       botonesImp.appendChild(btnDetallado);
       secDoc.appendChild(botonesImp);
@@ -1853,7 +1853,7 @@ function _imprimirTiquera(htmlBody) {
   setTimeout(() => { win.print(); win.close(); }, 400);
 }
 
-window._imprimirReporteDoctorSimple = function(nombre, g, deuda) {
+window._imprimirReporteDoctorSimple = function(nombre, g, deuda, deduccion) {
   const tasa      = parseFloat(window.tasaDolarHoy) || 1;
   const comision  = g.comision    || 0;
   const bruto     = g.bruto       || 0;
@@ -1890,11 +1890,13 @@ window._imprimirReporteDoctorSimple = function(nombre, g, deuda) {
   <div class="hr"></div>
   ${servResumen ? servResumen + '<div class="hr"></div>' : ''}
   ${fps}
-  ${deuda>0?`<div class="hr"></div><div class="row" style="color:#dc2626;font-weight:900;"><span class="lbl">⚠️ Deuda pendiente</span><span>$${deuda.toFixed(2)}</span></div>`:''}`;
+  ${(deduccion>0||deuda>0)?`<div class="hr"></div>`:''}
+  ${deduccion>0?`<div class="row" style="color:#dc2626;font-weight:900;"><span class="lbl">Descuento deuda</span><span>-$${deduccion.toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:13px;font-weight:900;">A COBRAR</span><span style="font-size:16px;font-weight:900;">$${Math.max(0,neto-deduccion).toFixed(2)}</span></div>`:''}
+  ${deuda>0?`<div class="row" style="color:#dc2626;font-weight:700;"><span class="lbl">⚠️ Deuda pendiente</span><span>$${deuda.toFixed(2)}</span></div>`:''}`;
   _imprimirTiquera(body);
 };
 
-window._imprimirReporteDoctor = function(nombre, g, deuda) {
+window._imprimirReporteDoctor = function(nombre, g, deuda, deduccion) {
   const tasa       = parseFloat(window.tasaDolarHoy) || 1;
   const comision   = g.comision   || 0;
   const bruto      = g.bruto      || 0;
@@ -1946,7 +1948,9 @@ window._imprimirReporteDoctor = function(nombre, g, deuda) {
   <div class="hr"></div>
   <div style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;margin:3px 0;">Desglose por consulta</div>
   ${rowsConsultas}
-  ${deuda>0?`<div class="hr"></div><div class="row" style="color:#dc2626;font-weight:900;"><span class="lbl">⚠️ Deuda pendiente</span><span>$${deuda.toFixed(2)}</span></div>`:''}`;
+  ${(deduccion>0||deuda>0)?`<div class="hr"></div>`:''}
+  ${deduccion>0?`<div class="row" style="color:#dc2626;font-weight:900;"><span class="lbl">Descuento deuda</span><span>-$${deduccion.toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:13px;font-weight:900;">A COBRAR</span><span style="font-size:16px;font-weight:900;">$${Math.max(0,neto-deduccion).toFixed(2)}</span></div>`:''}
+  ${deuda>0?`<div class="row" style="color:#dc2626;font-weight:700;"><span class="lbl">⚠️ Deuda pendiente</span><span>$${deuda.toFixed(2)}</span></div>`:''}`;
   _imprimirTiquera(body);
 };
 
@@ -2077,6 +2081,10 @@ window._descontarDeudaDoc = async function(personaId, nombreDoc, totalDeuda, inp
       }
     }
     await batch.commit();
+
+    // Guardar deducción para que el ticket principal la muestre
+    window._deduccionDoc = window._deduccionDoc || {};
+    window._deduccionDoc[personaId] = (window._deduccionDoc[personaId] || 0) + abono;
 
     const deudaRestante = parseFloat((totalDeuda - abono).toFixed(2));
     // Imprimir ticket de descuento
