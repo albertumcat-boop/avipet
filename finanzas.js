@@ -1405,8 +1405,35 @@ window.pagarRegistroPeluFinanzas = async (idDoc, paciente, precio) => {
   if (!modoPago) return;
 
   const p = parseFloat(precio);
-  const montoPagadoUSD = (modoPago === 'bs' || modoPago === 'cashea') ? 0 : modoPago === 'mixto' ? p / 2 : p;
-  const montoPagadoBS  = modoPago === 'usd'   ? 0     : modoPago === 'mixto' ? p / 2 : p;
+  let montoPagadoUSD, montoPagadoBS;
+
+  if (modoPago === 'mixto') {
+    const { value: montosMixto } = await Swal.fire({
+      title: '🔀 Pago Mixto',
+      html:
+        '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Total: <b>$' + p.toFixed(2) + '</b></p>' +
+        '<label style="font-size:10px;font-weight:700;">💵 Monto en Dólares (USD)</label>' +
+        '<input id="_swal_usd_fin" type="number" min="0" step="0.01" placeholder="0.00" class="swal2-input" style="margin:4px 0 10px 0;">' +
+        '<label style="font-size:10px;font-weight:700;">🪙 Monto en Bolívares (equivalente en $)</label>' +
+        '<input id="_swal_bs_fin" type="number" min="0" step="0.01" placeholder="0.00" class="swal2-input" style="margin:4px 0;">',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#0f766e',
+      preConfirm: () => {
+        const u = parseFloat(document.getElementById('_swal_usd_fin')?.value) || 0;
+        const b = parseFloat(document.getElementById('_swal_bs_fin')?.value)  || 0;
+        if (u <= 0 && b <= 0) { Swal.showValidationMessage('Ingresa al menos un monto.'); return false; }
+        return { usd: u, bs: b };
+      }
+    });
+    if (!montosMixto) return;
+    montoPagadoUSD = montosMixto.usd;
+    montoPagadoBS  = montosMixto.bs;
+  } else {
+    montoPagadoUSD = (modoPago === 'bs') ? 0 : p;
+    montoPagadoBS  = (modoPago === 'usd') ? 0 : p;
+  }
 
   try {
     await updateDoc(doc(db, 'servicios_estetica', idDoc), {
