@@ -468,7 +468,7 @@ try{Swal.fire({title:'Inicializando...',allowOutsideClick:false,didOpen:()=>Swal
 
 // CAMBIAR SUB-TAB CONFIG 
 window.cambiarSubTabConfig = (tab) => {
-  ['servicios','insumos','medicamentos','seguridad','tarifa','compras','empleados','general','combos'].forEach(t => {
+  ['servicios','insumos','medicamentos','seguridad','tarifa','compras','empleados','general','combos','manual'].forEach(t => {
     const panel = document.getElementById('panel_subTab' + t.charAt(0).toUpperCase() + t.slice(1));
     const btn   = document.getElementById('btn_subTab'   + t.charAt(0).toUpperCase() + t.slice(1));
     const activo = t === tab;

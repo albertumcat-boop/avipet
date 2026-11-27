@@ -1027,7 +1027,7 @@
  <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase italic"> Panel de Control Maestro</h2>
  <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase tracking-widest text-center border-b pb-2">Gestión de Tarifas, Comisiones y Costos</p>
 
- <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:4px;margin-bottom:24px;background:#f1f5f9;padding:4px;border-radius:12px;">
+ <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:24px;background:#f1f5f9;padding:4px;border-radius:12px;">
  <button onclick="_llamarFuncion('cambiarSubTabConfig','servicios')" id="btn_subTabServicios"
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:#2563eb;color:white;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Servicios</button>
  <button onclick="_llamarFuncion('cambiarSubTabConfig','insumos')" id="btn_subTabInsumos"
@@ -1042,6 +1042,8 @@
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">⚙️ General</button>
  <button onclick="_llamarFuncion('cambiarSubTabConfig','combos')" id="btn_subTabCombos"
  style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🔗 Combos</button>
+ <button onclick="_llamarFuncion('cambiarSubTabConfig','manual')" id="btn_subTabManual"
+ style="padding:8px 4px;border-radius:8px;font-weight:900;font-size:10px;text-transform:uppercase;background:transparent;color:#64748b;border:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📖 Manual</button>
  </div>
 
  <div id="panelClaveMaestra" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between gap-4">
@@ -1162,6 +1164,459 @@
  <!-- Panel Combos -->
  <div id="panel_subTabCombos" class="hidden bg-slate-50 rounded-xl border border-slate-100 p-4">
   <p style="text-align:center;color:#94a3b8;font-size:10px;padding:8px 0;">Cargando combos...</p>
+ </div>
+
+ <!-- ═══ MANUAL AVIPET ═══ -->
+ <div id="panel_subTabManual" class="hidden bg-white rounded-xl border border-slate-200 p-0">
+  <style>
+   .man-wrap{max-width:860px;margin:0 auto;padding:20px 16px 40px;}
+   .man-h1{font-size:22px;font-weight:900;color:#1e3a5f;margin:0 0 4px 0;text-transform:uppercase;}
+   .man-sub{font-size:11px;color:#64748b;margin:0 0 20px 0;}
+   .man-sec{margin-bottom:14px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;}
+   .man-sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f8fafc;cursor:pointer;user-select:none;}
+   .man-sec-hdr h2{font-size:13px;font-weight:900;color:#1e293b;margin:0;text-transform:uppercase;}
+   .man-sec-body{padding:14px 16px;display:none;border-top:1px solid #e2e8f0;}
+   .man-sec-body.open{display:block;}
+   .man-caret{font-size:14px;color:#94a3b8;transition:transform .2s;}
+   .man-h3{font-size:11px;font-weight:900;color:#1d4ed8;text-transform:uppercase;margin:16px 0 6px 0;padding-bottom:4px;border-bottom:2px solid #dbeafe;}
+   .man-h3:first-child{margin-top:0;}
+   .man-row{margin-bottom:10px;}
+   .man-lbl{font-size:10px;font-weight:900;color:#374151;text-transform:uppercase;}
+   .man-txt{font-size:11px;color:#475569;margin:3px 0 0 0;line-height:1.5;}
+   .man-ex{font-size:10px;color:#059669;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:3px 8px;margin-top:3px;display:inline-block;}
+   .man-warn{font-size:10px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 10px;margin-top:4px;display:block;}
+   .man-formula{font-size:10px;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:5px 10px;margin:4px 0;font-family:monospace;display:block;}
+   .man-ul{margin:4px 0 4px 14px;padding:0;}
+   .man-ul li{font-size:11px;color:#475569;margin-bottom:3px;line-height:1.4;}
+   .man-badge{display:inline-block;font-size:9px;font-weight:900;padding:2px 8px;border-radius:20px;text-transform:uppercase;margin-left:6px;}
+   .man-badge-blue{background:#dbeafe;color:#1d4ed8;}
+   .man-badge-green{background:#dcfce7;color:#15803d;}
+   .man-badge-red{background:#fee2e2;color:#dc2626;}
+   .man-badge-yellow{background:#fef3c7;color:#92400e;}
+   .man-tbl{width:100%;border-collapse:collapse;font-size:10px;margin-top:6px;}
+   .man-tbl th{background:#f1f5f9;padding:5px 8px;text-align:left;font-weight:900;color:#374151;text-transform:uppercase;}
+   .man-tbl td{padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#475569;vertical-align:top;}
+   .man-tbl tr:last-child td{border-bottom:none;}
+  </style>
+  <div class="man-wrap">
+   <p class="man-h1">📖 Manual de AVIPET</p>
+   <p class="man-sub">Guía completa de cada módulo, botón, campo y cálculo del sistema. Haz clic en cada sección para expandirla.</p>
+
+   <!-- ═══ HISTORIA CLÍNICA ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>🩺 Historia Clínica</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Datos del Paciente</p>
+     <div class="man-row"><p class="man-lbl">Cédula del Dueño</p><p class="man-txt">Número de identidad del propietario. Al escribirlo, el sistema busca en Firestore si el dueño ya existe y autocompleta sus datos y mascotas. Acepta formato con puntos o guiones (se normaliza internamente). <span class="man-ex">Ej: V-12345678 → se guarda como V12345678</span></p></div>
+     <div class="man-row"><p class="man-lbl">Propietario</p><p class="man-txt">Nombre completo del dueño. Se autocompleta al encontrar la cédula. Se guarda en mayúsculas.</p></div>
+     <div class="man-row"><p class="man-lbl">Nombre de la Mascota</p><p class="man-txt">Nombre del paciente. Si el dueño tiene varias mascotas registradas, aparece un selector para elegir cuál atender.</p></div>
+     <div class="man-row"><p class="man-lbl">Especie</p><p class="man-txt">Canino, Felino, Ave, etc.</p></div>
+     <div class="man-row"><p class="man-lbl">Raza</p><p class="man-txt">Raza de la mascota. Campo libre.</p></div>
+     <div class="man-row"><p class="man-lbl">Edad</p><p class="man-txt">Edad aproximada. <span class="man-ex">Ej: 2 años, 4 meses</span></p></div>
+     <div class="man-row"><p class="man-lbl">Fecha de Nacimiento</p><p class="man-txt">Fecha exacta de nacimiento si se conoce. No es obligatoria.</p></div>
+     <div class="man-row"><p class="man-lbl">Sexo</p><p class="man-txt">Macho o hembra.</p></div>
+     <div class="man-row"><p class="man-lbl">Peso (kg)</p><p class="man-txt">Peso en kilogramos. <span class="man-ex">Ej: 5.3</span></p></div>
+     <div class="man-row"><p class="man-lbl">Color</p><p class="man-txt">Color o pelaje de la mascota.</p></div>
+     <div class="man-row"><p class="man-lbl">Teléfono</p><p class="man-txt">Teléfono del dueño. Se usa para el botón de WhatsApp.</p></div>
+     <div class="man-row"><p class="man-lbl">Correo</p><p class="man-txt">Correo electrónico (opcional).</p></div>
+     <div class="man-row"><p class="man-lbl">Dirección</p><p class="man-txt">Dirección del dueño (opcional).</p></div>
+
+     <p class="man-h3">Doctor y Forma de Pago</p>
+     <div class="man-row"><p class="man-lbl">Doctor</p><p class="man-txt">Se selecciona con la clave maestra o verificado antes de abrir la historia. Es el médico que atiende y quien recibe la comisión. Si hay una cirugía, el doctor de guardia queda marcado automáticamente en el modal de cirugía.</p></div>
+     <div class="man-row"><p class="man-lbl">Forma de Pago</p><p class="man-txt">Define cómo paga el cliente: Dólares, Móvil (transferencia), Cashea o Efectivo Bs. Afecta directamente cuánto le llega al doctor porque Cashea tiene un fee (descuento al doctor).</p></div>
+     <div class="man-row"><p class="man-lbl">Fee Cashea</p><p class="man-txt">Cuando el pago es Cashea, se descuenta un porcentaje del neto del doctor. El porcentaje se configura en Ajustes → General. Por defecto es 3.5%. <span class="man-formula">Cashea fee = neto doctor × feeCashea</span></p></div>
+
+     <p class="man-h3">Servicios</p>
+     <div class="man-row"><p class="man-lbl">Selector de Servicios</p><p class="man-txt">Lista desplegable con todos los servicios disponibles (leídos de Firestore). Al seleccionar uno, se inserta en la tabla de servicios con su precio y porcentaje del doctor pre-cargados desde la base de datos.</p></div>
+     <div class="man-row"><p class="man-lbl">Tabla de Servicios</p><p class="man-txt">Muestra los servicios agregados. Cada fila tiene: nombre del servicio, precio ($) editable y botón de eliminar (×). El precio se puede cambiar manualmente.</p></div>
+     <div class="man-row"><p class="man-lbl">Combos Automáticos</p><p class="man-txt">Cuando se detectan servicios que forman un combo predefinido, el precio baja automáticamente y aparece "(Combo)". <strong>REGLAS:</strong><br>
+      • KC sola → $45 / KC + otra vacuna → $40<br>
+      • Antirrabica sola → $30 / + otra vacuna → $25<br>
+      • Hematología sola → $23 / + otro lab → $20<br>
+      Los combos de Firestore (creados en Ajustes → Combos) aplican cuando TODOS los servicios del combo están presentes. Si falta aunque sea uno, el descuento no aplica.</p></div>
+
+     <p class="man-h3">Servicios Especiales con Modal</p>
+     <div class="man-row"><p class="man-lbl">KG Adicional</p><p class="man-txt">Pide el número de kilogramos. Precio = kg × $7. Comisión del doctor: 0%.</p></div>
+     <div class="man-row"><p class="man-lbl">Disposición / Cremación con Cenizas</p><p class="man-txt">Pide el precio pactado manualmente. Comisión: 0%.</p></div>
+     <div class="man-row"><p class="man-lbl">Gusanera</p><p class="man-txt">Abre modal con 4 opciones de gravedad: Leve $25, Media $35, Grave $50, o precio personalizado.</p></div>
+     <div class="man-row"><p class="man-lbl">Cirugía Personalizada</p><p class="man-txt">Abre el modal de cirugía completo. Ver sección "Modal de Cirugía" más abajo.</p></div>
+
+     <p class="man-h3">Modal de Cirugía</p>
+     <div class="man-row"><p class="man-lbl">Tipo de Cirugía</p><p class="man-txt">Nombre de la cirugía en texto libre (se guarda en mayúsculas). <span class="man-ex">Ej: CASTRACIÓN, PIOMETRA, FRACTURA FEMORAL</span></p></div>
+     <div class="man-row"><p class="man-lbl">Precio ($)</p><p class="man-txt">Precio de la cirugía. Sirve de base para todos los cálculos.</p></div>
+     <div class="man-row"><p class="man-lbl">IVA</p><p class="man-txt">Alícuota de IVA aplicable: 0% Exento, 8% o 16%. Por defecto viene en 16%. El IVA se descuenta del precio antes de repartir. <span class="man-formula">IVA = precioConCargos − precioConCargos / (1 + IVA%)</span></p></div>
+     <div class="man-row"><p class="man-lbl">Equipo Quirúrgico</p><p class="man-txt">Doctores que participan en la cirugía. El doctor de guardia queda marcado y no se puede desmarcar. Se pueden agregar doctores invitados (externos). Cada doctor toma la misma parte proporcional.</p></div>
+     <div class="man-row"><p class="man-lbl">+ Agregar Doctor Invitado</p><p class="man-txt">Agrega un campo de texto para escribir el nombre de un doctor externo que participa en la cirugía.</p></div>
+     <div class="man-row"><p class="man-lbl">Insumos Base 15%</p><p class="man-txt">Se calcula automáticamente como el 15% del precio base de la cirugía. No se puede editar, es fijo. <span class="man-formula">Insumos 15% = precio × 0.15</span></p></div>
+     <div class="man-row"><p class="man-lbl">🩸 Hematología — +$10.00</p><p class="man-txt">Casilla opcional. Si se tilda, suma $10 adicionales a los insumos. Aparece como insumo en Finanzas y en los tickets (Tiquera/Detallado). Se guarda en el campo <code>hematologia: true</code> de la historia.</p></div>
+     <div class="man-row"><p class="man-lbl">+ Agregar Insumo Adicional</p><p class="man-txt">Agrega filas para insumos adicionales con descripción y monto. Se suman al total de insumos.</p></div>
+     <div class="man-row"><p class="man-lbl">+ Agregar Cargo</p><p class="man-txt">Cargos adicionales que se suman al precio de la cirugía antes de calcular todo. <span class="man-ex">Ej: hospitalización, suero</span></p></div>
+     <div class="man-row"><p class="man-lbl">Resumen Dr. (Breakdown)</p><p class="man-txt">Muestra en tiempo real el desglose completo:
+      <span class="man-formula">Base neta = (precio + cargos) − IVA − insumos (15% + adicionales)</span>
+      <span class="man-formula">Neto por doctor = base neta / (n° doctores + 1 Avipet)</span>
+      Avipet también toma su parte igual que un doctor más.</p></div>
+     <div class="man-row"><p class="man-lbl">Cashea en Cirugía</p><p class="man-txt"><span class="man-warn">La cirugía NO tiene casilla de Cashea. El fee se determina automáticamente cuando el dueño paga con Cashea al guardar la historia clínica o al cambiar la forma de pago en el Buscador.</span></p></div>
+
+     <p class="man-h3">Diagnóstico / Tratamiento</p>
+     <div class="man-row"><p class="man-lbl">Campo de Tratamiento</p><p class="man-txt">Texto libre para el diagnóstico, tratamiento indicado, notas clínicas, etc. No tiene límite. Se guarda tal cual.</p></div>
+
+     <p class="man-h3">Insumos del Servicio</p>
+     <div class="man-row"><p class="man-lbl">Tabla de Insumos</p><p class="man-txt">Se llena automáticamente con los insumos de cada servicio (leídos de Firestore). Aparece el nombre y el costo de cada insumo. También hay 4 insumos médicos fijos (guantes, alcohol, algodón, hojas) que siempre se agregan.</p></div>
+
+     <p class="man-h3">Cálculo de Totales</p>
+     <div class="man-row"><p class="man-lbl">Monto Venta</p><p class="man-txt">Suma de los precios de todos los servicios.</p></div>
+     <div class="man-row"><p class="man-lbl">Monto Insumos</p><p class="man-txt">Suma de todos los costos de insumos.</p></div>
+     <div class="man-row"><p class="man-lbl">IVA</p><p class="man-txt">Si el servicio tiene alícuota de IVA configurada, se calcula sobre el precio de venta.</p></div>
+     <div class="man-row"><p class="man-lbl">Comisión Doctor</p><p class="man-txt">Calculada por servicio según el % configurado. Fórmula general: <span class="man-formula">Comisión = (precio − insumos − IVA) × (porcDoc / 100)</span> Si hay Cashea: <span class="man-formula">Comisión final = comisión − (comisión × feeCashea)</span></p></div>
+
+     <p class="man-h3">Fotos e Imágenes</p>
+     <div class="man-row"><p class="man-lbl">📷 Adjuntar Imagen</p><p class="man-txt">Permite agregar fotos de la mascota o evidencias. Se comprimen automáticamente (máx. 800px, calidad 55%) y se guardan como base64 en Firestore.</p></div>
+
+     <p class="man-h3">Medicamentos Despachados</p>
+     <div class="man-row"><p class="man-lbl">Lista de Medicamentos</p><p class="man-txt">Si se despacha medicamento desde la consulta, se registra el nombre y precio cobrado al cliente. Se guarda como campo separado en la historia.</p></div>
+
+     <p class="man-h3">Vacunas</p>
+     <div class="man-row"><p class="man-lbl">¿Vacuna pagada anteriormente?</p><p class="man-txt">Casilla que marca que la vacuna ya fue pagada en una visita previa. Cuando está tildada, la consulta NO aparece en Finanzas como ingreso (se excluye del dashboard).</p></div>
+
+     <p class="man-h3">Producto Vinculado al Carrito</p>
+     <div class="man-row"><p class="man-lbl">Vinculación de Servicio a Inventario</p><p class="man-txt">Permite asociar un servicio de historia clínica con un producto del inventario para efectos de facturación fiscal (módulo Carrito/Facturación). No afecta el cálculo de comisiones ni los dashboards de Finanzas. Es exclusivo para el módulo fiscal.</p></div>
+
+     <p class="man-h3">Botones Principales</p>
+     <div class="man-row"><p class="man-lbl">📋 Sala de Espera</p><p class="man-txt">Guarda el progreso en localStorage y envía al paciente a la cola de espera sin guardar en Firestore. El formulario se limpia después.</p></div>
+     <div class="man-row"><p class="man-lbl">💾 Guardar Historia</p><p class="man-txt">Guarda la historia clínica completa en Firestore (colección <code>consultas</code>). Calcula y guarda todos los montos, comisiones, desglose de servicios e insumos.</p></div>
+     <div class="man-row"><p class="man-lbl">🖨️ Imprimir</p><p class="man-txt">Abre una ventana de impresión con el resumen de la consulta del cliente (servicios, insumos, total a pagar).</p></div>
+     <div class="man-row"><p class="man-lbl">WhatsApp</p><p class="man-txt">Abre WhatsApp Web con un mensaje pre-llenado con el resumen de la consulta para enviarle al dueño.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ BUSCADOR ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>🔍 Buscador</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Filtros de Búsqueda</p>
+     <div class="man-row"><p class="man-lbl">Cédula</p><p class="man-txt">Busca por número de cédula del dueño (normalizado: sin puntos ni guiones). Búsqueda exacta.</p></div>
+     <div class="man-row"><p class="man-lbl">Nombre de Mascota</p><p class="man-txt">Búsqueda parcial por nombre de la mascota (mayúsculas insensible).</p></div>
+     <div class="man-row"><p class="man-lbl">Doctor</p><p class="man-txt">Filtra registros por el doctor que atendió.</p></div>
+     <div class="man-row"><p class="man-lbl">Período</p><p class="man-txt">Hoy, Esta semana (desde el lunes), Este mes, o Rango de fechas personalizado. Cuando se elige "Rango" aparecen campos de fecha inicio y fin.</p></div>
+
+     <p class="man-h3">Tabla de Resultados — Columnas</p>
+     <table class="man-tbl">
+      <tr><th>Columna</th><th>Qué muestra</th></tr>
+      <tr><td>Fecha</td><td>Fecha y hora de la consulta</td></tr>
+      <tr><td>Paciente / Dueño</td><td>Nombre de la mascota y del propietario</td></tr>
+      <tr><td>Doctor</td><td>Doctor que atendió</td></tr>
+      <tr><td>Servicios</td><td>Lista de servicios realizados</td></tr>
+      <tr><td>Venta</td><td>Monto total cobrado al cliente</td></tr>
+      <tr><td>Insumos</td><td>Costo total de los insumos usados</td></tr>
+      <tr><td>Comisión Dr.</td><td>Monto que le corresponde al doctor. Al pasar el mouse aparece un tooltip con el desglose por servicio.</td></tr>
+      <tr><td>Forma de Pago</td><td>Cómo pagó el cliente (dólares, móvil, Cashea, etc.)</td></tr>
+      <tr><td>Acciones</td><td>Botones de acción por registro</td></tr>
+     </table>
+
+     <p class="man-h3">Botones de Acción por Registro</p>
+     <div class="man-row"><p class="man-lbl">✏️ Editar Forma de Pago</p><p class="man-txt">Permite cambiar la forma de pago de una consulta ya guardada. Al cambiar a Cashea, recalcula automáticamente la comisión del doctor descontando el fee Cashea. Al quitar Cashea, recalcula sin el descuento.</p></div>
+     <div class="man-row"><p class="man-lbl">🗑️ Eliminar</p><p class="man-txt">Elimina el registro de la consulta de Firestore. Requiere confirmación. Solo disponible con clave maestra.</p></div>
+     <div class="man-row"><p class="man-lbl">📋 Ver Detalle</p><p class="man-txt">Muestra el detalle completo del registro: todos los servicios, insumos individuales, medicamentos, diagnóstico.</p></div>
+     <div class="man-row"><p class="man-lbl">🖨️ Reimprimir</p><p class="man-txt">Vuelve a imprimir el comprobante del cliente para esa consulta.</p></div>
+
+     <p class="man-h3">Resumen en Buscador</p>
+     <div class="man-row"><p class="man-lbl">Totales al pie</p><p class="man-txt">Al final de los resultados se muestran los totales: suma de ventas, insumos y comisiones del período filtrado.</p></div>
+     <div class="man-row"><p class="man-lbl">Paginación</p><p class="man-txt">Se muestran 20 registros por página. Usa los botones Anterior/Siguiente para navegar. El número de página se indica en el centro.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ PELUQUERÍA ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>✂️ Peluquería</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Formulario de Peluquería</p>
+     <div class="man-row"><p class="man-lbl">Cédula del Dueño</p><p class="man-txt">Al igual que Historia Clínica, autocompleta los datos del dueño y mascotas al detectar la cédula.</p></div>
+     <div class="man-row"><p class="man-lbl">Nombre de la Mascota</p><p class="man-txt">Si hay varias mascotas, aparece selector.</p></div>
+     <div class="man-row"><p class="man-lbl">Especie / Raza</p><p class="man-txt">Especie y raza de la mascota.</p></div>
+     <div class="man-row"><p class="man-lbl">Condición de Llegada</p><p class="man-txt">Notas sobre el estado de la mascota al llegar (nudos, suciedad, heridas). Se guarda y aparece en las fotos de evidencia.</p></div>
+     <div class="man-row"><p class="man-lbl">Servicio de Peluquería</p><p class="man-txt">Tipo de servicio: Baño, Corte, Baño + Corte, etc.</p></div>
+     <div class="man-row"><p class="man-lbl">Precio ($)</p><p class="man-txt">Precio cobrado al cliente.</p></div>
+     <div class="man-row"><p class="man-lbl">Peluquera Principal</p><p class="man-txt">La peluquera que realiza el servicio. Recibe su porcentaje configurado de la base neta.</p></div>
+     <div class="man-row"><p class="man-lbl">Ayudante / Asistente</p><p class="man-txt">Si hay una persona que ayuda. Recibe una parte definida.</p></div>
+     <div class="man-row"><p class="man-lbl">Peluquero Externo</p><p class="man-txt">Si la peluquería la realiza alguien de afuera (no empleado fijo). Se registra por separado con su propia comisión. El IVA aplica diferente: en el caso del externo, el IVA sale de su parte, no de la base completa.</p></div>
+     <div class="man-row"><p class="man-lbl">Forma de Pago</p><p class="man-txt">Dólares, Móvil o Cashea. Si es Cashea, el fee se descuenta de la parte de la peluquera.</p></div>
+
+     <p class="man-h3">Cálculo de Comisiones Peluquería</p>
+     <div class="man-row"><p class="man-lbl">IVA Peluquería</p><p class="man-txt">16% aplicado al precio de venta. Se descuenta antes de repartir. <span class="man-formula">IVA = precio × 0.16</span></p></div>
+     <div class="man-row"><p class="man-lbl">Base Neta</p><p class="man-txt"><span class="man-formula">Base neta = precio − IVA</span></p></div>
+     <div class="man-row"><p class="man-lbl">Distribución</p><p class="man-txt">La base neta se divide entre: Peluquera, Avipet y Ayudante según los porcentajes configurados. Los porcentajes se definen en Ajustes → Empleados.</p></div>
+
+     <p class="man-h3">Fotos de Evidencia</p>
+     <div class="man-row"><p class="man-lbl">📷 Fotos de llegada</p><p class="man-txt">Desde la bitácora de peluquería se pueden agregar fotos del paciente al llegar. Se comprimen y guardan en Firestore. Se pueden eliminar individualmente.</p></div>
+     <div class="man-row"><p class="man-lbl">📱 QR para foto</p><p class="man-txt">Genera un QR que el staff puede escanear con el teléfono del dueño para tomar la foto directamente desde el teléfono y subirla al sistema.</p></div>
+     <div class="man-row"><p class="man-lbl">📲 Enviar por WhatsApp</p><p class="man-txt">Envía las fotos guardadas al WhatsApp del dueño para notificar que el paciente está en espera.</p></div>
+
+     <p class="man-h3">Bitácora y Historial</p>
+     <div class="man-row"><p class="man-lbl">Bitácora del Día</p><p class="man-txt">Lista todos los servicios de peluquería registrados hoy. Muestra nombre, dueño, servicio, estado y acciones.</p></div>
+     <div class="man-row"><p class="man-lbl">Historial por Cédula</p><p class="man-txt">Busca todos los servicios de peluquería de un dueño por cédula.</p></div>
+     <div class="man-row"><p class="man-lbl">Estado del Servicio</p><p class="man-txt">Pendiente → En proceso → Listo. Se actualiza manualmente desde la bitácora.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ FINANZAS ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>💰 Finanzas</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Menú Principal de Finanzas</p>
+     <div class="man-row"><p class="man-lbl">Veterinaria</p><p class="man-txt">Dashboard de consultas veterinarias. Si hay deudas pendientes de doctores, el botón muestra un badge rojo con el monto.</p></div>
+     <div class="man-row"><p class="man-lbl">Peluquería</p><p class="man-txt">Dashboard de servicios de peluquería. Mismo comportamiento de badge de deuda.</p></div>
+     <div class="man-row"><p class="man-lbl">Cashea</p><p class="man-txt">Resumen de ventas pagadas con Cashea. Los cobros se hacen los martes.</p></div>
+     <div class="man-row"><p class="man-lbl">Deudas y Préstamos</p><p class="man-txt">Módulo para registrar y gestionar deudas de doctores y empleados. Ver sección "Módulo de Deudas" abajo.</p></div>
+     <div class="man-row"><p class="man-lbl">Rentabilidad</p><p class="man-txt">Análisis de rentabilidad por servicio y por doctor. Muestra qué servicios generan más ganancia.</p></div>
+     <div class="man-row"><p class="man-lbl">Directorio Clientes</p><p class="man-txt">Historial de visitas por cliente. Muestra frecuencia, última visita y total gastado.</p></div>
+
+     <p class="man-h3">Selector de Período</p>
+     <div class="man-row"><p class="man-lbl">Hoy</p><p class="man-txt">Muestra solo la fecha de hoy.</p></div>
+     <div class="man-row"><p class="man-lbl">Semana</p><p class="man-txt">Desde el lunes de la semana actual hasta hoy.</p></div>
+     <div class="man-row"><p class="man-lbl">Mes</p><p class="man-txt">Desde el día 1 del mes hasta hoy.</p></div>
+     <div class="man-row"><p class="man-lbl">Rango</p><p class="man-txt">Muestra campos "Desde" y "Hasta" para elegir un rango personalizado. Al presionar Buscar recarga el dashboard con esas fechas.</p></div>
+
+     <p class="man-h3">Dashboard Veterinaria — Tarjetas de Resumen</p>
+     <div class="man-row"><p class="man-lbl">Bruto Total</p><p class="man-txt">Suma de todos los montos de venta del período (todos los doctores, o el filtrado).</p></div>
+     <div class="man-row"><p class="man-lbl">Insumos</p><p class="man-txt">Suma total de costos de insumos del período.</p></div>
+     <div class="man-row"><p class="man-lbl">Comisión Médicos</p><p class="man-txt">Total de comisiones pagadas a doctores en el período.</p></div>
+     <div class="man-row"><p class="man-lbl">Cashea Fee</p><p class="man-txt">Total de fees descontados por ventas Cashea.</p></div>
+
+     <p class="man-h3">Dashboard Veterinaria — Filtro por Doctor</p>
+     <div class="man-row"><p class="man-lbl">Botones de Doctor</p><p class="man-txt">Aparece un botón por cada doctor que tiene registros en el período. "Todos" muestra todo sin filtrar. Al seleccionar un doctor, el dashboard se recalcula solo para ese doctor.</p></div>
+
+     <p class="man-h3">Dashboard Veterinaria — Tarjeta por Doctor</p>
+     <div class="man-row"><p class="man-lbl">Neto Doctor</p><p class="man-txt">Total a pagarle al doctor en el período. Incluye el descuento por Cashea y por deuda si se aplicó.</p></div>
+     <div class="man-row"><p class="man-lbl">Consultas</p><p class="man-txt">Número de consultas del período.</p></div>
+     <div class="man-row"><p class="man-lbl">Formas de Pago</p><p class="man-txt">Desglose de cuánto se cobró en Dólares, Móvil, Cashea y Otros.</p></div>
+     <div class="man-row"><p class="man-lbl">Deuda Pendiente</p><p class="man-txt">Si el doctor tiene deuda registrada, aparece el monto en rojo debajo de la tarjeta.</p></div>
+     <div class="man-row"><p class="man-lbl">Monto a Descontar</p><p class="man-txt">Campo numérico para escribir cuánto se va a descontar de la deuda en este pago. Si se deja vacío, no se descuenta nada y el ticket solo mostrará la deuda como informativa. Si se escribe un monto, al imprimir se aplica el descuento en Firestore y en el ticket.</p></div>
+     <div class="man-row"><p class="man-lbl">📄 Tiquera</p><p class="man-txt">Imprime el ticket simple del doctor. Muestra: nombre, período, bruto, insumos, comisión por servicio, formas de pago, neto a pagar. Si hay descuento de deuda: muestra "Descuento deuda", "A COBRAR" y "Deuda pendiente".</p></div>
+     <div class="man-row"><p class="man-lbl">📋 Detallado</p><p class="man-txt">Imprime el ticket detallado. Igual que Tiquera pero con cada consulta desglosada: fecha, paciente, servicios, insumos (anotando si incluye Hematología), forma de pago y comisión. Más útil para revisión a fondo.</p></div>
+
+     <p class="man-h3">Módulo de Deudas</p>
+     <div class="man-row"><p class="man-lbl">¿Qué es una Deuda?</p><p class="man-txt">Un préstamo o adelanto hecho a un doctor o empleado que se irá descontando de sus pagos futuros.</p></div>
+     <div class="man-row"><p class="man-lbl">Registrar Deuda</p><p class="man-txt">Se ingresa: Persona (ID normalizado), descripción y monto. Queda guardada en la colección <code>deudas</code> de Firestore.</p></div>
+     <div class="man-row"><p class="man-lbl">¿Cuándo se descuenta la deuda?</p><p class="man-txt">Al momento de pagar al doctor: en la tarjeta del doctor en Finanzas → Veterinaria, se escribe el monto a descontar en el campo "Monto a descontar" y se presiona Tiquera o Detallado. El sistema:
+      <ul class="man-ul">
+       <li>Pregunta confirmación</li>
+       <li>Aplica el descuento en Firestore (actualiza o cierra las deudas más antiguas primero — FIFO)</li>
+       <li>Imprime el ticket con el descuento reflejado</li>
+       <li>Recarga el dashboard</li>
+      </ul>
+      Si no se escribe nada, NO se descuenta aunque se imprima el ticket. Solo aparece la deuda como informativa.</p></div>
+     <div class="man-row"><p class="man-lbl">Deuda Parcial</p><p class="man-txt">Si se descuenta menos del total adeudado, el ticket muestra: "Descuento deuda: $X", "A COBRAR: $Y" y "Deuda pendiente: $Z". Las deudas se van cerrando de más antigua a más reciente.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ AJUSTES ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>⚙️ Ajustes</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+
+     <p class="man-h3">Clave Maestra</p>
+     <div class="man-row"><p class="man-lbl">Clave Maestra del Sistema</p><p class="man-txt">Contraseña global que protege las acciones administrativas (eliminar registros, cambiar precios, etc.). Se configura aquí una sola vez. Si no está configurada, ninguna acción admin funciona.</p></div>
+
+     <p class="man-h3">Tab: Servicios</p>
+     <div class="man-row"><p class="man-lbl">Buscar Servicio</p><p class="man-txt">Filtra la tabla de servicios en tiempo real por nombre.</p></div>
+     <div class="man-row"><p class="man-lbl">➕ Nuevo Servicio</p><p class="man-txt">Abre un modal para crear un servicio nuevo.</p></div>
+     <div class="man-row"><p class="man-lbl">⬆️ Sincronizar Recetas</p><p class="man-txt">Sube los servicios del código fuente a Firestore. No sobreescribe los que ya existen. Se usa para inicializar una instalación nueva.</p></div>
+
+     <p class="man-h3">Campos al Crear/Editar un Servicio</p>
+     <table class="man-tbl">
+      <tr><th>Campo</th><th>Qué hace</th><th>Ejemplo</th></tr>
+      <tr><td>Nombre del Servicio</td><td>Identificador único del servicio (en mayúsculas). Este es el nombre que aparece en el selector de Historia Clínica.</td><td>CONSULTA GENERAL</td></tr>
+      <tr><td>Precio de Venta ($)</td><td>Precio que paga el cliente por el servicio.</td><td>30.00</td></tr>
+      <tr><td>% Doctor</td><td>Porcentaje de la base neta que le corresponde al doctor como comisión. La base neta es: precio − insumos − IVA.</td><td>40 → doctor recibe 40% de la base</td></tr>
+      <tr><td>Categoría</td><td>Agrupa el servicio para los reportes de rentabilidad y el selector. Opciones: CONSULTAS, VACUNAS, LABORATORIO, CIRUGÍAS, OTROS PROCEDIMIENTOS, REFERIDOS.</td><td>CONSULTAS</td></tr>
+      <tr><td>Monto Base IVA ($)</td><td>Monto del precio sobre el cual se calcula el IVA. Normalmente igual al precio de venta, pero si el servicio está parcialmente exento, se puede ajustar.</td><td>30.00</td></tr>
+      <tr><td>Alícuota IVA (%)</td><td>Porcentaje de IVA del servicio. 0 = exento, 8 = reducido, 16 = general.</td><td>16</td></tr>
+      <tr><td>Incluye 15% insumos (cirugía)</td><td>Casilla para marcar que este servicio descuenta el 15% del precio como insumos (aplica a cirugías). Fuera de la cirugía personalizada, esta lógica se gestiona en el modal de cirugía.</td><td>✅ para cirugías</td></tr>
+      <tr><td>Producto vinculado al carrito</td><td>Vincula este servicio a un producto del inventario para el módulo de facturación fiscal. No afecta Finanzas ni comisiones.</td><td>Solo para facturación</td></tr>
+      <tr><td>Precio Factura ($)</td><td>Precio del servicio tal como aparece en la factura fiscal (puede diferir del precio de venta normal).</td><td>30.00</td></tr>
+      <tr><td>Insumos del Servicio</td><td>Lista de insumos que consume este servicio. Nombre + costo. Pueden marcarse como "bloqueados" (no editables desde el modal de historia clínica).</td><td>Crema $0.50</td></tr>
+     </table>
+
+     <p class="man-h3">Tab: Insumos</p>
+     <div class="man-row"><p class="man-lbl">Buscar Insumo</p><p class="man-txt">Filtra la lista de insumos en tiempo real.</p></div>
+     <div class="man-row"><p class="man-lbl">Nombre del Insumo</p><p class="man-txt">Identificador del insumo (texto libre). <span class="man-ex">Ej: Jelco 22G</span></p></div>
+     <div class="man-row"><p class="man-lbl">Costo ($)</p><p class="man-txt">Costo unitario del insumo en dólares. Se usa para calcular el margen.</p></div>
+     <div class="man-row"><p class="man-lbl">➕ Agregar</p><p class="man-txt">Guarda el nuevo insumo en la colección <code>insumos_maestro</code> de Firestore.</p></div>
+     <div class="man-row"><p class="man-lbl">✏️ Editar / 🗑️ Eliminar</p><p class="man-txt">Acciones sobre cada insumo en la lista.</p></div>
+
+     <p class="man-h3">Tab: Medicamentos</p>
+     <div class="man-row"><p class="man-lbl">Lista de Medicamentos</p><p class="man-txt">Medicamentos que se pueden despachar desde la historia clínica. Cada uno tiene precio sugerido al cliente.</p></div>
+     <div class="man-row"><p class="man-lbl">Precio al Cliente ($)</p><p class="man-txt">Precio al que se cobra el medicamento. No representa comisión — va al ingreso de la clínica.</p></div>
+
+     <p class="man-h3">Tab: Combos</p>
+     <div class="man-row"><p class="man-lbl">¿Qué es un Combo?</p><p class="man-txt">Conjunto de servicios que cuando se atienden juntos tienen un precio especial combinado. Se guarda en la colección <code>combos_servicios</code> de Firestore.</p></div>
+     <div class="man-row"><p class="man-lbl">Nombre del Combo</p><p class="man-txt">Nombre descriptivo del combo. <span class="man-ex">Ej: Pack Vacunas Completo</span></p></div>
+     <div class="man-row"><p class="man-lbl">Precio Combo ($)</p><p class="man-txt">Precio total del combo. Se divide equitativamente entre los servicios participantes. <span class="man-ex">Si el combo vale $60 y tiene 3 servicios, cada uno aparece como $20.</span></p></div>
+     <div class="man-row"><p class="man-lbl">Servicios del Combo</p><p class="man-txt">Lista de los servicios que componen el combo. Se deben escribir exactamente como están en Ajustes → Servicios.</p></div>
+     <div class="man-warn">⚠️ El combo SOLO aplica si TODOS los servicios del combo están presentes en la historia clínica. Si falta aunque sea uno, no se activa el descuento.</div>
+     <div class="man-row"><p class="man-lbl">¿Cómo se activa?</p><p class="man-txt">Automáticamente al insertar servicios. La función <code>_recalcularCombos()</code> revisa la lista completa cada vez que se agrega o elimina un servicio y ajusta los precios.</p></div>
+
+     <p class="man-h3">Tab: Compras</p>
+     <div class="man-row"><p class="man-lbl">Registro de Compras</p><p class="man-txt">Historial de compras de inventario realizadas. Muestra proveedor, producto, cantidad, costo y fecha.</p></div>
+
+     <p class="man-h3">Tab: Empleados</p>
+     <div class="man-row"><p class="man-lbl">Teléfonos de Empleados</p><p class="man-txt">Directorio de contacto del staff. Nombre y teléfono. Se usa para notificaciones internas.</p></div>
+     <div class="man-row"><p class="man-lbl">% Comisión Peluquería</p><p class="man-txt">Porcentajes de distribución para los servicios de peluquería: peluquera principal, ayudante y Avipet. Deben sumar 100%.</p></div>
+
+     <p class="man-h3">Tab: General</p>
+     <div class="man-row"><p class="man-lbl">Fee Cashea (%)</p><p class="man-txt">Porcentaje que se descuenta del neto del doctor cuando el cliente paga con Cashea. Se guarda en Firestore (<code>configuracion/sistema.feeCashea</code>). Viene por defecto en 3.5%. <span class="man-ex">Si el doctor gana $50 con Cashea y el fee es 3.5%, se le descuentan $1.75 → cobra $48.25.</span></p></div>
+     <div class="man-row"><p class="man-lbl">Guardar</p><p class="man-txt">Guarda el fee en Firestore. Aparece un mensaje de confirmación por 3 segundos.</p></div>
+
+     <p class="man-h3">Botones Globales de Ajustes</p>
+     <div class="man-row"><p class="man-lbl">Inicializar</p><p class="man-txt">Sube la configuración inicial completa a Firebase (servicios, categorías, todo). Solo se usa en instalaciones nuevas o para resetear la base de datos. <span class="man-warn">¡Cuidado! Esto sobreescribe los datos existentes si están en conflicto.</span></p></div>
+     <div class="man-row"><p class="man-lbl">Reparar Categorías</p><p class="man-txt">Recorre los servicios existentes en Firestore y les asigna la categoría correcta según el nombre del servicio. Se usa si las categorías quedaron mal o vacías.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ INVENTARIO ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>📦 Inventario</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Lista de Productos</p>
+     <div class="man-row"><p class="man-lbl">Buscar Producto</p><p class="man-txt">Filtra la tabla de inventario en tiempo real por nombre.</p></div>
+     <div class="man-row"><p class="man-lbl">Columnas de la Tabla</p><p class="man-txt">Nombre, Stock Actual, Stock Mínimo, Costo Unitario, Precio de Venta, Categoría, Acciones.</p></div>
+     <div class="man-row"><p class="man-lbl">Stock Mínimo</p><p class="man-txt">Cuando el stock baja de este número, el sistema muestra una alerta automáticamente al insertar servicios en Historia Clínica.</p></div>
+
+     <p class="man-h3">Agregar / Editar Producto</p>
+     <table class="man-tbl">
+      <tr><th>Campo</th><th>Qué hace</th></tr>
+      <tr><td>Nombre</td><td>Nombre del producto en inventario</td></tr>
+      <tr><td>Cantidad en Stock</td><td>Unidades disponibles actualmente</td></tr>
+      <tr><td>Stock Mínimo</td><td>Umbral de alerta de reposición</td></tr>
+      <tr><td>Costo de Compra ($)</td><td>Precio al que se compra (en USD)</td></tr>
+      <tr><td>Precio de Venta ($)</td><td>Precio al que se vende al cliente</td></tr>
+      <tr><td>Categoría</td><td>Agrupa el producto para los reportes</td></tr>
+     </table>
+
+     <p class="man-h3">Calculadora de Inventario</p>
+     <div class="man-row"><p class="man-lbl">Calculadora BCV</p><p class="man-txt">Convierte el precio de compra de Bs a USD usando la tasa del BCV. Ayuda a calcular automáticamente el costo en USD y el precio de venta sugerido. Los valores calculados se pueden aplicar directamente al formulario con el botón "Aplicar".</p></div>
+
+     <p class="man-h3">Ajuste por Conteo Físico</p>
+     <div class="man-row"><p class="man-lbl">Ajuste de Stock</p><p class="man-txt">Permite corregir el stock contando físicamente los productos. Se ingresan las cantidades reales y el sistema calcula las diferencias. Requiere confirmación. Los ajustes quedan registrados en la auditoría.</p></div>
+
+     <p class="man-h3">Auditoría de Inventario</p>
+     <div class="man-row"><p class="man-lbl">Ver Auditoría</p><p class="man-txt">Muestra el historial completo de movimientos: entradas, salidas, ajustes y quién los hizo. Guardado en la colección <code>auditoria_inventario</code>.</p></div>
+
+     <p class="man-h3">Resumen de Movimientos</p>
+     <div class="man-row"><p class="man-lbl">Columnas</p><p class="man-txt">Producto, Entradas (+), Salidas (−), Ajustes (±), Costo total movido. Sirve para ver el flujo de inventario en un período.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ VACUNAS ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>💉 Vacunas</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Registro de Vacunas</p>
+     <div class="man-row"><p class="man-lbl">Cédula del Dueño</p><p class="man-txt">Busca al paciente. Autocompleta datos del propietario.</p></div>
+     <div class="man-row"><p class="man-lbl">Nombre de la Mascota</p><p class="man-txt">Nombre del paciente que recibe la vacuna.</p></div>
+     <div class="man-row"><p class="man-lbl">Tipo de Vacuna</p><p class="man-txt">Nombre de la vacuna aplicada. <span class="man-ex">Ej: Séxtuple, Antirrabica, Triple Felina</span></p></div>
+     <div class="man-row"><p class="man-lbl">Fecha de Aplicación</p><p class="man-txt">Fecha en que se aplicó la vacuna. Por defecto es hoy.</p></div>
+     <div class="man-row"><p class="man-lbl">Próxima Dosis</p><p class="man-txt">Fecha programada para la siguiente dosis. Se calcula automáticamente según el tipo de vacuna (por ejemplo, 1 año para la antirrabica).</p></div>
+     <div class="man-row"><p class="man-lbl">Doctor</p><p class="man-txt">Doctor que aplicó la vacuna.</p></div>
+     <div class="man-row"><p class="man-lbl">Notas</p><p class="man-txt">Observaciones adicionales. Campo libre.</p></div>
+
+     <p class="man-h3">Historial de Vacunas</p>
+     <div class="man-row"><p class="man-lbl">Por Paciente</p><p class="man-txt">Busca todas las vacunas aplicadas a una mascota por cédula. Muestra historial cronológico con tipo, fechas y doctor.</p></div>
+     <div class="man-row"><p class="man-lbl">Próximas Dosis</p><p class="man-txt">Lista de pacientes con vacunas próximas a vencer o ya vencidas. Permite notificar al dueño por WhatsApp.</p></div>
+
+     <p class="man-h3">Desparasitaciones</p>
+     <div class="man-row"><p class="man-lbl">Registro de Desparasitación</p><p class="man-txt">Similar al registro de vacunas. Guarda el producto usado, dosis y próxima aplicación. Se mantiene en historial separado.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ ALMUERZO / PERSONAL ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>🍽️ Control de Personal / Almuerzo</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Planificador de Almuerzo</p>
+     <div class="man-row"><p class="man-lbl">Empleado</p><p class="man-txt">Nombre del empleado que solicita o se le asigna almuerzo.</p></div>
+     <div class="man-row"><p class="man-lbl">Tipo de Comida</p><p class="man-txt">Comida normal o especial (con restricciones, vegetariana, etc.).</p></div>
+     <div class="man-row"><p class="man-lbl">¿Pagó?</p><p class="man-txt">Indica si el empleado ya pagó su almuerzo. Permite llevar control de quién debe.</p></div>
+     <div class="man-row"><p class="man-lbl">Monto</p><p class="man-txt">Costo del almuerzo para ese empleado. Se puede personalizar.</p></div>
+     <div class="man-row"><p class="man-lbl">Notas</p><p class="man-txt">Observaciones adicionales para el pedido.</p></div>
+
+     <p class="man-h3">Lista del Día</p>
+     <div class="man-row"><p class="man-lbl">Lista de Pedidos</p><p class="man-txt">Muestra todos los pedidos del día. Se puede marcar como pagado individualmente.</p></div>
+     <div class="man-row"><p class="man-lbl">Resumen de Cobros</p><p class="man-txt">Total a cobrar, total cobrado y saldo pendiente.</p></div>
+     <div class="man-row"><p class="man-lbl">Exportar / Imprimir</p><p class="man-txt">Imprime el resumen del día para el control del proveedor de comida.</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ TASA DE CAMBIO ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>💱 Tasa BCV y Cashea</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Tasa del Dólar BCV</p>
+     <div class="man-row"><p class="man-lbl">¿De dónde sale la tasa?</p><p class="man-txt">Se obtiene automáticamente de <code>ve.dolarapi.com</code> cada vez que se abre Finanzas. Se guarda en <code>window.tasaDolarHoy</code> y en localStorage como respaldo. Si la API falla, usa el último valor guardado.</p></div>
+     <div class="man-row"><p class="man-lbl">¿Para qué se usa?</p><p class="man-txt">Para la calculadora de inventario (convertir precios de Bs a USD) y para los cálculos de forma de pago "Efectivo Bs".</p></div>
+     <div class="man-row"><p class="man-lbl">¿Se guarda en Firestore?</p><p class="man-txt">Sí, cuando la tasa nueva difiere en más de 0.10 Bs de la anterior, se actualiza automáticamente en <code>configuracion/tasa</code>.</p></div>
+
+     <p class="man-h3">Cashea</p>
+     <div class="man-row"><p class="man-lbl">¿Qué es Cashea?</p><p class="man-txt">Plataforma de financiamiento al consumidor. El cliente paga en cuotas, la clínica recibe el pago completo los martes con un descuento (fee). Ese fee se descuenta de la comisión del doctor que atendió.</p></div>
+     <div class="man-row"><p class="man-lbl">¿Cómo se configura el fee?</p><p class="man-txt">Ajustes → General → Fee Cashea. Por defecto 3.5%.</p></div>
+     <div class="man-row"><p class="man-lbl">¿Cuándo se aplica?</p><p class="man-txt">Cuando la forma de pago de la consulta/cirugía es "Cashea". Se aplica tanto en Historia Clínica al guardar, como si se cambia la forma de pago desde el Buscador.</p></div>
+     <div class="man-row"><p class="man-lbl">Dashboard Cashea</p><p class="man-txt">En Finanzas → Cashea se ve el resumen de las ventas Cashea del período: total facturado, fee cobrado, neto esperado y fecha de próximo pago (martes).</p></div>
+    </div>
+   </div>
+
+   <!-- ═══ FÓRMULAS COMPLETAS ═══ -->
+   <div class="man-sec">
+    <div class="man-sec-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.man-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+     <h2>🧮 Fórmulas y Cálculos</h2><span class="man-caret">▶</span>
+    </div>
+    <div class="man-sec-body">
+     <p class="man-h3">Comisión en Consulta Normal</p>
+     <span class="man-formula">Base = precio_servicio − costo_insumos − IVA_servicio</span>
+     <span class="man-formula">Comisión = Base × (porcDoc / 100)</span>
+     <span class="man-formula">Si Cashea: Comisión_final = Comisión − (Comisión × feeCashea)</span>
+
+     <p class="man-h3">Comisión en Cirugía</p>
+     <span class="man-formula">precioConCargos = precio_cirugia + cargos_adicionales</span>
+     <span class="man-formula">IVA = precioConCargos − precioConCargos / (1 + IVA%)</span>
+     <span class="man-formula">insumos_total = precio_cirugia × 0.15 + hematologia($10) + insumos_adicionales</span>
+     <span class="man-formula">base_neta = precioConCargos − IVA − insumos_total</span>
+     <span class="man-formula">neto_por_doctor = base_neta / (n_doctores + 1)</span>
+     <p class="man-txt">Avipet y cada doctor reciben partes iguales. Si hay 2 doctores → 3 partes.</p>
+
+     <p class="man-h3">Deuda — Descuento</p>
+     <span class="man-formula">A_cobrar = neto_doctor − abono_deuda</span>
+     <span class="man-formula">Deuda_restante = deuda_total − abono_deuda</span>
+     <p class="man-txt">Las deudas se van cerrando de más antigua a más reciente (FIFO).</p>
+
+     <p class="man-h3">Peluquería</p>
+     <span class="man-formula">IVA = precio × 0.16</span>
+     <span class="man-formula">Base_neta = precio − IVA</span>
+     <span class="man-formula">Peluquera = base_neta × porcPeluquera%</span>
+     <span class="man-formula">Avipet = base_neta × porcAvipet%</span>
+     <span class="man-formula">Ayudante = base_neta × porcAyudante%</span>
+    </div>
+   </div>
+
+   <p style="text-align:center;font-size:9px;color:#cbd5e1;margin-top:24px;padding-top:12px;border-top:1px solid #f1f5f9;">AVIPET · Manual v1.0 · 2024</p>
+  </div>
  </div>
 
  </div>
