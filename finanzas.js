@@ -291,7 +291,7 @@ window.mostrarDashboardVet = async () => {
     consultas.forEach(function(c){
       const nombreDoc = (c.doctor||'Sin doctor').trim();
       if (!porDoctor[nombreDoc]) {
-        porDoctor[nombreDoc] = { consultas:[], servicios:{}, formasPago:{dolares:0,movil:0,cashea:0,otro:0},
+        porDoctor[nombreDoc] = { consultas:[], servicios:{}, formasPago:{dolares:0,movil:0,cashea:0,mixto:0,mixtoUSD:0,mixtoBS:0,otro:0},
           comision:0, bruto:0, insumos:0, casheaFee:0, casheaFeeDoc:0, ivaDocTotal:0, consultasDetalle:[] };
       }
       const g = porDoctor[nombreDoc];
@@ -305,6 +305,11 @@ window.mostrarDashboardVet = async () => {
       if (fp === 'dolares') g.formasPago.dolares += v;
       else if (fp === 'movil') g.formasPago.movil += v;
       else if (fp === 'cashea') { g.formasPago.cashea += v; }
+      else if (fp === 'mixto') {
+        g.formasPago.mixto += v;
+        g.formasPago.mixtoUSD += parseFloat(c.montoPagadoUSD || v/2);
+        g.formasPago.mixtoBS  += parseFloat(c.montoPagadoBS  || v/2);
+      }
       else g.formasPago.otro += v;
 
       // ── Recalcular comisión con fórmula correcta (igual que buscador) ──
@@ -384,7 +389,7 @@ window.mostrarDashboardVet = async () => {
         (eq.doctores || []).forEach(function(docAy) {
           if (!docAy || docAy === nombreDoc) return; // principal ya procesado arriba
           if (!porDoctor[docAy]) {
-            porDoctor[docAy] = { consultas:[], servicios:{}, formasPago:{dolares:0,movil:0,cashea:0,otro:0},
+            porDoctor[docAy] = { consultas:[], servicios:{}, formasPago:{dolares:0,movil:0,cashea:0,mixto:0,mixtoUSD:0,mixtoBS:0,otro:0},
               comision:0, bruto:0, insumos:0, casheaFee:0, casheaFeeDoc:0, ivaDocTotal:0, consultasDetalle:[], _soloEquipo:true };
           }
           const gAy = porDoctor[docAy];
@@ -541,7 +546,7 @@ window.mostrarDashboardVet = async () => {
 
       // Desglose por forma de pago
       const fp = g.formasPago;
-      const hayFp = fp.dolares > 0 || fp.movil > 0 || fp.cashea > 0 || fp.otro > 0;
+      const hayFp = fp.dolares > 0 || fp.movil > 0 || fp.cashea > 0 || fp.mixto > 0 || fp.otro > 0;
       if (hayFp) {
         const fpDiv = document.createElement('div');
         fpDiv.style.cssText = 'margin-top:8px;padding-top:6px;border-top:1px solid '+col.borde+';';
@@ -551,10 +556,12 @@ window.mostrarDashboardVet = async () => {
         fpDiv.appendChild(fpTit);
         const fpRow = document.createElement('div');
         fpRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
+        const mixtoLabel = fp.mixto > 0 ? '🔀 Mixto ($'+fp.mixtoUSD.toFixed(2)+' USD + $'+fp.mixtoBS.toFixed(2)+' Bs)' : '🔀 Mixto';
         const pagoItems = [
           { label:'💵 Dólares', val: fp.dolares, color:'#15803d', bg:'#f0fdf4' },
           { label:'📲 Pago Móvil / Tarjeta', val: fp.movil, color:'#1d4ed8', bg:'#eff6ff' },
           { label:'🟣 Cashea', val: fp.cashea, color:'#7c3aed', bg:'#faf5ff' },
+          { label: mixtoLabel, val: fp.mixto, color:'#0f766e', bg:'#f0fdfa' },
           { label:'Sin registro', val: fp.otro, color:'#64748b', bg:'#f8fafc' },
         ];
         pagoItems.forEach(function(item) {
@@ -711,6 +718,7 @@ window.descargarReporte = () => {
       const fp = g.formasPago;
       if (fp.dolares > 0)  { txt += '    Dolares    : $' + fp.dolares.toFixed(2) + '\n'; totalDolares += fp.dolares; }
       if (fp.movil > 0)    { txt += '    Pago Movil : $' + fp.movil.toFixed(2) + '\n';   totalMovil   += fp.movil;   }
+      if (fp.mixto > 0)    { txt += '    Mixto      : $' + fp.mixto.toFixed(2) + ' ($' + (fp.mixtoUSD||0).toFixed(2) + ' USD + $' + (fp.mixtoBS||0).toFixed(2) + ' Bs)\n'; totalDolares += (fp.mixtoUSD||0); totalMovil += (fp.mixtoBS||0); }
       if (fp.cashea > 0)   {
         const fee = fp.cashea * _getCasheaFee();
         txt += '    Cashea     : $' + fp.cashea.toFixed(2) + ' (Bs)\n';
@@ -1887,8 +1895,10 @@ window._imprimirReporteDoctorSimple = function(nombre, g, deuda, deduccion) {
   const fp = g.formasPago || {};
   const fps = [
     { l:'Dolares', v: fp.dolares }, { l:'Pago Movil', v: fp.movil },
-    { l:'Cashea', v: fp.cashea },   { l:'Otro', v: fp.otro },
-  ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
+    { l:'Cashea', v: fp.cashea },
+    fp.mixto > 0 ? { l:`Mixto  ($${(fp.mixtoUSD||0).toFixed(2)} USD + $${(fp.mixtoBS||0).toFixed(2)} Bs)`, v: fp.mixto } : null,
+    { l:'Otro', v: fp.otro },
+  ].filter(x=>x&&x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
   const body = `
   <div class="c"><b>REPORTE VETERINARIA</b></div>
   <div class="c" style="font-size:11px;font-weight:900;">${nombre}</div>
@@ -1956,8 +1966,10 @@ window._imprimirReporteDoctor = function(nombre, g, deuda, deduccion) {
   const fp = g.formasPago || {};
   const fps = [
     { l:'Dolares', v: fp.dolares }, { l:'Pago Movil', v: fp.movil },
-    { l:'Cashea', v: fp.cashea },   { l:'Otro', v: fp.otro },
-  ].filter(x=>x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
+    { l:'Cashea', v: fp.cashea },
+    fp.mixto > 0 ? { l:`Mixto  ($${(fp.mixtoUSD||0).toFixed(2)} USD + $${(fp.mixtoBS||0).toFixed(2)} Bs)`, v: fp.mixto } : null,
+    { l:'Otro', v: fp.otro },
+  ].filter(x=>x&&x.v>0).map(x=>`<div class="row"><span class="lbl">${x.l}</span><span>$${x.v.toFixed(2)}</span></div>`).join('');
 
   const body = `
   <div class="c"><b>DESGLOSE DETALLADO</b></div>

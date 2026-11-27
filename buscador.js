@@ -387,6 +387,7 @@ function _renderizarTarjeta(consulta) {
    '<option value="dolares"' + (consulta.formaPago==='dolares'?' selected':'') + '>💵 Dólares</option>' +
    '<option value="movil"' + (consulta.formaPago==='movil'?' selected':'') + '>📲 Móvil/Tarjeta</option>' +
    '<option value="cashea"' + (consulta.formaPago==='cashea'?' selected':'') + '>🟣 Cashea</option>' +
+   '<option value="mixto"' + (consulta.formaPago==='mixto'?' selected':'') + '>🔀 Mixto USD+Bs</option>' +
    '<option value="otro"' + (consulta.formaPago==='otro'?' selected':'') + '>Sin registro</option>' +
  '</select>' +
  '</div>';
@@ -539,16 +540,41 @@ function _renderizarTarjeta(consulta) {
 // abrirConsultaParaEditar definida canónicamente en historia.js — no redefinir aquí
 
 // Cambio de forma de pago inline desde el buscador
-const _fpLabels = { dolares:'Dólares / Efectivo', movil:'Pago Móvil / Tarjeta', cashea:'Cashea', otro:'Sin registro' };
-const _fpColorsMap = { dolares:'#15803d:#f0fdf4', movil:'#1d4ed8:#eff6ff', cashea:'#7c3aed:#faf5ff', otro:'#64748b:#f8fafc' };
+const _fpLabels = { dolares:'Dólares / Efectivo', movil:'Pago Móvil / Tarjeta', cashea:'Cashea', mixto:'Mixto USD+Bs', otro:'Sin registro' };
+const _fpColorsMap = { dolares:'#15803d:#f0fdf4', movil:'#1d4ed8:#eff6ff', cashea:'#7c3aed:#faf5ff', mixto:'#0f766e:#f0fdfa', otro:'#64748b:#f8fafc' };
 
 window._cambiarFormaPago = async function(consultaId, nuevaFp, selectEl) {
   const valorOriginal = selectEl.value;
   try {
+    // Para mixto pedir montos antes de guardar
+    let extraCampos = {};
+    if (nuevaFp === 'mixto') {
+      const { value: montos } = await Swal.fire({
+        title: '🔀 Pago Mixto',
+        html: '<p style="font-size:11px;color:#64748b;margin-bottom:10px;">Ingresa cuánto se cobró en cada moneda (en $)</p>' +
+              '<label style="font-size:10px;font-weight:700;">💵 Monto en Dólares (USD)</label>' +
+              '<input id="_swal_usd" type="number" min="0" step="0.01" placeholder="0.00" class="swal2-input" style="margin:4px 0 10px 0;">' +
+              '<label style="font-size:10px;font-weight:700;">🪙 Monto en Bolívares (equivalente en $)</label>' +
+              '<input id="_swal_bs" type="number" min="0" step="0.01" placeholder="0.00" class="swal2-input" style="margin:4px 0;">',
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#0f766e',
+        preConfirm: () => {
+          const u = parseFloat(document.getElementById('_swal_usd')?.value) || 0;
+          const b = parseFloat(document.getElementById('_swal_bs')?.value)  || 0;
+          if (u <= 0 && b <= 0) { Swal.showValidationMessage('Ingresa al menos un monto.'); return false; }
+          return { usd: u, bs: b };
+        }
+      });
+      if (!montos) { selectEl.value = valorOriginal; return; }
+      extraCampos = { montoPagadoUSD: montos.usd, montoPagadoBS: montos.bs };
+    }
     const label = _fpLabels[nuevaFp] || nuevaFp;
     await updateDoc(doc(db, 'consultas', consultaId), {
       formaPago: nuevaFp,
-      formaPagoLabel: label
+      formaPagoLabel: label,
+      ...extraCampos
     });
     // Actualizar colores de la celda
     const [color, bg] = (_fpColorsMap[nuevaFp] || '#64748b:#f8fafc').split(':');
