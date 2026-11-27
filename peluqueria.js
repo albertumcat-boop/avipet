@@ -984,6 +984,20 @@ window.imprimirReciboPelu = async (idServicio) => {
       else if(modo==='mixto') pagoStr=`🔀 $${usd.toFixed(2)} USD + $${bs.toFixed(2)} en Bs`;
       else pagoStr=`💵 $${usd.toFixed(2)} Dólares`;
     }
+    // Para pago mixto calcular proporción USD/Bs y mostrar desglose por persona
+    const precioTotal = parseFloat(d.precioTotal||0);
+    const totalCobrado = usd + bs;
+    const porcUSD = (modo==='mixto' && totalCobrado>0) ? usd/totalCobrado : (modo==='usd'?1:0);
+    const porcBS  = 1 - porcUSD;
+    const _fmtPago = (monto) => {
+      if (modo==='mixto') {
+        const u=(monto*porcUSD), b=(monto*porcBS);
+        return `$${monto.toFixed(2)} ($${u.toFixed(2)} USD + $${b.toFixed(2)} Bs)`;
+      }
+      if (modo==='bs') return `$${monto.toFixed(2)} (Bs)`;
+      return `$${monto.toFixed(2)} USD`;
+    };
+
     const win=window.open("","_blank","width=400,height=500");if(!win)return;
     win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo AVIPET</title>
       <style>@page{size:80mm auto;margin:4mm;}body{font-family:'Courier New',monospace;font-size:11px;color:#000;margin:0;padding:8px;}
@@ -997,14 +1011,14 @@ window.imprimirReciboPelu = async (idServicio) => {
       <p><b>Fecha:</b> ${d.fechaSimple||'---'} ${d.hora||''}</p>
       <p><b>Empleado:</b> ${d.empleadoRegistro||'---'}</p>
       <div class="sep"></div>
-      <div class="center"><p class="big">$${parseFloat(d.precioTotal||0).toFixed(2)}</p></div>
+      <div class="center"><p class="big">$${precioTotal.toFixed(2)}</p></div>
       <p class="center"><b>PAGO:</b> ${pagoStr}</p>
       <div class="sep"></div>
       <p style="font-size:9px;font-weight:bold;">DISTRIBUCIÓN:</p>
-      <p style="font-size:9px;">Miguelina: $${parseFloat(d.pagoPeluquera||0).toFixed(2)}</p>
-      ${parseFloat(d.pagoAyudante1||0)>0?`<p style="font-size:9px;">Adriani: $${parseFloat(d.pagoAyudante1||0).toFixed(2)}</p>`:''}
-      ${parseFloat(d.pagoAyudanteExtra||0)>0?`<p style="font-size:9px;">Tridente: $${parseFloat(d.pagoAyudanteExtra||0).toFixed(2)}</p>`:''}
-      ${(d.externosPelu&&d.externosPelu.length)?d.externosPelu.map(e=>`<p style="font-size:9px;">${e.nombre} (${e.rol==='peluquero'?'Peluquero':'Ayudante'}): $${parseFloat(e.pago||0).toFixed(2)}</p>`).join(''):''}
+      <p style="font-size:9px;">Miguelina: ${_fmtPago(parseFloat(d.pagoPeluquera||0))}</p>
+      ${parseFloat(d.pagoAyudante1||0)>0?`<p style="font-size:9px;">Adriani: ${_fmtPago(parseFloat(d.pagoAyudante1||0))}</p>`:''}
+      ${parseFloat(d.pagoAyudanteExtra||0)>0?`<p style="font-size:9px;">Tridente: ${_fmtPago(parseFloat(d.pagoAyudanteExtra||0))}</p>`:''}
+      ${(d.externosPelu&&d.externosPelu.length)?d.externosPelu.map(e=>`<p style="font-size:9px;">${e.nombre} (${e.rol==='peluquero'?'Peluquero':'Ayudante'}): ${_fmtPago(parseFloat(e.pago||0))}</p>`).join(''):''}
       <div class="sep"></div>
       <p class="center" style="font-size:9px;">¡Gracias por visitar AVIPET! 🐾</p>
       <div class="no-print" style="text-align:center;margin-top:10px;"><button onclick="window.print()" style="padding:6px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:900;">Imprimir</button></div>
