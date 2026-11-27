@@ -576,19 +576,15 @@ window.mostrarDashboardVet = async () => {
         secDoc.insertBefore(badgeEq, secDoc.firstChild);
       }
 
-      // Descuento de deuda (si tiene deuda)
+      // Descuento de deuda (si tiene deuda) — input vacío, usuario escribe monto a descontar
+      const deudaInputId = 'inp_deuda_' + pid;
       if (deuda > 0) {
         const deudaDescDiv = document.createElement('div');
         deudaDescDiv.style.cssText = 'background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px;margin-top:8px;';
-        const deudaInputId = 'inp_deuda_' + pid;
         deudaDescDiv.innerHTML =
-          '<p style="font-size:9px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0 0 6px 0;">💳 Descontar deuda del pago</p>' +
-          '<div style="display:flex;gap:6px;align-items:center;">' +
-            '<input id="'+deudaInputId+'" type="number" min="0.01" max="'+deuda.toFixed(2)+'" step="0.01" value="'+deuda.toFixed(2)+'" ' +
-              'style="flex:1;border:1.5px solid #fca5a5;border-radius:6px;padding:5px 8px;font-size:13px;font-weight:900;color:#dc2626;text-align:center;">' +
-            '<button onclick="window._descontarDeudaDoc(\''+pid+'\',\''+nombreDoc+'\','+deuda.toFixed(2)+',\''+deudaInputId+'\')" ' +
-              'style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap;">Descontar e Imprimir</button>' +
-          '</div>';
+          '<p style="font-size:9px;font-weight:900;color:#dc2626;text-transform:uppercase;margin:0 0 4px 0;">💳 Descontar deuda del pago — Deuda total: $'+deuda.toFixed(2)+'</p>' +
+          '<input id="'+deudaInputId+'" type="number" min="0.01" max="'+deuda.toFixed(2)+'" step="0.01" placeholder="Monto a descontar (dejar vacío si no aplica)" ' +
+            'style="width:100%;box-sizing:border-box;border:1.5px solid #fca5a5;border-radius:6px;padding:5px 8px;font-size:13px;font-weight:900;color:#dc2626;text-align:center;">';
         secDoc.appendChild(deudaDescDiv);
       }
 
@@ -601,10 +597,31 @@ window.mostrarDashboardVet = async () => {
       const btnDetallado = document.createElement('button');
       btnDetallado.innerHTML = '🖨️ Detallado';
       btnDetallado.style.cssText = 'padding:8px;background:'+col.color+';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;';
-      (function(nd, gd, dd, dc) {
-        btnSimple.onclick    = function() { window._imprimirReporteDoctorSimple(nd, gd, dd, dc); };
-        btnDetallado.onclick = function() { window._imprimirReporteDoctor(nd, gd, dd, dc); };
-      })(nombreDoc, g, deuda, (window._deduccionDoc && window._deduccionDoc[pid]) || 0);
+      (function(nd, gd, dd, inputId) {
+        async function _imprimir(tipo) {
+          const inp = document.getElementById(inputId);
+          const abono = inp ? parseFloat(inp.value) || 0 : 0;
+          if (abono > 0) {
+            if (abono > dd + 0.001) return Swal.fire({ icon:'warning', title:'Monto mayor a la deuda', text:'Máximo: $'+dd.toFixed(2) });
+            const conf = await Swal.fire({
+              icon:'question', title:'Descontar deuda',
+              html:'<p>Se descontarán <b style="color:#dc2626;">$'+abono.toFixed(2)+'</b> de la deuda de <b>'+nd+'</b>.</p>',
+              showCancelButton:true, confirmButtonText:'Confirmar', confirmButtonColor:'#dc2626', cancelButtonText:'Cancelar'
+            });
+            if (!conf.isConfirmed) return;
+            await window._aplicarDeduccionDoc(nd, dd, abono);
+            const deudaRestante = Math.max(0, dd - abono);
+            if (tipo === 'simple') window._imprimirReporteDoctorSimple(nd, gd, deudaRestante, abono);
+            else window._imprimirReporteDoctor(nd, gd, deudaRestante, abono);
+            window.mostrarDashboardVet && window.mostrarDashboardVet();
+          } else {
+            if (tipo === 'simple') window._imprimirReporteDoctorSimple(nd, gd, dd, 0);
+            else window._imprimirReporteDoctor(nd, gd, dd, 0);
+          }
+        }
+        btnSimple.onclick    = function() { _imprimir('simple'); };
+        btnDetallado.onclick = function() { _imprimir('detallado'); };
+      })(nombreDoc, g, deuda, deudaInputId);
       botonesImp.appendChild(btnSimple);
       botonesImp.appendChild(btnDetallado);
       secDoc.appendChild(botonesImp);
@@ -2036,6 +2053,33 @@ async function _renderizarContadorMaquinas(consultas, fechas) {
   listaDiv.appendChild(resumen);
   if (netoDiv) netoDiv.innerHTML = '';
 }
+
+// ─── HELPER: aplicar abono en Firestore sin UI ───────────────
+window._aplicarDeduccionDoc = async function(nombreDoc, totalDeuda, abono) {
+  const personaId = nombreDoc.toLowerCase().replace(/\s+/g,'').replace('dr.','').replace('dra.','').trim();
+  const snapD = await getDocs(collection(db, 'deudas'));
+  const docsD = [];
+  snapD.forEach(function(d) {
+    const r = d.data();
+    if (r.estado !== 'pagado' && (r.personaId||'').toLowerCase() === personaId) {
+      docsD.push({ id: d.id, monto: parseFloat(r.monto||0), fecha: r.fecha?.seconds||0 });
+    }
+  });
+  docsD.sort(function(a,b){ return a.fecha - b.fecha; });
+  const batch = writeBatch(db);
+  let restante = abono;
+  for (const d2 of docsD) {
+    if (restante <= 0) break;
+    if (restante >= d2.monto) {
+      batch.update(doc(db, 'deudas', d2.id), { estado:'pagado', montoPagado: d2.monto });
+      restante -= d2.monto;
+    } else {
+      batch.update(doc(db, 'deudas', d2.id), { monto: parseFloat((d2.monto - restante).toFixed(2)) });
+      restante = 0;
+    }
+  }
+  await batch.commit();
+};
 
 // ─── DESCONTAR DEUDA DOCTOR VET + IMPRIMIR TICKET ───────────
 window._descontarDeudaDoc = async function(personaId, nombreDoc, totalDeuda, inputId) {
